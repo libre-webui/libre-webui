@@ -845,7 +845,30 @@ export function toOpenAIWorkMessages(
   messages: OllamaChatMessage[]
 ): JsonObject[] {
   let pendingCalls: Array<{ id: string; name: string }> = [];
-  return messages.map((message, messageIndex) => {
+  const output: JsonObject[] = [];
+  // OpenAI-compatible tool messages are text-only, and every tool response
+  // must directly follow its assistant tool_calls turn. Screenshots from
+  // tool results therefore travel as one user message emitted after the
+  // whole tool-result run — the placement vision endpoints accept.
+  let pendingImages: string[] = [];
+  const flushImages = (): void => {
+    if (pendingImages.length === 0) return;
+    output.push({
+      role: 'user',
+      content: [
+        {
+          type: 'text',
+          text: 'Screenshots returned by the preceding tool results.',
+        },
+        ...pendingImages.map(image => ({
+          type: 'image_url',
+          image_url: { url: workImageDataUrl(image) },
+        })),
+      ],
+    });
+    pendingImages = [];
+  };
+  for (const [messageIndex, message] of messages.entries()) {
     if (message.role === 'assistant') {
       const toolCalls = normalizeOutboundToolCalls(message.tool_calls);
       const reasoningContent = toolCalls
@@ -855,7 +878,8 @@ export function toOpenAIWorkMessages(
         id: String(call.id),
         name: String((call.function as JsonObject).name),
       }));
-      return {
+      flushImages();
+      output.push({
         role: 'assistant',
         content: message.content || null,
         ...(typeof reasoningContent === 'string'
@@ -870,7 +894,8 @@ export function toOpenAIWorkMessages(
               })),
             }
           : {}),
-      };
+      });
+      continue;
     }
     if (message.role === 'tool') {
       const matchingIndex = pendingCalls.findIndex(
@@ -880,16 +905,21 @@ export function toOpenAIWorkMessages(
         matchingIndex >= 0
           ? pendingCalls.splice(matchingIndex, 1)[0]
           : undefined;
-      return {
+      output.push({
         role: 'tool',
         content: message.content,
         name: message.tool_name,
         tool_call_id:
           message.tool_call_id || matching?.id || `work-tool-${messageIndex}`,
-      };
+      });
+      if (message.images?.length) pendingImages.push(...message.images);
+      continue;
     }
-    return { role: message.role, content: message.content };
-  });
+    flushImages();
+    output.push({ role: message.role, content: message.content });
+  }
+  flushImages();
+  return output;
 }
 
 export function toOpenAIResponsesWorkInput(
@@ -898,9 +928,30 @@ export function toOpenAIResponsesWorkInput(
 ): JsonObject[] {
   const input: JsonObject[] = [];
   let pendingCalls: Array<{ id: string; name: string }> = [];
+  // function_call_output carries text only; screenshots follow the tool-
+  // result run as one user message of input_image parts.
+  let pendingImages: string[] = [];
+  const flushImages = (): void => {
+    if (pendingImages.length === 0) return;
+    input.push({
+      role: 'user',
+      content: [
+        {
+          type: 'input_text',
+          text: 'Screenshots returned by the preceding tool results.',
+        },
+        ...pendingImages.map(image => ({
+          type: 'input_image',
+          image_url: workImageDataUrl(image),
+        })),
+      ],
+    });
+    pendingImages = [];
+  };
 
   for (const [messageIndex, message] of messages.entries()) {
     if (message.role === 'assistant') {
+      flushImages();
       const toolCalls = normalizeOutboundToolCalls(message.tool_calls);
 
       const responseOutputItems = Array.isArray(
@@ -990,9 +1041,11 @@ export function toOpenAIResponsesWorkInput(
           },
         ])
       );
+      if (message.images?.length) pendingImages.push(...message.images);
       continue;
     }
 
+    flushImages();
     input.push(
       ...toOpenAIResponsesInput([
         { role: message.role, content: message.content },
@@ -1000,6 +1053,7 @@ export function toOpenAIResponsesWorkInput(
     );
   }
 
+  flushImages();
   return input;
 }
 
@@ -1059,10 +1113,27 @@ function buildAnthropicWorkPayload(
       );
       const matching =
         matchIndex >= 0 ? pendingCalls.splice(matchIndex, 1)[0] : undefined;
+      // Anthropic tool_result blocks accept image content natively — the
+      // screenshot rides inside the result itself.
       const block = {
         type: 'tool_result',
         tool_use_id: matching?.id || `work-tool-${messageIndex}`,
-        content: message.content,
+        content: message.images?.length
+          ? [
+              { type: 'text', text: message.content },
+              ...message.images.map(image => {
+                const source = workImageBase64(image);
+                return {
+                  type: 'image',
+                  source: {
+                    type: 'base64',
+                    media_type: source.mediaType,
+                    data: source.data,
+                  },
+                };
+              }),
+            ]
+          : message.content,
       };
       const previous = providerMessages[providerMessages.length - 1];
       if (appendToolResult && previous?.role === 'user') {
@@ -1145,6 +1216,14 @@ function buildGeminiWorkPayload(
           response: { result: message.content },
         },
       });
+      // Gemini functionResponse parts are text-only; the screenshot follows
+      // as an inlineData part in the same user turn.
+      for (const image of message.images ?? []) {
+        const source = workImageBase64(image);
+        append('user', {
+          inlineData: { mimeType: source.mediaType, data: source.data },
+        });
+      }
       continue;
     }
     append('user', { text: message.content });
@@ -1179,6 +1258,19 @@ function buildGeminiWorkPayload(
       topP: params.topP,
     },
   };
+}
+
+// Work tool screenshots are raw base64 PNG (Ollama's wire convention); a
+// data: URL is accepted too and split where a provider needs the parts.
+function workImageDataUrl(image: string): string {
+  return image.startsWith('data:') ? image : `data:image/png;base64,${image}`;
+}
+
+function workImageBase64(image: string): { mediaType: string; data: string } {
+  const match = image.match(/^data:([^;]+);base64,(.+)$/);
+  return match
+    ? { mediaType: match[1], data: match[2] }
+    : { mediaType: 'image/png', data: image };
 }
 
 function normalizeOpenAIWorkResponse(

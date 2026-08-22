@@ -16,11 +16,13 @@ const {
   WORK_AGENT_SKILLS,
   buildWorkAgentSystemPrompt,
   buildWorkBudgetExhaustionPrompt,
+  workAgentSkillsForContext,
   workToolCallBudget,
 } = guidanceModule;
 
 const guidanceContext = {
   networkEnabled: true,
+  computerAvailable: false,
   previewPort: 4173,
   roundBudget: 48,
   commandTimeoutMs: 120_000,
@@ -35,6 +37,7 @@ test('built-in Work skills have stable unique identities', () => {
       'focused-implementation',
       'verification',
       'browser-preview',
+      'computer',
       'budget-discipline',
     ]
   );
@@ -79,9 +82,37 @@ test('Work guidance changes network policy without changing its core skills', ()
 
   assert.match(prompt, /Network access is disabled/);
   assert.match(prompt, /do not repeatedly retry/);
-  for (const skill of WORK_AGENT_SKILLS) {
+  for (const skill of workAgentSkillsForContext({ computerAvailable: false })) {
     assert.match(prompt, new RegExp(escapeRegExp(skill.title)));
   }
+});
+
+test('computer guidance loads only when the task has a Work Computer', () => {
+  const withoutComputer = buildWorkAgentSystemPrompt(guidanceContext);
+  assert.doesNotMatch(withoutComputer, /computer_observe/);
+  assert.doesNotMatch(withoutComputer, /Computer control/);
+
+  const withComputer = buildWorkAgentSystemPrompt({
+    ...guidanceContext,
+    computerAvailable: true,
+  });
+  assert.match(withComputer, /Computer control/);
+  assert.match(withComputer, /computer_observe/);
+  assert.match(withComputer, /computer_act/);
+  assert.match(withComputer, /Never enter credentials/);
+  assert.match(withComputer, /re-observe instead of assuming/);
+
+  assert.deepEqual(
+    workAgentSkillsForContext({ computerAvailable: true }).map(
+      skill => skill.id
+    ),
+    WORK_AGENT_SKILLS.map(skill => skill.id)
+  );
+  assert.ok(
+    !workAgentSkillsForContext({ computerAvailable: false }).some(
+      skill => skill.id === 'computer'
+    )
+  );
 });
 
 test('tool-call safety budget scales with one unified round budget', () => {

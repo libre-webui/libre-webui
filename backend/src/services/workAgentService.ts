@@ -24,11 +24,15 @@ import {
   buildWorkAgentSystemPrompt,
   buildWorkBudgetExhaustionPrompt,
   buildWorkEmptyRoundNudgePrompt,
-  WORK_AGENT_SKILLS,
+  workAgentSkillsForContext,
   WORK_WRITE_FILE_RECOMMENDED_CHARS,
   workToolCallBudget,
 } from './workAgentGuidance.js';
-import workRuntimeService, { WorkCommandResult } from './workRuntimeService.js';
+import workRuntimeService, {
+  WORK_COMPUTER_ACTION_LIMIT,
+  WorkCommandResult,
+  WorkComputerObservation,
+} from './workRuntimeService.js';
 import {
   isWebSearchAvailable,
   userCanUseWebSearch,
@@ -172,15 +176,74 @@ export const WORK_WEB_SEARCH_TOOL_SCHEMA: Record<string, unknown> =
     ['query']
   );
 
+// Offered only when the task's policy enables the Work Computer and the
+// task has network access: the agent's eyes and hands on the GUI session.
+export const WORK_COMPUTER_TOOL_SCHEMAS: Record<string, unknown>[] = [
+  functionTool(
+    'computer_observe',
+    "Look at the task's virtual computer screen. Returns the current screenshot with the cursor position and active window title.",
+    {}
+  ),
+  functionTool(
+    'computer_act',
+    'Perform batched mouse and keyboard actions on the virtual computer, then return the screenshot after they settle.',
+    {
+      actions: {
+        type: 'array',
+        description:
+          `Up to ${WORK_COMPUTER_ACTION_LIMIT} actions executed in order. Each action is an object with "type" plus type-specific fields: ` +
+          'move {x,y}; click / double_click / right_click {x,y optional — clicks the current position without them}; ' +
+          'type {text}; key {keys, an xdotool name or chord such as "Return" or "ctrl+l"}; ' +
+          'scroll {direction: "up"|"down", amount optional, x,y optional}; wait {ms, at most 5000}.',
+        items: {
+          type: 'object',
+          properties: {
+            type: {
+              type: 'string',
+              enum: [
+                'move',
+                'click',
+                'double_click',
+                'right_click',
+                'type',
+                'key',
+                'scroll',
+                'wait',
+              ],
+            },
+            x: { type: 'integer' },
+            y: { type: 'integer' },
+            text: { type: 'string' },
+            keys: { type: 'string' },
+            direction: { type: 'string', enum: ['up', 'down'] },
+            amount: { type: 'integer' },
+            ms: { type: 'integer' },
+          },
+          required: ['type'],
+        },
+      },
+    },
+    ['actions']
+  ),
+];
+
 export async function workToolSchemasForTask(task: {
   networkEnabled: boolean;
   userId: string;
+  policyId?: string | null;
 }): Promise<Record<string, unknown>[]> {
-  return task.networkEnabled &&
+  const schemas = [...WORK_TOOL_SCHEMAS];
+  if (
+    task.networkEnabled &&
     (await isWebSearchAvailable()) &&
     (await userCanUseWebSearch(await userModel.getUserById(task.userId)))
-    ? [...WORK_TOOL_SCHEMAS, WORK_WEB_SEARCH_TOOL_SCHEMA]
-    : WORK_TOOL_SCHEMAS;
+  ) {
+    schemas.push(WORK_WEB_SEARCH_TOOL_SCHEMA);
+  }
+  if (await workRuntimeService.computerToolsAvailable(task)) {
+    schemas.push(...WORK_COMPUTER_TOOL_SCHEMAS);
+  }
+  return schemas;
 }
 
 export class WorkAgentService {
@@ -647,7 +710,9 @@ export class WorkAgentService {
         'transition:preparing',
         durableAttemptIdentity
       );
-      for (const skill of WORK_AGENT_SKILLS) {
+      const computerAvailable =
+        await workRuntimeService.computerToolsAvailable(task);
+      for (const skill of workAgentSkillsForContext({ computerAvailable })) {
         await workEventService.publish(
           taskId,
           runId,
@@ -689,6 +754,7 @@ export class WorkAgentService {
       const messages = await this.contextMessages(
         task,
         roundLimit,
+        computerAvailable,
         providerStateScope,
         run
       );
@@ -1013,6 +1079,7 @@ export class WorkAgentService {
             `message:${toolCallMessage.id}`
           );
           let toolOutput: string;
+          let toolImages: string[] | undefined;
           let toolMetadata: Record<string, unknown> = {
             name: call.function.name,
             toolCallId: call.id,
@@ -1036,6 +1103,7 @@ export class WorkAgentService {
             }
             const result = await this.executeTool(task, call);
             toolOutput = result.content;
+            toolImages = result.images;
             toolMetadata = { ...toolMetadata, ...result.metadata };
           } catch (error) {
             toolOutput =
@@ -1076,7 +1144,12 @@ export class WorkAgentService {
             content: toolOutput,
             tool_name: call.function.name,
             tool_call_id: call.id,
+            ...(toolImages?.length ? { images: toolImages } : {}),
           });
+          // Screenshots are live-context-only: persisted messages keep the
+          // text observation, and only the most recent screenshots stay in
+          // model context so a long computer session cannot flood tokens.
+          retainRecentWorkImages(messages);
         }
       }
       await this.throwIfCancelled(runId, controller);
@@ -1397,6 +1470,7 @@ export class WorkAgentService {
   private async contextMessages(
     task: WorkTaskRecord,
     roundLimit: number,
+    computerAvailable: boolean,
     providerStateScope?: string,
     provider: Pick<WorkRun, 'providerType' | 'providerId' | 'model'> = task
   ): Promise<OllamaChatMessage[]> {
@@ -1410,6 +1484,7 @@ export class WorkAgentService {
         role: 'system',
         content: buildWorkAgentSystemPrompt({
           networkEnabled: task.networkEnabled,
+          computerAvailable,
           previewPort: workRuntimeService.previewPort,
           roundBudget: roundLimit,
           commandTimeoutMs: workRuntimeService.limits.commandTimeoutMs,
@@ -1423,7 +1498,13 @@ export class WorkAgentService {
   private async executeTool(
     task: WorkTaskRecord,
     call: WorkToolCall
-  ): Promise<{ content: string; metadata?: Record<string, unknown> }> {
+  ): Promise<{
+    content: string;
+    metadata?: Record<string, unknown>;
+    // Base64 PNG screenshots for the model's live context. Never persisted:
+    // durable messages carry only the text observation.
+    images?: string[];
+  }> {
     const args = call.function.arguments;
     switch (call.function.name) {
       case 'list_files': {
@@ -1561,12 +1642,36 @@ export class WorkAgentService {
           onStopped: () => workTaskService.updatePreview(task.id, 'stopped'),
         });
         return { content: 'Preview stopped.' };
+      case 'computer_observe': {
+        await this.assertComputerToolsAvailable(task);
+        return computerToolResult(
+          await workRuntimeService.computerObserve(task)
+        );
+      }
+      case 'computer_act': {
+        await this.assertComputerToolsAvailable(task);
+        const actions = Array.isArray(args.actions) ? args.actions : [];
+        const observation = await workRuntimeService.computerAct(task, actions);
+        return computerToolResult(observation, actions.length);
+      }
       default:
         throw new WorkAgentHttpError(
           `Unknown tool: ${call.function.name}`,
           400,
           'WORK_UNKNOWN_TOOL'
         );
+    }
+  }
+
+  private async assertComputerToolsAvailable(
+    task: WorkTaskRecord
+  ): Promise<void> {
+    if (!(await workRuntimeService.computerToolsAvailable(task))) {
+      throw new WorkAgentHttpError(
+        'The Work Computer is not available for this task.',
+        403,
+        'WORK_COMPUTER_UNAVAILABLE'
+      );
     }
   }
 
@@ -2250,7 +2355,12 @@ function validateToolCallArguments(call: WorkToolCall): string | undefined {
     case 'list_files':
     case 'start_preview':
     case 'stop_preview':
+    case 'computer_observe':
       return undefined;
+    case 'computer_act':
+      return Array.isArray(args.actions) && args.actions.length > 0
+        ? undefined
+        : `The model returned invalid arguments for computer_act: "actions" must be a non-empty array of action objects.`;
     case 'read_file':
     case 'delete_file':
       return invalidRequiredString('path');
@@ -2324,10 +2434,78 @@ function summarizeToolCall(call: WorkToolCall): Record<string, unknown> {
     case 'start_preview':
       includeString('command', args.command, 2_000);
       break;
+    case 'computer_act':
+      if (Array.isArray(args.actions)) {
+        metadata.actionCount = args.actions.length;
+        includeString(
+          'actions',
+          args.actions
+            .map(action =>
+              action && typeof action === 'object'
+                ? String((action as Record<string, unknown>).type ?? '?')
+                : '?'
+            )
+            .join(','),
+          500
+        );
+      }
+      break;
     default:
       break;
   }
   return metadata;
+}
+
+/**
+ * Screenshots the live model context keeps (rakazo's trick): the newest
+ * screenshot-bearing tool results retain their images, everything older
+ * drops back to its text observation. Bounds tokens and sidesteps most of
+ * the cross-run screenshot persistence problem — a resumed run re-observes.
+ */
+const WORK_LIVE_SCREENSHOT_MESSAGE_LIMIT = 2;
+
+function retainRecentWorkImages(
+  messages: OllamaChatMessage[],
+  limit = WORK_LIVE_SCREENSHOT_MESSAGE_LIMIT
+): void {
+  let retained = 0;
+  for (let index = messages.length - 1; index >= 0; index--) {
+    const message = messages[index];
+    if (!message.images?.length) continue;
+    retained += 1;
+    if (retained > limit) delete message.images;
+  }
+}
+
+function computerToolResult(
+  observation: WorkComputerObservation,
+  actionCount?: number
+): { content: string; metadata: Record<string, unknown>; images: string[] } {
+  const summary = [
+    ...(actionCount !== undefined
+      ? [
+          `Applied ${actionCount} action${actionCount === 1 ? '' : 's'} and captured the settled screen.`,
+        ]
+      : []),
+    `Screen ${observation.width}x${observation.height}, cursor at ${observation.cursorX},${observation.cursorY}.`,
+    observation.window
+      ? `Active window: ${observation.window}`
+      : 'No active window.',
+    'The screenshot accompanies this result.',
+  ].join('\n');
+  return {
+    content: summary,
+    metadata: {
+      screenshot: true,
+      width: observation.width,
+      height: observation.height,
+      cursorX: observation.cursorX,
+      cursorY: observation.cursorY,
+      window: observation.window.slice(0, 300),
+      ...(actionCount !== undefined ? { actionCount } : {}),
+    },
+    images: [observation.screenshotBase64],
+  };
 }
 
 function boundPersistedToolOutput(value: string): string {

@@ -90,6 +90,210 @@ const logger = createLogger('services:work-runtime');
 const PREVIEW_READY_TIMEOUT_MS = 15_000;
 const PREVIEW_POLL_INTERVAL_MS = 250;
 
+/** One observation of the Work Computer screen — the agent's eyes. */
+export interface WorkComputerObservation {
+  width: number;
+  height: number;
+  cursorX: number;
+  cursorY: number;
+  window: string;
+  screenshotBase64: string;
+}
+
+export type WorkComputerAction =
+  | { type: 'move'; x: number; y: number }
+  | {
+      type: 'click' | 'double_click' | 'right_click';
+      x?: number;
+      y?: number;
+    }
+  | { type: 'type'; text: string }
+  | { type: 'key'; keys: string }
+  | {
+      type: 'scroll';
+      direction: 'up' | 'down';
+      amount: number;
+      x?: number;
+      y?: number;
+    }
+  | { type: 'wait'; ms: number };
+
+/** Most actions a single computer_act batch may carry (rakazo-scale). */
+export const WORK_COMPUTER_ACTION_LIMIT = 24;
+const WORK_COMPUTER_TEXT_LIMIT = 4_000;
+const WORK_COMPUTER_WAIT_LIMIT_MS = 5_000;
+const WORK_COMPUTER_WAIT_TOTAL_LIMIT_MS = 30_000;
+const WORK_COMPUTER_COORDINATE_LIMIT = 10_000;
+/** xdotool key syntax: chords like ctrl+shift+t, keysyms like Return. */
+const WORK_COMPUTER_KEYS_PATTERN = /^[A-Za-z0-9_]+(\+[A-Za-z0-9_]+)*$/;
+
+/**
+ * Validate a computer_act batch before anything reaches the sandbox. The
+ * output is plain data safe to JSON-encode into the in-container action
+ * interpreter; every rejected batch names the exact offending action.
+ */
+export function validateWorkComputerActions(
+  actions: unknown
+): WorkComputerAction[] {
+  if (!Array.isArray(actions) || actions.length === 0) {
+    throw new WorkRuntimeError(
+      'computer_act requires a non-empty "actions" array.',
+      400,
+      'WORK_COMPUTER_INVALID_ACTION'
+    );
+  }
+  if (actions.length > WORK_COMPUTER_ACTION_LIMIT) {
+    throw new WorkRuntimeError(
+      `computer_act accepts at most ${WORK_COMPUTER_ACTION_LIMIT} actions per call.`,
+      400,
+      'WORK_COMPUTER_INVALID_ACTION'
+    );
+  }
+  const invalid = (index: number, reason: string): WorkRuntimeError =>
+    new WorkRuntimeError(
+      `computer_act action ${index + 1} is invalid: ${reason}`,
+      400,
+      'WORK_COMPUTER_INVALID_ACTION'
+    );
+  const coordinate = (value: unknown, index: number, name: string): number => {
+    if (
+      typeof value !== 'number' ||
+      !Number.isInteger(value) ||
+      value < 0 ||
+      value > WORK_COMPUTER_COORDINATE_LIMIT
+    ) {
+      throw invalid(
+        index,
+        `"${name}" must be an integer between 0 and ${WORK_COMPUTER_COORDINATE_LIMIT}.`
+      );
+    }
+    return value;
+  };
+  let totalWaitMs = 0;
+  const validated: WorkComputerAction[] = [];
+  for (const [index, value] of actions.entries()) {
+    const action =
+      value && typeof value === 'object' && !Array.isArray(value)
+        ? (value as Record<string, unknown>)
+        : undefined;
+    if (!action || typeof action.type !== 'string') {
+      throw invalid(index, 'each action must be an object with a "type".');
+    }
+    switch (action.type) {
+      case 'move':
+        validated.push({
+          type: 'move',
+          x: coordinate(action.x, index, 'x'),
+          y: coordinate(action.y, index, 'y'),
+        });
+        break;
+      case 'click':
+      case 'double_click':
+      case 'right_click': {
+        const hasX = action.x !== undefined;
+        const hasY = action.y !== undefined;
+        if (hasX !== hasY) {
+          throw invalid(index, 'provide both "x" and "y" or neither.');
+        }
+        validated.push({
+          type: action.type,
+          ...(hasX
+            ? {
+                x: coordinate(action.x, index, 'x'),
+                y: coordinate(action.y, index, 'y'),
+              }
+            : {}),
+        });
+        break;
+      }
+      case 'type': {
+        if (
+          typeof action.text !== 'string' ||
+          action.text.length === 0 ||
+          action.text.length > WORK_COMPUTER_TEXT_LIMIT
+        ) {
+          throw invalid(
+            index,
+            `"text" must be a string of 1 to ${WORK_COMPUTER_TEXT_LIMIT} characters.`
+          );
+        }
+        validated.push({ type: 'type', text: action.text });
+        break;
+      }
+      case 'key': {
+        if (
+          typeof action.keys !== 'string' ||
+          !WORK_COMPUTER_KEYS_PATTERN.test(action.keys) ||
+          action.keys.length > 64
+        ) {
+          throw invalid(
+            index,
+            '"keys" must be an xdotool key name or chord such as "Return" or "ctrl+l".'
+          );
+        }
+        validated.push({ type: 'key', keys: action.keys });
+        break;
+      }
+      case 'scroll': {
+        if (action.direction !== 'up' && action.direction !== 'down') {
+          throw invalid(index, '"direction" must be "up" or "down".');
+        }
+        const amount = action.amount ?? 3;
+        if (
+          typeof amount !== 'number' ||
+          !Number.isInteger(amount) ||
+          amount < 1 ||
+          amount > 20
+        ) {
+          throw invalid(index, '"amount" must be an integer between 1 and 20.');
+        }
+        const hasX = action.x !== undefined;
+        const hasY = action.y !== undefined;
+        if (hasX !== hasY) {
+          throw invalid(index, 'provide both "x" and "y" or neither.');
+        }
+        validated.push({
+          type: 'scroll',
+          direction: action.direction,
+          amount,
+          ...(hasX
+            ? {
+                x: coordinate(action.x, index, 'x'),
+                y: coordinate(action.y, index, 'y'),
+              }
+            : {}),
+        });
+        break;
+      }
+      case 'wait': {
+        if (
+          typeof action.ms !== 'number' ||
+          !Number.isInteger(action.ms) ||
+          action.ms < 1 ||
+          action.ms > WORK_COMPUTER_WAIT_LIMIT_MS
+        ) {
+          throw invalid(
+            index,
+            `"ms" must be an integer between 1 and ${WORK_COMPUTER_WAIT_LIMIT_MS}.`
+          );
+        }
+        totalWaitMs += action.ms;
+        if (totalWaitMs > WORK_COMPUTER_WAIT_TOTAL_LIMIT_MS) {
+          throw invalid(
+            index,
+            `total wait time per call is limited to ${WORK_COMPUTER_WAIT_TOTAL_LIMIT_MS} ms.`
+          );
+        }
+        validated.push({ type: 'wait', ms: action.ms });
+        break;
+      }
+      default:
+        throw invalid(index, `unknown action type "${action.type}".`);
+    }
+  }
+  return validated;
+}
+
 /** How long a run waits for the shared runtime lease before conflicting. */
 const runLeaseWaitMs = (): number => {
   const parsed = Number.parseInt(process.env.WORK_RUN_LEASE_WAIT_MS ?? '', 10);
@@ -1760,6 +1964,128 @@ export class WorkRuntimeService {
    * loopback port, and a computer without network is not useful anyway).
    */
   async startComputer(task: WorkTaskRecord): Promise<void> {
+    await this.withComputerSession(task, async () => undefined);
+  }
+
+  /** Whether this task may use the agent computer tools. */
+  async computerToolsAvailable(task: {
+    networkEnabled: boolean;
+    policyId?: string | null;
+  }): Promise<boolean> {
+    return (
+      task.networkEnabled &&
+      (await workPolicyService.resolve(task.policyId)).guiEnabled === true
+    );
+  }
+
+  /**
+   * The agent's eyes: current screenshot plus cursor and window state from
+   * the task's Work Computer session. Starts the session when needed.
+   */
+  async computerObserve(
+    task: WorkTaskRecord
+  ): Promise<WorkComputerObservation> {
+    return this.withComputerSession(task, signal =>
+      this.runComputerScript(task, COMPUTER_OBSERVE_SCRIPT, [], 30_000, signal)
+    );
+  }
+
+  /**
+   * The agent's hands: a validated action batch executed with xdotool, then
+   * a settle-and-observe so the caller sees the resulting screen in the same
+   * round trip.
+   */
+  async computerAct(
+    task: WorkTaskRecord,
+    actions: unknown
+  ): Promise<WorkComputerObservation> {
+    const validated = validateWorkComputerActions(actions);
+    // Waits and slow synthetic typing both extend the exec deadline; the
+    // batch must never be killed mid-gesture by a fixed timeout.
+    const extraBudgetMs = validated.reduce(
+      (total, action) =>
+        total +
+        (action.type === 'wait' ? action.ms : 0) +
+        (action.type === 'type' ? action.text.length * 15 : 0),
+      0
+    );
+    return this.withComputerSession(task, signal =>
+      this.runComputerScript(
+        task,
+        COMPUTER_ACT_SCRIPT,
+        [JSON.stringify(validated)],
+        60_000 + extraBudgetMs,
+        signal
+      )
+    );
+  }
+
+  private async runComputerScript(
+    task: WorkTaskRecord,
+    script: string,
+    args: string[],
+    timeoutMs: number,
+    signal: AbortSignal | undefined
+  ): Promise<WorkComputerObservation> {
+    const result = await this.driver.exec(
+      task,
+      ['node', '-e', script, '--', ...args],
+      {
+        timeoutMs,
+        maxOutputChars: 4_000_000,
+        acceptFailure: true,
+        abortSignal: signal,
+      }
+    );
+    if (result.exitCode !== 0) {
+      throw new WorkRuntimeError(
+        `The Work Computer action failed: ${(
+          result.stderr ||
+          result.stdout ||
+          'unknown error'
+        )
+          .trim()
+          .slice(0, 300)}`,
+        500,
+        'WORK_COMPUTER_ACTION_FAILED'
+      );
+    }
+    const parsed = parseJsonOutput<{
+      width?: unknown;
+      height?: unknown;
+      cursorX?: unknown;
+      cursorY?: unknown;
+      window?: unknown;
+      image?: unknown;
+    }>(result.stdout);
+    if (
+      typeof parsed.width !== 'number' ||
+      typeof parsed.height !== 'number' ||
+      typeof parsed.cursorX !== 'number' ||
+      typeof parsed.cursorY !== 'number' ||
+      typeof parsed.image !== 'string' ||
+      parsed.image.length === 0
+    ) {
+      throw new WorkRuntimeError(
+        'The Work Computer returned an invalid observation.',
+        500,
+        'WORK_COMPUTER_ACTION_FAILED'
+      );
+    }
+    return {
+      width: parsed.width,
+      height: parsed.height,
+      cursorX: parsed.cursorX,
+      cursorY: parsed.cursorY,
+      window: typeof parsed.window === 'string' ? parsed.window : '',
+      screenshotBase64: parsed.image,
+    };
+  }
+
+  private async withComputerSession<T>(
+    task: WorkTaskRecord,
+    fn: (signal?: AbortSignal) => Promise<T>
+  ): Promise<T> {
     if (!task.networkEnabled) {
       throw new WorkRuntimeError(
         'The Work Computer requires network access. Enable network access for this Work task first.',
@@ -1779,29 +2105,34 @@ export class WorkRuntimeService {
     try {
       await this.ensureImage(task);
       await this.assertTaskIsActive(task);
-      await this.withLifecycleLock(task.id, async (assertHeld, signal) => {
-        await this.assertTaskIsActive(task);
-        this.assertCurrentNetworkPolicy(task);
-        await assertHeld();
-        await this.prepareWithLock(task, signal);
-        const result = await this.driver.exec(
-          task,
-          ['/usr/local/bin/start-computer'],
-          { timeoutMs: 60_000 }
-        );
-        if (result.exitCode !== 0) {
-          const detail = (result.stderr || result.stdout || '')
-            .trim()
-            .slice(0, 300);
-          throw new WorkRuntimeError(
-            `The Work Computer could not start${detail ? `: ${detail}` : '.'} ` +
-              'The policy image must include the Work Computer GUI stack.',
-            500,
-            'WORK_COMPUTER_START_FAILED'
+      return await this.withLifecycleLock(
+        task.id,
+        async (assertHeld, signal) => {
+          await this.assertTaskIsActive(task);
+          this.assertCurrentNetworkPolicy(task);
+          await assertHeld();
+          await this.prepareWithLock(task, signal);
+          const result = await this.driver.exec(
+            task,
+            ['/usr/local/bin/start-computer'],
+            { timeoutMs: 60_000 }
           );
+          if (result.exitCode !== 0) {
+            const detail = (result.stderr || result.stdout || '')
+              .trim()
+              .slice(0, 300);
+            throw new WorkRuntimeError(
+              `The Work Computer could not start${detail ? `: ${detail}` : '.'} ` +
+                'The policy image must include the Work Computer GUI stack.',
+              500,
+              'WORK_COMPUTER_START_FAILED'
+            );
+          }
+          const value = await fn(signal);
+          this.noteTaskActivity(task.id);
+          return value;
         }
-        this.noteTaskActivity(task.id);
-      });
+      );
     } finally {
       await releaseLease();
     }
@@ -3354,6 +3685,96 @@ const walk = directory => {
 };
 walk(targetReal);
 process.stdout.write(results.join('\\n'));
+`;
+
+/**
+ * Shared observation core for the Work Computer scripts: cursor, active
+ * window, display geometry, and a full-screen PNG captured with ImageMagick
+ * from the session's Xvfb display.
+ */
+const COMPUTER_OBSERVE_COMMON = String.raw`
+const {execFileSync} = require('node:child_process');
+process.env.DISPLAY = ':' + (process.env.LIBRE_COMPUTER_DISPLAY || '1');
+const out = (cmd, args, timeout = 10000) =>
+  execFileSync(cmd, args, {encoding: 'utf8', timeout});
+const observe = () => {
+  const cursor = {x: 0, y: 0};
+  for (const line of out('xdotool', ['getmouselocation', '--shell']).split('\n')) {
+    const [key, value] = line.split('=');
+    if (key === 'X') cursor.x = Number(value);
+    if (key === 'Y') cursor.y = Number(value);
+  }
+  let windowName = '';
+  try {
+    windowName = out('xdotool', ['getactivewindow', 'getwindowname']).trim();
+  } catch {}
+  const geometry = out('xdotool', ['getdisplaygeometry']).trim().split(' ');
+  const png = execFileSync('import', ['-window', 'root', '-silent', 'png:-'], {
+    timeout: 20000,
+    maxBuffer: 32 * 1024 * 1024,
+  });
+  return {
+    width: Number(geometry[0]),
+    height: Number(geometry[1]),
+    cursorX: cursor.x,
+    cursorY: cursor.y,
+    window: windowName.slice(0, 300),
+    image: png.toString('base64'),
+  };
+};
+`;
+
+const COMPUTER_OBSERVE_SCRIPT = String.raw`${COMPUTER_OBSERVE_COMMON}
+process.stdout.write(JSON.stringify(observe()));
+`;
+
+/**
+ * Interpreter for a backend-validated computer_act batch. Input is trusted
+ * JSON (validateWorkComputerActions runs first); every gesture goes through
+ * xdotool argv — no shell interpolation anywhere.
+ */
+const COMPUTER_ACT_SCRIPT = String.raw`${COMPUTER_OBSERVE_COMMON}
+const actions = JSON.parse(process.argv[1] || '[]');
+const xdotool = args => out('xdotool', args, 120000);
+const wait = ms =>
+  Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
+const moveTo = action => {
+  if (action.x !== undefined) {
+    xdotool(['mousemove', '--sync', String(action.x), String(action.y)]);
+  }
+};
+for (const action of actions) {
+  if (action.type === 'move') {
+    xdotool(['mousemove', '--sync', String(action.x), String(action.y)]);
+  } else if (action.type === 'click') {
+    moveTo(action);
+    xdotool(['click', '1']);
+  } else if (action.type === 'double_click') {
+    moveTo(action);
+    xdotool(['click', '--repeat', '2', '--delay', '150', '1']);
+  } else if (action.type === 'right_click') {
+    moveTo(action);
+    xdotool(['click', '3']);
+  } else if (action.type === 'type') {
+    xdotool(['type', '--clearmodifiers', '--delay', '15', '--', action.text]);
+  } else if (action.type === 'key') {
+    xdotool(['key', '--clearmodifiers', '--', action.keys]);
+  } else if (action.type === 'scroll') {
+    moveTo(action);
+    xdotool([
+      'click',
+      '--repeat',
+      String(action.amount),
+      '--delay',
+      '50',
+      action.direction === 'up' ? '4' : '5',
+    ]);
+  } else if (action.type === 'wait') {
+    wait(action.ms);
+  }
+}
+wait(400);
+process.stdout.write(JSON.stringify(observe()));
 `;
 
 /**

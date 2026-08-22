@@ -25,6 +25,7 @@ const [
     default: workAgentService,
     normalizeToolCalls,
     restorePersistedWorkContext,
+    WORK_COMPUTER_TOOL_SCHEMAS,
     WORK_TOOL_SCHEMAS,
   },
   { default: workEventService },
@@ -1705,4 +1706,168 @@ test('reasoning-only runs finish with the reasoning, replayed through the nudges
     ),
     false
   );
+});
+
+test('computer tools reach the model as live screenshots and persist text-only', async () => {
+  const now = Date.now();
+  const userId = 'agent-loop-computer-admin';
+  getDatabase()
+    .prepare(
+      `INSERT INTO users (
+        id, username, email, password_hash, role, avatar, created_at, updated_at
+      ) VALUES (?, ?, NULL, 'unused', 'admin', NULL, ?, ?)`
+    )
+    .run(userId, userId, now, now);
+
+  const screenshot = index => Buffer.from(`fake-png-${index}`).toString('base64');
+  const observation = index => ({
+    width: 1280,
+    height: 800,
+    cursorX: 100 + index,
+    cursorY: 200,
+    window: `Chromium round ${index}`,
+    screenshotBase64: screenshot(index),
+  });
+  replaceMethod(workRuntimeService, 'computerToolsAvailable', async () => true);
+  let observations = 0;
+  replaceMethod(workRuntimeService, 'computerObserve', async () =>
+    observation(++observations)
+  );
+  const actedBatches = [];
+  replaceMethod(workRuntimeService, 'computerAct', async (_task, actions) => {
+    actedBatches.push(actions);
+    return observation(++observations);
+  });
+
+  // Snapshot which context messages carry images per round; the live array
+  // is mutated in place by the screenshot retention pass.
+  const imageStates = [];
+  const requests = [];
+  replaceMethod(
+    workModelProviderService,
+    'generateChatStreamResponse',
+    async request => {
+      requests.push(request);
+      imageStates.push(
+        request.messages.map(message => ({
+          role: message.role,
+          images: message.images ? [...message.images] : undefined,
+        }))
+      );
+      const round = requests.length;
+      const respond = toolCalls => ({
+        model: request.model,
+        created_at: new Date().toISOString(),
+        message: { role: 'assistant', content: '', tool_calls: toolCalls },
+        done: true,
+      });
+      if (round === 1) {
+        const toolNames = request.tools.map(tool => tool.function.name);
+        assert.ok(toolNames.includes('computer_observe'));
+        assert.ok(toolNames.includes('computer_act'));
+        return respond([
+          { id: 'observe-1', function: { name: 'computer_observe', arguments: {} } },
+        ]);
+      }
+      if (round === 2) {
+        const lastTool = request.messages.at(-1);
+        assert.equal(lastTool.role, 'tool');
+        assert.match(lastTool.content, /cursor at 101,200/);
+        assert.deepEqual(lastTool.images, [screenshot(1)]);
+        return respond([
+          {
+            id: 'act-1',
+            function: {
+              name: 'computer_act',
+              arguments: {
+                actions: [
+                  { type: 'click', x: 640, y: 400 },
+                  { type: 'type', text: 'hello' },
+                ],
+              },
+            },
+          },
+        ]);
+      }
+      if (round === 3) {
+        return respond([
+          {
+            id: 'act-2',
+            function: {
+              name: 'computer_act',
+              arguments: { actions: [{ type: 'key', keys: 'Return' }] },
+            },
+          },
+        ]);
+      }
+      assert.equal(round, 4);
+      return {
+        model: request.model,
+        created_at: new Date().toISOString(),
+        message: { role: 'assistant', content: 'Browser task finished.' },
+        done: true,
+      };
+    }
+  );
+
+  const detail = await workTaskService.createTaskWithRun(
+    userId,
+    'Drive the computer.',
+    'test-model',
+    true,
+    { providerType: 'plugin', providerId: 'test-plugin' }
+  );
+  const runId = detail.activeRun?.id;
+  assert.ok(runId);
+  await workAgentService.execute(detail.id, runId, userId);
+
+  assert.equal(requests.length, 4);
+  assert.equal((await workTaskService.getRun(runId)).status, 'completed');
+  assert.deepEqual(actedBatches, [
+    [
+      { type: 'click', x: 640, y: 400 },
+      { type: 'type', text: 'hello' },
+    ],
+    [{ type: 'key', keys: 'Return' }],
+  ]);
+
+  // Only the newest two screenshots stay in live context; the oldest one is
+  // stripped back to its text observation before round 4.
+  const round4Images = imageStates[3].filter(entry => entry.images?.length);
+  assert.deepEqual(
+    round4Images.map(entry => entry.images).flat(),
+    [screenshot(2), screenshot(3)]
+  );
+
+  // Persisted transcripts keep the observation text and screenshot metadata
+  // but never the image bytes.
+  const persisted = await workTaskService.getMessages(detail.id);
+  const results = persisted.filter(message => message.kind === 'tool_result');
+  assert.equal(results.length, 3);
+  for (const [index, message] of results.entries()) {
+    assert.equal(message.metadata.screenshot, true);
+    assert.match(message.content, /Screen 1280x800/);
+    assert.ok(!message.content.includes(screenshot(index + 1)));
+  }
+  assert.equal(results[1].metadata.actionCount, 2);
+  assert.match(results[1].content, /Applied 2 actions/);
+  const actCall = persisted.find(
+    message =>
+      message.kind === 'tool_call' && message.metadata.toolCallId === 'act-1'
+  );
+  assert.equal(actCall.metadata.actionCount, 2);
+  assert.equal(actCall.metadata.actions, 'click,type');
+});
+
+test('the computer tool schemas are offered separately from the base registry', () => {
+  const baseNames = WORK_TOOL_SCHEMAS.map(schema => schema.function.name);
+  assert.ok(!baseNames.includes('computer_observe'));
+  assert.ok(!baseNames.includes('computer_act'));
+  assert.deepEqual(
+    WORK_COMPUTER_TOOL_SCHEMAS.map(schema => schema.function.name),
+    ['computer_observe', 'computer_act']
+  );
+  const act = WORK_COMPUTER_TOOL_SCHEMAS[1].function;
+  assert.deepEqual(act.parameters.required, ['actions']);
+  assert.equal(act.parameters.properties.actions.type, 'array');
 });

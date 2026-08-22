@@ -40,8 +40,10 @@ websockify listening on container port 6080 — the only network-reachable
 surface. The backend publishes that port on the Docker host's loopback and
 re-authenticates every viewer with a one-use, task-bound ticket.
 
-xdotool and ImageMagick are preinstalled for upcoming phases (agent control
-of the desktop, takeover, teach mode) so this image will not need to change.
+xdotool and ImageMagick power the agent's `computer_observe` and
+`computer_act` tools (screenshots in, OS-level input out) and remain in
+place for the upcoming takeover and teach phases, so this image will not
+need to change.
 
 Overhead relative to the base image: ~650 MB on disk; a running GUI session
 adds roughly 300–800 MB of memory depending on browser use. Size policies

@@ -17,6 +17,7 @@
 
 export interface WorkAgentGuidanceContext {
   networkEnabled: boolean;
+  computerAvailable: boolean;
   previewPort: number;
   roundBudget: number;
   commandTimeoutMs: number;
@@ -80,6 +81,17 @@ export const WORK_AGENT_SKILLS: readonly WorkAgentSkill[] = [
     ],
   },
   {
+    id: 'computer',
+    title: 'Computer control',
+    instructions: [
+      'This task has a virtual computer with a Chromium browser. computer_observe returns the current screenshot with the cursor position and active window title; computer_act performs batched mouse and keyboard actions and returns the screenshot after they settle.',
+      'Coordinates are absolute pixels on the returned screenshot. Observe before the first action, act on what the screenshot actually shows, and re-observe instead of assuming an action worked.',
+      'Batch related actions into one computer_act call: move, click, double_click, right_click, type, key, scroll, wait. Add a wait action after navigation or before reading a slow page.',
+      'run_command stops the sandbox processes when it finishes, which closes the browser. The computer session restarts on the next computer tool call and the browser profile persists, but open pages are lost — finish a browser workflow before running commands.',
+      'Never enter credentials, complete a CAPTCHA or 2FA challenge, or work around an authentication wall. Stop and report the exact blocker so the user can handle it.',
+    ],
+  },
+  {
     id: 'budget-discipline',
     title: 'Budget discipline',
     instructions: [
@@ -94,6 +106,19 @@ export function workToolCallBudget(roundBudget: number): number {
   return Math.max(128, positiveInteger(roundBudget, 'roundBudget') * 8);
 }
 
+/**
+ * The skills a specific run actually loads. Guidance for a capability the
+ * task cannot use (a computer without a GUI policy) would only invite the
+ * model to call tools that are not offered.
+ */
+export function workAgentSkillsForContext(
+  context: Pick<WorkAgentGuidanceContext, 'computerAvailable'>
+): readonly WorkAgentSkill[] {
+  return WORK_AGENT_SKILLS.filter(
+    skill => skill.id !== 'computer' || context.computerAvailable
+  );
+}
+
 export function buildWorkAgentSystemPrompt(
   context: WorkAgentGuidanceContext
 ): string {
@@ -102,10 +127,12 @@ export function buildWorkAgentSystemPrompt(
   const networkGuidance = context.networkEnabled
     ? 'Network access is enabled. Download dependencies only when the task needs them and respect the project lockfile.'
     : 'Network access is disabled. Downloads and remote services will fail; do not repeatedly retry them.';
-  const skills = WORK_AGENT_SKILLS.map(
-    skill =>
-      `## ${skill.title}\n${skill.instructions.map(item => `- ${item}`).join('\n')}`
-  ).join('\n\n');
+  const skills = workAgentSkillsForContext(context)
+    .map(
+      skill =>
+        `## ${skill.title}\n${skill.instructions.map(item => `- ${item}`).join('\n')}`
+    )
+    .join('\n\n');
 
   return `You are Libre WebUI Work, an autonomous implementation agent.
 Deliver a working result inside this task's isolated workspace, not a plan-only answer.

@@ -1147,3 +1147,111 @@ test('unparseable or non-object tool arguments degrade to an empty object', () =
   assert.deepEqual(calls[2].function.arguments, {});
   assert.deepEqual(calls[3].function.arguments, { already: 'object' });
 });
+
+test('Work screenshots reach every provider payload as image parts', () => {
+  const screenshot = Buffer.from('screenshot-bytes').toString('base64');
+  const screenshotMessages = [
+    { role: 'system', content: 'Work only in /workspace.' },
+    { role: 'user', content: 'Open the dashboard.' },
+    {
+      role: 'assistant',
+      content: '',
+      tool_calls: [
+        {
+          id: 'call-observe',
+          function: { name: 'computer_observe', arguments: {} },
+        },
+        {
+          id: 'call-list',
+          function: { name: 'list_files', arguments: { path: '.' } },
+        },
+      ],
+    },
+    {
+      role: 'tool',
+      content: 'Screen 1280x800, cursor at 10,20.',
+      tool_name: 'computer_observe',
+      tool_call_id: 'call-observe',
+      images: [screenshot],
+    },
+    {
+      role: 'tool',
+      content: '[]',
+      tool_name: 'list_files',
+      tool_call_id: 'call-list',
+    },
+  ];
+  const request = {
+    model: 'test-model',
+    messages: screenshotMessages,
+    tools: [tool],
+    stream: false,
+  };
+  const dataUrl = `data:image/png;base64,${screenshot}`;
+
+  // OpenAI-compatible chat: tool messages stay text-only and the screenshot
+  // follows the whole tool-result run as one user message.
+  const converted = toOpenAIWorkMessages(screenshotMessages);
+  assert.equal(converted.length, 6);
+  assert.equal(converted[3].role, 'tool');
+  assert.equal(typeof converted[3].content, 'string');
+  assert.equal(converted[4].role, 'tool');
+  const imageMessage = converted[5];
+  assert.equal(imageMessage.role, 'user');
+  assert.equal(imageMessage.content[0].type, 'text');
+  assert.deepEqual(imageMessage.content[1], {
+    type: 'image_url',
+    image_url: { url: dataUrl },
+  });
+
+  // Responses mode: the screenshot lands as an input_image user item after
+  // both function_call_output items.
+  const { payload: responsesPayload } = buildPluginWorkPayload(
+    plugin('openai'),
+    request,
+    {},
+    'responses'
+  );
+  const responseImage = responsesPayload.input.at(-1);
+  assert.equal(responseImage.role, 'user');
+  assert.equal(responseImage.content[0].type, 'input_text');
+  assert.deepEqual(responseImage.content[1], {
+    type: 'input_image',
+    image_url: dataUrl,
+  });
+
+  // Anthropic: native image blocks inside the tool_result.
+  const { payload: anthropicPayload } = buildPluginWorkPayload(
+    plugin('anthropic'),
+    request
+  );
+  const anthropicToolTurn = anthropicPayload.messages.at(-1);
+  assert.equal(anthropicToolTurn.role, 'user');
+  const observeResult = anthropicToolTurn.content.find(
+    block => block.tool_use_id === 'call-observe'
+  );
+  assert.equal(observeResult.content[0].type, 'text');
+  assert.deepEqual(observeResult.content[1], {
+    type: 'image',
+    source: { type: 'base64', media_type: 'image/png', data: screenshot },
+  });
+  const listResult = anthropicToolTurn.content.find(
+    block => block.tool_use_id === 'call-list'
+  );
+  assert.equal(typeof listResult.content, 'string');
+
+  // Gemini: an inlineData part right after the functionResponse part.
+  const { payload: geminiPayload } = buildPluginWorkPayload(
+    plugin('gemini'),
+    request
+  );
+  const geminiUserTurn = geminiPayload.contents.at(-1);
+  assert.equal(geminiUserTurn.role, 'user');
+  const responseIndex = geminiUserTurn.parts.findIndex(
+    part => part.functionResponse?.id === 'call-observe'
+  );
+  assert.ok(responseIndex >= 0);
+  assert.deepEqual(geminiUserTurn.parts[responseIndex + 1], {
+    inlineData: { mimeType: 'image/png', data: screenshot },
+  });
+});

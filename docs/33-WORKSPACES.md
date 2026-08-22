@@ -451,9 +451,24 @@ watching counts as task activity for the idle sweep. The browser profile
 persists in `/workspace/.browser-profile`, so sign-ins inside the computer
 survive container restarts.
 
-This phase is watch-only. Agent control of the desktop, user takeover for
-sign-ins, and teach-by-demonstration build on this surface in later
-releases.
+Agent control: a task with the Work Computer also offers the model two
+additional tools. `computer_observe` returns a full screenshot of the
+desktop together with the cursor position and active window title, and
+`computer_act` performs a batch of up to 24 mouse and keyboard actions
+(move, click, double-click, right-click, type, key chords, scroll, wait)
+and returns the screenshot after they settle. Screenshots reach the model
+as real image content on every provider route — Ollama, Anthropic, Gemini,
+and OpenAI-compatible chat and Responses plugins — so the model driving the
+task should be a vision model. Only the most recent screenshots stay in the
+model's live context, and persisted task transcripts keep the text
+observation only, never the image bytes. The agent is instructed to never
+enter credentials or complete CAPTCHA/2FA challenges; it reports the
+blocker instead. For untrusted tasks, pair a GUI policy with a filtering
+DNS resolver — a desktop browser makes the network egress policy matter
+more, not less.
+
+Human takeover for sign-ins and teach-by-demonstration build on this
+surface in later releases.
 
 ## Providers, Routing, and Data Disclosure
 
