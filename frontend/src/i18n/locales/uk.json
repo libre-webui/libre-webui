@@ -2630,7 +2630,13 @@
       "handBack": "Готово",
       "youHaveControl": "Ви керуєте",
       "otherHasControl": "{{name}} керує",
-      "agentWaiting": "Агент просить вас взяти керування"
+      "agentWaiting": "Агент просить вас взяти керування",
+      "teach": "Навчити завдання",
+      "recording": "Запис",
+      "teachSave": "Зберегти",
+      "teachDiscard": "Відхилити",
+      "teachNamePlaceholder": "Назвіть це завдання",
+      "teachSaved": "Збережено як навичку \"{{name}}\""
     }
   },
   "personaBackground": {

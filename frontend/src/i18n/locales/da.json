@@ -2630,7 +2630,13 @@
       "handBack": "Jeg er færdig",
       "youHaveControl": "Du har styringen",
       "otherHasControl": "{{name}} har styringen",
-      "agentWaiting": "Agenten har bedt dig tage styringen"
+      "agentWaiting": "Agenten har bedt dig tage styringen",
+      "teach": "Lær en opgave",
+      "recording": "Optager",
+      "teachSave": "Gem",
+      "teachDiscard": "Kassér",
+      "teachNamePlaceholder": "Navngiv denne opgave",
+      "teachSaved": "Gemt som færdigheden \"{{name}}\""
     }
   },
   "personaBackground": {

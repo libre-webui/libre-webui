@@ -2630,7 +2630,13 @@
       "handBack": "완료했어요",
       "youHaveControl": "제어 중입니다",
       "otherHasControl": "{{name}} 님이 제어 중입니다",
-      "agentWaiting": "에이전트가 제어를 요청했습니다"
+      "agentWaiting": "에이전트가 제어를 요청했습니다",
+      "teach": "작업 가르치기",
+      "recording": "기록 중",
+      "teachSave": "저장",
+      "teachDiscard": "취소",
+      "teachNamePlaceholder": "이 작업의 이름 입력",
+      "teachSaved": "\"{{name}}\" 스킬로 저장됨"
     }
   },
   "personaBackground": {

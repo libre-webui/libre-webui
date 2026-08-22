@@ -2630,7 +2630,13 @@
       "handBack": "Terminei",
       "youHaveControl": "Você está no controle",
       "otherHasControl": "{{name}} está no controle",
-      "agentWaiting": "O agente pediu que você assuma o controle"
+      "agentWaiting": "O agente pediu que você assuma o controle",
+      "teach": "Ensinar uma tarefa",
+      "recording": "Gravando",
+      "teachSave": "Salvar",
+      "teachDiscard": "Descartar",
+      "teachNamePlaceholder": "Nomeie esta tarefa",
+      "teachSaved": "Salvo como habilidade \"{{name}}\""
     }
   },
   "personaBackground": {

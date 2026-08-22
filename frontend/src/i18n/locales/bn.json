@@ -2630,7 +2630,13 @@
       "handBack": "আমার কাজ শেষ",
       "youHaveControl": "নিয়ন্ত্রণ আপনার হাতে",
       "otherHasControl": "{{name}} নিয়ন্ত্রণ করছেন",
-      "agentWaiting": "এজেন্ট আপনাকে নিয়ন্ত্রণ নিতে বলেছে"
+      "agentWaiting": "এজেন্ট আপনাকে নিয়ন্ত্রণ নিতে বলেছে",
+      "teach": "একটি কাজ শেখান",
+      "recording": "রেকর্ড হচ্ছে",
+      "teachSave": "সংরক্ষণ",
+      "teachDiscard": "বাতিল",
+      "teachNamePlaceholder": "এই কাজের নাম দিন",
+      "teachSaved": "\"{{name}}\" দক্ষতা হিসেবে সংরক্ষিত"
     }
   },
   "personaBackground": {

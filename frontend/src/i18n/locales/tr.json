@@ -2630,7 +2630,13 @@
       "handBack": "Bitirdim",
       "youHaveControl": "Kontrol sizde",
       "otherHasControl": "Kontrol {{name}} kullanıcısında",
-      "agentWaiting": "Ajan kontrolü almanızı istedi"
+      "agentWaiting": "Ajan kontrolü almanızı istedi",
+      "teach": "Bir görev öğret",
+      "recording": "Kaydediliyor",
+      "teachSave": "Kaydet",
+      "teachDiscard": "Vazgeç",
+      "teachNamePlaceholder": "Bu göreve ad verin",
+      "teachSaved": "\"{{name}}\" becerisi olarak kaydedildi"
     }
   },
   "personaBackground": {

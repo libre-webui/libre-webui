@@ -2630,7 +2630,13 @@
       "handBack": "Jag är klar",
       "youHaveControl": "Du har kontrollen",
       "otherHasControl": "{{name}} har kontrollen",
-      "agentWaiting": "Agenten bad dig ta över"
+      "agentWaiting": "Agenten bad dig ta över",
+      "teach": "Lär ut en uppgift",
+      "recording": "Spelar in",
+      "teachSave": "Spara",
+      "teachDiscard": "Släng",
+      "teachNamePlaceholder": "Namnge uppgiften",
+      "teachSaved": "Sparad som färdigheten \"{{name}}\""
     }
   },
   "personaBackground": {

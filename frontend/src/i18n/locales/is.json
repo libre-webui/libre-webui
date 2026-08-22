@@ -2630,7 +2630,13 @@
       "handBack": "Lokið",
       "youHaveControl": "Þú hefur stjórnina",
       "otherHasControl": "{{name}} hefur stjórnina",
-      "agentWaiting": "Agentinn bað þig að taka stjórnina"
+      "agentWaiting": "Agentinn bað þig að taka stjórnina",
+      "teach": "Kenna verkefni",
+      "recording": "Upptaka",
+      "teachSave": "Vista",
+      "teachDiscard": "Henda",
+      "teachNamePlaceholder": "Nefndu þetta verkefni",
+      "teachSaved": "Vistað sem færni \"{{name}}\""
     }
   },
   "personaBackground": {

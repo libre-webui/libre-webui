@@ -2630,7 +2630,13 @@
       "handBack": "完了しました",
       "youHaveControl": "あなたが操作中です",
       "otherHasControl": "{{name}} が操作中です",
-      "agentWaiting": "エージェントが操作の引き継ぎを求めています"
+      "agentWaiting": "エージェントが操作の引き継ぎを求めています",
+      "teach": "タスクを教える",
+      "recording": "記録中",
+      "teachSave": "保存",
+      "teachDiscard": "破棄",
+      "teachNamePlaceholder": "このタスクに名前を付ける",
+      "teachSaved": "スキル「{{name}}」として保存しました"
     }
   },
   "personaBackground": {

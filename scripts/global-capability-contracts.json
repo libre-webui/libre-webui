@@ -2444,6 +2444,12 @@
           "file": "backend/src/routes/work.ts",
           "mount": "/api/work",
           "method": "POST",
+          "path": "/tasks/:id/computer/teach"
+        },
+        {
+          "file": "backend/src/routes/work.ts",
+          "mount": "/api/work",
+          "method": "POST",
           "path": "/tasks/:id/preview/start"
         },
         {

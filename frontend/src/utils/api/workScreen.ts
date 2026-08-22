@@ -69,6 +69,47 @@ export async function releaseWorkScreenControl(taskId: string): Promise<void> {
   );
 }
 
+export interface WorkTeachEvent {
+  t: number;
+  kind: 'down' | 'up' | 'wheel' | 'key';
+  x?: number;
+  y?: number;
+  button?: number;
+  dy?: number;
+  key?: string;
+  ctrl?: boolean;
+  alt?: boolean;
+  meta?: boolean;
+  shift?: boolean;
+}
+
+/** Save a recorded demonstration as a taught skill. */
+export async function saveWorkScreenTeaching(
+  taskId: string,
+  input: {
+    name: string;
+    events: WorkTeachEvent[];
+    screenWidth?: number;
+    screenHeight?: number;
+  }
+): Promise<{ slug: string; name: string; steps: number; redactions: number }> {
+  const response = await api.post<
+    ApiResponse<{
+      skill: { id: string; slug: string; name: string };
+      steps: number;
+      redactions: number;
+    }>
+  >(`/work/tasks/${encodeURIComponent(taskId)}/computer/teach`, input);
+  const data = response.data.data;
+  if (!data?.skill) throw new Error('The server did not save the recording.');
+  return {
+    slug: data.skill.slug,
+    name: data.skill.name,
+    steps: data.steps,
+    redactions: data.redactions,
+  };
+}
+
 /**
  * Mint a one-use screen ticket and build the authenticated WebSocket URL,
  * mirroring the Work terminal's flow exactly.

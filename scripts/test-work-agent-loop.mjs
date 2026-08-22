@@ -2008,3 +2008,73 @@ test('request_takeover waits for the human hand-back and computer tools stay blo
   );
   assert.equal(takeoverResult.metadata.outcome, 'released');
 });
+
+test('taught skills load into computer-enabled runs and surface as skill events', async () => {
+  const { default: workComputerTeachService } = await distModule(
+    'services/workComputerTeachService.js'
+  );
+  const now = Date.now();
+  const userId = 'agent-loop-taught-admin';
+  getDatabase()
+    .prepare(
+      `INSERT INTO users (
+        id, username, email, password_hash, role, avatar, created_at, updated_at
+      ) VALUES (?, ?, NULL, 'unused', 'admin', NULL, ?, ?)`
+    )
+    .run(userId, userId, now, now);
+
+  replaceMethod(workRuntimeService, 'computerToolsAvailable', async () => true);
+  replaceMethod(workComputerTeachService, 'taughtSkillsForUser', async () => [
+    {
+      slug: 'taught-export-report',
+      name: 'Export the weekly report',
+      instructions: '## Steps\n1. Click at about (10, 10).',
+    },
+  ]);
+
+  const prompts = [];
+  replaceMethod(
+    workModelProviderService,
+    'generateChatStreamResponse',
+    async request => {
+      prompts.push(request.messages[0].content);
+      return {
+        model: request.model,
+        created_at: new Date().toISOString(),
+        message: { role: 'assistant', content: 'Done.' },
+        done: true,
+      };
+    }
+  );
+
+  const detail = await workTaskService.createTaskWithRun(
+    userId,
+    'Export the report.',
+    'test-model',
+    true,
+    { providerType: 'plugin', providerId: 'test-plugin' }
+  );
+  const runId = detail.activeRun?.id;
+  assert.ok(runId);
+
+  const events = [];
+  const unsubscribe = workEventService.subscribe(detail.id, runId, event =>
+    events.push(event)
+  );
+  try {
+    await workAgentService.execute(detail.id, runId, userId);
+  } finally {
+    unsubscribe();
+  }
+
+  assert.equal((await workTaskService.getRun(runId)).status, 'completed');
+  assert.match(prompts[0], /## Taught procedures/);
+  assert.match(prompts[0], /### Export the weekly report/);
+  assert.match(prompts[0], /Click at about \(10, 10\)/);
+  const taughtEvent = events.find(
+    event =>
+      event.type === 'skill_loaded' &&
+      event.data.id === 'taught:taught-export-report'
+  );
+  assert.equal(taughtEvent?.data.name, 'Export the weekly report');
+});

@@ -2630,7 +2630,13 @@
       "handBack": "انتهيت",
       "youHaveControl": "أنت تتحكم الآن",
       "otherHasControl": "{{name}} يتحكم الآن",
-      "agentWaiting": "طلب الوكيل منك تولي التحكم"
+      "agentWaiting": "طلب الوكيل منك تولي التحكم",
+      "teach": "علّم مهمة",
+      "recording": "جارٍ التسجيل",
+      "teachSave": "حفظ",
+      "teachDiscard": "تجاهل",
+      "teachNamePlaceholder": "سمّ هذه المهمة",
+      "teachSaved": "حُفظت كمهارة \"{{name}}\""
     }
   },
   "personaBackground": {

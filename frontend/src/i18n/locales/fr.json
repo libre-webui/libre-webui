@@ -2630,7 +2630,13 @@
       "handBack": "J'ai terminé",
       "youHaveControl": "Vous avez la main",
       "otherHasControl": "{{name}} a la main",
-      "agentWaiting": "L'agent vous demande de prendre la main"
+      "agentWaiting": "L'agent vous demande de prendre la main",
+      "teach": "Enseigner une tâche",
+      "recording": "Enregistrement",
+      "teachSave": "Enregistrer",
+      "teachDiscard": "Abandonner",
+      "teachNamePlaceholder": "Nommez cette tâche",
+      "teachSaved": "Enregistré comme compétence \"{{name}}\""
     }
   },
   "personaBackground": {

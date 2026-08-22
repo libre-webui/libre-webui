@@ -2630,7 +2630,13 @@
       "handBack": "Ik ben klaar",
       "youHaveControl": "Jij hebt de controle",
       "otherHasControl": "{{name}} heeft de controle",
-      "agentWaiting": "De agent vraagt je om over te nemen"
+      "agentWaiting": "De agent vraagt je om over te nemen",
+      "teach": "Taak aanleren",
+      "recording": "Opnemen",
+      "teachSave": "Opslaan",
+      "teachDiscard": "Weggooien",
+      "teachNamePlaceholder": "Geef deze taak een naam",
+      "teachSaved": "Opgeslagen als vaardigheid \"{{name}}\""
     }
   },
   "personaBackground": {

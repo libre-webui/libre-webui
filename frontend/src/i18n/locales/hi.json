@@ -2630,7 +2630,13 @@
       "handBack": "मेरा काम हो गया",
       "youHaveControl": "नियंत्रण आपके पास है",
       "otherHasControl": "{{name}} नियंत्रण कर रहे हैं",
-      "agentWaiting": "एजेंट ने आपसे नियंत्रण लेने को कहा है"
+      "agentWaiting": "एजेंट ने आपसे नियंत्रण लेने को कहा है",
+      "teach": "कोई कार्य सिखाएँ",
+      "recording": "रिकॉर्डिंग",
+      "teachSave": "सहेजें",
+      "teachDiscard": "हटाएँ",
+      "teachNamePlaceholder": "इस कार्य का नाम दें",
+      "teachSaved": "\"{{name}}\" कौशल के रूप में सहेजा गया"
     }
   },
   "personaBackground": {

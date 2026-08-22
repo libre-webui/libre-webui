@@ -2630,7 +2630,13 @@
       "handBack": "Gotowe",
       "youHaveControl": "Masz kontrolę",
       "otherHasControl": "{{name}} ma kontrolę",
-      "agentWaiting": "Agent poprosił Cię o przejęcie kontroli"
+      "agentWaiting": "Agent poprosił Cię o przejęcie kontroli",
+      "teach": "Naucz zadania",
+      "recording": "Nagrywanie",
+      "teachSave": "Zapisz",
+      "teachDiscard": "Odrzuć",
+      "teachNamePlaceholder": "Nazwij to zadanie",
+      "teachSaved": "Zapisano jako umiejętność \"{{name}}\""
     }
   },
   "personaBackground": {

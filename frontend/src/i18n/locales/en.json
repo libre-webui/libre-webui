@@ -2630,7 +2630,13 @@
       "handBack": "I'm done",
       "youHaveControl": "You have control",
       "otherHasControl": "{{name}} has control",
-      "agentWaiting": "The agent asked you to take over"
+      "agentWaiting": "The agent asked you to take over",
+      "teach": "Teach a task",
+      "recording": "Recording",
+      "teachSave": "Save",
+      "teachDiscard": "Discard",
+      "teachNamePlaceholder": "Name this task",
+      "teachSaved": "Saved as skill \"{{name}}\""
     }
   },
   "personaBackground": {

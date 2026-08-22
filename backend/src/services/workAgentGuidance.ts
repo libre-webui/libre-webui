@@ -18,6 +18,8 @@
 export interface WorkAgentGuidanceContext {
   networkEnabled: boolean;
   computerAvailable: boolean;
+  /** User-demonstrated Work Computer procedures loaded into this run. */
+  taughtSkills?: readonly { name: string; instructions: string }[];
   previewPort: number;
   roundBudget: number;
   commandTimeoutMs: number;
@@ -134,6 +136,12 @@ export function buildWorkAgentSystemPrompt(
         `## ${skill.title}\n${skill.instructions.map(item => `- ${item}`).join('\n')}`
     )
     .join('\n\n');
+  const taughtSkills =
+    context.computerAvailable && context.taughtSkills?.length
+      ? `\n\n## Taught procedures\nThe user demonstrated these procedures on this task's computer. When the request matches one, follow its playbook.\n\n${context.taughtSkills
+          .map(skill => `### ${skill.name}\n${skill.instructions}`)
+          .join('\n\n')}`
+      : '';
 
   return `You are Libre WebUI Work, an autonomous implementation agent.
 Deliver a working result inside this task's isolated workspace, not a plan-only answer.
@@ -149,7 +157,7 @@ Deliver a working result inside this task's isolated workspace, not a plan-only 
 - This run has a provider-agnostic budget of ${formatInteger(context.roundBudget)} model rounds and ${formatInteger(toolBudget)} tool calls.
 - A browser preview must listen on 0.0.0.0:${context.previewPort}.
 
-${skills}
+${skills}${taughtSkills}
 
 Finish with a concise summary of what changed and the checks that actually ran.`;
 }

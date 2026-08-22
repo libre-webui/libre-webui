@@ -2630,7 +2630,13 @@
       "handBack": "Hotovo",
       "youHaveControl": "Máte ovládání",
       "otherHasControl": "{{name}} ovládá obrazovku",
-      "agentWaiting": "Agent vás požádal o převzetí ovládání"
+      "agentWaiting": "Agent vás požádal o převzetí ovládání",
+      "teach": "Naučit úkol",
+      "recording": "Nahrávání",
+      "teachSave": "Uložit",
+      "teachDiscard": "Zahodit",
+      "teachNamePlaceholder": "Pojmenujte tento úkol",
+      "teachSaved": "Uloženo jako dovednost \"{{name}}\""
     }
   },
   "personaBackground": {

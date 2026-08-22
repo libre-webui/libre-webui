@@ -28,6 +28,8 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
+  Circle,
+  GraduationCap,
   Hand,
   Loader2,
   MonitorPlay,
@@ -38,9 +40,11 @@ import {
   acquireWorkScreenControl,
   getWorkScreenControl,
   releaseWorkScreenControl,
+  saveWorkScreenTeaching,
   startWorkComputer,
   workScreenUrl,
   type WorkScreenControlState,
+  type WorkTeachEvent,
 } from '@/utils/api/workScreen';
 import { logger } from '@/utils/logger';
 
@@ -61,10 +65,13 @@ interface WorkspaceScreenProps {
 
 type ScreenState = 'idle' | 'starting' | 'connected' | 'disconnected';
 type ScreenMode = 'view' | 'control';
+type TeachPhase = 'idle' | 'recording' | 'naming' | 'saving';
 
 const CONTROL_STATE_POLL_MS = 3_000;
 /** Renew well inside the lease TTL (the server holds leases for 2 min). */
 const CONTROL_RENEW_MS = 60_000;
+/** A demonstration recording caps itself rather than growing unbounded. */
+const TEACH_MAX_EVENTS = 5_000;
 
 export function WorkspaceScreen({ taskId, active }: WorkspaceScreenProps) {
   const { t } = useTranslation();
@@ -78,6 +85,12 @@ export function WorkspaceScreen({ taskId, active }: WorkspaceScreenProps) {
     agentWaiting: false,
   });
   const [takeoverSupported, setTakeoverSupported] = useState(false);
+  const [teachPhase, setTeachPhase] = useState<TeachPhase>('idle');
+  const [teachName, setTeachName] = useState('');
+  const [teachSavedName, setTeachSavedName] = useState<string | null>(null);
+  const teachEventsRef = useRef<WorkTeachEvent[]>([]);
+  const teachStartRef = useRef(0);
+  const teachScreenRef = useRef<{ width: number; height: number } | null>(null);
 
   const disconnect = useCallback(() => {
     try {
@@ -176,6 +189,86 @@ export function WorkspaceScreen({ taskId, active }: WorkspaceScreenProps) {
     };
   }, [taskId, active]);
 
+  // Teach mode: observe the demonstration's pointer/key/wheel events at
+  // remote-screen coordinates while the user drives. Listeners never
+  // preventDefault — noVNC keeps receiving everything; this only records.
+  useEffect(() => {
+    if (
+      teachPhase !== 'recording' ||
+      state !== 'connected' ||
+      mode !== 'control'
+    ) {
+      return;
+    }
+    const mount = mountRef.current;
+    if (!mount) return;
+    teachStartRef.current = performance.now();
+    teachEventsRef.current = [];
+    const remoteCoords = (clientX: number, clientY: number) => {
+      const canvas = mount.querySelector('canvas');
+      if (!canvas) return undefined;
+      const rect = canvas.getBoundingClientRect();
+      if (rect.width <= 0 || rect.height <= 0) return undefined;
+      teachScreenRef.current = { width: canvas.width, height: canvas.height };
+      const clamp = (value: number, max: number) =>
+        Math.max(0, Math.min(max, Math.round(value)));
+      return {
+        x: clamp(
+          ((clientX - rect.left) * canvas.width) / rect.width,
+          canvas.width
+        ),
+        y: clamp(
+          ((clientY - rect.top) * canvas.height) / rect.height,
+          canvas.height
+        ),
+      };
+    };
+    const stamp = () => Math.round(performance.now() - teachStartRef.current);
+    const record = (event: WorkTeachEvent) => {
+      if (teachEventsRef.current.length < TEACH_MAX_EVENTS) {
+        teachEventsRef.current.push(event);
+      }
+    };
+    const onPointer = (kind: 'down' | 'up') => (event: PointerEvent) => {
+      const at = remoteCoords(event.clientX, event.clientY);
+      if (at) record({ t: stamp(), kind, ...at, button: event.button });
+    };
+    const onWheel = (event: WheelEvent) => {
+      const at = remoteCoords(event.clientX, event.clientY);
+      if (at) {
+        record({
+          t: stamp(),
+          kind: 'wheel',
+          ...at,
+          dy: Math.sign(event.deltaY),
+        });
+      }
+    };
+    const onKey = (event: KeyboardEvent) => {
+      record({
+        t: stamp(),
+        kind: 'key',
+        key: event.key,
+        ...(event.ctrlKey ? { ctrl: true } : {}),
+        ...(event.altKey ? { alt: true } : {}),
+        ...(event.metaKey ? { meta: true } : {}),
+        ...(event.shiftKey ? { shift: true } : {}),
+      });
+    };
+    const down = onPointer('down');
+    const up = onPointer('up');
+    mount.addEventListener('pointerdown', down, true);
+    mount.addEventListener('pointerup', up, true);
+    mount.addEventListener('wheel', onWheel, true);
+    mount.addEventListener('keydown', onKey, true);
+    return () => {
+      mount.removeEventListener('pointerdown', down, true);
+      mount.removeEventListener('pointerup', up, true);
+      mount.removeEventListener('wheel', onWheel, true);
+      mount.removeEventListener('keydown', onKey, true);
+    };
+  }, [teachPhase, state, mode]);
+
   const handleTakeOver = useCallback(() => {
     setError(null);
     setMode('control');
@@ -185,6 +278,60 @@ export function WorkspaceScreen({ taskId, active }: WorkspaceScreenProps) {
     releaseWorkScreenControl(taskId).catch(() => undefined);
     setMode('view');
   }, [taskId]);
+
+  const handleTeachStart = useCallback(() => {
+    setTeachSavedName(null);
+    setError(null);
+    setTeachPhase('recording');
+    setMode('control');
+  }, []);
+
+  const handleTeachStop = useCallback(() => {
+    // The demonstration is over; hand the screen back while naming.
+    releaseWorkScreenControl(taskId).catch(() => undefined);
+    setMode('view');
+    setTeachPhase('naming');
+  }, [taskId]);
+
+  const handleTeachDiscard = useCallback(() => {
+    teachEventsRef.current = [];
+    setTeachName('');
+    setTeachPhase('idle');
+    if (mode === 'control') {
+      releaseWorkScreenControl(taskId).catch(() => undefined);
+      setMode('view');
+    }
+  }, [taskId, mode]);
+
+  const handleTeachSave = useCallback(async () => {
+    const name = teachName.trim();
+    if (!name) return;
+    setTeachPhase('saving');
+    try {
+      const saved = await saveWorkScreenTeaching(taskId, {
+        name,
+        events: teachEventsRef.current,
+        ...(teachScreenRef.current
+          ? {
+              screenWidth: teachScreenRef.current.width,
+              screenHeight: teachScreenRef.current.height,
+            }
+          : {}),
+      });
+      teachEventsRef.current = [];
+      setTeachName('');
+      setTeachPhase('idle');
+      setTeachSavedName(saved.name);
+      setTimeout(() => setTeachSavedName(null), 6_000);
+    } catch (saveError) {
+      logger.error('Saving the demonstration failed:', saveError);
+      const apiError = saveError as {
+        response?: { data?: { message?: string } };
+      };
+      setError(apiError.response?.data?.message ?? null);
+      setTeachPhase('naming');
+    }
+  }, [taskId, teachName]);
 
   const driving = mode === 'control' && state === 'connected';
   const someoneElseDriving =
@@ -247,18 +394,29 @@ export function WorkspaceScreen({ taskId, active }: WorkspaceScreenProps) {
                   })
                 : t('work.screen.viewOnly')}
           </div>
-          {showTakeOver && (
-            <button
-              type='button'
-              data-testid='work-screen-take-over'
-              onClick={handleTakeOver}
-              className='flex items-center gap-1.5 rounded-md bg-white/10 px-2 py-1 text-[11px] text-white/90 backdrop-blur transition-colors hover:bg-white/20'
-            >
-              <MousePointerClick size={12} />
-              {t('work.screen.takeOver')}
-            </button>
+          {showTakeOver && teachPhase === 'idle' && (
+            <>
+              <button
+                type='button'
+                data-testid='work-screen-take-over'
+                onClick={handleTakeOver}
+                className='flex items-center gap-1.5 rounded-md bg-white/10 px-2 py-1 text-[11px] text-white/90 backdrop-blur transition-colors hover:bg-white/20'
+              >
+                <MousePointerClick size={12} />
+                {t('work.screen.takeOver')}
+              </button>
+              <button
+                type='button'
+                data-testid='work-screen-teach'
+                onClick={handleTeachStart}
+                className='flex items-center gap-1.5 rounded-md bg-white/10 px-2 py-1 text-[11px] text-white/90 backdrop-blur transition-colors hover:bg-white/20'
+              >
+                <GraduationCap size={12} />
+                {t('work.screen.teach')}
+              </button>
+            </>
           )}
-          {driving && (
+          {driving && teachPhase === 'idle' && (
             <button
               type='button'
               data-testid='work-screen-hand-back'
@@ -269,6 +427,76 @@ export function WorkspaceScreen({ taskId, active }: WorkspaceScreenProps) {
               {t('work.screen.handBack')}
             </button>
           )}
+          {driving && teachPhase === 'recording' && (
+            <>
+              <div
+                className='pointer-events-none flex items-center gap-1.5 rounded-md bg-red-600/90 px-2 py-1 text-[10px] uppercase tracking-wide text-white backdrop-blur'
+                data-testid='work-screen-recording'
+              >
+                <Circle size={8} className='animate-pulse fill-current' />
+                {t('work.screen.recording')}
+              </div>
+              <button
+                type='button'
+                data-testid='work-screen-teach-stop'
+                onClick={handleTeachStop}
+                className='flex items-center gap-1.5 rounded-md bg-white/15 px-2 py-1 text-[11px] text-white backdrop-blur transition-colors hover:bg-white/25'
+              >
+                {t('work.screen.teachSave')}
+              </button>
+              <button
+                type='button'
+                onClick={handleTeachDiscard}
+                className='flex items-center gap-1.5 rounded-md bg-white/10 px-2 py-1 text-[11px] text-white/80 backdrop-blur transition-colors hover:bg-white/20'
+              >
+                {t('work.screen.teachDiscard')}
+              </button>
+            </>
+          )}
+          {teachSavedName && (
+            <div className='pointer-events-none rounded-md bg-emerald-500/80 px-2 py-1 text-[11px] text-white backdrop-blur'>
+              {t('work.screen.teachSaved', { name: teachSavedName })}
+            </div>
+          )}
+        </div>
+      )}
+      {(teachPhase === 'naming' || teachPhase === 'saving') && (
+        <div className='absolute inset-0 flex items-center justify-center bg-black/60'>
+          <div className='flex w-72 flex-col gap-3 rounded-lg bg-neutral-900 p-4 shadow-xl'>
+            <input
+              autoFocus
+              value={teachName}
+              onChange={event => setTeachName(event.target.value)}
+              onKeyDown={event => {
+                if (event.key === 'Enter') void handleTeachSave();
+              }}
+              placeholder={t('work.screen.teachNamePlaceholder')}
+              data-testid='work-screen-teach-name'
+              className='rounded-md border border-white/20 bg-black/40 px-3 py-2 text-sm text-white placeholder-white/40 outline-none focus:border-white/40'
+            />
+            <div className='flex justify-end gap-2'>
+              <button
+                type='button'
+                onClick={handleTeachDiscard}
+                disabled={teachPhase === 'saving'}
+                className='rounded-md px-3 py-1.5 text-xs text-white/70 transition-colors hover:bg-white/10'
+              >
+                {t('work.screen.teachDiscard')}
+              </button>
+              <button
+                type='button'
+                data-testid='work-screen-teach-confirm'
+                onClick={() => void handleTeachSave()}
+                disabled={teachPhase === 'saving' || !teachName.trim()}
+                className='flex items-center gap-2 rounded-md bg-emerald-600 px-3 py-1.5 text-xs text-white transition-colors hover:bg-emerald-500 disabled:opacity-50'
+              >
+                {teachPhase === 'saving' && (
+                  <Loader2 size={12} className='animate-spin' />
+                )}
+                {t('work.screen.teachSave')}
+              </button>
+            </div>
+          </div>
         </div>
       )}
       {control.agentWaiting && !driving && state === 'connected' && (

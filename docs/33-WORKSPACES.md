@@ -486,7 +486,26 @@ through the model or the task transcript. Takeover requires a GUI image
 built from `deploy/work-computer/` at this version or later; sessions from
 older images remain watchable but view-only for everyone.
 
-Teach-by-demonstration builds on this surface in a later release.
+Teach mode: **Teach a task** on the Screen pane records a demonstration —
+you drive the real screen (it takes control exactly like a takeover, with
+a visible recording indicator) while your pointer, keyboard, and scroll
+actions are captured at screen coordinates. Saving builds a playbook
+**deterministically, with no model in the loop**: keystrokes batch into
+typed strings, click-versus-drag is decided by an 8-pixel threshold,
+pauses become explicit wait steps, and typed text that mentions secret
+vocabulary or is credential-shaped (8+ characters mixing three character
+classes) is redacted and replaced with an instruction to use
+`request_takeover` at that step. The playbook is a natural-language
+procedure — recorded coordinates are explicitly hints to re-interpret with
+`computer_observe`, not a pixel macro — with when-to-use, inputs, steps,
+verification, approval boundaries, and stop-and-ask failure handling. It
+is saved as an ordinary skill (slug prefix `taught-`), so it appears in
+the Skills page with versioning, editing, and sharing. Computer-enabled
+Work runs load the owner's enabled taught skills into their system prompt
+and report them in the run's skill list, so replaying a taught task is
+just a normal run whose request matches the procedure. Do not type real
+passwords while recording — demonstrate up to the sign-in, save, and let
+`request_takeover` handle credentials on replay.
 
 ## Providers, Routing, and Data Disclosure
 

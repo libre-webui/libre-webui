@@ -2630,7 +2630,13 @@
       "handBack": "Tôi xong rồi",
       "youHaveControl": "Bạn đang điều khiển",
       "otherHasControl": "{{name}} đang điều khiển",
-      "agentWaiting": "Tác nhân đề nghị bạn tiếp quản"
+      "agentWaiting": "Tác nhân đề nghị bạn tiếp quản",
+      "teach": "Dạy một tác vụ",
+      "recording": "Đang ghi",
+      "teachSave": "Lưu",
+      "teachDiscard": "Bỏ",
+      "teachNamePlaceholder": "Đặt tên cho tác vụ này",
+      "teachSaved": "Đã lưu thành kỹ năng \"{{name}}\""
     }
   },
   "personaBackground": {

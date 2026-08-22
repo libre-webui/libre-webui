@@ -2630,7 +2630,13 @@
       "handBack": "我完成了",
       "youHaveControl": "您正在控制",
       "otherHasControl": "{{name}} 正在控制",
-      "agentWaiting": "代理请求您接管控制"
+      "agentWaiting": "代理请求您接管控制",
+      "teach": "教一个任务",
+      "recording": "录制中",
+      "teachSave": "保存",
+      "teachDiscard": "放弃",
+      "teachNamePlaceholder": "为该任务命名",
+      "teachSaved": "已保存为技能“{{name}}”"
     }
   },
   "personaBackground": {

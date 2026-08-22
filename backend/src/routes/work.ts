@@ -45,6 +45,7 @@ import workRuntimeService from '../services/workRuntimeService.js';
 import workScreenControlService, {
   WORK_SCREEN_CONTROL_TTL_MS,
 } from '../services/workScreenControlService.js';
+import workComputerTeachService from '../services/workComputerTeachService.js';
 import workTerminalService from '../services/workTerminalService.js';
 import workHostWorkspaceService, {
   WorkHostWorkspaceError,
@@ -1245,6 +1246,51 @@ router.post(
       sendSuccess(res, {
         controlPassword: credentials.control,
         expiresAt: holder.expiresAt,
+      });
+    } catch (error) {
+      sendError(res, error);
+    }
+  }
+);
+
+// Save a recorded demonstration as a taught skill: the deterministic
+// playbook builder turns raw pointer/key events from the Screen pane's
+// teach mode into a reusable natural-language procedure.
+router.post(
+  '/tasks/:id/computer/teach',
+  async (
+    req: AuthenticatedRequest,
+    res: Response<
+      ApiResponse<{
+        skill: { id: string; slug: string; name: string };
+        steps: number;
+        redactions: number;
+      }>
+    >
+  ): Promise<void> => {
+    const taskId = readTaskId(req);
+    const userId = requireUserId(req);
+    try {
+      const task = await workTaskService.requireMutableTaskRecord(
+        taskId,
+        userId
+      );
+      if (!(await workRuntimeService.computerToolsAvailable(task))) {
+        throw new WorkConflictError(
+          'Teaching requires a task whose policy enables the Work Computer.'
+        );
+      }
+      const { skill, playbook } =
+        await workComputerTeachService.saveDemonstration(userId, {
+          name: req.body?.name,
+          events: req.body?.events,
+          screenWidth: req.body?.screenWidth,
+          screenHeight: req.body?.screenHeight,
+        });
+      sendSuccess(res, {
+        skill: { id: skill.id, slug: skill.slug, name: skill.name },
+        steps: playbook.steps.length,
+        redactions: playbook.redactions,
       });
     } catch (error) {
       sendError(res, error);

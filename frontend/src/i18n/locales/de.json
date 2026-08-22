@@ -2630,7 +2630,13 @@
       "handBack": "Fertig",
       "youHaveControl": "Du hast die Kontrolle",
       "otherHasControl": "{{name}} hat die Kontrolle",
-      "agentWaiting": "Der Agent bittet dich zu übernehmen"
+      "agentWaiting": "Der Agent bittet dich zu übernehmen",
+      "teach": "Aufgabe beibringen",
+      "recording": "Aufnahme",
+      "teachSave": "Speichern",
+      "teachDiscard": "Verwerfen",
+      "teachNamePlaceholder": "Aufgabe benennen",
+      "teachSaved": "Als Skill \"{{name}}\" gespeichert"
     }
   },
   "personaBackground": {

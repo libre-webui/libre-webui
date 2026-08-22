@@ -36,6 +36,7 @@ import workRuntimeService, {
 import workScreenControlService, {
   WORK_SCREEN_ASSIST_TIMEOUT_MS,
 } from './workScreenControlService.js';
+import workComputerTeachService from './workComputerTeachService.js';
 import {
   isWebSearchAvailable,
   userCanUseWebSearch,
@@ -725,6 +726,19 @@ export class WorkAgentService {
       );
       const computerAvailable =
         await workRuntimeService.computerToolsAvailable(task);
+      let taughtSkills: Array<{
+        slug: string;
+        name: string;
+        instructions: string;
+      }> = [];
+      if (computerAvailable) {
+        try {
+          taughtSkills =
+            await workComputerTeachService.taughtSkillsForUser(userId);
+        } catch (error) {
+          logger.warn(`Could not load taught skills for run ${runId}:`, error);
+        }
+      }
       for (const skill of workAgentSkillsForContext({ computerAvailable })) {
         await workEventService.publish(
           taskId,
@@ -736,6 +750,20 @@ export class WorkAgentService {
             description: skill.instructions[0],
           },
           `skill:${skill.id}`,
+          durableAttemptIdentity
+        );
+      }
+      for (const skill of taughtSkills) {
+        await workEventService.publish(
+          taskId,
+          runId,
+          'skill_loaded',
+          {
+            id: `taught:${skill.slug}`,
+            name: skill.name,
+            description: 'Taught procedure demonstrated by the user.',
+          },
+          `skill:taught:${skill.slug}`,
           durableAttemptIdentity
         );
       }
@@ -768,6 +796,7 @@ export class WorkAgentService {
         task,
         roundLimit,
         computerAvailable,
+        taughtSkills,
         providerStateScope,
         run
       );
@@ -1486,6 +1515,7 @@ export class WorkAgentService {
     task: WorkTaskRecord,
     roundLimit: number,
     computerAvailable: boolean,
+    taughtSkills: readonly { name: string; instructions: string }[],
     providerStateScope?: string,
     provider: Pick<WorkRun, 'providerType' | 'providerId' | 'model'> = task
   ): Promise<OllamaChatMessage[]> {
@@ -1500,6 +1530,7 @@ export class WorkAgentService {
         content: buildWorkAgentSystemPrompt({
           networkEnabled: task.networkEnabled,
           computerAvailable,
+          ...(taughtSkills.length > 0 ? { taughtSkills } : {}),
           previewPort: workRuntimeService.previewPort,
           roundBudget: roundLimit,
           commandTimeoutMs: workRuntimeService.limits.commandTimeoutMs,

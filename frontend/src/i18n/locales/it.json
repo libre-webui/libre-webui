@@ -2630,7 +2630,13 @@
       "handBack": "Ho finito",
       "youHaveControl": "Hai il controllo",
       "otherHasControl": "{{name}} ha il controllo",
-      "agentWaiting": "L'agente ti ha chiesto di prendere il controllo"
+      "agentWaiting": "L'agente ti ha chiesto di prendere il controllo",
+      "teach": "Insegna un'attività",
+      "recording": "Registrazione",
+      "teachSave": "Salva",
+      "teachDiscard": "Scarta",
+      "teachNamePlaceholder": "Dai un nome a questa attività",
+      "teachSaved": "Salvato come competenza \"{{name}}\""
     }
   },
   "personaBackground": {

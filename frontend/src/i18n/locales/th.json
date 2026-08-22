@@ -2630,7 +2630,13 @@
       "handBack": "เสร็จแล้ว",
       "youHaveControl": "คุณกำลังควบคุมอยู่",
       "otherHasControl": "{{name}} กำลังควบคุมอยู่",
-      "agentWaiting": "เอเจนต์ขอให้คุณเข้าควบคุม"
+      "agentWaiting": "เอเจนต์ขอให้คุณเข้าควบคุม",
+      "teach": "สอนงาน",
+      "recording": "กำลังบันทึก",
+      "teachSave": "บันทึก",
+      "teachDiscard": "ทิ้ง",
+      "teachNamePlaceholder": "ตั้งชื่องานนี้",
+      "teachSaved": "บันทึกเป็นทักษะ \"{{name}}\" แล้ว"
     }
   },
   "personaBackground": {

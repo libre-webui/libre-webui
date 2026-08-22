@@ -2630,7 +2630,13 @@
       "handBack": "Saya selesai",
       "youHaveControl": "Anda memegang kawalan",
       "otherHasControl": "{{name}} memegang kawalan",
-      "agentWaiting": "Ejen meminta anda mengambil alih"
+      "agentWaiting": "Ejen meminta anda mengambil alih",
+      "teach": "Ajar tugasan",
+      "recording": "Merakam",
+      "teachSave": "Simpan",
+      "teachDiscard": "Buang",
+      "teachNamePlaceholder": "Namakan tugasan ini",
+      "teachSaved": "Disimpan sebagai kemahiran \"{{name}}\""
     }
   },
   "personaBackground": {
