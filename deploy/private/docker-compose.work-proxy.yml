@@ -2,7 +2,7 @@
 # Work on a private instance. Libre WebUI never sees the Docker socket and
 # joins no socket-owning group; a proxy holds the socket on an internal
 # network and forwards only the API sections Work uses. Swarm, secrets,
-# configs, commit, and system endpoints are denied before they reach
+# configs, build, commit, and system endpoints are denied before they reach
 # the daemon. The proxy narrows the API surface, not the blast radius of
 # what it forwards: container creation can still bind-mount host paths, so
 # the audit's dedicated-VM / rootless-daemon guidance still applies.
@@ -33,11 +33,10 @@ services:
       VOLUMES: 1
       NETWORKS: 1
       EXEC: 1
-      # The one-click Work Computer setup builds the GUI sandbox image from
-      # the application's bundled context. Building grants no more than the
-      # container creation already allowed above; set to 0 if GUI images are
-      # built out-of-band on the host instead.
-      BUILD: 1
+      # /build stays denied. The one-click Work Computer setup needs it to
+      # build the GUI sandbox image itself; behind this proxy, build that
+      # image out-of-band on the host instead (see deploy/work-computer) —
+      # once it exists, the setup skips the build and creates the policy.
       INFO: 1
       PING: 1
       VERSION: 1
