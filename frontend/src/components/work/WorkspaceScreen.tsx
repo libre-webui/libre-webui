@@ -342,11 +342,27 @@ export function WorkspaceScreen({ taskId, active }: WorkspaceScreenProps) {
     mode === 'view' &&
     !someoneElseDriving;
 
+  const recording = teachPhase === 'recording' && state === 'connected';
   return (
     <div
-      className='relative h-full min-h-[16rem] w-full overflow-hidden bg-black'
+      className={`relative h-full min-h-[16rem] w-full overflow-hidden bg-black ${
+        recording
+          ? 'ring-2 ring-inset ring-red-500'
+          : driving
+            ? 'ring-2 ring-inset ring-emerald-500'
+            : ''
+      }`}
       data-testid='work-screen'
     >
+      {recording && (
+        <div
+          className='absolute inset-x-0 top-0 z-10 flex items-center justify-center gap-2 bg-red-600/95 py-1 text-[11px] font-medium text-white'
+          data-testid='work-screen-watching-banner'
+        >
+          <Circle size={8} className='animate-pulse fill-current' />
+          {t('work.screen.watchingLearning')}
+        </div>
+      )}
       <div ref={mountRef} className='h-full w-full' />
       {state !== 'connected' && (
         <div className='absolute inset-0 flex flex-col items-center justify-center gap-3 px-6 text-center'>
@@ -377,7 +393,9 @@ export function WorkspaceScreen({ taskId, active }: WorkspaceScreenProps) {
         </div>
       )}
       {state === 'connected' && (
-        <div className='absolute left-3 top-3 flex items-center gap-2'>
+        <div
+          className={`absolute left-3 flex items-center gap-2 ${recording ? 'top-9' : 'top-3'}`}
+        >
           <div
             className={`pointer-events-none rounded-md px-2 py-1 text-[10px] uppercase tracking-wide backdrop-blur ${
               driving

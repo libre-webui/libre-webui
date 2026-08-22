@@ -2640,7 +2640,8 @@
       "teachSave": "저장",
       "teachDiscard": "취소",
       "teachNamePlaceholder": "이 작업의 이름 입력",
-      "teachSaved": "\"{{name}}\" 스킬로 저장됨"
+      "teachSaved": "\"{{name}}\" 스킬로 저장됨",
+      "watchingLearning": "에이전트가 보고 배우는 중입니다"
     }
   },
   "personaBackground": {

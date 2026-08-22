@@ -2640,7 +2640,8 @@
       "teachSave": "Save",
       "teachDiscard": "Discard",
       "teachNamePlaceholder": "Name this task",
-      "teachSaved": "Saved as skill \"{{name}}\""
+      "teachSaved": "Saved as skill \"{{name}}\"",
+      "watchingLearning": "The agent is watching and learning"
     }
   },
   "personaBackground": {

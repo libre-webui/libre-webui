@@ -2640,7 +2640,8 @@
       "teachSave": "Speichern",
       "teachDiscard": "Verwerfen",
       "teachNamePlaceholder": "Aufgabe benennen",
-      "teachSaved": "Als Skill \"{{name}}\" gespeichert"
+      "teachSaved": "Als Skill \"{{name}}\" gespeichert",
+      "watchingLearning": "Der Agent schaut zu und lernt"
     }
   },
   "personaBackground": {

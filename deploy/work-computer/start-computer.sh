@@ -37,17 +37,18 @@ while [ ! -e "/tmp/.X11-unix/X${DISPLAY_NUM}" ]; do
   sleep 0.1
 done
 
-# Plain background instead of fluxbox's default wallpaper script, whose
-# missing Debian image otherwise pops a permanent xmessage error dialog.
-mkdir -p "$HOME/.fluxbox"
-if [ ! -f "$HOME/.fluxbox/init" ]; then
-  {
-    echo 'session.screen0.rootCommand: xsetroot -solid "#3b4252" || true'
-    echo 'session.screen0.toolbar.visible: true'
-  } > "$HOME/.fluxbox/init"
-fi
 fluxbox >/dev/null 2>&1 &
 echo $! > "$STATE_DIR/fluxbox.pid"
+
+# Paint the baked wallpaper straight onto the root window (the image's
+# fbsetbg is a no-op, so fluxbox's default wallpaper script can neither
+# repaint it nor pop its missing-image xmessage dialog).
+WALLPAPER="/usr/local/share/libre-computer/wallpaper.png"
+if [ -f "$WALLPAPER" ]; then
+  sleep 0.5
+  display -window root "$WALLPAPER" >/dev/null 2>&1 &
+  echo $! > "$STATE_DIR/wallpaper.pid"
+fi
 
 # A container killed mid-session leaves Chromium's profile singleton lock
 # behind; without clearing it the browser silently refuses to start and the
@@ -57,6 +58,7 @@ rm -f "$PROFILE_DIR/SingletonLock" "$PROFILE_DIR/SingletonSocket" \
 
 chromium \
   --no-sandbox \
+  --test-type \
   --disable-dev-shm-usage \
   --disable-gpu \
   --no-first-run \
@@ -64,7 +66,7 @@ chromium \
   --password-store=basic \
   --user-data-dir="$PROFILE_DIR" \
   --start-maximized \
-  "about:blank" >/dev/null 2>&1 &
+  "file:///usr/local/share/libre-computer/start-page.html" >/dev/null 2>&1 &
 echo $! > "$STATE_DIR/chromium.pid"
 
 # One VNC server, two privilege levels: the first password in the passwd

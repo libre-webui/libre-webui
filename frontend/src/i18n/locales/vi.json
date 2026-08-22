@@ -2640,7 +2640,8 @@
       "teachSave": "Lưu",
       "teachDiscard": "Bỏ",
       "teachNamePlaceholder": "Đặt tên cho tác vụ này",
-      "teachSaved": "Đã lưu thành kỹ năng \"{{name}}\""
+      "teachSaved": "Đã lưu thành kỹ năng \"{{name}}\"",
+      "watchingLearning": "Tác nhân đang quan sát và học"
     }
   },
   "personaBackground": {

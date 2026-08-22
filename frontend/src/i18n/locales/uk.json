@@ -2640,7 +2640,8 @@
       "teachSave": "Зберегти",
       "teachDiscard": "Відхилити",
       "teachNamePlaceholder": "Назвіть це завдання",
-      "teachSaved": "Збережено як навичку \"{{name}}\""
+      "teachSaved": "Збережено як навичку \"{{name}}\"",
+      "watchingLearning": "Агент спостерігає і вчиться"
     }
   },
   "personaBackground": {

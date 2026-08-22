@@ -2640,7 +2640,8 @@
       "teachSave": "Zapisz",
       "teachDiscard": "Odrzuć",
       "teachNamePlaceholder": "Nazwij to zadanie",
-      "teachSaved": "Zapisano jako umiejętność \"{{name}}\""
+      "teachSaved": "Zapisano jako umiejętność \"{{name}}\"",
+      "watchingLearning": "Agent obserwuje i uczy się"
     }
   },
   "personaBackground": {

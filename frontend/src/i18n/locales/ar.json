@@ -2640,7 +2640,8 @@
       "teachSave": "حفظ",
       "teachDiscard": "تجاهل",
       "teachNamePlaceholder": "سمّ هذه المهمة",
-      "teachSaved": "حُفظت كمهارة \"{{name}}\""
+      "teachSaved": "حُفظت كمهارة \"{{name}}\"",
+      "watchingLearning": "الوكيل يشاهد ويتعلم"
     }
   },
   "personaBackground": {

@@ -2640,7 +2640,8 @@
       "teachSave": "Kaydet",
       "teachDiscard": "Vazgeç",
       "teachNamePlaceholder": "Bu göreve ad verin",
-      "teachSaved": "\"{{name}}\" becerisi olarak kaydedildi"
+      "teachSaved": "\"{{name}}\" becerisi olarak kaydedildi",
+      "watchingLearning": "Ajan izliyor ve öğreniyor"
     }
   },
   "personaBackground": {

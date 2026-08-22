@@ -2640,7 +2640,8 @@
       "teachSave": "Сохранить",
       "teachDiscard": "Отменить",
       "teachNamePlaceholder": "Назовите эту задачу",
-      "teachSaved": "Сохранено как навык \"{{name}}\""
+      "teachSaved": "Сохранено как навык \"{{name}}\"",
+      "watchingLearning": "Агент наблюдает и учится"
     }
   },
   "personaBackground": {

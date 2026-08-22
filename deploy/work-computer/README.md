@@ -33,7 +33,7 @@ GUI and headless tasks.
 ## What runs inside
 
 `start-computer` (idempotent, invoked by the server when the screen is
-opened) starts: Xvfb on display `:1` (1280×800), fluxbox, Chromium with an
+opened) starts: Xvfb on display `:1` (1280×800), fluxbox with a baked-in wallpaper (fbsetbg is a no-op in this image), Chromium on a branded local start page with an
 isolated profile persisted at `/workspace/.browser-profile` (logins survive
 container restarts), x11vnc bound to `127.0.0.1`, and websockify listening
 on container port 6080 — the only network-reachable surface. The backend

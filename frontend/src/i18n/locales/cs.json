@@ -2640,7 +2640,8 @@
       "teachSave": "Uložit",
       "teachDiscard": "Zahodit",
       "teachNamePlaceholder": "Pojmenujte tento úkol",
-      "teachSaved": "Uloženo jako dovednost \"{{name}}\""
+      "teachSaved": "Uloženo jako dovednost \"{{name}}\"",
+      "watchingLearning": "Agent sleduje a učí se"
     }
   },
   "personaBackground": {

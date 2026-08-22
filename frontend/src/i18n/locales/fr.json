@@ -2640,7 +2640,8 @@
       "teachSave": "Enregistrer",
       "teachDiscard": "Abandonner",
       "teachNamePlaceholder": "Nommez cette tâche",
-      "teachSaved": "Enregistré comme compétence \"{{name}}\""
+      "teachSaved": "Enregistré comme compétence \"{{name}}\"",
+      "watchingLearning": "L'agent observe et apprend"
     }
   },
   "personaBackground": {

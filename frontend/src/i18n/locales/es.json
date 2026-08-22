@@ -2640,7 +2640,8 @@
       "teachSave": "Guardar",
       "teachDiscard": "Descartar",
       "teachNamePlaceholder": "Nombra esta tarea",
-      "teachSaved": "Guardado como habilidad \"{{name}}\""
+      "teachSaved": "Guardado como habilidad \"{{name}}\"",
+      "watchingLearning": "El agente está observando y aprendiendo"
     }
   },
   "personaBackground": {

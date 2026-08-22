@@ -2640,7 +2640,8 @@
       "teachSave": "Vista",
       "teachDiscard": "Henda",
       "teachNamePlaceholder": "Nefndu þetta verkefni",
-      "teachSaved": "Vistað sem færni \"{{name}}\""
+      "teachSaved": "Vistað sem færni \"{{name}}\"",
+      "watchingLearning": "Agentinn fylgist með og lærir"
     }
   },
   "personaBackground": {

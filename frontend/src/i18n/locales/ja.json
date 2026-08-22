@@ -2640,7 +2640,8 @@
       "teachSave": "保存",
       "teachDiscard": "破棄",
       "teachNamePlaceholder": "このタスクに名前を付ける",
-      "teachSaved": "スキル「{{name}}」として保存しました"
+      "teachSaved": "スキル「{{name}}」として保存しました",
+      "watchingLearning": "エージェントが見て学習しています"
     }
   },
   "personaBackground": {

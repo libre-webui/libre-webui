@@ -2640,7 +2640,8 @@
       "teachSave": "Salva",
       "teachDiscard": "Scarta",
       "teachNamePlaceholder": "Dai un nome a questa attività",
-      "teachSaved": "Salvato come competenza \"{{name}}\""
+      "teachSaved": "Salvato come competenza \"{{name}}\"",
+      "watchingLearning": "L'agente sta osservando e imparando"
     }
   },
   "personaBackground": {

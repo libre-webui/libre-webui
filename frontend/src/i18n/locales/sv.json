@@ -2640,7 +2640,8 @@
       "teachSave": "Spara",
       "teachDiscard": "Släng",
       "teachNamePlaceholder": "Namnge uppgiften",
-      "teachSaved": "Sparad som färdigheten \"{{name}}\""
+      "teachSaved": "Sparad som färdigheten \"{{name}}\"",
+      "watchingLearning": "Agenten tittar på och lär sig"
     }
   },
   "personaBackground": {

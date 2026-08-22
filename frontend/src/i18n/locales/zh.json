@@ -2640,7 +2640,8 @@
       "teachSave": "保存",
       "teachDiscard": "放弃",
       "teachNamePlaceholder": "为该任务命名",
-      "teachSaved": "已保存为技能“{{name}}”"
+      "teachSaved": "已保存为技能“{{name}}”",
+      "watchingLearning": "代理正在观看并学习"
     }
   },
   "personaBackground": {

@@ -2640,7 +2640,8 @@
       "teachSave": "सहेजें",
       "teachDiscard": "हटाएँ",
       "teachNamePlaceholder": "इस कार्य का नाम दें",
-      "teachSaved": "\"{{name}}\" कौशल के रूप में सहेजा गया"
+      "teachSaved": "\"{{name}}\" कौशल के रूप में सहेजा गया",
+      "watchingLearning": "एजेंट देख रहा है और सीख रहा है"
     }
   },
   "personaBackground": {

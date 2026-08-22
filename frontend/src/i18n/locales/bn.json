@@ -2640,7 +2640,8 @@
       "teachSave": "সংরক্ষণ",
       "teachDiscard": "বাতিল",
       "teachNamePlaceholder": "এই কাজের নাম দিন",
-      "teachSaved": "\"{{name}}\" দক্ষতা হিসেবে সংরক্ষিত"
+      "teachSaved": "\"{{name}}\" দক্ষতা হিসেবে সংরক্ষিত",
+      "watchingLearning": "এজেন্ট দেখছে ও শিখছে"
     }
   },
   "personaBackground": {

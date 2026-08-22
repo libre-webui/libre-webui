@@ -2640,7 +2640,8 @@
       "teachSave": "Simpan",
       "teachDiscard": "Buang",
       "teachNamePlaceholder": "Namakan tugasan ini",
-      "teachSaved": "Disimpan sebagai kemahiran \"{{name}}\""
+      "teachSaved": "Disimpan sebagai kemahiran \"{{name}}\"",
+      "watchingLearning": "Ejen sedang memerhati dan belajar"
     }
   },
   "personaBackground": {

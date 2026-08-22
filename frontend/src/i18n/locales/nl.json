@@ -2640,7 +2640,8 @@
       "teachSave": "Opslaan",
       "teachDiscard": "Weggooien",
       "teachNamePlaceholder": "Geef deze taak een naam",
-      "teachSaved": "Opgeslagen als vaardigheid \"{{name}}\""
+      "teachSaved": "Opgeslagen als vaardigheid \"{{name}}\"",
+      "watchingLearning": "De agent kijkt mee en leert"
     }
   },
   "personaBackground": {
