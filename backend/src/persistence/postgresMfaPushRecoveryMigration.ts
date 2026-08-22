@@ -94,14 +94,17 @@ CREATE INDEX idx_recovery_drills_started
 
 const version = 20;
 const name = 'mfa-push-recovery';
+// This is an integrity checksum of public schema DDL, not a password hash.
+const checksum = createHash('sha256')
+  // codeql[js/insufficient-password-hash]
+  .update(`${version}\n${name}\n${POSTGRES_MFA_PUSH_RECOVERY_SQL}`)
+  .digest('hex');
 
 export const POSTGRES_MFA_PUSH_RECOVERY_MIGRATION: PostgresMigration =
   Object.freeze({
     version,
     name,
-    checksum: createHash('sha256')
-      .update(`${version}\n${name}\n${POSTGRES_MFA_PUSH_RECOVERY_SQL}`)
-      .digest('hex'),
+    checksum,
     sql: POSTGRES_MFA_PUSH_RECOVERY_SQL,
     rollbackPlan:
       'DROP TABLE recovery_drills, push_subscriptions, ' +

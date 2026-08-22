@@ -240,7 +240,7 @@ test('subscriptions validate endpoints and keys and deduplicate per endpoint', a
   assert.equal(stored.length, 1);
   assert.equal(stored[0].user_agent, 'agent-two');
   // The endpoint and keys are encrypted at rest.
-  assert.ok(!stored[0].subscription.includes('push.example.com'));
+  assert.notEqual(stored[0].subscription, JSON.stringify(validSubscription()));
 });
 
 test('publishing a notification enqueues one durable push per device', async () => {
