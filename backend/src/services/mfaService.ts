@@ -28,7 +28,7 @@
  */
 
 import jwt from 'jsonwebtoken';
-import { createHmac, randomBytes, randomUUID } from 'node:crypto';
+import { createHmac, randomInt, randomUUID } from 'node:crypto';
 import { getPersistence } from '../persistence/index.js';
 import { encryptionService } from './encryptionService.js';
 import { JWT_SECRET } from './authService.js';
@@ -77,10 +77,9 @@ const recoveryCodeLookup = (userId: string, code: string): string =>
   );
 
 const generateRecoveryCode = (): string => {
-  const bytes = randomBytes(10);
   let code = '';
   for (let index = 0; index < 10; index++) {
-    code += RECOVERY_ALPHABET[bytes[index] % RECOVERY_ALPHABET.length];
+    code += RECOVERY_ALPHABET[randomInt(RECOVERY_ALPHABET.length)];
     if (index === 4) code += '-';
   }
   return code;
