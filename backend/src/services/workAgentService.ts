@@ -813,8 +813,28 @@ export class WorkAgentService {
       // instead of a placeholder.
       let lastReasoningContent = '';
 
+      // Mid-run user messages join the model context at round boundaries,
+      // so the user can steer the agent without cancelling the run. Seed
+      // with what the restored context already contains so nothing repeats.
+      const injectedMidRunMessages = new Set(
+        (await workTaskService.getMessages(taskId))
+          .filter(message => message.metadata?.midRun === true)
+          .map(message => message.id)
+      );
       roundLoop: for (let round = 0; round < roundLimit; round++) {
         await this.throwIfCancelled(runId, controller);
+        for (const message of await workTaskService.getMessages(taskId)) {
+          if (
+            message.runId === runId &&
+            message.role === 'user' &&
+            message.kind === 'message' &&
+            message.metadata?.midRun === true &&
+            !injectedMidRunMessages.has(message.id)
+          ) {
+            injectedMidRunMessages.add(message.id);
+            messages.push({ role: 'user', content: message.content });
+          }
+        }
         await workEventService.publish(
           taskId,
           runId,

@@ -59,6 +59,14 @@ export const workApi = {
   listPolicies: (): Promise<ApiResponse<WorkPolicy[]>> =>
     api.get('/work/policies').then(response => response.data),
 
+  sendRunMessage: (
+    taskId: string,
+    message: string
+  ): Promise<ApiResponse<unknown>> =>
+    api
+      .post(`/work/tasks/${encodeURIComponent(taskId)}/messages`, { message })
+      .then(response => response.data),
+
   getComputerSetup: (): Promise<ApiResponse<WorkComputerSetupStatus>> =>
     api.get('/work/computer/setup').then(response => response.data),
 

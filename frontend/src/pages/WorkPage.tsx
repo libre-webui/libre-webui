@@ -654,7 +654,15 @@ export default function WorkPage() {
       setWorkspaceDirty(false);
     }
     try {
-      if (selectedTask) {
+      if (selectedTask && isWorkTaskActive(selectedTask)) {
+        // The agent is working: the message joins the running conversation
+        // at the next round boundary instead of requiring a stop.
+        const sent = await workApi.sendRunMessage(selectedTask.id, message);
+        if (!sent.success) {
+          throw new Error(sent.message || 'The message could not be sent.');
+        }
+        await loadTask(selectedTask.id);
+      } else if (selectedTask) {
         await startRun(selectedTask.id, {
           message,
           model: selectedTask.model,

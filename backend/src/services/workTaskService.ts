@@ -780,6 +780,28 @@ export class WorkTaskService {
     };
   }
 
+  /**
+   * A user message sent while a run is active: it joins the conversation
+   * immediately and the agent picks it up at the next round boundary — no
+   * need to stop the run (or lose the screen) to talk to the agent.
+   */
+  async addUserMessageToActiveRun(
+    taskId: string,
+    userId: string,
+    content: string
+  ): Promise<WorkMessage> {
+    await this.requireMutableTaskRecord(taskId, userId);
+    const run = await this.getActiveRun(taskId);
+    if (!run) {
+      throw new WorkConflictError(
+        'This Work task has no active run. Send the message as a new run instead.'
+      );
+    }
+    return this.addMessage(taskId, run.id, 'user', 'message', content, {
+      midRun: true,
+    });
+  }
+
   async getMessages(taskId: string): Promise<WorkMessage[]> {
     const rows = await getWorkPersistence().listMessages({
       taskId,

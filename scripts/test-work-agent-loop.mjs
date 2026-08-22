@@ -2078,3 +2078,86 @@ test('taught skills load into computer-enabled runs and surface as skill events'
   );
   assert.equal(taughtEvent?.data.name, 'Export the weekly report');
 });
+
+test('a user message sent mid-run reaches the model at the next round', async () => {
+  const now = Date.now();
+  const userId = 'agent-loop-midrun-admin';
+  getDatabase()
+    .prepare(
+      `INSERT INTO users (
+        id, username, email, password_hash, role, avatar, created_at, updated_at
+      ) VALUES (?, ?, NULL, 'unused', 'admin', NULL, ?, ?)`
+    )
+    .run(userId, userId, now, now);
+
+  let taskIdForRun;
+  const requests = [];
+  replaceMethod(
+    workModelProviderService,
+    'generateChatStreamResponse',
+    async request => {
+      requests.push(request);
+      const round = requests.length;
+      if (round === 1) {
+        // The user talks while the agent works: persist a mid-run message
+        // during the first model round.
+        await workTaskService.addUserMessageToActiveRun(
+          taskIdForRun,
+          userId,
+          'also check the logs'
+        );
+        return {
+          model: request.model,
+          created_at: new Date().toISOString(),
+          message: {
+            role: 'assistant',
+            content: '',
+            tool_calls: [
+              {
+                id: 'list-mid',
+                function: { name: 'list_files', arguments: { path: '.' } },
+              },
+            ],
+          },
+          done: true,
+        };
+      }
+      const injected = request.messages.filter(
+        message =>
+          message.role === 'user' && message.content === 'also check the logs'
+      );
+      assert.equal(injected.length, 1, 'mid-run message appears exactly once');
+      return {
+        model: request.model,
+        created_at: new Date().toISOString(),
+        message: { role: 'assistant', content: 'Checked the logs too.' },
+        done: true,
+      };
+    }
+  );
+
+  const detail = await workTaskService.createTaskWithRun(
+    userId,
+    'Summarize the workspace.',
+    'test-model',
+    true,
+    { providerType: 'plugin', providerId: 'test-plugin' }
+  );
+  taskIdForRun = detail.id;
+  const runId = detail.activeRun?.id;
+  assert.ok(runId);
+  await workAgentService.execute(detail.id, runId, userId);
+
+  assert.equal(requests.length, 2);
+  assert.equal((await workTaskService.getRun(runId)).status, 'completed');
+  const persisted = await workTaskService.getMessages(detail.id);
+  const midRun = persisted.find(
+    message => message.metadata?.midRun === true
+  );
+  assert.equal(midRun?.content, 'also check the logs');
+  // Without an active run the endpoint-facing method refuses.
+  await assert.rejects(
+    workTaskService.addUserMessageToActiveRun(detail.id, userId, 'late'),
+    /no active run/i
+  );
+});

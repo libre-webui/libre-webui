@@ -140,7 +140,11 @@ export function WorkComposer({
 
   const submit = async () => {
     const trimmed = message.trim();
-    if (!trimmed || loading || running || disabled || !selectedModel) return;
+    // A running task still accepts messages: they reach the agent at its
+    // next round without stopping the run.
+    if (!trimmed || loading || disabled || (!running && !selectedModel)) {
+      return;
+    }
     if (await onSubmit(trimmed)) setMessage('');
   };
 
@@ -250,7 +254,7 @@ export function WorkComposer({
                 void submit();
               }
             }}
-            disabled={disabled || running}
+            disabled={disabled}
             rows={1}
             className='m-0 block max-h-[160px] min-h-9 w-full resize-none overflow-y-auto rounded-none border-0 bg-transparent px-2 pt-1.5 pb-2 text-[0.9375rem] leading-relaxed text-ink shadow-none outline-none placeholder:text-ink-subtle focus:border-0 focus:bg-transparent focus:ring-0 disabled:cursor-not-allowed disabled:opacity-60'
             placeholder={t('work.composer.placeholder', {
@@ -280,7 +284,7 @@ export function WorkComposer({
               />
             </div>
 
-            {running ? (
+            {running && (
               <Button
                 data-testid='work-cancel-button'
                 type='button'
@@ -300,14 +304,18 @@ export function WorkComposer({
                   <Square className='h-4 w-4 fill-current' />
                 )}
               </Button>
-            ) : (
+            )}
+            {
               <Button
                 data-testid='work-submit-button'
                 type='submit'
                 variant='ghost'
                 size='sm'
                 disabled={
-                  loading || disabled || !message.trim() || !selectedModel
+                  loading ||
+                  disabled ||
+                  !message.trim() ||
+                  (!running && !selectedModel)
                 }
                 className={cn(
                   'flex h-9 w-9 shrink-0 touch-manipulation items-center justify-center rounded-full p-0 transition-colors duration-150',
@@ -325,7 +333,7 @@ export function WorkComposer({
                   <ArrowUp className='h-4 w-4' />
                 )}
               </Button>
-            )}
+            }
           </div>
         </div>
       </form>

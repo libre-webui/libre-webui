@@ -60,6 +60,7 @@ import {
   WorkGitDiff,
   WorkGitStatus,
   WorkLiveEvent,
+  WorkMessage,
   WorkMessagePage,
   WorkProviderSelection,
   WorkRunStatus,
@@ -890,6 +891,28 @@ router.post(
       const runId = detail.activeRun?.id;
       if (!runId) throw new Error('Work run was not created.');
       res.status(202).json({ success: true, data: detail });
+    } catch (error) {
+      sendError(res, error);
+    }
+  }
+);
+
+// Talk to the agent while it works: the message lands in the conversation
+// now and reaches the model at the next round boundary.
+router.post(
+  '/tasks/:id/messages',
+  async (
+    req: AuthenticatedRequest,
+    res: Response<ApiResponse<WorkMessage>>
+  ): Promise<void> => {
+    try {
+      const taskId = readTaskId(req);
+      const userId = requireUserId(req);
+      const message = requireBodyString(req.body?.message, 'message', 65_536);
+      sendSuccess(
+        res,
+        await workTaskService.addUserMessageToActiveRun(taskId, userId, message)
+      );
     } catch (error) {
       sendError(res, error);
     }
