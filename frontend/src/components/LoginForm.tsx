@@ -543,7 +543,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
         </button>
       </form>
 
-      {!isDemo && passkeysSupported() && (
+      {!isDemo && passkeysSupported() && systemInfo?.passkeysInUse && (
         <button
           type='button'
           data-testid='passkey-signin-button'

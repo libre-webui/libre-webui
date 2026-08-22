@@ -290,6 +290,7 @@ export interface WebAuthnCredentialRepository {
   delete(id: string, userId: string): Promise<boolean>;
   deleteForUser(userId: string): Promise<number>;
   countForUser(userId: string): Promise<number>;
+  countAll(): Promise<number>;
 }
 
 export interface SecurityRepositories {

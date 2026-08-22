@@ -19,9 +19,10 @@
  * Minimal WebAuthn (passkey) server-side verification on node:crypto.
  *
  * Scope is deliberate: attestation is accepted as `none` (the statement is
- * not evaluated — standard for consumer passkeys), and the two algorithms
- * browsers actually negotiate are supported: ES256 (COSE -7) and EdDSA
- * (COSE -8). The bounded CBOR reader below decodes only the subset WebAuthn
+ * not evaluated — standard for consumer passkeys), and the algorithms
+ * browsers actually negotiate are supported: ES256 (COSE -7), EdDSA
+ * (COSE -8), and RS256 (COSE -257, required for TPM-backed Windows Hello).
+ * The bounded CBOR reader below decodes only the subset WebAuthn
  * structures use: unsigned/negative integers, byte/text strings, arrays,
  * and maps.
  */
@@ -211,9 +212,13 @@ export const parseAuthenticatorData = (
 /* -------------------------------------------------------- COSE keys */
 
 export interface StoredPublicKey {
-  /** COSE algorithm: -7 = ES256, -8 = EdDSA (Ed25519). */
+  /** COSE algorithm: -7 = ES256, -8 = EdDSA (Ed25519), -257 = RS256. */
   alg: number;
-  /** base64url key parameters. */
+  /**
+   * base64url key parameters. For EC2 keys `x`/`y` are the curve
+   * coordinates; for Ed25519 `x` is the key; for RSA `x` holds the
+   * modulus n and `y` the public exponent e.
+   */
   x: string;
   y?: string;
 }
@@ -256,6 +261,24 @@ export const extractPublicKey = (
     }
     return { alg: -8, x: x.toString('base64url') };
   }
+  if (alg === -257) {
+    if (kty !== 3) {
+      throw new WebAuthnError('RS256 requires an RSA key');
+    }
+    const n = asBuffer(cose.get(-1), 'n');
+    const e = asBuffer(cose.get(-2), 'e');
+    if (n.length < 256 || n.length > 512) {
+      throw new WebAuthnError('RSA modulus must be 2048-4096 bits');
+    }
+    if (e.length < 1 || e.length > 8) {
+      throw new WebAuthnError('Invalid RSA exponent length');
+    }
+    return {
+      alg: -257,
+      x: n.toString('base64url'),
+      y: e.toString('base64url'),
+    };
+  }
   throw new WebAuthnError('Unsupported credential algorithm');
 };
 
@@ -269,6 +292,12 @@ const publicKeyObject = (stored: StoredPublicKey) => {
   if (stored.alg === -8) {
     return createPublicKey({
       key: { kty: 'OKP', crv: 'Ed25519', x: stored.x },
+      format: 'jwk',
+    });
+  }
+  if (stored.alg === -257) {
+    return createPublicKey({
+      key: { kty: 'RSA', n: stored.x, e: stored.y },
       format: 'jwk',
     });
   }
@@ -295,6 +324,10 @@ export const verifyAssertionSignature = (
         { key, dsaEncoding: 'der' },
         signature
       );
+    }
+    if (stored.alg === -257) {
+      // RSASSA-PKCS1-v1_5 with SHA-256 (node's default RSA padding).
+      return cryptoVerify('sha256', signedData, key, signature);
     }
     return cryptoVerify(null, signedData, key, signature);
   } catch {

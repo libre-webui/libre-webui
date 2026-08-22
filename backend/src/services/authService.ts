@@ -29,8 +29,30 @@ import {
 } from './registrationPolicy.js';
 import { createLogger } from '../utils/logger.js';
 import { validatePasswordStrength } from '../utils/hash.js';
+import { getPersistence } from '../persistence/index.js';
+import { encryptionService } from './encryptionService.js';
 
 const logger = createLogger('services:auth-service');
+
+/**
+ * Whether any user has a registered passkey. Drives the passkey sign-in
+ * affordance on the login screen: with zero credentials in the system the
+ * button can never succeed, so it is not shown. Fails open to `false`.
+ */
+const anyPasskeysRegistered = async (): Promise<boolean> => {
+  try {
+    const count =
+      await getPersistence(
+        encryptionService
+      ).repositories.security.webauthnCredentials.countAll();
+    return count > 0;
+  } catch (error) {
+    logger.warn('Failed to count passkeys for system info', {
+      error: error instanceof Error ? error.message : String(error),
+    });
+    return false;
+  }
+};
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -130,6 +152,8 @@ export interface SystemInfo {
   userCount: number;
   signupEnabled: boolean;
   agentsEnabled: boolean;
+  /** True when at least one passkey is registered system-wide. */
+  passkeysInUse: boolean;
   version?: string;
   turnstile: TurnstilePublicConfig;
 }
@@ -242,6 +266,7 @@ export class AuthService {
       userCount,
       signupEnabled: canCreateLocalAccount(userCount),
       agentsEnabled: await getAgentsEnabled(),
+      passkeysInUse: await anyPasskeysRegistered(),
       version: packageVersion,
       turnstile: turnstileService.getPublicConfig(),
     };

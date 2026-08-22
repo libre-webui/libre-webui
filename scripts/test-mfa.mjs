@@ -459,6 +459,100 @@ test('a foreign origin, a bad signature, and a stale counter are rejected', asyn
   assert.equal(removed, true);
 });
 
+test('a passkey registers and signs in with RS256', async () => {
+  const rsa = generateKeyPairSync('rsa', { modulusLength: 2048 });
+  const rsaJwk = rsa.publicKey.export({ format: 'jwk' });
+  const rsaCose = new Map([
+    [1, 3],
+    [3, -257],
+    [-1, Buffer.from(rsaJwk.n, 'base64url')],
+    [-2, Buffer.from(rsaJwk.e, 'base64url')],
+  ]);
+  const rsaCredentialId = randomBytes(32);
+  const buildRsaAuthData = (flags, signCount, includeCredential) => {
+    const rpIdHash = createHash('sha256').update('localhost').digest();
+    const head = Buffer.alloc(37);
+    rpIdHash.copy(head, 0);
+    head[32] = flags;
+    head.writeUInt32BE(signCount, 33);
+    if (!includeCredential) return head;
+    const credentialLength = Buffer.alloc(2);
+    credentialLength.writeUInt16BE(rsaCredentialId.length);
+    return Buffer.concat([
+      head,
+      Buffer.alloc(16), // AAGUID
+      credentialLength,
+      rsaCredentialId,
+      cborEncode(rsaCose),
+    ]);
+  };
+
+  const options = await webauthnService.registrationOptions(
+    { id: admin.id, username: admin.username },
+    RP_HOST
+  );
+  // Chromium warns unless both ES256 and RS256 are offered.
+  assert.ok(options.publicKey.pubKeyCredParams.some(p => p.alg === -7));
+  assert.ok(options.publicKey.pubKeyCredParams.some(p => p.alg === -257));
+
+  const attestationObject = cborEncode(
+    new Map([
+      ['fmt', 'none'],
+      ['attStmt', new Map()],
+      ['authData', buildRsaAuthData(0x45, 0, true)],
+    ])
+  );
+  const record = await webauthnService.registerPasskey(
+    admin.id,
+    {
+      challengeToken: options.challengeToken,
+      name: 'TPM key',
+      credential: {
+        rawId: rsaCredentialId.toString('base64url'),
+        response: {
+          clientDataJSON: clientData(
+            'webauthn.create',
+            options.publicKey.challenge
+          ).toString('base64url'),
+          attestationObject: attestationObject.toString('base64url'),
+          transports: ['internal'],
+        },
+      },
+    },
+    RP_HOST
+  );
+  assert.equal(record.name, 'TPM key');
+
+  const login = await webauthnService.loginOptions(RP_HOST);
+  const authData = buildRsaAuthData(0x05, 1, false);
+  const clientDataJson = clientData('webauthn.get', login.publicKey.challenge);
+  const signature = cryptoSign(
+    'sha256',
+    Buffer.concat([
+      authData,
+      createHash('sha256').update(clientDataJson).digest(),
+    ]),
+    rsa.privateKey
+  );
+  const verified = await webauthnService.verifyPasskeyLogin(
+    {
+      challengeToken: login.challengeToken,
+      credential: {
+        rawId: rsaCredentialId.toString('base64url'),
+        response: {
+          clientDataJSON: clientDataJson.toString('base64url'),
+          authenticatorData: authData.toString('base64url'),
+          signature: signature.toString('base64url'),
+        },
+      },
+    },
+    RP_HOST
+  );
+  assert.equal(verified.userId, admin.id);
+  assert.equal(verified.passkeyId, record.id);
+  await webauthnService.deletePasskey(admin.id, record.id);
+});
+
 test('malformed authenticator payloads fail closed', () => {
   assert.throws(() => webauthnUtils.decodeCbor(Buffer.from([0x5b])), {
     name: 'Error',

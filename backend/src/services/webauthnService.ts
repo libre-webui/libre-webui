@@ -227,6 +227,7 @@ export const registrationOptions = async (
       pubKeyCredParams: [
         { type: 'public-key', alg: -7 },
         { type: 'public-key', alg: -8 },
+        { type: 'public-key', alg: -257 },
       ],
       authenticatorSelection: {
         residentKey: 'required',

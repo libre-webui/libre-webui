@@ -1011,6 +1011,13 @@ class SQLiteWebAuthnCredentialRepository implements WebAuthnCredentialRepository
       .get(userId) as { count: number };
     return row.count;
   }
+
+  async countAll(): Promise<number> {
+    const row = this.database
+      .prepare('SELECT COUNT(*) AS count FROM webauthn_credentials')
+      .get() as { count: number };
+    return row.count;
+  }
 }
 
 export const createSQLiteSecurityRepositories = (

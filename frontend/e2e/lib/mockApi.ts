@@ -44,6 +44,7 @@ type MockSystemInfo = {
   hasUsers: boolean;
   userCount: number;
   signupEnabled?: boolean;
+  passkeysInUse?: boolean;
   version: string;
   turnstile?: { enabled: boolean; siteKey?: string };
 };

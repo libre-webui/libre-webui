@@ -894,6 +894,13 @@ class PostgresWebAuthnCredentialRepository implements WebAuthnCredentialReposito
     );
     return number(result.rows[0]?.count, 'webauthn credential count');
   }
+
+  async countAll(): Promise<number> {
+    const result = await this.database.query(
+      'SELECT COUNT(*) AS count FROM webauthn_credentials'
+    );
+    return number(result.rows[0]?.count, 'webauthn credential count');
+  }
 }
 
 export const createPostgresSecurityRepositories = (

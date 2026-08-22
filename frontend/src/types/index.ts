@@ -825,6 +825,7 @@ export interface SystemInfo {
   userCount: number;
   signupEnabled: boolean;
   agentsEnabled?: boolean; // Admin opt-in for the Agents section (Libre Claw)
+  passkeysInUse?: boolean; // At least one passkey registered system-wide
   version?: string;
   turnstile?: {
     enabled: boolean;
