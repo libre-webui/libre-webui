@@ -35,6 +35,8 @@ import {
   MonitorPlay,
   MousePointerClick,
   RefreshCw,
+  Volume2,
+  VolumeX,
 } from 'lucide-react';
 import {
   acquireWorkScreenControl,
@@ -42,10 +44,15 @@ import {
   releaseWorkScreenControl,
   saveWorkScreenTeaching,
   startWorkComputer,
+  workAudioUrl,
   workScreenUrl,
   type WorkScreenControlState,
   type WorkTeachEvent,
 } from '@/utils/api/workScreen';
+import {
+  startWorkAudioPlayer,
+  type WorkAudioPlayer,
+} from '@/utils/workAudioPlayer';
 import { logger } from '@/utils/logger';
 
 // The RFB client instance surface this component actually uses.
@@ -91,6 +98,41 @@ export function WorkspaceScreen({ taskId, active }: WorkspaceScreenProps) {
   const teachEventsRef = useRef<WorkTeachEvent[]>([]);
   const teachStartRef = useRef(0);
   const teachScreenRef = useRef<{ width: number; height: number } | null>(null);
+  const [audioOn, setAudioOn] = useState(false);
+  const audioPlayerRef = useRef<WorkAudioPlayer | null>(null);
+
+  const stopAudio = useCallback(() => {
+    audioPlayerRef.current?.stop();
+    audioPlayerRef.current = null;
+    setAudioOn(false);
+  }, []);
+
+  const handleToggleAudio = useCallback(async () => {
+    if (audioPlayerRef.current) {
+      stopAudio();
+      return;
+    }
+    try {
+      const url = await workAudioUrl(taskId);
+      // Created inside the click handler so the AudioContext starts under a
+      // user gesture, as browsers require.
+      audioPlayerRef.current = await startWorkAudioPlayer(url, () => {
+        audioPlayerRef.current = null;
+        setAudioOn(false);
+      });
+      setAudioOn(true);
+    } catch (audioError) {
+      logger.warn('Work screen audio failed to start:', audioError);
+      stopAudio();
+    }
+  }, [taskId, stopAudio]);
+
+  // Sound follows the picture: leaving the tab or losing the connection
+  // stops playback.
+  useEffect(() => {
+    if (!active || state !== 'connected') stopAudio();
+  }, [active, state, stopAudio]);
+  useEffect(() => stopAudio, [taskId, stopAudio]);
 
   const disconnect = useCallback(() => {
     try {
@@ -412,6 +454,21 @@ export function WorkspaceScreen({ taskId, active }: WorkspaceScreenProps) {
                   })
                 : t('work.screen.viewOnly')}
           </div>
+          <button
+            type='button'
+            data-testid='work-screen-audio'
+            onClick={() => void handleToggleAudio()}
+            aria-label={
+              audioOn ? t('work.screen.mute') : t('work.screen.unmute')
+            }
+            className={`flex items-center gap-1.5 rounded-md px-2 py-1 text-[11px] backdrop-blur transition-colors ${
+              audioOn
+                ? 'bg-emerald-500/80 text-white hover:bg-emerald-500'
+                : 'bg-white/10 text-white/90 hover:bg-white/20'
+            }`}
+          >
+            {audioOn ? <Volume2 size={12} /> : <VolumeX size={12} />}
+          </button>
           {showTakeOver && teachPhase === 'idle' && (
             <>
               <button

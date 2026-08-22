@@ -467,6 +467,14 @@ blocker instead. For untrusted tasks, pair a GUI policy with a filtering
 DNS resolver — a desktop browser makes the network egress policy matter
 more, not less.
 
+Audio: the screen is muted by default (a browser rule — audio needs a
+click); the speaker button on the Screen pane streams the computer's sound
+live. Inside the sandbox, PulseAudio plays into a null sink whose monitor
+is captured as raw PCM and served over a second authenticated
+loopback-published WebSocket bridge — the same ticket, access re-check, and
+per-task viewer cap as the screen itself. Requires a GUI image built from
+`deploy/work-computer/` at this version or later.
+
 Takeover: the Screen pane's **Take over** button gives you the mouse and
 keyboard — for signing in, clearing a CAPTCHA, or any step the agent must
 not perform — and **I'm done** hands the screen back. One VNC session

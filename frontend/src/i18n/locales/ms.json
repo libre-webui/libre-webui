@@ -2641,7 +2641,9 @@
       "teachDiscard": "Buang",
       "teachNamePlaceholder": "Namakan tugasan ini",
       "teachSaved": "Disimpan sebagai kemahiran \"{{name}}\"",
-      "watchingLearning": "Ejen sedang memerhati dan belajar"
+      "watchingLearning": "Ejen sedang memerhati dan belajar",
+      "unmute": "Nyahsenyapkan",
+      "mute": "Senyapkan"
     }
   },
   "personaBackground": {

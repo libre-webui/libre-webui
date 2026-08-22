@@ -2641,7 +2641,9 @@
       "teachDiscard": "破棄",
       "teachNamePlaceholder": "このタスクに名前を付ける",
       "teachSaved": "スキル「{{name}}」として保存しました",
-      "watchingLearning": "エージェントが見て学習しています"
+      "watchingLearning": "エージェントが見て学習しています",
+      "unmute": "ミュート解除",
+      "mute": "ミュート"
     }
   },
   "personaBackground": {

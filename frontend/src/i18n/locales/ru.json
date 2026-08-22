@@ -2641,7 +2641,9 @@
       "teachDiscard": "Отменить",
       "teachNamePlaceholder": "Назовите эту задачу",
       "teachSaved": "Сохранено как навык \"{{name}}\"",
-      "watchingLearning": "Агент наблюдает и учится"
+      "watchingLearning": "Агент наблюдает и учится",
+      "unmute": "Включить звук",
+      "mute": "Выключить звук"
     }
   },
   "personaBackground": {

@@ -18,6 +18,9 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-ins
       xdotool \
       imagemagick \
       x11-utils \
+      pulseaudio \
+      pulseaudio-utils \
+      socat \
       dbus-x11 \
       fonts-dejavu-core \
       fonts-noto-color-emoji \

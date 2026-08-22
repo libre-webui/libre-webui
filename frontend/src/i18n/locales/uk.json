@@ -2641,7 +2641,9 @@
       "teachDiscard": "Відхилити",
       "teachNamePlaceholder": "Назвіть це завдання",
       "teachSaved": "Збережено як навичку \"{{name}}\"",
-      "watchingLearning": "Агент спостерігає і вчиться"
+      "watchingLearning": "Агент спостерігає і вчиться",
+      "unmute": "Увімкнути звук",
+      "mute": "Вимкнути звук"
     }
   },
   "personaBackground": {

@@ -17,7 +17,7 @@
 
 import { api } from './client';
 import type { ApiResponse } from '@/types';
-import { buildWorkScreenUrl } from '../websocketUrl';
+import { buildWorkAudioUrl, buildWorkScreenUrl } from '../websocketUrl';
 
 export interface WorkScreenControlState {
   holder?: { you: boolean; username?: string; expiresAt: number };
@@ -115,6 +115,18 @@ export async function saveWorkScreenTeaching(
  * mirroring the Work terminal's flow exactly.
  */
 export async function workScreenUrl(taskId: string): Promise<string> {
+  return buildWorkSurfaceUrl(taskId, buildWorkScreenUrl);
+}
+
+/** Same ticket flow for the screen's audio stream. */
+export async function workAudioUrl(taskId: string): Promise<string> {
+  return buildWorkSurfaceUrl(taskId, buildWorkAudioUrl);
+}
+
+async function buildWorkSurfaceUrl(
+  taskId: string,
+  build: typeof buildWorkScreenUrl
+): Promise<string> {
   const response = await api.post<
     ApiResponse<{ ticket: string; expiresAt: string }>
   >('/auth/websocket-ticket', {
@@ -123,7 +135,7 @@ export async function workScreenUrl(taskId: string): Promise<string> {
   });
   const ticket = response.data.data?.ticket;
   if (!ticket) throw new Error('The server did not issue a screen ticket.');
-  return buildWorkScreenUrl(taskId, ticket, {
+  return build(taskId, ticket, {
     protocol: window.location.protocol,
     host: window.location.host,
     hostname: window.location.hostname,

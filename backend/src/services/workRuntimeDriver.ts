@@ -124,6 +124,13 @@ export interface WorkRuntimeDriver {
   screenEndpoint(
     task: WorkTaskRecord
   ): Promise<{ host: string; port: number } | undefined>;
+  /**
+   * Published endpoint of the Work Computer audio bridge (websockify →
+   * PulseAudio monitor), or undefined when the task has no GUI session.
+   */
+  audioEndpoint(
+    task: WorkTaskRecord
+  ): Promise<{ host: string; port: number } | undefined>;
   /** Every sandbox this runtime has ever created, by ownership label. */
   listManaged(): Promise<DiscoveredWorkContainer[]>;
   /** Force-remove a managed sandbox whose task record no longer exists. */
@@ -354,12 +361,25 @@ export class DockerWorkRuntimeDriver implements WorkRuntimeDriver {
   async screenEndpoint(
     task: WorkTaskRecord
   ): Promise<{ host: string; port: number } | undefined> {
+    return this.publishedGuiEndpoint(task, config.screenPort);
+  }
+
+  async audioEndpoint(
+    task: WorkTaskRecord
+  ): Promise<{ host: string; port: number } | undefined> {
+    return this.publishedGuiEndpoint(task, config.audioPort);
+  }
+
+  private async publishedGuiEndpoint(
+    task: WorkTaskRecord,
+    containerPort: number
+  ): Promise<{ host: string; port: number } | undefined> {
     const portResult = await this.docker([
       'port',
       task.containerName,
-      `${config.screenPort}/tcp`,
+      `${containerPort}/tcp`,
     ]);
-    const port = parsePublishedPort(portResult.stdout, config.screenPort);
+    const port = parsePublishedPort(portResult.stdout, containerPort);
     const configuredHost = config.previewBind.trim();
     const host =
       !configuredHost || configuredHost === '0.0.0.0'
@@ -752,24 +772,25 @@ export class DockerWorkRuntimeDriver implements WorkRuntimeDriver {
           objectRecord
         )
       : [];
-    const screenBindings = Array.isArray(
-      portBindings[`${config.screenPort}/tcp`]
-    )
-      ? (portBindings[`${config.screenPort}/tcp`] as unknown[]).map(
-          objectRecord
-        )
-      : [];
-    // A GUI policy publishes the screen bridge next to the preview port;
-    // demanding exactly one binding here declared every Work Computer
-    // container permanently stale and recreated it on each prepare.
+    const guiPortBindings = (port: number): Array<Record<string, unknown>> =>
+      Array.isArray(portBindings[`${port}/tcp`])
+        ? (portBindings[`${port}/tcp`] as unknown[]).map(objectRecord)
+        : [];
+    const screenBindings = guiPortBindings(config.screenPort);
+    const audioBindings = guiPortBindings(config.audioPort);
+    // A GUI policy publishes the screen and audio bridges next to the
+    // preview port; demanding exactly one binding here declared every Work
+    // Computer container permanently stale and recreated it on each prepare.
     const guiEnabled = policy.guiEnabled === true;
     const portPolicyMatches = task.networkEnabled
-      ? Object.keys(portBindings).length === (guiEnabled ? 2 : 1) &&
+      ? Object.keys(portBindings).length === (guiEnabled ? 3 : 1) &&
         previewBindings.length === 1 &&
         previewBindings[0]?.HostIp === config.previewBind &&
         (!guiEnabled ||
           (screenBindings.length === 1 &&
-            screenBindings[0]?.HostIp === config.previewBind))
+            screenBindings[0]?.HostIp === config.previewBind &&
+            audioBindings.length === 1 &&
+            audioBindings[0]?.HostIp === config.previewBind))
       : Object.keys(portBindings).length === 0;
     return (
       labels['ai.libre-webui.managed'] === 'true' &&
@@ -987,9 +1008,11 @@ export function buildWorkContainerRunArgs(
   if (task.networkEnabled) {
     args.push('--publish', `${config.previewBind}::${config.previewPort}`);
     if (policy.guiEnabled === true) {
-      // Work Computer: the GUI image's websockify bridge, published the same
-      // loopback-only way as the preview. Raw VNC never leaves the container.
+      // Work Computer: the GUI image's websockify bridges (screen + audio),
+      // published the same loopback-only way as the preview. Raw VNC and
+      // raw PCM never leave the container.
       args.push('--publish', `${config.previewBind}::${config.screenPort}`);
+      args.push('--publish', `${config.previewBind}::${config.audioPort}`);
     }
     for (const server of config.dnsServers) {
       args.push('--dns', server);

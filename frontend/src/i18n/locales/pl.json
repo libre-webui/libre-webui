@@ -2641,7 +2641,9 @@
       "teachDiscard": "Odrzuć",
       "teachNamePlaceholder": "Nazwij to zadanie",
       "teachSaved": "Zapisano jako umiejętność \"{{name}}\"",
-      "watchingLearning": "Agent obserwuje i uczy się"
+      "watchingLearning": "Agent obserwuje i uczy się",
+      "unmute": "Włącz dźwięk",
+      "mute": "Wycisz"
     }
   },
   "personaBackground": {

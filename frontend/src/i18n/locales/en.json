@@ -2641,7 +2641,9 @@
       "teachDiscard": "Discard",
       "teachNamePlaceholder": "Name this task",
       "teachSaved": "Saved as skill \"{{name}}\"",
-      "watchingLearning": "The agent is watching and learning"
+      "watchingLearning": "The agent is watching and learning",
+      "unmute": "Unmute",
+      "mute": "Mute"
     }
   },
   "personaBackground": {

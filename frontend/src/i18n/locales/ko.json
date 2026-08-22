@@ -2641,7 +2641,9 @@
       "teachDiscard": "취소",
       "teachNamePlaceholder": "이 작업의 이름 입력",
       "teachSaved": "\"{{name}}\" 스킬로 저장됨",
-      "watchingLearning": "에이전트가 보고 배우는 중입니다"
+      "watchingLearning": "에이전트가 보고 배우는 중입니다",
+      "unmute": "소리 켜기",
+      "mute": "음소거"
     }
   },
   "personaBackground": {

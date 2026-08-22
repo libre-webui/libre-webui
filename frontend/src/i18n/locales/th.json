@@ -2641,7 +2641,9 @@
       "teachDiscard": "ทิ้ง",
       "teachNamePlaceholder": "ตั้งชื่องานนี้",
       "teachSaved": "บันทึกเป็นทักษะ \"{{name}}\" แล้ว",
-      "watchingLearning": "เอเจนต์กำลังดูและเรียนรู้"
+      "watchingLearning": "เอเจนต์กำลังดูและเรียนรู้",
+      "unmute": "เปิดเสียง",
+      "mute": "ปิดเสียง"
     }
   },
   "personaBackground": {

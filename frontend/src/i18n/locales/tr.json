@@ -2641,7 +2641,9 @@
       "teachDiscard": "Vazgeç",
       "teachNamePlaceholder": "Bu göreve ad verin",
       "teachSaved": "\"{{name}}\" becerisi olarak kaydedildi",
-      "watchingLearning": "Ajan izliyor ve öğreniyor"
+      "watchingLearning": "Ajan izliyor ve öğreniyor",
+      "unmute": "Sesi aç",
+      "mute": "Sessize al"
     }
   },
   "personaBackground": {

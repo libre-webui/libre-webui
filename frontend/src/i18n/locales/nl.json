@@ -2641,7 +2641,9 @@
       "teachDiscard": "Weggooien",
       "teachNamePlaceholder": "Geef deze taak een naam",
       "teachSaved": "Opgeslagen als vaardigheid \"{{name}}\"",
-      "watchingLearning": "De agent kijkt mee en leert"
+      "watchingLearning": "De agent kijkt mee en leert",
+      "unmute": "Geluid aan",
+      "mute": "Dempen"
     }
   },
   "personaBackground": {

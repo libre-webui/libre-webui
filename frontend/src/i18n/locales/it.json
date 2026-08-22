@@ -2641,7 +2641,9 @@
       "teachDiscard": "Scarta",
       "teachNamePlaceholder": "Dai un nome a questa attività",
       "teachSaved": "Salvato come competenza \"{{name}}\"",
-      "watchingLearning": "L'agente sta osservando e imparando"
+      "watchingLearning": "L'agente sta osservando e imparando",
+      "unmute": "Attiva audio",
+      "mute": "Disattiva audio"
     }
   },
   "personaBackground": {

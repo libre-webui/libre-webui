@@ -2641,7 +2641,9 @@
       "teachDiscard": "Zahodit",
       "teachNamePlaceholder": "Pojmenujte tento úkol",
       "teachSaved": "Uloženo jako dovednost \"{{name}}\"",
-      "watchingLearning": "Agent sleduje a učí se"
+      "watchingLearning": "Agent sleduje a učí se",
+      "unmute": "Zapnout zvuk",
+      "mute": "Ztlumit"
     }
   },
   "personaBackground": {

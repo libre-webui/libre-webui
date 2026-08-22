@@ -44,6 +44,10 @@ export const WORK_RUNTIME_DEFAULTS = {
   // (websockify in the GUI image). Published on previewBind when a task's
   // policy enables the GUI.
   screenPort: 6080,
+  // Container-internal WebSocket port of the Work Computer audio bridge
+  // (websockify → PulseAudio monitor capture). Published alongside the
+  // screen port for GUI policies.
+  audioPort: 6081,
   networkName: 'libre-webui-work',
   // 0 disables the idle sweep: previews stay up until stopped explicitly.
   idleTimeoutMs: 0,
@@ -91,6 +95,10 @@ export const workRuntimeConfig = {
   screenPort: positiveInteger(
     process.env.WORK_COMPUTER_SCREEN_PORT,
     WORK_RUNTIME_DEFAULTS.screenPort
+  ),
+  audioPort: positiveInteger(
+    process.env.WORK_COMPUTER_AUDIO_PORT,
+    WORK_RUNTIME_DEFAULTS.audioPort
   ),
   // Stop a running sandbox after this much inactivity: no command finished,
   // no terminal attached, no preview request through the signed proxy.
@@ -162,7 +170,8 @@ export function computePolicyFingerprint(
   return createHash('sha256')
     .update(
       JSON.stringify({
-        version: 3,
+        // v4: GUI containers additionally publish the audio bridge port.
+        version: 4,
         memoryLimit: policy.memoryLimit,
         cpuLimit: policy.cpuLimit,
         pidsLimit: policy.pidsLimit,
@@ -173,6 +182,7 @@ export function computePolicyFingerprint(
         memorySwapPinned: true,
         guiEnabled: policy.guiEnabled === true,
         screenPort: workRuntimeConfig.screenPort,
+        audioPort: workRuntimeConfig.audioPort,
       })
     )
     .digest('hex');

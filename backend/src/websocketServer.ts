@@ -19,6 +19,7 @@ import type { IncomingMessage, Server } from 'http';
 import type { Duplex } from 'stream';
 import {
   tryHandleScreenUpgrade,
+  WORK_AUDIO_WS_PATH,
   WORK_SCREEN_WS_PATH,
 } from './workScreenServer.js';
 import { WebSocketServer, type RawData } from 'ws';
@@ -1206,7 +1207,7 @@ export function registerWebSocketServer(
       });
       return;
     }
-    if (pathname === WORK_SCREEN_WS_PATH) {
+    if (pathname === WORK_SCREEN_WS_PATH || pathname === WORK_AUDIO_WS_PATH) {
       if (!isAllowedWebSocketOrigin(request.headers.origin)) {
         rejectUpgrade(socket, 403, 'WebSocket origin is not allowed');
         return;

@@ -13,6 +13,10 @@ DISPLAY_NUM="${LIBRE_COMPUTER_DISPLAY:-1}"
 SCREEN_GEOMETRY="${LIBRE_COMPUTER_GEOMETRY:-1280x800x24}"
 VNC_PORT="${LIBRE_COMPUTER_VNC_PORT:-5900}"
 WS_PORT="${LIBRE_COMPUTER_WS_PORT:-6080}"
+AUDIO_WS_PORT="${LIBRE_COMPUTER_AUDIO_WS_PORT:-6081}"
+AUDIO_TCP_PORT="${LIBRE_COMPUTER_AUDIO_TCP_PORT:-4713}"
+AUDIO_RATE=44100
+AUDIO_CHANNELS=2
 STATE_DIR="${LIBRE_COMPUTER_STATE_DIR:-/tmp/libre-computer}"
 PROFILE_DIR="${LIBRE_COMPUTER_PROFILE_DIR:-/workspace/.browser-profile}"
 
@@ -50,6 +54,31 @@ if [ -f "$WALLPAPER" ]; then
   echo $! > "$STATE_DIR/wallpaper.pid"
 fi
 
+# Audio: PulseAudio with a null sink is the container's "sound card".
+# Chromium plays into it; the sink's monitor is captured as raw PCM and
+# served, one capture per connection, over a second websockify bridge.
+export XDG_RUNTIME_DIR="$STATE_DIR/runtime"
+mkdir -p "$XDG_RUNTIME_DIR"
+chmod 700 "$XDG_RUNTIME_DIR"
+pulseaudio --daemonize=yes --exit-idle-time=-1 --log-target=file:"$STATE_DIR/pulseaudio.log" 2>/dev/null || true
+for _ in 1 2 3 4 5 6 7 8 9 10; do
+  pactl info >/dev/null 2>&1 && break
+  sleep 0.2
+done
+pactl load-module module-null-sink sink_name=libre \
+  sink_properties=device.description=LibreOutput >/dev/null 2>&1 || true
+pactl set-default-sink libre >/dev/null 2>&1 || true
+
+socat "TCP-LISTEN:${AUDIO_TCP_PORT},bind=127.0.0.1,reuseaddr,fork" \
+  EXEC:"parec -d libre.monitor --format=s16le --rate=${AUDIO_RATE} --channels=${AUDIO_CHANNELS} --raw" \
+  >/dev/null 2>&1 &
+echo $! > "$STATE_DIR/audio-capture.pid"
+
+websockify --daemon "0.0.0.0:${AUDIO_WS_PORT}" "127.0.0.1:${AUDIO_TCP_PORT}" \
+  >/dev/null 2>&1
+sleep 0.3
+pgrep -f "websockify.*${AUDIO_WS_PORT}" | head -1 > "$STATE_DIR/audio-ws.pid"
+
 # A container killed mid-session leaves Chromium's profile singleton lock
 # behind; without clearing it the browser silently refuses to start and the
 # desktop comes up empty.
@@ -59,6 +88,7 @@ rm -f "$PROFILE_DIR/SingletonLock" "$PROFILE_DIR/SingletonSocket" \
 chromium \
   --no-sandbox \
   --test-type \
+  --autoplay-policy=no-user-gesture-required \
   --disable-dev-shm-usage \
   --disable-gpu \
   --no-first-run \

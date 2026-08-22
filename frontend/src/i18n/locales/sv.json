@@ -2641,7 +2641,9 @@
       "teachDiscard": "Släng",
       "teachNamePlaceholder": "Namnge uppgiften",
       "teachSaved": "Sparad som färdigheten \"{{name}}\"",
-      "watchingLearning": "Agenten tittar på och lär sig"
+      "watchingLearning": "Agenten tittar på och lär sig",
+      "unmute": "Slå på ljud",
+      "mute": "Stäng av ljud"
     }
   },
   "personaBackground": {

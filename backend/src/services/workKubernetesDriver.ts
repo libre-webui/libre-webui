@@ -320,6 +320,17 @@ export class KubernetesWorkRuntimeDriver implements WorkRuntimeDriver {
     return { host: podIp, port: config.screenPort };
   }
 
+  async audioEndpoint(
+    task: WorkTaskRecord
+  ): Promise<{ host: string; port: number } | undefined> {
+    const pod = await this.readPod(task.containerName);
+    if (!pod) return undefined;
+    assertOwnedRuntime(pod.metadata?.labels, task);
+    const podIp = pod.status?.podIP;
+    if (!podIp) return undefined;
+    return { host: podIp, port: config.audioPort };
+  }
+
   async listManaged(): Promise<DiscoveredWorkContainer[]> {
     const { core } = await this.client();
     const pods = await core.listNamespacedPod({

@@ -2641,7 +2641,9 @@
       "teachDiscard": "Verwerfen",
       "teachNamePlaceholder": "Aufgabe benennen",
       "teachSaved": "Als Skill \"{{name}}\" gespeichert",
-      "watchingLearning": "Der Agent schaut zu und lernt"
+      "watchingLearning": "Der Agent schaut zu und lernt",
+      "unmute": "Ton einschalten",
+      "mute": "Stummschalten"
     }
   },
   "personaBackground": {

@@ -2641,7 +2641,9 @@
       "teachDiscard": "বাতিল",
       "teachNamePlaceholder": "এই কাজের নাম দিন",
       "teachSaved": "\"{{name}}\" দক্ষতা হিসেবে সংরক্ষিত",
-      "watchingLearning": "এজেন্ট দেখছে ও শিখছে"
+      "watchingLearning": "এজেন্ট দেখছে ও শিখছে",
+      "unmute": "শব্দ চালু করুন",
+      "mute": "শব্দ বন্ধ করুন"
     }
   },
   "personaBackground": {

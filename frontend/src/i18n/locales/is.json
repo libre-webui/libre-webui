@@ -2641,7 +2641,9 @@
       "teachDiscard": "Henda",
       "teachNamePlaceholder": "Nefndu þetta verkefni",
       "teachSaved": "Vistað sem færni \"{{name}}\"",
-      "watchingLearning": "Agentinn fylgist með og lærir"
+      "watchingLearning": "Agentinn fylgist með og lærir",
+      "unmute": "Kveikja á hljóði",
+      "mute": "Þagga"
     }
   },
   "personaBackground": {

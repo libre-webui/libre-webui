@@ -218,6 +218,8 @@ test('Work runtime defaults pin the image and bound resource use', () => {
     previewBind: '127.0.0.1',
     // Work Computer screen bridge (websockify) inside GUI-enabled sandboxes.
     screenPort: 6080,
+    // Work Computer audio bridge (websockify → PulseAudio monitor).
+    audioPort: 6081,
     networkName: 'libre-webui-work',
     // Idle-stop is opt-in: 0 keeps previews running until stopped.
     idleTimeoutMs: 0,

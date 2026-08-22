@@ -2641,7 +2641,9 @@
       "teachDiscard": "Bỏ",
       "teachNamePlaceholder": "Đặt tên cho tác vụ này",
       "teachSaved": "Đã lưu thành kỹ năng \"{{name}}\"",
-      "watchingLearning": "Tác nhân đang quan sát và học"
+      "watchingLearning": "Tác nhân đang quan sát và học",
+      "unmute": "Bật tiếng",
+      "mute": "Tắt tiếng"
     }
   },
   "personaBackground": {

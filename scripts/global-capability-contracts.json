@@ -2496,6 +2496,21 @@
               ]
             }
           ]
+        },
+        {
+          "file": "backend/src/websocketServer.ts",
+          "path": "/ws/work-audio",
+          "authenticationEvidence": [
+            {
+              "file": "backend/src/workScreenServer.ts",
+              "patterns": [
+                "WORK_AUDIO_WS_PATH = '/ws/work-audio'",
+                "websocketTicketService\\.consume\\(",
+                "'work-screen'",
+                "requireCurrentTerminalTask\\("
+              ]
+            }
+          ]
         }
       ],
       "contractSurfaces": {

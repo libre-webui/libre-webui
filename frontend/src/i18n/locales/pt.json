@@ -2641,7 +2641,9 @@
       "teachDiscard": "Descartar",
       "teachNamePlaceholder": "Nomeie esta tarefa",
       "teachSaved": "Salvo como habilidade \"{{name}}\"",
-      "watchingLearning": "O agente está observando e aprendendo"
+      "watchingLearning": "O agente está observando e aprendendo",
+      "unmute": "Ativar som",
+      "mute": "Silenciar"
     }
   },
   "personaBackground": {

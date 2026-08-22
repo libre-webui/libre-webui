@@ -2641,7 +2641,9 @@
       "teachDiscard": "हटाएँ",
       "teachNamePlaceholder": "इस कार्य का नाम दें",
       "teachSaved": "\"{{name}}\" कौशल के रूप में सहेजा गया",
-      "watchingLearning": "एजेंट देख रहा है और सीख रहा है"
+      "watchingLearning": "एजेंट देख रहा है और सीख रहा है",
+      "unmute": "ध्वनि चालू करें",
+      "mute": "म्यूट करें"
     }
   },
   "personaBackground": {

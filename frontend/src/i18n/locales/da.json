@@ -2641,7 +2641,9 @@
       "teachDiscard": "Kassér",
       "teachNamePlaceholder": "Navngiv denne opgave",
       "teachSaved": "Gemt som færdigheden \"{{name}}\"",
-      "watchingLearning": "Agenten ser med og lærer"
+      "watchingLearning": "Agenten ser med og lærer",
+      "unmute": "Slå lyd til",
+      "mute": "Slå lyd fra"
     }
   },
   "personaBackground": {

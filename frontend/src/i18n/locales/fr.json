@@ -2641,7 +2641,9 @@
       "teachDiscard": "Abandonner",
       "teachNamePlaceholder": "Nommez cette tâche",
       "teachSaved": "Enregistré comme compétence \"{{name}}\"",
-      "watchingLearning": "L'agent observe et apprend"
+      "watchingLearning": "L'agent observe et apprend",
+      "unmute": "Activer le son",
+      "mute": "Couper le son"
     }
   },
   "personaBackground": {

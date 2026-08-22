@@ -2641,7 +2641,9 @@
       "teachDiscard": "放弃",
       "teachNamePlaceholder": "为该任务命名",
       "teachSaved": "已保存为技能“{{name}}”",
-      "watchingLearning": "代理正在观看并学习"
+      "watchingLearning": "代理正在观看并学习",
+      "unmute": "取消静音",
+      "mute": "静音"
     }
   },
   "personaBackground": {

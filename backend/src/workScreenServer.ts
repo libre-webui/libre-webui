@@ -46,8 +46,11 @@ import { createLogger } from './utils/logger.js';
 const logger = createLogger('work-screen');
 
 export const WORK_SCREEN_WS_PATH = '/ws/work-screen';
-/** Concurrent viewers per task; watching is cheap but not free. */
+export const WORK_AUDIO_WS_PATH = '/ws/work-audio';
+/** Concurrent viewers per task and surface; watching is cheap but not free. */
 export const WORK_SCREEN_MAX_VIEWERS_PER_TASK = 4;
+
+type ScreenSurface = 'screen' | 'audio';
 /** Screen viewing counts as task activity at this cadence (idle sweep). */
 const ACTIVITY_TICK_MS = 60_000;
 
@@ -141,10 +144,16 @@ export function tryHandleScreenUpgrade(
   } catch {
     return false;
   }
-  if (pathname !== WORK_SCREEN_WS_PATH) return false;
+  const surface: ScreenSurface | undefined =
+    pathname === WORK_SCREEN_WS_PATH
+      ? 'screen'
+      : pathname === WORK_AUDIO_WS_PATH
+        ? 'audio'
+        : undefined;
+  if (!surface) return false;
   socket.pause();
-  void handleScreenUpgrade(request, socket, head).catch(error => {
-    logger.warn('Work screen upgrade failed:', error);
+  void handleScreenUpgrade(request, socket, head, surface).catch(error => {
+    logger.warn(`Work ${surface} upgrade failed:`, error);
     if (!socket.destroyed) socket.destroy();
   });
   return true;
@@ -153,7 +162,8 @@ export function tryHandleScreenUpgrade(
 async function handleScreenUpgrade(
   request: IncomingMessage,
   socket: Duplex,
-  head: Buffer
+  head: Buffer,
+  surface: ScreenSurface
 ): Promise<void> {
   let auth: ScreenAuthResult;
   try {
@@ -174,16 +184,23 @@ async function handleScreenUpgrade(
     httpError(socket, 403, 'This task has no Work Computer.');
     return;
   }
-  if ((viewersByTask.get(task.id) ?? 0) >= WORK_SCREEN_MAX_VIEWERS_PER_TASK) {
+  const viewerKey = `${surface}:${task.id}`;
+  if ((viewersByTask.get(viewerKey) ?? 0) >= WORK_SCREEN_MAX_VIEWERS_PER_TASK) {
     httpError(socket, 409, 'Too many viewers on this screen.');
     return;
   }
 
   let endpoint;
   try {
-    endpoint = await workRuntimeService.driver.screenEndpoint(task);
+    endpoint =
+      surface === 'audio'
+        ? await workRuntimeService.driver.audioEndpoint(task)
+        : await workRuntimeService.driver.screenEndpoint(task);
   } catch (error) {
-    logger.warn(`Screen endpoint lookup failed for ${task.id}:`, error);
+    logger.warn(
+      `Work ${surface} endpoint lookup failed for ${task.id}:`,
+      error
+    );
   }
   if (!endpoint) {
     httpError(socket, 409, 'The Work Computer screen is not running.');
@@ -271,7 +288,7 @@ async function handleScreenUpgrade(
     (socket as { setTimeout?: (ms: number) => void }).setTimeout?.(0);
     (socket as { setNoDelay?: (on: boolean) => void }).setNoDelay?.(true);
 
-    viewersByTask.set(task.id, (viewersByTask.get(task.id) ?? 0) + 1);
+    viewersByTask.set(viewerKey, (viewersByTask.get(viewerKey) ?? 0) + 1);
     workRuntimeService.noteTaskActivity(task.id);
     // The viewer owns the running container for the connection's lifetime:
     // without this hold, any workspace-helper call (a Files refresh) would
@@ -311,9 +328,9 @@ async function handleScreenUpgrade(
     const cleanup = (): void => {
       clearInterval(activityTimer);
       if (expiryTimer) clearTimeout(expiryTimer);
-      const remaining = (viewersByTask.get(task.id) ?? 1) - 1;
-      if (remaining <= 0) viewersByTask.delete(task.id);
-      else viewersByTask.set(task.id, remaining);
+      const remaining = (viewersByTask.get(viewerKey) ?? 1) - 1;
+      if (remaining <= 0) viewersByTask.delete(viewerKey);
+      else viewersByTask.set(viewerKey, remaining);
       workRuntimeService.noteTaskActivity(task.id);
       void releaseScreenSession?.();
     };

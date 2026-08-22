@@ -2641,7 +2641,9 @@
       "teachDiscard": "تجاهل",
       "teachNamePlaceholder": "سمّ هذه المهمة",
       "teachSaved": "حُفظت كمهارة \"{{name}}\"",
-      "watchingLearning": "الوكيل يشاهد ويتعلم"
+      "watchingLearning": "الوكيل يشاهد ويتعلم",
+      "unmute": "تشغيل الصوت",
+      "mute": "كتم الصوت"
     }
   },
   "personaBackground": {

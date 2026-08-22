@@ -40,6 +40,12 @@ on container port 6080 — the only network-reachable surface. The backend
 publishes that port on the Docker host's loopback and re-authenticates
 every viewer with a one-use, task-bound ticket.
 
+Audio: PulseAudio plays into a null sink; its monitor is captured per
+connection (`socat` + `parec`, raw s16le 44.1 kHz stereo) and served over a
+second websockify bridge on container port 6081, published and
+authenticated exactly like the screen. Silence transmits nothing — Pulse
+suspends idle sources.
+
 The VNC session has two per-session passwords generated at start (0600
 passwd file in the state dir): the entry before `__BEGIN_VIEWONLY__`
 grants full mouse/keyboard control and is released by the backend only to
