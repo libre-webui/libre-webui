@@ -3211,6 +3211,16 @@ test(
       `ALTER TABLE work_messages
          DROP CONSTRAINT work_messages_content_json_string_check`
     );
+    await target.query('ALTER TABLE work_policies DROP COLUMN gui_enabled');
+    await target.query(
+      'DELETE FROM libre_schema_migrations WHERE version = 22'
+    );
+    await target.query('ALTER TABLE automation_runs DROP COLUMN work_task_id');
+    await target.query('ALTER TABLE automations DROP COLUMN work_policy_id');
+    await target.query('ALTER TABLE automations DROP COLUMN target');
+    await target.query(
+      'DELETE FROM libre_schema_migrations WHERE version = 21'
+    );
     await target.query('DROP TABLE recovery_drills');
     await target.query('DROP TABLE push_subscriptions');
     await target.query('DROP TABLE webauthn_credentials');
@@ -3347,7 +3357,7 @@ test(
     assert.equal(prefixDryRun.sourceFingerprint, dryRun.sourceFingerprint);
     assert.match(
       prefixDryRun.warnings.join('\n'),
-      /exact version 10 migration-ledger prefix.*--resume can safely apply through version 20/i
+      /exact version 10 migration-ledger prefix.*--resume can safely apply through version 22/i
     );
     const codec = {
       encrypt: value => value,
@@ -3390,7 +3400,7 @@ test(
          (SELECT COUNT(*)::text FROM work_messages) AS work_messages`
     );
     assert.deepEqual(resumedState.rows[0], {
-      schema_version: '20',
+      schema_version: '22',
       import_status: 'complete',
       journal_count: String(dryRun.tables.length),
       work_journal: '1',
