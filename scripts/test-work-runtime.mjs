@@ -276,6 +276,77 @@ test('workspace helpers attach to a running sandbox when the lease is held elsew
   );
 });
 
+test('the Work Computer and screen viewers survive a lease held elsewhere', async () => {
+  const sharedModule = await import(
+    pathToFileURL(
+      path.join(repoRoot, 'backend', 'dist', 'services', 'workRuntimeShared.js')
+    ).href
+  );
+  const policyModule = await import(
+    pathToFileURL(
+      path.join(repoRoot, 'backend', 'dist', 'services', 'workPolicyService.js')
+    ).href
+  );
+  const originalResolve = policyModule.default.resolve;
+  policyModule.default.resolve = async () => ({
+    guiEnabled: true,
+    idleTimeoutMs: 0,
+  });
+  try {
+    const service = new WorkRuntimeService();
+    // In team mode the durable worker holds the per-task runtime lease for
+    // the whole run — exactly when a human opens the Screen tab. The
+    // session must attach to the running sandbox instead of failing with
+    // "active on another replica".
+    service.acquireRuntimeLease = async () => {
+      throw new sharedModule.WorkRuntimeError(
+        'This Work task is active on another replica.',
+        409,
+        'WORK_RUNTIME_LEASE_CONFLICT'
+      );
+    };
+    service.assertTaskIsActive = async () => {};
+    service.stopContainerIfIdleWithLock = async () => false;
+    let runtimeState = 'running';
+    const execCommands = [];
+    service.driver = {
+      runtimeState: async () => runtimeState,
+      exec: async (_task, command) => {
+        execCommands.push(command.join(' '));
+        return { stdout: '', stderr: '', exitCode: 0 };
+      },
+    };
+    const task = {
+      id: 'task-computer-lease-attach',
+      userId: 'admin-a',
+      networkEnabled: true,
+      containerName: 'container-computer-lease-attach',
+      volumeName: 'volume-computer-lease-attach',
+    };
+    await service.startComputer(task);
+    assert.ok(
+      execCommands.some(command => command.includes('start-computer'))
+    );
+
+    // A viewer never takes the runtime lease at all: watching must neither
+    // fail against an active run nor block the next run from starting.
+    const release = await service.beginScreenSession(task);
+    assert.equal(service.screenSessionCount(task.id), 1);
+    await release();
+    assert.equal(service.screenSessionCount(task.id), 0);
+
+    // Without a running sandbox the conflict still surfaces: the holder
+    // really is another replica mid-lifecycle.
+    runtimeState = 'stopped';
+    await assert.rejects(
+      () => service.startComputer(task),
+      error => error.code === 'WORK_RUNTIME_LEASE_CONFLICT'
+    );
+  } finally {
+    policyModule.default.resolve = originalResolve;
+  }
+});
+
 test('a run waits out a transient shared-lease holder instead of failing', async () => {
   const { acquireSharedRuntimeLeaseWithWait } = runtimeModule;
 

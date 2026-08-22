@@ -406,6 +406,11 @@ export class WorkRuntimeService {
   private previewLeaseReleases = new Map<string, () => void>();
   private terminalHolds = new Map<string, number>();
   private screenHolds = new Map<string, number>();
+  // Cross-replica mirror of screenHolds: presence members that tell another
+  // replica's teardown (a run ending on the durable worker) that a viewer
+  // here still owns the container.
+  private viewerPresenceCounts = new Map<string, number>();
+  private viewerPresenceTimers = new Map<string, NodeJS.Timeout>();
   private recoveryTasks = new Map<string, WorkTaskRecord>();
   private recoveryOrphans = new Map<string, DiscoveredWorkContainer>();
   private recoveryInventory?: WorkTaskRecord[];
@@ -833,7 +838,13 @@ export class WorkRuntimeService {
    * release for the lifetime of the viewer connection.
    */
   async beginScreenSession(task: WorkTaskRecord): Promise<() => Promise<void>> {
-    const releaseLease = await this.acquireRuntimeLease(task);
+    // Deliberately NOT the runtime lease: in team mode the task's run holds
+    // that lease on the durable worker for its whole duration, and a viewer
+    // must neither fail against it nor block the next run by holding it.
+    // Local holds stop this process's teardown; the presence member stops
+    // every other replica's.
+    await this.assertTaskIsActive(task);
+    const releasePresence = await this.acquireViewerPresence(task.id);
     this.screenHolds.set(task.id, (this.screenHolds.get(task.id) ?? 0) + 1);
     let released = false;
     return async () => {
@@ -846,6 +857,7 @@ export class WorkRuntimeService {
       } else {
         this.screenHolds.set(task.id, remaining);
       }
+      releasePresence();
       try {
         if (remaining <= 0 && !this.shuttingDown) {
           await this.withLifecycleLock(task.id, (_assertHeld, signal) =>
@@ -857,9 +869,65 @@ export class WorkRuntimeService {
           `Could not idle Work container ${task.containerName} after a screen session:`,
           error
         );
-      } finally {
-        releaseLease();
       }
+    };
+  }
+
+  /**
+   * Register this process as an active viewer of the task in the shared
+   * presence scope, refreshed for as long as at least one viewer remains.
+   * Solo mode needs no cross-replica signal and returns a no-op.
+   */
+  private async acquireViewerPresence(taskId: string): Promise<() => void> {
+    if (getPlatformRuntimeConfig().mode !== 'team') {
+      return () => undefined;
+    }
+    const member = `${this.activityMemberId}:viewer`;
+    const refresh = (): Promise<void> =>
+      withCoordinationTimeout(
+        getCoordinator().setPresence(
+          `work-task-active:${taskId}`,
+          member,
+          30_000
+        ),
+        SHARED_COORDINATION_OPERATION_TIMEOUT_MS
+      );
+    await refresh();
+    const count = this.viewerPresenceCounts.get(taskId) ?? 0;
+    if (count === 0) {
+      const timer = setInterval(() => {
+        void refresh().catch(error =>
+          logger.warn(
+            `Could not refresh Work viewer presence for ${taskId}:`,
+            error
+          )
+        );
+      }, 10_000);
+      timer.unref?.();
+      this.viewerPresenceTimers.set(taskId, timer);
+    }
+    this.viewerPresenceCounts.set(taskId, count + 1);
+    let released = false;
+    return () => {
+      if (released) return;
+      released = true;
+      const remaining = (this.viewerPresenceCounts.get(taskId) ?? 1) - 1;
+      if (remaining > 0) {
+        this.viewerPresenceCounts.set(taskId, remaining);
+        return;
+      }
+      this.viewerPresenceCounts.delete(taskId);
+      const timer = this.viewerPresenceTimers.get(taskId);
+      if (timer) clearInterval(timer);
+      this.viewerPresenceTimers.delete(taskId);
+      void getCoordinator()
+        .clearPresence(`work-task-active:${taskId}`, member)
+        .catch(error =>
+          logger.warn(
+            `Could not clear Work viewer presence for ${taskId}:`,
+            error
+          )
+        );
     };
   }
 
@@ -1473,6 +1541,30 @@ export class WorkRuntimeService {
     // So does a watched Work Computer screen: without this, every Files
     // refresh would destroy the GUI session mid-view.
     if ((this.screenHolds.get(task.id) ?? 0) > 0) return false;
+    // Holds on other replicas are only visible through the presence scope:
+    // a screen viewer on the app process must survive the durable worker's
+    // run-end teardown, and a run on the worker must survive an app-side
+    // helper's teardown. Own members are excluded — this process's holds
+    // were checked directly above, and a run's own presence must not block
+    // its own cleanup. When coordination is unreachable, keep the container;
+    // the idle sweep is the backstop.
+    if (getPlatformRuntimeConfig().mode === 'team') {
+      try {
+        const members = await withCoordinationTimeout(
+          getCoordinator().listPresence(`work-task-active:${task.id}`),
+          SHARED_COORDINATION_OPERATION_TIMEOUT_MS
+        );
+        if (members.some(member => !member.startsWith(this.activityMemberId))) {
+          return false;
+        }
+      } catch (error) {
+        logger.warn(
+          `Could not check cross-replica activity before idling Work container ${task.containerName}; keeping it:`,
+          error
+        );
+        return false;
+      }
+    }
     try {
       if (
         (await this.previewProcessCheckWithLock(task, signal)) === 'ready' &&
@@ -2217,7 +2309,29 @@ export class WorkRuntimeService {
         'WORK_COMPUTER_NOT_ENABLED'
       );
     }
-    const releaseLease = await this.acquireRuntimeLease(task);
+    let releaseLease: () => void;
+    try {
+      releaseLease = await this.acquireRuntimeLease(task);
+    } catch (error) {
+      // In team mode the lease holder is usually this deployment's own
+      // durable worker executing the task's run — exactly when a human
+      // wants to see the screen. When the sandbox is already running,
+      // attach to it the way workspace helpers do: start-computer is
+      // idempotent, and lifecycle transitions stay lease-guarded.
+      if (
+        error instanceof WorkRuntimeError &&
+        error.code === 'WORK_RUNTIME_LEASE_CONFLICT'
+      ) {
+        await this.assertTaskIsActive(task);
+        if ((await this.driver.runtimeState(task)) === 'running') {
+          await this.startComputerInContainer(task);
+          const value = await fn();
+          this.noteTaskActivity(task.id);
+          return value;
+        }
+      }
+      throw error;
+    }
     try {
       await this.ensureImage(task);
       await this.assertTaskIsActive(task);
@@ -2228,29 +2342,36 @@ export class WorkRuntimeService {
           this.assertCurrentNetworkPolicy(task);
           await assertHeld();
           await this.prepareWithLock(task, signal);
-          const result = await this.driver.exec(
-            task,
-            ['/usr/local/bin/start-computer'],
-            { timeoutMs: 60_000 }
-          );
-          if (result.exitCode !== 0) {
-            const detail = (result.stderr || result.stdout || '')
-              .trim()
-              .slice(0, 300);
-            throw new WorkRuntimeError(
-              `The Work Computer could not start${detail ? `: ${detail}` : '.'} ` +
-                'The policy image must include the Work Computer GUI stack.',
-              500,
-              'WORK_COMPUTER_START_FAILED'
-            );
-          }
+          await this.startComputerInContainer(task, signal);
           const value = await fn(signal);
           this.noteTaskActivity(task.id);
           return value;
         }
       );
     } finally {
-      await releaseLease();
+      releaseLease();
+    }
+  }
+
+  private async startComputerInContainer(
+    task: WorkTaskRecord,
+    signal?: AbortSignal
+  ): Promise<void> {
+    const result = await this.driver.exec(
+      task,
+      ['/usr/local/bin/start-computer'],
+      { timeoutMs: 60_000, ...(signal ? { abortSignal: signal } : {}) }
+    );
+    if (result.exitCode !== 0) {
+      const detail = (result.stderr || result.stdout || '')
+        .trim()
+        .slice(0, 300);
+      throw new WorkRuntimeError(
+        `The Work Computer could not start${detail ? `: ${detail}` : '.'} ` +
+          'The policy image must include the Work Computer GUI stack.',
+        500,
+        'WORK_COMPUTER_START_FAILED'
+      );
     }
   }
 
