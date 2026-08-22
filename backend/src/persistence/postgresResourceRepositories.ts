@@ -2350,8 +2350,10 @@ class PostgresAutomationRepository implements AutomationRepository {
       const result = await client.query(
         `INSERT INTO automations
            (id, user_id, name, instructions, triggers, provider, model,
-            notify, status, next_run_at, last_run_at, created_at, updated_at)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+            notify, status, target, work_policy_id, next_run_at,
+            last_run_at, created_at, updated_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13,
+                 $14, $15)
          ON CONFLICT (id) DO UPDATE SET
            name = EXCLUDED.name,
            instructions = EXCLUDED.instructions,
@@ -2360,6 +2362,8 @@ class PostgresAutomationRepository implements AutomationRepository {
            model = EXCLUDED.model,
            notify = EXCLUDED.notify,
            status = EXCLUDED.status,
+           target = EXCLUDED.target,
+           work_policy_id = EXCLUDED.work_policy_id,
            next_run_at = EXCLUDED.next_run_at,
            last_run_at = EXCLUDED.last_run_at,
            updated_at = EXCLUDED.updated_at
@@ -2374,6 +2378,8 @@ class PostgresAutomationRepository implements AutomationRepository {
           value.model,
           value.notify,
           value.status,
+          value.target,
+          value.work_policy_id,
           value.next_run_at,
           value.last_run_at,
           value.created_at,
@@ -2462,8 +2468,9 @@ class PostgresAutomationRunRepository implements AutomationRunRepository {
     await this.database.query(
       `INSERT INTO automation_runs
          (id, automation_id, user_id, scheduled_for, started_at, finished_at,
-          status, session_id, assistant_message_id, error, seen_at, created_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
+          status, session_id, assistant_message_id, work_task_id, error,
+          seen_at, created_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`,
       [
         run.id,
         run.automation_id,
@@ -2474,6 +2481,7 @@ class PostgresAutomationRunRepository implements AutomationRunRepository {
         run.status,
         run.session_id,
         run.assistant_message_id,
+        run.work_task_id,
         run.error,
         run.seen_at,
         run.created_at,
@@ -2552,6 +2560,25 @@ class PostgresAutomationRunRepository implements AutomationRunRepository {
                   status = 'running'
               WHERE id = $4 AND status = 'queued'`,
             [sessionId, assistantMessageId, startedAt, runId]
+          )
+        ).rowCount
+      ) > 0
+    );
+  }
+
+  async markStartedWork(
+    runId: string,
+    workTaskId: string,
+    startedAt: number
+  ): Promise<boolean> {
+    return (
+      changes(
+        (
+          await this.database.query(
+            `UPDATE automation_runs
+              SET work_task_id = $1, started_at = $2, status = 'running'
+              WHERE id = $3 AND status = 'queued'`,
+            [workTaskId, startedAt, runId]
           )
         ).rowCount
       ) > 0

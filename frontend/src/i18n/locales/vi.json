@@ -2808,7 +2808,12 @@
       "toHour": "Đến",
       "weekday": "Thứ",
       "dayOfMonth": "Ngày",
-      "month": "Tháng"
+      "month": "Tháng",
+      "target": "Chạy dưới dạng",
+      "targetChat": "Phiên trò chuyện",
+      "targetWork": "Tác vụ Work",
+      "workPolicy": "Chính sách Work",
+      "workPolicyDefault": "Mặc định (giới hạn chung)"
     },
     "kind": {
       "once": "Một lần",
@@ -2845,7 +2850,8 @@
         "name": "Báo cáo tháng",
         "description": "Dàn ý báo cáo tình trạng vào ngày đầu mỗi tháng."
       }
-    }
+    },
+    "openTask": "Mở tác vụ"
   },
   "home": {
     "active": "đang hoạt động",

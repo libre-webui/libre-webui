@@ -2808,7 +2808,12 @@
       "toHour": "إلى",
       "weekday": "اليوم",
       "dayOfMonth": "اليوم",
-      "month": "الشهر"
+      "month": "الشهر",
+      "target": "تشغيل كـ",
+      "targetChat": "جلسة محادثة",
+      "targetWork": "مهمة Work",
+      "workPolicy": "سياسة Work",
+      "workPolicyDefault": "افتراضي (حدود عامة)"
     },
     "kind": {
       "once": "مرة واحدة",
@@ -2845,7 +2850,8 @@
         "name": "تقرير شهري",
         "description": "مخطط تقرير حالة في أول كل شهر."
       }
-    }
+    },
+    "openTask": "فتح المهمة"
   },
   "home": {
     "active": "نشط",

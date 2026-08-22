@@ -15,13 +15,20 @@
  * limitations under the License.
  */
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { Plus, X } from 'lucide-react';
-import type { Automation, AutomationTrigger, OllamaModel } from '@/types';
+import type {
+  Automation,
+  AutomationTarget,
+  AutomationTrigger,
+  OllamaModel,
+} from '@/types';
 import type { AutomationPayload } from '@/utils/api/automationsApi';
 import { isTriggerValid } from '@/utils/automationSchedule';
+import { workApi } from '@/utils/api';
+import type { WorkPolicy } from '@/types/work';
 import { TriggerEditor } from './TriggerEditor';
 
 interface AutomationModalProps {
@@ -93,6 +100,30 @@ function AutomationModalForm({
   const [notify, setNotify] = useState<'app' | 'off'>(
     automation?.notify ?? 'app'
   );
+  const [target, setTarget] = useState<AutomationTarget>(
+    automation?.target ?? 'chat'
+  );
+  const [workPolicyId, setWorkPolicyId] = useState(
+    automation?.workPolicyId ?? ''
+  );
+  // Named policies are optional server config; an empty list renders no
+  // picker, mirroring the Work composer.
+  const [policies, setPolicies] = useState<WorkPolicy[]>([]);
+  useEffect(() => {
+    if (target !== 'work') return;
+    let cancelled = false;
+    workApi
+      .listPolicies()
+      .then(response => {
+        if (!cancelled && response.success && Array.isArray(response.data)) {
+          setPolicies(response.data);
+        }
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, [target]);
 
   const valid =
     name.trim().length > 0 &&
@@ -109,6 +140,8 @@ function AutomationModalForm({
       triggers,
       ...(picked ? { provider: providerOf(picked), model: picked.name } : {}),
       notify,
+      target,
+      ...(target === 'work' && workPolicyId ? { workPolicyId } : {}),
     });
   };
 
@@ -218,6 +251,47 @@ function AutomationModalForm({
               className={fieldClass}
               maxLength={20_000}
             />
+          </div>
+
+          <div className='grid grid-cols-2 gap-3'>
+            <div>
+              <label htmlFor='automation-target' className={labelClass}>
+                {t('automations.form.target')}
+              </label>
+              <select
+                id='automation-target'
+                data-testid='automation-target'
+                value={target}
+                onChange={e => setTarget(e.target.value as AutomationTarget)}
+                className={fieldClass}
+              >
+                <option value='chat'>{t('automations.form.targetChat')}</option>
+                <option value='work'>{t('automations.form.targetWork')}</option>
+              </select>
+            </div>
+            {target === 'work' && policies.length > 0 && (
+              <div>
+                <label htmlFor='automation-work-policy' className={labelClass}>
+                  {t('automations.form.workPolicy')}
+                </label>
+                <select
+                  id='automation-work-policy'
+                  data-testid='automation-work-policy'
+                  value={workPolicyId}
+                  onChange={e => setWorkPolicyId(e.target.value)}
+                  className={fieldClass}
+                >
+                  <option value=''>
+                    {t('automations.form.workPolicyDefault')}
+                  </option>
+                  {policies.map(policy => (
+                    <option key={policy.id} value={policy.id}>
+                      {policy.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
           </div>
 
           <div className='grid grid-cols-2 gap-3'>

@@ -75,6 +75,10 @@ function readAutomationBody(body: Record<string, unknown>): AutomationInput {
       : undefined;
   const model =
     typeof body.model === 'string' && body.model ? body.model : undefined;
+  const workPolicyId =
+    typeof body.workPolicyId === 'string' && body.workPolicyId
+      ? body.workPolicyId
+      : undefined;
   return {
     name: typeof body.name === 'string' ? body.name : '',
     instructions:
@@ -83,6 +87,8 @@ function readAutomationBody(body: Record<string, unknown>): AutomationInput {
     ...(provider ? { provider } : {}),
     ...(model ? { model } : {}),
     notify: body.notify === 'off' ? 'off' : 'app',
+    target: body.target === 'work' ? 'work' : 'chat',
+    ...(workPolicyId ? { workPolicyId } : {}),
   };
 }
 

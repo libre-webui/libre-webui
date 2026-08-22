@@ -26,6 +26,7 @@ import { POSTGRES_NOTES_V2_MIGRATION } from './postgresNotesV2Migration.js';
 import { POSTGRES_TEAM_COLLABORATION_MIGRATION } from './postgresTeamCollaborationMigration.js';
 import { POSTGRES_MEDIA_ENTERPRISE_OPS_MIGRATION } from './postgresMediaEnterpriseOpsMigration.js';
 import { POSTGRES_MFA_PUSH_RECOVERY_MIGRATION } from './postgresMfaPushRecoveryMigration.js';
+import { POSTGRES_AUTOMATION_WORK_TARGET_MIGRATION } from './postgresAutomationWorkTargetMigration.js';
 import type { PostgresMigration } from './postgresMigrationTypes.js';
 import { validatePostgresMigrationRegistry } from './postgresMigrations.js';
 
@@ -54,6 +55,7 @@ export const POSTGRES_MIGRATIONS: readonly PostgresMigration[] =
         POSTGRES_TEAM_COLLABORATION_MIGRATION,
         POSTGRES_MEDIA_ENTERPRISE_OPS_MIGRATION,
         POSTGRES_MFA_PUSH_RECOVERY_MIGRATION,
+        POSTGRES_AUTOMATION_WORK_TARGET_MIGRATION,
       ].map(migration => Object.freeze({ ...migration }))
     )
   );

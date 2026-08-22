@@ -2808,7 +2808,12 @@
       "toHour": "Sampai",
       "weekday": "Hari",
       "dayOfMonth": "Tanggal",
-      "month": "Bulan"
+      "month": "Bulan",
+      "target": "Jalankan sebagai",
+      "targetChat": "Sesi obrolan",
+      "targetWork": "Tugas Work",
+      "workPolicy": "Kebijakan Work",
+      "workPolicyDefault": "Bawaan (batas global)"
     },
     "kind": {
       "once": "Sekali",
@@ -2845,7 +2850,8 @@
         "name": "Laporan bulanan",
         "description": "Kerangka laporan status setiap tanggal satu."
       }
-    }
+    },
+    "openTask": "Buka tugas"
   },
   "home": {
     "active": "aktif",

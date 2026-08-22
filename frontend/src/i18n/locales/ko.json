@@ -2808,7 +2808,12 @@
       "toHour": "종료",
       "weekday": "요일",
       "dayOfMonth": "일",
-      "month": "월"
+      "month": "월",
+      "target": "실행 방식",
+      "targetChat": "채팅 세션",
+      "targetWork": "Work 작업",
+      "workPolicy": "Work 정책",
+      "workPolicyDefault": "기본값(전역 제한)"
     },
     "kind": {
       "once": "한 번",
@@ -2845,7 +2850,8 @@
         "name": "월간 보고서",
         "description": "매월 1일 상태 보고서 개요."
       }
-    }
+    },
+    "openTask": "작업 열기"
   },
   "home": {
     "active": "활성",

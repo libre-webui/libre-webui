@@ -225,6 +225,67 @@ test('automations enforce validation, ownership, and pause semantics', async () 
   assert.equal(response.status, 200);
 });
 
+test('a work-target automation stores its target and validates the policy', async () => {
+  // Default target is chat; an explicit work target persists.
+  let response = await fetch(baseUrl, {
+    method: 'POST',
+    headers: headersFor(ownerToken),
+    body: JSON.stringify({
+      name: 'Nightly build check',
+      instructions: 'Clone the repo and run the test suite.',
+      triggers: [{ kind: 'daily', hour: 2, minute: 0 }],
+      target: 'work',
+    }),
+  });
+  assert.equal(response.status, 200);
+  const created = (await response.json()).data;
+  assert.equal(created.target, 'work');
+  assert.equal(created.workPolicyId, undefined);
+
+  // An unknown Work policy is refused at save time.
+  response = await fetch(baseUrl, {
+    method: 'POST',
+    headers: headersFor(ownerToken),
+    body: JSON.stringify({
+      name: 'Bad policy',
+      instructions: 'Run something.',
+      triggers: [{ kind: 'daily', hour: 3, minute: 0 }],
+      target: 'work',
+      workPolicyId: 'no-such-policy',
+    }),
+  });
+  assert.equal(response.status, 400);
+
+  // A chat-target automation ignores any stray policy id.
+  response = await fetch(baseUrl, {
+    method: 'POST',
+    headers: headersFor(ownerToken),
+    body: JSON.stringify({
+      name: 'Chat with stray policy',
+      instructions: 'Say hi.',
+      triggers: [{ kind: 'daily', hour: 4, minute: 0 }],
+      target: 'chat',
+      workPolicyId: 'no-such-policy',
+    }),
+  });
+  assert.equal(response.status, 200);
+  assert.equal((await response.json()).data.target, 'chat');
+
+  // Unknown target values normalize to chat instead of erroring.
+  response = await fetch(baseUrl, {
+    method: 'POST',
+    headers: headersFor(ownerToken),
+    body: JSON.stringify({
+      name: 'Weird target',
+      instructions: 'Do a thing.',
+      triggers: [{ kind: 'daily', hour: 5, minute: 0 }],
+      target: 'teleport',
+    }),
+  });
+  assert.equal(response.status, 200);
+  assert.equal((await response.json()).data.target, 'chat');
+});
+
 test('the scheduler fires due automations once and settles stalled runs', async () => {
   const createResponse = await fetch(baseUrl, {
     method: 'POST',

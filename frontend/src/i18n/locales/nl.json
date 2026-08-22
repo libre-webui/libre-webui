@@ -2808,7 +2808,12 @@
       "toHour": "Tot",
       "weekday": "Weekdag",
       "dayOfMonth": "Dag",
-      "month": "Maand"
+      "month": "Maand",
+      "target": "Uitvoeren als",
+      "targetChat": "Chatsessie",
+      "targetWork": "Work-taak",
+      "workPolicy": "Work-beleid",
+      "workPolicyDefault": "Standaard (globale limieten)"
     },
     "kind": {
       "once": "Eenmalig",
@@ -2845,7 +2850,8 @@
         "name": "Maandrapport",
         "description": "Een opzet voor een statusrapport op de eerste van elke maand."
       }
-    }
+    },
+    "openTask": "Taak openen"
   },
   "home": {
     "active": "actief",

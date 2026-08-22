@@ -2808,7 +2808,12 @@
       "toHour": "तक",
       "weekday": "सप्ताह का दिन",
       "dayOfMonth": "दिन",
-      "month": "महीना"
+      "month": "महीना",
+      "target": "इस रूप में चलाएँ",
+      "targetChat": "चैट सत्र",
+      "targetWork": "Work कार्य",
+      "workPolicy": "Work नीति",
+      "workPolicyDefault": "डिफ़ॉल्ट (वैश्विक सीमाएँ)"
     },
     "kind": {
       "once": "एक बार",
@@ -2845,7 +2850,8 @@
         "name": "मासिक रिपोर्ट",
         "description": "हर महीने की पहली तारीख़ को स्थिति रिपोर्ट की रूपरेखा।"
       }
-    }
+    },
+    "openTask": "कार्य खोलें"
   },
   "home": {
     "active": "सक्रिय",

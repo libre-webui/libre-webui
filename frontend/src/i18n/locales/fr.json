@@ -2808,7 +2808,12 @@
       "toHour": "À",
       "weekday": "Jour de la semaine",
       "dayOfMonth": "Jour",
-      "month": "Mois"
+      "month": "Mois",
+      "target": "Exécuter comme",
+      "targetChat": "Session de chat",
+      "targetWork": "Tâche Work",
+      "workPolicy": "Politique Work",
+      "workPolicyDefault": "Par défaut (limites globales)"
     },
     "kind": {
       "once": "Une fois",
@@ -2845,7 +2850,8 @@
         "name": "Rapport mensuel",
         "description": "Un plan de rapport d'état le premier de chaque mois."
       }
-    }
+    },
+    "openTask": "Ouvrir la tâche"
   },
   "home": {
     "active": "actif",

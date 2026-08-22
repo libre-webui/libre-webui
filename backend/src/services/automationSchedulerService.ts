@@ -213,6 +213,47 @@ class AutomationSchedulerService {
     let settled = 0;
     for (const run of runs) {
       try {
+        if (run.work_task_id) {
+          // A Work-target run settles from its task's lifecycle: the agent
+          // finishing (or needing input) succeeds the run; a failed or
+          // cancelled task fails it; an active task is left alone.
+          const { workTaskService } = await import('./workTaskService.js');
+          const task = await workTaskService.getTaskRecord(
+            run.work_task_id,
+            run.user_id
+          );
+          if (!task) {
+            if (
+              await automationService.finalizeRun(
+                run.id,
+                'failed',
+                'work-task-missing',
+                { userId: run.user_id, automationId: run.automation_id }
+              )
+            ) {
+              settled += 1;
+            }
+          } else if (
+            task.status === 'completed' ||
+            task.status === 'needs_input'
+          ) {
+            if (await automationService.finalizeRun(run.id, 'succeeded')) {
+              settled += 1;
+            }
+          } else if (task.status === 'failed' || task.status === 'cancelled') {
+            if (
+              await automationService.finalizeRun(
+                run.id,
+                'failed',
+                `work-task-${task.status}`,
+                { userId: run.user_id, automationId: run.automation_id }
+              )
+            ) {
+              settled += 1;
+            }
+          }
+          continue;
+        }
         if (run.session_id && run.assistant_message_id) {
           const chatJob = await service.getByIdempotency(
             run.user_id,

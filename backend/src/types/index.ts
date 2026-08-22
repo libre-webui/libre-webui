@@ -272,6 +272,8 @@ export interface WebhookTargetView {
 export type AutomationNotify = 'app' | 'off';
 export type AutomationStatus = 'active' | 'paused';
 export type AutomationRunStatus = 'queued' | 'running' | 'succeeded' | 'failed';
+/** 'chat' runs a scheduled chat session; 'work' launches an isolated Work task. */
+export type AutomationTarget = 'chat' | 'work';
 
 export interface Automation {
   id: string;
@@ -283,6 +285,9 @@ export interface Automation {
   model?: string;
   notify: AutomationNotify;
   status: AutomationStatus;
+  target: AutomationTarget;
+  /** Named Work policy applied when the target is 'work'. */
+  workPolicyId?: string;
   nextRunAt?: number;
   lastRunAt?: number;
   createdAt: number;
@@ -297,6 +302,8 @@ export interface AutomationRun {
   finishedAt?: number;
   status: AutomationRunStatus;
   sessionId?: string;
+  /** The Work task a 'work'-target run created. */
+  workTaskId?: string;
   error?: string;
   seen: boolean;
   createdAt: number;

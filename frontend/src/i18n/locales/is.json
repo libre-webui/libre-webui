@@ -2808,7 +2808,12 @@
       "toHour": "Til",
       "weekday": "Vikudagur",
       "dayOfMonth": "Dagur",
-      "month": "Mánuður"
+      "month": "Mánuður",
+      "target": "Keyra sem",
+      "targetChat": "Spjalllota",
+      "targetWork": "Work-verkefni",
+      "workPolicy": "Work-regla",
+      "workPolicyDefault": "Sjálfgefið (almenn mörk)"
     },
     "kind": {
       "once": "Einu sinni",
@@ -2845,7 +2850,8 @@
         "name": "Mánaðarskýrsla",
         "description": "Uppkast að stöðuskýrslu fyrsta dag hvers mánaðar."
       }
-    }
+    },
+    "openTask": "Opna verkefni"
   },
   "home": {
     "active": "virkt",

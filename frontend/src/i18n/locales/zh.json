@@ -2808,7 +2808,12 @@
       "toHour": "到",
       "weekday": "星期",
       "dayOfMonth": "日",
-      "month": "月"
+      "month": "月",
+      "target": "运行方式",
+      "targetChat": "聊天会话",
+      "targetWork": "Work 任务",
+      "workPolicy": "Work 策略",
+      "workPolicyDefault": "默认（全局限制）"
     },
     "kind": {
       "once": "一次",
@@ -2845,7 +2850,8 @@
         "name": "月度报告",
         "description": "每月一日的状态报告提纲。"
       }
-    }
+    },
+    "openTask": "打开任务"
   },
   "home": {
     "active": "活跃",

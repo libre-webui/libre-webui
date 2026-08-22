@@ -2808,7 +2808,12 @@
       "toHour": "Hasta",
       "weekday": "Día de la semana",
       "dayOfMonth": "Día",
-      "month": "Mes"
+      "month": "Mes",
+      "target": "Ejecutar como",
+      "targetChat": "Sesión de chat",
+      "targetWork": "Tarea de Work",
+      "workPolicy": "Política de Work",
+      "workPolicyDefault": "Predeterminada (límites globales)"
     },
     "kind": {
       "once": "Una vez",
@@ -2845,7 +2850,8 @@
         "name": "Informe mensual",
         "description": "Un esquema de informe de estado el primer día de cada mes."
       }
-    }
+    },
+    "openTask": "Abrir tarea"
   },
   "home": {
     "active": "activo",

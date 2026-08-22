@@ -22,6 +22,7 @@ import type {
   AutomationRun,
   AutomationRunStatus,
   AutomationStatus,
+  AutomationTarget,
   AutomationTrigger,
 } from '../types/index.js';
 import { encryptionService } from './encryptionService.js';
@@ -77,6 +78,8 @@ const mapAutomationRow = (row: StoredAutomationRecord): Automation => ({
   ...(row.model ? { model: row.model } : {}),
   notify: row.notify as AutomationNotify,
   status: row.status as AutomationStatus,
+  target: (row.target === 'work' ? 'work' : 'chat') as AutomationTarget,
+  ...(row.work_policy_id !== null ? { workPolicyId: row.work_policy_id } : {}),
   ...(row.next_run_at !== null ? { nextRunAt: row.next_run_at } : {}),
   ...(row.last_run_at !== null ? { lastRunAt: row.last_run_at } : {}),
   createdAt: row.created_at,
@@ -91,6 +94,7 @@ const mapRunRow = (row: StoredAutomationRunRecord): AutomationRun => ({
   ...(row.finished_at !== null ? { finishedAt: row.finished_at } : {}),
   status: row.status as AutomationRunStatus,
   ...(row.session_id !== null ? { sessionId: row.session_id } : {}),
+  ...(row.work_task_id !== null ? { workTaskId: row.work_task_id } : {}),
   ...(row.error !== null ? { error: row.error } : {}),
   seen: row.seen_at !== null,
   createdAt: row.created_at,
@@ -103,6 +107,8 @@ export interface AutomationInput {
   provider?: string;
   model?: string;
   notify?: AutomationNotify;
+  target?: AutomationTarget;
+  workPolicyId?: string;
 }
 
 class AutomationService {
@@ -170,6 +176,27 @@ class AutomationService {
       );
     }
     const triggers = validateTriggers(input.triggers);
+    const target: AutomationTarget = input.target === 'work' ? 'work' : 'chat';
+    const workPolicyId =
+      target === 'work' && input.workPolicyId ? input.workPolicyId : null;
+    if (workPolicyId) {
+      // A dangling policy would fail every run; refuse it at save time,
+      // mirroring the Work composer's behavior. An unreachable Work
+      // subsystem counts as unverifiable and is refused the same way.
+      let policyExists = false;
+      try {
+        const { workPolicyService } = await import('./workPolicyService.js');
+        policyExists = Boolean(await workPolicyService.get(workPolicyId));
+      } catch {
+        policyExists = false;
+      }
+      if (!policyExists) {
+        throw new ResourcePolicyError(
+          'The selected Work policy no longer exists',
+          400
+        );
+      }
+    }
     const now = Date.now();
     const status = (existing?.status ?? 'active') as AutomationStatus;
     const record: StoredAutomationRecord = {
@@ -182,6 +209,8 @@ class AutomationService {
       model: input.model ?? null,
       notify: input.notify === 'off' ? 'off' : 'app',
       status,
+      target,
+      work_policy_id: workPolicyId,
       // Editing reschedules from now; a paused automation stays dormant.
       next_run_at: status === 'active' ? nextRunAt(triggers, now) : null,
       last_run_at: existing?.last_run_at ?? null,
@@ -260,6 +289,7 @@ class AutomationService {
       status: 'queued',
       session_id: null,
       assistant_message_id: null,
+      work_task_id: null,
       error: null,
       seen_at: null,
       created_at: Date.now(),
@@ -299,6 +329,17 @@ class AutomationService {
       runId,
       sessionId,
       assistantMessageId,
+      Date.now()
+    );
+  }
+
+  async markRunStartedWork(
+    runId: string,
+    workTaskId: string
+  ): Promise<boolean> {
+    return repositories().automationRuns.markStartedWork(
+      runId,
+      workTaskId,
       Date.now()
     );
   }

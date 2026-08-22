@@ -2808,7 +2808,12 @@
       "toHour": "Til",
       "weekday": "Ugedag",
       "dayOfMonth": "Dag",
-      "month": "Måned"
+      "month": "Måned",
+      "target": "Kør som",
+      "targetChat": "Chatsession",
+      "targetWork": "Work-opgave",
+      "workPolicy": "Work-politik",
+      "workPolicyDefault": "Standard (globale grænser)"
     },
     "kind": {
       "once": "Én gang",
@@ -2845,7 +2850,8 @@
         "name": "Månedsrapport",
         "description": "En statusrapport-skitse den første i hver måned."
       }
-    }
+    },
+    "openTask": "Åbn opgave"
   },
   "home": {
     "active": "aktiv",

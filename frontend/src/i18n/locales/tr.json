@@ -2808,7 +2808,12 @@
       "toHour": "Bitiş",
       "weekday": "Haftanın günü",
       "dayOfMonth": "Gün",
-      "month": "Ay"
+      "month": "Ay",
+      "target": "Şu şekilde çalıştır",
+      "targetChat": "Sohbet oturumu",
+      "targetWork": "Work görevi",
+      "workPolicy": "Work politikası",
+      "workPolicyDefault": "Varsayılan (genel sınırlar)"
     },
     "kind": {
       "once": "Bir kez",
@@ -2845,7 +2850,8 @@
         "name": "Aylık rapor",
         "description": "Her ayın birinde bir durum raporu taslağı."
       }
-    }
+    },
+    "openTask": "Görevi aç"
   },
   "home": {
     "active": "etkin",

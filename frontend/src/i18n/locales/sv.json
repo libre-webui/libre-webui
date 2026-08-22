@@ -2808,7 +2808,12 @@
       "toHour": "Till",
       "weekday": "Veckodag",
       "dayOfMonth": "Dag",
-      "month": "Månad"
+      "month": "Månad",
+      "target": "Kör som",
+      "targetChat": "Chattsession",
+      "targetWork": "Work-uppgift",
+      "workPolicy": "Work-policy",
+      "workPolicyDefault": "Standard (globala gränser)"
     },
     "kind": {
       "once": "En gång",
@@ -2845,7 +2850,8 @@
         "name": "Månadsrapport",
         "description": "En statusrapportskiss den första varje månad."
       }
-    }
+    },
+    "openTask": "Öppna uppgift"
   },
   "home": {
     "active": "aktiv",

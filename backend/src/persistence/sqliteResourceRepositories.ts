@@ -2053,8 +2053,9 @@ class SQLiteAutomationRepository implements AutomationRepository {
         .prepare(
           `INSERT INTO automations
              (id, user_id, name, instructions, triggers, provider, model,
-              notify, status, next_run_at, last_run_at, created_at, updated_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+              notify, status, target, work_policy_id, next_run_at,
+              last_run_at, created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
            ON CONFLICT(id) DO UPDATE SET
              name = excluded.name,
              instructions = excluded.instructions,
@@ -2063,6 +2064,8 @@ class SQLiteAutomationRepository implements AutomationRepository {
              model = excluded.model,
              notify = excluded.notify,
              status = excluded.status,
+             target = excluded.target,
+             work_policy_id = excluded.work_policy_id,
              next_run_at = excluded.next_run_at,
              last_run_at = excluded.last_run_at,
              updated_at = excluded.updated_at
@@ -2078,6 +2081,8 @@ class SQLiteAutomationRepository implements AutomationRepository {
           automation.model,
           automation.notify,
           automation.status,
+          automation.target,
+          automation.work_policy_id,
           automation.next_run_at,
           automation.last_run_at,
           automation.created_at,
@@ -2155,9 +2160,9 @@ class SQLiteAutomationRunRepository implements AutomationRunRepository {
       .prepare(
         `INSERT INTO automation_runs
            (id, automation_id, user_id, scheduled_for, started_at,
-            finished_at, status, session_id, assistant_message_id, error,
-            seen_at, created_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+            finished_at, status, session_id, assistant_message_id,
+            work_task_id, error, seen_at, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
       )
       .run(
         run.id,
@@ -2169,6 +2174,7 @@ class SQLiteAutomationRunRepository implements AutomationRunRepository {
         run.status,
         run.session_id,
         run.assistant_message_id,
+        run.work_task_id,
         run.error,
         run.seen_at,
         run.created_at
@@ -2246,6 +2252,22 @@ class SQLiteAutomationRunRepository implements AutomationRunRepository {
            WHERE id = ? AND status = 'queued'`
         )
         .run(sessionId, assistantMessageId, startedAt, runId).changes > 0
+    );
+  }
+
+  async markStartedWork(
+    runId: string,
+    workTaskId: string,
+    startedAt: number
+  ): Promise<boolean> {
+    return (
+      this.database
+        .prepare(
+          `UPDATE automation_runs
+           SET work_task_id = ?, started_at = ?, status = 'running'
+           WHERE id = ? AND status = 'queued'`
+        )
+        .run(workTaskId, startedAt, runId).changes > 0
     );
   }
 

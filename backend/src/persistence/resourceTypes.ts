@@ -580,6 +580,9 @@ export interface StoredAutomationRecord {
   model: string | null;
   notify: string;
   status: string;
+  /** 'chat' runs a scheduled chat session; 'work' launches a Work task. */
+  target: string;
+  work_policy_id: string | null;
   next_run_at: number | null;
   last_run_at: number | null;
   created_at: number;
@@ -596,6 +599,7 @@ export interface StoredAutomationRunRecord {
   status: string;
   session_id: string | null;
   assistant_message_id: string | null;
+  work_task_id: string | null;
   error: string | null;
   seen_at: number | null;
   created_at: number;
@@ -657,6 +661,11 @@ export interface AutomationRunRepository {
     runId: string,
     sessionId: string,
     assistantMessageId: string,
+    startedAt: number
+  ): Promise<boolean>;
+  markStartedWork(
+    runId: string,
+    workTaskId: string,
     startedAt: number
   ): Promise<boolean>;
   finalize(

@@ -2808,7 +2808,12 @@
       "toHour": "Do",
       "weekday": "Dzień tygodnia",
       "dayOfMonth": "Dzień",
-      "month": "Miesiąc"
+      "month": "Miesiąc",
+      "target": "Uruchom jako",
+      "targetChat": "Sesja czatu",
+      "targetWork": "Zadanie Work",
+      "workPolicy": "Zasada Work",
+      "workPolicyDefault": "Domyślna (limity globalne)"
     },
     "kind": {
       "once": "Raz",
@@ -2845,7 +2850,8 @@
         "name": "Raport miesięczny",
         "description": "Szkic raportu stanu pierwszego dnia każdego miesiąca."
       }
-    }
+    },
+    "openTask": "Otwórz zadanie"
   },
   "home": {
     "active": "aktywny",

@@ -1054,6 +1054,136 @@ const runAutomation: DurableJobHandler = async context => {
     return { resultReference: `automation-run:${runId}:missing` };
   }
   await context.assertSideEffectAllowed();
+
+  if (automation.target === 'work') {
+    // A retried attempt whose task already exists must not launch another.
+    if (run.work_task_id) {
+      return {
+        resultReference: `automation-run:${runId}:work:${run.work_task_id}`,
+      };
+    }
+    await context.reportProgress({
+      current: 1,
+      total: 2,
+      message: 'Launching automation Work task',
+    });
+    const { userModel } = await import('../../models/userModel.js');
+    const { userHasWorkAccess } =
+      await import('../../services/workAccessService.js');
+    const owner = await userModel.getUserById(context.actorUserId);
+    if (
+      !owner ||
+      owner.status !== 'active' ||
+      !(await userHasWorkAccess(owner))
+    ) {
+      // Access is enforced when the schedule fires, so revoking Work access
+      // also silences that user's Work automations.
+      await automationService.finalizeRun(
+        runId,
+        'failed',
+        'work-access-denied',
+        {
+          userId: context.actorUserId,
+          automationId,
+        }
+      );
+      return { resultReference: `automation-run:${runId}:work-access-denied` };
+    }
+    let model = automation.model;
+    let provider = decodeProvider(automation.provider ?? null);
+    if (!model) {
+      const { default: preferencesService } =
+        await import('../../services/preferencesService.js');
+      const preferences = await preferencesService.getPreferences(
+        context.actorUserId
+      );
+      model = preferences.defaultModel;
+      provider = {
+        providerType: preferences.defaultProviderType ?? undefined,
+        providerId: preferences.defaultProviderId ?? undefined,
+      };
+    }
+    if (!model) {
+      await automationService.finalizeRun(runId, 'failed', 'no-model', {
+        userId: context.actorUserId,
+        automationId,
+      });
+      return { resultReference: `automation-run:${runId}:no-model` };
+    }
+    let policy;
+    if (automation.workPolicyId) {
+      const { workPolicyService } =
+        await import('../../services/workPolicyService.js');
+      policy = await workPolicyService.get(automation.workPolicyId);
+      if (!policy) {
+        await automationService.finalizeRun(
+          runId,
+          'failed',
+          'work-policy-missing',
+          { userId: context.actorUserId, automationId }
+        );
+        return { resultReference: `automation-run:${runId}:no-policy` };
+      }
+    }
+    if (
+      provider.providerType &&
+      provider.providerType !== 'ollama' &&
+      provider.providerType !== 'plugin'
+    ) {
+      // Work runs on direct model providers only.
+      await automationService.finalizeRun(
+        runId,
+        'failed',
+        'work-provider-unsupported',
+        { userId: context.actorUserId, automationId }
+      );
+      return {
+        resultReference: `automation-run:${runId}:provider-unsupported`,
+      };
+    }
+    const workProvider = {
+      providerType: (provider.providerType ?? 'ollama') as 'ollama' | 'plugin',
+      ...(provider.providerId ? { providerId: provider.providerId } : {}),
+    };
+    try {
+      const { default: workModelProviderService } =
+        await import('../../services/workModelProviderService.js');
+      await workModelProviderService.assertModelSupportsTools(
+        model,
+        workProvider,
+        context.actorUserId
+      );
+      const { workTaskService } =
+        await import('../../services/workTaskService.js');
+      const detail = await workTaskService.createTaskWithRun(
+        context.actorUserId,
+        automation.instructions,
+        model,
+        policy?.networkDefault ?? true,
+        workProvider,
+        undefined,
+        policy?.id
+      );
+      await automationService.markRunStartedWork(runId, detail.id);
+      await context.reportProgress({
+        current: 2,
+        total: 2,
+        message: 'Automation Work task launched',
+      });
+      return { resultReference: `automation-run:${runId}:work:${detail.id}` };
+    } catch (error) {
+      if (error instanceof DurableJobExecutionError || context.signal.aborted) {
+        throw error;
+      }
+      handlerLogger.error(`Automation Work run ${runId} failed:`, error);
+      throw new DurableJobExecutionError(
+        true,
+        'automation-work-run-failed',
+        'The automation run could not launch its Work task'
+      );
+    }
+  }
+
   await context.reportProgress({
     current: 1,
     total: 2,

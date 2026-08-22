@@ -2808,7 +2808,12 @@
       "toHour": "To",
       "weekday": "Weekday",
       "dayOfMonth": "Day",
-      "month": "Month"
+      "month": "Month",
+      "target": "Run as",
+      "targetChat": "Chat session",
+      "targetWork": "Work task",
+      "workPolicy": "Work policy",
+      "workPolicyDefault": "Default (global limits)"
     },
     "kind": {
       "once": "Once",
@@ -2845,7 +2850,8 @@
         "name": "Monthly report",
         "description": "A status report outline on the first of each month."
       }
-    }
+    },
+    "openTask": "Open task"
   },
   "home": {
     "active": "active",

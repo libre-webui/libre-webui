@@ -2808,7 +2808,12 @@
       "toHour": "Até",
       "weekday": "Dia da semana",
       "dayOfMonth": "Dia",
-      "month": "Mês"
+      "month": "Mês",
+      "target": "Executar como",
+      "targetChat": "Sessão de chat",
+      "targetWork": "Tarefa do Work",
+      "workPolicy": "Política do Work",
+      "workPolicyDefault": "Padrão (limites globais)"
     },
     "kind": {
       "once": "Uma vez",
@@ -2845,7 +2850,8 @@
         "name": "Relatório mensal",
         "description": "Um esboço de relatório de status no primeiro dia de cada mês."
       }
-    }
+    },
+    "openTask": "Abrir tarefa"
   },
   "home": {
     "active": "ativo",

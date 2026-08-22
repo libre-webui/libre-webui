@@ -2808,7 +2808,12 @@
       "toHour": "Bis",
       "weekday": "Wochentag",
       "dayOfMonth": "Tag",
-      "month": "Monat"
+      "month": "Monat",
+      "target": "Ausführen als",
+      "targetChat": "Chat-Sitzung",
+      "targetWork": "Work-Aufgabe",
+      "workPolicy": "Work-Richtlinie",
+      "workPolicyDefault": "Standard (globale Limits)"
     },
     "kind": {
       "once": "Einmalig",
@@ -2845,7 +2850,8 @@
         "name": "Monatsbericht",
         "description": "Eine Statusbericht-Gliederung am Ersten jedes Monats."
       }
-    }
+    },
+    "openTask": "Aufgabe öffnen"
   },
   "home": {
     "active": "aktiv",

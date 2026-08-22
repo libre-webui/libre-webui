@@ -80,48 +80,54 @@ test('PostgreSQL configuration rejects ambiguous TLS and unsafe bounds', () => {
 test('PostgreSQL migration registry is contiguous, checksummed, and frozen', () => {
   assert.deepEqual(
     POSTGRES_MIGRATIONS.map(migration => migration.version),
-    [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
+    [
+      1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
+      21,
+    ]
   );
   validatePostgresMigrationRegistry(POSTGRES_MIGRATIONS);
   assert.equal(Object.isFrozen(POSTGRES_MIGRATIONS), true);
   assert.equal(POSTGRES_MIGRATIONS.every(Object.isFrozen), true);
-  assert.equal(SQLITE_MIGRATION_CONTRACT.at(-1)?.version, 21);
-  assert.equal(SQLITE_MIGRATION_CONTRACT.at(-1)?.name, 'mfa-push-recovery');
-  assert.equal(SQLITE_MIGRATION_CONTRACT.at(-2)?.version, 20);
-  assert.equal(SQLITE_MIGRATION_CONTRACT.at(-2)?.name, 'media-enterprise-ops');
-  assert.equal(POSTGRES_MIGRATIONS.at(-3)?.version, 18);
-  assert.equal(POSTGRES_MIGRATIONS.at(-3)?.name, 'team-collaboration');
+  assert.equal(SQLITE_MIGRATION_CONTRACT.at(-1)?.version, 22);
+  assert.equal(SQLITE_MIGRATION_CONTRACT.at(-1)?.name, 'automation-work-target');
+  assert.equal(SQLITE_MIGRATION_CONTRACT.at(-2)?.version, 21);
+  assert.equal(SQLITE_MIGRATION_CONTRACT.at(-2)?.name, 'mfa-push-recovery');
+  assert.equal(POSTGRES_MIGRATIONS.at(-3)?.version, 19);
+  assert.equal(POSTGRES_MIGRATIONS.at(-3)?.name, 'media-enterprise-ops');
   assert.match(
     POSTGRES_MIGRATIONS.at(-3)?.sql ?? '',
-    /CREATE TABLE channels/
-  );
-  assert.match(
-    POSTGRES_MIGRATIONS.at(-3)?.sql ?? '',
-    /CREATE TABLE notifications/
-  );
-  assert.equal(POSTGRES_MIGRATIONS.at(-2)?.version, 19);
-  assert.equal(POSTGRES_MIGRATIONS.at(-2)?.name, 'media-enterprise-ops');
-  assert.match(
-    POSTGRES_MIGRATIONS.at(-2)?.sql ?? '',
     /CREATE TABLE model_tariffs/
   );
   assert.match(
-    POSTGRES_MIGRATIONS.at(-2)?.sql ?? '',
+    POSTGRES_MIGRATIONS.at(-3)?.sql ?? '',
     /CREATE TABLE eval_runs/
   );
-  assert.equal(POSTGRES_MIGRATIONS.at(-1)?.version, 20);
-  assert.equal(POSTGRES_MIGRATIONS.at(-1)?.name, 'mfa-push-recovery');
-  assert.match(POSTGRES_MIGRATIONS.at(-1)?.sql ?? '', /CREATE TABLE user_mfa/);
+  assert.equal(POSTGRES_MIGRATIONS.at(-2)?.version, 20);
+  assert.equal(POSTGRES_MIGRATIONS.at(-2)?.name, 'mfa-push-recovery');
+  assert.match(
+    POSTGRES_MIGRATIONS.at(-2)?.sql ?? '',
+    /CREATE TABLE user_mfa/
+  );
+  assert.match(
+    POSTGRES_MIGRATIONS.at(-2)?.sql ?? '',
+    /CREATE TABLE webauthn_credentials/
+  );
+  assert.equal(POSTGRES_MIGRATIONS.at(-1)?.version, 21);
+  assert.equal(POSTGRES_MIGRATIONS.at(-1)?.name, 'automation-work-target');
   assert.match(
     POSTGRES_MIGRATIONS.at(-1)?.sql ?? '',
-    /CREATE TABLE webauthn_credentials/
+    /ALTER TABLE automations ADD COLUMN target/
   );
   assert.match(
     POSTGRES_MIGRATIONS.at(-1)?.sql ?? '',
+    /ALTER TABLE automation_runs ADD COLUMN work_task_id/
+  );
+  assert.match(
+    POSTGRES_MIGRATIONS.at(-2)?.sql ?? '',
     /CREATE TABLE push_subscriptions/
   );
   assert.match(
-    POSTGRES_MIGRATIONS.at(-1)?.sql ?? '',
+    POSTGRES_MIGRATIONS.at(-2)?.sql ?? '',
     /CREATE TABLE recovery_drills/
   );
   assert.equal(
@@ -370,7 +376,7 @@ test(
         initializePostgresPersistence(config, codec),
       ]);
       assert.equal(first.schemaCompatibility.status, 'compatible');
-      assert.equal(second.schemaCompatibility.currentVersion, 20);
+      assert.equal(second.schemaCompatibility.currentVersion, 21);
       assert.equal((await first.health()).ready, true);
 
       const assertStructuralDamage = async (mutation, expected) => {
@@ -3375,7 +3381,7 @@ test(
       resumed.tables.every(row => row.status === 'verified'),
       true
     );
-    assert.equal(resumed.targetSchemaVersion, 20);
+    assert.equal(resumed.targetSchemaVersion, 21);
     const resumedState = await target.query(
       `SELECT
          (SELECT MAX(version)::text FROM libre_schema_migrations)

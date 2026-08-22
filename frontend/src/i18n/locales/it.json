@@ -2808,7 +2808,12 @@
       "toHour": "A",
       "weekday": "Giorno della settimana",
       "dayOfMonth": "Giorno",
-      "month": "Mese"
+      "month": "Mese",
+      "target": "Esegui come",
+      "targetChat": "Sessione di chat",
+      "targetWork": "Attività Work",
+      "workPolicy": "Politica Work",
+      "workPolicyDefault": "Predefinita (limiti globali)"
     },
     "kind": {
       "once": "Una volta",
@@ -2845,7 +2850,8 @@
         "name": "Report mensile",
         "description": "Uno schema di report di stato il primo di ogni mese."
       }
-    }
+    },
+    "openTask": "Apri attività"
   },
   "home": {
     "active": "attivo",

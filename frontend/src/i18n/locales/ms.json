@@ -2808,7 +2808,12 @@
       "toHour": "Hingga",
       "weekday": "Hari",
       "dayOfMonth": "Hari bulan",
-      "month": "Bulan"
+      "month": "Bulan",
+      "target": "Jalankan sebagai",
+      "targetChat": "Sesi sembang",
+      "targetWork": "Tugas Work",
+      "workPolicy": "Dasar Work",
+      "workPolicyDefault": "Lalai (had global)"
     },
     "kind": {
       "once": "Sekali",
@@ -2845,7 +2850,8 @@
         "name": "Laporan bulanan",
         "description": "Rangka laporan status pada satu haribulan setiap bulan."
       }
-    }
+    },
+    "openTask": "Buka tugas"
   },
   "home": {
     "active": "aktif",

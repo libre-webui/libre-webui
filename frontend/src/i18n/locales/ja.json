@@ -2808,7 +2808,12 @@
       "toHour": "終了",
       "weekday": "曜日",
       "dayOfMonth": "日",
-      "month": "月"
+      "month": "月",
+      "target": "実行形式",
+      "targetChat": "チャットセッション",
+      "targetWork": "Work タスク",
+      "workPolicy": "Work ポリシー",
+      "workPolicyDefault": "デフォルト（全体の制限）"
     },
     "kind": {
       "once": "1回のみ",
@@ -2845,7 +2850,8 @@
         "name": "月次レポート",
         "description": "毎月1日にステータスレポートの骨子を作成。"
       }
-    }
+    },
+    "openTask": "タスクを開く"
   },
   "home": {
     "active": "アクティブ",

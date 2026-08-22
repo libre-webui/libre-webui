@@ -426,6 +426,15 @@ const AutomationsPage: React.FC = () => {
                         {t('automations.openChat')}
                       </button>
                     )}
+                    {run.workTaskId && (
+                      <button
+                        onClick={() => navigate(`/work/${run.workTaskId}`)}
+                        data-testid='automation-run-open-task'
+                        className='shrink-0 rounded-lg px-2.5 py-1 text-[12px] font-medium text-primary-600 transition-colors hover:bg-primary-500/10 dark:text-primary-400'
+                      >
+                        {t('automations.openTask')}
+                      </button>
+                    )}
                   </div>
                 ))}
               </div>

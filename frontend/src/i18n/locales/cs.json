@@ -2808,7 +2808,12 @@
       "toHour": "Do",
       "weekday": "Den v týdnu",
       "dayOfMonth": "Den",
-      "month": "Měsíc"
+      "month": "Měsíc",
+      "target": "Spustit jako",
+      "targetChat": "Chatová relace",
+      "targetWork": "Úloha Work",
+      "workPolicy": "Zásada Work",
+      "workPolicyDefault": "Výchozí (globální limity)"
     },
     "kind": {
       "once": "Jednou",
@@ -2845,7 +2850,8 @@
         "name": "Měsíční zpráva",
         "description": "Osnova stavové zprávy prvního dne v měsíci."
       }
-    }
+    },
+    "openTask": "Otevřít úlohu"
   },
   "home": {
     "active": "aktivní",

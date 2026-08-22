@@ -2808,7 +2808,12 @@
       "toHour": "পর্যন্ত",
       "weekday": "বার",
       "dayOfMonth": "দিন",
-      "month": "মাস"
+      "month": "মাস",
+      "target": "হিসেবে চালান",
+      "targetChat": "চ্যাট সেশন",
+      "targetWork": "Work কাজ",
+      "workPolicy": "Work নীতি",
+      "workPolicyDefault": "ডিফল্ট (গ্লোবাল সীমা)"
     },
     "kind": {
       "once": "একবার",
@@ -2845,7 +2850,8 @@
         "name": "মাসিক প্রতিবেদন",
         "description": "প্রতি মাসের প্রথম দিনে একটি স্ট্যাটাস রিপোর্টের রূপরেখা।"
       }
-    }
+    },
+    "openTask": "কাজ খুলুন"
   },
   "home": {
     "active": "সক্রিয়",

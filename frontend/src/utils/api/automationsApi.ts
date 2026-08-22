@@ -31,6 +31,8 @@ export interface AutomationPayload {
   provider?: string;
   model?: string;
   notify?: 'app' | 'off';
+  target?: 'chat' | 'work';
+  workPolicyId?: string;
 }
 
 export interface AutomationOccurrence {

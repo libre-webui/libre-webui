@@ -16,8 +16,12 @@ be opened and continued like any other conversation.
 ## Anatomy
 
 An automation has a name, free-text instructions, one or more triggers, an
-optional model (empty means Auto: your default chat model at run time), and a
-notification preference (in-app or off). With notifications on, a failed
+optional model (empty means Auto: your default chat model at run time), a
+run target, and a notification preference (in-app or off). The target
+decides what a run produces: **Chat session** (the default) queues the
+instructions as a conversation, while **Work task** launches an isolated
+[Work](./33-WORKSPACES.md) sandbox with the instructions as its opening message,
+optionally under a named Work policy chosen in the form. With notifications on, a failed
 run also lands in the [notification inbox](./55-NOTIFICATIONS.md), so
 failures reach you even when the Automations page is closed. Names and
 instructions are encrypted at rest. Every automation belongs to the user
@@ -46,6 +50,17 @@ automation removes its run history through a foreign-key cascade.
 Runs settle from the durable job ledger: succeeded when the chat generation
 finished, failed when either job dead-lettered, and failed as `stalled` when
 a queued run never started within 30 minutes.
+
+Work-target runs behave the same way with the Work lifecycle in place of the
+chat job: the run records the task it created (the Runs tab links straight
+to it), succeeds when the agent completes — or stops to ask for input — and
+fails when the task fails or is cancelled. Work access is enforced when the
+schedule fires, so revoking a user's Work access also silences their
+Work-target automations; the run then fails as `work-access-denied` rather
+than silently skipping. A selected policy is validated when the automation
+is saved, and its network default and resource limits apply to every task
+the automation launches. Only direct model providers run in Work, and the
+model must support tools — the same rules as the Work composer.
 
 ## API
 
