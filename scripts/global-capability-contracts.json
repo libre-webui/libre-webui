@@ -2425,6 +2425,24 @@
         {
           "file": "backend/src/routes/work.ts",
           "mount": "/api/work",
+          "method": "GET",
+          "path": "/tasks/:id/computer/control"
+        },
+        {
+          "file": "backend/src/routes/work.ts",
+          "mount": "/api/work",
+          "method": "POST",
+          "path": "/tasks/:id/computer/control"
+        },
+        {
+          "file": "backend/src/routes/work.ts",
+          "mount": "/api/work",
+          "method": "DELETE",
+          "path": "/tasks/:id/computer/control"
+        },
+        {
+          "file": "backend/src/routes/work.ts",
+          "mount": "/api/work",
           "method": "POST",
           "path": "/tasks/:id/preview/start"
         },

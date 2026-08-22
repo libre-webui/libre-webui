@@ -2625,7 +2625,12 @@
       "starting": "Запуск Work Computer…",
       "disconnected": "Екран відключено.",
       "reconnect": "Перепідключити",
-      "viewOnly": "Спостереження"
+      "viewOnly": "Спостереження",
+      "takeOver": "Взяти керування",
+      "handBack": "Готово",
+      "youHaveControl": "Ви керуєте",
+      "otherHasControl": "{{name}} керує",
+      "agentWaiting": "Агент просить вас взяти керування"
     }
   },
   "personaBackground": {

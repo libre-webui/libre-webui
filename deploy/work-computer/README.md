@@ -35,10 +35,18 @@ GUI and headless tasks.
 `start-computer` (idempotent, invoked by the server when the screen is
 opened) starts: Xvfb on display `:1` (1280×800), fluxbox, Chromium with an
 isolated profile persisted at `/workspace/.browser-profile` (logins survive
-container restarts), x11vnc bound to `127.0.0.1` in view-only mode, and
-websockify listening on container port 6080 — the only network-reachable
-surface. The backend publishes that port on the Docker host's loopback and
-re-authenticates every viewer with a one-use, task-bound ticket.
+container restarts), x11vnc bound to `127.0.0.1`, and websockify listening
+on container port 6080 — the only network-reachable surface. The backend
+publishes that port on the Docker host's loopback and re-authenticates
+every viewer with a one-use, task-bound ticket.
+
+The VNC session has two per-session passwords generated at start (0600
+passwd file in the state dir): the entry before `__BEGIN_VIEWONLY__`
+grants full mouse/keyboard control and is released by the backend only to
+the current takeover-lease holder; the entry after it is view-only and
+goes to every authorized watcher. The VNC server itself keeps view-only
+connections' input inert, so a leaked watch credential cannot drive the
+screen.
 
 xdotool and ImageMagick power the agent's `computer_observe` and
 `computer_act` tools (screenshots in, OS-level input out) and remain in

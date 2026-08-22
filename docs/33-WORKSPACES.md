@@ -467,8 +467,26 @@ blocker instead. For untrusted tasks, pair a GUI policy with a filtering
 DNS resolver — a desktop browser makes the network egress policy matter
 more, not less.
 
-Human takeover for sign-ins and teach-by-demonstration build on this
-surface in later releases.
+Takeover: the Screen pane's **Take over** button gives you the mouse and
+keyboard — for signing in, clearing a CAPTCHA, or any step the agent must
+not perform — and **I'm done** hands the screen back. One VNC session
+serves both roles: the in-container server holds a full-control password
+and a view-only password (generated per session, never logged), watchers
+receive only the view password, and the control password is released
+exclusively to the current holder of a control lease. The lease is
+TTL-bounded (an abandoned takeover lapses within two minutes), renewed
+while the takeover UI is open, and cooperative — it cannot be seized from
+another user. While a human holds it, the agent's `computer_observe` and
+`computer_act` are both blocked, so the agent can neither fight your input
+nor screenshot what you type. The agent can also ask for you: its
+`request_takeover` tool posts a banner on the Screen pane with the reason
+and waits until you take over and hand back. Credentials entered during a
+takeover go directly from your keyboard to the page — they never pass
+through the model or the task transcript. Takeover requires a GUI image
+built from `deploy/work-computer/` at this version or later; sessions from
+older images remain watchable but view-only for everyone.
+
+Teach-by-demonstration builds on this surface in a later release.
 
 ## Providers, Routing, and Data Disclosure
 

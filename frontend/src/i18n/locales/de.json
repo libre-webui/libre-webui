@@ -2625,7 +2625,12 @@
       "starting": "Work Computer wird gestartet…",
       "disconnected": "Der Bildschirm ist getrennt.",
       "reconnect": "Neu verbinden",
-      "viewOnly": "Beobachten"
+      "viewOnly": "Beobachten",
+      "takeOver": "Übernehmen",
+      "handBack": "Fertig",
+      "youHaveControl": "Du hast die Kontrolle",
+      "otherHasControl": "{{name}} hat die Kontrolle",
+      "agentWaiting": "Der Agent bittet dich zu übernehmen"
     }
   },
   "personaBackground": {

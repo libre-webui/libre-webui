@@ -2625,7 +2625,12 @@
       "starting": "Work Computer başlatılıyor…",
       "disconnected": "Ekran bağlantısı kesildi.",
       "reconnect": "Yeniden bağlan",
-      "viewOnly": "İzleme"
+      "viewOnly": "İzleme",
+      "takeOver": "Kontrolü al",
+      "handBack": "Bitirdim",
+      "youHaveControl": "Kontrol sizde",
+      "otherHasControl": "Kontrol {{name}} kullanıcısında",
+      "agentWaiting": "Ajan kontrolü almanızı istedi"
     }
   },
   "personaBackground": {

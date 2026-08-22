@@ -2625,7 +2625,12 @@
       "starting": "Ræsi Work Computer…",
       "disconnected": "Skjárinn er aftengdur.",
       "reconnect": "Endurtengja",
-      "viewOnly": "Fylgist með"
+      "viewOnly": "Fylgist með",
+      "takeOver": "Taka stjórn",
+      "handBack": "Lokið",
+      "youHaveControl": "Þú hefur stjórnina",
+      "otherHasControl": "{{name}} hefur stjórnina",
+      "agentWaiting": "Agentinn bað þig að taka stjórnina"
     }
   },
   "personaBackground": {

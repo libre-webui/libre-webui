@@ -2625,7 +2625,12 @@
       "starting": "Work Computer शुरू हो रहा है…",
       "disconnected": "स्क्रीन डिस्कनेक्ट है।",
       "reconnect": "पुनः कनेक्ट करें",
-      "viewOnly": "देख रहे हैं"
+      "viewOnly": "देख रहे हैं",
+      "takeOver": "नियंत्रण लें",
+      "handBack": "मेरा काम हो गया",
+      "youHaveControl": "नियंत्रण आपके पास है",
+      "otherHasControl": "{{name}} नियंत्रण कर रहे हैं",
+      "agentWaiting": "एजेंट ने आपसे नियंत्रण लेने को कहा है"
     }
   },
   "personaBackground": {

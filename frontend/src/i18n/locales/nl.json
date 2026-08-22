@@ -2625,7 +2625,12 @@
       "starting": "Work Computer wordt gestart…",
       "disconnected": "Het scherm is losgekoppeld.",
       "reconnect": "Opnieuw verbinden",
-      "viewOnly": "Meekijken"
+      "viewOnly": "Meekijken",
+      "takeOver": "Overnemen",
+      "handBack": "Ik ben klaar",
+      "youHaveControl": "Jij hebt de controle",
+      "otherHasControl": "{{name}} heeft de controle",
+      "agentWaiting": "De agent vraagt je om over te nemen"
     }
   },
   "personaBackground": {

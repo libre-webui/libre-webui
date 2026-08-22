@@ -2625,7 +2625,12 @@
       "starting": "Memulai Work Computer…",
       "disconnected": "Layar terputus.",
       "reconnect": "Sambungkan ulang",
-      "viewOnly": "Mengamati"
+      "viewOnly": "Mengamati",
+      "takeOver": "Ambil kendali",
+      "handBack": "Saya selesai",
+      "youHaveControl": "Anda memegang kendali",
+      "otherHasControl": "{{name}} memegang kendali",
+      "agentWaiting": "Agen meminta Anda mengambil kendali"
     }
   },
   "personaBackground": {

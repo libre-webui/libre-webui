@@ -52,11 +52,23 @@ chromium \
   "about:blank" >/dev/null 2>&1 &
 echo $! > "$STATE_DIR/chromium.pid"
 
-# View-only in phase 1: the human watches, the agent (later phases) drives
-# via xdotool. -localhost keeps raw VNC off the network; websockify is the
-# only reachable surface and the backend authenticates every connection.
-x11vnc -display "$DISPLAY" -rfbport "$VNC_PORT" -localhost -viewonly \
-  -shared -forever -nopw -quiet -bg -o "$STATE_DIR/x11vnc.log"
+# One VNC server, two privilege levels: the first password in the passwd
+# file grants full control (handed out by the backend only to the current
+# takeover-lease holder), passwords after __BEGIN_VIEWONLY__ only watch.
+# -localhost keeps raw VNC off the network; websockify is the only
+# reachable surface and the backend authenticates every connection.
+PASSWD_FILE="$STATE_DIR/passwd"
+if [ ! -s "$PASSWD_FILE" ]; then
+  umask 077
+  random_password() {
+    head -c 48 /dev/urandom | base64 | tr -dc 'a-zA-Z0-9' | cut -c1-8
+  }
+  printf '%s\n__BEGIN_VIEWONLY__\n%s\n' \
+    "$(random_password)" "$(random_password)" > "$PASSWD_FILE"
+fi
+x11vnc -display "$DISPLAY" -rfbport "$VNC_PORT" -localhost \
+  -passwdfile "$PASSWD_FILE" \
+  -shared -forever -quiet -bg -o "$STATE_DIR/x11vnc.log"
 
 websockify --daemon "0.0.0.0:${WS_PORT}" "127.0.0.1:${VNC_PORT}" \
   >/dev/null 2>&1

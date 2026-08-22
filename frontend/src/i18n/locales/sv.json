@@ -2625,7 +2625,12 @@
       "starting": "Startar Work Computer…",
       "disconnected": "Skärmen är frånkopplad.",
       "reconnect": "Återanslut",
-      "viewOnly": "Tittar"
+      "viewOnly": "Tittar",
+      "takeOver": "Ta över",
+      "handBack": "Jag är klar",
+      "youHaveControl": "Du har kontrollen",
+      "otherHasControl": "{{name}} har kontrollen",
+      "agentWaiting": "Agenten bad dig ta över"
     }
   },
   "personaBackground": {

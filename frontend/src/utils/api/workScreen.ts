@@ -19,9 +19,54 @@ import { api } from './client';
 import type { ApiResponse } from '@/types';
 import { buildWorkScreenUrl } from '../websocketUrl';
 
-/** Ask the server to start the task's Work Computer GUI session. */
-export async function startWorkComputer(taskId: string): Promise<void> {
-  await api.post(`/work/tasks/${encodeURIComponent(taskId)}/computer/start`);
+export interface WorkScreenControlState {
+  holder?: { you: boolean; username?: string; expiresAt: number };
+  agentWaiting: boolean;
+  agentWaitingReason?: string;
+}
+
+/**
+ * Ask the server to start the task's Work Computer GUI session. Returns the
+ * session's view-only VNC password when the image supports takeover.
+ */
+export async function startWorkComputer(
+  taskId: string
+): Promise<{ viewOnlyPassword?: string }> {
+  const response = await api.post<
+    ApiResponse<{ ready: boolean; viewOnlyPassword?: string }>
+  >(`/work/tasks/${encodeURIComponent(taskId)}/computer/start`);
+  return { viewOnlyPassword: response.data.data?.viewOnlyPassword };
+}
+
+/** Who is driving the screen, and is the agent asking for a human? */
+export async function getWorkScreenControl(
+  taskId: string
+): Promise<WorkScreenControlState> {
+  const response = await api.get<ApiResponse<WorkScreenControlState>>(
+    `/work/tasks/${encodeURIComponent(taskId)}/computer/control`
+  );
+  return response.data.data ?? { agentWaiting: false };
+}
+
+/** Take over (or renew) control of the screen. */
+export async function acquireWorkScreenControl(
+  taskId: string
+): Promise<{ controlPassword: string; expiresAt: number }> {
+  const response = await api.post<
+    ApiResponse<{ controlPassword: string; expiresAt: number }>
+  >(`/work/tasks/${encodeURIComponent(taskId)}/computer/control`);
+  const data = response.data.data;
+  if (!data?.controlPassword) {
+    throw new Error('The server did not grant screen control.');
+  }
+  return data;
+}
+
+/** Hand the screen back to the agent. */
+export async function releaseWorkScreenControl(taskId: string): Promise<void> {
+  await api.delete(
+    `/work/tasks/${encodeURIComponent(taskId)}/computer/control`
+  );
 }
 
 /**

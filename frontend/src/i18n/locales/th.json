@@ -2625,7 +2625,12 @@
       "starting": "กำลังเริ่ม Work Computer…",
       "disconnected": "หน้าจอถูกตัดการเชื่อมต่อ",
       "reconnect": "เชื่อมต่อใหม่",
-      "viewOnly": "กำลังดู"
+      "viewOnly": "กำลังดู",
+      "takeOver": "เข้าควบคุม",
+      "handBack": "เสร็จแล้ว",
+      "youHaveControl": "คุณกำลังควบคุมอยู่",
+      "otherHasControl": "{{name}} กำลังควบคุมอยู่",
+      "agentWaiting": "เอเจนต์ขอให้คุณเข้าควบคุม"
     }
   },
   "personaBackground": {

@@ -90,6 +90,14 @@ const logger = createLogger('services:work-runtime');
 const PREVIEW_READY_TIMEOUT_MS = 15_000;
 const PREVIEW_POLL_INTERVAL_MS = 250;
 
+/** Per-session VNC passwords for the Work Computer screen. */
+export interface WorkComputerCredentials {
+  /** Full mouse/keyboard control — takeover-lease holders only. */
+  control: string;
+  /** Watch-only. */
+  view: string;
+}
+
 /** One observation of the Work Computer screen — the agent's eyes. */
 export interface WorkComputerObservation {
   width: number;
@@ -1976,6 +1984,46 @@ export class WorkRuntimeService {
       task.networkEnabled &&
       (await workPolicyService.resolve(task.policyId)).guiEnabled === true
     );
+  }
+
+  /**
+   * The session's VNC passwords, generated in-container at session start.
+   * `view` goes to every authorized watcher; `control` goes only to the
+   * current takeover-lease holder — the VNC server itself keeps everyone
+   * else's input inert. Undefined on a pre-takeover GUI image (no passwd
+   * file), where the session is view-only for everyone.
+   */
+  async computerCredentials(
+    task: WorkTaskRecord
+  ): Promise<WorkComputerCredentials | undefined> {
+    return this.withComputerSession(task, async signal => {
+      const result = await this.driver.exec(
+        task,
+        [
+          '/bin/sh',
+          '-c',
+          'cat "${LIBRE_COMPUTER_STATE_DIR:-/tmp/libre-computer}/passwd"',
+        ],
+        {
+          timeoutMs: 10_000,
+          maxOutputChars: 10_000,
+          acceptFailure: true,
+          abortSignal: signal,
+        }
+      );
+      if (result.exitCode !== 0) return undefined;
+      const lines = result.stdout
+        .split('\n')
+        .map(line => line.trim())
+        .filter(Boolean);
+      const marker = lines.indexOf('__BEGIN_VIEWONLY__');
+      const control = lines[0];
+      const view = marker > 0 ? lines[marker + 1] : undefined;
+      if (!control || control === '__BEGIN_VIEWONLY__' || !view) {
+        return undefined;
+      }
+      return { control, view };
+    });
   }
 
   /**

@@ -42,11 +42,15 @@ import workPolicyService, {
   type WorkPolicyRecord,
 } from '../services/workPolicyService.js';
 import workRuntimeService from '../services/workRuntimeService.js';
+import workScreenControlService, {
+  WORK_SCREEN_CONTROL_TTL_MS,
+} from '../services/workScreenControlService.js';
 import workTerminalService from '../services/workTerminalService.js';
 import workHostWorkspaceService, {
   WorkHostWorkspaceError,
 } from '../services/workHostWorkspaceService.js';
 import workTaskService, {
+  WorkConflictError,
   WorkNotFoundError,
 } from '../services/workTaskService.js';
 import {
@@ -1140,7 +1144,7 @@ router.post(
   '/tasks/:id/computer/start',
   async (
     req: AuthenticatedRequest,
-    res: Response<ApiResponse<{ ready: boolean }>>
+    res: Response<ApiResponse<{ ready: boolean; viewOnlyPassword?: string }>>
   ): Promise<void> => {
     const taskId = readTaskId(req);
     const userId = requireUserId(req);
@@ -1150,7 +1154,117 @@ router.post(
         userId
       );
       await workRuntimeService.startComputer(task);
-      sendSuccess(res, { ready: true });
+      // Watch access needs the session's view-only VNC password. Absent on
+      // a GUI image built before takeover support (its VNC has no auth).
+      const credentials = await workRuntimeService.computerCredentials(task);
+      sendSuccess(res, {
+        ready: true,
+        ...(credentials ? { viewOnlyPassword: credentials.view } : {}),
+      });
+    } catch (error) {
+      sendError(res, error);
+    }
+  }
+);
+
+// Who is driving this task's Work Computer, and is the agent asking for a
+// human? Polled by the Screen pane while it is open.
+router.get(
+  '/tasks/:id/computer/control',
+  async (
+    req: AuthenticatedRequest,
+    res: Response<
+      ApiResponse<{
+        holder?: { you: boolean; username?: string; expiresAt: number };
+        agentWaiting: boolean;
+        agentWaitingReason?: string;
+      }>
+    >
+  ): Promise<void> => {
+    const taskId = readTaskId(req);
+    const userId = requireUserId(req);
+    try {
+      await workTaskService.requireTaskRecord(taskId, userId);
+      const [holder, assist] = await Promise.all([
+        workScreenControlService.current(taskId),
+        workScreenControlService.assistState(taskId),
+      ]);
+      const holderUser = holder
+        ? await userModel.getUserById(holder.userId)
+        : undefined;
+      sendSuccess(res, {
+        ...(holder
+          ? {
+              holder: {
+                you: holder.userId === userId,
+                ...(holderUser?.username
+                  ? { username: holderUser.username }
+                  : {}),
+                expiresAt: holder.expiresAt,
+              },
+            }
+          : {}),
+        agentWaiting: assist !== undefined && assist.phase !== 'released',
+        ...(assist && assist.phase !== 'released'
+          ? { agentWaitingReason: assist.reason.slice(0, 500) }
+          : {}),
+      });
+    } catch (error) {
+      sendError(res, error);
+    }
+  }
+);
+
+// Take over (or renew a held takeover of) the task's screen. Work access is
+// re-checked through the task lookup; the control VNC password in the
+// response is what actually unlocks input on the session.
+router.post(
+  '/tasks/:id/computer/control',
+  async (
+    req: AuthenticatedRequest,
+    res: Response<ApiResponse<{ controlPassword: string; expiresAt: number }>>
+  ): Promise<void> => {
+    const taskId = readTaskId(req);
+    const userId = requireUserId(req);
+    try {
+      const task = await workTaskService.requireMutableTaskRecord(
+        taskId,
+        userId
+      );
+      const credentials = await workRuntimeService.computerCredentials(task);
+      if (!credentials) {
+        throw new WorkConflictError(
+          'This Work Computer image predates takeover support. Rebuild the GUI image from deploy/work-computer/.'
+        );
+      }
+      const holder = await workScreenControlService.acquire(
+        taskId,
+        userId,
+        WORK_SCREEN_CONTROL_TTL_MS
+      );
+      sendSuccess(res, {
+        controlPassword: credentials.control,
+        expiresAt: holder.expiresAt,
+      });
+    } catch (error) {
+      sendError(res, error);
+    }
+  }
+);
+
+// "I'm done": hand the screen back to the agent.
+router.delete(
+  '/tasks/:id/computer/control',
+  async (
+    req: AuthenticatedRequest,
+    res: Response<ApiResponse<{ released: boolean }>>
+  ): Promise<void> => {
+    const taskId = readTaskId(req);
+    const userId = requireUserId(req);
+    try {
+      await workTaskService.requireTaskRecord(taskId, userId);
+      await workScreenControlService.release(taskId, userId);
+      sendSuccess(res, { released: true });
     } catch (error) {
       sendError(res, error);
     }

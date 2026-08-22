@@ -1865,9 +1865,146 @@ test('the computer tool schemas are offered separately from the base registry', 
   assert.ok(!baseNames.includes('computer_act'));
   assert.deepEqual(
     WORK_COMPUTER_TOOL_SCHEMAS.map(schema => schema.function.name),
-    ['computer_observe', 'computer_act']
+    ['computer_observe', 'computer_act', 'request_takeover']
   );
   const act = WORK_COMPUTER_TOOL_SCHEMAS[1].function;
   assert.deepEqual(act.parameters.required, ['actions']);
   assert.equal(act.parameters.properties.actions.type, 'array');
+});
+
+test('request_takeover waits for the human hand-back and computer tools stay blocked meanwhile', async () => {
+  const { default: workScreenControlService } = await distModule(
+    'services/workScreenControlService.js'
+  );
+  const now = Date.now();
+  const userId = 'agent-loop-takeover-admin';
+  getDatabase()
+    .prepare(
+      `INSERT INTO users (
+        id, username, email, password_hash, role, avatar, created_at, updated_at
+      ) VALUES (?, ?, NULL, 'unused', 'admin', NULL, ?, ?)`
+    )
+    .run(userId, userId, now, now);
+
+  replaceMethod(workRuntimeService, 'computerToolsAvailable', async () => true);
+  const assists = [];
+  replaceMethod(
+    workScreenControlService,
+    'waitForAssist',
+    async (taskId, reason, options) => {
+      assists.push({ taskId, reason, hasSignal: Boolean(options?.signal) });
+      return 'released';
+    }
+  );
+  // A human "holds" the lease during round 2 only.
+  let leaseHeld = false;
+  replaceMethod(workScreenControlService, 'current', async () =>
+    leaseHeld
+      ? { userId: 'human', acquiredAt: now, expiresAt: now + 60_000 }
+      : undefined
+  );
+  replaceMethod(workRuntimeService, 'computerObserve', async () => ({
+    width: 1280,
+    height: 800,
+    cursorX: 1,
+    cursorY: 2,
+    window: 'Chromium',
+    screenshotBase64: Buffer.from('after-takeover').toString('base64'),
+  }));
+
+  const requests = [];
+  replaceMethod(
+    workModelProviderService,
+    'generateChatStreamResponse',
+    async request => {
+      requests.push(request);
+      const round = requests.length;
+      const respond = toolCalls => ({
+        model: request.model,
+        created_at: new Date().toISOString(),
+        message: { role: 'assistant', content: '', tool_calls: toolCalls },
+        done: true,
+      });
+      if (round === 1) {
+        return respond([
+          {
+            id: 'assist-1',
+            function: {
+              name: 'request_takeover',
+              arguments: { reason: 'Sign in to the dashboard for me.' },
+            },
+          },
+        ]);
+      }
+      if (round === 2) {
+        const lastTool = request.messages.at(-1);
+        assert.match(lastTool.content, /handed it back/);
+        leaseHeld = true;
+        return respond([
+          {
+            id: 'blocked-act',
+            function: {
+              name: 'computer_act',
+              arguments: { actions: [{ type: 'key', keys: 'Return' }] },
+            },
+          },
+        ]);
+      }
+      if (round === 3) {
+        const lastTool = request.messages.at(-1);
+        assert.match(lastTool.content, /Tool error/);
+        assert.match(lastTool.content, /controlling the Work Computer/);
+        leaseHeld = false;
+        return respond([
+          {
+            id: 'observe-after',
+            function: { name: 'computer_observe', arguments: {} },
+          },
+        ]);
+      }
+      assert.equal(requests.length, 4);
+      assert.match(request.messages.at(-1).content, /cursor at 1,2/);
+      return {
+        model: request.model,
+        created_at: new Date().toISOString(),
+        message: { role: 'assistant', content: 'Signed-in flow continued.' },
+        done: true,
+      };
+    }
+  );
+
+  const detail = await workTaskService.createTaskWithRun(
+    userId,
+    'Handle the sign-in with the user.',
+    'test-model',
+    true,
+    { providerType: 'plugin', providerId: 'test-plugin' }
+  );
+  const runId = detail.activeRun?.id;
+  assert.ok(runId);
+  await workAgentService.execute(detail.id, runId, userId);
+
+  assert.equal((await workTaskService.getRun(runId)).status, 'completed');
+  assert.deepEqual(assists, [
+    {
+      taskId: detail.id,
+      reason: 'Sign in to the dashboard for me.',
+      hasSignal: true,
+    },
+  ]);
+  const persisted = await workTaskService.getMessages(detail.id);
+  const takeoverCall = persisted.find(
+    message =>
+      message.kind === 'tool_call' && message.metadata.toolCallId === 'assist-1'
+  );
+  assert.equal(
+    takeoverCall.metadata.reason,
+    'Sign in to the dashboard for me.'
+  );
+  const takeoverResult = persisted.find(
+    message =>
+      message.kind === 'tool_result' &&
+      message.metadata.toolCallId === 'assist-1'
+  );
+  assert.equal(takeoverResult.metadata.outcome, 'released');
 });

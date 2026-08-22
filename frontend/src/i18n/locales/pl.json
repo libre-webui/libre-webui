@@ -2625,7 +2625,12 @@
       "starting": "Uruchamianie Work Computera…",
       "disconnected": "Ekran jest rozłączony.",
       "reconnect": "Połącz ponownie",
-      "viewOnly": "Podgląd"
+      "viewOnly": "Podgląd",
+      "takeOver": "Przejmij kontrolę",
+      "handBack": "Gotowe",
+      "youHaveControl": "Masz kontrolę",
+      "otherHasControl": "{{name}} ma kontrolę",
+      "agentWaiting": "Agent poprosił Cię o przejęcie kontroli"
     }
   },
   "personaBackground": {

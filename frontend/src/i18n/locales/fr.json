@@ -2625,7 +2625,12 @@
       "starting": "Démarrage du Work Computer…",
       "disconnected": "L'écran est déconnecté.",
       "reconnect": "Reconnecter",
-      "viewOnly": "Observation"
+      "viewOnly": "Observation",
+      "takeOver": "Prendre la main",
+      "handBack": "J'ai terminé",
+      "youHaveControl": "Vous avez la main",
+      "otherHasControl": "{{name}} a la main",
+      "agentWaiting": "L'agent vous demande de prendre la main"
     }
   },
   "personaBackground": {

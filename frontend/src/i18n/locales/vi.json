@@ -2625,7 +2625,12 @@
       "starting": "Đang khởi động Work Computer…",
       "disconnected": "Màn hình đã ngắt kết nối.",
       "reconnect": "Kết nối lại",
-      "viewOnly": "Đang xem"
+      "viewOnly": "Đang xem",
+      "takeOver": "Tiếp quản",
+      "handBack": "Tôi xong rồi",
+      "youHaveControl": "Bạn đang điều khiển",
+      "otherHasControl": "{{name}} đang điều khiển",
+      "agentWaiting": "Tác nhân đề nghị bạn tiếp quản"
     }
   },
   "personaBackground": {

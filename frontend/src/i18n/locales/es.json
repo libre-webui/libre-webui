@@ -2625,7 +2625,12 @@
       "starting": "Iniciando el Work Computer…",
       "disconnected": "La pantalla está desconectada.",
       "reconnect": "Reconectar",
-      "viewOnly": "Observando"
+      "viewOnly": "Observando",
+      "takeOver": "Tomar el control",
+      "handBack": "He terminado",
+      "youHaveControl": "Tienes el control",
+      "otherHasControl": "{{name}} tiene el control",
+      "agentWaiting": "El agente te pidió tomar el control"
     }
   },
   "personaBackground": {

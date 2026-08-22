@@ -2625,7 +2625,12 @@
       "starting": "Spouštění Work Computeru…",
       "disconnected": "Obrazovka je odpojena.",
       "reconnect": "Znovu připojit",
-      "viewOnly": "Sledování"
+      "viewOnly": "Sledování",
+      "takeOver": "Převzít ovládání",
+      "handBack": "Hotovo",
+      "youHaveControl": "Máte ovládání",
+      "otherHasControl": "{{name}} ovládá obrazovku",
+      "agentWaiting": "Agent vás požádal o převzetí ovládání"
     }
   },
   "personaBackground": {

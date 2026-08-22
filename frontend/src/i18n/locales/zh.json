@@ -2625,7 +2625,12 @@
       "starting": "正在启动 Work Computer…",
       "disconnected": "屏幕已断开连接。",
       "reconnect": "重新连接",
-      "viewOnly": "观看中"
+      "viewOnly": "观看中",
+      "takeOver": "接管控制",
+      "handBack": "我完成了",
+      "youHaveControl": "您正在控制",
+      "otherHasControl": "{{name}} 正在控制",
+      "agentWaiting": "代理请求您接管控制"
     }
   },
   "personaBackground": {

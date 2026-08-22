@@ -33,6 +33,9 @@ import workRuntimeService, {
   WorkCommandResult,
   WorkComputerObservation,
 } from './workRuntimeService.js';
+import workScreenControlService, {
+  WORK_SCREEN_ASSIST_TIMEOUT_MS,
+} from './workScreenControlService.js';
 import {
   isWebSearchAvailable,
   userCanUseWebSearch,
@@ -224,6 +227,16 @@ export const WORK_COMPUTER_TOOL_SCHEMAS: Record<string, unknown>[] = [
       },
     },
     ['actions']
+  ),
+  functionTool(
+    'request_takeover',
+    'Ask the user to take control of the virtual computer screen — for signing in, a CAPTCHA, 2FA, or any step you must not perform yourself. Waits until the user finishes and hands control back (or a timeout passes). While the user is driving, your computer tools are blocked.',
+    {
+      reason: stringProperty(
+        'What you need the user to do on the screen, stated concretely.'
+      ),
+    },
+    ['reason']
   ),
 ];
 
@@ -1101,7 +1114,9 @@ export class WorkAgentService {
                 'WORK_TOOL_BATCH_NOT_EXECUTED'
               );
             }
-            const result = await this.executeTool(task, call);
+            const result = await this.executeTool(task, call, {
+              signal: controller.signal,
+            });
             toolOutput = result.content;
             toolImages = result.images;
             toolMetadata = { ...toolMetadata, ...result.metadata };
@@ -1497,7 +1512,8 @@ export class WorkAgentService {
 
   private async executeTool(
     task: WorkTaskRecord,
-    call: WorkToolCall
+    call: WorkToolCall,
+    context: { signal?: AbortSignal } = {}
   ): Promise<{
     content: string;
     metadata?: Record<string, unknown>;
@@ -1644,15 +1660,48 @@ export class WorkAgentService {
         return { content: 'Preview stopped.' };
       case 'computer_observe': {
         await this.assertComputerToolsAvailable(task);
+        await this.assertComputerNotHumanControlled(task);
         return computerToolResult(
           await workRuntimeService.computerObserve(task)
         );
       }
       case 'computer_act': {
         await this.assertComputerToolsAvailable(task);
+        await this.assertComputerNotHumanControlled(task);
         const actions = Array.isArray(args.actions) ? args.actions : [];
         const observation = await workRuntimeService.computerAct(task, actions);
         return computerToolResult(observation, actions.length);
+      }
+      case 'request_takeover': {
+        await this.assertComputerToolsAvailable(task);
+        const reason = requiredString(args.reason, 'reason').slice(0, 1_000);
+        const outcome = await workScreenControlService.waitForAssist(
+          task.id,
+          reason,
+          {
+            timeoutMs: WORK_SCREEN_ASSIST_TIMEOUT_MS,
+            signal: context.signal,
+          }
+        );
+        if (outcome === 'released') {
+          return {
+            content:
+              'The user took control of the computer and has handed it back. Use computer_observe to see the current screen before continuing.',
+            metadata: { outcome },
+          };
+        }
+        if (outcome === 'still_controlled') {
+          return {
+            content:
+              'The user is still controlling the computer. Your computer tools stay blocked until they finish; continue with other work or wait.',
+            metadata: { outcome },
+          };
+        }
+        return {
+          content:
+            'No one took over the screen within the waiting period. State the exact blocker in your response so the user can handle it later.',
+          metadata: { outcome },
+        };
       }
       default:
         throw new WorkAgentHttpError(
@@ -1671,6 +1720,23 @@ export class WorkAgentService {
         'The Work Computer is not available for this task.',
         403,
         'WORK_COMPUTER_UNAVAILABLE'
+      );
+    }
+  }
+
+  /**
+   * While a human holds the control lease, the agent's eyes and hands are
+   * both off: acting would fight the user's input, and observing could
+   * capture usernames or one-time codes typed during a sign-in.
+   */
+  private async assertComputerNotHumanControlled(
+    task: WorkTaskRecord
+  ): Promise<void> {
+    if (await workScreenControlService.current(task.id)) {
+      throw new WorkAgentHttpError(
+        'A user is controlling the Work Computer right now. Wait for them to finish (request_takeover reports when control is handed back).',
+        409,
+        'WORK_COMPUTER_HUMAN_CONTROL'
       );
     }
   }
@@ -2373,6 +2439,8 @@ function validateToolCallArguments(call: WorkToolCall): string | undefined {
     case 'search_files':
     case 'web_search':
       return invalidRequiredString('query');
+    case 'request_takeover':
+      return invalidRequiredString('reason');
     case 'run_command':
       return invalidRequiredString('command');
     default:
@@ -2433,6 +2501,9 @@ function summarizeToolCall(call: WorkToolCall): Record<string, unknown> {
       break;
     case 'start_preview':
       includeString('command', args.command, 2_000);
+      break;
+    case 'request_takeover':
+      includeString('reason', args.reason, 500);
       break;
     case 'computer_act':
       if (Array.isArray(args.actions)) {

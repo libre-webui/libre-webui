@@ -2625,7 +2625,12 @@
       "starting": "جارٍ تشغيل Work Computer…",
       "disconnected": "الشاشة غير متصلة.",
       "reconnect": "إعادة الاتصال",
-      "viewOnly": "مشاهدة"
+      "viewOnly": "مشاهدة",
+      "takeOver": "تولّ التحكم",
+      "handBack": "انتهيت",
+      "youHaveControl": "أنت تتحكم الآن",
+      "otherHasControl": "{{name}} يتحكم الآن",
+      "agentWaiting": "طلب الوكيل منك تولي التحكم"
     }
   },
   "personaBackground": {
