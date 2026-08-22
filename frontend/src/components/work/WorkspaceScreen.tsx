@@ -385,217 +385,218 @@ export function WorkspaceScreen({ taskId, active }: WorkspaceScreenProps) {
     !someoneElseDriving;
 
   const recording = teachPhase === 'recording' && state === 'connected';
+  const toolbarButton =
+    'flex items-center gap-1.5 rounded-lg border border-line px-2.5 py-1 text-xs text-ink transition-colors hover:bg-surface-subtle';
   return (
     <div
-      className={`relative h-full min-h-[16rem] w-full overflow-hidden bg-black ${
-        recording
-          ? 'ring-2 ring-inset ring-red-500'
-          : driving
-            ? 'ring-2 ring-inset ring-emerald-500'
-            : ''
-      }`}
+      className='flex h-full min-h-[16rem] w-full flex-col'
       data-testid='work-screen'
     >
-      {recording && (
+      {/* Controls live in their own toolbar, never on top of the remote
+          screen's pixels. */}
+      <div className='flex shrink-0 flex-wrap items-center gap-2 border-b border-line bg-surface px-3 py-2'>
         <div
-          className='absolute inset-x-0 top-0 z-10 flex items-center justify-center gap-2 bg-red-600/95 py-1 text-[11px] font-medium text-white'
-          data-testid='work-screen-watching-banner'
+          className={`rounded-md px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide ${
+            recording
+              ? 'bg-red-500/15 text-red-500'
+              : driving
+                ? 'bg-emerald-500/15 text-emerald-500'
+                : 'bg-surface-subtle text-ink-muted'
+          }`}
+          data-testid='work-screen-mode'
         >
-          <Circle size={8} className='animate-pulse fill-current' />
-          {t('work.screen.watchingLearning')}
-        </div>
-      )}
-      <div ref={mountRef} className='h-full w-full' />
-      {state !== 'connected' && (
-        <div className='absolute inset-0 flex flex-col items-center justify-center gap-3 px-6 text-center'>
-          {state === 'starting' ? (
-            <>
-              <Loader2 size={20} className='animate-spin text-white/60' />
-              <p className='text-sm text-white/70'>
-                {t('work.screen.starting')}
-              </p>
-            </>
-          ) : (
-            <>
-              <MonitorPlay size={22} className='text-white/40' />
-              <p className='text-sm text-white/70'>
-                {error ?? t('work.screen.disconnected')}
-              </p>
-              <button
-                type='button'
-                data-testid='work-screen-reconnect'
-                onClick={() => setAttempt(value => value + 1)}
-                className='flex items-center gap-2 rounded-lg border border-white/20 px-3 py-1.5 text-xs text-white/80 transition-colors hover:bg-white/10'
-              >
-                <RefreshCw size={12} />
-                {t('work.screen.reconnect')}
-              </button>
-            </>
-          )}
-        </div>
-      )}
-      {state === 'connected' && (
-        <div
-          className={`absolute left-3 flex items-center gap-2 ${recording ? 'top-9' : 'top-3'}`}
-        >
-          <div
-            className={`pointer-events-none rounded-md px-2 py-1 text-[10px] uppercase tracking-wide backdrop-blur ${
-              driving
-                ? 'bg-emerald-500/80 text-white'
-                : 'bg-black/50 text-white/60'
-            }`}
-            data-testid='work-screen-mode'
-          >
-            {driving
+          {recording
+            ? t('work.screen.recording')
+            : driving
               ? t('work.screen.youHaveControl')
               : someoneElseDriving
                 ? t('work.screen.otherHasControl', {
                     name: control.holder?.username ?? '…',
                   })
                 : t('work.screen.viewOnly')}
-          </div>
-          <button
-            type='button'
-            data-testid='work-screen-audio'
-            onClick={() => void handleToggleAudio()}
-            aria-label={
-              audioOn ? t('work.screen.mute') : t('work.screen.unmute')
-            }
-            className={`flex items-center gap-1.5 rounded-md px-2 py-1 text-[11px] backdrop-blur transition-colors ${
-              audioOn
-                ? 'bg-emerald-500/80 text-white hover:bg-emerald-500'
-                : 'bg-white/10 text-white/90 hover:bg-white/20'
-            }`}
-          >
-            {audioOn ? <Volume2 size={12} /> : <VolumeX size={12} />}
-          </button>
-          {showTakeOver && teachPhase === 'idle' && (
-            <>
-              <button
-                type='button'
-                data-testid='work-screen-take-over'
-                onClick={handleTakeOver}
-                className='flex items-center gap-1.5 rounded-md bg-white/10 px-2 py-1 text-[11px] text-white/90 backdrop-blur transition-colors hover:bg-white/20'
-              >
-                <MousePointerClick size={12} />
-                {t('work.screen.takeOver')}
-              </button>
-              <button
-                type='button'
-                data-testid='work-screen-teach'
-                onClick={handleTeachStart}
-                className='flex items-center gap-1.5 rounded-md bg-white/10 px-2 py-1 text-[11px] text-white/90 backdrop-blur transition-colors hover:bg-white/20'
-              >
-                <GraduationCap size={12} />
-                {t('work.screen.teach')}
-              </button>
-            </>
-          )}
-          {driving && teachPhase === 'idle' && (
-            <button
-              type='button'
-              data-testid='work-screen-hand-back'
-              onClick={handleHandBack}
-              className='flex items-center gap-1.5 rounded-md bg-white/15 px-2 py-1 text-[11px] text-white backdrop-blur transition-colors hover:bg-white/25'
-            >
-              <Hand size={12} />
-              {t('work.screen.handBack')}
-            </button>
-          )}
-          {driving && teachPhase === 'recording' && (
-            <>
-              <div
-                className='pointer-events-none flex items-center gap-1.5 rounded-md bg-red-600/90 px-2 py-1 text-[10px] uppercase tracking-wide text-white backdrop-blur'
-                data-testid='work-screen-recording'
-              >
-                <Circle size={8} className='animate-pulse fill-current' />
-                {t('work.screen.recording')}
-              </div>
-              <button
-                type='button'
-                data-testid='work-screen-teach-stop'
-                onClick={handleTeachStop}
-                className='flex items-center gap-1.5 rounded-md bg-white/15 px-2 py-1 text-[11px] text-white backdrop-blur transition-colors hover:bg-white/25'
-              >
-                {t('work.screen.teachSave')}
-              </button>
-              <button
-                type='button'
-                onClick={handleTeachDiscard}
-                className='flex items-center gap-1.5 rounded-md bg-white/10 px-2 py-1 text-[11px] text-white/80 backdrop-blur transition-colors hover:bg-white/20'
-              >
-                {t('work.screen.teachDiscard')}
-              </button>
-            </>
-          )}
-          {teachSavedName && (
-            <div className='pointer-events-none rounded-md bg-emerald-500/80 px-2 py-1 text-[11px] text-white backdrop-blur'>
-              {t('work.screen.teachSaved', { name: teachSavedName })}
-            </div>
-          )}
         </div>
-      )}
-      {(teachPhase === 'naming' || teachPhase === 'saving') && (
-        <div className='absolute inset-0 flex items-center justify-center bg-black/60'>
-          <div className='flex w-72 flex-col gap-3 rounded-lg bg-neutral-900 p-4 shadow-xl'>
-            <input
-              autoFocus
-              value={teachName}
-              onChange={event => setTeachName(event.target.value)}
-              onKeyDown={event => {
-                if (event.key === 'Enter') void handleTeachSave();
-              }}
-              placeholder={t('work.screen.teachNamePlaceholder')}
-              data-testid='work-screen-teach-name'
-              className='rounded-md border border-white/20 bg-black/40 px-3 py-2 text-sm text-white placeholder-white/40 outline-none focus:border-white/40'
-            />
-            <div className='flex justify-end gap-2'>
-              <button
-                type='button'
-                onClick={handleTeachDiscard}
-                disabled={teachPhase === 'saving'}
-                className='rounded-md px-3 py-1.5 text-xs text-white/70 transition-colors hover:bg-white/10'
-              >
-                {t('work.screen.teachDiscard')}
-              </button>
-              <button
-                type='button'
-                data-testid='work-screen-teach-confirm'
-                onClick={() => void handleTeachSave()}
-                disabled={teachPhase === 'saving' || !teachName.trim()}
-                className='flex items-center gap-2 rounded-md bg-emerald-600 px-3 py-1.5 text-xs text-white transition-colors hover:bg-emerald-500 disabled:opacity-50'
-              >
-                {teachPhase === 'saving' && (
-                  <Loader2 size={12} className='animate-spin' />
-                )}
-                {t('work.screen.teachSave')}
-              </button>
-            </div>
+        {teachSavedName && (
+          <div className='rounded-md bg-emerald-500/15 px-2 py-0.5 text-[11px] text-emerald-500'>
+            {t('work.screen.teachSaved', { name: teachSavedName })}
           </div>
-        </div>
-      )}
-      {control.agentWaiting && !driving && state === 'connected' && (
-        <div
-          className='absolute bottom-3 left-1/2 flex max-w-[90%] -translate-x-1/2 items-center gap-3 rounded-lg bg-amber-500/90 px-3 py-2 text-xs text-black shadow-lg backdrop-blur'
-          data-testid='work-screen-agent-waiting'
+        )}
+        <div className='min-w-0 flex-1' />
+        <button
+          type='button'
+          data-testid='work-screen-audio'
+          onClick={() => void handleToggleAudio()}
+          disabled={state !== 'connected'}
+          aria-label={audioOn ? t('work.screen.mute') : t('work.screen.unmute')}
+          className={`${toolbarButton} disabled:opacity-40 ${
+            audioOn ? 'border-emerald-500/50 text-emerald-500' : ''
+          }`}
         >
-          <span className='font-medium'>{t('work.screen.agentWaiting')}</span>
-          {control.agentWaitingReason && (
-            <span className='truncate opacity-80'>
-              {control.agentWaitingReason}
-            </span>
-          )}
-          {takeoverSupported && !someoneElseDriving && (
+          {audioOn ? <Volume2 size={13} /> : <VolumeX size={13} />}
+        </button>
+        {showTakeOver && teachPhase === 'idle' && (
+          <>
             <button
               type='button'
+              data-testid='work-screen-take-over'
               onClick={handleTakeOver}
-              className='shrink-0 rounded-md bg-black/80 px-2 py-1 text-[11px] text-white transition-colors hover:bg-black'
+              className={toolbarButton}
             >
+              <MousePointerClick size={13} />
               {t('work.screen.takeOver')}
             </button>
-          )}
-        </div>
-      )}
+            <button
+              type='button'
+              data-testid='work-screen-teach'
+              onClick={handleTeachStart}
+              className={toolbarButton}
+            >
+              <GraduationCap size={13} />
+              {t('work.screen.teach')}
+            </button>
+          </>
+        )}
+        {driving && teachPhase === 'idle' && (
+          <button
+            type='button'
+            data-testid='work-screen-hand-back'
+            onClick={handleHandBack}
+            className={`${toolbarButton} border-emerald-500/50 text-emerald-500`}
+          >
+            <Hand size={13} />
+            {t('work.screen.handBack')}
+          </button>
+        )}
+        {driving && teachPhase === 'recording' && (
+          <>
+            <button
+              type='button'
+              data-testid='work-screen-teach-stop'
+              onClick={handleTeachStop}
+              className={`${toolbarButton} border-red-500/50 text-red-500`}
+            >
+              <Circle size={9} className='animate-pulse fill-current' />
+              {t('work.screen.teachSave')}
+            </button>
+            <button
+              type='button'
+              onClick={handleTeachDiscard}
+              className={toolbarButton}
+            >
+              {t('work.screen.teachDiscard')}
+            </button>
+          </>
+        )}
+      </div>
+
+      <div
+        className={`relative min-h-0 flex-1 overflow-hidden bg-black ${
+          recording
+            ? 'ring-2 ring-inset ring-red-500'
+            : driving
+              ? 'ring-2 ring-inset ring-emerald-500'
+              : ''
+        }`}
+      >
+        {recording && (
+          <div
+            className='absolute inset-x-0 top-0 z-10 flex items-center justify-center gap-2 bg-red-600/95 py-1 text-[11px] font-medium text-white'
+            data-testid='work-screen-watching-banner'
+          >
+            <Circle size={8} className='animate-pulse fill-current' />
+            {t('work.screen.watchingLearning')}
+          </div>
+        )}
+        <div ref={mountRef} className='h-full w-full' />
+        {state !== 'connected' && (
+          <div className='absolute inset-0 flex flex-col items-center justify-center gap-3 px-6 text-center'>
+            {state === 'starting' ? (
+              <>
+                <Loader2 size={20} className='animate-spin text-white/60' />
+                <p className='text-sm text-white/70'>
+                  {t('work.screen.starting')}
+                </p>
+              </>
+            ) : (
+              <>
+                <MonitorPlay size={22} className='text-white/40' />
+                <p className='text-sm text-white/70'>
+                  {error ?? t('work.screen.disconnected')}
+                </p>
+                <button
+                  type='button'
+                  data-testid='work-screen-reconnect'
+                  onClick={() => setAttempt(value => value + 1)}
+                  className='flex items-center gap-2 rounded-lg border border-white/20 px-3 py-1.5 text-xs text-white/80 transition-colors hover:bg-white/10'
+                >
+                  <RefreshCw size={12} />
+                  {t('work.screen.reconnect')}
+                </button>
+              </>
+            )}
+          </div>
+        )}
+        {(teachPhase === 'naming' || teachPhase === 'saving') && (
+          <div className='absolute inset-0 z-20 flex items-center justify-center bg-black/60'>
+            <div className='flex w-72 flex-col gap-3 rounded-xl border border-line bg-surface-raised p-4 shadow-xl'>
+              <input
+                autoFocus
+                value={teachName}
+                onChange={event => setTeachName(event.target.value)}
+                onKeyDown={event => {
+                  if (event.key === 'Enter') void handleTeachSave();
+                }}
+                placeholder={t('work.screen.teachNamePlaceholder')}
+                data-testid='work-screen-teach-name'
+                className='rounded-lg border border-line bg-surface px-3 py-2 text-sm text-ink outline-none placeholder:text-ink-subtle focus:border-line-strong'
+              />
+              <div className='flex justify-end gap-2'>
+                <button
+                  type='button'
+                  onClick={handleTeachDiscard}
+                  disabled={teachPhase === 'saving'}
+                  className='rounded-lg px-3 py-1.5 text-xs text-ink-muted transition-colors hover:bg-surface-subtle'
+                >
+                  {t('work.screen.teachDiscard')}
+                </button>
+                <button
+                  type='button'
+                  data-testid='work-screen-teach-confirm'
+                  onClick={() => void handleTeachSave()}
+                  disabled={teachPhase === 'saving' || !teachName.trim()}
+                  className='flex items-center gap-2 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs text-white transition-colors hover:bg-emerald-500 disabled:opacity-50'
+                >
+                  {teachPhase === 'saving' && (
+                    <Loader2 size={12} className='animate-spin' />
+                  )}
+                  {t('work.screen.teachSave')}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+        {control.agentWaiting && !driving && state === 'connected' && (
+          <div
+            className='absolute bottom-3 left-1/2 flex max-w-[90%] -translate-x-1/2 items-center gap-3 rounded-lg bg-amber-500/90 px-3 py-2 text-xs text-black shadow-lg backdrop-blur'
+            data-testid='work-screen-agent-waiting'
+          >
+            <span className='font-medium'>{t('work.screen.agentWaiting')}</span>
+            {control.agentWaitingReason && (
+              <span className='truncate opacity-80'>
+                {control.agentWaitingReason}
+              </span>
+            )}
+            {takeoverSupported && !someoneElseDriving && (
+              <button
+                type='button'
+                onClick={handleTakeOver}
+                className='shrink-0 rounded-md bg-black/80 px-2 py-1 text-[11px] text-white transition-colors hover:bg-black'
+              >
+                {t('work.screen.takeOver')}
+              </button>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
