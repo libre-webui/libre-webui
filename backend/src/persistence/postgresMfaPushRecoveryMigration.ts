@@ -15,7 +15,6 @@
  * limitations under the License.
  */
 
-import { createHash } from 'node:crypto';
 import type { PostgresMigration } from './postgresMigrationTypes.js';
 
 /**
@@ -94,14 +93,16 @@ CREATE INDEX idx_recovery_drills_started
 
 const version = 20;
 const name = 'mfa-push-recovery';
+// Frozen integrity checksum of `${version}\n${name}\n${SQL}`. This migration is
+// already released, so changing its DDL must fail registry validation.
+const checksum =
+  '91906a765da28e48e7d1e2d82a230f76ab06fe934a12f8cc06658ffd75671e23';
 
 export const POSTGRES_MFA_PUSH_RECOVERY_MIGRATION: PostgresMigration =
   Object.freeze({
     version,
     name,
-    checksum: createHash('sha256')
-      .update(`${version}\n${name}\n${POSTGRES_MFA_PUSH_RECOVERY_SQL}`)
-      .digest('hex'),
+    checksum,
     sql: POSTGRES_MFA_PUSH_RECOVERY_SQL,
     rollbackPlan:
       'DROP TABLE recovery_drills, push_subscriptions, ' +
