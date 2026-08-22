@@ -86,15 +86,18 @@ export class WorkComputerSetupService {
    * policy when no GUI policy exists yet.
    */
   async ensure(): Promise<WorkComputerSetupStatus> {
-    const context = bundledContextPath();
-    if (!existsSync(path.join(context, 'Dockerfile'))) {
-      throw new WorkRuntimeError(
-        'The bundled Work Computer image files are missing from this installation.',
-        500,
-        'WORK_COMPUTER_SETUP_UNAVAILABLE'
-      );
-    }
     if (!(await this.imageExists()) && !this.building) {
+      // The context is only needed when the image actually has to be built;
+      // an image built out-of-band (for deployments whose Docker API proxy
+      // denies /build) must still let this converge on the policy.
+      const context = bundledContextPath();
+      if (!existsSync(path.join(context, 'Dockerfile'))) {
+        throw new WorkRuntimeError(
+          'The bundled Work Computer image files are missing from this installation.',
+          500,
+          'WORK_COMPUTER_SETUP_UNAVAILABLE'
+        );
+      }
       this.building = true;
       this.buildError = undefined;
       this.buildLog = '';

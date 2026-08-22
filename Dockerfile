@@ -190,6 +190,10 @@ RUN if [ -n "$APP_VERSION" ]; then \
 # Copy plugins directory
 COPY plugins ./plugins
 
+# Bundled Work Computer build context: the one-click setup builds the GUI
+# sandbox image from this directory on the deployment's own Docker daemon.
+COPY deploy/work-computer ./deploy/work-computer
+
 # Create directories for data persistence
 RUN mkdir -p ./backend/data && \
     mkdir -p ./backend/temp && \
