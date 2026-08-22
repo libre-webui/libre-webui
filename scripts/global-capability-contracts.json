@@ -2420,6 +2420,12 @@
           "file": "backend/src/routes/work.ts",
           "mount": "/api/work",
           "method": "POST",
+          "path": "/tasks/:id/computer/start"
+        },
+        {
+          "file": "backend/src/routes/work.ts",
+          "mount": "/api/work",
+          "method": "POST",
           "path": "/tasks/:id/preview/start"
         },
         {
@@ -2448,6 +2454,21 @@
               "patterns": [
                 "production Work upgrade applies task-bound ticket authentication",
                 "expectAuthenticatedSocketClose\\(wrongTaskUrl, 4401\\)"
+              ]
+            }
+          ]
+        },
+        {
+          "file": "backend/src/websocketServer.ts",
+          "path": "/ws/work-screen",
+          "authenticationEvidence": [
+            {
+              "file": "backend/src/workScreenServer.ts",
+              "patterns": [
+                "WORK_SCREEN_WS_PATH = '/ws/work-screen'",
+                "websocketTicketService\\.consume\\(",
+                "'work-screen'",
+                "requireCurrentTerminalTask\\("
               ]
             }
           ]

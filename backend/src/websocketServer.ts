@@ -17,6 +17,10 @@
 
 import type { IncomingMessage, Server } from 'http';
 import type { Duplex } from 'stream';
+import {
+  tryHandleScreenUpgrade,
+  WORK_SCREEN_WS_PATH,
+} from './workScreenServer.js';
 import { WebSocketServer, type RawData } from 'ws';
 
 import ollamaService from './services/ollamaService.js';
@@ -1200,6 +1204,14 @@ export function registerWebSocketServer(
       terminalServer.handleUpgrade(request, socket, head, ws => {
         terminalServer.emit('connection', ws, request);
       });
+      return;
+    }
+    if (pathname === WORK_SCREEN_WS_PATH) {
+      if (!isAllowedWebSocketOrigin(request.headers.origin)) {
+        rejectUpgrade(socket, 403, 'WebSocket origin is not allowed');
+        return;
+      }
+      tryHandleScreenUpgrade(request, socket, head);
       return;
     }
     if (pathname === '/ws') {

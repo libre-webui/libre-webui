@@ -1643,7 +1643,8 @@
       "saved": "Politica Work salvata",
       "deleted": "Politica Work eliminata",
       "failed": "Impossibile salvare la politica Work",
-      "invalidNumber": "Il limite PID e l'arresto per inattività devono essere numeri."
+      "invalidNumber": "Il limite PID e l'arresto per inattività devono essere numeri.",
+      "guiEnabled": "Work Computer (GUI + browser)"
     },
     "modelAccess": {
       "title": "Download dei modelli",
@@ -2502,7 +2503,8 @@
       "resizeHint": "Trascina per ridimensionare. Usa i tasti freccia per un controllo preciso. Fai doppio clic o premi Invio per ripristinare.",
       "splitSize": "Conversazione {{conversation}}%, spazio di lavoro {{workspace}}%",
       "terminal": "Terminale",
-      "git": "Git"
+      "git": "Git",
+      "screen": "Schermo"
     },
     "files": {
       "discard": "Ignorare le modifiche al file non salvate?",
@@ -2618,6 +2620,12 @@
       "hint": "Lascia vuoto per uno spazio isolato, oppure punta l'attività a una cartella di questa macchina.",
       "label": "Cartella dello spazio di lavoro (facoltativa)",
       "warning": "L'attività può leggere e scrivere questa cartella direttamente. Lascia vuoto per uno spazio isolato."
+    },
+    "screen": {
+      "starting": "Avvio del Work Computer…",
+      "disconnected": "Lo schermo è disconnesso.",
+      "reconnect": "Riconnetti",
+      "viewOnly": "Osservazione"
     }
   },
   "personaBackground": {

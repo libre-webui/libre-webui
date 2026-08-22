@@ -426,6 +426,35 @@ The model can also start the preview through its `start_preview` tool. This is
 the only supported way for a model to leave a process running. Ordinary
 `run_command` calls clean up background descendants when the command finishes.
 
+### Screen (the Work Computer)
+
+A task whose policy enables the **Work Computer** gains a Screen tab: a live,
+view-only window onto a virtual desktop running inside the same sandbox —
+a window manager and a Chromium browser on a 1280×800 display. Opening the
+tab starts the GUI session on demand (nothing runs until someone looks) and
+attaches a VNC-over-WebSocket viewer.
+
+Enabling it requires two admin steps: build the GUI image variant from
+`deploy/work-computer/` in the repository, then create a Work policy that
+uses that image and checks **Work Computer (GUI + browser)**. Tasks under
+that policy must have network access — the screen is reached over a
+loopback-published container port, exactly like the preview.
+
+Security model: the in-container VNC server binds to localhost in view-only
+mode; the WebSocket bridge is the only reachable surface, published on the
+Docker host's loopback and never exposed directly. Every viewer
+authenticates with a one-use ticket bound to their session and the task —
+the same mechanism as the Terminal — and current Work access is re-checked
+on every connection, so revoking a user's access cuts their screens
+immediately. Up to four concurrent viewers may watch one screen, and
+watching counts as task activity for the idle sweep. The browser profile
+persists in `/workspace/.browser-profile`, so sign-ins inside the computer
+survive container restarts.
+
+This phase is watch-only. Agent control of the desktop, user takeover for
+sign-ins, and teach-by-demonstration build on this surface in later
+releases.
+
 ## Providers, Routing, and Data Disclosure
 
 ### Supported provider routes

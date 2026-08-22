@@ -1004,7 +1004,25 @@ export class WorkTaskService {
       workspacePath: '/workspace',
       hostPath: row.host_path || undefined,
       policyId: row.policy_id || undefined,
+      computerAvailable: await this.policyEnablesComputer(row.policy_id),
     };
+  }
+
+  /**
+   * Whether a task's policy grants the Work Computer. Policy-less tasks run
+   * on the global defaults, which never enable the GUI. Fails closed.
+   */
+  private async policyEnablesComputer(
+    policyId: string | null
+  ): Promise<boolean> {
+    if (!policyId) return false;
+    try {
+      const { default: workPolicyService } =
+        await import('./workPolicyService.js');
+      return (await workPolicyService.resolve(policyId)).guiEnabled === true;
+    } catch {
+      return false;
+    }
   }
 }
 

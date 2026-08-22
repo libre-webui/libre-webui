@@ -1643,7 +1643,8 @@
       "saved": "已保存 Work 策略",
       "deleted": "已删除 Work 策略",
       "failed": "无法保存 Work 策略",
-      "invalidNumber": "PID 限制和空闲停止必须是数字。"
+      "invalidNumber": "PID 限制和空闲停止必须是数字。",
+      "guiEnabled": "Work Computer（GUI + 浏览器）"
     },
     "modelAccess": {
       "title": "模型下载",
@@ -2502,7 +2503,8 @@
       "resizeHint": "拖动以调整大小。使用方向键精确控制。双击或按 Enter 重置。",
       "splitSize": "对话 {{conversation}}%，工作区 {{workspace}}%",
       "terminal": "终端",
-      "git": "Git"
+      "git": "Git",
+      "screen": "屏幕"
     },
     "files": {
       "discard": "放弃未保存的文件更改？",
@@ -2618,6 +2620,12 @@
       "hint": "留空以使用隔离工作区，或将任务指向本机的一个文件夹。",
       "label": "工作区文件夹（可选）",
       "warning": "任务可以直接读写此文件夹。留空则使用隔离工作区。"
+    },
+    "screen": {
+      "starting": "正在启动 Work Computer…",
+      "disconnected": "屏幕已断开连接。",
+      "reconnect": "重新连接",
+      "viewOnly": "观看中"
     }
   },
   "personaBackground": {

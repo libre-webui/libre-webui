@@ -1643,7 +1643,8 @@
       "saved": "Work ポリシーを保存しました",
       "deleted": "Work ポリシーを削除しました",
       "failed": "Work ポリシーを保存できませんでした",
-      "invalidNumber": "PID 制限とアイドル停止は数値で入力してください。"
+      "invalidNumber": "PID 制限とアイドル停止は数値で入力してください。",
+      "guiEnabled": "Work Computer（GUI + ブラウザ）"
     },
     "modelAccess": {
       "title": "モデルのダウンロード",
@@ -2502,7 +2503,8 @@
       "resizeHint": "ドラッグしてサイズを変更します。細かく調整するには矢印キーを使用します。ダブルクリックまたは Enter キーでリセットします。",
       "splitSize": "会話 {{conversation}}%、ワークスペース {{workspace}}%",
       "terminal": "ターミナル",
-      "git": "Git"
+      "git": "Git",
+      "screen": "画面"
     },
     "files": {
       "discard": "未保存のファイル変更を破棄しますか？",
@@ -2618,6 +2620,12 @@
       "hint": "分離ワークスペースの場合は空欄のまま、またはこのマシンのフォルダーをタスクに指定します。",
       "label": "ワークスペースフォルダー（任意）",
       "warning": "タスクはこのフォルダーを直接読み書きできます。分離ワークスペースを使うには空欄のままにしてください。"
+    },
+    "screen": {
+      "starting": "Work Computer を起動しています…",
+      "disconnected": "画面が切断されました。",
+      "reconnect": "再接続",
+      "viewOnly": "閲覧中"
     }
   },
   "personaBackground": {

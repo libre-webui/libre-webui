@@ -1643,7 +1643,8 @@
       "saved": "Work policy saved",
       "deleted": "Work policy deleted",
       "failed": "Could not save the Work policy",
-      "invalidNumber": "PID limit and idle stop must be numbers."
+      "invalidNumber": "PID limit and idle stop must be numbers.",
+      "guiEnabled": "Work Computer (GUI + browser)"
     },
     "modelAccess": {
       "title": "Model downloads",
@@ -2502,7 +2503,8 @@
       "resizeHint": "Drag to resize. Use arrow keys for precise control. Double-click or press Enter to reset.",
       "splitSize": "Conversation {{conversation}}%, workspace {{workspace}}%",
       "terminal": "Terminal",
-      "git": "Git"
+      "git": "Git",
+      "screen": "Screen"
     },
     "files": {
       "discard": "Discard unsaved file changes?",
@@ -2618,6 +2620,12 @@
       "hint": "Leave blank for an isolated workspace, or point the task at a folder on this machine.",
       "label": "Workspace folder (optional)",
       "warning": "The task can read and write this folder directly. Leave blank to use an isolated workspace instead."
+    },
+    "screen": {
+      "starting": "Starting the Work Computer…",
+      "disconnected": "The screen is disconnected.",
+      "reconnect": "Reconnect",
+      "viewOnly": "Watching"
     }
   },
   "personaBackground": {

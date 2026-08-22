@@ -1094,6 +1094,10 @@ const AUTOMATION_WORK_TARGET_REQUIRED_SCHEMA = {
   automation_runs: ['work_task_id'],
 } as const;
 
+const WORK_COMPUTER_REQUIRED_SCHEMA = {
+  work_policies: ['gui_enabled'],
+} as const;
+
 export const IDENTITY_EMAIL_LOOKUP_SCHEMA_SQL = `
   ALTER TABLE users ADD COLUMN email_lookup TEXT;
   CREATE UNIQUE INDEX idx_users_email_lookup
@@ -1886,6 +1890,10 @@ export const AUTOMATION_WORK_TARGET_SCHEMA_SQL = `
   ALTER TABLE automations ADD COLUMN target TEXT NOT NULL DEFAULT 'chat';
   ALTER TABLE automations ADD COLUMN work_policy_id TEXT;
   ALTER TABLE automation_runs ADD COLUMN work_task_id TEXT;
+`;
+
+export const WORK_COMPUTER_SCHEMA_SQL = `
+  ALTER TABLE work_policies ADD COLUMN gui_enabled INTEGER;
 `;
 
 const REQUIRED_SCHEMA = {
@@ -3605,6 +3613,10 @@ const collectMissingAutomationWorkTargetSchema = (
 ): string[] =>
   collectMissingColumns(database, AUTOMATION_WORK_TARGET_REQUIRED_SCHEMA);
 
+const collectMissingWorkComputerSchema = (
+  database: Database.Database
+): string[] => collectMissingColumns(database, WORK_COMPUTER_REQUIRED_SCHEMA);
+
 const collectMissingIdentityAccountRetirementSchema = (
   database: Database.Database
 ): string[] => {
@@ -3661,6 +3673,7 @@ function collectMissingSchemaAtVersion(
     ...(version >= 22
       ? collectMissingAutomationWorkTargetSchema(database)
       : []),
+    ...(version >= 23 ? collectMissingWorkComputerSchema(database) : []),
   ];
 }
 
@@ -3758,6 +3771,8 @@ const MEDIA_ENTERPRISE_OPS_MIGRATION_CHECKSUM =
   'c6bc6d98518f7a279ad7109cfdfcd8a75fbf7e3e157c50bca98142b50ac0f38b';
 const MFA_PUSH_RECOVERY_MIGRATION_CHECKSUM =
   '9b2cdc08d2316877af091587113c749aed4b224d6ee12e72626b830da5447005';
+const WORK_COMPUTER_MIGRATION_CHECKSUM =
+  'b86fa1e6cb13bd76129db93043007cf7dd6888b85bd0139dfc34dbe394069867';
 const AUTOMATION_WORK_TARGET_MIGRATION_CHECKSUM =
   'e5fb43e9bf42ab206dce74bfd867d5001754983c7a3cef30b811c4d4da54d1a9';
 
@@ -4163,6 +4178,20 @@ const MIGRATIONS: readonly SQLiteMigration[] = [
       if (missing.length > 0) {
         throw new Error(
           `SQLite automation work-target schema is incomplete; missing ${missing.join(', ')}`
+        );
+      }
+    },
+  },
+  {
+    version: 23,
+    name: 'work-computer',
+    checksum: WORK_COMPUTER_MIGRATION_CHECKSUM,
+    apply(database) {
+      addColumnIfMissing(database, 'work_policies', 'gui_enabled', 'INTEGER');
+      const missing = collectMissingWorkComputerSchema(database);
+      if (missing.length > 0) {
+        throw new Error(
+          `SQLite work computer schema is incomplete; missing ${missing.join(', ')}`
         );
       }
     },

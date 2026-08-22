@@ -1751,6 +1751,62 @@ export class WorkRuntimeService {
     }
   }
 
+  /**
+   * Start (or confirm) the Work Computer GUI session in a task's sandbox:
+   * virtual display, window manager, browser, and the localhost-only
+   * VNC-to-WebSocket bridge. Idempotent — the in-container script exits 0
+   * when a session is already running. Requires a policy with the GUI
+   * enabled and a networked task (the screen is reached over the published
+   * loopback port, and a computer without network is not useful anyway).
+   */
+  async startComputer(task: WorkTaskRecord): Promise<void> {
+    if (!task.networkEnabled) {
+      throw new WorkRuntimeError(
+        'The Work Computer requires network access. Enable network access for this Work task first.',
+        409,
+        'WORK_COMPUTER_REQUIRES_NETWORK'
+      );
+    }
+    const policy = await workPolicyService.resolve(task.policyId);
+    if (policy.guiEnabled !== true) {
+      throw new WorkRuntimeError(
+        "This task's Work policy does not enable the Work Computer.",
+        409,
+        'WORK_COMPUTER_NOT_ENABLED'
+      );
+    }
+    const releaseLease = await this.acquireRuntimeLease(task);
+    try {
+      await this.ensureImage(task);
+      await this.assertTaskIsActive(task);
+      await this.withLifecycleLock(task.id, async (assertHeld, signal) => {
+        await this.assertTaskIsActive(task);
+        this.assertCurrentNetworkPolicy(task);
+        await assertHeld();
+        await this.prepareWithLock(task, signal);
+        const result = await this.driver.exec(
+          task,
+          ['/usr/local/bin/start-computer'],
+          { timeoutMs: 60_000 }
+        );
+        if (result.exitCode !== 0) {
+          const detail = (result.stderr || result.stdout || '')
+            .trim()
+            .slice(0, 300);
+          throw new WorkRuntimeError(
+            `The Work Computer could not start${detail ? `: ${detail}` : '.'} ` +
+              'The policy image must include the Work Computer GUI stack.',
+            500,
+            'WORK_COMPUTER_START_FAILED'
+          );
+        }
+        this.noteTaskActivity(task.id);
+      });
+    } finally {
+      await releaseLease();
+    }
+  }
+
   async startPreview(
     task: WorkTaskRecord,
     command?: string,

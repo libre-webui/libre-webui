@@ -566,8 +566,9 @@ export class SQLiteWorkPersistence implements WorkPersistenceRepository {
         .prepare(
           `INSERT INTO work_policies (
              id, name, image, memory_limit, cpu_limit, pids_limit,
-             network_default, workspace_size, idle_timeout_ms, created_at, updated_at
-           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+             network_default, workspace_size, idle_timeout_ms, gui_enabled,
+             created_at, updated_at
+           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
         )
         .run(...this.policyValues(row));
     } catch (error) {
@@ -585,7 +586,8 @@ export class SQLiteWorkPersistence implements WorkPersistenceRepository {
           .prepare(
             `UPDATE work_policies SET name = ?, image = ?, memory_limit = ?,
                cpu_limit = ?, pids_limit = ?, network_default = ?,
-               workspace_size = ?, idle_timeout_ms = ?, updated_at = ?
+               workspace_size = ?, idle_timeout_ms = ?, gui_enabled = ?,
+               updated_at = ?
              WHERE id = ?`
           )
           .run(
@@ -597,6 +599,7 @@ export class SQLiteWorkPersistence implements WorkPersistenceRepository {
             row.network_default,
             row.workspace_size,
             row.idle_timeout_ms,
+            row.gui_enabled,
             row.updated_at,
             row.id
           ).changes === 1
@@ -770,6 +773,7 @@ export class SQLiteWorkPersistence implements WorkPersistenceRepository {
       row.network_default,
       row.workspace_size,
       row.idle_timeout_ms,
+      row.gui_enabled,
       row.created_at,
       row.updated_at,
     ];

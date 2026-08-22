@@ -1643,7 +1643,8 @@
       "saved": "Work-Richtlinie gespeichert",
       "deleted": "Work-Richtlinie gelöscht",
       "failed": "Work-Richtlinie konnte nicht gespeichert werden",
-      "invalidNumber": "PID-Limit und Leerlauf-Stopp müssen Zahlen sein."
+      "invalidNumber": "PID-Limit und Leerlauf-Stopp müssen Zahlen sein.",
+      "guiEnabled": "Work Computer (GUI + Browser)"
     },
     "modelAccess": {
       "title": "Modell-Downloads",
@@ -2502,7 +2503,8 @@
       "resizeHint": "Ziehen Sie zum Ändern der Größe. Verwenden Sie die Pfeiltasten zur präzisen Steuerung. Doppelklicken Sie oder drücken Sie die Eingabetaste zum Zurücksetzen.",
       "splitSize": "Unterhaltung {{conversation}} %, Arbeitsbereich {{workspace}} %",
       "terminal": "Terminal",
-      "git": "Git"
+      "git": "Git",
+      "screen": "Bildschirm"
     },
     "files": {
       "discard": "Ungespeicherte Dateiänderungen verwerfen?",
@@ -2618,6 +2620,12 @@
       "hint": "Leer lassen für einen isolierten Arbeitsbereich, oder die Aufgabe auf einen Ordner dieses Rechners richten.",
       "label": "Arbeitsbereich-Ordner (optional)",
       "warning": "Die Aufgabe kann diesen Ordner direkt lesen und schreiben. Leer lassen für einen isolierten Arbeitsbereich."
+    },
+    "screen": {
+      "starting": "Work Computer wird gestartet…",
+      "disconnected": "Der Bildschirm ist getrennt.",
+      "reconnect": "Neu verbinden",
+      "viewOnly": "Beobachten"
     }
   },
   "personaBackground": {

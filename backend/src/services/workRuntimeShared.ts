@@ -40,6 +40,10 @@ export const WORK_RUNTIME_DEFAULTS = {
   pidsLimit: 256,
   previewPort: 4173,
   previewBind: '127.0.0.1',
+  // Container-internal WebSocket port of the Work Computer screen bridge
+  // (websockify in the GUI image). Published on previewBind when a task's
+  // policy enables the GUI.
+  screenPort: 6080,
   networkName: 'libre-webui-work',
   // 0 disables the idle sweep: previews stay up until stopped explicitly.
   idleTimeoutMs: 0,
@@ -84,6 +88,10 @@ export const workRuntimeConfig = {
   // private to the Docker host, which is correct when the browser runs there.
   previewBind:
     process.env.WORK_PREVIEW_BIND || WORK_RUNTIME_DEFAULTS.previewBind,
+  screenPort: positiveInteger(
+    process.env.WORK_COMPUTER_SCREEN_PORT,
+    WORK_RUNTIME_DEFAULTS.screenPort
+  ),
   // Stop a running sandbox after this much inactivity: no command finished,
   // no terminal attached, no preview request through the signed proxy.
   // Commands already stop their container on completion, so this mainly
@@ -124,6 +132,8 @@ export interface ResolvedWorkRuntimePolicy {
   pidsLimit: number;
   idleTimeoutMs: number;
   workspaceSize?: string;
+  /** GUI session (Work Computer) enabled for containers under this policy. */
+  guiEnabled?: boolean;
 }
 
 /** The resolution of "no policy": exactly the global configuration. */
@@ -146,13 +156,13 @@ export const defaultRuntimePolicy: ResolvedWorkRuntimePolicy = {
 export function computePolicyFingerprint(
   policy: Pick<
     ResolvedWorkRuntimePolicy,
-    'memoryLimit' | 'cpuLimit' | 'pidsLimit'
+    'memoryLimit' | 'cpuLimit' | 'pidsLimit' | 'guiEnabled'
   >
 ): string {
   return createHash('sha256')
     .update(
       JSON.stringify({
-        version: 2,
+        version: 3,
         memoryLimit: policy.memoryLimit,
         cpuLimit: policy.cpuLimit,
         pidsLimit: policy.pidsLimit,
@@ -161,6 +171,8 @@ export function computePolicyFingerprint(
         networkName: workRuntimeConfig.networkName,
         dnsServers: workRuntimeConfig.dnsServers,
         memorySwapPinned: true,
+        guiEnabled: policy.guiEnabled === true,
+        screenPort: workRuntimeConfig.screenPort,
       })
     )
     .digest('hex');

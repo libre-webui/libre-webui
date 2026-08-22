@@ -1643,7 +1643,8 @@
       "saved": "Work-stefna vistuð",
       "deleted": "Work-stefnu eytt",
       "failed": "Ekki tókst að vista Work-stefnuna",
-      "invalidNumber": "PID-mörk og stöðvun í aðgerðaleysi verða að vera tölur."
+      "invalidNumber": "PID-mörk og stöðvun í aðgerðaleysi verða að vera tölur.",
+      "guiEnabled": "Work Computer (viðmót + vafri)"
     },
     "modelAccess": {
       "title": "Niðurhal líkana",
@@ -2502,7 +2503,8 @@
       "resizeHint": "Dragðu til að breyta stærð. Notaðu örvatakkana til að fínstilla. Tvísmelltu eða ýttu á Enter til að endurstilla.",
       "splitSize": "Samtal {{conversation}}%, vinnusvæði {{workspace}}%",
       "terminal": "Skjáhermir",
-      "git": "Git"
+      "git": "Git",
+      "screen": "Skjár"
     },
     "files": {
       "discard": "Fleygja óvistuðum breytingum á skrá?",
@@ -2618,6 +2620,12 @@
       "hint": "Skildu eftir autt fyrir einangrað vinnusvæði, eða beindu verkinu á möppu á þessari vél.",
       "label": "Vinnusvæðismappa (valfrjálst)",
       "warning": "Verkið getur lesið og skrifað þessa möppu beint. Skildu eftir autt fyrir einangrað vinnusvæði."
+    },
+    "screen": {
+      "starting": "Ræsi Work Computer…",
+      "disconnected": "Skjárinn er aftengdur.",
+      "reconnect": "Endurtengja",
+      "viewOnly": "Fylgist með"
     }
   },
   "personaBackground": {

@@ -17,6 +17,7 @@
 
 export const CHAT_WEBSOCKET_PATH = '/ws';
 export const WORK_TERMINAL_WEBSOCKET_PATH = '/ws/work-terminal';
+export const WORK_SCREEN_WEBSOCKET_PATH = '/ws/work-screen';
 
 export interface WebSocketUrlEnvironment {
   protocol: string;
@@ -110,6 +111,17 @@ export function buildChatWebSocketUrl(
   environment: WebSocketUrlEnvironment
 ): string {
   return buildWebSocketUrl(CHAT_WEBSOCKET_PATH, environment, { ticket });
+}
+
+export function buildWorkScreenUrl(
+  taskId: string,
+  ticket: string,
+  environment: WebSocketUrlEnvironment
+): string {
+  return buildWebSocketUrl(WORK_SCREEN_WEBSOCKET_PATH, environment, {
+    taskId,
+    ticket,
+  });
 }
 
 export function buildWorkTerminalUrl(

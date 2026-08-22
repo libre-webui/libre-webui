@@ -1643,7 +1643,8 @@
       "saved": "Polityka Work zapisana",
       "deleted": "Polityka Work usunięta",
       "failed": "Nie udało się zapisać polityki Work",
-      "invalidNumber": "Limit PID i zatrzymanie przy bezczynności muszą być liczbami."
+      "invalidNumber": "Limit PID i zatrzymanie przy bezczynności muszą być liczbami.",
+      "guiEnabled": "Work Computer (GUI + przeglądarka)"
     },
     "modelAccess": {
       "title": "Pobieranie modeli",
@@ -2502,7 +2503,8 @@
       "resizeHint": "Przeciągnij, aby zmienić rozmiar. Użyj klawiszy strzałek do precyzyjnej regulacji. Kliknij dwukrotnie lub naciśnij Enter, aby zresetować.",
       "splitSize": "Rozmowa {{conversation}}%, obszar roboczy {{workspace}}%",
       "terminal": "Terminal",
-      "git": "Git"
+      "git": "Git",
+      "screen": "Ekran"
     },
     "files": {
       "discard": "Odrzucić niezapisane zmiany w pliku?",
@@ -2618,6 +2620,12 @@
       "hint": "Zostaw puste dla izolowanej przestrzeni, albo wskaż zadaniu folder na tej maszynie.",
       "label": "Folder przestrzeni roboczej (opcjonalnie)",
       "warning": "Zadanie może bezpośrednio czytać i zapisywać ten folder. Zostaw puste dla izolowanej przestrzeni."
+    },
+    "screen": {
+      "starting": "Uruchamianie Work Computera…",
+      "disconnected": "Ekran jest rozłączony.",
+      "reconnect": "Połącz ponownie",
+      "viewOnly": "Podgląd"
     }
   },
   "personaBackground": {

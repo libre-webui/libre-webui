@@ -307,6 +307,19 @@ export class KubernetesWorkRuntimeDriver implements WorkRuntimeDriver {
     return { host: podIp, port: config.previewPort };
   }
 
+  async screenEndpoint(
+    task: WorkTaskRecord
+  ): Promise<{ host: string; port: number } | undefined> {
+    // Same shape as the preview: the backend reaches websockify on the Pod
+    // IP directly; nothing is published outside the cluster.
+    const pod = await this.readPod(task.containerName);
+    if (!pod) return undefined;
+    assertOwnedRuntime(pod.metadata?.labels, task);
+    const podIp = pod.status?.podIP;
+    if (!podIp) return undefined;
+    return { host: podIp, port: config.screenPort };
+  }
+
   async listManaged(): Promise<DiscoveredWorkContainer[]> {
     const { core } = await this.client();
     const pods = await core.listNamespacedPod({

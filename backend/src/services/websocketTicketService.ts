@@ -51,7 +51,7 @@ export interface ConsumedWebSocketTicket {
   sessionId?: string;
 }
 
-export type WebSocketTicketAudience = 'chat' | 'work-terminal';
+export type WebSocketTicketAudience = 'chat' | 'work-terminal' | 'work-screen';
 
 export class WebSocketTicketRateLimitError extends Error {
   constructor() {

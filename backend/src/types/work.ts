@@ -100,6 +100,8 @@ export interface WorkTaskDetail {
   hostPath?: string;
   /** Named runtime policy this task runs under; absent = global defaults. */
   policyId?: string;
+  /** True when this task's policy enables the Work Computer GUI session. */
+  computerAvailable: boolean;
 }
 
 export type WorkLiveEventType =

@@ -102,6 +102,8 @@ export interface WorkPolicyRecord {
   networkDefault?: boolean;
   workspaceSize?: string;
   idleTimeoutMs?: number;
+  /** True when tasks under this policy get a GUI session (Work Computer). */
+  guiEnabled?: boolean;
   createdAt: number;
   updatedAt: number;
 }
@@ -115,6 +117,7 @@ export interface WorkPolicyInput {
   networkDefault?: boolean | null;
   workspaceSize?: string | null;
   idleTimeoutMs?: number | null;
+  guiEnabled?: boolean | null;
 }
 
 type PolicyRow = WorkPolicyRow;
@@ -134,6 +137,7 @@ function mapPolicy(row: PolicyRow): WorkPolicyRecord {
       row.network_default === null ? undefined : Boolean(row.network_default),
     workspaceSize: row.workspace_size ?? undefined,
     idleTimeoutMs: row.idle_timeout_ms ?? undefined,
+    guiEnabled: row.gui_enabled === null ? undefined : Boolean(row.gui_enabled),
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -148,6 +152,7 @@ export function validateWorkPolicyInput(input: WorkPolicyInput): {
   networkDefault: boolean | null;
   workspaceSize: string | null;
   idleTimeoutMs: number | null;
+  guiEnabled: boolean | null;
 } {
   const name = typeof input.name === 'string' ? input.name.trim() : '';
   if (!name || name.length > NAME_MAX_LENGTH || name.includes('\u0000')) {
@@ -249,6 +254,11 @@ export function validateWorkPolicyInput(input: WorkPolicyInput): {
     throw invalid('Policy idle timeout must be a non-negative duration in ms.');
   }
 
+  const guiEnabled =
+    input.guiEnabled === null || input.guiEnabled === undefined
+      ? null
+      : Boolean(input.guiEnabled);
+
   return {
     name,
     image,
@@ -258,6 +268,7 @@ export function validateWorkPolicyInput(input: WorkPolicyInput): {
     networkDefault,
     workspaceSize,
     idleTimeoutMs,
+    guiEnabled,
   };
 }
 
@@ -288,6 +299,8 @@ export class WorkPolicyService {
           fields.networkDefault === null ? null : fields.networkDefault ? 1 : 0,
         workspace_size: fields.workspaceSize,
         idle_timeout_ms: fields.idleTimeoutMs,
+        gui_enabled:
+          fields.guiEnabled === null ? null : fields.guiEnabled ? 1 : 0,
         created_at: now,
         updated_at: now,
       });
@@ -331,6 +344,8 @@ export class WorkPolicyService {
           fields.networkDefault === null ? null : fields.networkDefault ? 1 : 0,
         workspace_size: fields.workspaceSize,
         idle_timeout_ms: fields.idleTimeoutMs,
+        gui_enabled:
+          fields.guiEnabled === null ? null : fields.guiEnabled ? 1 : 0,
         created_at: existing.createdAt,
         updated_at: Date.now(),
       });
@@ -398,6 +413,7 @@ export class WorkPolicyService {
       pidsLimit: policy.pidsLimit ?? workRuntimeConfig.pidsLimit,
       idleTimeoutMs: policy.idleTimeoutMs ?? workRuntimeConfig.idleTimeoutMs,
       workspaceSize: policy.workspaceSize,
+      guiEnabled: policy.guiEnabled === true,
     };
   }
 

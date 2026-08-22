@@ -1137,6 +1137,27 @@ router.post(
 );
 
 router.post(
+  '/tasks/:id/computer/start',
+  async (
+    req: AuthenticatedRequest,
+    res: Response<ApiResponse<{ ready: boolean }>>
+  ): Promise<void> => {
+    const taskId = readTaskId(req);
+    const userId = requireUserId(req);
+    try {
+      const task = await workTaskService.requireMutableTaskRecord(
+        taskId,
+        userId
+      );
+      await workRuntimeService.startComputer(task);
+      sendSuccess(res, { ready: true });
+    } catch (error) {
+      sendError(res, error);
+    }
+  }
+);
+
+router.post(
   '/tasks/:id/preview/start',
   async (
     req: AuthenticatedRequest,

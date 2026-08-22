@@ -1643,7 +1643,8 @@
       "saved": "Work-politik gemt",
       "deleted": "Work-politik slettet",
       "failed": "Work-politikken kunne ikke gemmes",
-      "invalidNumber": "PID-grænse og tomgangsstop skal være tal."
+      "invalidNumber": "PID-grænse og tomgangsstop skal være tal.",
+      "guiEnabled": "Work Computer (GUI + browser)"
     },
     "modelAccess": {
       "title": "Modeldownloads",
@@ -2502,7 +2503,8 @@
       "resizeHint": "Træk for at ændre størrelsen. Brug piletasterne til præcis styring. Dobbeltklik eller tryk på Enter for at nulstille.",
       "splitSize": "Samtale {{conversation}} %, arbejdsområde {{workspace}} %",
       "terminal": "Terminal",
-      "git": "Git"
+      "git": "Git",
+      "screen": "Skærm"
     },
     "files": {
       "discard": "Kassér ændringer i filen, der ikke er gemt?",
@@ -2618,6 +2620,12 @@
       "hint": "Lad stå tomt for et isoleret arbejdsområde, eller peg opgaven på en mappe på denne maskine.",
       "label": "Arbejdsområdemappe (valgfri)",
       "warning": "Opgaven kan læse og skrive denne mappe direkte. Lad stå tomt for et isoleret arbejdsområde."
+    },
+    "screen": {
+      "starting": "Starter Work Computer…",
+      "disconnected": "Skærmen er afbrudt.",
+      "reconnect": "Genopret forbindelse",
+      "viewOnly": "Ser med"
     }
   },
   "personaBackground": {

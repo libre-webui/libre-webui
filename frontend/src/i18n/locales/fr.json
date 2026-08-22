@@ -1643,7 +1643,8 @@
       "saved": "Politique Work enregistrée",
       "deleted": "Politique Work supprimée",
       "failed": "Impossible d'enregistrer la politique Work",
-      "invalidNumber": "La limite de PID et l'arrêt d'inactivité doivent être des nombres."
+      "invalidNumber": "La limite de PID et l'arrêt d'inactivité doivent être des nombres.",
+      "guiEnabled": "Work Computer (GUI + navigateur)"
     },
     "modelAccess": {
       "title": "Téléchargement de modèles",
@@ -2502,7 +2503,8 @@
       "resizeHint": "Faites glisser pour redimensionner. Utilisez les touches fléchées pour un réglage précis. Double-cliquez ou appuyez sur Entrée pour réinitialiser.",
       "splitSize": "Conversation {{conversation}} %, espace de travail {{workspace}} %",
       "terminal": "Terminal",
-      "git": "Git"
+      "git": "Git",
+      "screen": "Écran"
     },
     "files": {
       "discard": "Ignorer les modifications de fichier non enregistrées ?",
@@ -2618,6 +2620,12 @@
       "hint": "Laissez vide pour un espace isolé, ou pointez la tâche vers un dossier de cette machine.",
       "label": "Dossier de l'espace de travail (facultatif)",
       "warning": "La tâche peut lire et écrire ce dossier directement. Laissez vide pour un espace isolé."
+    },
+    "screen": {
+      "starting": "Démarrage du Work Computer…",
+      "disconnected": "L'écran est déconnecté.",
+      "reconnect": "Reconnecter",
+      "viewOnly": "Observation"
     }
   },
   "personaBackground": {

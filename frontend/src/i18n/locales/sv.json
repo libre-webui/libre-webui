@@ -1643,7 +1643,8 @@
       "saved": "Work-policy sparad",
       "deleted": "Work-policy borttagen",
       "failed": "Kunde inte spara Work-policyn",
-      "invalidNumber": "PID-gräns och tomgångsstopp måste vara tal."
+      "invalidNumber": "PID-gräns och tomgångsstopp måste vara tal.",
+      "guiEnabled": "Work Computer (GUI + webbläsare)"
     },
     "modelAccess": {
       "title": "Modellnedladdningar",
@@ -2502,7 +2503,8 @@
       "resizeHint": "Dra för att ändra storleken. Använd piltangenterna för exakt kontroll. Dubbelklicka eller tryck på Retur för att återställa.",
       "splitSize": "Konversation {{conversation}} %, arbetsyta {{workspace}} %",
       "terminal": "Terminal",
-      "git": "Git"
+      "git": "Git",
+      "screen": "Skärm"
     },
     "files": {
       "discard": "Kassera osparade filändringar?",
@@ -2618,6 +2620,12 @@
       "hint": "Lämna tomt för en isolerad arbetsyta, eller peka uppgiften mot en mapp på den här datorn.",
       "label": "Arbetsytemapp (valfritt)",
       "warning": "Uppgiften kan läsa och skriva denna mapp direkt. Lämna tomt för en isolerad arbetsyta."
+    },
+    "screen": {
+      "starting": "Startar Work Computer…",
+      "disconnected": "Skärmen är frånkopplad.",
+      "reconnect": "Återanslut",
+      "viewOnly": "Tittar"
     }
   },
   "personaBackground": {

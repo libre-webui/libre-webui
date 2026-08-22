@@ -250,6 +250,7 @@ export interface WorkTaskSummary {
   updatedAt: number;
   activeRun?: WorkRun | null;
   previewUrl?: string | null;
+  computerAvailable?: boolean;
   previewStatus: WorkPreviewStatus;
   workspacePath: '/workspace';
   /** Host folder mounted at /workspace, when this task is bound to one. */
@@ -338,6 +339,7 @@ export interface WorkPolicy {
   networkDefault?: boolean;
   workspaceSize?: string;
   idleTimeoutMs?: number;
+  guiEnabled?: boolean;
   createdAt: number;
   updatedAt: number;
 }
@@ -351,6 +353,7 @@ export interface WorkPolicyInput {
   networkDefault?: boolean | null;
   workspaceSize?: string | null;
   idleTimeoutMs?: number | null;
+  guiEnabled?: boolean | null;
 }
 
 export interface StartWorkRunRequest {

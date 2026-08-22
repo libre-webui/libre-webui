@@ -1643,7 +1643,8 @@
       "saved": "Política de Work guardada",
       "deleted": "Política de Work eliminada",
       "failed": "No se pudo guardar la política de Work",
-      "invalidNumber": "El límite de PID y la parada por inactividad deben ser números."
+      "invalidNumber": "El límite de PID y la parada por inactividad deben ser números.",
+      "guiEnabled": "Work Computer (GUI + navegador)"
     },
     "modelAccess": {
       "title": "Descarga de modelos",
@@ -2502,7 +2503,8 @@
       "resizeHint": "Arrastra para cambiar el tamaño. Usa las teclas de flecha para un control preciso. Haz doble clic o pulsa Intro para restablecer.",
       "splitSize": "Conversación {{conversation}} %, espacio de trabajo {{workspace}} %",
       "terminal": "Terminal",
-      "git": "Git"
+      "git": "Git",
+      "screen": "Pantalla"
     },
     "files": {
       "discard": "¿Descartar los cambios no guardados del archivo?",
@@ -2618,6 +2620,12 @@
       "hint": "Déjalo en blanco para un espacio aislado, o apunta la tarea a una carpeta de esta máquina.",
       "label": "Carpeta del espacio de trabajo (opcional)",
       "warning": "La tarea puede leer y escribir esta carpeta directamente. Déjalo en blanco para usar un espacio aislado."
+    },
+    "screen": {
+      "starting": "Iniciando el Work Computer…",
+      "disconnected": "La pantalla está desconectada.",
+      "reconnect": "Reconectar",
+      "viewOnly": "Observando"
     }
   },
   "personaBackground": {

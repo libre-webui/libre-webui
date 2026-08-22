@@ -32,6 +32,7 @@ interface PolicyFormState {
   workspaceSize: string;
   idleMinutes: string;
   networkDefault: 'inherit' | 'on' | 'off';
+  guiEnabled: boolean;
 }
 
 const emptyForm: PolicyFormState = {
@@ -43,10 +44,12 @@ const emptyForm: PolicyFormState = {
   workspaceSize: '',
   idleMinutes: '',
   networkDefault: 'inherit',
+  guiEnabled: false,
 };
 
 const formFromPolicy = (policy: WorkPolicy): PolicyFormState => ({
   name: policy.name,
+  guiEnabled: policy.guiEnabled === true,
   image: policy.image ?? '',
   memoryLimit: policy.memoryLimit ?? '',
   cpuLimit: policy.cpuLimit ?? '',
@@ -86,6 +89,7 @@ const inputFromForm = (form: PolicyFormState): WorkPolicyInput => ({
     : null,
   networkDefault:
     form.networkDefault === 'inherit' ? null : form.networkDefault === 'on',
+  guiEnabled: form.guiEnabled ? true : null,
 });
 
 /**
@@ -125,7 +129,8 @@ export const WorkPoliciesSettings: React.FC = () => {
     };
   }, []);
 
-  const field = (key: keyof PolicyFormState) => ({
+  type TextFieldKey = Exclude<keyof PolicyFormState, 'guiEnabled'>;
+  const field = (key: TextFieldKey) => ({
     value: form[key],
     onChange: (
       event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -180,11 +185,7 @@ export const WorkPoliciesSettings: React.FC = () => {
     }
   };
 
-  const textField = (
-    key: keyof PolicyFormState,
-    label: string,
-    placeholder: string
-  ) => (
+  const textField = (key: TextFieldKey, label: string, placeholder: string) => (
     <label className='block text-xs'>
       <span className='mb-1 block font-medium text-gray-700 dark:text-gray-300'>
         {label}
@@ -323,6 +324,23 @@ export const WorkPoliciesSettings: React.FC = () => {
                   {t('userManager.workPolicies.networkOff')}
                 </option>
               </select>
+            </label>
+            <label className='flex items-center gap-2 text-xs'>
+              <input
+                type='checkbox'
+                data-testid='work-policy-gui'
+                checked={form.guiEnabled}
+                onChange={event =>
+                  setForm(current => ({
+                    ...current,
+                    guiEnabled: event.target.checked,
+                  }))
+                }
+                className='h-3.5 w-3.5 rounded border-gray-300 text-primary-600 focus:ring-primary-500'
+              />
+              <span className='font-medium text-gray-700 dark:text-gray-300'>
+                {t('userManager.workPolicies.guiEnabled')}
+              </span>
             </label>
             {textField(
               'image',

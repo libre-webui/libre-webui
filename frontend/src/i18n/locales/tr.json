@@ -1643,7 +1643,8 @@
       "saved": "Work ilkesi kaydedildi",
       "deleted": "Work ilkesi silindi",
       "failed": "Work ilkesi kaydedilemedi",
-      "invalidNumber": "PID sınırı ve boşta durdurma sayı olmalıdır."
+      "invalidNumber": "PID sınırı ve boşta durdurma sayı olmalıdır.",
+      "guiEnabled": "Work Computer (GUI + tarayıcı)"
     },
     "modelAccess": {
       "title": "Model indirmeleri",
@@ -2502,7 +2503,8 @@
       "resizeHint": "Yeniden boyutlandırmak için sürükleyin. Hassas ayar için ok tuşlarını kullanın. Sıfırlamak için çift tıklayın veya Enter tuşuna basın.",
       "splitSize": "Konuşma %{{conversation}}, çalışma alanı %{{workspace}}",
       "terminal": "Terminal",
-      "git": "Git"
+      "git": "Git",
+      "screen": "Ekran"
     },
     "files": {
       "discard": "Kaydedilmemiş dosya değişiklikleri silinsin mi?",
@@ -2618,6 +2620,12 @@
       "hint": "İzole çalışma alanı için boş bırakın veya görevi bu makinedeki bir klasöre yönlendirin.",
       "label": "Çalışma alanı klasörü (isteğe bağlı)",
       "warning": "Görev bu klasörü doğrudan okuyup yazabilir. İzole çalışma alanı için boş bırakın."
+    },
+    "screen": {
+      "starting": "Work Computer başlatılıyor…",
+      "disconnected": "Ekran bağlantısı kesildi.",
+      "reconnect": "Yeniden bağlan",
+      "viewOnly": "İzleme"
     }
   },
   "personaBackground": {

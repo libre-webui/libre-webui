@@ -1643,7 +1643,8 @@
       "saved": "Politika Work uložena",
       "deleted": "Politika Work smazána",
       "failed": "Politiku Work se nepodařilo uložit",
-      "invalidNumber": "Limit PID a zastavení při nečinnosti musí být čísla."
+      "invalidNumber": "Limit PID a zastavení při nečinnosti musí být čísla.",
+      "guiEnabled": "Work Computer (GUI + prohlížeč)"
     },
     "modelAccess": {
       "title": "Stahování modelů",
@@ -2502,7 +2503,8 @@
       "resizeHint": "Velikost změníte přetažením. Pro přesné nastavení použijte klávesy se šipkami. Dvojitým kliknutím nebo klávesou Enter obnovíte výchozí velikost.",
       "splitSize": "Konverzace {{conversation}} %, pracovní prostor {{workspace}} %",
       "terminal": "Terminál",
-      "git": "Git"
+      "git": "Git",
+      "screen": "Obrazovka"
     },
     "files": {
       "discard": "Zahodit neuložené změny souboru?",
@@ -2618,6 +2620,12 @@
       "hint": "Nechte prázdné pro izolovaný pracovní prostor, nebo nasměrujte úlohu na složku na tomto počítači.",
       "label": "Složka pracovního prostoru (volitelné)",
       "warning": "Úloha může tuto složku přímo číst i zapisovat. Pro izolovaný pracovní prostor nechte prázdné."
+    },
+    "screen": {
+      "starting": "Spouštění Work Computeru…",
+      "disconnected": "Obrazovka je odpojena.",
+      "reconnect": "Znovu připojit",
+      "viewOnly": "Sledování"
     }
   },
   "personaBackground": {

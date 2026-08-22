@@ -1643,7 +1643,8 @@
       "saved": "Đã lưu chính sách Work",
       "deleted": "Đã xóa chính sách Work",
       "failed": "Không thể lưu chính sách Work",
-      "invalidNumber": "Giới hạn PID và dừng khi rảnh phải là số."
+      "invalidNumber": "Giới hạn PID và dừng khi rảnh phải là số.",
+      "guiEnabled": "Work Computer (GUI + trình duyệt)"
     },
     "modelAccess": {
       "title": "Tải mô hình",
@@ -2502,7 +2503,8 @@
       "resizeHint": "Kéo để đổi kích thước. Dùng phím mũi tên để điều chỉnh chính xác. Nhấp đúp hoặc nhấn Enter để đặt lại.",
       "splitSize": "Cuộc trò chuyện {{conversation}}%, không gian làm việc {{workspace}}%",
       "terminal": "Terminal",
-      "git": "Git"
+      "git": "Git",
+      "screen": "Màn hình"
     },
     "files": {
       "discard": "Bỏ các thay đổi tệp chưa lưu?",
@@ -2618,6 +2620,12 @@
       "hint": "Để trống cho không gian làm việc cô lập, hoặc trỏ tác vụ tới một thư mục trên máy này.",
       "label": "Thư mục không gian làm việc (tùy chọn)",
       "warning": "Tác vụ có thể đọc và ghi thư mục này trực tiếp. Để trống để dùng không gian cô lập."
+    },
+    "screen": {
+      "starting": "Đang khởi động Work Computer…",
+      "disconnected": "Màn hình đã ngắt kết nối.",
+      "reconnect": "Kết nối lại",
+      "viewOnly": "Đang xem"
     }
   },
   "personaBackground": {

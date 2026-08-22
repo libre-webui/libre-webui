@@ -1643,7 +1643,8 @@
       "saved": "Kebijakan Work disimpan",
       "deleted": "Kebijakan Work dihapus",
       "failed": "Tidak dapat menyimpan kebijakan Work",
-      "invalidNumber": "Batas PID dan henti saat idle harus berupa angka."
+      "invalidNumber": "Batas PID dan henti saat idle harus berupa angka.",
+      "guiEnabled": "Work Computer (GUI + peramban)"
     },
     "modelAccess": {
       "title": "Unduhan model",
@@ -2502,7 +2503,8 @@
       "resizeHint": "Seret untuk mengubah ukuran. Gunakan tombol panah untuk kontrol presisi. Klik dua kali atau tekan Enter untuk mereset.",
       "splitSize": "Percakapan {{conversation}}%, ruang kerja {{workspace}}%",
       "terminal": "Terminal",
-      "git": "Git"
+      "git": "Git",
+      "screen": "Layar"
     },
     "files": {
       "discard": "Buang perubahan file yang belum disimpan?",
@@ -2618,6 +2620,12 @@
       "hint": "Biarkan kosong untuk ruang kerja terisolasi, atau arahkan tugas ke folder di mesin ini.",
       "label": "Folder ruang kerja (opsional)",
       "warning": "Tugas dapat membaca dan menulis folder ini langsung. Biarkan kosong untuk ruang kerja terisolasi."
+    },
+    "screen": {
+      "starting": "Memulai Work Computer…",
+      "disconnected": "Layar terputus.",
+      "reconnect": "Sambungkan ulang",
+      "viewOnly": "Mengamati"
     }
   },
   "personaBackground": {

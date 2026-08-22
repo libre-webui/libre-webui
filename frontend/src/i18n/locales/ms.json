@@ -1643,7 +1643,8 @@
       "saved": "Dasar Work disimpan",
       "deleted": "Dasar Work dipadamkan",
       "failed": "Tidak dapat menyimpan dasar Work",
-      "invalidNumber": "Had PID dan henti melahu mestilah nombor."
+      "invalidNumber": "Had PID dan henti melahu mestilah nombor.",
+      "guiEnabled": "Work Computer (GUI + pelayar)"
     },
     "modelAccess": {
       "title": "Muat turun model",
@@ -2502,7 +2503,8 @@
       "resizeHint": "Seret untuk mengubah saiz. Gunakan kekunci anak panah untuk kawalan tepat. Klik dua kali atau tekan Enter untuk menetapkan semula.",
       "splitSize": "Perbualan {{conversation}}%, ruang kerja {{workspace}}%",
       "terminal": "Terminal",
-      "git": "Git"
+      "git": "Git",
+      "screen": "Skrin"
     },
     "files": {
       "discard": "Buang perubahan fail yang belum disimpan?",
@@ -2618,6 +2620,12 @@
       "hint": "Biarkan kosong untuk ruang kerja terpencil, atau halakan tugas ke folder pada mesin ini.",
       "label": "Folder ruang kerja (pilihan)",
       "warning": "Tugas boleh membaca dan menulis folder ini terus. Biarkan kosong untuk ruang kerja terpencil."
+    },
+    "screen": {
+      "starting": "Memulakan Work Computer…",
+      "disconnected": "Skrin terputus.",
+      "reconnect": "Sambung semula",
+      "viewOnly": "Memerhati"
     }
   },
   "personaBackground": {

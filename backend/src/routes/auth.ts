@@ -194,15 +194,20 @@ router.post(
     res.set('Cache-Control', 'no-store');
     const audience = req.body?.audience;
     const taskId = req.body?.taskId;
-    if (audience !== 'chat' && audience !== 'work-terminal') {
+    if (
+      audience !== 'chat' &&
+      audience !== 'work-terminal' &&
+      audience !== 'work-screen'
+    ) {
       res.status(400).json({
         success: false,
-        message: 'WebSocket ticket audience must be chat or work-terminal',
+        message:
+          'WebSocket ticket audience must be chat, work-terminal, or work-screen',
       });
       return;
     }
     if (
-      audience === 'work-terminal' &&
+      (audience === 'work-terminal' || audience === 'work-screen') &&
       (typeof taskId !== 'string' || !taskId.trim() || taskId.length > 256)
     ) {
       res.status(400).json({
@@ -217,7 +222,9 @@ router.post(
         req.user!.userId,
         sessionExpiresAt,
         audience,
-        audience === 'work-terminal' ? taskId.trim() : undefined,
+        audience === 'work-terminal' || audience === 'work-screen'
+          ? taskId.trim()
+          : undefined,
         req.auth?.kind === 'session' ? req.auth.sessionId : undefined
       );
       res.json({ success: true, data: ticket });

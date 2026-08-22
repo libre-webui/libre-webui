@@ -32,6 +32,7 @@ import {
   Square,
   TerminalSquare,
   WandSparkles,
+  MonitorPlay,
 } from 'lucide-react';
 import {
   useEffect,
@@ -70,8 +71,10 @@ import {
   isWorkCodeFormatSizeSupported,
 } from '@/utils/workCode';
 import { diffWorkLines, workDiffStats } from '@/utils/workDiff';
+import { WorkspaceScreen } from './WorkspaceScreen';
 
-type WorkspaceTab = 'files' | 'activity' | 'git' | 'terminal' | 'preview';
+type WorkspaceTab =
+  'files' | 'activity' | 'git' | 'terminal' | 'preview' | 'screen';
 
 interface WorkspacePaneProps {
   task: WorkTask;
@@ -482,6 +485,17 @@ export function WorkspacePane({
       icon: Monitor,
       testId: 'work-preview-tab',
     },
+    // The Work Computer screen appears only when the task's policy grants it.
+    ...(task.computerAvailable
+      ? [
+          {
+            id: 'screen' as const,
+            label: t('work.workspace.screen', { defaultValue: 'Screen' }),
+            icon: MonitorPlay,
+            testId: 'work-screen-tab',
+          },
+        ]
+      : []),
   ];
 
   const handleTabKeyDown = (
@@ -726,6 +740,17 @@ export function WorkspacePane({
 
         {(tab === 'activity' || tab === 'git') && (
           <div className='min-w-0 flex-1' />
+        )}
+
+        {tab === 'screen' && (
+          <div
+            id='work-workspace-panel-screen'
+            role='tabpanel'
+            aria-labelledby='work-workspace-tab-screen'
+            className='flex min-h-0 flex-1 flex-col'
+          >
+            <WorkspaceScreen taskId={task.id} active={tab === 'screen'} />
+          </div>
         )}
 
         {tab === 'terminal' && (
@@ -1040,6 +1065,17 @@ export function WorkspacePane({
                   : undefined
             }
           />
+        </div>
+      )}
+
+      {tab === 'screen' && (
+        <div
+          id='work-workspace-panel-screen'
+          role='tabpanel'
+          aria-labelledby='work-workspace-tab-screen'
+          className='flex min-h-0 flex-1 flex-col'
+        >
+          <WorkspaceScreen taskId={task.id} active={tab === 'screen'} />
         </div>
       )}
 

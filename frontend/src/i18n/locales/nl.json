@@ -1643,7 +1643,8 @@
       "saved": "Work-beleid opgeslagen",
       "deleted": "Work-beleid verwijderd",
       "failed": "Kon het Work-beleid niet opslaan",
-      "invalidNumber": "PID-limiet en inactiviteitsstop moeten getallen zijn."
+      "invalidNumber": "PID-limiet en inactiviteitsstop moeten getallen zijn.",
+      "guiEnabled": "Work Computer (GUI + browser)"
     },
     "modelAccess": {
       "title": "Modeldownloads",
@@ -2502,7 +2503,8 @@
       "resizeHint": "Sleep om het formaat te wijzigen. Gebruik de pijltoetsen voor nauwkeurige bediening. Dubbelklik of druk op Enter om te herstellen.",
       "splitSize": "Conversatie {{conversation}}%, werkruimte {{workspace}}%",
       "terminal": "Terminal",
-      "git": "Git"
+      "git": "Git",
+      "screen": "Scherm"
     },
     "files": {
       "discard": "Niet-opgeslagen bestandswijzigingen negeren?",
@@ -2618,6 +2620,12 @@
       "hint": "Laat leeg voor een geïsoleerde werkruimte, of wijs de taak naar een map op deze machine.",
       "label": "Werkruimtemap (optioneel)",
       "warning": "De taak kan deze map direct lezen en schrijven. Laat leeg voor een geïsoleerde werkruimte."
+    },
+    "screen": {
+      "starting": "Work Computer wordt gestart…",
+      "disconnected": "Het scherm is losgekoppeld.",
+      "reconnect": "Opnieuw verbinden",
+      "viewOnly": "Meekijken"
     }
   },
   "personaBackground": {

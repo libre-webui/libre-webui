@@ -131,6 +131,49 @@ test('policy input validation accepts sane values and rejects the rest', () => {
   }
 });
 
+test('the Work Computer flag is tri-state and round-trips', async () => {
+  // Omitted and null both mean off-by-inheritance (stored null).
+  assert.equal(validateWorkPolicyInput({ name: 'a' }).guiEnabled, null);
+  assert.equal(
+    validateWorkPolicyInput({ name: 'a', guiEnabled: null }).guiEnabled,
+    null
+  );
+  assert.equal(
+    validateWorkPolicyInput({ name: 'a', guiEnabled: true }).guiEnabled,
+    true
+  );
+  assert.equal(
+    validateWorkPolicyInput({ name: 'a', guiEnabled: false }).guiEnabled,
+    false
+  );
+
+  const created = await workPolicyService.create({
+    name: 'gui-policy',
+    guiEnabled: true,
+  });
+  assert.equal(created.guiEnabled, true);
+  // The resolved runtime policy carries the flag for the container driver.
+  assert.equal(
+    (await workPolicyService.resolve(created.id)).guiEnabled,
+    true
+  );
+  // Policy-less resolution never enables the GUI.
+  assert.notEqual(
+    (await workPolicyService.resolve(null)).guiEnabled,
+    true
+  );
+  const updated = await workPolicyService.update(created.id, {
+    name: 'gui-policy',
+    guiEnabled: null,
+  });
+  assert.equal(updated.guiEnabled, undefined);
+  assert.notEqual(
+    (await workPolicyService.resolve(created.id)).guiEnabled,
+    true
+  );
+  await workPolicyService.remove(created.id);
+});
+
 test('policies are created, listed, updated, and name-unique', async () => {
   const created = await workPolicyService.create({
     name: 'heavy',

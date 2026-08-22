@@ -117,6 +117,13 @@ export interface WorkRuntimeDriver {
   previewEndpoint(
     task: WorkTaskRecord
   ): Promise<{ host: string; port: number } | undefined>;
+  /**
+   * Published endpoint of the Work Computer screen bridge (websockify), or
+   * undefined when the task has no GUI session surface.
+   */
+  screenEndpoint(
+    task: WorkTaskRecord
+  ): Promise<{ host: string; port: number } | undefined>;
   /** Every sandbox this runtime has ever created, by ownership label. */
   listManaged(): Promise<DiscoveredWorkContainer[]>;
   /** Force-remove a managed sandbox whose task record no longer exists. */
@@ -334,6 +341,25 @@ export class DockerWorkRuntimeDriver implements WorkRuntimeDriver {
       `${config.previewPort}/tcp`,
     ]);
     const port = parsePublishedPort(portResult.stdout, config.previewPort);
+    const configuredHost = config.previewBind.trim();
+    const host =
+      !configuredHost || configuredHost === '0.0.0.0'
+        ? '127.0.0.1'
+        : configuredHost === '::' || configuredHost === '[::]'
+          ? '::1'
+          : configuredHost.replace(/^\[|\]$/g, '');
+    return port === undefined ? undefined : { host, port };
+  }
+
+  async screenEndpoint(
+    task: WorkTaskRecord
+  ): Promise<{ host: string; port: number } | undefined> {
+    const portResult = await this.docker([
+      'port',
+      task.containerName,
+      `${config.screenPort}/tcp`,
+    ]);
+    const port = parsePublishedPort(portResult.stdout, config.screenPort);
     const configuredHost = config.previewBind.trim();
     const host =
       !configuredHost || configuredHost === '0.0.0.0'
@@ -946,6 +972,11 @@ export function buildWorkContainerRunArgs(
   ];
   if (task.networkEnabled) {
     args.push('--publish', `${config.previewBind}::${config.previewPort}`);
+    if (policy.guiEnabled === true) {
+      // Work Computer: the GUI image's websockify bridge, published the same
+      // loopback-only way as the preview. Raw VNC never leaves the container.
+      args.push('--publish', `${config.previewBind}::${config.screenPort}`);
+    }
     for (const server of config.dnsServers) {
       args.push('--dns', server);
     }
