@@ -7,9 +7,16 @@
   :root { color-scheme: dark; }
   html, body {
     margin: 0; height: 100%;
+    /* The desktop wallpaper shows through a scrim that opens up toward the
+       horizon at the bottom of the frame. */
     background:
-      radial-gradient(900px 480px at 50% -20%, rgba(255, 123, 82, 0.07), transparent 65%),
-      linear-gradient(180deg, #000000 0%, #0b0b0c 100%);
+      linear-gradient(180deg,
+        rgba(5, 5, 8, 0.93) 0%,
+        rgba(7, 7, 10, 0.86) 42%,
+        rgba(8, 8, 11, 0.55) 75%,
+        rgba(8, 8, 10, 0.18) 100%),
+      url('file:///usr/local/share/libre-computer/wallpaper.png') center / cover no-repeat,
+      #0b0b0c;
     color: #f7f5f0;
     font-family: "Space Grotesk", "Manrope", "DejaVu Sans", system-ui, sans-serif;
     display: flex; align-items: center; justify-content: center;
@@ -18,7 +25,8 @@
   .mark {
     width: 76px; height: 76px; margin: 0 auto 18px;
     border-radius: 12px;
-    background: #111111;
+    background: rgba(14, 14, 18, 0.6);
+    backdrop-filter: blur(10px);
     border: 1px solid rgba(255, 255, 255, 0.12);
     display: flex; align-items: center; justify-content: center;
   }
@@ -32,8 +40,9 @@
   }
   form.search input[type="text"] {
     flex: 1; padding: 12px 18px;
-    background: #0b0b0c;
-    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(10, 10, 14, 0.55);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.14);
     border-radius: 999px;
     color: #f7f5f0; font-size: 14px; outline: none;
   }
@@ -48,7 +57,8 @@
   .links a {
     display: flex; flex-direction: column; align-items: center; gap: 8px;
     width: 96px; padding: 14px 6px 12px;
-    background: #111111;
+    background: rgba(14, 14, 18, 0.55);
+    backdrop-filter: blur(10px);
     border: 1px solid rgba(255, 255, 255, 0.12);
     border-radius: 8px;
     color: #f7f5f0; text-decoration: none; font-size: 12px;
