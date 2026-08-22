@@ -2644,6 +2644,13 @@
       "watchingLearning": "L'agent observe et apprend",
       "unmute": "Activer le son",
       "mute": "Couper le son"
+    },
+    "computerSetup": {
+      "title": "Work Computer",
+      "description": "Donnez à votre agent un vrai bureau avec navigateur — tout se configure automatiquement.",
+      "building": "Construction de l'image du bureau... la première fois prend quelques minutes.",
+      "enable": "Activer",
+      "retry": "Réessayer"
     }
   },
   "personaBackground": {

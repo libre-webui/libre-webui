@@ -2644,6 +2644,13 @@
       "watchingLearning": "代理正在观看并学习",
       "unmute": "取消静音",
       "mute": "静音"
+    },
+    "computerSetup": {
+      "title": "Work Computer",
+      "description": "为您的代理提供带浏览器的真实桌面——一切自动完成设置。",
+      "building": "正在构建桌面镜像... 首次需要几分钟。",
+      "enable": "启用",
+      "retry": "重试"
     }
   },
   "personaBackground": {

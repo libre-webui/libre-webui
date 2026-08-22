@@ -2644,6 +2644,13 @@
       "watchingLearning": "Agentinn fylgist með og lærir",
       "unmute": "Kveikja á hljóði",
       "mute": "Þagga"
+    },
+    "computerSetup": {
+      "title": "Work Computer",
+      "description": "Gefðu umboðinu alvöru skjáborð með vafra — allt er sett upp sjálfkrafa.",
+      "building": "Byggi skjáborðsmyndina... fyrsta skiptið tekur nokkrar mínútur.",
+      "enable": "Virkja",
+      "retry": "Reyna aftur"
     }
   },
   "personaBackground": {

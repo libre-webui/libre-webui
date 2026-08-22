@@ -2644,6 +2644,13 @@
       "watchingLearning": "O agente está observando e aprendendo",
       "unmute": "Ativar som",
       "mute": "Silenciar"
+    },
+    "computerSetup": {
+      "title": "Work Computer",
+      "description": "Dê ao seu agente um desktop real com navegador — tudo é configurado automaticamente.",
+      "building": "Construindo a imagem do desktop... a primeira vez leva alguns minutos.",
+      "enable": "Ativar",
+      "retry": "Tentar novamente"
     }
   },
   "personaBackground": {

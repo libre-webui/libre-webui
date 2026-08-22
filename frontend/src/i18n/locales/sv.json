@@ -2644,6 +2644,13 @@
       "watchingLearning": "Agenten tittar på och lär sig",
       "unmute": "Slå på ljud",
       "mute": "Stäng av ljud"
+    },
+    "computerSetup": {
+      "title": "Work Computer",
+      "description": "Ge din agent ett riktigt skrivbord med webbläsare — allt sätts upp automatiskt.",
+      "building": "Bygger skrivbordsavbilden... första gången tar det några minuter.",
+      "enable": "Aktivera",
+      "retry": "Försök igen"
     }
   },
   "personaBackground": {

@@ -2644,6 +2644,13 @@
       "watchingLearning": "Agent obserwuje i uczy się",
       "unmute": "Włącz dźwięk",
       "mute": "Wycisz"
+    },
+    "computerSetup": {
+      "title": "Work Computer",
+      "description": "Daj agentowi prawdziwy pulpit z przeglądarką — wszystko konfiguruje się automatycznie.",
+      "building": "Budowanie obrazu pulpitu... za pierwszym razem trwa to kilka minut.",
+      "enable": "Włącz",
+      "retry": "Ponów"
     }
   },
   "personaBackground": {

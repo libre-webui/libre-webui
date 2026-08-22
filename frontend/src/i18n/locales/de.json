@@ -2644,6 +2644,13 @@
       "watchingLearning": "Der Agent schaut zu und lernt",
       "unmute": "Ton einschalten",
       "mute": "Stummschalten"
+    },
+    "computerSetup": {
+      "title": "Work Computer",
+      "description": "Gib deinem Agenten einen echten Desktop mit Browser — alles wird automatisch eingerichtet.",
+      "building": "Das Desktop-Image wird gebaut... beim ersten Mal kann das einige Minuten dauern.",
+      "enable": "Aktivieren",
+      "retry": "Erneut versuchen"
     }
   },
   "personaBackground": {

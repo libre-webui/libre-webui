@@ -2644,6 +2644,13 @@
       "watchingLearning": "De agent kijkt mee en leert",
       "unmute": "Geluid aan",
       "mute": "Dempen"
+    },
+    "computerSetup": {
+      "title": "Work Computer",
+      "description": "Geef je agent een echt bureaublad met browser — alles wordt automatisch ingesteld.",
+      "building": "Desktop-image wordt gebouwd... de eerste keer duurt enkele minuten.",
+      "enable": "Inschakelen",
+      "retry": "Opnieuw proberen"
     }
   },
   "personaBackground": {

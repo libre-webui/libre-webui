@@ -2644,6 +2644,13 @@
       "watchingLearning": "Ejen sedang memerhati dan belajar",
       "unmute": "Nyahsenyapkan",
       "mute": "Senyapkan"
+    },
+    "computerSetup": {
+      "title": "Work Computer",
+      "description": "Beri ejen anda desktop sebenar dengan pelayar — semuanya disediakan secara automatik.",
+      "building": "Membina imej desktop... kali pertama mengambil beberapa minit.",
+      "enable": "Dayakan",
+      "retry": "Cuba lagi"
     }
   },
   "personaBackground": {

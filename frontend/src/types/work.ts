@@ -344,6 +344,14 @@ export interface WorkPolicy {
   updatedAt: number;
 }
 
+export interface WorkComputerSetupStatus {
+  imageReady: boolean;
+  policyId?: string;
+  building: boolean;
+  buildLog?: string;
+  buildError?: string;
+}
+
 export interface WorkPolicyInput {
   name: string;
   image?: string | null;

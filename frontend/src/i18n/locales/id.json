@@ -2644,6 +2644,13 @@
       "watchingLearning": "Agen sedang menonton dan belajar",
       "unmute": "Bunyikan",
       "mute": "Bisukan"
+    },
+    "computerSetup": {
+      "title": "Work Computer",
+      "description": "Beri agen Anda desktop sungguhan dengan browser — semuanya disiapkan otomatis.",
+      "building": "Membangun image desktop... pertama kali butuh beberapa menit.",
+      "enable": "Aktifkan",
+      "retry": "Coba lagi"
     }
   },
   "personaBackground": {

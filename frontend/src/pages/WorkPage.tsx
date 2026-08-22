@@ -229,6 +229,39 @@ export default function WorkPage() {
       cancelled = true;
     };
   }, [onLanding]);
+  // One-click Work Computer onboarding: the backend builds the bundled GUI
+  // image and creates the policy; this just presses the button and polls.
+  const [computerSetupBusy, setComputerSetupBusy] = useState(false);
+  const [computerSetupError, setComputerSetupError] = useState<string | null>(
+    null
+  );
+  const hasComputerPolicy = policies.some(policy => policy.guiEnabled === true);
+  const enableComputer = useCallback(async () => {
+    setComputerSetupBusy(true);
+    setComputerSetupError(null);
+    try {
+      let status = (await workApi.startComputerSetup()).data;
+      while (status?.building) {
+        await new Promise(resolve => window.setTimeout(resolve, 4000));
+        status = (await workApi.getComputerSetup()).data;
+      }
+      if (status?.buildError) {
+        setComputerSetupError(status.buildError);
+        return;
+      }
+      const refreshed = await workApi.listPolicies();
+      if (refreshed.success && refreshed.data) {
+        setPolicies(refreshed.data);
+        if (status?.policyId) setPolicyId(status.policyId);
+      }
+    } catch (setupError) {
+      setComputerSetupError(
+        errorMessage(setupError, 'The Work Computer could not be set up.')
+      );
+    } finally {
+      setComputerSetupBusy(false);
+    }
+  }, []);
   // Idle-stop can end a preview server-side, and no live channel exists to
   // announce it (the SSE stream is run-scoped and idle-stop fires precisely
   // when nothing runs). Poll the open task while its preview is up so the
@@ -1271,18 +1304,35 @@ export default function WorkPage() {
                   </select>
                 </div>
               )}
-              {policies.length === 0 && authenticatedUser?.role === 'admin' && (
+              {!hasComputerPolicy && authenticatedUser?.role === 'admin' && (
                 <div
-                  className='mt-8 w-full max-w-2xl rounded-xl border border-line bg-surface px-4 py-3 text-[13px] text-ink-muted'
+                  className='mt-8 flex w-full max-w-2xl items-center justify-between gap-4 rounded-xl border border-line bg-surface px-4 py-3'
                   data-testid='work-policy-setup-hint'
                 >
-                  {t('work.policy.setupHint')}{' '}
+                  <div className='min-w-0'>
+                    <p className='text-[13px] font-medium text-ink'>
+                      {t('work.computerSetup.title')}
+                    </p>
+                    <p className='mt-0.5 text-xs text-ink-muted'>
+                      {computerSetupError ??
+                        (computerSetupBusy
+                          ? t('work.computerSetup.building')
+                          : t('work.computerSetup.description'))}
+                    </p>
+                  </div>
                   <button
                     type='button'
-                    onClick={() => navigate('/users')}
-                    className='font-medium text-primary-600 underline-offset-2 hover:underline dark:text-primary-400'
+                    data-testid='work-computer-enable'
+                    onClick={() => void enableComputer()}
+                    disabled={computerSetupBusy}
+                    className='flex shrink-0 items-center gap-2 rounded-lg bg-primary-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-primary-500 disabled:opacity-60'
                   >
-                    {t('work.policy.setupLink')}
+                    {computerSetupBusy && (
+                      <span className='h-3 w-3 animate-spin rounded-full border border-white/40 border-t-white' />
+                    )}
+                    {computerSetupError
+                      ? t('work.computerSetup.retry')
+                      : t('work.computerSetup.enable')}
                   </button>
                 </div>
               )}

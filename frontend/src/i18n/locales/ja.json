@@ -2644,6 +2644,13 @@
       "watchingLearning": "エージェントが見て学習しています",
       "unmute": "ミュート解除",
       "mute": "ミュート"
+    },
+    "computerSetup": {
+      "title": "Work Computer",
+      "description": "エージェントにブラウザ付きの本物のデスクトップを。セットアップはすべて自動です。",
+      "building": "デスクトップイメージをビルド中... 初回は数分かかります。",
+      "enable": "有効にする",
+      "retry": "再試行"
     }
   },
   "personaBackground": {

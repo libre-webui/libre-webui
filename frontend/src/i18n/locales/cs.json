@@ -2644,6 +2644,13 @@
       "watchingLearning": "Agent sleduje a učí se",
       "unmute": "Zapnout zvuk",
       "mute": "Ztlumit"
+    },
+    "computerSetup": {
+      "title": "Work Computer",
+      "description": "Dejte agentovi skutečnou plochu s prohlížečem — vše se připraví automaticky.",
+      "building": "Sestavuje se obraz plochy... poprvé to může trvat několik minut.",
+      "enable": "Zapnout",
+      "retry": "Zkusit znovu"
     }
   },
   "personaBackground": {

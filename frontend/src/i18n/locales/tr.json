@@ -2644,6 +2644,13 @@
       "watchingLearning": "Ajan izliyor ve öğreniyor",
       "unmute": "Sesi aç",
       "mute": "Sessize al"
+    },
+    "computerSetup": {
+      "title": "Work Computer",
+      "description": "Ajanınıza tarayıcılı gerçek bir masaüstü verin — her şey otomatik kurulur.",
+      "building": "Masaüstü imajı derleniyor... ilk seferde birkaç dakika sürer.",
+      "enable": "Etkinleştir",
+      "retry": "Yeniden dene"
     }
   },
   "personaBackground": {

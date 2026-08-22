@@ -29,6 +29,7 @@ import type {
   WorkGitDiff,
   WorkGitStatus,
   WorkMessagePage,
+  WorkComputerSetupStatus,
   WorkPolicy,
   WorkPolicyInput,
   WorkTask,
@@ -57,6 +58,12 @@ export const workApi = {
 
   listPolicies: (): Promise<ApiResponse<WorkPolicy[]>> =>
     api.get('/work/policies').then(response => response.data),
+
+  getComputerSetup: (): Promise<ApiResponse<WorkComputerSetupStatus>> =>
+    api.get('/work/computer/setup').then(response => response.data),
+
+  startComputerSetup: (): Promise<ApiResponse<WorkComputerSetupStatus>> =>
+    api.post('/work/computer/setup').then(response => response.data),
 
   createPolicy: (input: WorkPolicyInput): Promise<ApiResponse<WorkPolicy>> =>
     api.post('/work/policies', input).then(response => response.data),

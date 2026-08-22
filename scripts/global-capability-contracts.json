@@ -2419,6 +2419,18 @@
         {
           "file": "backend/src/routes/work.ts",
           "mount": "/api/work",
+          "method": "GET",
+          "path": "/computer/setup"
+        },
+        {
+          "file": "backend/src/routes/work.ts",
+          "mount": "/api/work",
+          "method": "POST",
+          "path": "/computer/setup"
+        },
+        {
+          "file": "backend/src/routes/work.ts",
+          "mount": "/api/work",
           "method": "POST",
           "path": "/tasks/:id/computer/start"
         },

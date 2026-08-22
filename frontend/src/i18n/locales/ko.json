@@ -2644,6 +2644,13 @@
       "watchingLearning": "에이전트가 보고 배우는 중입니다",
       "unmute": "소리 켜기",
       "mute": "음소거"
+    },
+    "computerSetup": {
+      "title": "Work Computer",
+      "description": "에이전트에게 브라우저가 있는 진짜 데스크톱을 제공하세요. 모든 설정이 자동으로 됩니다.",
+      "building": "데스크톱 이미지를 빌드하는 중... 처음에는 몇 분 걸립니다.",
+      "enable": "활성화",
+      "retry": "다시 시도"
     }
   },
   "personaBackground": {

@@ -12,6 +12,7 @@
     "frontend/dist",
     "plugins/*.json",
     "scripts/postinstall.js",
+    "deploy/work-computer",
     "README.md",
     "LICENSE"
   ],

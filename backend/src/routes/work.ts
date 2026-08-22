@@ -46,6 +46,7 @@ import workScreenControlService, {
   WORK_SCREEN_CONTROL_TTL_MS,
 } from '../services/workScreenControlService.js';
 import workComputerTeachService from '../services/workComputerTeachService.js';
+import workComputerSetupService from '../services/workComputerSetupService.js';
 import workTerminalService from '../services/workTerminalService.js';
 import workHostWorkspaceService, {
   WorkHostWorkspaceError,
@@ -1135,6 +1136,38 @@ router.post(
           requireBodyString(req.body?.name, 'name', 200)
         )
       );
+    } catch (error) {
+      sendError(res, error);
+    }
+  }
+);
+
+// One-click Work Computer onboarding: build the bundled GUI image on the
+// deployment's Docker daemon and create the default policy. Status is
+// polled while the build runs.
+router.get(
+  '/computer/setup',
+  requireAdmin,
+  async (req: AuthenticatedRequest, res): Promise<void> => {
+    try {
+      const status = await workComputerSetupService.status();
+      if (!status.building && status.imageReady && !status.policyId) {
+        sendSuccess(res, await workComputerSetupService.finalize());
+        return;
+      }
+      sendSuccess(res, status);
+    } catch (error) {
+      sendError(res, error);
+    }
+  }
+);
+
+router.post(
+  '/computer/setup',
+  requireAdmin,
+  async (req: AuthenticatedRequest, res): Promise<void> => {
+    try {
+      sendSuccess(res, await workComputerSetupService.ensure());
     } catch (error) {
       sendError(res, error);
     }

@@ -2644,6 +2644,13 @@
       "watchingLearning": "Tác nhân đang quan sát và học",
       "unmute": "Bật tiếng",
       "mute": "Tắt tiếng"
+    },
+    "computerSetup": {
+      "title": "Work Computer",
+      "description": "Cho tác nhân của bạn một màn hình nền thật với trình duyệt — mọi thứ tự thiết lập.",
+      "building": "Đang dựng image màn hình nền... lần đầu mất vài phút.",
+      "enable": "Bật",
+      "retry": "Thử lại"
     }
   },
   "personaBackground": {
