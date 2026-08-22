@@ -91,6 +91,7 @@ rm -f "$PROFILE_DIR/SingletonLock" "$PROFILE_DIR/SingletonSocket" \
 chromium \
   --no-sandbox \
   --test-type \
+  --hide-crash-restore-bubble \
   --autoplay-policy=no-user-gesture-required \
   --disable-dev-shm-usage \
   --disable-gpu \

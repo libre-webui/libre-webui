@@ -489,7 +489,7 @@ export function WorkspaceScreen({ taskId, active }: WorkspaceScreenProps) {
       </div>
 
       <div
-        className={`relative min-h-0 flex-1 overflow-hidden bg-black ${
+        className={`relative flex min-h-0 flex-1 items-center justify-center overflow-hidden bg-canvas ${
           recording
             ? 'ring-2 ring-inset ring-red-500'
             : driving
