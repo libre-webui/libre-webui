@@ -21,14 +21,21 @@ GUI and headless tasks.
 
 ## Enable it
 
+The easy path: an administrator presses **Enable** on the Work Computer
+card shown on the Work landing page. The backend builds this image from
+its bundled copy of this directory and creates a ready **Work Computer**
+policy automatically.
+
+The manual path, for deployments that build images elsewhere:
+
 1. Build (or push and pull) the image on the Docker host that runs Work
    sandboxes.
 2. In **User management → Work policies**, create or edit a policy: set its
    **Image** to `libre-work-computer:latest` and check **Work Computer
    (GUI + browser)**.
 3. Start a Work task under that policy (network access on). The **Screen**
-   tab appears in the workspace pane; opening it starts the GUI session and
-   connects the view-only screen.
+   tab appears in the workspace pane; opening it starts the GUI session
+   and connects the screen.
 
 ## What runs inside
 

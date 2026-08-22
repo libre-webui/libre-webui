@@ -207,6 +207,11 @@ Exhausting the round or tool-call safety budget also ends in **Needs input**
 after the final no-tools handoff, so incomplete work is never labeled
 **Complete**.
 
+An active run does not lock the conversation: a message sent while the
+agent works joins the conversation immediately and reaches the model at
+its next round, so you can steer, correct, or add context without stopping
+the run — the stop button remains available beside send.
+
 ### Resize the workspace
 
 At the `xl` desktop breakpoint, Conversation and Workspace share a draggable
@@ -428,21 +433,30 @@ the only supported way for a model to leave a process running. Ordinary
 
 ### Screen (the Work Computer)
 
-A task whose policy enables the **Work Computer** gains a Screen tab: a live,
-view-only window onto a virtual desktop running inside the same sandbox —
-a window manager and a Chromium browser on a 1280×800 display. Opening the
-tab starts the GUI session on demand (nothing runs until someone looks) and
+A task whose policy enables the **Work Computer** gains a Screen tab: a live
+window onto a virtual desktop running inside the same sandbox — a window
+manager, a dock, and a Chromium browser on a 1280×800 display. You can
+watch the agent work, take over the mouse and keyboard, listen to the
+computer's audio, and teach it tasks by demonstration. Opening the tab
+starts the GUI session on demand (nothing runs until someone looks) and
 attaches a VNC-over-WebSocket viewer.
 
-Enabling it requires two admin steps: build the GUI image variant from
-`deploy/work-computer/` in the repository, then create a Work policy that
-uses that image and checks **Work Computer (GUI + browser)**. Tasks under
-that policy must have network access — the screen is reached over a
-loopback-published container port, exactly like the preview.
+Enabling it is one click for an administrator: the Work landing page shows
+a **Work Computer** card with an **Enable** button. Pressing it builds the
+bundled GUI image on the deployment's own Docker daemon (the first build
+takes a few minutes) and creates a ready **Work Computer** policy — no
+manual `docker build` or policy fields required. The same image can still
+be built by hand from `deploy/work-computer/` when a deployment prefers
+that. Tasks under the policy must have network access — the screen is
+reached over a loopback-published container port, exactly like the
+preview.
 
-Security model: the in-container VNC server binds to localhost in view-only
-mode; the WebSocket bridge is the only reachable surface, published on the
-Docker host's loopback and never exposed directly. Every viewer
+Security model: the in-container VNC server binds to localhost behind two
+per-session passwords — a view-only one handed to every authorized watcher
+and a full-control one released only to the current takeover-lease holder,
+so the VNC server itself keeps everyone else's input inert. The WebSocket
+bridge is the only reachable surface, published on the Docker host's
+loopback and never exposed directly. Every viewer
 authenticates with a one-use ticket bound to their session and the task —
 the same mechanism as the Terminal — and current Work access is re-checked
 on every connection, so revoking a user's access cuts their screens
@@ -1088,8 +1102,16 @@ administrative policy/access endpoints remain admin-only.
 | `PATCH`  | `/tasks/:id`                        | Rename or change the explicit model route         |
 | `DELETE` | `/tasks/:id`                        | Remove the task and durable workspace             |
 | `POST`   | `/tasks/:id/runs`                   | Start a follow-up run                             |
+| `POST`   | `/tasks/:id/messages`               | Message the agent during an active run            |
 | `GET`    | `/tasks/:taskId/runs/:runId/events` | Stream authenticated live run events using SSE    |
 | `POST`   | `/tasks/:id/cancel`                 | Cancel the active run                             |
+| `GET`    | `/computer/setup`                   | Work Computer setup status (admin)                |
+| `POST`   | `/computer/setup`                   | Build the GUI image and create the policy (admin) |
+| `POST`   | `/tasks/:id/computer/start`         | Start the task's Work Computer session            |
+| `GET`    | `/tasks/:id/computer/control`       | Who is driving the screen; agent takeover request |
+| `POST`   | `/tasks/:id/computer/control`       | Take over (or renew control of) the screen        |
+| `DELETE` | `/tasks/:id/computer/control`       | Hand the screen back to the agent                 |
+| `POST`   | `/tasks/:id/computer/teach`         | Save a recorded demonstration as a taught skill   |
 | `GET`    | `/tasks/:id/files`                  | List a workspace directory                        |
 | `GET`    | `/tasks/:id/file`                   | Read a workspace text file                        |
 | `PUT`    | `/tasks/:id/file`                   | Save a workspace text file                        |

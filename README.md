@@ -123,32 +123,33 @@ persistent storage.
 
 ## Features
 
-| Feature                | Description                                                                                            |
-| ---------------------- | ------------------------------------------------------------------------------------------------------ |
-| **Chat**               | Streaming conversations with prompt queueing, multi-model comparison, and chat forking                 |
-| **Local inference**    | Ollama support with no required cloud account                                                          |
-| **Provider plugins**   | Chat, image, video, embedding, and speech providers through an extensible plugin layer                 |
-| **Knowledge**          | Chat with PDF, Office, Markdown, HTML, code, and CSV documents via hybrid retrieval with cited sources |
-| **Web search**         | Self-hosted SearXNG search for chats and Work tasks                                                    |
-| **Artifacts**          | Generate and preview HTML, SVG, JSON, code, and multi-file projects                                    |
-| **Workspaces**         | Persistent, task-scoped environments with files, terminal, diffs, and previews                         |
-| **Channels**           | Public, private, and direct-message team conversations with threads, reactions, files, and `@model`    |
-| **Calendar**           | Multiple shareable calendars with recurrence, reminders, and ICS import/export, encrypted at rest      |
-| **Automations**        | Scheduled AI runs delivered as normal chat sessions                                                    |
-| **Notifications**      | Durable in-app inbox with live delivery and signed, egress-guarded outbound webhooks                   |
-| **Notes**              | Notebook with revision history, attachments, sharing, and reversible AI edits                          |
-| **Personas**           | Reusable assistant profiles with their own prompts, models, and memory                                 |
-| **Media generation**   | Image generation and editing plus video generation, with a persistent gallery and retention controls   |
-| **Voice**              | Speech-to-text dictation, text-to-speech playback, and hands-free voice mode with consent-aware voices |
-| **Context management** | Context meter and undoable conversation compaction for long chats                                      |
-| **Agents**             | Optional integration with installed agent CLIs and Libre Claw                                          |
-| **Sharing**            | One grant model for chats, notes, knowledge, personas, prompts, skills, and calendars                  |
-| **Accounts**           | Local accounts, roles, groups, API tokens, and SSO                                                     |
-| **Public API**         | OpenAI-compatible `/v1` endpoints on scoped API tokens                                                 |
-| **Evaluations**        | Feedback with topic tags, blind arena matches with an Elo leaderboard, and reproducible eval runs      |
-| **Monitoring**         | System diagnostics, usage analytics with tariffs and budgets, OpenTelemetry export, and an audit log   |
-| **Deployment**         | npm, Docker Compose, Kubernetes, Helm, and desktop client                                              |
-| **Interface**          | Tabs, full-text search across chats, notes, and documents, themes, and 25 locales including Arabic RTL |
+| Feature                | Description                                                                                                                     |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| **Chat**               | Streaming conversations with prompt queueing, multi-model comparison, and chat forking                                          |
+| **Local inference**    | Ollama support with no required cloud account                                                                                   |
+| **Provider plugins**   | Chat, image, video, embedding, and speech providers through an extensible plugin layer                                          |
+| **Knowledge**          | Chat with PDF, Office, Markdown, HTML, code, and CSV documents via hybrid retrieval with cited sources                          |
+| **Web search**         | Self-hosted SearXNG search for chats and Work tasks                                                                             |
+| **Artifacts**          | Generate and preview HTML, SVG, JSON, code, and multi-file projects                                                             |
+| **Workspaces**         | Persistent, task-scoped environments with files, terminal, diffs, and previews                                                  |
+| **Work Computer**      | A watchable desktop with a browser for each agent — take over for sign-ins, hear its audio, and teach it tasks by demonstration |
+| **Channels**           | Public, private, and direct-message team conversations with threads, reactions, files, and `@model`                             |
+| **Calendar**           | Multiple shareable calendars with recurrence, reminders, and ICS import/export, encrypted at rest                               |
+| **Automations**        | Scheduled AI runs delivered as normal chat sessions                                                                             |
+| **Notifications**      | Durable in-app inbox with live delivery and signed, egress-guarded outbound webhooks                                            |
+| **Notes**              | Notebook with revision history, attachments, sharing, and reversible AI edits                                                   |
+| **Personas**           | Reusable assistant profiles with their own prompts, models, and memory                                                          |
+| **Media generation**   | Image generation and editing plus video generation, with a persistent gallery and retention controls                            |
+| **Voice**              | Speech-to-text dictation, text-to-speech playback, and hands-free voice mode with consent-aware voices                          |
+| **Context management** | Context meter and undoable conversation compaction for long chats                                                               |
+| **Agents**             | Optional integration with installed agent CLIs and Libre Claw                                                                   |
+| **Sharing**            | One grant model for chats, notes, knowledge, personas, prompts, skills, and calendars                                           |
+| **Accounts**           | Local accounts, roles, groups, API tokens, and SSO                                                                              |
+| **Public API**         | OpenAI-compatible `/v1` endpoints on scoped API tokens                                                                          |
+| **Evaluations**        | Feedback with topic tags, blind arena matches with an Elo leaderboard, and reproducible eval runs                               |
+| **Monitoring**         | System diagnostics, usage analytics with tariffs and budgets, OpenTelemetry export, and an audit log                            |
+| **Deployment**         | npm, Docker Compose, Kubernetes, Helm, and desktop client                                                                       |
+| **Interface**          | Tabs, full-text search across chats, notes, and documents, themes, and 25 locales including Arabic RTL                          |
 
 ## Models and providers
 
@@ -193,7 +194,7 @@ Work task
 ├── Persistent conversation and run history
 ├── Dedicated workspace volume
 ├── Policy-checked command sandbox
-└── Files · Activity · Terminal · Preview
+└── Files · Activity · Terminal · Preview · Screen
 ```
 
 Work can allow a model to:
@@ -201,9 +202,18 @@ Work can allow a model to:
 - Read, create, edit, move, delete, and search files
 - Run bounded shell commands
 - Start and stop a browser preview
+- Drive a real desktop with a browser through screenshots and input
 - Produce syntax-highlighted code
 - Show file diffs
 - Continue work in the same environment later
+
+With the **Work Computer** enabled (one click for an administrator), each
+task also gets a live virtual desktop: watch the agent browse in real
+time, unmute the computer's audio, take over the mouse and keyboard for
+sign-ins or CAPTCHAs — credentials go directly from your keyboard to the
+page, never through the model — and teach reusable tasks by demonstrating
+them once on screen. You can message the agent while it works; it picks
+the message up at its next step without stopping the run.
 
 Work is disabled for regular users by default and never falls back to executing
 commands directly on the host.

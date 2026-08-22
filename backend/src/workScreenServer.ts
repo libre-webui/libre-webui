@@ -17,7 +17,9 @@
 
 /**
  * Work Computer screen relay: bridges an authenticated browser WebSocket to
- * the websockify endpoint inside a task's sandbox, view-only in this phase.
+ * the websockify endpoints inside a task's sandbox (screen and audio).
+ * Whether a connection can drive is decided by VNC credentials: watchers
+ * hold the view-only password, the takeover-lease holder the control one.
  *
  * Auth mirrors the Work terminal exactly — a short-lived one-use ticket
  * bound to the 'work-screen' audience and the task, then a live check that
