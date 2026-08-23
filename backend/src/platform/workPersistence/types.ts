@@ -70,6 +70,7 @@ export interface WorkPolicyRow {
   workspace_size: string | null;
   idle_timeout_ms: number | null;
   gui_enabled: number | null;
+  takeover_enabled: number | null;
   created_at: number;
   updated_at: number;
 }

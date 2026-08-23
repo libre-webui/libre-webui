@@ -1645,6 +1645,7 @@
       "failed": "Tidak dapat menyimpan dasar Work",
       "invalidNumber": "Had PID dan henti melahu mestilah nombor.",
       "guiEnabled": "Work Computer (GUI + pelayar)",
+      "takeoverEnabled": "Benarkan pengambilalihan skrin",
       "computerPreset": "Work Computer",
       "computerPresetHint": "Work Computer memerlukan imej GUI: bina daripada deploy/work-computer dalam repositori dan tag sebagai libre-work-computer:latest."
     },
@@ -2486,7 +2487,10 @@
       "reconnecting": "Menyambung semula ke kemas kini langsung…",
       "unavailable": "Kemas kini langsung tidak tersedia",
       "newActivity": "Aktiviti baharu",
-      "skillsLoaded": "Kemahiran ruang kerja · {{count}}"
+      "skillsLoaded": "Kemahiran ruang kerja · {{count}}",
+      "skillWorked": "Prosedur ini berjaya",
+      "skillFailed": "Prosedur ini gagal",
+      "skillTraceSaved": "dicatat"
     },
     "runtime": {
       "unavailable": "Masa jalan tidak tersedia",

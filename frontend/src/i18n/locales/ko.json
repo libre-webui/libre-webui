@@ -1645,6 +1645,7 @@
       "failed": "Work 정책을 저장할 수 없습니다",
       "invalidNumber": "PID 제한과 유휴 중지는 숫자여야 합니다.",
       "guiEnabled": "Work Computer (GUI + 브라우저)",
+      "takeoverEnabled": "화면 제어 인계 허용",
       "computerPreset": "Work Computer",
       "computerPresetHint": "Work Computer에는 GUI 이미지가 필요합니다. 저장소의 deploy/work-computer에서 빌드해 libre-work-computer:latest 태그를 지정하세요."
     },
@@ -2486,7 +2487,10 @@
       "reconnecting": "실시간 업데이트에 다시 연결하는 중…",
       "unavailable": "실시간 업데이트를 사용할 수 없습니다",
       "newActivity": "새 활동",
-      "skillsLoaded": "워크스페이스 기술 · {{count}}"
+      "skillsLoaded": "워크스페이스 기술 · {{count}}",
+      "skillWorked": "이 절차가 성공했습니다",
+      "skillFailed": "이 절차가 실패했습니다",
+      "skillTraceSaved": "기록됨"
     },
     "runtime": {
       "unavailable": "런타임을 사용할 수 없습니다",

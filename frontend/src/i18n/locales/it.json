@@ -1645,6 +1645,7 @@
       "failed": "Impossibile salvare la politica Work",
       "invalidNumber": "Il limite PID e l'arresto per inattività devono essere numeri.",
       "guiEnabled": "Work Computer (GUI + browser)",
+      "takeoverEnabled": "Consenti la presa di controllo dello schermo",
       "computerPreset": "Work Computer",
       "computerPresetHint": "Il Work Computer richiede l'immagine GUI: compilala da deploy/work-computer nel repository e taggala libre-work-computer:latest."
     },
@@ -2486,7 +2487,10 @@
       "reconnecting": "Riconnessione agli aggiornamenti in tempo reale…",
       "unavailable": "Aggiornamenti in tempo reale non disponibili",
       "newActivity": "Nuova attività",
-      "skillsLoaded": "Competenze dell’area di lavoro · {{count}}"
+      "skillsLoaded": "Competenze dell’area di lavoro · {{count}}",
+      "skillWorked": "Questa procedura ha funzionato",
+      "skillFailed": "Questa procedura è fallita",
+      "skillTraceSaved": "annotato"
     },
     "runtime": {
       "unavailable": "Runtime non disponibile",

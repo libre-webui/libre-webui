@@ -1645,6 +1645,7 @@
       "failed": "Ekki tókst að vista Work-stefnuna",
       "invalidNumber": "PID-mörk og stöðvun í aðgerðaleysi verða að vera tölur.",
       "guiEnabled": "Work Computer (viðmót + vafri)",
+      "takeoverEnabled": "Leyfa yfirtöku á skjánum",
       "computerPreset": "Work Computer",
       "computerPresetHint": "Work Computer þarf GUI-myndina: byggðu hana úr deploy/work-computer í geymslunni og merktu libre-work-computer:latest."
     },
@@ -2486,7 +2487,10 @@
       "reconnecting": "Endurtengist rauntímauppfærslum…",
       "unavailable": "Rauntímauppfærslur eru ekki tiltækar",
       "newActivity": "Ný virkni",
-      "skillsLoaded": "Færni vinnusvæðis · {{count}}"
+      "skillsLoaded": "Færni vinnusvæðis · {{count}}",
+      "skillWorked": "Þetta ferli virkaði",
+      "skillFailed": "Þetta ferli mistókst",
+      "skillTraceSaved": "skráð"
     },
     "runtime": {
       "unavailable": "Keyrsluumhverfi ekki tiltækt",

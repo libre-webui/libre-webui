@@ -1645,6 +1645,7 @@
       "failed": "无法保存 Work 策略",
       "invalidNumber": "PID 限制和空闲停止必须是数字。",
       "guiEnabled": "Work Computer（GUI + 浏览器）",
+      "takeoverEnabled": "允许接管屏幕",
       "computerPreset": "Work Computer",
       "computerPresetHint": "Work Computer 需要 GUI 镜像：从仓库的 deploy/work-computer 构建并标记为 libre-work-computer:latest。"
     },
@@ -2486,7 +2487,10 @@
       "reconnecting": "正在重新连接实时更新…",
       "unavailable": "实时更新不可用",
       "newActivity": "新活动",
-      "skillsLoaded": "工作区技能 · {{count}}"
+      "skillsLoaded": "工作区技能 · {{count}}",
+      "skillWorked": "此流程成功",
+      "skillFailed": "此流程失败",
+      "skillTraceSaved": "已记录"
     },
     "runtime": {
       "unavailable": "运行时不可用",

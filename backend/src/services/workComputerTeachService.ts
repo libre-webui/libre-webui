@@ -32,6 +32,7 @@ import {
   getSkillBySlug,
   listSkills,
   Skill,
+  updateSkill,
 } from './skillService.js';
 import { WorkRuntimeError } from './workRuntimeShared.js';
 
@@ -67,12 +68,18 @@ export interface WorkTeachRecordedEvent {
   alt?: boolean;
   meta?: boolean;
   shift?: boolean;
+  /** Element descriptor under the pointer, resolved by the anchor probe. */
+  anchor?: string;
+  /** Page URL at the time of the event, for the derived allowed scope. */
+  url?: string;
 }
 
 export interface WorkTeachPlaybook {
   steps: string[];
   redactions: number;
   typedInputs: string[];
+  /** Distinct web hosts visited during the demonstration. */
+  hosts: string[];
   instructions: string;
 }
 
@@ -84,6 +91,7 @@ type Step =
       button: number;
       count: number;
       t: number;
+      anchor?: string;
     }
   | {
       kind: 'drag';
@@ -92,6 +100,7 @@ type Step =
       toX: number;
       toY: number;
       t: number;
+      anchor?: string;
     }
   | { kind: 'type'; text: string; t: number }
   | { kind: 'key'; chord: string; t: number }
@@ -157,7 +166,22 @@ export function validateWorkTeachEvents(
       default:
         throw invalidRecording('an event has an unknown kind.');
     }
-    validated.push(event);
+    // Anchors and URLs are best-effort enrichment from the recorder's
+    // probe: keep them only when well-formed, never fail the recording.
+    const copy: WorkTeachRecordedEvent = { ...event };
+    delete copy.anchor;
+    delete copy.url;
+    if (
+      event.kind === 'down' &&
+      typeof event.anchor === 'string' &&
+      event.anchor.trim()
+    ) {
+      copy.anchor = event.anchor.trim().slice(0, 200);
+    }
+    if (typeof event.url === 'string' && event.url.trim()) {
+      copy.url = event.url.trim().slice(0, 300);
+    }
+    validated.push(copy);
   }
   return validated.sort((left, right) => left.t - right.t);
 }
@@ -259,7 +283,15 @@ function collectSteps(events: WorkTeachRecordedEvent[]): Step[] {
         const toY = round(event.y ?? fromY);
         const distance = Math.hypot(toX - fromX, toY - fromY);
         if (distance >= DRAG_THRESHOLD_PX) {
-          steps.push({ kind: 'drag', fromX, fromY, toX, toY, t: event.t });
+          steps.push({
+            kind: 'drag',
+            fromX,
+            fromY,
+            toX,
+            toY,
+            t: event.t,
+            ...(pendingDown.anchor ? { anchor: pendingDown.anchor } : {}),
+          });
         } else {
           const previous = steps[steps.length - 1];
           if (
@@ -278,6 +310,7 @@ function collectSteps(events: WorkTeachRecordedEvent[]): Step[] {
               button: pendingDown.button ?? 0,
               count: 1,
               t: event.t,
+              ...(pendingDown.anchor ? { anchor: pendingDown.anchor } : {}),
             });
           }
         }
@@ -350,10 +383,14 @@ function describeStep(
         step.count >= 2
           ? 'Double-click'
           : (BUTTON_NAMES[step.button] ?? 'Click');
-      return `${verb} at about (${step.x}, ${step.y}).`;
+      return step.anchor
+        ? `${verb} "${step.anchor}" — it was at about (${step.x}, ${step.y}) in the demonstration.`
+        : `${verb} at about (${step.x}, ${step.y}).`;
     }
     case 'drag':
-      return `Drag from about (${step.fromX}, ${step.fromY}) to (${step.toX}, ${step.toY}).`;
+      return step.anchor
+        ? `Drag "${step.anchor}" from about (${step.fromX}, ${step.fromY}) to (${step.toX}, ${step.toY}).`
+        : `Drag from about (${step.fromX}, ${step.fromY}) to (${step.toX}, ${step.toY}).`;
     case 'type': {
       if (isSecretLikeText(step.text)) {
         onRedact(step.text);
@@ -400,6 +437,29 @@ export function buildWorkComputerPlaybook(
       ? `${options.screenWidth}×${options.screenHeight}`
       : '1280×800';
 
+  // The demonstration's own footprint becomes the replay envelope: the
+  // distinct web hosts it touched, derived deterministically from the
+  // recorded page URLs. A taught procedure never inherits open-ended
+  // authority beyond what the human actually showed.
+  const hosts = [
+    ...new Set(
+      events
+        .map(event => event.url)
+        .filter((url): url is string => Boolean(url))
+        .map(url => {
+          try {
+            return new URL(url).host;
+          } catch {
+            return '';
+          }
+        })
+        .filter(Boolean)
+    ),
+  ].sort();
+  const anchored = steps.some(
+    step => (step.kind === 'click' || step.kind === 'drag') && step.anchor
+  );
+
   const inputsSection =
     typedInputs.length > 0
       ? typedInputs
@@ -411,7 +471,11 @@ export function buildWorkComputerPlaybook(
       : '- None recorded; follow the request.';
 
   const instructions = `Demonstrated procedure recorded on the Work Computer (${screen} screen).
-Coordinates are hints from the demonstration, not exact targets: computer_observe first, find the equivalent element on the current screen, and adapt when the layout differs.
+${
+  anchored
+    ? 'Quoted anchors name the demonstrated targets — find the same control by its label or role first; coordinates are only where it sat during the demonstration. computer_observe first and adapt when the layout differs.'
+    : 'Coordinates are hints from the demonstration, not exact targets: computer_observe first, find the equivalent element on the current screen, and adapt when the layout differs.'
+}
 
 ## When to use
 When the request matches "${options.name}".
@@ -425,6 +489,13 @@ ${lines.join('\n')}
 ## How to check
 Re-observe after each consequential step and confirm the screen changed as the step intended before continuing.
 
+## Allowed scope
+${
+  hosts.length > 0
+    ? `The demonstration stayed on: ${hosts.join(', ')}. Replay within that scope only — if the flow leads to a different site, stop and ask instead of extending the procedure to new territory.`
+    : 'The demonstration recorded no web destination. If replaying takes you onto the web, stop and confirm the destination with the user first.'
+}
+
 ## Approval boundaries
 Never type credentials, one-time codes, or CAPTCHA answers — call request_takeover so the user enters them directly. Stop and ask before destructive or payment actions${redactions > 0 ? '. This demonstration contained redacted secret input at the marked step; a takeover is required there' : ''}.
 
@@ -434,7 +505,7 @@ Summarize the end state and how it was verified.
 ## Failure handling
 If a step cannot be completed as demonstrated, stop and ask the user; do not improvise around errors.`;
 
-  return { steps: lines, redactions, typedInputs, instructions };
+  return { steps: lines, redactions, typedInputs, hosts, instructions };
 }
 
 const slugify = (name: string): string =>
@@ -490,6 +561,80 @@ export class WorkComputerTeachService {
       enabled: true,
     });
     return { skill, playbook };
+  }
+
+  /**
+   * Record a user-reviewed replay outcome on a taught skill: a dated
+   * "worked / failed" line in the skill's Track record section, newest
+   * first and bounded. Goes through updateSkill, so every annotation is a
+   * reviewable skill version.
+   */
+  async recordSkillTrace(
+    userId: string,
+    slug: string,
+    input: { outcome: unknown; note?: unknown }
+  ): Promise<{ skill: Skill; outcome: 'success' | 'failure' }> {
+    if (input.outcome !== 'success' && input.outcome !== 'failure') {
+      throw new WorkRuntimeError(
+        'A skill trace outcome must be "success" or "failure".',
+        400,
+        'WORK_TEACH_INVALID_TRACE'
+      );
+    }
+    const note =
+      typeof input.note === 'string' && input.note.trim()
+        ? input.note.trim().split('\n').join(' ').slice(0, 300)
+        : undefined;
+    const skill = await getSkillBySlug(userId, slug);
+    if (!skill || !skill.slug.startsWith(WORK_TAUGHT_SKILL_PREFIX)) {
+      throw new WorkRuntimeError(
+        'No taught skill with this slug exists for you.',
+        404,
+        'WORK_TEACH_SKILL_NOT_FOUND'
+      );
+    }
+    const line =
+      `- ${new Date().toISOString().slice(0, 10)}: ` +
+      `${input.outcome === 'success' ? 'Worked' : 'Failed'}${note ? ` — ${note}` : ''}`;
+    const header = '## Track record';
+    const intro = 'User-reviewed replay outcomes, newest first.';
+    const sectionStart = skill.instructions.indexOf(`${header}\n`);
+    let instructions: string;
+    if (sectionStart < 0) {
+      instructions = `${skill.instructions.trimEnd()}\n\n${header}\n${intro}\n${line}\n`;
+    } else {
+      const afterHeader = sectionStart + header.length + 1;
+      const rest = skill.instructions.slice(afterHeader);
+      const nextSection = rest.indexOf('\n## ');
+      const sectionBody = nextSection < 0 ? rest : rest.slice(0, nextSection);
+      const tail = nextSection < 0 ? '' : rest.slice(nextSection);
+      const existing = sectionBody
+        .split('\n')
+        .filter(entry => entry.startsWith('- '))
+        .slice(0, 4);
+      instructions =
+        skill.instructions.slice(0, afterHeader) +
+        `${intro}\n${[line, ...existing].join('\n')}\n` +
+        tail;
+    }
+    const updated = await updateSkill(
+      skill.id,
+      { userId },
+      {
+        name: skill.name,
+        description: skill.description,
+        instructions,
+        enabled: skill.enabled,
+      }
+    );
+    if (!updated) {
+      throw new WorkRuntimeError(
+        'No taught skill with this slug exists for you.',
+        404,
+        'WORK_TEACH_SKILL_NOT_FOUND'
+      );
+    }
+    return { skill: updated, outcome: input.outcome };
   }
 
   /**

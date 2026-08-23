@@ -340,6 +340,7 @@ export interface WorkPolicy {
   workspaceSize?: string;
   idleTimeoutMs?: number;
   guiEnabled?: boolean;
+  takeoverEnabled?: boolean;
   createdAt: number;
   updatedAt: number;
 }
@@ -362,6 +363,7 @@ export interface WorkPolicyInput {
   workspaceSize?: string | null;
   idleTimeoutMs?: number | null;
   guiEnabled?: boolean | null;
+  takeoverEnabled?: boolean | null;
 }
 
 export interface StartWorkRunRequest {

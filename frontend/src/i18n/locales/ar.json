@@ -1645,6 +1645,7 @@
       "failed": "تعذر حفظ سياسة Work",
       "invalidNumber": "يجب أن يكون حد PID والإيقاف عند الخمول أرقامًا.",
       "guiEnabled": "Work Computer (واجهة + متصفح)",
+      "takeoverEnabled": "السماح بالاستحواذ على الشاشة",
       "computerPreset": "Work Computer",
       "computerPresetHint": "يتطلب الـ Work Computer صورة الواجهة الرسومية: ابنها من deploy/work-computer في المستودع بوسم libre-work-computer:latest."
     },
@@ -2486,7 +2487,10 @@
       "reconnecting": "جارٍ إعادة الاتصال بالتحديثات المباشرة…",
       "unavailable": "التحديثات المباشرة غير متاحة",
       "newActivity": "نشاط جديد",
-      "skillsLoaded": "مهارات مساحة العمل · {{count}}"
+      "skillsLoaded": "مهارات مساحة العمل · {{count}}",
+      "skillWorked": "نجح هذا الإجراء",
+      "skillFailed": "فشل هذا الإجراء",
+      "skillTraceSaved": "تم التدوين"
     },
     "runtime": {
       "unavailable": "بيئة التشغيل غير متاحة",

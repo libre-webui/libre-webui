@@ -42,6 +42,7 @@ import workPolicyService, {
   type WorkPolicyRecord,
 } from '../services/workPolicyService.js';
 import workRuntimeService from '../services/workRuntimeService.js';
+import { WorkRuntimeError } from '../services/workRuntimeShared.js';
 import workScreenControlService, {
   WORK_SCREEN_CONTROL_TTL_MS,
 } from '../services/workScreenControlService.js';
@@ -1235,16 +1236,18 @@ router.get(
         holder?: { you: boolean; username?: string; expiresAt: number };
         agentWaiting: boolean;
         agentWaitingReason?: string;
+        takeoverEnabled: boolean;
       }>
     >
   ): Promise<void> => {
     const taskId = readTaskId(req);
     const userId = requireUserId(req);
     try {
-      await workTaskService.requireTaskRecord(taskId, userId);
-      const [holder, assist] = await Promise.all([
+      const task = await workTaskService.requireTaskRecord(taskId, userId);
+      const [holder, assist, policy] = await Promise.all([
         workScreenControlService.current(taskId),
         workScreenControlService.assistState(taskId),
+        workPolicyService.resolve(task.policyId),
       ]);
       const holderUser = holder
         ? await userModel.getUserById(holder.userId)
@@ -1265,6 +1268,7 @@ router.get(
         ...(assist && assist.phase !== 'released'
           ? { agentWaitingReason: assist.reason.slice(0, 500) }
           : {}),
+        takeoverEnabled: policy.takeoverEnabled !== false,
       });
     } catch (error) {
       sendError(res, error);
@@ -1288,6 +1292,17 @@ router.post(
         taskId,
         userId
       );
+      // Per-policy gating: the takeover choke point. Teach-mode recording
+      // requires this lease too, so a policy that disables takeover also
+      // disables teaching on its tasks.
+      const policy = await workPolicyService.resolve(task.policyId);
+      if (policy.takeoverEnabled === false) {
+        throw new WorkRuntimeError(
+          "This task's Work policy does not allow taking over the screen.",
+          403,
+          'WORK_TAKEOVER_DISABLED'
+        );
+      }
       const credentials = await workRuntimeService.computerCredentials(task);
       if (!credentials) {
         throw new WorkConflictError(
@@ -1303,6 +1318,72 @@ router.post(
         controlPassword: credentials.control,
         expiresAt: holder.expiresAt,
       });
+    } catch (error) {
+      sendError(res, error);
+    }
+  }
+);
+
+// Record a user-reviewed replay outcome on a taught skill: a dated
+// worked/failed line in the skill's Track record, versioned like any other
+// skill edit. The review click is the authorization — nothing automatic
+// ever writes here.
+router.post(
+  '/computer/skills/:slug/trace',
+  async (
+    req: AuthenticatedRequest,
+    res: Response<
+      ApiResponse<{ slug: string; version: number; outcome: string }>
+    >
+  ): Promise<void> => {
+    const userId = requireUserId(req);
+    try {
+      const { skill, outcome } =
+        await workComputerTeachService.recordSkillTrace(
+          userId,
+          String(req.params.slug || ''),
+          { outcome: req.body?.outcome, note: req.body?.note }
+        );
+      sendSuccess(res, { slug: skill.slug, version: skill.version, outcome });
+    } catch (error) {
+      sendError(res, error);
+    }
+  }
+);
+
+// Resolve the interactive element under a screen coordinate while a
+// demonstration is being recorded — anchors make taught playbooks survive
+// layout changes. Read-only: it never injects input or steals focus.
+router.post(
+  '/tasks/:id/computer/anchor',
+  async (
+    req: AuthenticatedRequest,
+    res: Response<ApiResponse<{ anchor?: string; url?: string }>>
+  ): Promise<void> => {
+    const taskId = readTaskId(req);
+    const userId = requireUserId(req);
+    try {
+      const task = await workTaskService.requireMutableTaskRecord(
+        taskId,
+        userId
+      );
+      const x = Number(req.body?.x);
+      const y = Number(req.body?.y);
+      if (
+        !Number.isInteger(x) ||
+        !Number.isInteger(y) ||
+        x < 0 ||
+        y < 0 ||
+        x > 10_000 ||
+        y > 10_000
+      ) {
+        throw new WorkRuntimeError(
+          'Anchor coordinates must be non-negative integers.',
+          400,
+          'WORK_COMPUTER_INVALID_ACTION'
+        );
+      }
+      sendSuccess(res, await workRuntimeService.computerAnchorAt(task, x, y));
     } catch (error) {
       sendError(res, error);
     }

@@ -1645,6 +1645,7 @@
       "failed": "Nie udało się zapisać polityki Work",
       "invalidNumber": "Limit PID i zatrzymanie przy bezczynności muszą być liczbami.",
       "guiEnabled": "Work Computer (GUI + przeglądarka)",
+      "takeoverEnabled": "Zezwól na przejęcie ekranu",
       "computerPreset": "Work Computer",
       "computerPresetHint": "Work Computer wymaga obrazu GUI: zbuduj go z deploy/work-computer w repozytorium i oznacz libre-work-computer:latest."
     },
@@ -2486,7 +2487,10 @@
       "reconnecting": "Ponowne łączenie z aktualizacjami na żywo…",
       "unavailable": "Aktualizacje na żywo są niedostępne",
       "newActivity": "Nowa aktywność",
-      "skillsLoaded": "Umiejętności obszaru roboczego · {{count}}"
+      "skillsLoaded": "Umiejętności obszaru roboczego · {{count}}",
+      "skillWorked": "Ta procedura zadziałała",
+      "skillFailed": "Ta procedura zawiodła",
+      "skillTraceSaved": "odnotowano"
     },
     "runtime": {
       "unavailable": "Środowisko uruchomieniowe niedostępne",

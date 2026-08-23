@@ -72,7 +72,7 @@ test(
   'live GUI sandbox: focus assertions, batch fences, and outcome predicates hold on the edge-lab fixtures',
   { skip: guiImageAvailable ? false : 'docker or libre-work-computer:latest unavailable' },
   async () => {
-    const { COMPUTER_OBSERVE_SCRIPT, COMPUTER_ACT_SCRIPT } = await import(
+    const { COMPUTER_OBSERVE_SCRIPT, COMPUTER_ACT_SCRIPT, COMPUTER_ANCHOR_SCRIPT } = await import(
       pathToFileURL(
         path.join(repoRoot, 'backend', 'dist', 'services', 'workRuntimeService.js')
       ).href
@@ -193,6 +193,27 @@ test(
       );
       assert.equal(pending.expect?.outcome, 'pending');
       assert.deepEqual(pending.expect?.unmet, ['urlContains']);
+
+      // The teach recorder's anchor probe names the element under a screen
+      // coordinate — and the page URL — without injecting any input.
+      const modalButton = coords('#openModal');
+      const anchored = JSON.parse(
+        exec([
+          'node',
+          '-e',
+          COMPUTER_ANCHOR_SCRIPT,
+          '--',
+          String(modalButton.x),
+          String(modalButton.y),
+        ])
+      );
+      assert.match(anchored.anchor ?? '', /button#openModal \(OPEN REVIEW\)/);
+      assert.match(anchored.url ?? '', /edge-lab\.html$/);
+      // Outside the browser viewport the probe degrades to URL-only.
+      const offscreen = JSON.parse(
+        exec(['node', '-e', COMPUTER_ANCHOR_SCRIPT, '--', '5', '795'])
+      );
+      assert.equal(offscreen.anchor, undefined);
 
       // Case F: goal-directed scrolling finds the below-the-fold target and
       // reports a visibility receipt instead of a blind wheel count.

@@ -24,7 +24,7 @@ import {
   Sparkles,
   TerminalSquare,
 } from 'lucide-react';
-import { useEffect, useId, useMemo, useState } from 'react';
+import { useCallback, useEffect, useId, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StreamingMessageContent } from '@/components/ui/StreamingMessageContent';
 import type {
@@ -34,6 +34,7 @@ import type {
   WorkLiveRunPhase,
 } from '@/types/work';
 import { cn } from '@/utils';
+import { recordWorkSkillTrace } from '@/utils/api/workScreen';
 
 interface WorkLiveRunSurfaceProps {
   run: WorkLiveRun;
@@ -341,6 +342,22 @@ export function WorkLiveRunSurface({
   const label =
     connectionLabel(run.connection, t) || phaseLabel(run.phase, t, activeTool);
   const active = !run.terminal;
+  const [skillTraces, setSkillTraces] = useState<
+    Record<string, 'success' | 'failure'>
+  >({});
+  const recordSkillTraceClick = useCallback(
+    (slug: string, outcome: 'success' | 'failure') => {
+      setSkillTraces(current => ({ ...current, [slug]: outcome }));
+      recordWorkSkillTrace(slug, outcome).catch(() => {
+        setSkillTraces(current => {
+          const next = { ...current };
+          delete next[slug];
+          return next;
+        });
+      });
+    },
+    []
+  );
   const exactOutputTokens = run.usage?.outputTokens;
   const liveTokenContent = run.reasoning + run.response;
   const outputTokens =
@@ -413,7 +430,7 @@ export function WorkLiveRunSurface({
       )}
 
       {run.skills.length > 0 && (
-        <div className='mb-3 flex flex-wrap gap-1.5'>
+        <div className='mb-3 flex flex-wrap items-center gap-1.5'>
           <span className='inline-flex items-center gap-1 rounded-full border border-line bg-surface-raised px-2 py-1 text-[10px] text-ink-muted'>
             <Sparkles className='h-3 w-3 text-primary-500' aria-hidden='true' />
             <span dir='auto'>
@@ -423,6 +440,62 @@ export function WorkLiveRunSurface({
               })}
             </span>
           </span>
+          {/* A finished run is the user's chance to grade taught procedures:
+              each review click appends a dated line to the skill's Track
+              record and creates a reviewable version. */}
+          {run.terminal &&
+            run.skills
+              .filter(skill => skill.id.startsWith('taught:'))
+              .map(skill => {
+                const slug = skill.id.slice('taught:'.length);
+                const traced = skillTraces[slug];
+                return (
+                  <span
+                    key={skill.id}
+                    className='inline-flex items-center gap-1 rounded-full border border-line bg-surface-raised px-2 py-1 text-[10px] text-ink-muted'
+                  >
+                    <span dir='auto'>{skill.name}</span>
+                    {traced ? (
+                      <span className='text-primary-500'>
+                        {t('work.live.skillTraceSaved', {
+                          defaultValue: 'noted',
+                        })}
+                      </span>
+                    ) : (
+                      <>
+                        <button
+                          type='button'
+                          data-testid={`skill-trace-success-${slug}`}
+                          aria-label={t('work.live.skillWorked', {
+                            defaultValue: 'This procedure worked',
+                          })}
+                          title={t('work.live.skillWorked', {
+                            defaultValue: 'This procedure worked',
+                          })}
+                          onClick={() => recordSkillTraceClick(slug, 'success')}
+                          className='rounded px-1 hover:text-primary-600'
+                        >
+                          ✓
+                        </button>
+                        <button
+                          type='button'
+                          data-testid={`skill-trace-failure-${slug}`}
+                          aria-label={t('work.live.skillFailed', {
+                            defaultValue: 'This procedure failed',
+                          })}
+                          title={t('work.live.skillFailed', {
+                            defaultValue: 'This procedure failed',
+                          })}
+                          onClick={() => recordSkillTraceClick(slug, 'failure')}
+                          className='rounded px-1 hover:text-red-600'
+                        >
+                          ✕
+                        </button>
+                      </>
+                    )}
+                  </span>
+                );
+              })}
         </div>
       )}
 

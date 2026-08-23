@@ -1645,6 +1645,7 @@
       "failed": "Work ポリシーを保存できませんでした",
       "invalidNumber": "PID 制限とアイドル停止は数値で入力してください。",
       "guiEnabled": "Work Computer（GUI + ブラウザ）",
+      "takeoverEnabled": "画面の操作引き継ぎを許可",
       "computerPreset": "Work Computer",
       "computerPresetHint": "Work Computer には GUI イメージが必要です。リポジトリの deploy/work-computer からビルドし、libre-work-computer:latest とタグ付けしてください。"
     },
@@ -2486,7 +2487,10 @@
       "reconnecting": "ライブ更新に再接続しています…",
       "unavailable": "ライブ更新を利用できません",
       "newActivity": "新しいアクティビティ",
-      "skillsLoaded": "ワークスペーススキル · {{count}}"
+      "skillsLoaded": "ワークスペーススキル · {{count}}",
+      "skillWorked": "この手順は成功しました",
+      "skillFailed": "この手順は失敗しました",
+      "skillTraceSaved": "記録済み"
     },
     "runtime": {
       "unavailable": "ランタイムを利用できません",

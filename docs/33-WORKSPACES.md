@@ -530,9 +530,13 @@ receive only the view password, and the control password is released
 exclusively to the current holder of a control lease. The lease is
 TTL-bounded (an abandoned takeover lapses within two minutes), renewed
 while the takeover UI is open, and cooperative — it cannot be seized from
-another user. While a human holds it, the agent's `computer_observe` and
-`computer_act` are both blocked, so the agent can neither fight your input
-nor screenshot what you type. The agent can also ask for you: its
+another user. A policy can disable takeover entirely (**Allow screen
+takeover** in the policy editor): tasks under it hide the Take over and
+Teach controls, the takeover endpoint refuses, and the agent's
+`request_takeover` reports that no one can be handed control — watching
+stays available. While a human holds it, the agent's `computer_observe`
+and `computer_act` are both blocked, so the agent can neither fight your
+input nor screenshot what you type. The agent can also ask for you: its
 `request_takeover` tool posts a banner on the Screen pane with the reason
 and waits until you take over and hand back. Credentials entered during a
 takeover go directly from your keyboard to the page — they never pass
@@ -543,23 +547,34 @@ older images remain watchable but view-only for everyone.
 Teach mode: **Teach a task** on the Screen pane records a demonstration —
 you drive the real screen (it takes control exactly like a takeover, with
 a visible recording indicator) while your pointer, keyboard, and scroll
-actions are captured at screen coordinates. Saving builds a playbook
-**deterministically, with no model in the loop**: keystrokes batch into
-typed strings, click-versus-drag is decided by an 8-pixel threshold,
-pauses become explicit wait steps, and typed text that mentions secret
-vocabulary or is credential-shaped (8+ characters mixing three character
-classes) is redacted and replaced with an instruction to use
-`request_takeover` at that step. The playbook is a natural-language
-procedure — recorded coordinates are explicitly hints to re-interpret with
-`computer_observe`, not a pixel macro — with when-to-use, inputs, steps,
-verification, approval boundaries, and stop-and-ask failure handling. It
-is saved as an ordinary skill (slug prefix `taught-`), so it appears in
-the Skills page with versioning, editing, and sharing. Computer-enabled
-Work runs load the owner's enabled taught skills into their system prompt
-and report them in the run's skill list, so replaying a taught task is
-just a normal run whose request matches the procedure. Do not type real
-passwords while recording — demonstrate up to the sign-in, save, and let
-`request_takeover` handle credentials on replay.
+actions are captured at screen coordinates. Each click is also anchored:
+a read-only probe resolves the interactive element under the pointer (its
+tag, id, and visible label) and the current page URL, so playbook steps
+name their targets — "Click \"button#submit (Place order)\"" — with
+coordinates demoted to where the control sat during the demonstration.
+Saving builds a playbook **deterministically, with no model in the
+loop**: keystrokes batch into typed strings, click-versus-drag is decided
+by an 8-pixel threshold, pauses become explicit wait steps, and typed
+text that mentions secret vocabulary or is credential-shaped (8+
+characters mixing three character classes) is redacted and replaced with
+an instruction to use `request_takeover` at that step. The playbook is a
+natural-language procedure — anchored targets first, coordinates as
+hints, re-interpreted with `computer_observe` — with when-to-use, inputs,
+steps, verification, an **allowed scope** derived from the hosts the
+demonstration actually visited (replay must stop and ask before leaving
+them — a taught procedure never inherits authority beyond what was
+shown), approval boundaries, and stop-and-ask failure handling. It is
+saved as an ordinary skill (slug prefix `taught-`), so it appears in the
+Skills page with versioning, editing, and sharing. Computer-enabled Work
+runs load the owner's enabled taught skills into their system prompt and
+report them in the run's skill list, so replaying a taught task is just a
+normal run whose request matches the procedure. After a finished run, the
+skill chips offer a one-click worked/failed review that appends a dated
+line to the skill's **Track record** section (newest first, bounded, each
+one a normal skill version) — the procedure's history stays with the
+procedure. Do not type real passwords while recording — demonstrate up to
+the sign-in, save, and let `request_takeover` handle credentials on
+replay.
 
 ## Providers, Routing, and Data Disclosure
 

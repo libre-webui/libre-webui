@@ -1645,6 +1645,7 @@
       "failed": "Kon het Work-beleid niet opslaan",
       "invalidNumber": "PID-limiet en inactiviteitsstop moeten getallen zijn.",
       "guiEnabled": "Work Computer (GUI + browser)",
+      "takeoverEnabled": "Overname van het scherm toestaan",
       "computerPreset": "Work Computer",
       "computerPresetHint": "De Work Computer vereist de GUI-image: bouw die vanuit deploy/work-computer in de repository en tag als libre-work-computer:latest."
     },
@@ -2486,7 +2487,10 @@
       "reconnecting": "Opnieuw verbinden met live-updates…",
       "unavailable": "Live-updates niet beschikbaar",
       "newActivity": "Nieuwe activiteit",
-      "skillsLoaded": "Werkruimtevaardigheden · {{count}}"
+      "skillsLoaded": "Werkruimtevaardigheden · {{count}}",
+      "skillWorked": "Deze procedure werkte",
+      "skillFailed": "Deze procedure mislukte",
+      "skillTraceSaved": "genoteerd"
     },
     "runtime": {
       "unavailable": "Runtime niet beschikbaar",

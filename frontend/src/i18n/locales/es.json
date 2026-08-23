@@ -1645,6 +1645,7 @@
       "failed": "No se pudo guardar la política de Work",
       "invalidNumber": "El límite de PID y la parada por inactividad deben ser números.",
       "guiEnabled": "Work Computer (GUI + navegador)",
+      "takeoverEnabled": "Permitir tomar el control de la pantalla",
       "computerPreset": "Work Computer",
       "computerPresetHint": "El Work Computer necesita la imagen GUI: constrúyela desde deploy/work-computer en el repositorio y etiquétala libre-work-computer:latest."
     },
@@ -2486,7 +2487,10 @@
       "reconnecting": "Reconectando con las actualizaciones en vivo…",
       "unavailable": "Actualizaciones en vivo no disponibles",
       "newActivity": "Nueva actividad",
-      "skillsLoaded": "Habilidades del espacio de trabajo · {{count}}"
+      "skillsLoaded": "Habilidades del espacio de trabajo · {{count}}",
+      "skillWorked": "Este procedimiento funcionó",
+      "skillFailed": "Este procedimiento falló",
+      "skillTraceSaved": "anotado"
     },
     "runtime": {
       "unavailable": "Entorno de ejecución no disponible",

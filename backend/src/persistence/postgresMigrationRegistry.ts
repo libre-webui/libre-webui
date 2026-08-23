@@ -28,6 +28,7 @@ import { POSTGRES_MEDIA_ENTERPRISE_OPS_MIGRATION } from './postgresMediaEnterpri
 import { POSTGRES_MFA_PUSH_RECOVERY_MIGRATION } from './postgresMfaPushRecoveryMigration.js';
 import { POSTGRES_AUTOMATION_WORK_TARGET_MIGRATION } from './postgresAutomationWorkTargetMigration.js';
 import { POSTGRES_WORK_COMPUTER_MIGRATION } from './postgresWorkComputerMigration.js';
+import { POSTGRES_WORK_TAKEOVER_MIGRATION } from './postgresWorkTakeoverMigration.js';
 import type { PostgresMigration } from './postgresMigrationTypes.js';
 import { validatePostgresMigrationRegistry } from './postgresMigrations.js';
 
@@ -58,6 +59,7 @@ export const POSTGRES_MIGRATIONS: readonly PostgresMigration[] =
         POSTGRES_MFA_PUSH_RECOVERY_MIGRATION,
         POSTGRES_AUTOMATION_WORK_TARGET_MIGRATION,
         POSTGRES_WORK_COMPUTER_MIGRATION,
+        POSTGRES_WORK_TAKEOVER_MIGRATION,
       ].map(migration => Object.freeze({ ...migration }))
     )
   );

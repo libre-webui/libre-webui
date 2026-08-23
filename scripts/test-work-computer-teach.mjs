@@ -128,6 +128,7 @@ test('the playbook carries every rakazo section and the coordinates-are-hints fr
     '## Inputs',
     '## Steps',
     '## How to check',
+    '## Allowed scope',
     '## Approval boundaries',
     '## What to return',
     '## Failure handling',
@@ -145,6 +146,57 @@ test('the playbook carries every rakazo section and the coordinates-are-hints fr
     playbook.instructions,
     /substitute the value the current request calls for/
   );
+});
+
+test('anchored clicks name their targets and URLs derive the allowed scope', () => {
+  const playbook = build([
+    {
+      t: 0,
+      kind: 'down',
+      x: 10,
+      y: 10,
+      button: 0,
+      anchor: 'button#submit (Place order)',
+      url: 'https://shop.example.com/checkout',
+    },
+    { t: 60, kind: 'up', x: 10, y: 10, button: 0 },
+    ...click(500, 300, 300),
+    {
+      t: 900,
+      kind: 'down',
+      x: 40,
+      y: 40,
+      button: 0,
+      url: 'https://auth.example.com/login',
+    },
+    { t: 960, kind: 'up', x: 40, y: 40, button: 0 },
+  ]);
+  assert.match(
+    playbook.steps[0],
+    /Click "button#submit \(Place order\)" — it was at about \(10, 10\)/
+  );
+  assert.match(playbook.steps[1], /Click at about \(300, 300\)\./);
+  assert.deepEqual(playbook.hosts, ['auth.example.com', 'shop.example.com']);
+  assert.match(playbook.instructions, /## Allowed scope/);
+  assert.match(
+    playbook.instructions,
+    /auth\.example\.com, shop\.example\.com/
+  );
+  assert.match(
+    playbook.instructions,
+    /Quoted anchors name the demonstrated targets/
+  );
+  assert.match(playbook.instructions, /stop and ask instead of extending/);
+
+  // Malformed enrichment degrades to coordinates instead of failing.
+  const degraded = build([
+    { t: 0, kind: 'down', x: 1, y: 1, button: 0, anchor: '   ', url: 'not a url' },
+    { t: 50, kind: 'up', x: 1, y: 1, button: 0 },
+  ]);
+  assert.match(degraded.steps[0], /Click at about \(1, 1\)\./);
+  assert.deepEqual(degraded.hosts, []);
+  assert.match(degraded.instructions, /recorded no web destination/);
+  assert.match(degraded.instructions, /Coordinates are hints/);
 });
 
 test('malformed and oversized recordings are rejected with clear errors', () => {

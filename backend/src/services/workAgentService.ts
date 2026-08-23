@@ -30,6 +30,7 @@ import {
   WORK_WRITE_FILE_RECOMMENDED_CHARS,
   workToolCallBudget,
 } from './workAgentGuidance.js';
+import workPolicyService from './workPolicyService.js';
 import workRuntimeService, {
   WORK_COMPUTER_ACTION_LIMIT,
   WorkCommandResult,
@@ -1908,6 +1909,16 @@ export class WorkAgentService {
       }
       case 'request_takeover': {
         await this.assertComputerToolsAvailable(task);
+        if (
+          (await workPolicyService.resolve(task.policyId)).takeoverEnabled ===
+          false
+        ) {
+          return {
+            content:
+              "This task's Work policy does not allow human takeover of the screen. No one can be handed control; state the exact blocker in your response so the user can address it another way.",
+            metadata: { outcome: 'disabled' },
+          };
+        }
         const reason = requiredString(args.reason, 'reason').slice(0, 1_000);
         const outcome = await workScreenControlService.waitForAssist(
           task.id,

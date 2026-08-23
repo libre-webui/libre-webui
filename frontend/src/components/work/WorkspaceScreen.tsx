@@ -40,6 +40,7 @@ import {
 } from 'lucide-react';
 import {
   acquireWorkScreenControl,
+  getWorkScreenAnchor,
   getWorkScreenControl,
   releaseWorkScreenControl,
   saveWorkScreenTeaching,
@@ -273,7 +274,25 @@ export function WorkspaceScreen({ taskId, active }: WorkspaceScreenProps) {
     };
     const onPointer = (kind: 'down' | 'up') => (event: PointerEvent) => {
       const at = remoteCoords(event.clientX, event.clientY);
-      if (at) record({ t: stamp(), kind, ...at, button: event.button });
+      if (!at) return;
+      const recorded: WorkTeachEvent = {
+        t: stamp(),
+        kind,
+        ...at,
+        button: event.button,
+      };
+      record(recorded);
+      // Anchor probe: resolve what sits under this click so the playbook
+      // can name targets, not just coordinates. Fire-and-forget — the
+      // recorded object is enriched in place if the probe returns in time.
+      if (kind === 'down') {
+        getWorkScreenAnchor(taskId, at.x, at.y)
+          .then(({ anchor, url }) => {
+            if (anchor) recorded.anchor = anchor;
+            if (url) recorded.url = url;
+          })
+          .catch(() => undefined);
+      }
     };
     const onWheel = (event: WheelEvent) => {
       const at = remoteCoords(event.clientX, event.clientY);
@@ -309,7 +328,7 @@ export function WorkspaceScreen({ taskId, active }: WorkspaceScreenProps) {
       mount.removeEventListener('wheel', onWheel, true);
       mount.removeEventListener('keydown', onKey, true);
     };
-  }, [teachPhase, state, mode]);
+  }, [teachPhase, state, mode, taskId]);
 
   const handleTakeOver = useCallback(() => {
     setError(null);
@@ -378,8 +397,10 @@ export function WorkspaceScreen({ taskId, active }: WorkspaceScreenProps) {
   const driving = mode === 'control' && state === 'connected';
   const someoneElseDriving =
     control.holder !== undefined && !control.holder.you;
+  const takeoverAllowed = control.takeoverEnabled !== false;
   const showTakeOver =
     takeoverSupported &&
+    takeoverAllowed &&
     state === 'connected' &&
     mode === 'view' &&
     !someoneElseDriving;
@@ -585,7 +606,7 @@ export function WorkspaceScreen({ taskId, active }: WorkspaceScreenProps) {
                 {control.agentWaitingReason}
               </span>
             )}
-            {takeoverSupported && !someoneElseDriving && (
+            {takeoverSupported && takeoverAllowed && !someoneElseDriving && (
               <button
                 type='button'
                 onClick={handleTakeOver}

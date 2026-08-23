@@ -1645,6 +1645,7 @@
       "failed": "Work-Richtlinie konnte nicht gespeichert werden",
       "invalidNumber": "PID-Limit und Leerlauf-Stopp müssen Zahlen sein.",
       "guiEnabled": "Work Computer (GUI + Browser)",
+      "takeoverEnabled": "Übernahme des Bildschirms erlauben",
       "computerPreset": "Work Computer",
       "computerPresetHint": "Der Work Computer benötigt das GUI-Image: aus deploy/work-computer im Repository bauen und als libre-work-computer:latest taggen."
     },
@@ -2486,7 +2487,10 @@
       "reconnecting": "Verbindung zu Live-Updates wird wiederhergestellt…",
       "unavailable": "Live-Updates nicht verfügbar",
       "newActivity": "Neue Aktivität",
-      "skillsLoaded": "Arbeitsbereichsfähigkeiten · {{count}}"
+      "skillsLoaded": "Arbeitsbereichsfähigkeiten · {{count}}",
+      "skillWorked": "Dieser Ablauf hat funktioniert",
+      "skillFailed": "Dieser Ablauf ist fehlgeschlagen",
+      "skillTraceSaved": "vermerkt"
     },
     "runtime": {
       "unavailable": "Laufzeit nicht verfügbar",

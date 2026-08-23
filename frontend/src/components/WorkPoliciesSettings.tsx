@@ -33,6 +33,7 @@ interface PolicyFormState {
   idleMinutes: string;
   networkDefault: 'inherit' | 'on' | 'off';
   guiEnabled: boolean;
+  takeoverEnabled: boolean;
 }
 
 const emptyForm: PolicyFormState = {
@@ -45,6 +46,7 @@ const emptyForm: PolicyFormState = {
   idleMinutes: '',
   networkDefault: 'inherit',
   guiEnabled: false,
+  takeoverEnabled: true,
 };
 
 // One-click starting point for the Work Computer: the GUI image variant
@@ -62,6 +64,7 @@ const computerPresetForm: PolicyFormState = {
 const formFromPolicy = (policy: WorkPolicy): PolicyFormState => ({
   name: policy.name,
   guiEnabled: policy.guiEnabled === true,
+  takeoverEnabled: policy.takeoverEnabled !== false,
   image: policy.image ?? '',
   memoryLimit: policy.memoryLimit ?? '',
   cpuLimit: policy.cpuLimit ?? '',
@@ -102,6 +105,8 @@ const inputFromForm = (form: PolicyFormState): WorkPolicyInput => ({
   networkDefault:
     form.networkDefault === 'inherit' ? null : form.networkDefault === 'on',
   guiEnabled: form.guiEnabled ? true : null,
+  // Takeover defaults to allowed; only an explicit disable is stored.
+  takeoverEnabled: form.takeoverEnabled ? null : false,
 });
 
 /**
@@ -141,7 +146,10 @@ export const WorkPoliciesSettings: React.FC = () => {
     };
   }, []);
 
-  type TextFieldKey = Exclude<keyof PolicyFormState, 'guiEnabled'>;
+  type TextFieldKey = Exclude<
+    keyof PolicyFormState,
+    'guiEnabled' | 'takeoverEnabled'
+  >;
   const field = (key: TextFieldKey) => ({
     value: form[key],
     onChange: (
@@ -373,6 +381,25 @@ export const WorkPoliciesSettings: React.FC = () => {
                 {t('userManager.workPolicies.guiEnabled')}
               </span>
             </label>
+            {form.guiEnabled && (
+              <label className='flex items-center gap-2 text-xs'>
+                <input
+                  type='checkbox'
+                  data-testid='work-policy-takeover'
+                  checked={form.takeoverEnabled}
+                  onChange={event =>
+                    setForm(current => ({
+                      ...current,
+                      takeoverEnabled: event.target.checked,
+                    }))
+                  }
+                  className='h-3.5 w-3.5 rounded border-gray-300 text-primary-600 focus:ring-primary-500'
+                />
+                <span className='font-medium text-gray-700 dark:text-gray-300'>
+                  {t('userManager.workPolicies.takeoverEnabled')}
+                </span>
+              </label>
+            )}
             {textField(
               'image',
               t('userManager.workPolicies.image'),

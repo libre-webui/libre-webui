@@ -1645,6 +1645,7 @@
       "failed": "Không thể lưu chính sách Work",
       "invalidNumber": "Giới hạn PID và dừng khi rảnh phải là số.",
       "guiEnabled": "Work Computer (GUI + trình duyệt)",
+      "takeoverEnabled": "Cho phép tiếp quản màn hình",
       "computerPreset": "Work Computer",
       "computerPresetHint": "Work Computer cần image GUI: dựng từ deploy/work-computer trong kho mã và gắn thẻ libre-work-computer:latest."
     },
@@ -2486,7 +2487,10 @@
       "reconnecting": "Đang kết nối lại với cập nhật trực tiếp…",
       "unavailable": "Cập nhật trực tiếp không khả dụng",
       "newActivity": "Hoạt động mới",
-      "skillsLoaded": "Kỹ năng không gian làm việc · {{count}}"
+      "skillsLoaded": "Kỹ năng không gian làm việc · {{count}}",
+      "skillWorked": "Quy trình này đã thành công",
+      "skillFailed": "Quy trình này đã thất bại",
+      "skillTraceSaved": "đã ghi nhận"
     },
     "runtime": {
       "unavailable": "Môi trường chạy không khả dụng",

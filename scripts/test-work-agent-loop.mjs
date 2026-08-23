@@ -2204,6 +2204,169 @@ test('the computer tool schemas are offered separately from the base registry', 
   assert.equal(act.parameters.properties.actions.type, 'array');
 });
 
+test('taught-skill traces append a bounded, versioned track record', async () => {
+  const { default: workComputerTeachService } = await distModule(
+    'services/workComputerTeachService.js'
+  );
+  const { getSkillBySlug } = await distModule('services/skillService.js');
+  const now = Date.now();
+  const userId = 'agent-loop-skill-trace-admin';
+  getDatabase()
+    .prepare(
+      `INSERT INTO users (
+        id, username, email, password_hash, role, avatar, created_at, updated_at
+      ) VALUES (?, ?, NULL, 'unused', 'admin', NULL, ?, ?)`
+    )
+    .run(userId, userId, now, now);
+
+  const { skill } = await workComputerTeachService.saveDemonstration(userId, {
+    name: 'Trace target',
+    events: [
+      {
+        t: 0,
+        kind: 'down',
+        x: 5,
+        y: 5,
+        button: 0,
+        anchor: 'button#run (Run report)',
+        url: 'https://example.test/app',
+      },
+      { t: 60, kind: 'up', x: 5, y: 5, button: 0 },
+    ],
+  });
+  assert.match(skill.instructions, /## Allowed scope/);
+  assert.match(skill.instructions, /example\.test/);
+
+  const first = await workComputerTeachService.recordSkillTrace(
+    userId,
+    skill.slug,
+    { outcome: 'success', note: 'ran cleanly' }
+  );
+  assert.equal(first.outcome, 'success');
+  assert.equal(first.skill.version, skill.version + 1);
+  assert.match(first.skill.instructions, /## Track record/);
+  assert.match(first.skill.instructions, /Worked — ran cleanly/);
+
+  // Newest first, bounded to five entries; every write is a new version.
+  for (let attempt = 0; attempt < 6; attempt++) {
+    await workComputerTeachService.recordSkillTrace(userId, skill.slug, {
+      outcome: 'failure',
+      note: `attempt ${attempt}`,
+    });
+  }
+  const final = await getSkillBySlug(userId, skill.slug);
+  const traceLines = final.instructions
+    .split('\n')
+    .filter(
+      line =>
+        line.startsWith('- ') &&
+        (line.includes('Worked') || line.includes('Failed'))
+    );
+  assert.equal(traceLines.length, 5);
+  assert.match(traceLines[0], /attempt 5/);
+  assert.match(final.instructions, /## Allowed scope/);
+
+  await assert.rejects(
+    () =>
+      workComputerTeachService.recordSkillTrace(userId, 'ordinary-skill', {
+        outcome: 'success',
+      }),
+    error => error.code === 'WORK_TEACH_SKILL_NOT_FOUND'
+  );
+  await assert.rejects(
+    () =>
+      workComputerTeachService.recordSkillTrace(userId, skill.slug, {
+        outcome: 'meh',
+      }),
+    error => error.code === 'WORK_TEACH_INVALID_TRACE'
+  );
+});
+
+test('request_takeover reports policy-disabled takeover instead of waiting', async () => {
+  const { default: workPolicyService } = await distModule(
+    'services/workPolicyService.js'
+  );
+  const now = Date.now();
+  const userId = 'agent-loop-takeover-gated-admin';
+  getDatabase()
+    .prepare(
+      `INSERT INTO users (
+        id, username, email, password_hash, role, avatar, created_at, updated_at
+      ) VALUES (?, ?, NULL, 'unused', 'admin', NULL, ?, ?)`
+    )
+    .run(userId, userId, now, now);
+
+  replaceMethod(workRuntimeService, 'computerToolsAvailable', async () => true);
+  // Restored at the end of THIS test: file-level restorers only run once the
+  // whole file finishes, and later tests need the real resolve.
+  const originalResolve = workPolicyService.resolve;
+  workPolicyService.resolve = async () => ({
+    policyId: 'gated',
+    image: 'libre-work-computer:latest',
+    memoryLimit: '2g',
+    cpuLimit: '2',
+    pidsLimit: 256,
+    idleTimeoutMs: 0,
+    guiEnabled: true,
+    takeoverEnabled: false,
+  });
+
+  const requests = [];
+  replaceMethod(
+    workModelProviderService,
+    'generateChatStreamResponse',
+    async request => {
+      requests.push(request);
+      if (requests.length === 1) {
+        return {
+          model: request.model,
+          created_at: new Date().toISOString(),
+          message: {
+            role: 'assistant',
+            content: '',
+            tool_calls: [
+              {
+                id: 'gated-takeover',
+                function: {
+                  name: 'request_takeover',
+                  arguments: { reason: 'Please sign in for me.' },
+                },
+              },
+            ],
+          },
+          done: true,
+        };
+      }
+      return {
+        model: request.model,
+        created_at: new Date().toISOString(),
+        message: { role: 'assistant', content: 'Blocked: no takeover here.' },
+        done: true,
+      };
+    }
+  );
+
+  try {
+    const detail = await workTaskService.createTaskWithRun(
+      userId,
+      'Sign in somewhere.',
+      'test-model',
+      true,
+      { providerType: 'plugin', providerId: 'test-plugin' }
+    );
+    const runId = detail.activeRun?.id;
+    assert.ok(runId);
+    await workAgentService.execute(detail.id, runId, userId);
+
+    const persisted = await workTaskService.getMessages(detail.id);
+    const result = persisted.find(message => message.kind === 'tool_result');
+    assert.match(result.content, /policy does not allow human takeover/);
+    assert.equal(result.metadata.outcome, 'disabled');
+  } finally {
+    workPolicyService.resolve = originalResolve;
+  }
+});
+
 test('request_takeover waits for the human hand-back and computer tools stay blocked meanwhile', async () => {
   const { default: workScreenControlService } = await distModule(
     'services/workScreenControlService.js'

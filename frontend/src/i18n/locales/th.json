@@ -1645,6 +1645,7 @@
       "failed": "ไม่สามารถบันทึกนโยบาย Work ได้",
       "invalidNumber": "ขีดจำกัด PID และหยุดเมื่อไม่ใช้งานต้องเป็นตัวเลข",
       "guiEnabled": "Work Computer (GUI + เบราว์เซอร์)",
+      "takeoverEnabled": "อนุญาตให้เข้าควบคุมหน้าจอ",
       "computerPreset": "Work Computer",
       "computerPresetHint": "Work Computer ต้องใช้อิมเมจ GUI: สร้างจาก deploy/work-computer ในรีโพซิทอรีแล้วแท็กเป็น libre-work-computer:latest"
     },
@@ -2486,7 +2487,10 @@
       "reconnecting": "กำลังเชื่อมต่อกับการอัปเดตแบบสดอีกครั้ง…",
       "unavailable": "การอัปเดตแบบสดไม่พร้อมใช้งาน",
       "newActivity": "กิจกรรมใหม่",
-      "skillsLoaded": "ทักษะพื้นที่ทำงาน · {{count}}"
+      "skillsLoaded": "ทักษะพื้นที่ทำงาน · {{count}}",
+      "skillWorked": "ขั้นตอนนี้สำเร็จ",
+      "skillFailed": "ขั้นตอนนี้ล้มเหลว",
+      "skillTraceSaved": "บันทึกแล้ว"
     },
     "runtime": {
       "unavailable": "รันไทม์ไม่พร้อมใช้งาน",

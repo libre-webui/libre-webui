@@ -172,6 +172,44 @@ test('the Work Computer flag is tri-state and round-trips', async () => {
     true
   );
   await workPolicyService.remove(created.id);
+
+  // Takeover gating: allowed unless a policy explicitly disables it — the
+  // pre-existing behavior stays the default for old rows and null inputs.
+  assert.equal(
+    validateWorkPolicyInput({ name: 'a' }).takeoverEnabled,
+    null
+  );
+  assert.equal(
+    validateWorkPolicyInput({ name: 'a', takeoverEnabled: false })
+      .takeoverEnabled,
+    false
+  );
+  const gated = await workPolicyService.create({
+    name: 'takeover-gated-policy',
+    guiEnabled: true,
+    takeoverEnabled: false,
+  });
+  assert.equal(gated.takeoverEnabled, false);
+  assert.equal(
+    (await workPolicyService.resolve(gated.id)).takeoverEnabled,
+    false
+  );
+  const ungated = await workPolicyService.update(gated.id, {
+    name: 'takeover-gated-policy',
+    guiEnabled: true,
+    takeoverEnabled: null,
+  });
+  assert.equal(ungated.takeoverEnabled, undefined);
+  assert.equal(
+    (await workPolicyService.resolve(gated.id)).takeoverEnabled,
+    true
+  );
+  // Policy-less resolution keeps the global default: takeover allowed.
+  assert.notEqual(
+    (await workPolicyService.resolve(null)).takeoverEnabled,
+    false
+  );
+  await workPolicyService.remove(gated.id);
 });
 
 test('policies are created, listed, updated, and name-unique', async () => {

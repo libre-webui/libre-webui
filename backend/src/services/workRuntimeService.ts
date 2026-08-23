@@ -2393,6 +2393,43 @@ export class WorkRuntimeService {
     await this.withComputerSession(task, async () => undefined);
   }
 
+  /**
+   * The teach recorder's anchor probe: which interactive element sits under
+   * a screen coordinate right now, plus the page URL. Read-only, leaseless,
+   * and best-effort — a missing anchor degrades a demonstration to bare
+   * coordinates, never fails the recording.
+   */
+  async computerAnchorAt(
+    task: WorkTaskRecord,
+    x: number,
+    y: number
+  ): Promise<{ anchor?: string; url?: string }> {
+    if (!(await this.computerToolsAvailable(task))) return {};
+    if ((await this.driver.runtimeState(task)) !== 'running') return {};
+    const result = await this.driver.exec(
+      task,
+      ['node', '-e', COMPUTER_ANCHOR_SCRIPT, '--', String(x), String(y)],
+      { timeoutMs: 8_000, maxOutputChars: 10_000, acceptFailure: true }
+    );
+    if (result.exitCode !== 0) return {};
+    try {
+      const parsed = JSON.parse(result.stdout.trim() || '{}') as {
+        anchor?: unknown;
+        url?: unknown;
+      };
+      return {
+        ...(typeof parsed.anchor === 'string' && parsed.anchor
+          ? { anchor: parsed.anchor.slice(0, 200) }
+          : {}),
+        ...(typeof parsed.url === 'string' && parsed.url
+          ? { url: parsed.url.slice(0, 300) }
+          : {}),
+      };
+    } catch {
+      return {};
+    }
+  }
+
   /** Whether this task may use the agent computer tools. */
   async computerToolsAvailable(task: {
     networkEnabled: boolean;
@@ -4737,6 +4774,50 @@ const main = async () => {
       ...(scrollReceipts.length ? {scrollReceipts} : {}),
     })
   );
+};
+main().catch(error => {
+  console.error(error && error.message ? error.message : String(error));
+  process.exit(1);
+});
+`;
+
+/**
+ * Resolve the page element under a screen coordinate — the teach recorder's
+ * anchor probe. Runs during a human demonstration, so it must never inject
+ * input or steal focus: it only reads. Returns {} outside the browser
+ * viewport, on non-browser windows, or on pre-CDP GUI images.
+ */
+export const COMPUTER_ANCHOR_SCRIPT = String.raw`${COMPUTER_OBSERVE_COMMON}
+const pointX = Number(process.argv[1]);
+const pointY = Number(process.argv[2]);
+const main = async () => {
+  const result = {};
+  try {
+    const active = await cdpActiveTarget(frame().windowName);
+    if (active) {
+      result.url = String(active.url).slice(0, 300);
+      const expression =
+        '(() => { const sx = ' + String(pointX) + '; const sy = ' + String(pointY) + '; ' +
+        'const px = sx - (window.screenX + (window.outerWidth - window.innerWidth) / 2); ' +
+        'const py = sy - (window.screenY + (window.outerHeight - window.innerHeight)); ' +
+        'if (px < 0 || py < 0 || px > window.innerWidth || py > window.innerHeight) return null; ' +
+        'const el = document.elementFromPoint(px, py); if (!el) return null; ' +
+        'const host = el.closest("button, a, input, select, textarea, label, summary, [role]") || el; ' +
+        'const a = n => host.getAttribute(n) || ""; ' +
+        'const text = (host.innerText || host.value || "").split("\\n").join(" ").split("\\t").join(" ").trim().slice(0, 60); ' +
+        'const label = (a("aria-label") || a("placeholder") || a("name") || text).trim(); ' +
+        'let d = host.tagName.toLowerCase(); ' +
+        'if (host.id) d += "#" + host.id; ' +
+        'if (a("type")) d += "[type=" + a("type") + "]"; ' +
+        'if (label) d += " (" + label + ")"; ' +
+        'return d; })()';
+      const anchor = await cdpEvaluate(active, expression);
+      if (typeof anchor === 'string' && anchor) {
+        result.anchor = anchor.slice(0, 200);
+      }
+    }
+  } catch {}
+  process.stdout.write(JSON.stringify(result));
 };
 main().catch(error => {
   console.error(error && error.message ? error.message : String(error));

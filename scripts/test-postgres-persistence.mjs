@@ -82,44 +82,50 @@ test('PostgreSQL migration registry is contiguous, checksummed, and frozen', () 
     POSTGRES_MIGRATIONS.map(migration => migration.version),
     [
       1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
-      21, 22,
+      21, 22, 23,
     ]
   );
   validatePostgresMigrationRegistry(POSTGRES_MIGRATIONS);
   assert.equal(Object.isFrozen(POSTGRES_MIGRATIONS), true);
   assert.equal(POSTGRES_MIGRATIONS.every(Object.isFrozen), true);
-  assert.equal(SQLITE_MIGRATION_CONTRACT.at(-1)?.version, 23);
-  assert.equal(SQLITE_MIGRATION_CONTRACT.at(-1)?.name, 'work-computer');
-  assert.equal(SQLITE_MIGRATION_CONTRACT.at(-2)?.version, 22);
-  assert.equal(SQLITE_MIGRATION_CONTRACT.at(-2)?.name, 'automation-work-target');
-  assert.equal(POSTGRES_MIGRATIONS.at(-3)?.version, 20);
-  assert.equal(POSTGRES_MIGRATIONS.at(-3)?.name, 'mfa-push-recovery');
+  assert.equal(SQLITE_MIGRATION_CONTRACT.at(-1)?.version, 24);
+  assert.equal(SQLITE_MIGRATION_CONTRACT.at(-1)?.name, 'work-takeover');
+  assert.equal(SQLITE_MIGRATION_CONTRACT.at(-2)?.version, 23);
+  assert.equal(SQLITE_MIGRATION_CONTRACT.at(-2)?.name, 'work-computer');
+  assert.equal(POSTGRES_MIGRATIONS.at(-4)?.version, 20);
+  assert.equal(POSTGRES_MIGRATIONS.at(-4)?.name, 'mfa-push-recovery');
   assert.match(
-    POSTGRES_MIGRATIONS.at(-3)?.sql ?? '',
+    POSTGRES_MIGRATIONS.at(-4)?.sql ?? '',
     /CREATE TABLE user_mfa/
   );
   assert.match(
-    POSTGRES_MIGRATIONS.at(-3)?.sql ?? '',
+    POSTGRES_MIGRATIONS.at(-4)?.sql ?? '',
     /CREATE TABLE webauthn_credentials/
   );
-  assert.equal(POSTGRES_MIGRATIONS.at(-2)?.version, 21);
-  assert.equal(POSTGRES_MIGRATIONS.at(-2)?.name, 'automation-work-target');
+  assert.equal(POSTGRES_MIGRATIONS.at(-3)?.version, 21);
+  assert.equal(POSTGRES_MIGRATIONS.at(-3)?.name, 'automation-work-target');
   assert.match(
-    POSTGRES_MIGRATIONS.at(-2)?.sql ?? '',
+    POSTGRES_MIGRATIONS.at(-3)?.sql ?? '',
     /ALTER TABLE automations ADD COLUMN target/
   );
   assert.match(
-    POSTGRES_MIGRATIONS.at(-2)?.sql ?? '',
+    POSTGRES_MIGRATIONS.at(-3)?.sql ?? '',
     /ALTER TABLE automation_runs ADD COLUMN work_task_id/
   );
-  assert.equal(POSTGRES_MIGRATIONS.at(-1)?.version, 22);
-  assert.equal(POSTGRES_MIGRATIONS.at(-1)?.name, 'work-computer');
+  assert.equal(POSTGRES_MIGRATIONS.at(-2)?.version, 22);
+  assert.equal(POSTGRES_MIGRATIONS.at(-2)?.name, 'work-computer');
   assert.match(
-    POSTGRES_MIGRATIONS.at(-1)?.sql ?? '',
+    POSTGRES_MIGRATIONS.at(-2)?.sql ?? '',
     /ALTER TABLE work_policies ADD COLUMN gui_enabled/
   );
+  assert.equal(POSTGRES_MIGRATIONS.at(-1)?.version, 23);
+  assert.equal(POSTGRES_MIGRATIONS.at(-1)?.name, 'work-takeover');
   assert.match(
-    POSTGRES_MIGRATIONS.at(-3)?.sql ?? '',
+    POSTGRES_MIGRATIONS.at(-1)?.sql ?? '',
+    /ALTER TABLE work_policies ADD COLUMN takeover_enabled/
+  );
+  assert.match(
+    POSTGRES_MIGRATIONS.at(-4)?.sql ?? '',
     /CREATE TABLE push_subscriptions/
   );
   assert.match(
@@ -372,7 +378,7 @@ test(
         initializePostgresPersistence(config, codec),
       ]);
       assert.equal(first.schemaCompatibility.status, 'compatible');
-      assert.equal(second.schemaCompatibility.currentVersion, 22);
+      assert.equal(second.schemaCompatibility.currentVersion, 23);
       assert.equal((await first.health()).ready, true);
 
       const assertStructuralDamage = async (mutation, expected) => {
@@ -3211,6 +3217,12 @@ test(
       `ALTER TABLE work_messages
          DROP CONSTRAINT work_messages_content_json_string_check`
     );
+    await target.query(
+      'ALTER TABLE work_policies DROP COLUMN takeover_enabled'
+    );
+    await target.query(
+      'DELETE FROM libre_schema_migrations WHERE version = 23'
+    );
     await target.query('ALTER TABLE work_policies DROP COLUMN gui_enabled');
     await target.query(
       'DELETE FROM libre_schema_migrations WHERE version = 22'
@@ -3357,7 +3369,7 @@ test(
     assert.equal(prefixDryRun.sourceFingerprint, dryRun.sourceFingerprint);
     assert.match(
       prefixDryRun.warnings.join('\n'),
-      /exact version 10 migration-ledger prefix.*--resume can safely apply through version 22/i
+      /exact version 10 migration-ledger prefix.*--resume can safely apply through version 23/i
     );
     const codec = {
       encrypt: value => value,
@@ -3387,7 +3399,7 @@ test(
       resumed.tables.every(row => row.status === 'verified'),
       true
     );
-    assert.equal(resumed.targetSchemaVersion, 22);
+    assert.equal(resumed.targetSchemaVersion, 23);
     const resumedState = await target.query(
       `SELECT
          (SELECT MAX(version)::text FROM libre_schema_migrations)
@@ -3400,7 +3412,7 @@ test(
          (SELECT COUNT(*)::text FROM work_messages) AS work_messages`
     );
     assert.deepEqual(resumedState.rows[0], {
-      schema_version: '22',
+      schema_version: '23',
       import_status: 'complete',
       journal_count: String(dryRun.tables.length),
       work_journal: '1',

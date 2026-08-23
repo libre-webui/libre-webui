@@ -1645,6 +1645,7 @@
       "failed": "Work ilkesi kaydedilemedi",
       "invalidNumber": "PID sınırı ve boşta durdurma sayı olmalıdır.",
       "guiEnabled": "Work Computer (GUI + tarayıcı)",
+      "takeoverEnabled": "Ekranı devralmaya izin ver",
       "computerPreset": "Work Computer",
       "computerPresetHint": "Work Computer, GUI imajını gerektirir: depodaki deploy/work-computer klasöründen derleyin ve libre-work-computer:latest olarak etiketleyin."
     },
@@ -2486,7 +2487,10 @@
       "reconnecting": "Canlı güncellemelere yeniden bağlanılıyor…",
       "unavailable": "Canlı güncellemeler kullanılamıyor",
       "newActivity": "Yeni etkinlik",
-      "skillsLoaded": "Çalışma alanı becerileri · {{count}}"
+      "skillsLoaded": "Çalışma alanı becerileri · {{count}}",
+      "skillWorked": "Bu prosedür işe yaradı",
+      "skillFailed": "Bu prosedür başarısız oldu",
+      "skillTraceSaved": "kaydedildi"
     },
     "runtime": {
       "unavailable": "Çalışma ortamı kullanılamıyor",

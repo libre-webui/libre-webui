@@ -142,6 +142,8 @@ export interface ResolvedWorkRuntimePolicy {
   workspaceSize?: string;
   /** GUI session (Work Computer) enabled for containers under this policy. */
   guiEnabled?: boolean;
+  /** Human takeover of the screen; defaults to allowed when undefined. */
+  takeoverEnabled?: boolean;
 }
 
 /** The resolution of "no policy": exactly the global configuration. */

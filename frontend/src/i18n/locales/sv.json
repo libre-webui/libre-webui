@@ -1645,6 +1645,7 @@
       "failed": "Kunde inte spara Work-policyn",
       "invalidNumber": "PID-gräns och tomgångsstopp måste vara tal.",
       "guiEnabled": "Work Computer (GUI + webbläsare)",
+      "takeoverEnabled": "Tillåt övertagande av skärmen",
       "computerPreset": "Work Computer",
       "computerPresetHint": "Work Computer kräver GUI-avbilden: bygg den från deploy/work-computer i repositoriet och tagga den libre-work-computer:latest."
     },
@@ -2486,7 +2487,10 @@
       "reconnecting": "Återansluter till liveuppdateringar…",
       "unavailable": "Liveuppdateringar är inte tillgängliga",
       "newActivity": "Ny aktivitet",
-      "skillsLoaded": "Arbetsytefärdigheter · {{count}}"
+      "skillsLoaded": "Arbetsytefärdigheter · {{count}}",
+      "skillWorked": "Den här proceduren fungerade",
+      "skillFailed": "Den här proceduren misslyckades",
+      "skillTraceSaved": "noterat"
     },
     "runtime": {
       "unavailable": "Körmiljön är inte tillgänglig",

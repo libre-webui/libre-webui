@@ -1645,6 +1645,7 @@
       "failed": "Work नीति सहेजी नहीं जा सकी",
       "invalidNumber": "PID सीमा और निष्क्रिय रोक संख्याएँ होनी चाहिए।",
       "guiEnabled": "Work Computer (GUI + ब्राउज़र)",
+      "takeoverEnabled": "स्क्रीन टेकओवर की अनुमति दें",
       "computerPreset": "Work Computer",
       "computerPresetHint": "Work Computer को GUI इमेज चाहिए: रिपॉज़िटरी के deploy/work-computer से बनाएँ और libre-work-computer:latest टैग करें।"
     },
@@ -2486,7 +2487,10 @@
       "reconnecting": "लाइव अपडेट से फिर से कनेक्ट हो रहा है…",
       "unavailable": "लाइव अपडेट उपलब्ध नहीं हैं",
       "newActivity": "नई गतिविधि",
-      "skillsLoaded": "वर्कस्पेस कौशल · {{count}}"
+      "skillsLoaded": "वर्कस्पेस कौशल · {{count}}",
+      "skillWorked": "यह प्रक्रिया सफल रही",
+      "skillFailed": "यह प्रक्रिया विफल रही",
+      "skillTraceSaved": "नोट किया गया"
     },
     "runtime": {
       "unavailable": "रनटाइम उपलब्ध नहीं है",

@@ -23,6 +23,8 @@ export interface WorkScreenControlState {
   holder?: { you: boolean; username?: string; expiresAt: number };
   agentWaiting: boolean;
   agentWaitingReason?: string;
+  /** False when the task's policy disables human takeover. */
+  takeoverEnabled?: boolean;
 }
 
 /**
@@ -81,6 +83,40 @@ export interface WorkTeachEvent {
   alt?: boolean;
   meta?: boolean;
   shift?: boolean;
+  /** Element under the pointer, resolved by the server-side anchor probe. */
+  anchor?: string;
+  /** Page URL at the time of the event. */
+  url?: string;
+}
+
+/**
+ * Record a user-reviewed replay outcome on a taught skill's Track record.
+ */
+export async function recordWorkSkillTrace(
+  slug: string,
+  outcome: 'success' | 'failure',
+  note?: string
+): Promise<void> {
+  await api.post(`/work/computer/skills/${encodeURIComponent(slug)}/trace`, {
+    outcome,
+    ...(note ? { note } : {}),
+  });
+}
+
+/**
+ * Resolve the interactive element under a screen coordinate during a
+ * demonstration. Best-effort: a failed probe just leaves the recorded
+ * event un-anchored.
+ */
+export async function getWorkScreenAnchor(
+  taskId: string,
+  x: number,
+  y: number
+): Promise<{ anchor?: string; url?: string }> {
+  const response = await api.post<
+    ApiResponse<{ anchor?: string; url?: string }>
+  >(`/work/tasks/${encodeURIComponent(taskId)}/computer/anchor`, { x, y });
+  return response.data.data ?? {};
 }
 
 /** Save a recorded demonstration as a taught skill. */

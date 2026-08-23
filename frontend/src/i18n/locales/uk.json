@@ -1645,6 +1645,7 @@
       "failed": "Не вдалося зберегти політику Work",
       "invalidNumber": "Ліміт PID і зупинка в простої мають бути числами.",
       "guiEnabled": "Work Computer (GUI + браузер)",
+      "takeoverEnabled": "Дозволити перехоплення керування екраном",
       "computerPreset": "Work Computer",
       "computerPresetHint": "Для Work Computer потрібен GUI-образ: зберіть його з deploy/work-computer у репозиторії та позначте libre-work-computer:latest."
     },
@@ -2486,7 +2487,10 @@
       "reconnecting": "Повторне підключення до оновлень у реальному часі…",
       "unavailable": "Оновлення в реальному часі недоступні",
       "newActivity": "Нова активність",
-      "skillsLoaded": "Навички робочого простору · {{count}}"
+      "skillsLoaded": "Навички робочого простору · {{count}}",
+      "skillWorked": "Ця процедура спрацювала",
+      "skillFailed": "Ця процедура не спрацювала",
+      "skillTraceSaved": "занотовано"
     },
     "runtime": {
       "unavailable": "Середовище виконання недоступне",

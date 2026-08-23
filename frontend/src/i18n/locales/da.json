@@ -1645,6 +1645,7 @@
       "failed": "Work-politikken kunne ikke gemmes",
       "invalidNumber": "PID-grænse og tomgangsstop skal være tal.",
       "guiEnabled": "Work Computer (GUI + browser)",
+      "takeoverEnabled": "Tillad overtagelse af skærmen",
       "computerPreset": "Work Computer",
       "computerPresetHint": "Work Computer kræver GUI-imaget: byg det fra deploy/work-computer i repositoriet og tag det libre-work-computer:latest."
     },
@@ -2486,7 +2487,10 @@
       "reconnecting": "Genopretter forbindelse til liveopdateringer…",
       "unavailable": "Liveopdateringer er ikke tilgængelige",
       "newActivity": "Ny aktivitet",
-      "skillsLoaded": "Arbejdsområdefærdigheder · {{count}}"
+      "skillsLoaded": "Arbejdsområdefærdigheder · {{count}}",
+      "skillWorked": "Denne procedure virkede",
+      "skillFailed": "Denne procedure fejlede",
+      "skillTraceSaved": "noteret"
     },
     "runtime": {
       "unavailable": "Kørselsmiljø ikke tilgængeligt",

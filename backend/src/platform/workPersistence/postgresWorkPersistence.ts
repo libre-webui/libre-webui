@@ -679,8 +679,8 @@ export class PostgresWorkPersistence implements WorkPersistenceRepository {
       await this.database.query(
         `INSERT INTO work_policies (
            id,name,image,memory_limit,cpu_limit,pids_limit,network_default,
-           workspace_size,idle_timeout_ms,gui_enabled,created_at,updated_at)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)`,
+           workspace_size,idle_timeout_ms,gui_enabled,takeover_enabled,created_at,updated_at)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)`,
         this.policyValues(row)
       );
     } catch (error) {
@@ -696,7 +696,7 @@ export class PostgresWorkPersistence implements WorkPersistenceRepository {
       const result = await this.database.query(
         `UPDATE work_policies SET name=$1,image=$2,memory_limit=$3,cpu_limit=$4,
          pids_limit=$5,network_default=$6,workspace_size=$7,idle_timeout_ms=$8,
-         gui_enabled=$9,updated_at=$10 WHERE id=$11`,
+         gui_enabled=$9,takeover_enabled=$10,updated_at=$11 WHERE id=$12`,
         [
           row.name,
           row.image,
@@ -707,6 +707,7 @@ export class PostgresWorkPersistence implements WorkPersistenceRepository {
           row.workspace_size,
           row.idle_timeout_ms,
           row.gui_enabled,
+          row.takeover_enabled,
           row.updated_at,
           row.id,
         ]
@@ -915,6 +916,7 @@ export class PostgresWorkPersistence implements WorkPersistenceRepository {
       row.workspace_size,
       row.idle_timeout_ms,
       row.gui_enabled,
+      row.takeover_enabled,
       row.created_at,
       row.updated_at,
     ];

@@ -1645,6 +1645,7 @@
       "failed": "Could not save the Work policy",
       "invalidNumber": "PID limit and idle stop must be numbers.",
       "guiEnabled": "Work Computer (GUI + browser)",
+      "takeoverEnabled": "Allow screen takeover",
       "computerPreset": "Work Computer",
       "computerPresetHint": "The Work Computer needs the GUI image: build it from deploy/work-computer in the repository and tag it libre-work-computer:latest."
     },
@@ -2486,7 +2487,10 @@
       "reconnecting": "Reconnecting to live updates…",
       "unavailable": "Live updates unavailable",
       "newActivity": "New activity",
-      "skillsLoaded": "Workspace skills · {{count}}"
+      "skillsLoaded": "Workspace skills · {{count}}",
+      "skillWorked": "This procedure worked",
+      "skillFailed": "This procedure failed",
+      "skillTraceSaved": "noted"
     },
     "runtime": {
       "unavailable": "Runtime unavailable",

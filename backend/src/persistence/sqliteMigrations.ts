@@ -1098,6 +1098,10 @@ const WORK_COMPUTER_REQUIRED_SCHEMA = {
   work_policies: ['gui_enabled'],
 } as const;
 
+const WORK_TAKEOVER_REQUIRED_SCHEMA = {
+  work_policies: ['takeover_enabled'],
+} as const;
+
 export const IDENTITY_EMAIL_LOOKUP_SCHEMA_SQL = `
   ALTER TABLE users ADD COLUMN email_lookup TEXT;
   CREATE UNIQUE INDEX idx_users_email_lookup
@@ -1894,6 +1898,10 @@ export const AUTOMATION_WORK_TARGET_SCHEMA_SQL = `
 
 export const WORK_COMPUTER_SCHEMA_SQL = `
   ALTER TABLE work_policies ADD COLUMN gui_enabled INTEGER;
+`;
+
+export const WORK_TAKEOVER_SCHEMA_SQL = `
+  ALTER TABLE work_policies ADD COLUMN takeover_enabled INTEGER;
 `;
 
 const REQUIRED_SCHEMA = {
@@ -3617,6 +3625,10 @@ const collectMissingWorkComputerSchema = (
   database: Database.Database
 ): string[] => collectMissingColumns(database, WORK_COMPUTER_REQUIRED_SCHEMA);
 
+const collectMissingWorkTakeoverSchema = (
+  database: Database.Database
+): string[] => collectMissingColumns(database, WORK_TAKEOVER_REQUIRED_SCHEMA);
+
 const collectMissingIdentityAccountRetirementSchema = (
   database: Database.Database
 ): string[] => {
@@ -3674,6 +3686,7 @@ function collectMissingSchemaAtVersion(
       ? collectMissingAutomationWorkTargetSchema(database)
       : []),
     ...(version >= 23 ? collectMissingWorkComputerSchema(database) : []),
+    ...(version >= 24 ? collectMissingWorkTakeoverSchema(database) : []),
   ];
 }
 
@@ -3775,6 +3788,8 @@ const WORK_COMPUTER_MIGRATION_CHECKSUM =
   'b86fa1e6cb13bd76129db93043007cf7dd6888b85bd0139dfc34dbe394069867';
 const AUTOMATION_WORK_TARGET_MIGRATION_CHECKSUM =
   'e5fb43e9bf42ab206dce74bfd867d5001754983c7a3cef30b811c4d4da54d1a9';
+const WORK_TAKEOVER_MIGRATION_CHECKSUM =
+  '739dc7f86890961573baba8fdf8859bccf1e9e5ba9625288183582fc6be5c1b0';
 
 const MIGRATIONS: readonly SQLiteMigration[] = [
   {
@@ -4192,6 +4207,25 @@ const MIGRATIONS: readonly SQLiteMigration[] = [
       if (missing.length > 0) {
         throw new Error(
           `SQLite work computer schema is incomplete; missing ${missing.join(', ')}`
+        );
+      }
+    },
+  },
+  {
+    version: 24,
+    name: 'work-takeover',
+    checksum: WORK_TAKEOVER_MIGRATION_CHECKSUM,
+    apply(database) {
+      addColumnIfMissing(
+        database,
+        'work_policies',
+        'takeover_enabled',
+        'INTEGER'
+      );
+      const missing = collectMissingWorkTakeoverSchema(database);
+      if (missing.length > 0) {
+        throw new Error(
+          `SQLite work takeover schema is incomplete; missing ${missing.join(', ')}`
         );
       }
     },

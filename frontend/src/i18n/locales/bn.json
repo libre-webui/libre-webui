@@ -1645,6 +1645,7 @@
       "failed": "Work নীতি সংরক্ষণ করা যায়নি",
       "invalidNumber": "PID সীমা এবং নিষ্ক্রিয় বন্ধ অবশ্যই সংখ্যা হতে হবে।",
       "guiEnabled": "Work Computer (GUI + ব্রাউজার)",
+      "takeoverEnabled": "স্ক্রিন টেকওভারের অনুমতি দিন",
       "computerPreset": "Work Computer",
       "computerPresetHint": "Work Computer-এর জন্য GUI ইমেজ দরকার: রিপোজিটরির deploy/work-computer থেকে বিল্ড করে libre-work-computer:latest ট্যাগ দিন।"
     },
@@ -2486,7 +2487,10 @@
       "reconnecting": "লাইভ আপডেটে পুনরায় সংযোগ করা হচ্ছে…",
       "unavailable": "লাইভ আপডেট পাওয়া যাচ্ছে না",
       "newActivity": "নতুন কার্যকলাপ",
-      "skillsLoaded": "ওয়ার্কস্পেস দক্ষতা · {{count}}"
+      "skillsLoaded": "ওয়ার্কস্পেস দক্ষতা · {{count}}",
+      "skillWorked": "এই পদ্ধতিটি কাজ করেছে",
+      "skillFailed": "এই পদ্ধতিটি ব্যর্থ হয়েছে",
+      "skillTraceSaved": "নোট করা হয়েছে"
     },
     "runtime": {
       "unavailable": "রানটাইম পাওয়া যাচ্ছে না",

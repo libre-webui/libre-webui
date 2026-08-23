@@ -1645,6 +1645,7 @@
       "failed": "Politiku Work se nepodařilo uložit",
       "invalidNumber": "Limit PID a zastavení při nečinnosti musí být čísla.",
       "guiEnabled": "Work Computer (GUI + prohlížeč)",
+      "takeoverEnabled": "Povolit převzetí obrazovky",
       "computerPreset": "Work Computer",
       "computerPresetHint": "Work Computer vyžaduje GUI image: sestavte jej z deploy/work-computer v repozitáři a označte libre-work-computer:latest."
     },
@@ -2486,7 +2487,10 @@
       "reconnecting": "Obnovování připojení k živým aktualizacím…",
       "unavailable": "Živé aktualizace nejsou dostupné",
       "newActivity": "Nová aktivita",
-      "skillsLoaded": "Dovednosti pracovního prostoru · {{count}}"
+      "skillsLoaded": "Dovednosti pracovního prostoru · {{count}}",
+      "skillWorked": "Tento postup fungoval",
+      "skillFailed": "Tento postup selhal",
+      "skillTraceSaved": "zaznamenáno"
     },
     "runtime": {
       "unavailable": "Běhové prostředí není dostupné",

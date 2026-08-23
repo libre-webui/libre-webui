@@ -1645,6 +1645,7 @@
       "failed": "Tidak dapat menyimpan kebijakan Work",
       "invalidNumber": "Batas PID dan henti saat idle harus berupa angka.",
       "guiEnabled": "Work Computer (GUI + peramban)",
+      "takeoverEnabled": "Izinkan pengambilalihan layar",
       "computerPreset": "Work Computer",
       "computerPresetHint": "Work Computer memerlukan image GUI: bangun dari deploy/work-computer di repositori dan beri tag libre-work-computer:latest."
     },
@@ -2486,7 +2487,10 @@
       "reconnecting": "Menghubungkan kembali ke pembaruan langsung…",
       "unavailable": "Pembaruan langsung tidak tersedia",
       "newActivity": "Aktivitas baru",
-      "skillsLoaded": "Keterampilan ruang kerja · {{count}}"
+      "skillsLoaded": "Keterampilan ruang kerja · {{count}}",
+      "skillWorked": "Prosedur ini berhasil",
+      "skillFailed": "Prosedur ini gagal",
+      "skillTraceSaved": "dicatat"
     },
     "runtime": {
       "unavailable": "Runtime tidak tersedia",

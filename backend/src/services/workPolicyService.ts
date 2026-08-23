@@ -104,6 +104,8 @@ export interface WorkPolicyRecord {
   idleTimeoutMs?: number;
   /** True when tasks under this policy get a GUI session (Work Computer). */
   guiEnabled?: boolean;
+  /** False disables human takeover of the screen; unset/true allows it. */
+  takeoverEnabled?: boolean;
   createdAt: number;
   updatedAt: number;
 }
@@ -118,6 +120,7 @@ export interface WorkPolicyInput {
   workspaceSize?: string | null;
   idleTimeoutMs?: number | null;
   guiEnabled?: boolean | null;
+  takeoverEnabled?: boolean | null;
 }
 
 type PolicyRow = WorkPolicyRow;
@@ -138,6 +141,8 @@ function mapPolicy(row: PolicyRow): WorkPolicyRecord {
     workspaceSize: row.workspace_size ?? undefined,
     idleTimeoutMs: row.idle_timeout_ms ?? undefined,
     guiEnabled: row.gui_enabled === null ? undefined : Boolean(row.gui_enabled),
+    takeoverEnabled:
+      row.takeover_enabled === null ? undefined : Boolean(row.takeover_enabled),
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -153,6 +158,7 @@ export function validateWorkPolicyInput(input: WorkPolicyInput): {
   workspaceSize: string | null;
   idleTimeoutMs: number | null;
   guiEnabled: boolean | null;
+  takeoverEnabled: boolean | null;
 } {
   const name = typeof input.name === 'string' ? input.name.trim() : '';
   if (!name || name.length > NAME_MAX_LENGTH || name.includes('\u0000')) {
@@ -259,6 +265,11 @@ export function validateWorkPolicyInput(input: WorkPolicyInput): {
       ? null
       : Boolean(input.guiEnabled);
 
+  const takeoverEnabled =
+    input.takeoverEnabled === null || input.takeoverEnabled === undefined
+      ? null
+      : Boolean(input.takeoverEnabled);
+
   return {
     name,
     image,
@@ -269,6 +280,7 @@ export function validateWorkPolicyInput(input: WorkPolicyInput): {
     workspaceSize,
     idleTimeoutMs,
     guiEnabled,
+    takeoverEnabled,
   };
 }
 
@@ -301,6 +313,12 @@ export class WorkPolicyService {
         idle_timeout_ms: fields.idleTimeoutMs,
         gui_enabled:
           fields.guiEnabled === null ? null : fields.guiEnabled ? 1 : 0,
+        takeover_enabled:
+          fields.takeoverEnabled === null
+            ? null
+            : fields.takeoverEnabled
+              ? 1
+              : 0,
         created_at: now,
         updated_at: now,
       });
@@ -346,6 +364,12 @@ export class WorkPolicyService {
         idle_timeout_ms: fields.idleTimeoutMs,
         gui_enabled:
           fields.guiEnabled === null ? null : fields.guiEnabled ? 1 : 0,
+        takeover_enabled:
+          fields.takeoverEnabled === null
+            ? null
+            : fields.takeoverEnabled
+              ? 1
+              : 0,
         created_at: existing.createdAt,
         updated_at: Date.now(),
       });
@@ -414,6 +438,8 @@ export class WorkPolicyService {
       idleTimeoutMs: policy.idleTimeoutMs ?? workRuntimeConfig.idleTimeoutMs,
       workspaceSize: policy.workspaceSize,
       guiEnabled: policy.guiEnabled === true,
+      // Takeover defaults to allowed; only an explicit false disables it.
+      takeoverEnabled: policy.takeoverEnabled !== false,
     };
   }
 
