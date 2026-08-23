@@ -188,9 +188,10 @@ import CodeBlock from '@theme/CodeBlock';
 
       <div className="docs-landing-path">
         <h3>Agents and reusable assistants</h3>
-        <p>{"Move from a governed tool call to a durable coding workspace or a reusable assistant profile."}</p>
+        <p>{"Move from a governed tool call to a durable coding workspace — including a watchable, teachable Work Computer with a real browser — or a reusable assistant profile."}</p>
         <ul>
           <li><a href="/WORKSPACES">Work: Isolated Workspaces</a></li>
+          <li><a href="/WORKSPACES#screen-the-work-computer">Work Computer: Screen, Takeover, and Teach</a></li>
           <li><a href="/CHAT_TOOLS">Chat Tools</a></li>
           <li><a href="/PROMPTS">Prompt Library</a></li>
           <li><a href="/SKILLS">Skills</a></li>
@@ -248,6 +249,7 @@ import CodeBlock from '@theme/CodeBlock';
           <li><a href="/EVALUATIONS">Evaluations</a></li>
           <li><a href="/OBSERVABILITY">Observability</a></li>
           <li><a href="/PUBLIC_API">OpenAI-Compatible API</a></li>
+          <li><a href="/OPEN_WEBUI_VS_LIBRE_WEBUI">Feature Comparison</a></li>
         </ul>
       </div>
 

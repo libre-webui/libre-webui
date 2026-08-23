@@ -101,7 +101,7 @@ The first account created on a fresh installation becomes the administrator.
 Install Ollama, then pull a model:
 
 ```bash
-ollama pull gemma4:12b
+ollama pull gemma3:4b
 ```
 
 Libre WebUI can now use Ollama for local inference. No cloud account or API key
@@ -123,33 +123,33 @@ persistent storage.
 
 ## Features
 
-| Feature                | Description                                                                                                                     |
-| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| **Chat**               | Streaming conversations with prompt queueing, multi-model comparison, and chat forking                                          |
-| **Local inference**    | Ollama support with no required cloud account                                                                                   |
-| **Provider plugins**   | Chat, image, video, embedding, and speech providers through an extensible plugin layer                                          |
-| **Knowledge**          | Chat with PDF, Office, Markdown, HTML, code, and CSV documents via hybrid retrieval with cited sources                          |
-| **Web search**         | Self-hosted SearXNG search for chats and Work tasks                                                                             |
-| **Artifacts**          | Generate and preview HTML, SVG, JSON, code, and multi-file projects                                                             |
-| **Workspaces**         | Persistent, task-scoped environments with files, terminal, diffs, and previews                                                  |
-| **Work Computer**      | A watchable desktop with a browser for each agent — take over for sign-ins, hear its audio, and teach it tasks by demonstration |
-| **Channels**           | Public, private, and direct-message team conversations with threads, reactions, files, and `@model`                             |
-| **Calendar**           | Multiple shareable calendars with recurrence, reminders, and ICS import/export, encrypted at rest                               |
-| **Automations**        | Scheduled AI runs delivered as normal chat sessions                                                                             |
-| **Notifications**      | Durable in-app inbox with live delivery and signed, egress-guarded outbound webhooks                                            |
-| **Notes**              | Notebook with revision history, attachments, sharing, and reversible AI edits                                                   |
-| **Personas**           | Reusable assistant profiles with their own prompts, models, and memory                                                          |
-| **Media generation**   | Image generation and editing plus video generation, with a persistent gallery and retention controls                            |
-| **Voice**              | Speech-to-text dictation, text-to-speech playback, and hands-free voice mode with consent-aware voices                          |
-| **Context management** | Context meter and undoable conversation compaction for long chats                                                               |
-| **Agents**             | Optional integration with installed agent CLIs and Libre Claw                                                                   |
-| **Sharing**            | One grant model for chats, notes, knowledge, personas, prompts, skills, and calendars                                           |
-| **Accounts**           | Local accounts, roles, groups, API tokens, and SSO                                                                              |
-| **Public API**         | OpenAI-compatible `/v1` endpoints on scoped API tokens                                                                          |
-| **Evaluations**        | Feedback with topic tags, blind arena matches with an Elo leaderboard, and reproducible eval runs                               |
-| **Monitoring**         | System diagnostics, usage analytics with tariffs and budgets, OpenTelemetry export, and an audit log                            |
-| **Deployment**         | npm, Docker Compose, Kubernetes, Helm, and desktop client                                                                       |
-| **Interface**          | Tabs, full-text search across chats, notes, and documents, themes, and 25 locales including Arabic RTL                          |
+| Feature                | Description                                                                                                                                                          |
+| ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Chat**               | Streaming conversations with prompt queueing, multi-model comparison, and chat forking                                                                               |
+| **Local inference**    | Ollama support with no required cloud account                                                                                                                        |
+| **Provider plugins**   | Chat, image, video, embedding, and speech providers through an extensible plugin layer                                                                               |
+| **Knowledge**          | Chat with PDF, Office, Markdown, HTML, code, and CSV documents via hybrid retrieval with cited sources                                                               |
+| **Web search**         | Self-hosted SearXNG search for chats and Work tasks                                                                                                                  |
+| **Artifacts**          | Generate and preview HTML, SVG, JSON, code, and multi-file projects                                                                                                  |
+| **Workspaces**         | Persistent, task-scoped environments with files, terminal, diffs, and previews                                                                                       |
+| **Work Computer**      | A watchable desktop with a browser for each agent — verified clicks and typing, take over for sign-ins, hear its audio, and teach it anchored tasks by demonstration |
+| **Channels**           | Public, private, and direct-message team conversations with threads, reactions, files, and `@model`                                                                  |
+| **Calendar**           | Multiple shareable calendars with recurrence, reminders, and ICS import/export, encrypted at rest                                                                    |
+| **Automations**        | Scheduled AI runs delivered as normal chat sessions                                                                                                                  |
+| **Notifications**      | Durable in-app inbox with live delivery and signed, egress-guarded outbound webhooks                                                                                 |
+| **Notes**              | Notebook with revision history, attachments, sharing, and reversible AI edits                                                                                        |
+| **Personas**           | Reusable assistant profiles with their own prompts, models, and memory                                                                                               |
+| **Media generation**   | Image generation and editing plus video generation, with a persistent gallery and retention controls                                                                 |
+| **Voice**              | Speech-to-text dictation, text-to-speech playback, and hands-free voice mode with consent-aware voices                                                               |
+| **Context management** | Context meter and undoable conversation compaction for long chats                                                                                                    |
+| **Agents**             | Optional integration with installed agent CLIs and Libre Claw                                                                                                        |
+| **Sharing**            | One grant model for chats, notes, knowledge, personas, prompts, skills, and calendars                                                                                |
+| **Accounts**           | Local accounts, roles, groups, API tokens, and SSO                                                                                                                   |
+| **Public API**         | OpenAI-compatible `/v1` endpoints on scoped API tokens                                                                                                               |
+| **Evaluations**        | Feedback with topic tags, blind arena matches with an Elo leaderboard, and reproducible eval runs                                                                    |
+| **Monitoring**         | System diagnostics, usage analytics with tariffs and budgets, OpenTelemetry export, and an audit log                                                                 |
+| **Deployment**         | npm, Docker Compose, Kubernetes, Helm, and desktop client                                                                                                            |
+| **Interface**          | Tabs, full-text search across chats, notes, and documents, themes, and 25 locales including Arabic RTL                                                               |
 
 ## Models and providers
 
@@ -173,6 +173,7 @@ Supported integrations include:
 - Qwen3-TTS
 - Kyutai TTS
 - MLX LM on Apple Silicon
+- llama.cpp
 - OpenAI-compatible services
 
 Provider availability can change between releases. See the
@@ -194,7 +195,7 @@ Work task
 ├── Persistent conversation and run history
 ├── Dedicated workspace volume
 ├── Policy-checked command sandbox
-└── Files · Activity · Terminal · Preview · Screen
+└── Files · Activity · Changes · Terminal · Preview · Screen
 ```
 
 Work can allow a model to:
@@ -207,13 +208,22 @@ Work can allow a model to:
 - Show file diffs
 - Continue work in the same environment later
 
-With the **Work Computer** enabled (one click for an administrator), each
-task also gets a live virtual desktop: watch the agent browse in real
-time, unmute the computer's audio, take over the mouse and keyboard for
-sign-ins or CAPTCHAs — credentials go directly from your keyboard to the
-page, never through the model — and teach reusable tasks by demonstrating
-them once on screen. You can message the agent while it works; it picks
-the message up at its next step without stopping the run.
+With the **Work Computer** enabled (one click for an administrator; the
+GUI image is published ready to pull), each task also gets a live virtual
+desktop: watch the agent browse in real time, unmute the computer's
+audio, take over the mouse and keyboard for sign-ins or CAPTCHAs —
+credentials go directly from your keyboard to the page, never through the
+model — and teach reusable tasks by demonstrating them once on screen.
+Taught playbooks name the controls that were clicked, carry the sites the
+demonstration actually visited as their allowed scope, and collect a
+worked/failed track record from your one-click reviews. The agent's own
+actions are verified, not assumed: typing asserts the focused field,
+batches stop when the screen changes underneath them, outcomes are
+checked against declared expectations, and repeated no-effect actions end
+the run asking for help instead of burning its budget. Policies decide
+whether takeover is allowed at all. You can message the agent while it
+works; it picks the message up at its next step without stopping the
+run.
 
 Work is disabled for regular users by default and never falls back to executing
 commands directly on the host.
@@ -259,7 +269,7 @@ For multi-user deployments, Libre WebUI supports:
 - Optional GitHub and Hugging Face OAuth, plus generic OIDC single sign-on
 - An admin-facing security audit log
 - AES-256-GCM encryption for sensitive application values
-- Persistent SQLite storage
+- Persistent SQLite storage, or PostgreSQL with S3 blobs and pgvector for the multi-replica team profile
 - Configurable data directories
 
 Application-layer encryption is not full-disk encryption or end-to-end
@@ -301,6 +311,7 @@ HTTP, web search, MCP, memory, approvals, and schedules.
 | **External Ollama** | `docker compose -f docker-compose.external-ollama.yml up -d`            | Use an existing Ollama instance          |
 | **NVIDIA Docker**   | `docker compose -f docker-compose.gpu.yml up -d`                        | GPU-enabled local inference              |
 | **Kubernetes**      | `helm install libre-webui oci://ghcr.io/libre-webui/charts/libre-webui` | Cluster deployment                       |
+| **Team profile**    | `docker compose -f docker-compose.team.yml up -d`                       | Multi-replica PostgreSQL + S3 deployment |
 | **Desktop client**  | [GitHub Releases](https://github.com/libre-webui/libre-webui/releases)  | Desktop interface over a managed backend |
 | **Source**          | `npm install && npm run dev`                                            | Development                              |
 

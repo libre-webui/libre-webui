@@ -66,7 +66,8 @@ This release introduces Work as a complete task workflow:
 - A responsive Conversation/Workspace split with draggable, keyboard
   accessible sizing on desktop and a focused surface switcher on smaller
   screens.
-- Integrated Files, Activity, Git, Terminal, and Preview views.
+- Integrated Files, Activity, Git, Terminal, Preview, and Screen views —
+  the Screen view is the watchable, teachable Work Computer desktop.
 - Dark- and light-mode syntax highlighting, browser-side code formatting,
   save conflict detection, and temporary unsaved drafts.
 - A dismissible, per-user disclosure when a remote model provider is selected.
@@ -704,13 +705,18 @@ recreated.
 
 Administrators can define **named runtime policies** from the User
 Management page: presets combining a runtime image, memory/CPU/PID limits,
-a workspace size (Kubernetes), an idle timeout, and a network default. A
-task created under a policy runs with that configuration; every field a
-policy leaves empty inherits the deployment's global values, and deleting
-a policy returns its tasks to those globals on their next container
-recreation. Policies adjust resources only — the hardening profile
-(non-root, read-only rootfs, dropped capabilities, network isolation) is
-not a policy field and cannot be weakened per policy.
+a workspace size (Kubernetes), an idle timeout, a network default, and two
+capability switches — **Work Computer (GUI + browser)**, which gives the
+policy's tasks a virtual desktop and the Screen tab, and **Allow screen
+takeover**, which decides whether any human may take over those screens
+(and, since teaching records through a takeover, whether teach mode is
+available). A task created under a policy runs with that configuration;
+every field a policy leaves empty inherits the deployment's global values,
+and deleting a policy returns its tasks to those globals on their next
+container recreation. Policies adjust resources and these capability
+switches only — the hardening profile (non-root, read-only rootfs,
+dropped capabilities, network isolation) is not a policy field and cannot
+be weakened per policy.
 
 `WORK_RUNTIME_IDLE_TIMEOUT_MS` bounds how long that preview grace lasts:
 when set, a sweep stops any sandbox that has seen no activity — no command
@@ -988,14 +994,14 @@ not normally emit compatible resource headers.
 Work availability follows the machine and process running the Libre WebUI
 backend, not merely the browser or desktop interface.
 
-| Deployment                                | Work runs and files                                                                                                                                                                                                                                                            | Embedded preview                                                                                  |
-| ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------- |
-| `npx libre-webui` on a local computer     | Supported when Docker is installed, running, and callable by the backend user.                                                                                                                                                                                                 | Supported through the signed application-origin proxy.                                            |
-| Source development on a local computer    | Supported under the same Docker and provider requirements.                                                                                                                                                                                                                     | Supported through the development API origin on port 3001.                                        |
-| Electron desktop client                   | Conditional. Electron uses an external Libre WebUI backend and does not provide a separate Work runtime.                                                                                                                                                                       | Supported through that backend's signed proxy URL.                                                |
-| Bare-metal or VM backend on a remote host | Runs, files, and provider calls work when Docker is available on that host.                                                                                                                                                                                                    | Supported when the public reverse proxy preserves HTTP and WebSocket traffic.                     |
-| Standard repository Docker Compose        | Supported by default: the image ships the Docker CLI and the Compose file mounts the host Docker socket.                                                                                                                                                                       | Supported through the same public Libre WebUI origin.                                             |
-| Current Kubernetes/Helm deployment        | Supported with `--set work.enabled=true`: sandboxes run as Pods with PVC workspaces (runs, files, commands, git, interactive terminals), under a namespace-scoped Role and default-deny NetworkPolicies — no Docker socket anywhere. See the [Kubernetes guide](./KUBERNETES). | Supported when the backend runs in-cluster: the signed proxy targets the sandbox Pod IP directly. |
+| Deployment                                | Work runs and files                                                                                                                                                                                                                                                                                                                  | Embedded preview                                                                                  |
+| ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------- |
+| `npx libre-webui` on a local computer     | Supported when Docker is installed, running, and callable by the backend user.                                                                                                                                                                                                                                                       | Supported through the signed application-origin proxy.                                            |
+| Source development on a local computer    | Supported under the same Docker and provider requirements.                                                                                                                                                                                                                                                                           | Supported through the development API origin on port 3001.                                        |
+| Electron desktop client                   | Conditional. Electron uses an external Libre WebUI backend and does not provide a separate Work runtime.                                                                                                                                                                                                                             | Supported through that backend's signed proxy URL.                                                |
+| Bare-metal or VM backend on a remote host | Runs, files, and provider calls work when Docker is available on that host.                                                                                                                                                                                                                                                          | Supported when the public reverse proxy preserves HTTP and WebSocket traffic.                     |
+| Standard repository Docker Compose        | Supported by default: the image ships the Docker CLI and the Compose file mounts the host Docker socket.                                                                                                                                                                                                                             | Supported through the same public Libre WebUI origin.                                             |
+| Current Kubernetes/Helm deployment        | Supported with `--set work.enabled=true`: sandboxes run as Pods with PVC workspaces (runs, files, commands, git, interactive terminals, and the Work Computer screen and audio at the Pod IP), under a namespace-scoped Role and default-deny NetworkPolicies — no Docker socket anywhere. See the [Kubernetes guide](./KUBERNETES). | Supported when the backend runs in-cluster: the signed proxy targets the sandbox Pod IP directly. |
 
 ### Running Work when Libre WebUI is itself in Docker
 
@@ -1079,6 +1085,9 @@ Work reads these variables in the backend process:
 | `WORK_PIDS_LIMIT`                     | `256`                                                                                         | Per-container process limit                                |
 | `WORK_PREVIEW_PORT`                   | `4173`                                                                                        | Port the app must listen on inside the container           |
 | `WORK_PREVIEW_BIND`                   | `127.0.0.1`                                                                                   | Host interface the preview port is published on            |
+| `WORK_COMPUTER_SCREEN_PORT`           | `6080`                                                                                        | In-container WebSocket port of the screen bridge           |
+| `WORK_COMPUTER_AUDIO_PORT`            | `6081`                                                                                        | In-container WebSocket port of the audio bridge            |
+| `WORK_RUN_LEASE_WAIT_MS`              | `60000`                                                                                       | How long a run waits out a transient runtime-lease holder  |
 | `WORK_MAX_ACTIVE_RUNTIMES_GLOBAL`     | `3`                                                                                           | Concurrent container-backed tasks per Libre WebUI instance |
 | `WORK_MAX_ACTIVE_RUNTIMES_PER_USER`   | `2`                                                                                           | Concurrent container-backed tasks per administrator        |
 | `WORK_MAX_TASKS_GLOBAL`               | `500`                                                                                         | Persisted Work task limit per Libre WebUI instance         |
@@ -1161,6 +1170,8 @@ administrative policy/access endpoints remain admin-only.
 | `POST`   | `/tasks/:id/computer/control`       | Take over (or renew control of) the screen        |
 | `DELETE` | `/tasks/:id/computer/control`       | Hand the screen back to the agent                 |
 | `POST`   | `/tasks/:id/computer/teach`         | Save a recorded demonstration as a taught skill   |
+| `POST`   | `/tasks/:id/computer/anchor`        | Resolve the element under a recorded click        |
+| `POST`   | `/computer/skills/:slug/trace`      | Append a worked/failed line to a taught skill     |
 | `GET`    | `/tasks/:id/files`                  | List a workspace directory                        |
 | `GET`    | `/tasks/:id/file`                   | Read a workspace text file                        |
 | `PUT`    | `/tasks/:id/file`                   | Save a workspace text file                        |

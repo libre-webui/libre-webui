@@ -22,29 +22,30 @@ test-only canaries are intentionally omitted.
 
 ## Backend Server
 
-| Variable                     | Default                                                  | Purpose                                                                                       |
-| ---------------------------- | -------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
-| `NODE_ENV`                   | `development`                                            | Runtime mode                                                                                  |
-| `PORT`                       | `3001` in dev, `8080` in production                      | Backend HTTP port                                                                             |
-| `TRUST_PROXY`                | unset (`0` in Helm)                                      | Exact trusted reverse-proxy hop count used to derive the client address                       |
-| `CORS_ORIGIN`                | local dev origins                                        | Comma-separated allowed browser origins                                                       |
-| `SERVE_FRONTEND`             | unset                                                    | Serve built frontend from backend when `true`                                                 |
-| `DOCKER_ENV`                 | unset                                                    | Enables Docker-oriented behavior when `true`                                                  |
-| `DATA_DIR`                   | `backend/data`; `~/.libre-webui` in the packaged CLI     | Persistent data directory                                                                     |
-| `PLATFORM_PREFLIGHT_TMP_DIR` | `backend/temp/preflight`; user cache in the packaged CLI | Scratch space for a private DB/WAL startup inspection copy; size it for the database plus WAL |
-| `PLUGINS_DIR`                | `$DATA_DIR/plugins`                                      | Writable directory for installed/customized plugins                                           |
-| `BASE_URL`                   | `http://localhost:3001`                                  | Base URL used for OAuth callback defaults                                                     |
-| `LOG_LEVEL`                  | `info` (`warn` in tests)                                 | Backend log level                                                                             |
-| `LOG_FORMAT`                 | `text`                                                   | `json` switches to structured one-line logs with timestamps, correlation ids, and redaction   |
-| `OTEL_EXPORTER_OTLP_ENDPOINT` | unset                                                   | Opt-in OTLP/HTTP JSON telemetry export; unset means no telemetry leaves the process           |
-| `OTEL_EXPORTER_OTLP_HEADERS` | unset                                                    | Comma-separated `key=value` headers sent to the OTLP collector (for example auth)             |
-| `OTEL_SERVICE_NAME`          | `libre-webui`                                            | `service.name` resource attribute on exported telemetry                                       |
-| `WEBUI_HOST`                 | loopback; `0.0.0.0` in Docker                            | HTTP listen address                                                                           |
-| `OPEN_BROWSER`               | `true` when serving the frontend                         | Set `false` to suppress automatic browser launch                                              |
-| `FULL_DOCUMENT_CONTEXT_MAX_TOKENS` | `32000`                                            | Token guard for the per-chat full-document context mode (1000-2000000)                        |
-| `GALLERY_RETENTION_DAYS`     | unset (keep forever)                                     | Delete gallery media older than this many days via the scheduler sweep                        |
-| `RECOVERY_DRILL_INTERVAL_HOURS` | unset (drills off)             | Run a verified recovery drill automatically every N hours (solo profile) |
-| `RECOVERY_DRILL_HISTORY`      | `60`                              | Retained recovery-drill history entries                  |
+| Variable                           | Default                                                  | Purpose                                                                                       |
+| ---------------------------------- | -------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| `NODE_ENV`                         | `development`                                            | Runtime mode                                                                                  |
+| `PORT`                             | `3001` in dev, `8080` in production                      | Backend HTTP port                                                                             |
+| `TRUST_PROXY`                      | unset (`0` in Helm)                                      | Exact trusted reverse-proxy hop count used to derive the client address                       |
+| `CORS_ORIGIN`                      | local dev origins                                        | Comma-separated allowed browser origins                                                       |
+| `SERVE_FRONTEND`                   | unset                                                    | Serve built frontend from backend when `true`                                                 |
+| `DOCKER_ENV`                       | unset                                                    | Enables Docker-oriented behavior when `true`                                                  |
+| `DATA_DIR`                         | `backend/data`; `~/.libre-webui` in the packaged CLI     | Persistent data directory                                                                     |
+| `PLATFORM_PREFLIGHT_TMP_DIR`       | `backend/temp/preflight`; user cache in the packaged CLI | Scratch space for a private DB/WAL startup inspection copy; size it for the database plus WAL |
+| `PLUGIN_UPLOAD_TEMP_DIR`           | `libre-webui-plugin-uploads` under the OS temp directory | Scratch space for in-flight plugin uploads                                                    |
+| `PLUGINS_DIR`                      | `$DATA_DIR/plugins`                                      | Writable directory for installed/customized plugins                                           |
+| `BASE_URL`                         | `http://localhost:3001`                                  | Base URL used for OAuth callback defaults                                                     |
+| `LOG_LEVEL`                        | `info` (`warn` in tests)                                 | Backend log level                                                                             |
+| `LOG_FORMAT`                       | `text`                                                   | `json` switches to structured one-line logs with timestamps, correlation ids, and redaction   |
+| `OTEL_EXPORTER_OTLP_ENDPOINT`      | unset                                                    | Opt-in OTLP/HTTP JSON telemetry export; unset means no telemetry leaves the process           |
+| `OTEL_EXPORTER_OTLP_HEADERS`       | unset                                                    | Comma-separated `key=value` headers sent to the OTLP collector (for example auth)             |
+| `OTEL_SERVICE_NAME`                | `libre-webui`                                            | `service.name` resource attribute on exported telemetry                                       |
+| `WEBUI_HOST`                       | loopback; `0.0.0.0` in Docker                            | HTTP listen address                                                                           |
+| `OPEN_BROWSER`                     | `true` when serving the frontend                         | Set `false` to suppress automatic browser launch                                              |
+| `FULL_DOCUMENT_CONTEXT_MAX_TOKENS` | `32000`                                                  | Token guard for the per-chat full-document context mode (1000-2000000)                        |
+| `GALLERY_RETENTION_DAYS`           | unset (keep forever)                                     | Delete gallery media older than this many days via the scheduler sweep                        |
+| `RECOVERY_DRILL_INTERVAL_HOURS`    | unset (drills off)                                       | Run a verified recovery drill automatically every N hours (solo profile)                      |
+| `RECOVERY_DRILL_HISTORY`           | `60`                                                     | Retained recovery-drill history entries                                                       |
 
 Source launches anchor relative `DATA_DIR`, `PLUGINS_DIR`, and
 `PLATFORM_PREFLIGHT_TMP_DIR` values at the backend directory, independent of
@@ -99,6 +100,7 @@ dependencies must be selected together.
 | `REDIS_KEY_PREFIX`                   | `libre`                                | 1-64 character namespace for Libre coordination keys                                                                       |
 | `REDIS_CONNECT_TIMEOUT_MS`           | `5000`                                 | Initial Redis connection timeout, capped at 60 seconds                                                                     |
 | `JOB_WORKER_MODE`                    | `embedded` in solo; `external` in team | Run handlers in the app or in the standalone shared worker                                                                 |
+| `RESOURCE_LEASE_TTL_MS`              | `30000`                                | Coordination lease TTL for durable-job resource ownership (5000-300000; startup fails outside the range)                   |
 | `JOB_WORKER_CONCURRENCY`             | `4`                                    | Durable jobs one worker may run at the same time (1-32)                                                                    |
 | `CHAT_STREAM_EVENT_RETENTION_HOURS`  | `24`                                   | Hours chat stream chunk events stay before the hourly sweep removes them                                                   |
 | `PLATFORM_EVENT_RETENTION_DAYS`      | `30`                                   | Days any durable event stays before the hourly sweep removes it                                                            |
@@ -211,21 +213,21 @@ pre-created directory in a `ReadWritePaths=` service drop-in; see
 
 ## Authentication and Security
 
-| Variable                      | Default                           | Purpose                                                  |
-| ----------------------------- | --------------------------------- | -------------------------------------------------------- |
-| `ENABLE_SIGNUP`               | `false`                           | Allow registration after the first local administrator   |
-| `JWT_SECRET`                  | generated/fallback in development | JWT signing secret; set explicitly in production         |
-| `JWT_EXPIRES_IN`              | `7d`                              | Session-token lifetime                                   |
-| `ENCRYPTION_KEY`              | auto-generated                    | 64-character hex key for encrypted values                |
-| `DEBUG_ENCRYPTION`            | unset                             | Logs encryption debug output when set                    |
-| `TURNSTILE_SITE_KEY`          | unset                             | Cloudflare Turnstile site key for login and signup       |
-| `TURNSTILE_SECRET_KEY`        | unset                             | Cloudflare Turnstile secret key for backend verification |
-| `TURNSTILE_EXPECTED_HOSTNAME` | hostname from `BASE_URL`          | Required hostname in Cloudflare's verification response  |
-| `MFA_REQUIRED_MODE`           | unset (admin toggle, `optional`)  | Pin the two-factor policy to `optional` or `required`    |
+| Variable                      | Default                           | Purpose                                                   |
+| ----------------------------- | --------------------------------- | --------------------------------------------------------- |
+| `ENABLE_SIGNUP`               | `false`                           | Allow registration after the first local administrator    |
+| `JWT_SECRET`                  | generated/fallback in development | JWT signing secret; set explicitly in production          |
+| `JWT_EXPIRES_IN`              | `7d`                              | Session-token lifetime                                    |
+| `ENCRYPTION_KEY`              | auto-generated                    | 64-character hex key for encrypted values                 |
+| `DEBUG_ENCRYPTION`            | unset                             | Logs encryption debug output when set                     |
+| `TURNSTILE_SITE_KEY`          | unset                             | Cloudflare Turnstile site key for login and signup        |
+| `TURNSTILE_SECRET_KEY`        | unset                             | Cloudflare Turnstile secret key for backend verification  |
+| `TURNSTILE_EXPECTED_HOSTNAME` | hostname from `BASE_URL`          | Required hostname in Cloudflare's verification response   |
+| `MFA_REQUIRED_MODE`           | unset (admin toggle, `optional`)  | Pin the two-factor policy to `optional` or `required`     |
 | `WEBAUTHN_RP_ID`              | request hostname                  | Fixed relying-party id for passkeys behind many hostnames |
 | `VAPID_PUBLIC_KEY`            | generated and stored encrypted    | Pin the Web Push VAPID public key (base64url P-256 point) |
-| `VAPID_PRIVATE_KEY`           | generated and stored encrypted    | Pin the Web Push VAPID private key (base64url scalar)    |
-| `VAPID_SUBJECT`               | `mailto:admin@localhost`          | Contact claim inside signed Web Push authorizations      |
+| `VAPID_PRIVATE_KEY`           | generated and stored encrypted    | Pin the Web Push VAPID private key (base64url scalar)     |
+| `VAPID_SUBJECT`               | `mailto:admin@localhost`          | Contact claim inside signed Web Push authorizations       |
 
 Turnstile is enabled only when both Turnstile keys are present.
 

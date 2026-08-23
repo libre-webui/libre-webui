@@ -57,6 +57,20 @@ carries the bundle, and the edit modal manages files one by one. Paths are
 relative and can never escape the skill; contents are text-only, encrypted
 at rest, and bounded (32 files, 200 KB each, 1 MB per skill).
 
+## Taught skills
+
+Skills whose slug begins with `taught-` were created by demonstrating a
+task on a [Work Computer](./33-WORKSPACES.md) screen: the recording is
+compiled deterministically into a natural-language playbook — anchored
+click targets, redacted secrets, and an allowed scope derived from the
+sites the demonstration visited — and saved as an ordinary skill, so it
+gets versioning, editing, and sharing like any other. Computer-enabled
+Work runs load the owner's enabled taught skills automatically. After a
+run finishes, a one-click worked/failed review on the run's skill chips
+appends a dated line to the skill's **Track record** section; each review
+is a normal skill version, so the history is editable and restorable here
+like any other change.
+
 ## Sharing and profiles
 
 Skills are private by default and shareable through the common

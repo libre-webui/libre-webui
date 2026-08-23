@@ -55,10 +55,12 @@ no-store`), and every request collects fresh values.
 
 ### Docker socket dependency
 
-The Docker section works only through a local Unix socket. Libre WebUI uses
-`WORK_DOCKER_SOCKET` when set, otherwise `DOCKER_HOST` when it is a `unix://`
-URL, otherwise `/var/run/docker.sock`. A remote TCP Docker endpoint is
-deliberately not queried. The requests are strictly read-only engine `GET`s
+The Docker section resolves its endpoint the same way the Work runtime and
+interactive terminal do: `WORK_DOCKER_SOCKET` when set (always a local Unix
+socket path), otherwise `DOCKER_HOST` — a `unix://` URL or a plain-HTTP
+`tcp://` endpoint such as a filtered Docker API proxy — otherwise
+`/var/run/docker.sock`. `ssh://` and `npipe://` endpoints, and `tcp://`
+with TLS verification enabled, are deliberately not queried. The requests are strictly read-only engine `GET`s
 (version, info, container list) with a 4-second timeout and a bounded response
 size, and the container list is capped at 100 entries.
 
