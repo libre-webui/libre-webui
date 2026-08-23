@@ -23,6 +23,7 @@ import workEventService from './workEventService.js';
 import {
   buildWorkAgentSystemPrompt,
   buildWorkBudgetExhaustionPrompt,
+  buildWorkComputerAmbiguityPrompt,
   buildWorkComputerStallPrompt,
   buildWorkEmptyRoundNudgePrompt,
   workAgentSkillsForContext,
@@ -199,8 +200,11 @@ export const WORK_COMPUTER_TOOL_SCHEMAS: Record<string, unknown>[] = [
           `Up to ${WORK_COMPUTER_ACTION_LIMIT} actions executed in order. Each action is an object with "type" plus type-specific fields: ` +
           'move {x,y}; click / double_click / right_click {x,y optional — clicks the current position without them}; ' +
           'type {text}; key {keys, an xdotool name or chord such as "Return" or "ctrl+l"}; ' +
-          'scroll {direction: "up"|"down", amount optional, x,y optional}; wait {ms, at most 5000}. ' +
-          'type and key accept an optional "focus" string: the action runs only when the focused element, page URL, or window title contains it — use it before typing anything that must land in a specific field.',
+          'scroll {direction: "up"|"down", amount optional, x,y optional}; ' +
+          'scroll_until {direction, target: {text} or {edge: "top"|"bottom"}, maxAmount optional ≤30, x,y optional} — goal-directed scrolling that stops when the target text is visible and reports a visibility receipt, always preferable to blind scroll amounts; ' +
+          'wait {ms, at most 5000}. ' +
+          'type and key accept an optional "focus" string: the action runs only when the focused element, page URL, or window title contains it — use it before typing anything that must land in a specific field. ' +
+          'Clicks at explicit coordinates return a receipt saying whether pixels near the click changed.',
         items: {
           type: 'object',
           properties: {
@@ -214,6 +218,7 @@ export const WORK_COMPUTER_TOOL_SCHEMAS: Record<string, unknown>[] = [
                 'type',
                 'key',
                 'scroll',
+                'scroll_until',
                 'wait',
               ],
             },
@@ -224,10 +229,23 @@ export const WORK_COMPUTER_TOOL_SCHEMAS: Record<string, unknown>[] = [
             focus: { type: 'string' },
             direction: { type: 'string', enum: ['up', 'down'] },
             amount: { type: 'integer' },
+            maxAmount: { type: 'integer' },
+            target: {
+              type: 'object',
+              properties: {
+                text: { type: 'string' },
+                edge: { type: 'string', enum: ['top', 'bottom'] },
+              },
+            },
             ms: { type: 'integer' },
           },
           required: ['type'],
         },
+      },
+      subgoal: {
+        type: 'string',
+        description:
+          'One short sentence naming what this batch is meant to achieve (e.g. "open the settings page"). Persisted with the result as a checkpoint, and echoed back if the loop needs to recover — declare it on every consequential batch.',
       },
       expect: {
         type: 'object',
@@ -847,6 +865,22 @@ export class WorkAgentService {
       let computerStallSignature = '';
       let computerStallRepeats = 0;
       let computerStallNudged = false;
+      // Ambiguity budget: consecutive unverified expectations mean the loop
+      // is acting on assumptions; one re-grounding notice before it
+      // compounds.
+      let consecutivePendingExpectations = 0;
+      let ambiguityNudged = false;
+      const computerContext: WorkComputerRunContext = {};
+      const loopStats = {
+        rounds: 0,
+        toolCalls: 0,
+        screenshots: 0,
+        fences: 0,
+        expectationsPassed: 0,
+        expectationsPending: 0,
+        stallNudges: 0,
+        ambiguityNudges: 0,
+      };
       // Reasoning-channel models (DeepSeek and friends) sometimes place
       // their entire answer in reasoning and leave content empty. Keep the
       // last reasoning so a run can end with the model's actual findings
@@ -863,6 +897,7 @@ export class WorkAgentService {
       );
       roundLoop: for (let round = 0; round < roundLimit; round++) {
         await this.throwIfCancelled(runId, controller);
+        loopStats.rounds = round + 1;
         for (const message of await workTaskService.getMessages(taskId)) {
           if (
             message.runId === runId &&
@@ -1098,6 +1133,7 @@ export class WorkAgentService {
             'done',
             {
               status: 'completed',
+              loopStats,
             },
             'terminal:completed'
           );
@@ -1144,7 +1180,10 @@ export class WorkAgentService {
         }
         for (const call of toolCalls) {
           await this.throwIfCancelled(runId, controller);
-          const toolCallMetadata = summarizeToolCall(call);
+          const toolCallMetadata = {
+            ...summarizeToolCall(call),
+            round: round + 1,
+          };
           const toolCallMessage = await workTaskService.addMessage(
             taskId,
             runId,
@@ -1187,6 +1226,7 @@ export class WorkAgentService {
             toolCallId: call.id,
             toolName: call.function.name,
           };
+          const toolStartedAt = Date.now();
           try {
             const validationError = toolValidationErrors.get(call);
             if (validationError) {
@@ -1205,6 +1245,7 @@ export class WorkAgentService {
             }
             const result = await this.executeTool(task, call, {
               signal: controller.signal,
+              computer: computerContext,
             });
             toolOutput = result.content;
             toolImages = result.images;
@@ -1215,6 +1256,22 @@ export class WorkAgentService {
                 ? `Tool error: ${error.message}`
                 : 'Tool error.';
             toolMetadata.error = true;
+          }
+          toolMetadata.durationMs = Date.now() - toolStartedAt;
+          loopStats.toolCalls += 1;
+          if (toolMetadata.screenshot === true) loopStats.screenshots += 1;
+          if (toolMetadata.fence) loopStats.fences += 1;
+          const expectOutcome = (
+            toolMetadata.expect as { outcome?: string } | undefined
+          )?.outcome;
+          if (expectOutcome === 'passed') loopStats.expectationsPassed += 1;
+          if (expectOutcome === 'pending') loopStats.expectationsPending += 1;
+          if (call.function.name === 'computer_act') {
+            if (expectOutcome === 'pending') {
+              consecutivePendingExpectations += 1;
+            } else if (expectOutcome === 'passed') {
+              consecutivePendingExpectations = 0;
+            }
           }
           const boundedOutput = boundPersistedToolOutput(toolOutput);
           if (boundedOutput !== toolOutput) {
@@ -1285,14 +1342,28 @@ export class WorkAgentService {
           computerStallSignature = '';
           if (!computerStallNudged) {
             computerStallNudged = true;
+            loopStats.stallNudges += 1;
             messages.push({
               role: 'user',
-              content: buildWorkComputerStallPrompt(),
+              content: buildWorkComputerStallPrompt(
+                computerContext.lastSubgoal
+              ),
             });
           } else {
             budgetReason = 'computer-stall';
             break roundLoop;
           }
+        }
+        if (consecutivePendingExpectations >= 2 && !ambiguityNudged) {
+          ambiguityNudged = true;
+          consecutivePendingExpectations = 0;
+          loopStats.ambiguityNudges += 1;
+          messages.push({
+            role: 'user',
+            content: buildWorkComputerAmbiguityPrompt(
+              computerContext.lastSubgoal
+            ),
+          });
         }
       }
       await this.throwIfCancelled(runId, controller);
@@ -1435,6 +1506,7 @@ export class WorkAgentService {
         {
           budgetHandoff: true,
           budgetReason,
+          loopStats,
           ...handoffProviderStateMetadata,
         }
       );
@@ -1451,6 +1523,7 @@ export class WorkAgentService {
         {
           status: 'needs_input',
           budgetReason,
+          loopStats,
         },
         'terminal:needs_input'
       );
@@ -1650,7 +1723,12 @@ export class WorkAgentService {
   private async executeTool(
     task: WorkTaskRecord,
     call: WorkToolCall,
-    context: { signal?: AbortSignal } = {}
+    context: {
+      signal?: AbortSignal;
+      // Mutable per-run state: the last computer observation, for diffing
+      // consecutive screens so the model learns what its action changed.
+      computer?: WorkComputerRunContext;
+    } = {}
   ): Promise<{
     content: string;
     metadata?: Record<string, unknown>;
@@ -1799,19 +1877,34 @@ export class WorkAgentService {
         await this.assertComputerToolsAvailable(task);
         await this.assertComputerNotHumanControlled(task);
         return computerToolResult(
-          await workRuntimeService.computerObserve(task)
+          await workRuntimeService.computerObserve(task),
+          undefined,
+          context.computer
         );
       }
       case 'computer_act': {
         await this.assertComputerToolsAvailable(task);
         await this.assertComputerNotHumanControlled(task);
         const actions = Array.isArray(args.actions) ? args.actions : [];
+        const subgoal = optionalString(args.subgoal)?.trim().slice(0, 300);
         const observation = await workRuntimeService.computerAct(
           task,
           actions,
           args.expect
         );
-        return computerToolResult(observation, actions.length);
+        const result = computerToolResult(
+          observation,
+          actions.length,
+          context.computer
+        );
+        if (subgoal) {
+          // The checkpoint rides the durable transcript: goal, actions, and
+          // verified outcome persist together for resume and audit.
+          result.metadata.subgoal = subgoal;
+          result.content = `Subgoal: ${subgoal}\n${result.content}`;
+          if (context.computer) context.computer.lastSubgoal = subgoal;
+        }
+        return result;
       }
       case 'request_takeover': {
         await this.assertComputerToolsAvailable(task);
@@ -2689,15 +2782,88 @@ function retainRecentWorkImages(
   }
 }
 
+/** Per-run computer state threaded through the loop for observation diffs. */
+interface WorkComputerRunContext {
+  previous?: {
+    screenshotSha256?: string;
+    window: string;
+    url?: string;
+    pageFocus?: boolean;
+  };
+  lastSubgoal?: string;
+}
+
+function computerObservationDiff(
+  observation: WorkComputerObservation,
+  computerContext?: WorkComputerRunContext
+): string[] {
+  const previous = computerContext?.previous;
+  if (computerContext) {
+    computerContext.previous = {
+      ...(observation.screenshotSha256
+        ? { screenshotSha256: observation.screenshotSha256 }
+        : {}),
+      window: observation.window,
+      ...(observation.url ? { url: observation.url } : {}),
+      ...(observation.pageFocus !== undefined
+        ? { pageFocus: observation.pageFocus }
+        : {}),
+    };
+  }
+  if (!previous?.screenshotSha256 || !observation.screenshotSha256) return [];
+  if (previous.screenshotSha256 === observation.screenshotSha256) {
+    return [
+      'Since the previous observation: the screen is IDENTICAL — nothing changed visually.',
+    ];
+  }
+  const transitions = [
+    ...(previous.window !== observation.window
+      ? [`window "${previous.window}" → "${observation.window}"`]
+      : []),
+    ...(previous.url !== observation.url
+      ? [`URL ${previous.url || '(none)'} → ${observation.url || '(none)'}`]
+      : []),
+    ...(previous.pageFocus !== observation.pageFocus
+      ? [`page focus ${previous.pageFocus} → ${observation.pageFocus}`]
+      : []),
+  ];
+  return [
+    `Since the previous observation: the screen changed${transitions.length ? ` (${transitions.join('; ')})` : ' (same window, title, and URL)'}.`,
+  ];
+}
+
 function computerToolResult(
   observation: WorkComputerObservation,
-  actionCount?: number
+  actionCount?: number,
+  computerContext?: WorkComputerRunContext
 ): { content: string; metadata: Record<string, unknown>; images: string[] } {
   const ranCount = observation.fence
     ? observation.fence.afterAction
     : actionCount;
   const browserChrome =
     observation.pageFocus === false && /chromium/i.test(observation.window);
+  const diffLines = computerObservationDiff(observation, computerContext);
+  const receiptLines = [
+    ...(observation.clickReceipts?.length
+      ? [
+          `Click receipts: ${observation.clickReceipts
+            .map(
+              receipt =>
+                `#${receipt.action} (${receipt.x},${receipt.y}) ${receipt.changed ? 'changed nearby pixels' : 'NO visible change nearby'}`
+            )
+            .join('; ')}.`,
+        ]
+      : []),
+    ...(observation.scrollReceipts?.map(receipt =>
+      receipt.found === null
+        ? `Scroll receipt: action #${receipt.action} scrolled ${receipt.scrolledUnits} unit(s) — no semantic signal, target visibility unknown.`
+        : receipt.found && receipt.visible
+          ? `Scroll receipt: action #${receipt.action} scrolled ${receipt.scrolledUnits} unit(s) — target is now visible.`
+          : receipt.found
+            ? `Scroll receipt: action #${receipt.action} scrolled ${receipt.scrolledUnits} unit(s) — target found but still not fully visible.`
+            : `Scroll receipt: action #${receipt.action} scrolled ${receipt.scrolledUnits} unit(s) — target NOT found in the scrolled range.`
+    ) ?? []),
+  ];
   const summary = [
     ...(observation.fence
       ? [`BATCH STOPPED EARLY: ${observation.fence.detail}`]
@@ -2729,6 +2895,8 @@ function computerToolResult(
             : `Declared expectation: NOT yet observed (pending${observation.expect.unmet?.length ? `: ${observation.expect.unmet.join(', ')}` : ''}) — re-observe before assuming failure.`,
         ]
       : []),
+    ...receiptLines,
+    ...diffLines,
     ...(observation.screenshotSha256
       ? [`Screenshot sha256: ${observation.screenshotSha256.slice(0, 16)}`]
       : []),
@@ -2761,6 +2929,12 @@ function computerToolResult(
         : {}),
       ...(observation.fence ? { fence: observation.fence } : {}),
       ...(observation.expect ? { expect: observation.expect } : {}),
+      ...(observation.clickReceipts?.length
+        ? { clickReceipts: observation.clickReceipts }
+        : {}),
+      ...(observation.scrollReceipts?.length
+        ? { scrollReceipts: observation.scrollReceipts }
+        : {}),
       ...(actionCount !== undefined ? { actionCount } : {}),
       ...(ranCount !== undefined && ranCount !== actionCount
         ? { ranCount }

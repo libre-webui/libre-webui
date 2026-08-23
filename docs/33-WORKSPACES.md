@@ -487,10 +487,22 @@ stops early when a window appears, the title changes, or focus moves
 mid-batch, since the remaining coordinates targeted the previous screen;
 and a batch can declare an expected outcome (title, URL, or a changed
 screen region) that the runtime verifies with an adaptive deadline —
-"pending" means not observed yet, never assumed success. The agent loop
-also detects grounding stalls: three identical actions against an
+"pending" means not observed yet, never assumed success. After a batch
+the screen settles adaptively (polling until it stops changing) rather
+than after a fixed delay. Every result also carries evidence the model is
+told to read: clicks at explicit coordinates return a receipt saying
+whether pixels near the click changed, `scroll_until` scrolls toward a
+target text or page edge and reports whether it became visible, and each
+observation is diffed against the previous one so an unchanged screen is
+named as such. Batches can declare a one-line `subgoal` that persists
+with the result as a checkpoint and is echoed in recovery prompts. The
+agent loop detects grounding stalls (three identical actions against an
 unchanged screen trigger one recovery notice, and a repeat ends the run
-asking for input instead of burning the remaining rounds. Screenshots reach the model
+asking for input instead of burning the remaining rounds) and compounding
+ambiguity (consecutive unverified expectations trigger one re-grounding
+notice). Loop telemetry — rounds, tool latency, screenshots, fences,
+expectation verdicts — is stamped on every persisted tool record and
+summarized when the run ends. Screenshots reach the model
 as real image content on every provider route — Ollama, Anthropic, Gemini,
 and OpenAI-compatible chat and Responses plugins — so the model driving the
 task should be a vision model. Only the most recent screenshots stay in the

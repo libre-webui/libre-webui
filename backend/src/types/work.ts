@@ -213,6 +213,17 @@ export interface WorkLiveEventDataMap {
     >;
     error?: string;
     budgetReason?: string;
+    /** Loop telemetry: how the run spent its budget, for the run view. */
+    loopStats?: {
+      rounds: number;
+      toolCalls: number;
+      screenshots: number;
+      fences: number;
+      expectationsPassed: number;
+      expectationsPending: number;
+      stallNudges: number;
+      ambiguityNudges: number;
+    };
   };
 }
 

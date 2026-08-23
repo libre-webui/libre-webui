@@ -3,5 +3,5 @@ const zone=document.querySelector('#shiftZone');document.querySelector('#armShif
 const modal=document.querySelector('#modal');document.querySelector('#openModal').onclick=()=>{modal.classList.remove('hidden');hit('#modalLog','modal opened · context changed')};document.querySelector('#cancel').onclick=()=>{modal.classList.add('hidden');hit('#modalLog','cancelled safely')};document.querySelector('#confirm').onclick=()=>{modal.classList.add('hidden');hit('#modalLog','PUBLISH CONFIRMED')};
 document.querySelector('#silent').onclick=()=>{events++;score.textContent=`${events} events`;localStorage.setItem('edge-silent-save',Date.now())};document.querySelector('#noop').onclick=()=>{};
 document.querySelector('#focusInput').addEventListener('input',e=>hit('#focusLog',`page field value: “${e.target.value}”`));
-document.querySelector('#delay').onclick=()=>{hit('#delayLog','working…');setTimeout(()=>hit('#delayLog','EXPORT COMPLETE'),3500)};
+document.querySelector('#delay').onclick=()=>{hit('#delayLog','working…');setTimeout(()=>hit('#delayLog','EXPORT COMPLETE'),6000)};
 document.querySelector('#deep').onclick=()=>hit('#deepLog','FINALIZE ACTION FIRED');document.querySelector('#newTab').onclick=()=>hit('#tabLog','child context requested');

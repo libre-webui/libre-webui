@@ -298,6 +298,56 @@ test('computer_act validates focus assertions and expectation declarations', () 
     );
   }
 
+  // scroll_until: goal-directed scrolling with exactly one target kind.
+  assert.deepEqual(
+    validateWorkComputerActions([
+      {
+        type: 'scroll_until',
+        direction: 'down',
+        target: { text: ' Finalize report ' },
+        maxAmount: 20,
+        x: 640,
+        y: 400,
+      },
+      { type: 'scroll_until', direction: 'up', target: { edge: 'top' } },
+    ]),
+    [
+      {
+        type: 'scroll_until',
+        direction: 'down',
+        target: { text: 'Finalize report' },
+        maxAmount: 20,
+        x: 640,
+        y: 400,
+      },
+      { type: 'scroll_until', direction: 'up', target: { edge: 'top' } },
+    ]
+  );
+  for (const bad of [
+    { type: 'scroll_until', direction: 'down' },
+    { type: 'scroll_until', direction: 'sideways', target: { edge: 'top' } },
+    { type: 'scroll_until', direction: 'down', target: {} },
+    {
+      type: 'scroll_until',
+      direction: 'down',
+      target: { text: 'a', edge: 'top' },
+    },
+    { type: 'scroll_until', direction: 'down', target: { text: '' } },
+    { type: 'scroll_until', direction: 'down', target: { edge: 'left' } },
+    {
+      type: 'scroll_until',
+      direction: 'down',
+      target: { edge: 'top' },
+      maxAmount: 31,
+    },
+    { type: 'scroll_until', direction: 'down', target: { edge: 'top' }, x: 5 },
+  ]) {
+    assert.throws(
+      () => validateWorkComputerActions([bad]),
+      error => error.code === 'WORK_COMPUTER_INVALID_ACTION'
+    );
+  }
+
   // Expectations: absent stays absent, valid shapes normalize, and every
   // malformed field names itself.
   assert.equal(validateWorkComputerExpectation(undefined), undefined);

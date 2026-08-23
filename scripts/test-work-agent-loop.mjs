@@ -222,10 +222,11 @@ test('plugin Work runs use the configured round budget and finish with a no-tool
   const handoff = messages.at(-1);
   assert.equal(handoff.kind, 'message');
   assert.equal(handoff.content, 'Completed the configured-round handoff.');
-  assert.deepEqual(handoff.metadata, {
-    budgetHandoff: true,
-    budgetReason: 'round',
-  });
+  assert.equal(handoff.metadata.budgetHandoff, true);
+  assert.equal(handoff.metadata.budgetReason, 'round');
+  // Loop telemetry rides the handoff: how the run spent its budget.
+  assert.equal(handoff.metadata.loopStats.rounds, 13);
+  assert.equal(typeof handoff.metadata.loopStats.toolCalls, 'number');
   assert.equal(
     messages.filter(message => message.kind === 'tool_call').length,
     13
@@ -2063,6 +2064,131 @@ test('repeated identical computer actions on an unchanged screen stall the run i
     message => message.metadata?.budgetHandoff === true
   );
   assert.equal(handoff.metadata.budgetReason, 'computer-stall');
+});
+
+test('computer results carry diffs, receipts, subgoal checkpoints, and the ambiguity nudge', async () => {
+  const now = Date.now();
+  const userId = 'agent-loop-computer-diff-admin';
+  getDatabase()
+    .prepare(
+      `INSERT INTO users (
+        id, username, email, password_hash, role, avatar, created_at, updated_at
+      ) VALUES (?, ?, NULL, 'unused', 'admin', NULL, ?, ?)`
+    )
+    .run(userId, userId, now, now);
+
+  replaceMethod(workRuntimeService, 'computerToolsAvailable', async () => true);
+  // The same screen every time — with pending expectations and receipts.
+  let acts = 0;
+  replaceMethod(workRuntimeService, 'computerAct', async () => {
+    acts += 1;
+    return {
+      width: 1280,
+      height: 800,
+      cursorX: 640,
+      cursorY: 400,
+      window: 'Checkout - Chromium',
+      url: 'https://example.test/checkout',
+      pageFocus: true,
+      screenshotSha256: 'd'.repeat(64),
+      screenshotBase64: Buffer.from(`diff-png-${acts}`).toString('base64'),
+      expect: { outcome: 'pending', unmet: ['titleContains'] },
+      clickReceipts: [
+        { action: 1, type: 'click', x: 100 + acts, y: 200, changed: false },
+      ],
+      scrollReceipts: [
+        { action: 2, found: true, visible: true, scrolledUnits: 6 },
+      ],
+    };
+  });
+
+  const requests = [];
+  const requestTails = [];
+  replaceMethod(
+    workModelProviderService,
+    'generateChatStreamResponse',
+    async request => {
+      requests.push(request);
+      const tail = request.messages.at(-1);
+      requestTails.push({ role: tail.role, content: tail.content });
+      if (requests.length <= 2) {
+        return {
+          model: request.model,
+          created_at: new Date().toISOString(),
+          message: {
+            role: 'assistant',
+            content: '',
+            tool_calls: [
+              {
+                id: `act-diff-${requests.length}`,
+                function: {
+                  name: 'computer_act',
+                  arguments: {
+                    // Different args each round so stall detection stays out
+                    // of the way; the ambiguity budget is what must fire.
+                    actions: [
+                      { type: 'click', x: 100 + requests.length, y: 200 },
+                      {
+                        type: 'scroll_until',
+                        direction: 'down',
+                        target: { text: 'Place order' },
+                      },
+                    ],
+                    expect: { titleContains: 'Confirmation' },
+                    subgoal: 'submit the order form',
+                  },
+                },
+              },
+            ],
+          },
+          done: true,
+        };
+      }
+      return {
+        model: request.model,
+        created_at: new Date().toISOString(),
+        message: { role: 'assistant', content: 'Pausing to re-ground.' },
+        done: true,
+      };
+    }
+  );
+
+  const detail = await workTaskService.createTaskWithRun(
+    userId,
+    'Finish the checkout.',
+    'test-model',
+    true,
+    { providerType: 'plugin', providerId: 'test-plugin' }
+  );
+  const runId = detail.activeRun?.id;
+  assert.ok(runId);
+  await workAgentService.execute(detail.id, runId, userId);
+
+  // Two consecutive pending expectations → one ambiguity nudge, carrying
+  // the declared subgoal.
+  const nudge = requestTails[2];
+  assert.equal(nudge.role, 'user');
+  assert.match(nudge.content, /expectation still pending/);
+  assert.match(nudge.content, /submit the order form/);
+
+  const persisted = await workTaskService.getMessages(detail.id);
+  const results = persisted.filter(message => message.kind === 'tool_result');
+  assert.equal(results.length, 2);
+  // Subgoal checkpoint rides the persisted result.
+  assert.equal(results[0].metadata.subgoal, 'submit the order form');
+  assert.match(results[0].content, /^Subgoal: submit the order form/);
+  // Receipts surface in the summary text and metadata.
+  assert.match(results[0].content, /NO visible change nearby/);
+  assert.match(results[0].content, /target is now visible/);
+  assert.equal(results[0].metadata.clickReceipts[0].changed, false);
+  assert.equal(results[0].metadata.scrollReceipts[0].scrolledUnits, 6);
+  // The second result diffs against the first: same hash → identical.
+  assert.match(results[1].content, /screen is IDENTICAL/);
+  // Telemetry: duration and round stamped on every call and result.
+  assert.equal(typeof results[0].metadata.durationMs, 'number');
+  const calls = persisted.filter(message => message.kind === 'tool_call');
+  assert.equal(calls[0].metadata.round, 1);
+  assert.equal(calls[1].metadata.round, 2);
 });
 
 test('the computer tool schemas are offered separately from the base registry', () => {

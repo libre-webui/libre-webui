@@ -110,6 +110,26 @@ export interface WorkComputerBatchFence {
   detail: string;
 }
 
+/** Per-click receipt: did pixels near the click coordinate change? */
+export interface WorkComputerClickReceipt {
+  /** 1-based index of the action in its batch. */
+  action: number;
+  type: string;
+  x: number;
+  y: number;
+  /** A signal, not a verdict — a delivered click on inert space is false. */
+  changed: boolean;
+}
+
+/** Result of a goal-directed scroll_until action. */
+export interface WorkComputerScrollReceipt {
+  action: number;
+  /** null = no semantic signal (no browser page / pre-CDP image). */
+  found: boolean | null;
+  visible: boolean | null;
+  scrolledUnits: number;
+}
+
 /** Verdict on a batch's declared expectation, evaluated by the runtime. */
 export interface WorkComputerExpectationResult {
   /** `pending` = not observed before the deadline; not proof of failure. */
@@ -141,6 +161,8 @@ export interface WorkComputerObservation {
   screenshotBase64: string;
   fence?: WorkComputerBatchFence;
   expect?: WorkComputerExpectationResult;
+  clickReceipts?: WorkComputerClickReceipt[];
+  scrollReceipts?: WorkComputerScrollReceipt[];
 }
 
 /** Declared expected outcome of a computer_act batch. */
@@ -164,6 +186,14 @@ export type WorkComputerAction =
       type: 'scroll';
       direction: 'up' | 'down';
       amount: number;
+      x?: number;
+      y?: number;
+    }
+  | {
+      type: 'scroll_until';
+      direction: 'up' | 'down';
+      target: { text: string } | { edge: 'top' | 'bottom' };
+      maxAmount?: number;
       x?: number;
       y?: number;
     }
@@ -335,6 +365,77 @@ export function validateWorkComputerActions(
           type: 'scroll',
           direction: action.direction,
           amount,
+          ...(hasX
+            ? {
+                x: coordinate(action.x, index, 'x'),
+                y: coordinate(action.y, index, 'y'),
+              }
+            : {}),
+        });
+        break;
+      }
+      case 'scroll_until': {
+        if (action.direction !== 'up' && action.direction !== 'down') {
+          throw invalid(index, '"direction" must be "up" or "down".');
+        }
+        const target =
+          action.target &&
+          typeof action.target === 'object' &&
+          !Array.isArray(action.target)
+            ? (action.target as Record<string, unknown>)
+            : undefined;
+        const hasText = target?.text !== undefined;
+        const hasEdge = target?.edge !== undefined;
+        if (!target || hasText === hasEdge) {
+          throw invalid(
+            index,
+            '"target" must be an object with exactly one of "text" or "edge".'
+          );
+        }
+        let validatedTarget: { text: string } | { edge: 'top' | 'bottom' };
+        if (hasText) {
+          if (
+            typeof target.text !== 'string' ||
+            target.text.trim().length === 0 ||
+            target.text.length > 200
+          ) {
+            throw invalid(
+              index,
+              '"target.text" must be a string of 1 to 200 characters.'
+            );
+          }
+          validatedTarget = { text: target.text.trim() };
+        } else {
+          if (target.edge !== 'top' && target.edge !== 'bottom') {
+            throw invalid(index, '"target.edge" must be "top" or "bottom".');
+          }
+          validatedTarget = { edge: target.edge };
+        }
+        if (action.maxAmount !== undefined) {
+          if (
+            typeof action.maxAmount !== 'number' ||
+            !Number.isInteger(action.maxAmount) ||
+            action.maxAmount < 1 ||
+            action.maxAmount > 30
+          ) {
+            throw invalid(
+              index,
+              '"maxAmount" must be an integer between 1 and 30.'
+            );
+          }
+        }
+        const hasX = action.x !== undefined;
+        const hasY = action.y !== undefined;
+        if (hasX !== hasY) {
+          throw invalid(index, 'provide both "x" and "y" or neither.');
+        }
+        validated.push({
+          type: 'scroll_until',
+          direction: action.direction,
+          target: validatedTarget,
+          ...(action.maxAmount !== undefined
+            ? { maxAmount: action.maxAmount }
+            : {}),
           ...(hasX
             ? {
                 x: coordinate(action.x, index, 'x'),
@@ -2375,9 +2476,13 @@ export class WorkRuntimeService {
         (total, action) =>
           total +
           (action.type === 'wait' ? action.ms : 0) +
-          (action.type === 'type' ? action.text.length * 15 : 0),
+          (action.type === 'type' ? action.text.length * 15 : 0) +
+          (action.type === 'scroll_until' ? (action.maxAmount ?? 15) * 400 : 0),
         0
-      ) + (expectation ? (expectation.withinMs ?? 5_000) : 0);
+      ) +
+      (expectation ? (expectation.withinMs ?? 5_000) : 0) +
+      // Adaptive settle polling and per-click receipt captures.
+      5_000;
     return this.withComputerSession(task, signal =>
       this.runComputerScript(
         task,
@@ -2434,6 +2539,8 @@ export class WorkRuntimeService {
       screenshotSha256?: unknown;
       fence?: unknown;
       expect?: unknown;
+      clickReceipts?: unknown;
+      scrollReceipts?: unknown;
     }>(result.stdout);
     if (
       typeof parsed.width !== 'number' ||
@@ -2449,6 +2556,10 @@ export class WorkRuntimeService {
         'WORK_COMPUTER_ACTION_FAILED'
       );
     }
+    const asRecord = (value: unknown): Record<string, unknown> =>
+      value && typeof value === 'object' && !Array.isArray(value)
+        ? (value as Record<string, unknown>)
+        : {};
     const fence =
       parsed.fence && typeof parsed.fence === 'object'
         ? (parsed.fence as Record<string, unknown>)
@@ -2504,6 +2615,41 @@ export class WorkRuntimeService {
                 ? { unmet: expect.unmet.map(String).slice(0, 8) }
                 : {}),
             },
+          }
+        : {}),
+      ...(Array.isArray(parsed.clickReceipts)
+        ? {
+            clickReceipts: parsed.clickReceipts
+              .slice(0, WORK_COMPUTER_ACTION_LIMIT)
+              .map(asRecord)
+              .filter(
+                receipt =>
+                  typeof receipt.action === 'number' &&
+                  typeof receipt.changed === 'boolean'
+              )
+              .map(receipt => ({
+                action: receipt.action as number,
+                type: String(receipt.type ?? 'click'),
+                x: Number(receipt.x ?? 0),
+                y: Number(receipt.y ?? 0),
+                changed: receipt.changed as boolean,
+              })),
+          }
+        : {}),
+      ...(Array.isArray(parsed.scrollReceipts)
+        ? {
+            scrollReceipts: parsed.scrollReceipts
+              .slice(0, WORK_COMPUTER_ACTION_LIMIT)
+              .map(asRecord)
+              .filter(receipt => typeof receipt.action === 'number')
+              .map(receipt => ({
+                action: receipt.action as number,
+                found:
+                  typeof receipt.found === 'boolean' ? receipt.found : null,
+                visible:
+                  typeof receipt.visible === 'boolean' ? receipt.visible : null,
+                scrolledUnits: Number(receipt.scrolledUnits ?? 0),
+              })),
           }
         : {}),
       screenshotBase64: parsed.image,
@@ -4192,45 +4338,54 @@ const FOCUS_EXPRESSION =
   'if (a("type")) d += "[type=" + a("type") + "]"; ' +
   'if (label) d += " (" + label + ")"; ' +
   'return {focus: true, el: d}; })()';
+const cdpActiveTarget = async windowName => {
+  const listResponse = await fetch(CDP_BASE + '/json/list', {
+    signal: AbortSignal.timeout(700),
+  });
+  const targets = (await listResponse.json()).filter(
+    t => t.type === 'page' && t.url && !String(t.url).startsWith('devtools:')
+  );
+  if (!targets.length) return undefined;
+  return (
+    targets.find(
+      t => t.title && windowName && windowName.startsWith(String(t.title).slice(0, 80))
+    ) || targets[0]
+  );
+};
+// Evaluate one expression in the active page; undefined on any failure.
+const cdpEvaluate = async (target, expression) => {
+  if (!target || !target.webSocketDebuggerUrl) return undefined;
+  return new Promise(resolve => {
+    const socket = new WebSocket(target.webSocketDebuggerUrl);
+    const timer = setTimeout(() => {
+      try { socket.close(); } catch {}
+      resolve(undefined);
+    }, 900);
+    socket.onerror = () => { clearTimeout(timer); resolve(undefined); };
+    socket.onopen = () =>
+      socket.send(
+        JSON.stringify({
+          id: 1,
+          method: 'Runtime.evaluate',
+          params: {expression, returnByValue: true},
+        })
+      );
+    socket.onmessage = event => {
+      clearTimeout(timer);
+      try { socket.close(); } catch {}
+      try {
+        resolve(JSON.parse(event.data).result.result.value);
+      } catch { resolve(undefined); }
+    };
+  });
+};
 const cdpProbe = async windowName => {
   const result = {url: '', pageFocus: undefined, focusedElement: ''};
   try {
-    const listResponse = await fetch(CDP_BASE + '/json/list', {
-      signal: AbortSignal.timeout(700),
-    });
-    const targets = (await listResponse.json()).filter(
-      t => t.type === 'page' && t.url && !String(t.url).startsWith('devtools:')
-    );
-    if (!targets.length) return result;
-    const active =
-      targets.find(
-        t => t.title && windowName && windowName.startsWith(String(t.title).slice(0, 80))
-      ) || targets[0];
+    const active = await cdpActiveTarget(windowName);
+    if (!active) return result;
     result.url = String(active.url).slice(0, 500);
-    if (!active.webSocketDebuggerUrl) return result;
-    const probe = await new Promise(resolve => {
-      const socket = new WebSocket(active.webSocketDebuggerUrl);
-      const timer = setTimeout(() => {
-        try { socket.close(); } catch {}
-        resolve(undefined);
-      }, 900);
-      socket.onerror = () => { clearTimeout(timer); resolve(undefined); };
-      socket.onopen = () =>
-        socket.send(
-          JSON.stringify({
-            id: 1,
-            method: 'Runtime.evaluate',
-            params: {expression: FOCUS_EXPRESSION, returnByValue: true},
-          })
-        );
-      socket.onmessage = event => {
-        clearTimeout(timer);
-        try { socket.close(); } catch {}
-        try {
-          resolve(JSON.parse(event.data).result.result.value);
-        } catch { resolve(undefined); }
-      };
-    });
+    const probe = await cdpEvaluate(active, FOCUS_EXPRESSION);
     if (probe && typeof probe === 'object') {
       result.pageFocus = probe.focus === true;
       result.focusedElement =
@@ -4359,12 +4514,109 @@ const contextChanged = (action, before, after) => {
   if (before.windowName !== after.windowName) return 'the window title changed';
   return '';
 };
+const screenHash = () =>
+  attempt(() => {
+    const png = execFileSync('import', ['-window', 'root', '-silent', 'png:-'], {
+      timeout: 20000,
+      maxBuffer: 32 * 1024 * 1024,
+    });
+    return createHash('sha256').update(png).digest('hex');
+  });
+// Adaptive settle: two identical consecutive captures mean the screen has
+// stopped changing; the deadline bounds pages that never go quiet.
+const settleScreen = () => {
+  const deadline = Date.now() + 2500;
+  let previous = screenHash();
+  wait(250);
+  for (;;) {
+    const current = screenHash();
+    if (
+      (previous && current && previous === current) ||
+      Date.now() >= deadline
+    ) {
+      return;
+    }
+    previous = current;
+    wait(300);
+  }
+};
+const CLICK_RECEIPT_SIZE = 120;
+const clickReceiptRegion = action => ({
+  x: Math.max(0, action.x - CLICK_RECEIPT_SIZE / 2),
+  y: Math.max(0, action.y - CLICK_RECEIPT_SIZE / 2),
+  width: CLICK_RECEIPT_SIZE,
+  height: CLICK_RECEIPT_SIZE,
+});
+// Goal-directed scrolling: advance in small steps until the target text is
+// visible (or the page edge is reached), verified through the page itself.
+// Without a semantic signal it degrades to one bounded plain scroll.
+const scrollUntil = async action => {
+  const receipt = {action: 0, found: null, visible: null, scrolledUnits: 0};
+  const probe = async () => {
+    try {
+      const active = await cdpActiveTarget(frame().windowName);
+      if (!active) return undefined;
+      let expression;
+      if (action.target.text !== undefined) {
+        expression =
+          '(() => { const needle = ' +
+          JSON.stringify(String(action.target.text).toLowerCase()) +
+          '; const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT); ' +
+          'let node; let host = null; ' +
+          'while ((node = walker.nextNode())) { ' +
+          'if (String(node.nodeValue).toLowerCase().includes(needle)) { host = node.parentElement; break; } } ' +
+          'if (!host) return {found: false, visible: false}; ' +
+          'const r = host.getBoundingClientRect(); ' +
+          'return {found: true, visible: r.top >= 0 && r.bottom <= window.innerHeight && r.height > 0}; })()';
+      } else {
+        expression =
+          '(() => { const el = document.scrollingElement || document.documentElement; ' +
+          'return {found: true, visible: ' +
+          (action.target.edge === 'bottom'
+            ? 'Math.ceil(el.scrollTop + window.innerHeight) >= el.scrollHeight'
+            : 'el.scrollTop <= 0') +
+          '}; })()';
+      }
+      return await cdpEvaluate(active, expression);
+    } catch {
+      return undefined;
+    }
+  };
+  const maxUnits = action.maxAmount || 15;
+  const button = action.direction === 'up' ? '4' : '5';
+  moveTo(action);
+  for (;;) {
+    const state = await probe();
+    if (state === undefined) {
+      const remaining = maxUnits - receipt.scrolledUnits;
+      if (remaining > 0) {
+        xdotool(['click', '--repeat', String(remaining), '--delay', '50', button]);
+        receipt.scrolledUnits += remaining;
+      }
+      return receipt;
+    }
+    receipt.found = state.found === true;
+    receipt.visible = state.visible === true;
+    if (
+      (receipt.found && receipt.visible) ||
+      receipt.scrolledUnits >= maxUnits
+    ) {
+      return receipt;
+    }
+    const units = Math.min(3, maxUnits - receipt.scrolledUnits);
+    xdotool(['click', '--repeat', String(units), '--delay', '50', button]);
+    receipt.scrolledUnits += units;
+    wait(200);
+  }
+};
 const main = async () => {
   const beforeRegion =
     expectation && expectation.regionChanged
       ? regionHash(expectation.regionChanged)
       : undefined;
   let fence;
+  const clickReceipts = [];
+  const scrollReceipts = [];
   for (let index = 0; index < actions.length; index++) {
     const action = actions[index];
     if ((action.type === 'type' || action.type === 'key') && action.focus) {
@@ -4399,7 +4651,34 @@ const main = async () => {
       }
     }
     const before = frame();
-    perform(action);
+    const receiptRegion =
+      (action.type === 'click' ||
+        action.type === 'double_click' ||
+        action.type === 'right_click') &&
+      action.x !== undefined
+        ? clickReceiptRegion(action)
+        : undefined;
+    if (action.type === 'scroll_until') {
+      const receipt = await scrollUntil(action);
+      receipt.action = index + 1;
+      scrollReceipts.push(receipt);
+    } else if (receiptRegion) {
+      const beforeHash = regionHash(receiptRegion);
+      perform(action);
+      wait(150);
+      const afterHash = regionHash(receiptRegion);
+      // "Pixels near the click changed" — a signal, not a verdict: a dead
+      // click on empty space reads changed:false even though it delivered.
+      clickReceipts.push({
+        action: index + 1,
+        type: action.type,
+        x: action.x,
+        y: action.y,
+        changed: Boolean(beforeHash && afterHash && beforeHash !== afterHash),
+      });
+    } else {
+      perform(action);
+    }
     if (index < actions.length - 1) {
       const changed = contextChanged(action, before, frame());
       if (changed) {
@@ -4415,7 +4694,7 @@ const main = async () => {
       }
     }
   }
-  wait(400);
+  settleScreen();
   let expectResult;
   if (expectation && !fence) {
     const deadline = Date.now() + (expectation.withinMs || 5000);
@@ -4454,6 +4733,8 @@ const main = async () => {
       ...observation,
       ...(fence ? {fence} : {}),
       ...(expectResult ? {expect: expectResult} : {}),
+      ...(clickReceipts.length ? {clickReceipts} : {}),
+      ...(scrollReceipts.length ? {scrollReceipts} : {}),
     })
   );
 };

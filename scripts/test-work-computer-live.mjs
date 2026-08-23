@@ -95,15 +95,21 @@ test(
       JSON.parse(exec(['node', '-e', CDP_EVAL_SCRIPT, '--', expression]));
     // Screen coordinates of an element's center: page rect plus the browser
     // window's position and chrome offsets.
-    const coords = selector =>
-      cdpEval(
-        '(() => { const el = document.querySelector(' +
-          JSON.stringify(selector) +
-          "); el.scrollIntoView({block: 'center', behavior: 'instant'}); " +
-          'const r = el.getBoundingClientRect(); return {' +
-          'x: Math.round(window.screenX + (window.outerWidth - window.innerWidth) / 2 + r.x + r.width / 2),' +
-          'y: Math.round(window.screenY + (window.outerHeight - window.innerHeight) + r.y + r.height / 2) }; })()'
-      );
+    const coordsExpression = (selector, scroll) =>
+      '(() => { const el = document.querySelector(' +
+      JSON.stringify(selector) +
+      '); ' +
+      (scroll ? "el.scrollIntoView({block: 'center', behavior: 'instant'}); " : '') +
+      'const r = el.getBoundingClientRect(); ' +
+      'const ox = window.screenX + (window.outerWidth - window.innerWidth) / 2; ' +
+      'const oy = window.screenY + (window.outerHeight - window.innerHeight); return {' +
+      'x: Math.round(ox + r.x + r.width / 2), y: Math.round(oy + r.y + r.height / 2), ' +
+      'left: Math.round(ox + r.x), top: Math.round(oy + r.y) }; })()';
+    const coords = selector => cdpEval(coordsExpression(selector, true));
+    // Same viewport as the previous coords() call — measuring without
+    // scrolling keeps earlier measurements valid.
+    const coordsNoScroll = selector =>
+      cdpEval(coordsExpression(selector, false));
     const settle = seconds => execFileSync('sleep', [String(seconds)]);
 
     try {
@@ -187,6 +193,72 @@ test(
       );
       assert.equal(pending.expect?.outcome, 'pending');
       assert.deepEqual(pending.expect?.unmet, ['urlContains']);
+
+      // Case F: goal-directed scrolling finds the below-the-fold target and
+      // reports a visibility receipt instead of a blind wheel count.
+      act([
+        {
+          type: 'scroll_until',
+          direction: 'up',
+          target: { edge: 'top' },
+          maxAmount: 30,
+          x: 640,
+          y: 400,
+        },
+      ]);
+      const deep = act([
+        {
+          type: 'scroll_until',
+          direction: 'down',
+          target: { text: 'FINALIZE REPORT' },
+          maxAmount: 30,
+          x: 640,
+          y: 400,
+        },
+      ]);
+      const deepReceipt = deep.scrollReceipts?.[0];
+      assert.equal(deepReceipt?.found, true, JSON.stringify(deep.scrollReceipts));
+      assert.equal(deepReceipt?.visible, true);
+      assert.ok(deepReceipt.scrolledUnits > 0);
+      const finalize = coords('#deep');
+      act([{ type: 'click', x: finalize.x, y: finalize.y }]);
+      assert.match(
+        String(cdpEval("document.querySelector('#deepLog').textContent")),
+        /FINALIZE ACTION FIRED/
+      );
+
+      // A click on inert background earns a receipt saying nothing changed.
+      const spacer = coords('.spacer');
+      const inert = act([{ type: 'click', x: spacer.x, y: spacer.y }]);
+      assert.equal(inert.clickReceipts?.[0]?.changed, false);
+
+      // Case E: the export completes 6s after the click. Batch one shows
+      // "working…"; batch two starts well before completion, so its region
+      // predicate only passes once the late change lands — proving the
+      // adaptive polling, not a lucky delay. Coordinates are captured before
+      // the click so no exec time is spent mid-window.
+      const delayButton = coords('#delay');
+      const delayLog = coordsNoScroll('#delayLog');
+      act([{ type: 'click', x: delayButton.x, y: delayButton.y }]);
+      // The log text is left-aligned in a wide element: anchor the region at
+      // its left edge, where the change actually renders.
+      const late = act(
+        [{ type: 'move', x: 12, y: 12 }],
+        {
+          regionChanged: {
+            x: Math.max(0, delayLog.left),
+            y: Math.max(0, delayLog.top),
+            width: 300,
+            height: 40,
+          },
+          withinMs: 8000,
+        }
+      );
+      assert.equal(late.expect?.outcome, 'passed', JSON.stringify(late.expect));
+      assert.match(
+        String(cdpEval("document.querySelector('#delayLog').textContent")),
+        /EXPORT COMPLETE/
+      );
     } finally {
       try {
         docker(['rm', '-f', NAME]);
