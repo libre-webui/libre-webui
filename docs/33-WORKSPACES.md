@@ -191,6 +191,28 @@ the sidebar.
 Only one run can be active for a task. A later instruction creates another run
 against the same conversation and filesystem.
 
+### Hire an agent
+
+The landing view offers **Hire as an agent** when you have personas: pick one
+and the created task becomes a persistent named agent instead of a one-off
+task. An agent keeps its persona across runs — the persona's name and system
+prompt are prepended to the Work system prompt (the sandbox runtime contract
+always overrides them) — and the sidebar pins agents in their own **Agents**
+group above ad-hoc tasks, each with the persona avatar, an activity indicator,
+and a one-line status.
+
+The status line is deterministic, not model-generated on request: at the end
+of every run the first line of the final assistant message (bounded to 90
+characters) is stored on the task, so the sidebar answers "what did it last
+do" without opening the conversation. Failed runs store the error's first
+line the same way.
+
+You can hire under a persona you own or one shared with you; the shared view
+never exposes the owner's persona memories. If the persona is later deleted,
+the agent keeps running without it and a warning is logged. The API accepts
+`personaId` and `isAgent` on task creation; a task created with a persona is
+an agent automatically.
+
 ### Understand task status
 
 The interface maps durable backend states to a smaller user-facing set:

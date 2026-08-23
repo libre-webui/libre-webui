@@ -2734,6 +2734,15 @@
       "building": "Membina imej desktop... kali pertama mengambil beberapa minit.",
       "enable": "Dayakan",
       "retry": "Cuba lagi"
+    },
+    "agents": {
+      "title": "Ejen"
+    },
+    "persona": {
+      "label": "Ambil bekerja sebagai ejen (pilihan)",
+      "none": "Tiada persona (tugas sekali sahaja)",
+      "hint": "Tugas ini menjadi ejen bernama: ia mengekalkan persona, kekal disemat pada bar sisi dan melaporkan satu baris status selepas setiap larian.",
+      "description": "Pilih persona untuk menjadikan tugas ini ejen kekal dengan identitinya sendiri."
     }
   },
   "personaBackground": {

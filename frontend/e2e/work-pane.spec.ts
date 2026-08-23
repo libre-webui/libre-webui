@@ -289,6 +289,94 @@ test('creates a persistent Work task without exposing network controls', async (
   );
 });
 
+test('hires a persona as a pinned agent with avatar and status blurb', async ({
+  page,
+}) => {
+  const agentTask = {
+    ...task(
+      'agent-task-1',
+      'Chief of Staff',
+      'Inbox triage finished for today.'
+    ),
+    isAgent: true,
+    personaId: 'persona-1',
+    statusBlurb: 'Inbox at zero. 2 replies ready.',
+  };
+  const mock = await mockLibreWebUiApi(page, {
+    personas: [
+      {
+        id: 'persona-1',
+        name: 'Chief of Staff',
+        description: 'Keeps the inbox at zero.',
+        model: 'llama3.2:3b',
+        parameters: { system_prompt: 'Track the inbox.' },
+        user_id: 'mock-user',
+        created_at: createdAt,
+        updated_at: createdAt,
+      },
+    ],
+    workTasks: [
+      agentTask,
+      task('adhoc-task-1', 'One-off refactor', 'The refactor is done.'),
+    ],
+    workRunResult: {
+      assistantMessage: 'Reporting for duty.',
+      files: [],
+    },
+  });
+
+  await page.goto('/work');
+  await expect(page.getByTestId('work-landing')).toBeVisible();
+
+  // Hired agents sit in their own pinned group above ad-hoc tasks.
+  await expect(
+    page.getByRole('heading', { name: 'Agents', exact: true })
+  ).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: 'Work tasks', exact: true })
+  ).toBeVisible();
+  const rows = page.getByTestId('sidebar-work-task-item');
+  await expect(rows).toHaveCount(2);
+  await expect(rows.first()).toHaveAttribute('data-agent', 'true');
+  await expect(rows.first()).toContainText('Chief of Staff');
+  await expect(page.getByTestId('sidebar-work-agent-avatar')).toBeVisible();
+  await expect(page.getByTestId('sidebar-work-agent-blurb')).toHaveText(
+    'Inbox at zero. 2 replies ready.'
+  );
+  await expect(rows.last()).not.toHaveAttribute('data-agent', 'true');
+
+  // The landing view offers the persona picker; hiring one marks the
+  // created task as an agent.
+  const personaSelect = page.getByTestId('work-persona');
+  await expect(personaSelect).toBeVisible();
+  await personaSelect.selectOption('persona-1');
+  await expect(
+    page.getByText(
+      'This task becomes a named agent: it keeps the persona, stays pinned in the sidebar, and reports a one-line status after each run.'
+    )
+  ).toBeVisible();
+
+  await page.getByTestId('work-composer-input').fill('Clear my inbox');
+  await page.getByTestId('work-submit-button').click();
+
+  await expect(page).toHaveURL(/\/work\/work-task-3$/);
+  expect(mock.workTaskCreateRequests).toEqual([
+    {
+      message: 'Clear my inbox',
+      model: 'llama3.2:3b',
+      providerType: 'ollama',
+      networkEnabled: true,
+      personaId: 'persona-1',
+      isAgent: true,
+    },
+  ]);
+  // The new hire joins the pinned agent group immediately.
+  await expect(page.getByTestId('sidebar-work-task-item')).toHaveCount(3);
+  await expect(
+    page.locator('[data-testid="sidebar-work-task-item"][data-agent="true"]')
+  ).toHaveCount(2);
+});
+
 test('shows a readable LTR model name without changing its identifier', async ({
   page,
 }) => {

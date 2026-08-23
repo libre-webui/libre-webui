@@ -102,6 +102,12 @@ export interface WorkTaskDetail {
   policyId?: string;
   /** True when this task's policy enables the Work Computer GUI session. */
   computerAvailable: boolean;
+  /** Persona whose identity and instructions this task runs under. */
+  personaId?: string;
+  /** One-line status persisted at run completion for the agent sidebar. */
+  statusBlurb?: string;
+  /** True for a task the user hired as a persistent named agent. */
+  isAgent: boolean;
 }
 
 export type WorkLiveEventType =
@@ -327,6 +333,14 @@ export interface WorkTerminalCapability {
   idleTimeoutMs: number;
 }
 
+/** Agent identity chosen at task creation ("hire an agent"). */
+export interface WorkAgentIdentityInput {
+  /** Persona to run the task under; must belong to the creating user. */
+  personaId?: string;
+  /** Pin the task above ad-hoc tasks as a persistent named agent. */
+  isAgent?: boolean;
+}
+
 export interface WorkTaskRecord {
   id: string;
   userId: string;
@@ -348,6 +362,12 @@ export interface WorkTaskRecord {
   previewUpstreamHost?: string;
   /** Private runtime endpoint; never serialize this record to a client. */
   previewUpstreamPort?: number;
+  /** Persona whose identity and instructions this task runs under. */
+  personaId?: string;
+  /** One-line status persisted at run completion for the agent sidebar. */
+  statusBlurb?: string;
+  /** True for a task the user hired as a persistent named agent. */
+  isAgent: boolean;
   createdAt: number;
   updatedAt: number;
 }

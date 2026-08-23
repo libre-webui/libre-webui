@@ -2734,6 +2734,15 @@
       "building": "Budowanie obrazu pulpitu... za pierwszym razem trwa to kilka minut.",
       "enable": "Włącz",
       "retry": "Ponów"
+    },
+    "agents": {
+      "title": "Agenci"
+    },
+    "persona": {
+      "label": "Zatrudnij jako agenta (opcjonalnie)",
+      "none": "Bez persony (zadanie jednorazowe)",
+      "hint": "To zadanie staje się nazwanym agentem: zachowuje personę, pozostaje przypięte na pasku bocznym i po każdym uruchomieniu zgłasza jednowierszowy status.",
+      "description": "Wybierz personę, aby zmienić to zadanie w trwałego agenta z własną tożsamością."
     }
   },
   "personaBackground": {

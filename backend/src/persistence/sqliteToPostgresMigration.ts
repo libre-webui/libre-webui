@@ -890,11 +890,14 @@ const TABLE_MAPPINGS: readonly TableMapping[] = Object.freeze([
       'policy_id',
       'preview_url',
       'preview_status',
+      'persona_id',
+      'status_blurb',
+      'is_agent',
       'created_at',
       'updated_at',
     ],
     ['id'],
-    { integers: [...timestamps, 'network_enabled'] }
+    { integers: [...timestamps, 'network_enabled', 'is_agent'] }
   ),
   table(
     'work_runs',

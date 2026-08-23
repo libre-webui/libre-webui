@@ -38,6 +38,7 @@ import {
   WorkProviderType,
   WorkRun,
   WorkRunStatus,
+  WorkAgentIdentityInput,
   WorkTaskDetail,
   WorkTaskRecord,
   WorkTaskSummary,
@@ -219,7 +220,8 @@ export class WorkTaskService {
     networkEnabled: boolean,
     provider: WorkProviderSelection = { providerType: 'ollama' },
     hostPath?: string,
-    policyId?: string
+    policyId?: string,
+    identity?: WorkAgentIdentityInput
   ): Promise<WorkTaskDetail> {
     return this.withUserLifecycleLease(userId, assertHeld =>
       this.createTaskWithRunWithLeaseHeld(
@@ -230,6 +232,7 @@ export class WorkTaskService {
         provider,
         hostPath,
         policyId,
+        identity,
         assertHeld
       )
     );
@@ -243,6 +246,7 @@ export class WorkTaskService {
     provider: WorkProviderSelection,
     hostPath?: string,
     policyId?: string,
+    identity?: WorkAgentIdentityInput,
     assertHeld: () => Promise<void> = async () => undefined
   ): Promise<WorkTaskDetail> {
     await this.assertUserIsActive(userId);
@@ -271,6 +275,9 @@ export class WorkTaskService {
       preview_status: 'stopped',
       preview_upstream_host: null,
       preview_upstream_port: null,
+      persona_id: identity?.personaId || null,
+      status_blurb: null,
+      is_agent: identity?.isAgent ? 1 : 0,
       created_at: now,
       updated_at: now,
     };
@@ -424,6 +431,9 @@ export class WorkTaskService {
         preview_status: task.previewStatus,
         preview_upstream_host: task.previewUpstreamHost || null,
         preview_upstream_port: task.previewUpstreamPort || null,
+        persona_id: task.personaId || null,
+        status_blurb: task.statusBlurb || null,
+        is_agent: task.isAgent ? 1 : 0,
         created_at: task.createdAt,
         updated_at: task.updatedAt,
       };
@@ -946,9 +956,15 @@ export class WorkTaskService {
 
   async updateTaskStatus(
     taskId: string,
-    status: WorkTaskStatus
+    status: WorkTaskStatus,
+    statusBlurb?: string | null
   ): Promise<void> {
-    await getWorkPersistence().updateTaskStatus(taskId, status, Date.now());
+    await getWorkPersistence().updateTaskStatus(
+      taskId,
+      status,
+      Date.now(),
+      statusBlurb
+    );
   }
 
   async updatePreview(
@@ -1027,6 +1043,9 @@ export class WorkTaskService {
       hostPath: row.host_path || undefined,
       policyId: row.policy_id || undefined,
       computerAvailable: await this.policyEnablesComputer(row.policy_id),
+      personaId: row.persona_id || undefined,
+      statusBlurb: row.status_blurb || undefined,
+      isAgent: row.is_agent === 1,
     };
   }
 
@@ -1140,6 +1159,27 @@ const translatePersistenceError = (
   }
 };
 
+/**
+ * Deterministic one-line status for the agent sidebar: the first non-empty
+ * line of a run's final assistant message, stripped of leading markdown
+ * emphasis and bounded to 90 characters. Returns null when nothing usable
+ * remains so callers can leave the previous blurb in place.
+ */
+export const deriveStatusBlurb = (text: string): string | null => {
+  const line =
+    text
+      .split('\n')
+      .map(candidate => candidate.trim())
+      .find(candidate => candidate.length > 0) ?? '';
+  const cleaned = line
+    .replace(/^#{1,6}\s*/, '')
+    .replace(/^[-*>]\s+/, '')
+    .replace(/\*\*/g, '')
+    .trim();
+  if (!cleaned) return null;
+  return cleaned.length > 90 ? `${cleaned.slice(0, 89).trimEnd()}…` : cleaned;
+};
+
 const mapTaskRecord = (row: TaskRow): WorkTaskRecord => ({
   id: row.id,
   userId: row.user_id,
@@ -1157,6 +1197,9 @@ const mapTaskRecord = (row: TaskRow): WorkTaskRecord => ({
   previewStatus: row.preview_status,
   previewUpstreamHost: row.preview_upstream_host || undefined,
   previewUpstreamPort: row.preview_upstream_port || undefined,
+  personaId: row.persona_id || undefined,
+  statusBlurb: row.status_blurb || undefined,
+  isAgent: row.is_agent === 1,
   createdAt: row.created_at,
   updatedAt: row.updated_at,
 });

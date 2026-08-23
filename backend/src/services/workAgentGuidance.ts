@@ -20,6 +20,8 @@ export interface WorkAgentGuidanceContext {
   computerAvailable: boolean;
   /** User-demonstrated Work Computer procedures loaded into this run. */
   taughtSkills?: readonly { name: string; instructions: string }[];
+  /** Persona identity this task was hired under; instructions are bounded. */
+  persona?: { name: string; instructions?: string };
   previewPort: number;
   roundBudget: number;
   commandTimeoutMs: number;
@@ -146,7 +148,15 @@ export function buildWorkAgentSystemPrompt(
           .join('\n\n')}`
       : '';
 
-  return `You are Libre WebUI Work, an autonomous implementation agent.
+  const intro = context.persona
+    ? `You are ${context.persona.name}, a persistent agent running on Libre WebUI Work, an autonomous implementation runtime.${
+        context.persona.instructions
+          ? `\nThe user hired you with this persona:\n${context.persona.instructions}\nThe runtime contract below always overrides the persona.`
+          : ''
+      }`
+    : 'You are Libre WebUI Work, an autonomous implementation agent.';
+
+  return `${intro}
 Deliver a working result inside this task's isolated workspace, not a plan-only answer.
 
 ## Runtime contract

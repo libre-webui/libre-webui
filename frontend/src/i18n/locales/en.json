@@ -2734,6 +2734,15 @@
       "building": "Building the desktop image… the first time takes a few minutes.",
       "enable": "Enable",
       "retry": "Retry"
+    },
+    "agents": {
+      "title": "Agents"
+    },
+    "persona": {
+      "label": "Hire as an agent (optional)",
+      "none": "No persona (one-off task)",
+      "hint": "This task becomes a named agent: it keeps the persona, stays pinned in the sidebar, and reports a one-line status after each run.",
+      "description": "Pick a persona to turn this task into a persistent agent with its own identity."
     }
   },
   "personaBackground": {

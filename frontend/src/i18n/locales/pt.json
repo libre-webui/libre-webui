@@ -2734,6 +2734,15 @@
       "building": "Construindo a imagem do desktop... a primeira vez leva alguns minutos.",
       "enable": "Ativar",
       "retry": "Tentar novamente"
+    },
+    "agents": {
+      "title": "Agentes"
+    },
+    "persona": {
+      "label": "Contratar como agente (opcional)",
+      "none": "Sem persona (tarefa única)",
+      "hint": "Esta tarefa torna-se um agente nomeado: mantém a persona, fica fixada na barra lateral e informa uma linha de status após cada execução.",
+      "description": "Escolha uma persona para transformar esta tarefa em um agente persistente com identidade própria."
     }
   },
   "personaBackground": {

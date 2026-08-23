@@ -2734,6 +2734,15 @@
       "building": "Masaüstü imajı derleniyor... ilk seferde birkaç dakika sürer.",
       "enable": "Etkinleştir",
       "retry": "Yeniden dene"
+    },
+    "agents": {
+      "title": "Ajanlar"
+    },
+    "persona": {
+      "label": "Ajan olarak işe al (isteğe bağlı)",
+      "none": "Persona yok (tek seferlik görev)",
+      "hint": "Bu görev adlandırılmış bir ajana dönüşür: personayı korur, kenar çubuğunda sabit kalır ve her çalıştırmadan sonra tek satırlık durum bildirir.",
+      "description": "Bu görevi kendi kimliğine sahip kalıcı bir ajana dönüştürmek için bir persona seçin."
     }
   },
   "personaBackground": {

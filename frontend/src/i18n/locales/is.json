@@ -2734,6 +2734,15 @@
       "building": "Byggi skjáborðsmyndina... fyrsta skiptið tekur nokkrar mínútur.",
       "enable": "Virkja",
       "retry": "Reyna aftur"
+    },
+    "agents": {
+      "title": "Fulltrúar"
+    },
+    "persona": {
+      "label": "Ráða sem fulltrúa (valfrjálst)",
+      "none": "Engin persóna (einskiptisverk)",
+      "hint": "Þetta verk verður nefndur fulltrúi: það heldur persónunni, er fest í hliðarstikunni og birtir eina stöðulínu eftir hverja keyrslu.",
+      "description": "Veldu persónu til að breyta þessu verki í varanlegan fulltrúa með eigin auðkenni."
     }
   },
   "personaBackground": {

@@ -116,8 +116,9 @@ export class SQLiteWorkPersistence implements WorkPersistenceRepository {
              id, user_id, title, model, provider_type, provider_id, status,
              network_enabled, volume_name, container_name, host_path, policy_id,
              preview_url, preview_status, preview_upstream_host,
-             preview_upstream_port, created_at, updated_at
-           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+             preview_upstream_port, persona_id, status_blurb, is_agent,
+             created_at, updated_at
+           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
           )
           .run(
             input.task.id,
@@ -136,6 +137,9 @@ export class SQLiteWorkPersistence implements WorkPersistenceRepository {
             input.task.preview_status,
             input.task.preview_upstream_host,
             input.task.preview_upstream_port,
+            input.task.persona_id,
+            input.task.status_blurb,
+            input.task.is_agent,
             input.task.created_at,
             input.task.updated_at
           );
@@ -459,11 +463,22 @@ export class SQLiteWorkPersistence implements WorkPersistenceRepository {
   async updateTaskStatus(
     taskId: string,
     status: WorkTaskStatus,
-    now: number
+    now: number,
+    statusBlurb?: string | null
   ): Promise<void> {
+    if (statusBlurb === undefined) {
+      this.database
+        .prepare(
+          'UPDATE work_tasks SET status = ?, updated_at = ? WHERE id = ?'
+        )
+        .run(status, now, taskId);
+      return;
+    }
     this.database
-      .prepare('UPDATE work_tasks SET status = ?, updated_at = ? WHERE id = ?')
-      .run(status, now, taskId);
+      .prepare(
+        'UPDATE work_tasks SET status = ?, status_blurb = ?, updated_at = ? WHERE id = ?'
+      )
+      .run(status, statusBlurb, now, taskId);
   }
 
   async updatePreview(

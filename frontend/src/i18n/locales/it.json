@@ -2734,6 +2734,15 @@
       "building": "Compilazione dell'immagine desktop... la prima volta richiede qualche minuto.",
       "enable": "Attiva",
       "retry": "Riprova"
+    },
+    "agents": {
+      "title": "Agenti"
+    },
+    "persona": {
+      "label": "Assumi come agente (facoltativo)",
+      "none": "Nessuna persona (attività una tantum)",
+      "hint": "Questa attività diventa un agente con nome: mantiene la persona, resta fissata nella barra laterale e riporta una riga di stato dopo ogni esecuzione.",
+      "description": "Scegli una persona per trasformare questa attività in un agente permanente con una propria identità."
     }
   },
   "personaBackground": {

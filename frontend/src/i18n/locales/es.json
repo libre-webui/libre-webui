@@ -2734,6 +2734,15 @@
       "building": "Construyendo la imagen del escritorio... la primera vez tarda unos minutos.",
       "enable": "Activar",
       "retry": "Reintentar"
+    },
+    "agents": {
+      "title": "Agentes"
+    },
+    "persona": {
+      "label": "Contratar como agente (opcional)",
+      "none": "Sin persona (tarea puntual)",
+      "hint": "Esta tarea se convierte en un agente con nombre: conserva la persona, permanece fijada en la barra lateral e informa una línea de estado después de cada ejecución.",
+      "description": "Elige una persona para convertir esta tarea en un agente persistente con identidad propia."
     }
   },
   "personaBackground": {

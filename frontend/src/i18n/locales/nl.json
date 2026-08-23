@@ -2734,6 +2734,15 @@
       "building": "Desktop-image wordt gebouwd... de eerste keer duurt enkele minuten.",
       "enable": "Inschakelen",
       "retry": "Opnieuw proberen"
+    },
+    "agents": {
+      "title": "Agents"
+    },
+    "persona": {
+      "label": "Aannemen als agent (optioneel)",
+      "none": "Geen persona (eenmalige taak)",
+      "hint": "Deze taak wordt een benoemde agent: hij behoudt de persona, blijft vastgezet in de zijbalk en meldt na elke run een statusregel.",
+      "description": "Kies een persona om van deze taak een blijvende agent met een eigen identiteit te maken."
     }
   },
   "personaBackground": {

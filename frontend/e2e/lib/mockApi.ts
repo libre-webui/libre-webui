@@ -364,6 +364,21 @@ type MockWorkTask = {
   previewUrl?: string | null;
   previewStatus: 'stopped' | 'starting' | 'running' | 'failed';
   workspacePath: '/workspace';
+  personaId?: string | null;
+  statusBlurb?: string | null;
+  isAgent?: boolean;
+};
+
+type MockPersona = {
+  id: string;
+  name: string;
+  description?: string;
+  model: string;
+  parameters: Record<string, unknown>;
+  avatar?: string;
+  user_id: string;
+  created_at: number;
+  updated_at: number;
 };
 
 type MockWorkFile = {
@@ -474,6 +489,7 @@ type MockOptions = {
   workFileUpdateFailure?: string;
   workRunResult?: MockWorkRunResult;
   workTaskTransition?: MockWorkTaskTransition;
+  personas?: MockPersona[];
 };
 
 const defaultSystemInfo: MockSystemInfo = {
@@ -744,6 +760,8 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
     providerType: 'ollama' | 'plugin';
     providerId?: string;
     networkEnabled: boolean;
+    personaId?: string;
+    isAgent?: boolean;
   }> = [];
   const workTaskDetailRequests: string[] = [];
   const workTaskListRequests: number[] = [];
@@ -1646,6 +1664,8 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
           providerType: 'ollama' | 'plugin';
           providerId?: string;
           networkEnabled: boolean;
+          personaId?: string;
+          isAgent?: boolean;
         };
         const now = Date.now();
         const task: MockWorkTask = {
@@ -1665,6 +1685,10 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
           previewUrl: null,
           previewStatus: 'stopped',
           workspacePath: '/workspace',
+          ...(request.personaId ? { personaId: request.personaId } : {}),
+          ...(request.isAgent === true || request.personaId
+            ? { isAgent: true }
+            : {}),
         };
 
         workTaskCreateRequests.push(request);
@@ -2231,7 +2255,7 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
       }
 
       if (path === '/personas' && method === 'GET') {
-        await fulfillJson(route, []);
+        await fulfillJson(route, options.personas ?? []);
         return;
       }
 

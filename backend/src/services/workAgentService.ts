@@ -50,6 +50,7 @@ import workTaskService, {
   WORK_MESSAGE_METADATA_MAX_BYTES,
   WorkConflictError,
   WorkNotFoundError,
+  deriveStatusBlurb,
 } from './workTaskService.js';
 import { OllamaChatMessage, OllamaChatResponse } from '../types/index.js';
 import {
@@ -82,6 +83,9 @@ const WORK_EMPTY_ROUND_NUDGE_LIMIT = 2;
 // Cross-run replay only needs the shape of past tool calls, not full
 // write_file payloads; bound each persisted argument set.
 const WORK_CHAT_TOOL_CALL_ARGUMENTS_MAX_BYTES = 4_096;
+// Persona instructions share the taught-skill bound so one persona cannot
+// crowd the working context out of the system prompt.
+const PERSONA_INSTRUCTION_MAX_CHARS = 6_000;
 const INTERRUPTED_TOOL_RESULT =
   'Tool execution was interrupted; outcome unknown. Inspect the workspace before retrying.';
 
@@ -791,6 +795,43 @@ export class WorkAgentService {
           logger.warn(`Could not load taught skills for run ${runId}:`, error);
         }
       }
+      let persona: { name: string; instructions?: string } | undefined;
+      if (task.personaId) {
+        try {
+          const { personaService } = await import('./personaService.js');
+          const record = await personaService.getBasicPersonaById(
+            task.personaId,
+            userId
+          );
+          if (record) {
+            const instructions = record.parameters?.system_prompt
+              ?.trim()
+              .slice(0, PERSONA_INSTRUCTION_MAX_CHARS);
+            persona = {
+              name: record.name,
+              ...(instructions ? { instructions } : {}),
+            };
+            await workEventService.publish(
+              taskId,
+              runId,
+              'skill_loaded',
+              {
+                id: `persona:${record.id}`,
+                name: record.name,
+                description: 'Persona identity this agent runs under.',
+              },
+              `skill:persona:${record.id}`,
+              durableAttemptIdentity
+            );
+          } else {
+            logger.warn(
+              `Persona ${task.personaId} for task ${taskId} is no longer accessible; running without it.`
+            );
+          }
+        } catch (error) {
+          logger.warn(`Could not load persona for run ${runId}:`, error);
+        }
+      }
       for (const skill of workAgentSkillsForContext({ computerAvailable })) {
         await workEventService.publish(
           taskId,
@@ -850,7 +891,8 @@ export class WorkAgentService {
         computerAvailable,
         taughtSkills,
         providerStateScope,
-        run
+        run,
+        persona
       );
       let totalToolCalls = 0;
       let accumulatedInputTokens = 0;
@@ -1127,7 +1169,11 @@ export class WorkAgentService {
           await workTaskService.updateRun(runId, 'completed', {
             finished: true,
           });
-          await workTaskService.updateTaskStatus(taskId, 'completed');
+          await workTaskService.updateTaskStatus(
+            taskId,
+            'completed',
+            deriveStatusBlurb(finalContent)
+          );
           await workEventService.publish(
             taskId,
             runId,
@@ -1516,7 +1562,11 @@ export class WorkAgentService {
       if (!isActiveRunStatus((await workTaskService.getRun(runId))?.status))
         return;
       await workTaskService.updateRun(runId, 'needs_input', { finished: true });
-      await workTaskService.updateTaskStatus(taskId, 'needs_input');
+      await workTaskService.updateTaskStatus(
+        taskId,
+        'needs_input',
+        deriveStatusBlurb(handoffContent)
+      );
       await workEventService.publish(
         taskId,
         runId,
@@ -1605,7 +1655,11 @@ export class WorkAgentService {
         error: message,
         finished: true,
       });
-      await workTaskService.updateTaskStatus(taskId, 'failed');
+      await workTaskService.updateTaskStatus(
+        taskId,
+        'failed',
+        deriveStatusBlurb(message)
+      );
       await workEventService.publish(
         taskId,
         runId,
@@ -1697,7 +1751,8 @@ export class WorkAgentService {
     computerAvailable: boolean,
     taughtSkills: readonly { name: string; instructions: string }[],
     providerStateScope?: string,
-    provider: Pick<WorkRun, 'providerType' | 'providerId' | 'model'> = task
+    provider: Pick<WorkRun, 'providerType' | 'providerId' | 'model'> = task,
+    persona?: { name: string; instructions?: string }
   ): Promise<OllamaChatMessage[]> {
     const persisted = restorePersistedWorkContext(
       await workTaskService.getRecentModelContextMessages(task.id, 30),
@@ -1711,6 +1766,7 @@ export class WorkAgentService {
           networkEnabled: task.networkEnabled,
           computerAvailable,
           ...(taughtSkills.length > 0 ? { taughtSkills } : {}),
+          ...(persona ? { persona } : {}),
           previewPort: workRuntimeService.previewPort,
           roundBudget: roundLimit,
           commandTimeoutMs: workRuntimeService.limits.commandTimeoutMs,

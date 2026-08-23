@@ -2734,6 +2734,15 @@
       "building": "Bygger skrivbordsavbilden... första gången tar det några minuter.",
       "enable": "Aktivera",
       "retry": "Försök igen"
+    },
+    "agents": {
+      "title": "Agenter"
+    },
+    "persona": {
+      "label": "Anlita som agent (valfritt)",
+      "none": "Ingen persona (engångsuppgift)",
+      "hint": "Den här uppgiften blir en namngiven agent: den behåller personan, förblir fäst i sidofältet och rapporterar en statusrad efter varje körning.",
+      "description": "Välj en persona för att göra uppgiften till en beständig agent med egen identitet."
     }
   },
   "personaBackground": {

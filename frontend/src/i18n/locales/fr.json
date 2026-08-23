@@ -2734,6 +2734,15 @@
       "building": "Construction de l'image du bureau... la première fois prend quelques minutes.",
       "enable": "Activer",
       "retry": "Réessayer"
+    },
+    "agents": {
+      "title": "Agents"
+    },
+    "persona": {
+      "label": "Recruter comme agent (facultatif)",
+      "none": "Aucune persona (tâche ponctuelle)",
+      "hint": "Cette tâche devient un agent nommé : elle conserve la persona, reste épinglée dans la barre latérale et affiche une ligne d'état après chaque exécution.",
+      "description": "Choisissez une persona pour transformer cette tâche en agent permanent avec sa propre identité."
     }
   },
   "personaBackground": {

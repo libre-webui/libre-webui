@@ -399,6 +399,30 @@ router.post(
           );
         }
       }
+      const requestedPersonaId =
+        typeof req.body?.personaId === 'string'
+          ? req.body.personaId.trim()
+          : '';
+      if (requestedPersonaId.length > 128) {
+        throw new WorkRouteError('The persona reference is invalid.', 400);
+      }
+      if (requestedPersonaId) {
+        // A task can run under a persona the creating user owns or holds a
+        // read grant on; the shared view never exposes the owner's memories.
+        const { personaService } =
+          await import('../services/personaService.js');
+        const persona = await personaService.getBasicPersonaById(
+          requestedPersonaId,
+          userId
+        );
+        if (!persona) {
+          throw new WorkRouteError(
+            'The selected persona no longer exists.',
+            400
+          );
+        }
+      }
+      const isAgent = req.body?.isAgent === true || Boolean(requestedPersonaId);
       await workModelProviderService.assertModelSupportsTools(
         model,
         provider,
@@ -411,7 +435,11 @@ router.post(
         policy?.networkDefault ?? true,
         provider,
         hostPath,
-        policy?.id
+        policy?.id,
+        {
+          personaId: requestedPersonaId || undefined,
+          isAgent,
+        }
       );
       const runId = detail.activeRun?.id;
       if (!runId) {

@@ -140,6 +140,65 @@ test('guidance rejects invalid runtime facts before prompt interpolation', () =>
   assert.throws(() => workToolCallBudget(0), RangeError);
 });
 
+test('a hired persona renames the agent and prepends its instructions', () => {
+  const withoutPersona = buildWorkAgentSystemPrompt(guidanceContext);
+  assert.match(
+    withoutPersona,
+    /^You are Libre WebUI Work, an autonomous implementation agent\./
+  );
+
+  const named = buildWorkAgentSystemPrompt({
+    ...guidanceContext,
+    persona: { name: 'Chief of Staff' },
+  });
+  assert.match(
+    named,
+    /^You are Chief of Staff, a persistent agent running on Libre WebUI Work/
+  );
+  assert.doesNotMatch(named, /hired you with this persona/);
+
+  const instructed = buildWorkAgentSystemPrompt({
+    ...guidanceContext,
+    persona: {
+      name: 'Chief of Staff',
+      instructions: 'Track the inbox and keep replies short.',
+    },
+  });
+  assert.match(instructed, /hired you with this persona/);
+  assert.match(instructed, /Track the inbox and keep replies short\./);
+  // The persona can never displace the sandbox rules.
+  assert.match(
+    instructed,
+    /runtime contract below always overrides the persona/
+  );
+  assert.match(instructed, /only durable filesystem location/);
+});
+
+test('status blurbs are deterministic, single-line, and bounded', async () => {
+  const taskServiceModule = await import(
+    pathToFileURL(
+      path.join(repoRoot, 'backend', 'dist', 'services', 'workTaskService.js')
+    ).href
+  );
+  const { deriveStatusBlurb } = taskServiceModule;
+
+  assert.equal(deriveStatusBlurb('Inbox at zero. 2 replies ready.'), 'Inbox at zero. 2 replies ready.');
+  // First non-empty line wins, markdown lead-ins are stripped.
+  assert.equal(
+    deriveStatusBlurb('\n\n## Done\nThe rest of the message.'),
+    'Done'
+  );
+  assert.equal(deriveStatusBlurb('- **Shipped** the fix'), 'Shipped the fix');
+  // Bounded to 90 characters with an ellipsis.
+  const long = 'a'.repeat(200);
+  const blurb = deriveStatusBlurb(long);
+  assert.equal(blurb.length, 90);
+  assert.ok(blurb.endsWith('…'));
+  // Nothing usable leaves the previous blurb in place.
+  assert.equal(deriveStatusBlurb('   \n  \n'), null);
+  assert.equal(deriveStatusBlurb('##'), null);
+});
+
 test('budget exhaustion asks for an honest no-tools handoff', () => {
   const prompt = buildWorkBudgetExhaustionPrompt();
 

@@ -30,6 +30,9 @@ export interface WorkTaskRow {
   preview_status: WorkPreviewStatus;
   preview_upstream_host: string | null;
   preview_upstream_port: number | null;
+  persona_id: string | null;
+  status_blurb: string | null;
+  is_agent: number | null;
   created_at: number;
   updated_at: number;
 }
@@ -181,7 +184,8 @@ export interface WorkPersistenceRepository {
   updateTaskStatus(
     taskId: string,
     status: WorkTaskStatus,
-    now: number
+    now: number,
+    statusBlurb?: string | null
   ): Promise<void>;
   updatePreview(
     taskId: string,

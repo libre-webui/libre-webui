@@ -2734,6 +2734,15 @@
       "building": "Sestavuje se obraz plochy... poprvé to může trvat několik minut.",
       "enable": "Zapnout",
       "retry": "Zkusit znovu"
+    },
+    "agents": {
+      "title": "Agenti"
+    },
+    "persona": {
+      "label": "Najmout jako agenta (volitelné)",
+      "none": "Bez persony (jednorázový úkol)",
+      "hint": "Z tohoto úkolu se stane pojmenovaný agent: ponechá si personu, zůstane připnutý v postranním panelu a po každém běhu hlásí jednořádkový stav.",
+      "description": "Vyberte personu a proměňte tento úkol v trvalého agenta s vlastní identitou."
     }
   },
   "personaBackground": {

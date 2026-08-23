@@ -2734,6 +2734,15 @@
       "building": "Das Desktop-Image wird gebaut... beim ersten Mal kann das einige Minuten dauern.",
       "enable": "Aktivieren",
       "retry": "Erneut versuchen"
+    },
+    "agents": {
+      "title": "Agenten"
+    },
+    "persona": {
+      "label": "Als Agent einstellen (optional)",
+      "none": "Keine Persona (einmalige Aufgabe)",
+      "hint": "Diese Aufgabe wird zu einem benannten Agenten: Sie behält die Persona, bleibt in der Seitenleiste angeheftet und meldet nach jedem Lauf einen einzeiligen Status.",
+      "description": "Wähle eine Persona, um diese Aufgabe in einen dauerhaften Agenten mit eigener Identität zu verwandeln."
     }
   },
   "personaBackground": {

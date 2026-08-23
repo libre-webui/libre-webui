@@ -2734,6 +2734,15 @@
       "building": "Skrivebordsaftrykket bygges... første gang kan det tage nogle minutter.",
       "enable": "Aktivér",
       "retry": "Prøv igen"
+    },
+    "agents": {
+      "title": "Agenter"
+    },
+    "persona": {
+      "label": "Ansæt som agent (valgfrit)",
+      "none": "Ingen persona (engangsopgave)",
+      "hint": "Denne opgave bliver en navngiven agent: den beholder personaen, forbliver fastgjort i sidepanelet og rapporterer en statuslinje efter hver kørsel.",
+      "description": "Vælg en persona for at gøre denne opgave til en vedvarende agent med sin egen identitet."
     }
   },
   "personaBackground": {

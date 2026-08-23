@@ -206,6 +206,18 @@ export default function WorkPage() {
   // (the common case) renders no picker at all.
   const [policies, setPolicies] = useState<WorkPolicy[]>([]);
   const [policyId, setPolicyId] = useState('');
+  // Hiring a persona turns the task into a persistent named agent pinned
+  // above ad-hoc tasks in the sidebar.
+  const personas = useChatStore(state => state.personas);
+  const loadPersonas = useChatStore(state => state.loadPersonas);
+  const [personaId, setPersonaId] = useState('');
+  const personaList = useMemo(
+    () =>
+      Object.values(personas).sort((left, right) =>
+        left.name.localeCompare(right.name)
+      ),
+    [personas]
+  );
   // The picker only appears on the landing view, so refresh the list every
   // time the user returns there: an administrator may have added or deleted
   // policies since the last visit, and a stale selected id would 400 on
@@ -229,6 +241,16 @@ export default function WorkPage() {
       cancelled = true;
     };
   }, [onLanding]);
+  // Personas back the "hire an agent" picker; refresh on each landing visit
+  // and drop a selection whose persona has since been deleted.
+  useEffect(() => {
+    if (!onLanding) return;
+    void loadPersonas().catch(() => {});
+  }, [onLanding, loadPersonas]);
+  useEffect(() => {
+    if (!personaId) return;
+    if (personaList.length > 0 && !personas[personaId]) setPersonaId('');
+  }, [personaId, personaList.length, personas]);
   // One-click Work Computer onboarding: the backend builds the bundled GUI
   // image and creates the policy; this just presses the button and polls.
   const [computerSetupBusy, setComputerSetupBusy] = useState(false);
@@ -687,6 +709,7 @@ export default function WorkPage() {
             ? { hostPath: hostPath.trim() }
             : {}),
           ...(policyId ? { policyId } : {}),
+          ...(personaId ? { personaId, isAgent: true } : {}),
         });
         navigate(`/work/${task.id}`);
       }
@@ -1310,6 +1333,47 @@ export default function WorkPage() {
                       </option>
                     ))}
                   </select>
+                </div>
+              )}
+              {personaList.length > 0 && (
+                <div className='mt-8 w-full max-w-2xl'>
+                  <label
+                    htmlFor='work-persona'
+                    className='mb-1.5 block text-xs font-medium text-ink-muted'
+                  >
+                    {t('work.persona.label', {
+                      defaultValue: 'Hire as an agent (optional)',
+                    })}
+                  </label>
+                  <select
+                    id='work-persona'
+                    data-testid='work-persona'
+                    value={personaId}
+                    onChange={event => setPersonaId(event.target.value)}
+                    className='w-full rounded-xl border border-line bg-surface px-3 py-2 text-[13px] text-ink outline-none transition-colors focus:border-line-strong focus-visible:ring-2 focus-visible:ring-primary-500/30'
+                  >
+                    <option value=''>
+                      {t('work.persona.none', {
+                        defaultValue: 'No persona (one-off task)',
+                      })}
+                    </option>
+                    {personaList.map(persona => (
+                      <option key={persona.id} value={persona.id}>
+                        {persona.name}
+                      </option>
+                    ))}
+                  </select>
+                  <p className='mt-1.5 text-[11px] leading-relaxed text-ink-subtle'>
+                    {personaId
+                      ? t('work.persona.hint', {
+                          defaultValue:
+                            'This task becomes a named agent: it keeps the persona, stays pinned in the sidebar, and reports a one-line status after each run.',
+                        })
+                      : t('work.persona.description', {
+                          defaultValue:
+                            'Pick a persona to turn this task into a persistent agent with its own identity.',
+                        })}
+                  </p>
                 </div>
               )}
               {!hasComputerPolicy && authenticatedUser?.role === 'admin' && (

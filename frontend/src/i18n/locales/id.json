@@ -2734,6 +2734,15 @@
       "building": "Membangun image desktop... pertama kali butuh beberapa menit.",
       "enable": "Aktifkan",
       "retry": "Coba lagi"
+    },
+    "agents": {
+      "title": "Agen"
+    },
+    "persona": {
+      "label": "Pekerjakan sebagai agen (opsional)",
+      "none": "Tanpa persona (tugas sekali jalan)",
+      "hint": "Tugas ini menjadi agen bernama: mempertahankan persona, tetap tersemat di bilah samping, dan melaporkan satu baris status setelah setiap eksekusi.",
+      "description": "Pilih persona untuk mengubah tugas ini menjadi agen permanen dengan identitasnya sendiri."
     }
   },
   "personaBackground": {

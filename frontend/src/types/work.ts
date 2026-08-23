@@ -257,6 +257,12 @@ export interface WorkTaskSummary {
   hostPath?: string | null;
   /** Named runtime policy this task runs under; absent = global defaults. */
   policyId?: string | null;
+  /** Persona whose identity and instructions this task runs under. */
+  personaId?: string | null;
+  /** One-line status persisted at run completion for the agent sidebar. */
+  statusBlurb?: string | null;
+  /** True for a task the user hired as a persistent named agent. */
+  isAgent?: boolean;
 }
 
 export interface WorkTask extends WorkTaskSummary {
@@ -327,6 +333,10 @@ export interface CreateWorkTaskRequest {
   hostPath?: string;
   /** Named runtime policy to create the task under. */
   policyId?: string;
+  /** Persona to hire this task under; implies isAgent server-side. */
+  personaId?: string;
+  /** Pin the task above ad-hoc tasks as a persistent named agent. */
+  isAgent?: boolean;
 }
 
 export interface WorkPolicy {
