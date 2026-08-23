@@ -434,6 +434,12 @@ the only supported way for a model to leave a process running. Ordinary
 
 ### Screen (the Work Computer)
 
+<video controls preload="metadata" width="100%" src="https://s3.librewebui.org/media/work-computer-demo.mp4?v=1"></video>
+
+_A real, unedited run (30x, then real time): a Work agent browsing NASA's
+image galleries on its own screen, choosing photos, then building and
+testing an interactive Three.js gallery — all from one prompt._
+
 A task whose policy enables the **Work Computer** gains a Screen tab: a live
 window onto a virtual desktop running inside the same sandbox — a window
 manager, a dock, and a Chromium browser on a 1280×800 display. You can
