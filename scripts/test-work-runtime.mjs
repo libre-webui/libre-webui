@@ -387,6 +387,139 @@ test('computer_act validates focus assertions and expectation declarations', () 
   }
 });
 
+test('the policy match demands exactly the ports the policy publishes', async () => {
+  const sharedModule = await import(
+    pathToFileURL(
+      path.join(repoRoot, 'backend', 'dist', 'services', 'workRuntimeShared.js')
+    ).href
+  );
+  const driverModule = await import(
+    pathToFileURL(
+      path.join(repoRoot, 'backend', 'dist', 'services', 'workRuntimeDriver.js')
+    ).href
+  );
+  const { computePolicyFingerprint } = sharedModule;
+  const driver = new driverModule.DockerWorkRuntimeDriver();
+
+  const guiPolicy = {
+    policyId: 'port-match-policy',
+    image: 'libre-work-computer:latest',
+    memoryLimit: '2g',
+    cpuLimit: '2',
+    pidsLimit: 256,
+    idleTimeoutMs: 0,
+    guiEnabled: true,
+  };
+  const headlessPolicy = { ...guiPolicy, guiEnabled: false };
+  const baseTask = {
+    id: 'task-port-match',
+    userId: 'admin-a',
+    networkEnabled: true,
+    containerName: 'container-port-match',
+    volumeName: 'volume-port-match',
+  };
+  const binding = port => ({
+    [`${port}/tcp`]: [{ HostIp: '127.0.0.1', HostPort: String(40000 + port) }],
+  });
+  const inspectFixture = (policy, portBindings, networkMode) => ({
+    Config: {
+      Labels: {
+        'ai.libre-webui.managed': 'true',
+        'ai.libre-webui.task': baseTask.id,
+        'ai.libre-webui.policy': computePolicyFingerprint(policy),
+      },
+      Image: policy.image,
+      User: '1000:1000',
+      WorkingDir: '/workspace',
+      Cmd: ['tail', '-f', '/dev/null'],
+      Env: ['HOME=/tmp', 'NPM_CONFIG_CACHE=/tmp/npm-cache'],
+    },
+    HostConfig: {
+      ReadonlyRootfs: true,
+      Privileged: false,
+      CapDrop: ['ALL'],
+      SecurityOpt: ['no-new-privileges'],
+      PidsLimit: policy.pidsLimit,
+      Memory: 2147483648,
+      MemorySwap: 2147483648,
+      NanoCpus: 2000000000,
+      NetworkMode: networkMode ?? 'libre-webui-work',
+      PortBindings: portBindings,
+    },
+    Mounts: [
+      {
+        Type: 'volume',
+        Name: baseTask.volumeName,
+        Destination: '/workspace',
+        RW: true,
+      },
+    ],
+  });
+  const matches = async (policy, portBindings, override = {}) => {
+    driver.docker = async () => ({
+      exitCode: 0,
+      stdout: JSON.stringify(
+        inspectFixture(policy, portBindings, override.networkMode)
+      ),
+      stderr: '',
+      truncated: false,
+    });
+    return driver.containerMatchesTaskPolicy(
+      { ...baseTask, ...(override.task ?? {}) },
+      policy
+    );
+  };
+
+  // A GUI container publishes preview + screen + audio, all on the bind.
+  assert.equal(
+    await matches(guiPolicy, {
+      ...binding(4173),
+      ...binding(6080),
+      ...binding(6081),
+    }),
+    true
+  );
+  // Two ports was the pre-audio shape: stale, must recreate.
+  assert.equal(
+    await matches(guiPolicy, { ...binding(4173), ...binding(6080) }),
+    false
+  );
+  // Right count, wrong interface: not this deployment's publish.
+  assert.equal(
+    await matches(guiPolicy, {
+      ...binding(4173),
+      ...binding(6080),
+      '6081/tcp': [{ HostIp: '0.0.0.0', HostPort: '46081' }],
+    }),
+    false
+  );
+  // Headless publishes exactly the preview port — no more, no fewer.
+  assert.equal(await matches(headlessPolicy, binding(4173)), true);
+  assert.equal(
+    await matches(headlessPolicy, { ...binding(4173), ...binding(6080) }),
+    false
+  );
+  // Network-disabled tasks publish nothing at all.
+  assert.equal(
+    await matches(
+      headlessPolicy,
+      {},
+      {
+        networkMode: 'none',
+        task: { networkEnabled: false },
+      }
+    ),
+    true
+  );
+  assert.equal(
+    await matches(headlessPolicy, binding(4173), {
+      networkMode: 'none',
+      task: { networkEnabled: false },
+    }),
+    false
+  );
+});
+
 test('the Work Computer and screen viewers survive a lease held elsewhere', async () => {
   const sharedModule = await import(
     pathToFileURL(
@@ -435,9 +568,7 @@ test('the Work Computer and screen viewers survive a lease held elsewhere', asyn
       volumeName: 'volume-computer-lease-attach',
     };
     await service.startComputer(task);
-    assert.ok(
-      execCommands.some(command => command.includes('start-computer'))
-    );
+    assert.ok(execCommands.some(command => command.includes('start-computer')));
 
     // A viewer never takes the runtime lease at all: watching must neither
     // fail against an active run nor block the next run from starting.

@@ -446,9 +446,11 @@ a **Work Computer** card with an **Enable** button. Pressing it builds the
 bundled GUI image on the deployment's own Docker daemon (the first build
 takes a few minutes) and creates a ready **Work Computer** policy — no
 manual `docker build` or policy fields required. Behind a filtered Docker
-API proxy the build endpoint is deliberately denied; build the image on
-the Docker host from `deploy/work-computer/` instead, and **Enable** then
-skips the build and only creates the policy. Tasks under the policy must
+API proxy the build endpoint is deliberately denied; pull the published
+image on the Docker host instead
+(`ghcr.io/libre-webui/libre-work-computer`, tagged `libre-work-computer:latest`)
+or build it there from `deploy/work-computer/`, and **Enable** then skips
+the build and only creates the policy. Tasks under the policy must
 have network access — the screen is reached over a loopback-published
 container port, exactly like the preview.
 

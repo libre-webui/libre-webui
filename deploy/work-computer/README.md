@@ -6,6 +6,19 @@ openbox with a tint2 dock), Chromium, and a loopback-only VNC server bridged to 
 running this image under a policy with **Work Computer** enabled get a live,
 watchable screen in the Work view.
 
+## Pull (recommended)
+
+CI publishes this image on every change to this directory, built on the
+exact Work base pin from the application source:
+
+```bash
+docker pull ghcr.io/libre-webui/libre-work-computer:main   # or :dev
+docker tag ghcr.io/libre-webui/libre-work-computer:main libre-work-computer:latest
+```
+
+Behind a filtered Docker API proxy that denies `/build`, this is the whole
+install: pull and tag on the Docker host, then press **Enable**.
+
 ## Build
 
 ```bash
