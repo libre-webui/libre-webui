@@ -213,6 +213,8 @@ a Work agent browsing NASA's galleries on its own screen, choosing
 photos, then building and testing an interactive Three.js gallery,
 unedited, from a single prompt.
 
+https://github.com/user-attachments/assets/acd1ee80-c643-4622-bee6-3cdc2325a4ca
+
 With the **Work Computer** enabled (one click for an administrator; the
 GUI image is published ready to pull), each task also gets a live virtual
 desktop: watch the agent browse in real time, unmute the computer's
