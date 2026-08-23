@@ -2589,7 +2589,8 @@
       "splitSize": "Konversation {{conversation}} %, arbetsyta {{workspace}} %",
       "terminal": "Terminal",
       "git": "Git",
-      "screen": "Skärm"
+      "screen": "Skärm",
+      "agent": "Agent"
     },
     "files": {
       "discard": "Kassera osparade filändringar?",
@@ -2743,6 +2744,19 @@
       "none": "Ingen persona (engångsuppgift)",
       "hint": "Den här uppgiften blir en namngiven agent: den behåller personan, förblir fäst i sidofältet och rapporterar en statusrad efter varje körning.",
       "description": "Välj en persona för att göra uppgiften till en beständig agent med egen identitet."
+    },
+    "agent": {
+      "openScreen": "Öppna helskärmsvyn",
+      "personaLine": "Persona: {{name}}",
+      "screen": "Skärm",
+      "routines": "Rutiner",
+      "addRoutine": "Rutin",
+      "noRoutines": "Inga rutiner ännu. En rutin kör en instruktion enligt schema, inne i den här agentens arbetsyta.",
+      "routineToggleFailed": "Rutinen kunde inte uppdateras.",
+      "routineSaveFailed": "Rutinen kunde inte sparas.",
+      "skills": "Inlärda färdigheter",
+      "noSkills": "Inget inlärt ännu. Använd Teach på Skärm-fliken för att demonstrera en procedur en gång; den blir en återspelbar färdighet.",
+      "skillToggleFailed": "Färdigheten kunde inte uppdateras."
     }
   },
   "personaBackground": {
@@ -2938,7 +2952,8 @@
       "targetChat": "Chattsession",
       "targetWork": "Work-uppgift",
       "workPolicy": "Work-policy",
-      "workPolicyDefault": "Standard (globala gränser)"
+      "workPolicyDefault": "Standard (globala gränser)",
+      "taskBoundNote": "Den här rutinen körs inne i agentens egen arbetsyta och konversation, med agentens modell och körmiljö."
     },
     "kind": {
       "once": "En gång",

@@ -2589,7 +2589,8 @@
       "splitSize": "Unterhaltung {{conversation}} %, Arbeitsbereich {{workspace}} %",
       "terminal": "Terminal",
       "git": "Git",
-      "screen": "Bildschirm"
+      "screen": "Bildschirm",
+      "agent": "Agent"
     },
     "files": {
       "discard": "Ungespeicherte Dateiänderungen verwerfen?",
@@ -2743,6 +2744,19 @@
       "none": "Keine Persona (einmalige Aufgabe)",
       "hint": "Diese Aufgabe wird zu einem benannten Agenten: Sie behält die Persona, bleibt in der Seitenleiste angeheftet und meldet nach jedem Lauf einen einzeiligen Status.",
       "description": "Wähle eine Persona, um diese Aufgabe in einen dauerhaften Agenten mit eigener Identität zu verwandeln."
+    },
+    "agent": {
+      "openScreen": "Vollbildansicht öffnen",
+      "personaLine": "Persona: {{name}}",
+      "screen": "Bildschirm",
+      "routines": "Routinen",
+      "addRoutine": "Routine",
+      "noRoutines": "Noch keine Routinen. Eine Routine führt eine Anweisung nach Zeitplan im Arbeitsbereich dieses Agenten aus.",
+      "routineToggleFailed": "Die Routine konnte nicht aktualisiert werden.",
+      "routineSaveFailed": "Die Routine konnte nicht gespeichert werden.",
+      "skills": "Beigebrachte Fähigkeiten",
+      "noSkills": "Noch nichts beigebracht. Nutze Teach im Bildschirm-Tab, um einen Ablauf einmal vorzuführen; er wird zu einer wiederholbaren Fähigkeit.",
+      "skillToggleFailed": "Die Fähigkeit konnte nicht aktualisiert werden."
     }
   },
   "personaBackground": {
@@ -2938,7 +2952,8 @@
       "targetChat": "Chat-Sitzung",
       "targetWork": "Work-Aufgabe",
       "workPolicy": "Work-Richtlinie",
-      "workPolicyDefault": "Standard (globale Limits)"
+      "workPolicyDefault": "Standard (globale Limits)",
+      "taskBoundNote": "Diese Routine läuft im eigenen Arbeitsbereich und Gespräch des Agenten, mit Modell und Laufzeitumgebung des Agenten."
     },
     "kind": {
       "once": "Einmalig",

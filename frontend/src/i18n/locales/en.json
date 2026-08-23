@@ -2589,7 +2589,8 @@
       "splitSize": "Conversation {{conversation}}%, workspace {{workspace}}%",
       "terminal": "Terminal",
       "git": "Git",
-      "screen": "Screen"
+      "screen": "Screen",
+      "agent": "Agent"
     },
     "files": {
       "discard": "Discard unsaved file changes?",
@@ -2743,6 +2744,19 @@
       "none": "No persona (one-off task)",
       "hint": "This task becomes a named agent: it keeps the persona, stays pinned in the sidebar, and reports a one-line status after each run.",
       "description": "Pick a persona to turn this task into a persistent agent with its own identity."
+    },
+    "agent": {
+      "openScreen": "Open the full screen view",
+      "personaLine": "Persona: {{name}}",
+      "screen": "Screen",
+      "routines": "Routines",
+      "addRoutine": "Routine",
+      "noRoutines": "No routines yet. A routine runs an instruction on a schedule, inside this agent’s workspace.",
+      "routineToggleFailed": "Could not update the routine.",
+      "routineSaveFailed": "Could not save the routine.",
+      "skills": "Taught skills",
+      "noSkills": "Nothing taught yet. Use Teach on the Screen tab to demonstrate a procedure once; it becomes a replayable skill.",
+      "skillToggleFailed": "Could not update the skill."
     }
   },
   "personaBackground": {
@@ -2938,7 +2952,8 @@
       "targetChat": "Chat session",
       "targetWork": "Work task",
       "workPolicy": "Work policy",
-      "workPolicyDefault": "Default (global limits)"
+      "workPolicyDefault": "Default (global limits)",
+      "taskBoundNote": "This routine runs inside the agent's own workspace and conversation, with the agent's model and runtime."
     },
     "kind": {
       "once": "Once",

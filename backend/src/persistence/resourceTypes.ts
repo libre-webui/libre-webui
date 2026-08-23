@@ -583,6 +583,8 @@ export interface StoredAutomationRecord {
   /** 'chat' runs a scheduled chat session; 'work' launches a Work task. */
   target: string;
   work_policy_id: string | null;
+  /** Existing Work task (agent) this routine runs inside; null = new task per fire. */
+  work_task_id: string | null;
   next_run_at: number | null;
   last_run_at: number | null;
   created_at: number;

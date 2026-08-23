@@ -2053,9 +2053,9 @@ class SQLiteAutomationRepository implements AutomationRepository {
         .prepare(
           `INSERT INTO automations
              (id, user_id, name, instructions, triggers, provider, model,
-              notify, status, target, work_policy_id, next_run_at,
-              last_run_at, created_at, updated_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+              notify, status, target, work_policy_id, work_task_id,
+              next_run_at, last_run_at, created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
            ON CONFLICT(id) DO UPDATE SET
              name = excluded.name,
              instructions = excluded.instructions,
@@ -2066,6 +2066,7 @@ class SQLiteAutomationRepository implements AutomationRepository {
              status = excluded.status,
              target = excluded.target,
              work_policy_id = excluded.work_policy_id,
+             work_task_id = excluded.work_task_id,
              next_run_at = excluded.next_run_at,
              last_run_at = excluded.last_run_at,
              updated_at = excluded.updated_at
@@ -2083,6 +2084,7 @@ class SQLiteAutomationRepository implements AutomationRepository {
           automation.status,
           automation.target,
           automation.work_policy_id,
+          automation.work_task_id,
           automation.next_run_at,
           automation.last_run_at,
           automation.created_at,

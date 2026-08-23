@@ -2589,7 +2589,8 @@
       "splitSize": "Percakapan {{conversation}}%, ruang kerja {{workspace}}%",
       "terminal": "Terminal",
       "git": "Git",
-      "screen": "Layar"
+      "screen": "Layar",
+      "agent": "Agen"
     },
     "files": {
       "discard": "Buang perubahan file yang belum disimpan?",
@@ -2743,6 +2744,19 @@
       "none": "Tanpa persona (tugas sekali jalan)",
       "hint": "Tugas ini menjadi agen bernama: mempertahankan persona, tetap tersemat di bilah samping, dan melaporkan satu baris status setelah setiap eksekusi.",
       "description": "Pilih persona untuk mengubah tugas ini menjadi agen permanen dengan identitasnya sendiri."
+    },
+    "agent": {
+      "openScreen": "Buka tampilan layar penuh",
+      "personaLine": "Persona: {{name}}",
+      "screen": "Layar",
+      "routines": "Rutinitas",
+      "addRoutine": "Rutinitas",
+      "noRoutines": "Belum ada rutinitas. Rutinitas menjalankan instruksi sesuai jadwal, di dalam ruang kerja agen ini.",
+      "routineToggleFailed": "Tidak dapat memperbarui rutinitas.",
+      "routineSaveFailed": "Tidak dapat menyimpan rutinitas.",
+      "skills": "Keterampilan yang diajarkan",
+      "noSkills": "Belum ada yang diajarkan. Gunakan Teach di tab Layar untuk mendemonstrasikan prosedur sekali; prosedur itu menjadi keterampilan yang dapat diputar ulang.",
+      "skillToggleFailed": "Tidak dapat memperbarui keterampilan."
     }
   },
   "personaBackground": {
@@ -2938,7 +2952,8 @@
       "targetChat": "Sesi obrolan",
       "targetWork": "Tugas Work",
       "workPolicy": "Kebijakan Work",
-      "workPolicyDefault": "Bawaan (batas global)"
+      "workPolicyDefault": "Bawaan (batas global)",
+      "taskBoundNote": "Rutinitas ini berjalan di dalam ruang kerja dan percakapan milik agen, dengan model dan runtime agen."
     },
     "kind": {
       "once": "Sekali",

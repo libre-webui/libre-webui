@@ -1516,6 +1516,11 @@ export default function WorkPage() {
                 <WorkspacePane
                   key={selectedTask.id}
                   task={selectedTask}
+                  persona={
+                    selectedTask.personaId
+                      ? personas[selectedTask.personaId]
+                      : undefined
+                  }
                   liveRun={liveRun}
                   files={files}
                   selectedFile={selectedFile}

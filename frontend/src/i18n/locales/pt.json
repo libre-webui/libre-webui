@@ -2589,7 +2589,8 @@
       "splitSize": "Conversa {{conversation}}%, espaço de trabalho {{workspace}}%",
       "terminal": "Terminal",
       "git": "Git",
-      "screen": "Tela"
+      "screen": "Tela",
+      "agent": "Agente"
     },
     "files": {
       "discard": "Descartar alterações não salvas no arquivo?",
@@ -2743,6 +2744,19 @@
       "none": "Sem persona (tarefa única)",
       "hint": "Esta tarefa torna-se um agente nomeado: mantém a persona, fica fixada na barra lateral e informa uma linha de status após cada execução.",
       "description": "Escolha uma persona para transformar esta tarefa em um agente persistente com identidade própria."
+    },
+    "agent": {
+      "openScreen": "Abrir a visualização em tela cheia",
+      "personaLine": "Persona: {{name}}",
+      "screen": "Tela",
+      "routines": "Rotinas",
+      "addRoutine": "Rotina",
+      "noRoutines": "Ainda não há rotinas. Uma rotina executa uma instrução conforme um agendamento, dentro do espaço de trabalho deste agente.",
+      "routineToggleFailed": "Não foi possível atualizar a rotina.",
+      "routineSaveFailed": "Não foi possível salvar a rotina.",
+      "skills": "Habilidades ensinadas",
+      "noSkills": "Nada ensinado ainda. Use Teach na aba Tela para demonstrar um procedimento uma vez; ele se torna uma habilidade repetível.",
+      "skillToggleFailed": "Não foi possível atualizar a habilidade."
     }
   },
   "personaBackground": {
@@ -2938,7 +2952,8 @@
       "targetChat": "Sessão de chat",
       "targetWork": "Tarefa do Work",
       "workPolicy": "Política do Work",
-      "workPolicyDefault": "Padrão (limites globais)"
+      "workPolicyDefault": "Padrão (limites globais)",
+      "taskBoundNote": "Esta rotina é executada dentro do espaço de trabalho e da conversa do próprio agente, com o modelo e o runtime do agente."
     },
     "kind": {
       "once": "Uma vez",

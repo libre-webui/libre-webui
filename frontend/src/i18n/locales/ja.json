@@ -2589,7 +2589,8 @@
       "splitSize": "会話 {{conversation}}%、ワークスペース {{workspace}}%",
       "terminal": "ターミナル",
       "git": "Git",
-      "screen": "画面"
+      "screen": "画面",
+      "agent": "エージェント"
     },
     "files": {
       "discard": "未保存のファイル変更を破棄しますか？",
@@ -2743,6 +2744,19 @@
       "none": "ペルソナなし（単発タスク）",
       "hint": "このタスクは名前付きエージェントになります。ペルソナを保持し、サイドバーに固定され、実行のたびに1行のステータスを報告します。",
       "description": "ペルソナを選ぶと、このタスクは独自のアイデンティティを持つ永続的なエージェントになります。"
+    },
+    "agent": {
+      "openScreen": "全画面ビューを開く",
+      "personaLine": "ペルソナ: {{name}}",
+      "screen": "画面",
+      "routines": "ルーティン",
+      "addRoutine": "ルーティン",
+      "noRoutines": "まだルーティンがありません。ルーティンはスケジュールに従って、このエージェントのワークスペース内で指示を実行します。",
+      "routineToggleFailed": "ルーティンを更新できませんでした。",
+      "routineSaveFailed": "ルーティンを保存できませんでした。",
+      "skills": "教えたスキル",
+      "noSkills": "まだ何も教えていません。画面タブの Teach で手順を一度実演すると、再実行できるスキルになります。",
+      "skillToggleFailed": "スキルを更新できませんでした。"
     }
   },
   "personaBackground": {
@@ -2938,7 +2952,8 @@
       "targetChat": "チャットセッション",
       "targetWork": "Work タスク",
       "workPolicy": "Work ポリシー",
-      "workPolicyDefault": "デフォルト（全体の制限）"
+      "workPolicyDefault": "デフォルト（全体の制限）",
+      "taskBoundNote": "このルーティンはエージェント自身のワークスペースと会話の中で、エージェントのモデルとランタイムで実行されます。"
     },
     "kind": {
       "once": "1回のみ",

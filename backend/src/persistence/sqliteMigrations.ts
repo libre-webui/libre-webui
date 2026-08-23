@@ -1106,6 +1106,10 @@ const AGENT_IDENTITY_REQUIRED_SCHEMA = {
   work_tasks: ['persona_id', 'status_blurb', 'is_agent'],
 } as const;
 
+const AGENT_ROUTINES_REQUIRED_SCHEMA = {
+  automations: ['work_task_id'],
+} as const;
+
 export const IDENTITY_EMAIL_LOOKUP_SCHEMA_SQL = `
   ALTER TABLE users ADD COLUMN email_lookup TEXT;
   CREATE UNIQUE INDEX idx_users_email_lookup
@@ -1912,6 +1916,10 @@ export const AGENT_IDENTITY_SCHEMA_SQL = `
   ALTER TABLE work_tasks ADD COLUMN persona_id TEXT;
   ALTER TABLE work_tasks ADD COLUMN status_blurb TEXT;
   ALTER TABLE work_tasks ADD COLUMN is_agent INTEGER;
+`;
+
+export const AGENT_ROUTINES_SCHEMA_SQL = `
+  ALTER TABLE automations ADD COLUMN work_task_id TEXT;
 `;
 
 const REQUIRED_SCHEMA = {
@@ -3643,6 +3651,10 @@ const collectMissingAgentIdentitySchema = (
   database: Database.Database
 ): string[] => collectMissingColumns(database, AGENT_IDENTITY_REQUIRED_SCHEMA);
 
+const collectMissingAgentRoutinesSchema = (
+  database: Database.Database
+): string[] => collectMissingColumns(database, AGENT_ROUTINES_REQUIRED_SCHEMA);
+
 const collectMissingIdentityAccountRetirementSchema = (
   database: Database.Database
 ): string[] => {
@@ -3702,6 +3714,7 @@ function collectMissingSchemaAtVersion(
     ...(version >= 23 ? collectMissingWorkComputerSchema(database) : []),
     ...(version >= 24 ? collectMissingWorkTakeoverSchema(database) : []),
     ...(version >= 25 ? collectMissingAgentIdentitySchema(database) : []),
+    ...(version >= 26 ? collectMissingAgentRoutinesSchema(database) : []),
   ];
 }
 
@@ -3807,6 +3820,8 @@ const WORK_TAKEOVER_MIGRATION_CHECKSUM =
   '739dc7f86890961573baba8fdf8859bccf1e9e5ba9625288183582fc6be5c1b0';
 const AGENT_IDENTITY_MIGRATION_CHECKSUM =
   'cd6ea09543b8771258c0c55e95a7dc73f9b8cd838487aefe039bb82fa7bea840';
+const AGENT_ROUTINES_MIGRATION_CHECKSUM =
+  '2bf5167435acf8a43f9117f379dc4f35227196c65350bb72425bac467e06750b';
 
 const MIGRATIONS: readonly SQLiteMigration[] = [
   {
@@ -4259,6 +4274,20 @@ const MIGRATIONS: readonly SQLiteMigration[] = [
       if (missing.length > 0) {
         throw new Error(
           `SQLite agent identity schema is incomplete; missing ${missing.join(', ')}`
+        );
+      }
+    },
+  },
+  {
+    version: 26,
+    name: 'agent-routines',
+    checksum: AGENT_ROUTINES_MIGRATION_CHECKSUM,
+    apply(database) {
+      addColumnIfMissing(database, 'automations', 'work_task_id', 'TEXT');
+      const missing = collectMissingAgentRoutinesSchema(database);
+      if (missing.length > 0) {
+        throw new Error(
+          `SQLite agent routines schema is incomplete; missing ${missing.join(', ')}`
         );
       }
     },

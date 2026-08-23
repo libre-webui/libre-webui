@@ -2589,7 +2589,8 @@
       "splitSize": "Konverzace {{conversation}} %, pracovní prostor {{workspace}} %",
       "terminal": "Terminál",
       "git": "Git",
-      "screen": "Obrazovka"
+      "screen": "Obrazovka",
+      "agent": "Agent"
     },
     "files": {
       "discard": "Zahodit neuložené změny souboru?",
@@ -2743,6 +2744,19 @@
       "none": "Bez persony (jednorázový úkol)",
       "hint": "Z tohoto úkolu se stane pojmenovaný agent: ponechá si personu, zůstane připnutý v postranním panelu a po každém běhu hlásí jednořádkový stav.",
       "description": "Vyberte personu a proměňte tento úkol v trvalého agenta s vlastní identitou."
+    },
+    "agent": {
+      "openScreen": "Otevřít zobrazení celé obrazovky",
+      "personaLine": "Persona: {{name}}",
+      "screen": "Obrazovka",
+      "routines": "Rutiny",
+      "addRoutine": "Rutina",
+      "noRoutines": "Zatím žádné rutiny. Rutina spouští pokyn podle plánu uvnitř pracovního prostoru tohoto agenta.",
+      "routineToggleFailed": "Rutinu se nepodařilo aktualizovat.",
+      "routineSaveFailed": "Rutinu se nepodařilo uložit.",
+      "skills": "Naučené dovednosti",
+      "noSkills": "Zatím nic naučeného. Použijte Teach na kartě Obrazovka a předveďte postup jednou; stane se opakovatelnou dovedností.",
+      "skillToggleFailed": "Dovednost se nepodařilo aktualizovat."
     }
   },
   "personaBackground": {
@@ -2938,7 +2952,8 @@
       "targetChat": "Chatová relace",
       "targetWork": "Úloha Work",
       "workPolicy": "Zásada Work",
-      "workPolicyDefault": "Výchozí (globální limity)"
+      "workPolicyDefault": "Výchozí (globální limity)",
+      "taskBoundNote": "Tato rutina běží uvnitř vlastního pracovního prostoru a konverzace agenta, s modelem a běhovým prostředím agenta."
     },
     "kind": {
       "once": "Jednou",

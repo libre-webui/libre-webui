@@ -80,6 +80,7 @@ const mapAutomationRow = (row: StoredAutomationRecord): Automation => ({
   status: row.status as AutomationStatus,
   target: (row.target === 'work' ? 'work' : 'chat') as AutomationTarget,
   ...(row.work_policy_id !== null ? { workPolicyId: row.work_policy_id } : {}),
+  ...(row.work_task_id !== null ? { workTaskId: row.work_task_id } : {}),
   ...(row.next_run_at !== null ? { nextRunAt: row.next_run_at } : {}),
   ...(row.last_run_at !== null ? { lastRunAt: row.last_run_at } : {}),
   createdAt: row.created_at,
@@ -109,6 +110,8 @@ export interface AutomationInput {
   notify?: AutomationNotify;
   target?: AutomationTarget;
   workPolicyId?: string;
+  /** Existing Work task (agent) to run each fire inside; target must be 'work'. */
+  workTaskId?: string;
 }
 
 class AutomationService {
@@ -177,8 +180,33 @@ class AutomationService {
     }
     const triggers = validateTriggers(input.triggers);
     const target: AutomationTarget = input.target === 'work' ? 'work' : 'chat';
+    const workTaskId =
+      target === 'work' && input.workTaskId ? input.workTaskId : null;
+    if (workTaskId) {
+      // A routine runs inside an existing agent task, so the binding must
+      // resolve to a task the owner can use; a dangling task would fail
+      // every fire. The task carries its own runtime, so no policy binds.
+      let taskExists = false;
+      try {
+        const { default: workTaskService } =
+          await import('./workTaskService.js');
+        taskExists = Boolean(
+          await workTaskService.getTaskRecord(workTaskId, userId)
+        );
+      } catch {
+        taskExists = false;
+      }
+      if (!taskExists) {
+        throw new ResourcePolicyError(
+          'The selected Work task no longer exists',
+          400
+        );
+      }
+    }
     const workPolicyId =
-      target === 'work' && input.workPolicyId ? input.workPolicyId : null;
+      target === 'work' && !workTaskId && input.workPolicyId
+        ? input.workPolicyId
+        : null;
     if (workPolicyId) {
       // A dangling policy would fail every run; refuse it at save time,
       // mirroring the Work composer's behavior. An unreachable Work
@@ -211,6 +239,7 @@ class AutomationService {
       status,
       target,
       work_policy_id: workPolicyId,
+      work_task_id: workTaskId,
       // Editing reschedules from now; a paused automation stays dormant.
       next_run_at: status === 'active' ? nextRunAt(triggers, now) : null,
       last_run_at: existing?.last_run_at ?? null,

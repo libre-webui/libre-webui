@@ -367,6 +367,7 @@ type MockWorkTask = {
   personaId?: string | null;
   statusBlurb?: string | null;
   isAgent?: boolean;
+  computerAvailable?: boolean;
 };
 
 type MockPersona = {

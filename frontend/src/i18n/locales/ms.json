@@ -2589,7 +2589,8 @@
       "splitSize": "Perbualan {{conversation}}%, ruang kerja {{workspace}}%",
       "terminal": "Terminal",
       "git": "Git",
-      "screen": "Skrin"
+      "screen": "Skrin",
+      "agent": "Ejen"
     },
     "files": {
       "discard": "Buang perubahan fail yang belum disimpan?",
@@ -2743,6 +2744,19 @@
       "none": "Tiada persona (tugas sekali sahaja)",
       "hint": "Tugas ini menjadi ejen bernama: ia mengekalkan persona, kekal disemat pada bar sisi dan melaporkan satu baris status selepas setiap larian.",
       "description": "Pilih persona untuk menjadikan tugas ini ejen kekal dengan identitinya sendiri."
+    },
+    "agent": {
+      "openScreen": "Buka paparan skrin penuh",
+      "personaLine": "Persona: {{name}}",
+      "screen": "Skrin",
+      "routines": "Rutin",
+      "addRoutine": "Rutin",
+      "noRoutines": "Belum ada rutin. Rutin menjalankan arahan mengikut jadual, di dalam ruang kerja ejen ini.",
+      "routineToggleFailed": "Rutin tidak dapat dikemas kini.",
+      "routineSaveFailed": "Rutin tidak dapat disimpan.",
+      "skills": "Kemahiran yang diajar",
+      "noSkills": "Belum ada yang diajar. Gunakan Teach pada tab Skrin untuk menunjukkan prosedur sekali; ia menjadi kemahiran yang boleh dimainkan semula.",
+      "skillToggleFailed": "Kemahiran tidak dapat dikemas kini."
     }
   },
   "personaBackground": {
@@ -2938,7 +2952,8 @@
       "targetChat": "Sesi sembang",
       "targetWork": "Tugas Work",
       "workPolicy": "Dasar Work",
-      "workPolicyDefault": "Lalai (had global)"
+      "workPolicyDefault": "Lalai (had global)",
+      "taskBoundNote": "Rutin ini berjalan di dalam ruang kerja dan perbualan ejen itu sendiri, dengan model dan masa jalan ejen."
     },
     "kind": {
       "once": "Sekali",

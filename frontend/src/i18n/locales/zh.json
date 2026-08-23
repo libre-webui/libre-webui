@@ -2589,7 +2589,8 @@
       "splitSize": "对话 {{conversation}}%，工作区 {{workspace}}%",
       "terminal": "终端",
       "git": "Git",
-      "screen": "屏幕"
+      "screen": "屏幕",
+      "agent": "智能体"
     },
     "files": {
       "discard": "放弃未保存的文件更改？",
@@ -2743,6 +2744,19 @@
       "none": "无角色（一次性任务）",
       "hint": "此任务将成为一个具名智能体：保留角色、固定在侧边栏，并在每次运行后报告一行状态。",
       "description": "选择一个角色，把此任务变成拥有自己身份的常驻智能体。"
+    },
+    "agent": {
+      "openScreen": "打开全屏视图",
+      "personaLine": "角色：{{name}}",
+      "screen": "屏幕",
+      "routines": "例行任务",
+      "addRoutine": "例行任务",
+      "noRoutines": "还没有例行任务。例行任务按计划在此智能体的工作区内执行一条指令。",
+      "routineToggleFailed": "无法更新例行任务。",
+      "routineSaveFailed": "无法保存例行任务。",
+      "skills": "教会的技能",
+      "noSkills": "还没有教过任何内容。在屏幕标签页使用 Teach 演示一次流程，它就会成为可重放的技能。",
+      "skillToggleFailed": "无法更新技能。"
     }
   },
   "personaBackground": {
@@ -2938,7 +2952,8 @@
       "targetChat": "聊天会话",
       "targetWork": "Work 任务",
       "workPolicy": "Work 策略",
-      "workPolicyDefault": "默认（全局限制）"
+      "workPolicyDefault": "默认（全局限制）",
+      "taskBoundNote": "此例行任务在智能体自己的工作区和对话中运行，使用智能体的模型和运行时。"
     },
     "kind": {
       "once": "一次",

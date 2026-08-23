@@ -33,6 +33,8 @@ export interface AutomationPayload {
   notify?: 'app' | 'off';
   target?: 'chat' | 'work';
   workPolicyId?: string;
+  /** Existing Work task (agent) to run each fire inside; target must be 'work'. */
+  workTaskId?: string;
 }
 
 export interface AutomationOccurrence {

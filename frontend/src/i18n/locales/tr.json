@@ -2589,7 +2589,8 @@
       "splitSize": "Konuşma %{{conversation}}, çalışma alanı %{{workspace}}",
       "terminal": "Terminal",
       "git": "Git",
-      "screen": "Ekran"
+      "screen": "Ekran",
+      "agent": "Ajan"
     },
     "files": {
       "discard": "Kaydedilmemiş dosya değişiklikleri silinsin mi?",
@@ -2743,6 +2744,19 @@
       "none": "Persona yok (tek seferlik görev)",
       "hint": "Bu görev adlandırılmış bir ajana dönüşür: personayı korur, kenar çubuğunda sabit kalır ve her çalıştırmadan sonra tek satırlık durum bildirir.",
       "description": "Bu görevi kendi kimliğine sahip kalıcı bir ajana dönüştürmek için bir persona seçin."
+    },
+    "agent": {
+      "openScreen": "Tam ekran görünümünü aç",
+      "personaLine": "Persona: {{name}}",
+      "screen": "Ekran",
+      "routines": "Rutinler",
+      "addRoutine": "Rutin",
+      "noRoutines": "Henüz rutin yok. Rutin, bir talimatı zamanlamaya göre bu ajanın çalışma alanı içinde çalıştırır.",
+      "routineToggleFailed": "Rutin güncellenemedi.",
+      "routineSaveFailed": "Rutin kaydedilemedi.",
+      "skills": "Öğretilen beceriler",
+      "noSkills": "Henüz bir şey öğretilmedi. Ekran sekmesindeki Teach ile bir prosedürü bir kez gösterin; yeniden oynatılabilir bir beceri olur.",
+      "skillToggleFailed": "Beceri güncellenemedi."
     }
   },
   "personaBackground": {
@@ -2938,7 +2952,8 @@
       "targetChat": "Sohbet oturumu",
       "targetWork": "Work görevi",
       "workPolicy": "Work politikası",
-      "workPolicyDefault": "Varsayılan (genel sınırlar)"
+      "workPolicyDefault": "Varsayılan (genel sınırlar)",
+      "taskBoundNote": "Bu rutin, ajanın kendi çalışma alanı ve konuşması içinde, ajanın modeli ve çalışma zamanıyla çalışır."
     },
     "kind": {
       "once": "Bir kez",

@@ -2589,7 +2589,8 @@
       "splitSize": "대화 {{conversation}}%, 워크스페이스 {{workspace}}%",
       "terminal": "터미널",
       "git": "Git",
-      "screen": "화면"
+      "screen": "화면",
+      "agent": "에이전트"
     },
     "files": {
       "discard": "저장하지 않은 파일 변경 사항을 버릴까요?",
@@ -2743,6 +2744,19 @@
       "none": "페르소나 없음 (일회성 작업)",
       "hint": "이 작업은 이름 있는 에이전트가 됩니다. 페르소나를 유지하고 사이드바에 고정되며 실행이 끝날 때마다 한 줄 상태를 보고합니다.",
       "description": "페르소나를 선택하면 이 작업이 고유한 정체성을 가진 지속적인 에이전트가 됩니다."
+    },
+    "agent": {
+      "openScreen": "전체 화면 보기 열기",
+      "personaLine": "페르소나: {{name}}",
+      "screen": "화면",
+      "routines": "루틴",
+      "addRoutine": "루틴",
+      "noRoutines": "아직 루틴이 없습니다. 루틴은 일정에 따라 이 에이전트의 워크스페이스 안에서 지시를 실행합니다.",
+      "routineToggleFailed": "루틴을 업데이트할 수 없습니다.",
+      "routineSaveFailed": "루틴을 저장할 수 없습니다.",
+      "skills": "가르친 스킬",
+      "noSkills": "아직 가르친 것이 없습니다. 화면 탭의 Teach로 절차를 한 번 시연하면 다시 실행할 수 있는 스킬이 됩니다.",
+      "skillToggleFailed": "스킬을 업데이트할 수 없습니다."
     }
   },
   "personaBackground": {
@@ -2938,7 +2952,8 @@
       "targetChat": "채팅 세션",
       "targetWork": "Work 작업",
       "workPolicy": "Work 정책",
-      "workPolicyDefault": "기본값(전역 제한)"
+      "workPolicyDefault": "기본값(전역 제한)",
+      "taskBoundNote": "이 루틴은 에이전트 자신의 워크스페이스와 대화 안에서, 에이전트의 모델과 런타임으로 실행됩니다."
     },
     "kind": {
       "once": "한 번",

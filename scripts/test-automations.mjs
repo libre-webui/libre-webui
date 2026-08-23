@@ -53,6 +53,10 @@ await platformStorageModule.initializePlatformStorageRuntime({
   cipher: encryptionService,
   env: process.env,
 });
+const workPersistenceModule = await distModule(
+  'platform/workPersistence/index.js'
+);
+workPersistenceModule.initializeSelectedWorkPersistence('sqlite');
 const coordinationModule = await distModule('platform/coordination/service.js');
 await coordinationModule.initializeCoordinator();
 const jobsModule = await distModule('platform/jobs/index.js');
@@ -122,6 +126,7 @@ after(async () => {
   await new Promise(resolve => server.close(resolve));
   await jobsModule.closeDurableJobRuntime();
   await coordinationModule.closeCoordinator();
+  workPersistenceModule.resetWorkPersistenceForTests();
   await persistenceModule.closePersistence();
   await rm(dataDir, { recursive: true, force: true });
 });
@@ -284,6 +289,81 @@ test('a work-target automation stores its target and validates the policy', asyn
   });
   assert.equal(response.status, 200);
   assert.equal((await response.json()).data.target, 'chat');
+});
+
+test('a routine binds only to a Work task its owner can use', async () => {
+  const taskId = 'agent-task-bind';
+  database
+    .prepare(
+      `INSERT INTO work_tasks (
+        id, user_id, title, model, volume_name, container_name,
+        created_at, updated_at
+      ) VALUES (?, 'automation-owner', 'Chief of Staff', 'test-model',
+                'vol-bind', 'ctr-bind', ?, ?)`
+    )
+    .run(taskId, now, now);
+
+  // A bound routine persists the task and drops any policy binding: the
+  // task already carries its own runtime.
+  let response = await fetch(baseUrl, {
+    method: 'POST',
+    headers: headersFor(ownerToken),
+    body: JSON.stringify({
+      name: 'Morning briefing',
+      instructions: 'Summarize the inbox into briefing.md.',
+      triggers: [{ kind: 'daily', hour: 8, minute: 0 }],
+      target: 'work',
+      workTaskId: taskId,
+      workPolicyId: 'no-such-policy',
+    }),
+  });
+  assert.equal(response.status, 200);
+  const bound = (await response.json()).data;
+  assert.equal(bound.workTaskId, taskId);
+  assert.equal(bound.workPolicyId, undefined);
+
+  // A dangling task is refused at save time.
+  response = await fetch(baseUrl, {
+    method: 'POST',
+    headers: headersFor(ownerToken),
+    body: JSON.stringify({
+      name: 'Dangling task',
+      instructions: 'Run something.',
+      triggers: [{ kind: 'daily', hour: 9, minute: 0 }],
+      target: 'work',
+      workTaskId: 'no-such-task',
+    }),
+  });
+  assert.equal(response.status, 400);
+
+  // Another user's task is refused the same way, without existence leaks.
+  response = await fetch(baseUrl, {
+    method: 'POST',
+    headers: headersFor(strangerToken),
+    body: JSON.stringify({
+      name: 'Foreign task',
+      instructions: 'Run something.',
+      triggers: [{ kind: 'daily', hour: 10, minute: 0 }],
+      target: 'work',
+      workTaskId: taskId,
+    }),
+  });
+  assert.equal(response.status, 400);
+
+  // A chat-target automation ignores a stray task binding.
+  response = await fetch(baseUrl, {
+    method: 'POST',
+    headers: headersFor(ownerToken),
+    body: JSON.stringify({
+      name: 'Chat with stray task',
+      instructions: 'Say hi.',
+      triggers: [{ kind: 'daily', hour: 11, minute: 0 }],
+      target: 'chat',
+      workTaskId: taskId,
+    }),
+  });
+  assert.equal(response.status, 200);
+  assert.equal((await response.json()).data.workTaskId, undefined);
 });
 
 test('the scheduler fires due automations once and settles stalled runs', async () => {

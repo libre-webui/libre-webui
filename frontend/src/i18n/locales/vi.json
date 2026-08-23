@@ -2589,7 +2589,8 @@
       "splitSize": "Cuộc trò chuyện {{conversation}}%, không gian làm việc {{workspace}}%",
       "terminal": "Terminal",
       "git": "Git",
-      "screen": "Màn hình"
+      "screen": "Màn hình",
+      "agent": "Tác nhân"
     },
     "files": {
       "discard": "Bỏ các thay đổi tệp chưa lưu?",
@@ -2743,6 +2744,19 @@
       "none": "Không có persona (tác vụ một lần)",
       "hint": "Tác vụ này trở thành một tác nhân có tên: giữ persona, được ghim trong thanh bên và báo cáo một dòng trạng thái sau mỗi lần chạy.",
       "description": "Chọn một persona để biến tác vụ này thành tác nhân lâu dài với danh tính riêng."
+    },
+    "agent": {
+      "openScreen": "Mở chế độ xem toàn màn hình",
+      "personaLine": "Persona: {{name}}",
+      "screen": "Màn hình",
+      "routines": "Thói quen",
+      "addRoutine": "Thói quen",
+      "noRoutines": "Chưa có thói quen nào. Thói quen chạy một chỉ dẫn theo lịch, bên trong không gian làm việc của tác nhân này.",
+      "routineToggleFailed": "Không thể cập nhật thói quen.",
+      "routineSaveFailed": "Không thể lưu thói quen.",
+      "skills": "Kỹ năng đã dạy",
+      "noSkills": "Chưa dạy gì. Dùng Teach trong thẻ Màn hình để trình diễn một quy trình một lần; nó trở thành kỹ năng có thể phát lại.",
+      "skillToggleFailed": "Không thể cập nhật kỹ năng."
     }
   },
   "personaBackground": {
@@ -2938,7 +2952,8 @@
       "targetChat": "Phiên trò chuyện",
       "targetWork": "Tác vụ Work",
       "workPolicy": "Chính sách Work",
-      "workPolicyDefault": "Mặc định (giới hạn chung)"
+      "workPolicyDefault": "Mặc định (giới hạn chung)",
+      "taskBoundNote": "Thói quen này chạy bên trong không gian làm việc và cuộc trò chuyện của chính tác nhân, với mô hình và môi trường chạy của tác nhân."
     },
     "kind": {
       "once": "Một lần",

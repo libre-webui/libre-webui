@@ -2589,7 +2589,8 @@
       "splitSize": "Conversazione {{conversation}}%, spazio di lavoro {{workspace}}%",
       "terminal": "Terminale",
       "git": "Git",
-      "screen": "Schermo"
+      "screen": "Schermo",
+      "agent": "Agente"
     },
     "files": {
       "discard": "Ignorare le modifiche al file non salvate?",
@@ -2743,6 +2744,19 @@
       "none": "Nessuna persona (attività una tantum)",
       "hint": "Questa attività diventa un agente con nome: mantiene la persona, resta fissata nella barra laterale e riporta una riga di stato dopo ogni esecuzione.",
       "description": "Scegli una persona per trasformare questa attività in un agente permanente con una propria identità."
+    },
+    "agent": {
+      "openScreen": "Apri la vista a schermo intero",
+      "personaLine": "Persona: {{name}}",
+      "screen": "Schermo",
+      "routines": "Routine",
+      "addRoutine": "Routine",
+      "noRoutines": "Ancora nessuna routine. Una routine esegue un'istruzione secondo una pianificazione, nello spazio di lavoro di questo agente.",
+      "routineToggleFailed": "Impossibile aggiornare la routine.",
+      "routineSaveFailed": "Impossibile salvare la routine.",
+      "skills": "Abilità insegnate",
+      "noSkills": "Niente di insegnato finora. Usa Teach nella scheda Schermo per dimostrare una procedura una volta; diventa un'abilità ripetibile.",
+      "skillToggleFailed": "Impossibile aggiornare l'abilità."
     }
   },
   "personaBackground": {
@@ -2938,7 +2952,8 @@
       "targetChat": "Sessione di chat",
       "targetWork": "Attività Work",
       "workPolicy": "Politica Work",
-      "workPolicyDefault": "Predefinita (limiti globali)"
+      "workPolicyDefault": "Predefinita (limiti globali)",
+      "taskBoundNote": "Questa routine viene eseguita nello spazio di lavoro e nella conversazione dell'agente, con il modello e il runtime dell'agente."
     },
     "kind": {
       "once": "Una volta",

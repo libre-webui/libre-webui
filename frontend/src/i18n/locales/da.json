@@ -2589,7 +2589,8 @@
       "splitSize": "Samtale {{conversation}} %, arbejdsområde {{workspace}} %",
       "terminal": "Terminal",
       "git": "Git",
-      "screen": "Skærm"
+      "screen": "Skærm",
+      "agent": "Agent"
     },
     "files": {
       "discard": "Kassér ændringer i filen, der ikke er gemt?",
@@ -2743,6 +2744,19 @@
       "none": "Ingen persona (engangsopgave)",
       "hint": "Denne opgave bliver en navngiven agent: den beholder personaen, forbliver fastgjort i sidepanelet og rapporterer en statuslinje efter hver kørsel.",
       "description": "Vælg en persona for at gøre denne opgave til en vedvarende agent med sin egen identitet."
+    },
+    "agent": {
+      "openScreen": "Åbn fuld skærmvisning",
+      "personaLine": "Persona: {{name}}",
+      "screen": "Skærm",
+      "routines": "Rutiner",
+      "addRoutine": "Rutine",
+      "noRoutines": "Ingen rutiner endnu. En rutine kører en instruktion efter en tidsplan inde i denne agents arbejdsområde.",
+      "routineToggleFailed": "Rutinen kunne ikke opdateres.",
+      "routineSaveFailed": "Rutinen kunne ikke gemmes.",
+      "skills": "Lærte færdigheder",
+      "noSkills": "Intet lært endnu. Brug Teach på Skærm-fanen for at demonstrere en procedure én gang; den bliver en genafspillelig færdighed.",
+      "skillToggleFailed": "Færdigheden kunne ikke opdateres."
     }
   },
   "personaBackground": {
@@ -2938,7 +2952,8 @@
       "targetChat": "Chatsession",
       "targetWork": "Work-opgave",
       "workPolicy": "Work-politik",
-      "workPolicyDefault": "Standard (globale grænser)"
+      "workPolicyDefault": "Standard (globale grænser)",
+      "taskBoundNote": "Denne rutine kører inde i agentens eget arbejdsområde og samtale, med agentens model og runtime."
     },
     "kind": {
       "once": "Én gang",

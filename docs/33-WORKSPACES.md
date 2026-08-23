@@ -213,6 +213,27 @@ the agent keeps running without it and a warning is logged. The API accepts
 `personaId` and `isAgent` on task creation; a task created with a persona is
 an agent automatically.
 
+### The Agent tab
+
+An agent's workspace pane opens on an extra first tab, **Agent** — the
+agent's own page:
+
+- **Identity**: persona avatar, name, activity indicator, and the latest
+  status line.
+- **Screen**: when the task's policy grants the Work Computer, a compact
+  live view-only thumbnail of the agent's screen. It is a real viewer
+  (counted against the per-task viewer budget); clicking it opens the full
+  Screen tab where takeover, teach, and audio live.
+- **Routines**: [automations](./48-AUTOMATIONS.md) bound to this task. Each
+  fire runs inside the agent's own workspace and conversation with the
+  agent's model and runtime — not a fresh task — so a morning-briefing
+  routine accumulates in one place. Rows show the schedule in words with a
+  pause/resume toggle, and the inline **+ Routine** form is already bound to
+  the agent. An occurrence that fires while the agent is busy fails honestly
+  as `work-task-busy` instead of queueing.
+- **Taught skills**: procedures demonstrated in teach mode, with an
+  enable/disable switch per skill.
+
 ### Understand task status
 
 The interface maps durable backend states to a smaller user-facing set:

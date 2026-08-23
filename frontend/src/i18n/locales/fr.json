@@ -2589,7 +2589,8 @@
       "splitSize": "Conversation {{conversation}} %, espace de travail {{workspace}} %",
       "terminal": "Terminal",
       "git": "Git",
-      "screen": "Écran"
+      "screen": "Écran",
+      "agent": "Agent"
     },
     "files": {
       "discard": "Ignorer les modifications de fichier non enregistrées ?",
@@ -2743,6 +2744,19 @@
       "none": "Aucune persona (tâche ponctuelle)",
       "hint": "Cette tâche devient un agent nommé : elle conserve la persona, reste épinglée dans la barre latérale et affiche une ligne d'état après chaque exécution.",
       "description": "Choisissez une persona pour transformer cette tâche en agent permanent avec sa propre identité."
+    },
+    "agent": {
+      "openScreen": "Ouvrir la vue plein écran",
+      "personaLine": "Persona : {{name}}",
+      "screen": "Écran",
+      "routines": "Routines",
+      "addRoutine": "Routine",
+      "noRoutines": "Aucune routine pour l'instant. Une routine exécute une instruction selon un horaire, dans l'espace de travail de cet agent.",
+      "routineToggleFailed": "Impossible de mettre à jour la routine.",
+      "routineSaveFailed": "Impossible d'enregistrer la routine.",
+      "skills": "Compétences enseignées",
+      "noSkills": "Rien d'enseigné pour l'instant. Utilisez Teach dans l'onglet Écran pour démontrer une procédure une fois ; elle devient une compétence rejouable.",
+      "skillToggleFailed": "Impossible de mettre à jour la compétence."
     }
   },
   "personaBackground": {
@@ -2938,7 +2952,8 @@
       "targetChat": "Session de chat",
       "targetWork": "Tâche Work",
       "workPolicy": "Politique Work",
-      "workPolicyDefault": "Par défaut (limites globales)"
+      "workPolicyDefault": "Par défaut (limites globales)",
+      "taskBoundNote": "Cette routine s'exécute dans l'espace de travail et la conversation de l'agent, avec le modèle et l'environnement de l'agent."
     },
     "kind": {
       "once": "Une fois",

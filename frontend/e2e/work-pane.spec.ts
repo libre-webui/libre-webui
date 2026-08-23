@@ -377,6 +377,222 @@ test('hires a persona as a pinned agent with avatar and status blurb', async ({
   ).toHaveCount(2);
 });
 
+test('the Agent tab shows identity, routines, and taught skills', async ({
+  page,
+}) => {
+  const agentTask = {
+    ...task('agent-task-1', 'Chief of Staff', 'Inbox triage finished.'),
+    isAgent: true,
+    personaId: 'persona-1',
+    statusBlurb: 'Inbox at zero. 2 replies ready.',
+    computerAvailable: true,
+  };
+  await mockLibreWebUiApi(page, {
+    personas: [
+      {
+        id: 'persona-1',
+        name: 'Chief of Staff',
+        model: 'llama3.2:3b',
+        parameters: { system_prompt: 'Track the inbox.' },
+        user_id: 'mock-user',
+        created_at: createdAt,
+        updated_at: createdAt,
+      },
+    ],
+    workTasks: [agentTask],
+  });
+
+  // Specific routes registered after the broad mock take precedence.
+  const automations = [
+    {
+      id: 'routine-1',
+      name: 'Morning briefing',
+      instructions: 'Summarize the inbox.',
+      triggers: [{ kind: 'daily', hour: 8, minute: 0 }],
+      notify: 'app',
+      status: 'active',
+      target: 'work',
+      workTaskId: 'agent-task-1',
+      createdAt,
+      updatedAt: createdAt,
+    },
+    {
+      id: 'routine-2',
+      name: 'Unrelated chat digest',
+      instructions: 'Digest.',
+      triggers: [{ kind: 'daily', hour: 9, minute: 0 }],
+      notify: 'app',
+      status: 'active',
+      target: 'chat',
+      createdAt,
+      updatedAt: createdAt,
+    },
+  ];
+  const automationCreates: Array<Record<string, unknown>> = [];
+  const pauses: string[] = [];
+  await page.route(
+    /\/api\/automations(?:\/[^/]+\/(?:pause|resume))?$/,
+    route => {
+      const method = route.request().method();
+      const url = new URL(route.request().url());
+      if (method === 'GET') {
+        return route.fulfill({
+          contentType: 'application/json',
+          body: JSON.stringify({ success: true, data: automations }),
+        });
+      }
+      if (method === 'POST' && url.pathname.endsWith('/api/automations')) {
+        const body = route.request().postDataJSON() as Record<string, unknown>;
+        automationCreates.push(body);
+        const created = {
+          ...automations[0],
+          ...body,
+          id: `routine-${automations.length + 1}`,
+        };
+        automations.push(created as (typeof automations)[number]);
+        return route.fulfill({
+          contentType: 'application/json',
+          body: JSON.stringify({ success: true, data: created }),
+        });
+      }
+      if (method === 'POST' && url.pathname.endsWith('/pause')) {
+        const id = url.pathname.split('/').at(-2) as string;
+        pauses.push(id);
+        const target = automations.find(item => item.id === id);
+        if (target) target.status = 'paused';
+        return route.fulfill({
+          contentType: 'application/json',
+          body: JSON.stringify({ success: true, data: target }),
+        });
+      }
+      return route.fulfill({
+        contentType: 'application/json',
+        body: JSON.stringify({ success: true, data: null }),
+      });
+    }
+  );
+  const skillUpdates: Array<{ id: string; enabled: boolean }> = [];
+  await page.route(/\/api\/skills(?:\/[^/]+)?$/, route => {
+    const method = route.request().method();
+    if (method === 'GET') {
+      return route.fulfill({
+        contentType: 'application/json',
+        body: JSON.stringify({
+          success: true,
+          data: [
+            {
+              id: 'skill-1',
+              slug: 'taught-crm-export',
+              name: 'CRM export',
+              description: 'Taught on the Work Computer: CRM export',
+              instructions: '## Steps\n1. Open the CRM.',
+              enabled: true,
+              version: 3,
+              createdAt,
+              updatedAt: createdAt,
+              ownerUserId: 'mock-user',
+            },
+            {
+              id: 'skill-2',
+              slug: 'ordinary-skill',
+              name: 'Ordinary skill',
+              description: 'Not taught',
+              instructions: 'n/a',
+              enabled: true,
+              version: 1,
+              createdAt,
+              updatedAt: createdAt,
+              ownerUserId: 'mock-user',
+            },
+          ],
+        }),
+      });
+    }
+    if (method === 'PUT') {
+      const id = new URL(route.request().url()).pathname.split('/').at(-1);
+      const body = route.request().postDataJSON() as { enabled: boolean };
+      skillUpdates.push({ id: id as string, enabled: body.enabled });
+      return route.fulfill({
+        contentType: 'application/json',
+        body: JSON.stringify({ success: true, data: {} }),
+      });
+    }
+    return route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({ success: true, data: null }),
+    });
+  });
+
+  await page.goto('/work/agent-task-1');
+
+  // An agent opens on its identity panel.
+  const agentTab = page.getByTestId('work-agent-tab');
+  await expect(agentTab).toBeVisible();
+  await expect(agentTab).toHaveAttribute('aria-selected', 'true');
+  const panel = page.getByTestId('work-agent-panel');
+  await expect(panel).toBeVisible();
+  await expect(page.getByTestId('work-agent-avatar')).toBeVisible();
+  await expect(page.getByTestId('work-agent-blurb')).toHaveText(
+    'Inbox at zero. 2 replies ready.'
+  );
+  await expect(panel.getByText('Persona: Chief of Staff')).toBeVisible();
+
+  // The mini screen tile expands to the full Screen tab.
+  await expect(page.getByTestId('work-screen-mini')).toBeVisible();
+
+  // Only the routine bound to this task appears, with a schedule phrase.
+  const routines = page.getByTestId('work-agent-routine');
+  await expect(routines).toHaveCount(1);
+  await expect(routines.first()).toContainText('Morning briefing');
+  await expect(routines.first()).toContainText('Daily at');
+  await expect(panel.getByText('Unrelated chat digest')).toHaveCount(0);
+
+  // Pause round-trips through the API.
+  await page.getByTestId('work-agent-routine-toggle').click();
+  await expect.poll(() => pauses).toEqual(['routine-1']);
+
+  // Inline creation is task-bound: no target/policy/model controls, and the
+  // payload carries the binding.
+  await page.getByTestId('work-agent-add-routine').click();
+  const modal = page.getByTestId('automation-modal');
+  await expect(modal).toBeVisible();
+  await expect(page.getByTestId('automation-task-bound-note')).toBeVisible();
+  await expect(page.getByTestId('automation-target')).toBeHidden();
+  await page.getByTestId('automation-name').fill('Evening wrap-up');
+  await page
+    .getByTestId('automation-instructions')
+    .fill('Write the wrap-up note.');
+  await page.getByTestId('automation-save').click();
+  await expect(modal).toHaveCount(0);
+  expect(automationCreates).toHaveLength(1);
+  expect(automationCreates[0]).toMatchObject({
+    name: 'Evening wrap-up',
+    target: 'work',
+    workTaskId: 'agent-task-1',
+  });
+  expect(automationCreates[0].workPolicyId).toBeUndefined();
+  expect(automationCreates[0].model).toBeUndefined();
+  await expect(page.getByTestId('work-agent-routine')).toHaveCount(2);
+
+  // Only taught skills list, and the toggle persists through the API.
+  const skills = page.getByTestId('work-agent-skill');
+  await expect(skills).toHaveCount(1);
+  await expect(skills.first()).toContainText('CRM export');
+  await expect(panel.getByText('Ordinary skill')).toHaveCount(0);
+  await skills.first().getByRole('switch').click();
+  await expect
+    .poll(() => skillUpdates)
+    .toEqual([{ id: 'skill-1', enabled: false }]);
+
+  // Expanding the mini screen lands on the full Screen tab.
+  await page.getByTestId('work-screen-mini-expand').click();
+  await expect(page.getByTestId('work-screen-tab')).toHaveAttribute(
+    'aria-selected',
+    'true'
+  );
+  await expect(page.getByTestId('work-screen')).toBeVisible();
+});
+
 test('shows a readable LTR model name without changing its identifier', async ({
   page,
 }) => {

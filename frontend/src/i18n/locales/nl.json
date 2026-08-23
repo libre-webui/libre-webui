@@ -2589,7 +2589,8 @@
       "splitSize": "Conversatie {{conversation}}%, werkruimte {{workspace}}%",
       "terminal": "Terminal",
       "git": "Git",
-      "screen": "Scherm"
+      "screen": "Scherm",
+      "agent": "Agent"
     },
     "files": {
       "discard": "Niet-opgeslagen bestandswijzigingen negeren?",
@@ -2743,6 +2744,19 @@
       "none": "Geen persona (eenmalige taak)",
       "hint": "Deze taak wordt een benoemde agent: hij behoudt de persona, blijft vastgezet in de zijbalk en meldt na elke run een statusregel.",
       "description": "Kies een persona om van deze taak een blijvende agent met een eigen identiteit te maken."
+    },
+    "agent": {
+      "openScreen": "Volledige schermweergave openen",
+      "personaLine": "Persona: {{name}}",
+      "screen": "Scherm",
+      "routines": "Routines",
+      "addRoutine": "Routine",
+      "noRoutines": "Nog geen routines. Een routine voert een instructie volgens schema uit, binnen de werkruimte van deze agent.",
+      "routineToggleFailed": "De routine kon niet worden bijgewerkt.",
+      "routineSaveFailed": "De routine kon niet worden opgeslagen.",
+      "skills": "Aangeleerde vaardigheden",
+      "noSkills": "Nog niets aangeleerd. Gebruik Teach op het Scherm-tabblad om een procedure één keer voor te doen; die wordt een herafspeelbare vaardigheid.",
+      "skillToggleFailed": "De vaardigheid kon niet worden bijgewerkt."
     }
   },
   "personaBackground": {
@@ -2938,7 +2952,8 @@
       "targetChat": "Chatsessie",
       "targetWork": "Work-taak",
       "workPolicy": "Work-beleid",
-      "workPolicyDefault": "Standaard (globale limieten)"
+      "workPolicyDefault": "Standaard (globale limieten)",
+      "taskBoundNote": "Deze routine draait binnen de eigen werkruimte en het gesprek van de agent, met het model en de runtime van de agent."
     },
     "kind": {
       "once": "Eenmalig",

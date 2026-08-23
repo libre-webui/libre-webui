@@ -2350,10 +2350,10 @@ class PostgresAutomationRepository implements AutomationRepository {
       const result = await client.query(
         `INSERT INTO automations
            (id, user_id, name, instructions, triggers, provider, model,
-            notify, status, target, work_policy_id, next_run_at,
-            last_run_at, created_at, updated_at)
+            notify, status, target, work_policy_id, work_task_id,
+            next_run_at, last_run_at, created_at, updated_at)
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13,
-                 $14, $15)
+                 $14, $15, $16)
          ON CONFLICT (id) DO UPDATE SET
            name = EXCLUDED.name,
            instructions = EXCLUDED.instructions,
@@ -2364,6 +2364,7 @@ class PostgresAutomationRepository implements AutomationRepository {
            status = EXCLUDED.status,
            target = EXCLUDED.target,
            work_policy_id = EXCLUDED.work_policy_id,
+           work_task_id = EXCLUDED.work_task_id,
            next_run_at = EXCLUDED.next_run_at,
            last_run_at = EXCLUDED.last_run_at,
            updated_at = EXCLUDED.updated_at
@@ -2380,6 +2381,7 @@ class PostgresAutomationRepository implements AutomationRepository {
           value.status,
           value.target,
           value.work_policy_id,
+          value.work_task_id,
           value.next_run_at,
           value.last_run_at,
           value.created_at,

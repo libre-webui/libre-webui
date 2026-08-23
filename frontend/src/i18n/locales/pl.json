@@ -2589,7 +2589,8 @@
       "splitSize": "Rozmowa {{conversation}}%, obszar roboczy {{workspace}}%",
       "terminal": "Terminal",
       "git": "Git",
-      "screen": "Ekran"
+      "screen": "Ekran",
+      "agent": "Agent"
     },
     "files": {
       "discard": "Odrzucić niezapisane zmiany w pliku?",
@@ -2743,6 +2744,19 @@
       "none": "Bez persony (zadanie jednorazowe)",
       "hint": "To zadanie staje się nazwanym agentem: zachowuje personę, pozostaje przypięte na pasku bocznym i po każdym uruchomieniu zgłasza jednowierszowy status.",
       "description": "Wybierz personę, aby zmienić to zadanie w trwałego agenta z własną tożsamością."
+    },
+    "agent": {
+      "openScreen": "Otwórz widok pełnoekranowy",
+      "personaLine": "Persona: {{name}}",
+      "screen": "Ekran",
+      "routines": "Rutyny",
+      "addRoutine": "Rutyna",
+      "noRoutines": "Brak rutyn. Rutyna wykonuje polecenie według harmonogramu, w przestrzeni roboczej tego agenta.",
+      "routineToggleFailed": "Nie udało się zaktualizować rutyny.",
+      "routineSaveFailed": "Nie udało się zapisać rutyny.",
+      "skills": "Nauczone umiejętności",
+      "noSkills": "Jeszcze niczego nie nauczono. Użyj Teach na karcie Ekran, aby raz zademonstrować procedurę; stanie się powtarzalną umiejętnością.",
+      "skillToggleFailed": "Nie udało się zaktualizować umiejętności."
     }
   },
   "personaBackground": {
@@ -2938,7 +2952,8 @@
       "targetChat": "Sesja czatu",
       "targetWork": "Zadanie Work",
       "workPolicy": "Zasada Work",
-      "workPolicyDefault": "Domyślna (limity globalne)"
+      "workPolicyDefault": "Domyślna (limity globalne)",
+      "taskBoundNote": "Ta rutyna działa w przestrzeni roboczej i rozmowie samego agenta, z modelem i środowiskiem uruchomieniowym agenta."
     },
     "kind": {
       "once": "Raz",

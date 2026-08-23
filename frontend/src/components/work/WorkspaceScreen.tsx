@@ -69,6 +69,14 @@ interface WorkspaceScreenProps {
   taskId: string;
   /** Only the visible tab connects; leaving the tab disconnects. */
   active: boolean;
+  /**
+   * 'mini' renders a compact view-only thumbnail (no toolbar, no control,
+   * no teach, no audio) whose whole surface expands via onExpand. It is a
+   * full extra viewer against the server's per-task viewer budget.
+   */
+  variant?: 'full' | 'mini';
+  /** Invoked when the mini thumbnail is clicked to open the full Screen. */
+  onExpand?: () => void;
 }
 
 type ScreenState = 'idle' | 'starting' | 'connected' | 'disconnected';
@@ -81,7 +89,12 @@ const CONTROL_RENEW_MS = 60_000;
 /** A demonstration recording caps itself rather than growing unbounded. */
 const TEACH_MAX_EVENTS = 5_000;
 
-export function WorkspaceScreen({ taskId, active }: WorkspaceScreenProps) {
+export function WorkspaceScreen({
+  taskId,
+  active,
+  variant = 'full',
+  onExpand,
+}: WorkspaceScreenProps) {
   const { t } = useTranslation();
   const mountRef = useRef<HTMLDivElement | null>(null);
   const rfbRef = useRef<RfbClient | null>(null);
@@ -212,9 +225,9 @@ export function WorkspaceScreen({ taskId, active }: WorkspaceScreenProps) {
   }, [taskId, active, attempt, mode, disconnect]);
 
   // Who is driving, and is the agent asking for a human? Polled only while
-  // the pane is open.
+  // the pane is open; the mini thumbnail has no control UI to feed.
   useEffect(() => {
-    if (!active) return;
+    if (!active || variant === 'mini') return;
     let disposed = false;
     const poll = async () => {
       try {
@@ -408,6 +421,48 @@ export function WorkspaceScreen({ taskId, active }: WorkspaceScreenProps) {
   const recording = teachPhase === 'recording' && state === 'connected';
   const toolbarButton =
     'flex items-center gap-1.5 rounded-lg border border-line px-2.5 py-1 text-xs text-ink transition-colors hover:bg-surface-subtle';
+
+  if (variant === 'mini') {
+    return (
+      <div
+        className='relative aspect-[8/5] w-full overflow-hidden rounded-xl border border-line bg-canvas'
+        data-testid='work-screen-mini'
+      >
+        <div ref={mountRef} className='h-full w-full' />
+        {state !== 'connected' && (
+          <div className='pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-2 px-4 text-center'>
+            {state === 'starting' ? (
+              <>
+                <Loader2 size={16} className='animate-spin text-white/60' />
+                <p className='text-xs text-white/70'>
+                  {t('work.screen.starting')}
+                </p>
+              </>
+            ) : (
+              <>
+                <MonitorPlay size={18} className='text-white/40' />
+                <p className='text-xs text-white/70'>
+                  {error ?? t('work.screen.disconnected')}
+                </p>
+              </>
+            )}
+          </div>
+        )}
+        {/* The whole tile expands to the full Screen tab, where control,
+            teach, audio, and reconnect live. */}
+        <button
+          type='button'
+          data-testid='work-screen-mini-expand'
+          onClick={onExpand}
+          aria-label={t('work.agent.openScreen', {
+            defaultValue: 'Open the full screen view',
+          })}
+          className='absolute inset-0 cursor-pointer bg-transparent transition-colors hover:bg-white/5 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary-500/60'
+        />
+      </div>
+    );
+  }
+
   return (
     <div
       className='flex h-full min-h-[16rem] w-full flex-col'
