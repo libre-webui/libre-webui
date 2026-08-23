@@ -44,6 +44,10 @@
     "name": "Libre WebUI",
     "shortName": "Libre"
   },
+  "appInitialization": {
+    "ollamaUnavailable": "Ollama-tjänsten är inte tillgänglig. Pluginmodeller kan fortfarande användas.",
+    "backendConnectionFailed": "Det gick inte att ansluta till backendtjänsten"
+  },
   "auth": {
     "login": {
       "title": "Välkommen tillbaka",
@@ -99,7 +103,11 @@
       "continueWith": "Fortsätt med {{provider}}",
       "connectingTo": "Ansluter till {{provider}}...",
       "github": "GitHub",
-      "huggingFace": "Hugging Face"
+      "huggingFace": "Hugging Face",
+      "loginSuccess": "OAuth-inloggningen lyckades!",
+      "completionFailed": "Det gick inte att slutföra OAuth-autentiseringen",
+      "verificationFailed": "Verifieringen av OAuth-autentiseringen misslyckades",
+      "authenticationFailed": "OAuth-autentiseringen misslyckades"
     },
     "checkingAuth": "Kontrollerar autentisering...",
     "welcome": "Välkommen",
@@ -374,7 +382,8 @@
       "pullCommand": "ollama pull llama3.2:3b",
       "noModelsTooltip": "Inga modeller tillgängliga. Se till att Ollama körs och modeller är installerade.",
       "selectBeforePrivateChat": "Välj en tillgänglig modell innan du startar en privat chatt",
-      "selectBeforeSending": "Välj en tillgänglig modell innan du skickar"
+      "selectBeforeSending": "Välj en tillgänglig modell innan du skickar",
+      "selectBeforeRegenerating": "Välj en tillgänglig modell innan du genererar om"
     },
     "footer": {
       "disclaimer": "AI kan göra misstag - verifiera viktig information",
@@ -385,7 +394,10 @@
     "mediaUpload": {
       "dropImagesHere": "Släpp bilder här eller",
       "supportedFormats": "Stöder: JPG, PNG, GIF, WebP (max 10MB vardera)",
-      "browse": "bläddra"
+      "browse": "bläddra",
+      "unsupportedFileType": "Filtypen stöds inte: {{name}}",
+      "maxImagesAllowed": "Högst {{count}} bilder är tillåtna",
+      "imageTooLarge": "Bilden {{name}} är för stor (max 10 MB)"
     },
     "structuredOutput": {
       "title": "Svarsformat",
@@ -456,7 +468,22 @@
       "modelSwitched": "Växlade till {{model}} (föregående modell är inte längre tillgänglig)",
       "modelsLoadFailed": "Det gick inte att läsa in modeller",
       "modelUpdated": "Modell uppdaterad för den aktuella chatten",
-      "modelUpdateFailed": "Det gick inte att uppdatera sessionens modell"
+      "modelUpdateFailed": "Det gick inte att uppdatera sessionens modell",
+      "titlePreviewFallback": "Kunde inte skapa en titel; meddelandeförhandsvisningen används",
+      "titleGenerated": "Chattiteln skapades",
+      "titleGenerationFailed": "Det gick inte att skapa chattiteln",
+      "sessionNotFoundRedirect": "Sessionen hittades inte. En ny session skapas...",
+      "comparisonError": "{{model}}: {{error}}",
+      "generationFailed": "genereringen misslyckades",
+      "comparisonFailed": "jämförelsen misslyckades",
+      "sendFailed": "Det gick inte att skicka meddelandet",
+      "noMessageToRegenerate": "Det finns inget meddelande att generera om",
+      "regenerateFailed": "Det gick inte att generera om meddelandet",
+      "messageNotFound": "Meddelandet hittades inte",
+      "branchSwitched": "Bytte till variant {{number}}",
+      "branchSelectFailed": "Det gick inte att välja gren",
+      "editFailed": "Det gick inte att redigera meddelandet",
+      "toolDecisionFailed": "Beslutet om verktyget kunde inte registreras"
     },
     "documents": {
       "title": "Dokument i kontexten"
@@ -616,6 +643,9 @@
       }
     },
     "saveSettings": "Spara inställningar",
+    "preferences": {
+      "updateFailed": "Det gick inte att uppdatera inställningarna: {{error}}"
+    },
     "model": {
       "title": "Modellinställningar",
       "defaultModel": "Standardmodell",
@@ -651,7 +681,10 @@
         "taskModelDescription": "Modell som används för att generera konversationstitlar"
       },
       "updatingModel": "Uppdaterar {{name}} ({{current}}/{{total}})",
-      "modelsProgress": "{{current}} av {{total}} modeller"
+      "modelsProgress": "{{current}} av {{total}} modeller",
+      "defaultModelUpdated": "Standardmodellen har uppdaterats",
+      "allModelsUpdated": "Alla modeller har uppdaterats!",
+      "updateAllFailed": "Det gick inte att uppdatera modellerna: {{error}}"
     },
     "systemMessage": {
       "title": "Systemmeddelande",
@@ -711,6 +744,7 @@
       "modelCatalogNeedsApiKey": "Lägg till en giltig API-nyckel för denna leverantör för att ladda dess live-modelllista.",
       "modelCatalogUnavailable": "Kunde inte ladda leverantörens modelllista.",
       "modelCatalogRefreshFailed": "Misslyckades med att uppdatera modellkatalogen",
+      "invalidJson": "Ogiltigt JSON-format",
       "capability": {
         "chat": "Chatt",
         "embedding": "Inbäddning",
@@ -775,6 +809,11 @@
       "stopSequencesDescription": "Anpassade tokens som stoppar genereringen när de påträffas.",
       "resetDefaults": "Återställ till standardvärden",
       "saveOptions": "Spara alternativ",
+      "saveSuccess": "Genereringsalternativen har uppdaterats",
+      "saveFailed": "Det gick inte att uppdatera genereringsalternativen: {{error}}",
+      "modelDefaultsLoaded": "Inställningarna som {{model}} rekommenderar har lästs in",
+      "resetSuccess": "Genereringsalternativen har återställts till standardvärdena",
+      "resetFailed": "Det gick inte att återställa genereringsalternativen: {{error}}",
       "embeddingSettings": "Inbäddningsinställningar",
       "enableEmbeddings": "Aktivera dokumentinbäddningar",
       "thinking": "Tänkande",
@@ -811,7 +850,14 @@
         "chunksWithEmbeddings": "Segment med inbäddningar",
         "coverage": "Täckning",
         "regenerate": "Regenerera inbäddningar",
-        "regenerating": "Regenererar..."
+        "regenerating": "Regenererar...",
+        "regenerateSuccess": "Inbäddningar för {{count}} dokument har genererats om",
+        "regeneratePartialSuccess": "Genererade om {{count}} dokument; hoppade över {{skipped}}",
+        "regenerateFailed": "Det gick inte att generera om inbäddningarna: {{error}}",
+        "saveSuccess": "Inbäddningsinställningarna har uppdaterats",
+        "saveFailed": "Det gick inte att uppdatera inbäddningsinställningarna: {{error}}",
+        "resetSuccess": "Inbäddningsinställningarna har återställts till standardvärdena",
+        "resetFailed": "Det gick inte att återställa inbäddningsinställningarna: {{error}}"
       },
       "collections": {
         "title": "Kunskapssamlingar",
@@ -883,7 +929,11 @@
       "revokeSavedVoice": "Återkalla samtycke för {{name}}",
       "revokeSavedVoiceConfirm": "Återkalla samtycke för “{{name}}”? Den sparade rösten kan inte längre användas, men samtyckesposten behålls.",
       "savedVoiceRevoked": "Samtycke återkallat",
-      "savedVoiceRevokeFailed": "Det gick inte att återkalla samtycket"
+      "savedVoiceRevokeFailed": "Det gick inte att återkalla samtycket",
+      "savedVoiceUnavailableCleanupFailed": "Den sparade rösten är inte tillgänglig och kunde inte tas bort från talinställningarna",
+      "saveSuccess": "TTS-inställningarna har sparats",
+      "saveFailed": "Det gick inte att spara TTS-inställningarna: {{error}}",
+      "testFailed": "TTS-testet misslyckades: {{error}}"
     },
     "imageGen": {
       "title": "Bildgenerering",
@@ -903,7 +953,9 @@
       "style": "Stil",
       "styleDescription": "Stilförinställning för genererade bilder",
       "availableProviders": "Tillgängliga leverantörer",
-      "models": "modeller"
+      "models": "modeller",
+      "saveSuccess": "Inställningarna för bildgenerering har sparats",
+      "saveFailed": "Det gick inte att spara inställningarna för bildgenerering: {{error}}"
     },
     "data": {
       "title": "Datahantering",
@@ -945,6 +997,16 @@
       "documents": "Dokument",
       "warnings": "Varningar",
       "refreshAfterImportFailed": "Data importerades, men vissa vyer kunde inte uppdateras. Läs in Libre WebUI igen för att se alla ändringar.",
+      "exportSuccess": "Det portabla dataarkivet har exporterats",
+      "exportFailed": "Exporten misslyckades",
+      "importSuccess": "Det portabla dataarkivet har importerats",
+      "importFailed": "Importen misslyckades",
+      "archiveErrors": {
+        "invalidJson": "Det portabla arkivet innehåller inte giltig JSON.",
+        "objectRequired": "Det portabla arkivet måste innehålla ett JSON-objekt.",
+        "unsupportedVersion": "Version {{version}} av det portabla arkivet stöds inte.",
+        "unrecognized": "Den här filen är inte ett portabelt Libre WebUI-arkiv."
+      },
       "errors": "Fel",
       "archivedChats": {
         "title": "Arkiverade chattar",
@@ -1202,6 +1264,23 @@
     "newChat": "Ny chatt",
     "newWork": "Ny Work-session",
     "openPalette": "Öppna kommandopaletten"
+  },
+  "modelDownload": {
+    "success": "Modellen {{name}} hämtades",
+    "failed": "Kunde inte hämta modellen: {{error}}",
+    "startFailed": "Kunde inte starta hämtningen",
+    "cancelled": "Hämtningen avbröts"
+  },
+  "modelTools": {
+    "toasts": {
+      "fetchInfoFailed": "Kunde inte hämta information",
+      "pushSuccess": "Modellen laddades upp",
+      "createSuccess": "Modellen skapades",
+      "copySuccess": "Modellen kopierades",
+      "embeddingsSuccess": "Inbäddningar genererades (se konsolen)",
+      "failed": "Misslyckades",
+      "unknownError": "Okänt fel"
+    }
   },
   "modelManager": {
     "title": "Modeller",

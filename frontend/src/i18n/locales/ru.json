@@ -44,6 +44,10 @@
     "name": "Libre WebUI",
     "shortName": "Libre"
   },
+  "appInitialization": {
+    "ollamaUnavailable": "Сервис Ollama недоступен. Модели плагинов по-прежнему можно использовать.",
+    "backendConnectionFailed": "Не удалось подключиться к серверной службе"
+  },
   "auth": {
     "login": {
       "title": "С возвращением",
@@ -99,7 +103,11 @@
       "continueWith": "Продолжить через {{provider}}",
       "connectingTo": "Подключение к {{provider}}...",
       "github": "GitHub",
-      "huggingFace": "Hugging Face"
+      "huggingFace": "Hugging Face",
+      "loginSuccess": "Вход через OAuth выполнен!",
+      "completionFailed": "Не удалось завершить аутентификацию OAuth",
+      "verificationFailed": "Не удалось проверить аутентификацию OAuth",
+      "authenticationFailed": "Сбой аутентификации OAuth"
     },
     "checkingAuth": "Проверка аутентификации...",
     "welcome": "Добро пожаловать",
@@ -374,7 +382,8 @@
       "pullCommand": "ollama pull llama3.2:3b",
       "noModelsTooltip": "Модели недоступны. Убедитесь, что Ollama запущен и модели установлены.",
       "selectBeforePrivateChat": "Выберите доступную модель перед началом приватного чата",
-      "selectBeforeSending": "Выберите доступную модель перед отправкой"
+      "selectBeforeSending": "Выберите доступную модель перед отправкой",
+      "selectBeforeRegenerating": "Выберите доступную модель перед повторной генерацией"
     },
     "footer": {
       "disclaimer": "ИИ может ошибаться — проверяйте важную информацию",
@@ -385,7 +394,10 @@
     "mediaUpload": {
       "dropImagesHere": "Перетащите изображения сюда или",
       "supportedFormats": "Поддерживаются: JPG, PNG, GIF, WebP (макс. 10 МБ каждый)",
-      "browse": "выберите"
+      "browse": "выберите",
+      "unsupportedFileType": "Тип файла не поддерживается: {{name}}",
+      "maxImagesAllowed": "Допускается не более {{count}} изображений",
+      "imageTooLarge": "Изображение {{name}} слишком большое (не более 10 МБ)"
     },
     "structuredOutput": {
       "title": "Формат ответа",
@@ -456,7 +468,22 @@
       "modelSwitched": "Переключено на {{model}} (предыдущая модель больше недоступна)",
       "modelsLoadFailed": "Не удалось загрузить модели",
       "modelUpdated": "Модель обновлена для текущего чата",
-      "modelUpdateFailed": "Не удалось обновить модель сеанса"
+      "modelUpdateFailed": "Не удалось обновить модель сеанса",
+      "titlePreviewFallback": "Не удалось создать заголовок; используется предпросмотр сообщения",
+      "titleGenerated": "Заголовок чата создан",
+      "titleGenerationFailed": "Не удалось создать заголовок чата",
+      "sessionNotFoundRedirect": "Сеанс не найден. Создаётся новый сеанс...",
+      "comparisonError": "{{model}}: {{error}}",
+      "generationFailed": "сбой генерации",
+      "comparisonFailed": "сбой сравнения",
+      "sendFailed": "Не удалось отправить сообщение",
+      "noMessageToRegenerate": "Нет сообщения для повторной генерации",
+      "regenerateFailed": "Не удалось повторно сгенерировать сообщение",
+      "messageNotFound": "Сообщение не найдено",
+      "branchSwitched": "Выбран вариант {{number}}",
+      "branchSelectFailed": "Не удалось выбрать ветвь",
+      "editFailed": "Не удалось изменить сообщение",
+      "toolDecisionFailed": "Не удалось записать решение по инструменту"
     },
     "documents": {
       "title": "Документы в контексте"
@@ -616,6 +643,9 @@
       }
     },
     "saveSettings": "Сохранить настройки",
+    "preferences": {
+      "updateFailed": "Не удалось обновить настройки: {{error}}"
+    },
     "model": {
       "title": "Настройки модели",
       "defaultModel": "Модель по умолчанию",
@@ -651,7 +681,10 @@
         "taskModelDescription": "Модель для генерации заголовков разговоров"
       },
       "updatingModel": "Обновление {{name}} ({{current}}/{{total}})",
-      "modelsProgress": "{{current}} из {{total}} моделей"
+      "modelsProgress": "{{current}} из {{total}} моделей",
+      "defaultModelUpdated": "Модель по умолчанию обновлена",
+      "allModelsUpdated": "Все модели успешно обновлены!",
+      "updateAllFailed": "Не удалось обновить модели: {{error}}"
     },
     "systemMessage": {
       "title": "Системное сообщение",
@@ -711,6 +744,7 @@
       "modelCatalogNeedsApiKey": "Добавьте действительный API-ключ для этого провайдера, чтобы загрузить его актуальный список моделей.",
       "modelCatalogUnavailable": "Не удалось загрузить список моделей провайдера.",
       "modelCatalogRefreshFailed": "Не удалось обновить каталог моделей",
+      "invalidJson": "Недопустимый формат JSON",
       "capability": {
         "chat": "Чат",
         "embedding": "Эмбеддинг",
@@ -775,6 +809,11 @@
       "stopSequencesDescription": "Пользовательские токены, которые остановят генерацию при обнаружении.",
       "resetDefaults": "Сбросить по умолчанию",
       "saveOptions": "Сохранить параметры",
+      "saveSuccess": "Параметры генерации успешно обновлены",
+      "saveFailed": "Не удалось обновить параметры генерации: {{error}}",
+      "modelDefaultsLoaded": "Загружены настройки, рекомендованные моделью {{model}}",
+      "resetSuccess": "Параметры генерации сброшены до значений по умолчанию",
+      "resetFailed": "Не удалось сбросить параметры генерации: {{error}}",
       "embeddingSettings": "Настройки встраивания",
       "enableEmbeddings": "Включить встраивание документов",
       "thinking": "Рассуждение",
@@ -811,7 +850,14 @@
         "chunksWithEmbeddings": "Фрагментов со встраиванием",
         "coverage": "Покрытие",
         "regenerate": "Перегенерировать встраивания",
-        "regenerating": "Перегенерация..."
+        "regenerating": "Перегенерация...",
+        "regenerateSuccess": "Встраивания повторно созданы для {{count}} документов",
+        "regeneratePartialSuccess": "Обработано документов: {{count}}; пропущено: {{skipped}}",
+        "regenerateFailed": "Не удалось повторно создать встраивания: {{error}}",
+        "saveSuccess": "Настройки встраиваний успешно обновлены",
+        "saveFailed": "Не удалось обновить настройки встраиваний: {{error}}",
+        "resetSuccess": "Настройки встраиваний сброшены до значений по умолчанию",
+        "resetFailed": "Не удалось сбросить настройки встраиваний: {{error}}"
       },
       "collections": {
         "title": "Коллекции знаний",
@@ -883,7 +929,11 @@
       "revokeSavedVoice": "Отозвать согласие для {{name}}",
       "revokeSavedVoiceConfirm": "Отозвать согласие для «{{name}}»? Сохранённый голос больше нельзя будет использовать, но запись о согласии сохранится.",
       "savedVoiceRevoked": "Согласие отозвано",
-      "savedVoiceRevokeFailed": "Не удалось отозвать согласие"
+      "savedVoiceRevokeFailed": "Не удалось отозвать согласие",
+      "savedVoiceUnavailableCleanupFailed": "Сохранённый голос недоступен, и его не удалось удалить из настроек речи",
+      "saveSuccess": "Настройки TTS успешно сохранены",
+      "saveFailed": "Не удалось сохранить настройки TTS: {{error}}",
+      "testFailed": "Ошибка проверки TTS: {{error}}"
     },
     "imageGen": {
       "title": "Генерация изображений",
@@ -903,7 +953,9 @@
       "style": "Стиль",
       "styleDescription": "Пресет стиля для генерируемых изображений",
       "availableProviders": "Доступные провайдеры",
-      "models": "моделей"
+      "models": "моделей",
+      "saveSuccess": "Настройки генерации изображений успешно сохранены",
+      "saveFailed": "Не удалось сохранить настройки генерации изображений: {{error}}"
     },
     "data": {
       "title": "Управление данными",
@@ -945,6 +997,16 @@
       "documents": "Документы",
       "warnings": "Предупреждения",
       "refreshAfterImportFailed": "Данные импортированы, но некоторые представления не удалось обновить. Перезагрузите Libre WebUI, чтобы увидеть все изменения.",
+      "exportSuccess": "Переносимый архив данных экспортирован",
+      "exportFailed": "Не удалось экспортировать данные",
+      "importSuccess": "Переносимый архив данных импортирован",
+      "importFailed": "Не удалось импортировать данные",
+      "archiveErrors": {
+        "invalidJson": "Переносимый архив не содержит допустимый JSON.",
+        "objectRequired": "Переносимый архив должен содержать объект JSON.",
+        "unsupportedVersion": "Версия переносимого архива {{version}} не поддерживается.",
+        "unrecognized": "Этот файл не является переносимым архивом Libre WebUI."
+      },
       "errors": "Ошибки",
       "archivedChats": {
         "title": "Архивированные чаты",
@@ -1202,6 +1264,23 @@
     "newChat": "Новый чат",
     "newWork": "Новая сессия Work",
     "openPalette": "Открыть палитру команд"
+  },
+  "modelDownload": {
+    "success": "Модель {{name}} загружена",
+    "failed": "Не удалось загрузить: {{error}}",
+    "startFailed": "Не удалось начать загрузку",
+    "cancelled": "Загрузка отменена"
+  },
+  "modelTools": {
+    "toasts": {
+      "fetchInfoFailed": "Не удалось получить информацию",
+      "pushSuccess": "Модель отправлена",
+      "createSuccess": "Модель создана",
+      "copySuccess": "Модель скопирована",
+      "embeddingsSuccess": "Встраивания созданы (см. консоль)",
+      "failed": "Не удалось",
+      "unknownError": "Неизвестная ошибка"
+    }
   },
   "modelManager": {
     "title": "Модели",

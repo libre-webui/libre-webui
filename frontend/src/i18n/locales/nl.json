@@ -44,6 +44,10 @@
     "name": "Libre WebUI",
     "shortName": "Libre"
   },
+  "appInitialization": {
+    "ollamaUnavailable": "De Ollama-service is niet beschikbaar. Pluginmodellen kunnen nog wel worden gebruikt.",
+    "backendConnectionFailed": "Kan geen verbinding maken met de backendservice"
+  },
   "auth": {
     "login": {
       "title": "Welkom terug",
@@ -99,7 +103,11 @@
       "continueWith": "Doorgaan met {{provider}}",
       "connectingTo": "Verbinden met {{provider}}...",
       "github": "GitHub",
-      "huggingFace": "Hugging Face"
+      "huggingFace": "Hugging Face",
+      "loginSuccess": "OAuth-aanmelding geslaagd!",
+      "completionFailed": "OAuth-authenticatie kon niet worden voltooid",
+      "verificationFailed": "Verificatie van OAuth-authenticatie mislukt",
+      "authenticationFailed": "OAuth-authenticatie mislukt"
     },
     "checkingAuth": "Authenticatie controleren...",
     "welcome": "Welkom",
@@ -374,7 +382,8 @@
       "pullCommand": "ollama pull llama3.2:3b",
       "noModelsTooltip": "Geen modellen beschikbaar. Zorg ervoor dat Ollama draait en modellen zijn geïnstalleerd.",
       "selectBeforePrivateChat": "Selecteer een beschikbaar model voordat je een privéchat start",
-      "selectBeforeSending": "Selecteer een beschikbaar model voordat je verzendt"
+      "selectBeforeSending": "Selecteer een beschikbaar model voordat je verzendt",
+      "selectBeforeRegenerating": "Selecteer een beschikbaar model voordat je opnieuw genereert"
     },
     "footer": {
       "disclaimer": "LLM kan fouten maken - verifieer belangrijke informatie",
@@ -385,7 +394,10 @@
     "mediaUpload": {
       "dropImagesHere": "Sleep afbeeldingen hierheen of",
       "supportedFormats": "Ondersteunt: JPG, PNG, GIF, WebP (max 10 MB per stuk)",
-      "browse": "bladeren"
+      "browse": "bladeren",
+      "unsupportedFileType": "Bestandstype wordt niet ondersteund: {{name}}",
+      "maxImagesAllowed": "Maximaal {{count}} afbeeldingen toegestaan",
+      "imageTooLarge": "Afbeelding {{name}} is te groot (max. 10 MB)"
     },
     "structuredOutput": {
       "title": "Antwoordformaat",
@@ -456,7 +468,22 @@
       "modelSwitched": "Overgeschakeld naar {{model}} (vorig model is niet meer beschikbaar)",
       "modelsLoadFailed": "Modellen laden mislukt",
       "modelUpdated": "Model bijgewerkt voor de huidige chat",
-      "modelUpdateFailed": "Sessiemodel bijwerken mislukt"
+      "modelUpdateFailed": "Sessiemodel bijwerken mislukt",
+      "titlePreviewFallback": "Kan geen titel genereren; het berichtvoorbeeld wordt gebruikt",
+      "titleGenerated": "Chattitel gegenereerd",
+      "titleGenerationFailed": "Genereren van chattitel mislukt",
+      "sessionNotFoundRedirect": "Sessie niet gevonden. Er wordt een nieuwe sessie gemaakt...",
+      "comparisonError": "{{model}}: {{error}}",
+      "generationFailed": "genereren mislukt",
+      "comparisonFailed": "vergelijken mislukt",
+      "sendFailed": "Bericht verzenden mislukt",
+      "noMessageToRegenerate": "Geen bericht om opnieuw te genereren",
+      "regenerateFailed": "Opnieuw genereren van bericht mislukt",
+      "messageNotFound": "Bericht niet gevonden",
+      "branchSwitched": "Overgeschakeld naar variant {{number}}",
+      "branchSelectFailed": "Vertakking selecteren mislukt",
+      "editFailed": "Bericht bewerken mislukt",
+      "toolDecisionFailed": "De beslissing over de tool kon niet worden vastgelegd"
     },
     "documents": {
       "title": "Documenten in context"
@@ -616,6 +643,9 @@
       }
     },
     "saveSettings": "Instellingen opslaan",
+    "preferences": {
+      "updateFailed": "Instellingen bijwerken mislukt: {{error}}"
+    },
     "model": {
       "title": "Modelinstellingen",
       "defaultModel": "Standaardmodel",
@@ -651,7 +681,10 @@
         "taskModelDescription": "Model gebruikt voor het genereren van gesprekstitels"
       },
       "updatingModel": "{{name}} bijwerken ({{current}}/{{total}})",
-      "modelsProgress": "{{current}} van {{total}} modellen"
+      "modelsProgress": "{{current}} van {{total}} modellen",
+      "defaultModelUpdated": "Standaardmodel bijgewerkt",
+      "allModelsUpdated": "Alle modellen zijn bijgewerkt!",
+      "updateAllFailed": "Modellen bijwerken mislukt: {{error}}"
     },
     "systemMessage": {
       "title": "Systeembericht",
@@ -711,6 +744,7 @@
       "modelCatalogNeedsApiKey": "Voeg een geldige API-sleutel toe voor deze provider om de live modellenlijst te laden.",
       "modelCatalogUnavailable": "Kon de modellenlijst van de provider niet laden.",
       "modelCatalogRefreshFailed": "Vernieuwen van modelcatalogus mislukt",
+      "invalidJson": "Ongeldige JSON-indeling",
       "capability": {
         "chat": "Chat",
         "embedding": "Embedding",
@@ -775,6 +809,11 @@
       "stopSequencesDescription": "Aangepaste tokens die de generatie stoppen wanneer ze worden aangetroffen.",
       "resetDefaults": "Resetten naar standaard",
       "saveOptions": "Opties opslaan",
+      "saveSuccess": "Generatieopties bijgewerkt",
+      "saveFailed": "Bijwerken van generatieopties mislukt: {{error}}",
+      "modelDefaultsLoaded": "De door {{model}} aanbevolen instellingen zijn geladen",
+      "resetSuccess": "Generatieopties teruggezet naar de standaardwaarden",
+      "resetFailed": "Terugzetten van generatieopties mislukt: {{error}}",
       "embeddingSettings": "Embedding-instellingen",
       "enableEmbeddings": "Document-embeddings inschakelen",
       "thinking": "Nadenken",
@@ -811,7 +850,14 @@
         "chunksWithEmbeddings": "Chunks met embeddings",
         "coverage": "Dekking",
         "regenerate": "Embeddings opnieuw genereren",
-        "regenerating": "Opnieuw genereren..."
+        "regenerating": "Opnieuw genereren...",
+        "regenerateSuccess": "Embeddings opnieuw gegenereerd voor {{count}} documenten",
+        "regeneratePartialSuccess": "{{count}} documenten opnieuw gegenereerd; {{skipped}} overgeslagen",
+        "regenerateFailed": "Opnieuw genereren van embeddings mislukt: {{error}}",
+        "saveSuccess": "Embedding-instellingen bijgewerkt",
+        "saveFailed": "Bijwerken van embedding-instellingen mislukt: {{error}}",
+        "resetSuccess": "Embedding-instellingen teruggezet naar de standaardwaarden",
+        "resetFailed": "Terugzetten van embedding-instellingen mislukt: {{error}}"
       },
       "collections": {
         "title": "Kenniscollecties",
@@ -883,7 +929,11 @@
       "revokeSavedVoice": "Toestemming intrekken voor {{name}}",
       "revokeSavedVoiceConfirm": "Toestemming intrekken voor ‘{{name}}’? De opgeslagen stem kan niet meer worden gebruikt, maar het toestemmingsbewijs blijft bewaard.",
       "savedVoiceRevoked": "Toestemming ingetrokken",
-      "savedVoiceRevokeFailed": "Toestemming intrekken mislukt"
+      "savedVoiceRevokeFailed": "Toestemming intrekken mislukt",
+      "savedVoiceUnavailableCleanupFailed": "De opgeslagen stem is niet beschikbaar en kon niet uit de spraakinstellingen worden verwijderd",
+      "saveSuccess": "TTS-instellingen opgeslagen",
+      "saveFailed": "Opslaan van TTS-instellingen mislukt: {{error}}",
+      "testFailed": "TTS-test mislukt: {{error}}"
     },
     "imageGen": {
       "title": "Beeldgeneratie",
@@ -903,7 +953,9 @@
       "style": "Stijl",
       "styleDescription": "Stijlpreset voor gegenereerde afbeeldingen",
       "availableProviders": "Beschikbare providers",
-      "models": "modellen"
+      "models": "modellen",
+      "saveSuccess": "Instellingen voor afbeeldingsgeneratie opgeslagen",
+      "saveFailed": "Opslaan van instellingen voor afbeeldingsgeneratie mislukt: {{error}}"
     },
     "data": {
       "title": "Gegevensbeheer",
@@ -945,6 +997,16 @@
       "documents": "Documenten",
       "warnings": "Waarschuwingen",
       "refreshAfterImportFailed": "De gegevens zijn geïmporteerd, maar sommige weergaven konden niet worden vernieuwd. Laad Libre WebUI opnieuw om alle wijzigingen te zien.",
+      "exportSuccess": "Draagbaar gegevensarchief geëxporteerd",
+      "exportFailed": "Exporteren mislukt",
+      "importSuccess": "Draagbaar gegevensarchief geïmporteerd",
+      "importFailed": "Importeren mislukt",
+      "archiveErrors": {
+        "invalidJson": "Het draagbare archief bevat geen geldige JSON.",
+        "objectRequired": "Het draagbare archief moet een JSON-object bevatten.",
+        "unsupportedVersion": "Niet-ondersteunde versie {{version}} van het draagbare archief.",
+        "unrecognized": "Dit bestand is geen draagbaar Libre WebUI-archief."
+      },
       "errors": "Fouten",
       "archivedChats": {
         "title": "Gearchiveerde chats",
@@ -1202,6 +1264,23 @@
     "newChat": "Nieuwe chat",
     "newWork": "Nieuwe Work-sessie",
     "openPalette": "Opdrachtenpalet openen"
+  },
+  "modelDownload": {
+    "success": "Model {{name}} opgehaald",
+    "failed": "Kon model niet ophalen: {{error}}",
+    "startFailed": "Kon het ophalen niet starten",
+    "cancelled": "Ophalen geannuleerd"
+  },
+  "modelTools": {
+    "toasts": {
+      "fetchInfoFailed": "Kon informatie niet ophalen",
+      "pushSuccess": "Model geüpload",
+      "createSuccess": "Model aangemaakt",
+      "copySuccess": "Model gekopieerd",
+      "embeddingsSuccess": "Embeddings gegenereerd (zie console)",
+      "failed": "Mislukt",
+      "unknownError": "Onbekende fout"
+    }
   },
   "modelManager": {
     "title": "Modellen",

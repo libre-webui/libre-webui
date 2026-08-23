@@ -153,7 +153,7 @@ interface ChatState {
     model: string,
     providerType?: ChatProviderType | null,
     providerId?: string | null
-  ) => void;
+  ) => Promise<{ success: boolean; error?: string }>;
 
   // Multi-model comparison generations still running
   pendingComparisons: Array<{
@@ -180,7 +180,7 @@ interface ChatState {
 
   // System Message
   systemMessage: string;
-  setSystemMessage: (message: string) => void;
+  setSystemMessage: (message: string) => Promise<boolean>;
 
   // UI state
   loading: boolean;
@@ -763,7 +763,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
           ollamaLoadError = new Error(
             ollamaResponse.error ||
               ollamaResponse.message ||
-              'Ollama models are unavailable.'
+              i18n.t('chat.toasts.noModelProvider')
           );
         }
       } catch (error) {
@@ -1059,7 +1059,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
       ),
     })),
 
-  setSelectedModel: (model, providerType = null, providerId = null) => {
+  setSelectedModel: async (model, providerType = null, providerId = null) => {
     const normalizedProviderId =
       providerType === 'plugin' || providerType === 'agent'
         ? providerId || null
@@ -1070,11 +1070,23 @@ export const useChatStore = create<ChatState>((set, get) => ({
       selectedProviderId: normalizedProviderId,
     });
     // Save to backend preferences when model is selected
-    preferencesApi
-      .setDefaultModel(model, providerType, normalizedProviderId)
-      .catch(_error => {
-        logger.warn('Failed to save default model to backend:', _error);
-      });
+    try {
+      const response = await preferencesApi.setDefaultModel(
+        model,
+        providerType,
+        normalizedProviderId
+      );
+      if (!response.success) {
+        const error = response.error || i18n.t('errors.generic');
+        logger.warn('Failed to save default model to backend:', error);
+        return { success: false, error };
+      }
+      return { success: true };
+    } catch (error: unknown) {
+      const errorMessage = getErrorMessage(error, i18n.t('errors.generic'));
+      logger.warn('Failed to save default model to backend:', errorMessage);
+      return { success: false, error: errorMessage };
+    }
   },
 
   updateCurrentSessionModel: async (
@@ -1168,14 +1180,18 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
   // System Message
   systemMessage: '',
-  setSystemMessage: message => {
+  setSystemMessage: async message => {
     const state = get();
     set({ systemMessage: message });
-
-    // Save to backend preferences when system message is updated
-    preferencesApi.setSystemMessage(message).catch(_error => {
-      logger.warn('Failed to save system message to backend:', _error);
-    });
+    const syncRequests: Promise<unknown>[] = [
+      preferencesApi.setSystemMessage(message).then(response => {
+        if (!response.success) {
+          throw new Error(
+            response.error || i18n.t('settings.systemMessage.saveFailed')
+          );
+        }
+      }),
+    ];
 
     // Update the system message in the current session if it exists — never
     // a compaction summary, which also has role 'system' and may sit first.
@@ -1222,20 +1238,31 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
         // Also update the system message on the backend
         const systemMessage = state.currentSession.messages[systemMessageIndex];
-        chatApi
-          .updateMessage(state.currentSession.id, systemMessage.id, {
-            content: message,
-          })
-          .catch(_error => {
-            logger.warn(
-              'Failed to sync system message update to backend:',
-              _error
-            );
-          });
+        syncRequests.push(
+          chatApi
+            .updateMessage(state.currentSession.id, systemMessage.id, {
+              content: message,
+            })
+            .then(response => {
+              if (!response.success) {
+                throw new Error(
+                  response.error || i18n.t('settings.systemMessage.saveFailed')
+                );
+              }
+            })
+        );
 
         logger.debug('✅ Updated system message in current session');
       }
     }
+
+    const syncResults = await Promise.allSettled(syncRequests);
+    for (const result of syncResults) {
+      if (result.status === 'rejected') {
+        logger.warn('Failed to save system message to backend:', result.reason);
+      }
+    }
+    return syncResults.every(result => result.status === 'fulfilled');
   },
 
   // UI state

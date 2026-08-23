@@ -44,6 +44,10 @@
     "name": "Libre WebUI",
     "shortName": "Libre"
   },
+  "appInitialization": {
+    "ollamaUnavailable": "Ollama hizmeti kullanılamıyor. Eklenti modelleri kullanılmaya devam edilebilir.",
+    "backendConnectionFailed": "Backend hizmetine bağlanılamadı"
+  },
   "auth": {
     "login": {
       "title": "Tekrar Hoş Geldiniz",
@@ -99,7 +103,11 @@
       "continueWith": "{{provider}} ile devam et",
       "connectingTo": "{{provider}} bağlanılıyor...",
       "github": "GitHub",
-      "huggingFace": "Hugging Face"
+      "huggingFace": "Hugging Face",
+      "loginSuccess": "OAuth ile giriş başarılı!",
+      "completionFailed": "OAuth kimlik doğrulaması tamamlanamadı",
+      "verificationFailed": "OAuth kimlik doğrulaması doğrulanamadı",
+      "authenticationFailed": "OAuth kimlik doğrulaması başarısız oldu"
     },
     "checkingAuth": "Kimlik doğrulama kontrol ediliyor...",
     "welcome": "Hoş geldiniz",
@@ -374,7 +382,8 @@
       "pullCommand": "ollama pull llama3.2:3b",
       "noModelsTooltip": "Kullanılabilir model yok. Lütfen Ollama'nın çalıştığından ve modellerin yüklü olduğundan emin olun.",
       "selectBeforePrivateChat": "Gizli sohbeti başlatmadan önce kullanılabilir bir model seçin",
-      "selectBeforeSending": "Göndermeden önce kullanılabilir bir model seçin"
+      "selectBeforeSending": "Göndermeden önce kullanılabilir bir model seçin",
+      "selectBeforeRegenerating": "Yeniden oluşturmadan önce kullanılabilir bir model seçin"
     },
     "footer": {
       "disclaimer": "Yapay zeka hata yapabilir - önemli bilgileri doğrulayın",
@@ -385,7 +394,10 @@
     "mediaUpload": {
       "dropImagesHere": "Görselleri buraya bırakın veya",
       "supportedFormats": "Desteklenen: JPG, PNG, GIF, WebP (maks. 10MB)",
-      "browse": "göz atın"
+      "browse": "göz atın",
+      "unsupportedFileType": "Dosya türü desteklenmiyor: {{name}}",
+      "maxImagesAllowed": "En fazla {{count}} görsele izin verilir",
+      "imageTooLarge": "{{name}} görseli çok büyük (en fazla 10 MB)"
     },
     "structuredOutput": {
       "title": "Yanıt Formatı",
@@ -456,7 +468,22 @@
       "modelSwitched": "{{model}} öğesine geçildi (önceki model artık kullanılamıyor)",
       "modelsLoadFailed": "Modeller yüklenemedi",
       "modelUpdated": "Geçerli sohbet için model güncellendi",
-      "modelUpdateFailed": "Oturum modeli güncellenemedi"
+      "modelUpdateFailed": "Oturum modeli güncellenemedi",
+      "titlePreviewFallback": "Başlık oluşturulamadı; mesaj önizlemesi kullanılıyor",
+      "titleGenerated": "Sohbet başlığı oluşturuldu",
+      "titleGenerationFailed": "Sohbet başlığı oluşturulamadı",
+      "sessionNotFoundRedirect": "Oturum bulunamadı. Yeni bir oturum oluşturuluyor...",
+      "comparisonError": "{{model}}: {{error}}",
+      "generationFailed": "üretim başarısız oldu",
+      "comparisonFailed": "karşılaştırma başarısız oldu",
+      "sendFailed": "Mesaj gönderilemedi",
+      "noMessageToRegenerate": "Yeniden oluşturulacak mesaj yok",
+      "regenerateFailed": "Mesaj yeniden oluşturulamadı",
+      "messageNotFound": "Mesaj bulunamadı",
+      "branchSwitched": "{{number}} numaralı varyanta geçildi",
+      "branchSelectFailed": "Dal seçilemedi",
+      "editFailed": "Mesaj düzenlenemedi",
+      "toolDecisionFailed": "Araç kararı kaydedilemedi"
     },
     "documents": {
       "title": "Bağlamdaki belgeler"
@@ -616,6 +643,9 @@
       }
     },
     "saveSettings": "Ayarları Kaydet",
+    "preferences": {
+      "updateFailed": "Ayarlar güncellenemedi: {{error}}"
+    },
     "model": {
       "title": "Model Ayarları",
       "defaultModel": "Varsayılan Model",
@@ -651,7 +681,10 @@
         "taskModelDescription": "Konuşma başlıkları oluşturmak için kullanılan model"
       },
       "updatingModel": "{{name}} güncelleniyor ({{current}}/{{total}})",
-      "modelsProgress": "{{total}} modelden {{current}}"
+      "modelsProgress": "{{total}} modelden {{current}}",
+      "defaultModelUpdated": "Varsayılan model güncellendi",
+      "allModelsUpdated": "Tüm modeller başarıyla güncellendi!",
+      "updateAllFailed": "Modeller güncellenemedi: {{error}}"
     },
     "systemMessage": {
       "title": "Sistem Mesajı",
@@ -711,6 +744,7 @@
       "modelCatalogNeedsApiKey": "Canlı model listesini yüklemek için bu sağlayıcıya geçerli bir API anahtarı ekleyin.",
       "modelCatalogUnavailable": "Sağlayıcının model listesi yüklenemedi.",
       "modelCatalogRefreshFailed": "Model kataloğu yenilenemedi",
+      "invalidJson": "Geçersiz JSON biçimi",
       "capability": {
         "chat": "Sohbet",
         "embedding": "Gömme",
@@ -775,6 +809,11 @@
       "stopSequencesDescription": "Karşılaşıldığında üretimi durduracak özel tokenler.",
       "resetDefaults": "Varsayılanlara Sıfırla",
       "saveOptions": "Seçenekleri Kaydet",
+      "saveSuccess": "Üretim seçenekleri başarıyla güncellendi",
+      "saveFailed": "Üretim seçenekleri güncellenemedi: {{error}}",
+      "modelDefaultsLoaded": "{{model}} tarafından önerilen ayarlar yüklendi",
+      "resetSuccess": "Üretim seçenekleri varsayılanlara sıfırlandı",
+      "resetFailed": "Üretim seçenekleri sıfırlanamadı: {{error}}",
       "embeddingSettings": "Gömme Ayarları",
       "enableEmbeddings": "Belge Gömmelerini Etkinleştir",
       "thinking": "Düşünme",
@@ -811,7 +850,14 @@
         "chunksWithEmbeddings": "Gömmeli parçalar",
         "coverage": "Kapsam",
         "regenerate": "Gömmeleri Yeniden Oluştur",
-        "regenerating": "Yeniden oluşturuluyor..."
+        "regenerating": "Yeniden oluşturuluyor...",
+        "regenerateSuccess": "{{count}} belge için gömmeler yeniden oluşturuldu",
+        "regeneratePartialSuccess": "{{count}} belge yeniden oluşturuldu; {{skipped}} belge atlandı",
+        "regenerateFailed": "Gömmeler yeniden oluşturulamadı: {{error}}",
+        "saveSuccess": "Gömme ayarları başarıyla güncellendi",
+        "saveFailed": "Gömme ayarları güncellenemedi: {{error}}",
+        "resetSuccess": "Gömme ayarları varsayılanlara sıfırlandı",
+        "resetFailed": "Gömme ayarları sıfırlanamadı: {{error}}"
       },
       "collections": {
         "title": "Bilgi koleksiyonları",
@@ -883,7 +929,11 @@
       "revokeSavedVoice": "{{name}} için onayı geri çek",
       "revokeSavedVoiceConfirm": "“{{name}}” için onay geri çekilsin mi? Kaydedilen ses artık kullanılamaz, ancak onay kaydı saklanır.",
       "savedVoiceRevoked": "Onay geri çekildi",
-      "savedVoiceRevokeFailed": "Onay geri çekilemedi"
+      "savedVoiceRevokeFailed": "Onay geri çekilemedi",
+      "savedVoiceUnavailableCleanupFailed": "Kaydedilen ses kullanılamıyor ve konuşma ayarlarından temizlenemedi",
+      "saveSuccess": "TTS ayarları başarıyla kaydedildi",
+      "saveFailed": "TTS ayarları kaydedilemedi: {{error}}",
+      "testFailed": "TTS testi başarısız oldu: {{error}}"
     },
     "imageGen": {
       "title": "Görsel Üretimi",
@@ -903,7 +953,9 @@
       "style": "Stil",
       "styleDescription": "Üretilen görseller için stil ön ayarı",
       "availableProviders": "Mevcut Sağlayıcılar",
-      "models": "model"
+      "models": "model",
+      "saveSuccess": "Görsel üretme ayarları başarıyla kaydedildi",
+      "saveFailed": "Görsel üretme ayarları kaydedilemedi: {{error}}"
     },
     "data": {
       "title": "Veri Yönetimi",
@@ -945,6 +997,16 @@
       "documents": "Belgeler",
       "warnings": "Uyarılar",
       "refreshAfterImportFailed": "Veriler içe aktarıldı, ancak bazı görünümler yenilenemedi. Tüm değişiklikleri görmek için Libre WebUI’yi yeniden yükleyin.",
+      "exportSuccess": "Taşınabilir veri arşivi dışa aktarıldı",
+      "exportFailed": "Dışa aktarma başarısız oldu",
+      "importSuccess": "Taşınabilir veri arşivi içe aktarıldı",
+      "importFailed": "İçe aktarma başarısız oldu",
+      "archiveErrors": {
+        "invalidJson": "Taşınabilir arşiv geçerli bir JSON değil.",
+        "objectRequired": "Taşınabilir arşiv bir JSON nesnesi içermelidir.",
+        "unsupportedVersion": "Taşınabilir arşiv sürümü {{version}} desteklenmiyor.",
+        "unrecognized": "Bu dosya bir Libre WebUI taşınabilir arşivi değil."
+      },
       "errors": "Hatalar",
       "archivedChats": {
         "title": "Arşivlenmiş sohbetler",
@@ -1202,6 +1264,23 @@
     "newChat": "Yeni sohbet",
     "newWork": "Yeni Work oturumu",
     "openPalette": "Komut paletini aç"
+  },
+  "modelDownload": {
+    "success": "{{name}} indirildi",
+    "failed": "İndirme başarısız: {{error}}",
+    "startFailed": "İndirme başlatılamadı",
+    "cancelled": "İndirme iptal edildi"
+  },
+  "modelTools": {
+    "toasts": {
+      "fetchInfoFailed": "Bilgi alınamadı",
+      "pushSuccess": "Model gönderildi",
+      "createSuccess": "Model oluşturuldu",
+      "copySuccess": "Model kopyalandı",
+      "embeddingsSuccess": "Gömmeler oluşturuldu (konsola bakın)",
+      "failed": "İşlem başarısız",
+      "unknownError": "Bilinmeyen hata"
+    }
   },
   "modelManager": {
     "title": "Modeller",

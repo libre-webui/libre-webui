@@ -68,7 +68,7 @@ export const SettingsSessionsTab: React.FC = () => {
     try {
       const response = await authApi.revokeSession(session.id);
       if (!response.success) {
-        throw new Error(response.error || 'Session revoke failed.');
+        throw new Error(response.error || t('settings.sessions.revokeFailed'));
       }
       toast.success(t('settings.sessions.revoked', 'Session signed out.'));
       await load();
@@ -91,7 +91,7 @@ export const SettingsSessionsTab: React.FC = () => {
     try {
       const response = await authApi.revokeOtherSessions();
       if (!response.success || !response.data) {
-        throw new Error(response.error || 'Session revoke failed.');
+        throw new Error(response.error || t('settings.sessions.revokeFailed'));
       }
       toast.success(
         t('settings.sessions.othersRevoked', {

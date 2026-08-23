@@ -16,6 +16,7 @@
  */
 
 import { useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useChatStore } from '@/store/chatStore';
 import { useAppStore } from '@/store/appStore';
 import { useAuthStore } from '@/store/authStore';
@@ -33,6 +34,7 @@ import {
 const logger = createLogger('initialize');
 
 export const useInitializeApp = () => {
+  const { t } = useTranslation();
   const initialized = useRef(false);
   const initializing = useRef(false);
   const {
@@ -78,9 +80,7 @@ export const useInitializeApp = () => {
         try {
           const healthResponse = await ollamaApi.checkHealth();
           if (!healthResponse.success && !isDemoMode()) {
-            toast.error(
-              'Ollama service is not available. Plugin models may still be used.'
-            );
+            toast.error(t('appInitialization.ollamaUnavailable'));
           }
         } catch (healthError) {
           logger.warn(
@@ -88,9 +88,7 @@ export const useInitializeApp = () => {
             healthError
           );
           if (!isDemoMode()) {
-            toast.error(
-              'Ollama service is not available. Plugin models may still be used.'
-            );
+            toast.error(t('appInitialization.ollamaUnavailable'));
           }
         }
 
@@ -103,7 +101,7 @@ export const useInitializeApp = () => {
       } catch (_error) {
         if (!isDemoMode()) {
           logger.error('Failed to initialize app:', _error);
-          toast.error('Failed to connect to the backend service');
+          toast.error(t('appInitialization.backendConnectionFailed'));
         } else {
           // In demo mode, proceed to load models and sessions anyway, no error log
           await Promise.all([loadAppPreferences(), loadChatPreferences()]);
@@ -123,6 +121,7 @@ export const useInitializeApp = () => {
     loadModels,
     loadSessions,
     loadPlugins,
+    t,
   ]);
 
   // Set default model when models are loaded

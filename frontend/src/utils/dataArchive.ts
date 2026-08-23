@@ -20,6 +20,20 @@ const LEGACY_FORMAT = 'libre-webui-export';
 const CURRENT_VERSION = 3;
 const MIGRATABLE_VERSIONS = new Set([2, CURRENT_VERSION]);
 
+export type PortableArchiveParseErrorCode =
+  'invalidJson' | 'objectRequired' | 'unsupportedVersion' | 'unrecognized';
+
+export class PortableArchiveParseError extends Error {
+  constructor(
+    public readonly code: PortableArchiveParseErrorCode,
+    message: string,
+    public readonly version?: unknown
+  ) {
+    super(message);
+    this.name = 'PortableArchiveParseError';
+  }
+}
+
 type JsonValue =
   null | boolean | number | string | JsonValue[] | { [key: string]: JsonValue };
 
@@ -57,20 +71,31 @@ export function parsePortableArchiveJson(
   try {
     value = JSON.parse(text) as unknown;
   } catch {
-    throw new Error('Portable archive is not valid JSON.');
+    throw new PortableArchiveParseError(
+      'invalidJson',
+      'Portable archive is not valid JSON.'
+    );
   }
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
-    throw new Error('Portable archive must contain a JSON object.');
+    throw new PortableArchiveParseError(
+      'objectRequired',
+      'Portable archive must contain a JSON object.'
+    );
   }
   const archive = value as Record<string, unknown>;
   if (archive.format === CURRENT_FORMAT) {
     if (!MIGRATABLE_VERSIONS.has(archive.version as number)) {
-      throw new Error(
-        `Unsupported portable archive version ${String(archive.version)}.`
+      throw new PortableArchiveParseError(
+        'unsupportedVersion',
+        `Unsupported portable archive version ${String(archive.version)}.`,
+        archive.version
       );
     }
     return archive;
   }
   if (archive.format === LEGACY_FORMAT) return archive;
-  throw new Error('This file is not a Libre WebUI portable archive.');
+  throw new PortableArchiveParseError(
+    'unrecognized',
+    'This file is not a Libre WebUI portable archive.'
+  );
 }

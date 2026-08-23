@@ -44,6 +44,10 @@
     "name": "Libre WebUI",
     "shortName": "Libre"
   },
+  "appInitialization": {
+    "ollamaUnavailable": "Služba Ollama není dostupná. Modely pluginů lze stále používat.",
+    "backendConnectionFailed": "Nepodařilo se připojit k backendové službě"
+  },
   "auth": {
     "login": {
       "title": "Vítejte zpět",
@@ -99,7 +103,11 @@
       "continueWith": "Pokračovat s {{provider}}",
       "connectingTo": "Připojování k {{provider}}...",
       "github": "GitHub",
-      "huggingFace": "Hugging Face"
+      "huggingFace": "Hugging Face",
+      "loginSuccess": "Přihlášení přes OAuth bylo úspěšné!",
+      "completionFailed": "Dokončení autentizace OAuth se nezdařilo",
+      "verificationFailed": "Ověření autentizace OAuth se nezdařilo",
+      "authenticationFailed": "Autentizace OAuth se nezdařila"
     },
     "checkingAuth": "Kontrola ověření...",
     "welcome": "Vítejte",
@@ -374,7 +382,8 @@
       "pullCommand": "ollama pull llama3.2:3b",
       "noModelsTooltip": "Žádné dostupné modely. Ujistěte se, že Ollama běží a modely jsou nainstalované.",
       "selectBeforePrivateChat": "Před zahájením soukromého chatu vyberte dostupný model",
-      "selectBeforeSending": "Před odesláním vyberte dostupný model"
+      "selectBeforeSending": "Před odesláním vyberte dostupný model",
+      "selectBeforeRegenerating": "Před opětovným vygenerováním vyberte dostupný model"
     },
     "footer": {
       "disclaimer": "LLM může dělat chyby - ověřujte důležité informace",
@@ -385,7 +394,10 @@
     "mediaUpload": {
       "dropImagesHere": "Přetáhněte obrázky sem nebo",
       "supportedFormats": "Podporované: JPG, PNG, GIF, WebP (max 10MB každý)",
-      "browse": "procházet"
+      "browse": "procházet",
+      "unsupportedFileType": "Typ souboru není podporován: {{name}}",
+      "maxImagesAllowed": "Je povoleno nejvýše {{count}} obrázků",
+      "imageTooLarge": "Obrázek {{name}} je příliš velký (max. 10 MB)"
     },
     "structuredOutput": {
       "title": "Formát odpovědi",
@@ -456,7 +468,22 @@
       "modelSwitched": "Přepnuto na {{model}} (předchozí model již není dostupný)",
       "modelsLoadFailed": "Načtení modelů se nezdařilo",
       "modelUpdated": "Model pro aktuální chat aktualizován",
-      "modelUpdateFailed": "Aktualizace modelu relace se nezdařila"
+      "modelUpdateFailed": "Aktualizace modelu relace se nezdařila",
+      "titlePreviewFallback": "Titulek se nepodařilo vygenerovat; používá se náhled zprávy",
+      "titleGenerated": "Titulek chatu vygenerován",
+      "titleGenerationFailed": "Generování titulku chatu se nezdařilo",
+      "sessionNotFoundRedirect": "Relace nebyla nalezena. Vytváří se nová relace...",
+      "comparisonError": "{{model}}: {{error}}",
+      "generationFailed": "generování se nezdařilo",
+      "comparisonFailed": "porovnání se nezdařilo",
+      "sendFailed": "Odeslání zprávy se nezdařilo",
+      "noMessageToRegenerate": "Žádná zpráva k opětovnému vygenerování",
+      "regenerateFailed": "Opětovné vygenerování zprávy se nezdařilo",
+      "messageNotFound": "Zpráva nebyla nalezena",
+      "branchSwitched": "Přepnuto na variantu {{number}}",
+      "branchSelectFailed": "Výběr větve se nezdařil",
+      "editFailed": "Úprava zprávy se nezdařila",
+      "toolDecisionFailed": "Rozhodnutí o použití nástroje se nepodařilo zaznamenat"
     },
     "documents": {
       "title": "Dokumenty v kontextu"
@@ -616,6 +643,9 @@
       }
     },
     "saveSettings": "Uložit nastavení",
+    "preferences": {
+      "updateFailed": "Nepodařilo se aktualizovat nastavení: {{error}}"
+    },
     "model": {
       "title": "Nastavení modelu",
       "defaultModel": "Výchozí model",
@@ -651,7 +681,10 @@
         "taskModelDescription": "Model používaný pro generování titulků konverzací"
       },
       "updatingModel": "Aktualizace {{name}} ({{current}}/{{total}})",
-      "modelsProgress": "{{current}} z {{total}} modelů"
+      "modelsProgress": "{{current}} z {{total}} modelů",
+      "defaultModelUpdated": "Výchozí model aktualizován",
+      "allModelsUpdated": "Všechny modely byly úspěšně aktualizovány!",
+      "updateAllFailed": "Aktualizace modelů se nezdařila: {{error}}"
     },
     "systemMessage": {
       "title": "Systémová zpráva",
@@ -711,6 +744,7 @@
       "modelCatalogNeedsApiKey": "Přidejte platný API klíč pro tohoto poskytovatele, aby se načetl jeho živý seznam modelů.",
       "modelCatalogUnavailable": "Nelze načíst seznam modelů poskytovatele.",
       "modelCatalogRefreshFailed": "Nepodařilo se obnovit katalog modelů",
+      "invalidJson": "Neplatný formát JSON",
       "capability": {
         "chat": "Chat",
         "embedding": "Embedding",
@@ -775,6 +809,11 @@
       "stopSequencesDescription": "Vlastní tokeny, které zastaví generování při nalezení.",
       "resetDefaults": "Obnovit výchozí",
       "saveOptions": "Uložit možnosti",
+      "saveSuccess": "Možnosti generování byly úspěšně aktualizovány",
+      "saveFailed": "Možnosti generování se nepodařilo aktualizovat: {{error}}",
+      "modelDefaultsLoaded": "Načtena nastavení doporučená modelem {{model}}",
+      "resetSuccess": "Možnosti generování byly obnoveny na výchozí hodnoty",
+      "resetFailed": "Možnosti generování se nepodařilo obnovit: {{error}}",
       "embeddingSettings": "Nastavení embeddingů",
       "enableEmbeddings": "Povolit embeddingy dokumentů",
       "thinking": "Přemýšlení",
@@ -811,7 +850,14 @@
         "chunksWithEmbeddings": "Části s embeddingy",
         "coverage": "Pokrytí",
         "regenerate": "Regenerovat embeddingy",
-        "regenerating": "Regenerování..."
+        "regenerating": "Regenerování...",
+        "regenerateSuccess": "Embeddingy byly regenerovány pro {{count}} dokumentů",
+        "regeneratePartialSuccess": "Regenerováno {{count}} dokumentů; přeskočeno {{skipped}}",
+        "regenerateFailed": "Regenerování embeddingů se nezdařilo: {{error}}",
+        "saveSuccess": "Nastavení embeddingů byla úspěšně aktualizována",
+        "saveFailed": "Nastavení embeddingů se nepodařilo aktualizovat: {{error}}",
+        "resetSuccess": "Nastavení embeddingů byla obnovena na výchozí hodnoty",
+        "resetFailed": "Nastavení embeddingů se nepodařilo obnovit: {{error}}"
       },
       "collections": {
         "title": "Kolekce znalostí",
@@ -883,7 +929,11 @@
       "revokeSavedVoice": "Odvolat souhlas pro {{name}}",
       "revokeSavedVoiceConfirm": "Odvolat souhlas pro „{{name}}“? Uložený hlas už nebude možné použít, záznam o souhlasu ale zůstane zachován.",
       "savedVoiceRevoked": "Souhlas odvolán",
-      "savedVoiceRevokeFailed": "Souhlas se nepodařilo odvolat"
+      "savedVoiceRevokeFailed": "Souhlas se nepodařilo odvolat",
+      "savedVoiceUnavailableCleanupFailed": "Uložený hlas není dostupný a nepodařilo se ho odstranit z nastavení řeči",
+      "saveSuccess": "Nastavení TTS byla úspěšně uložena",
+      "saveFailed": "Nastavení TTS se nepodařilo uložit: {{error}}",
+      "testFailed": "Test TTS se nezdařil: {{error}}"
     },
     "imageGen": {
       "title": "Generování obrázků",
@@ -903,7 +953,9 @@
       "style": "Styl",
       "styleDescription": "Preset stylu pro generované obrázky",
       "availableProviders": "Dostupní poskytovatelé",
-      "models": "modelů"
+      "models": "modelů",
+      "saveSuccess": "Nastavení generování obrázků byla úspěšně uložena",
+      "saveFailed": "Nastavení generování obrázků se nepodařilo uložit: {{error}}"
     },
     "data": {
       "title": "Správa dat",
@@ -945,6 +997,16 @@
       "documents": "Dokumenty",
       "warnings": "Varování",
       "refreshAfterImportFailed": "Data byla importována, ale některá zobrazení se nepodařilo obnovit. Načtěte Libre WebUI znovu, aby se zobrazily všechny změny.",
+      "exportSuccess": "Přenositelný datový archiv byl exportován",
+      "exportFailed": "Export se nezdařil",
+      "importSuccess": "Přenositelný datový archiv byl importován",
+      "importFailed": "Import se nezdařil",
+      "archiveErrors": {
+        "invalidJson": "Přenositelný archiv neobsahuje platný JSON.",
+        "objectRequired": "Přenositelný archiv musí obsahovat objekt JSON.",
+        "unsupportedVersion": "Nepodporovaná verze přenositelného archivu {{version}}.",
+        "unrecognized": "Tento soubor není přenositelným archivem Libre WebUI."
+      },
       "errors": "Chyby",
       "archivedChats": {
         "title": "Archivované chaty",
@@ -1202,6 +1264,23 @@
     "newChat": "Nový chat",
     "newWork": "Nová relace Work",
     "openPalette": "Otevřít příkazovou paletu"
+  },
+  "modelDownload": {
+    "success": "Model {{name}} stažen",
+    "failed": "Model se nepodařilo stáhnout: {{error}}",
+    "startFailed": "Stahování se nepodařilo spustit",
+    "cancelled": "Stahování zrušeno"
+  },
+  "modelTools": {
+    "toasts": {
+      "fetchInfoFailed": "Informace se nepodařilo načíst",
+      "pushSuccess": "Model nahrán",
+      "createSuccess": "Model vytvořen",
+      "copySuccess": "Model zkopírován",
+      "embeddingsSuccess": "Embeddingy vygenerovány (viz konzole)",
+      "failed": "Nezdařilo se",
+      "unknownError": "Neznámá chyba"
+    }
   },
   "modelManager": {
     "title": "Modely",

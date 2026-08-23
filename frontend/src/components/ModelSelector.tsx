@@ -316,21 +316,21 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
             setPullProgress(null);
             setPullingModel(null);
             setCancelPull(null);
-            toast.success(`Downloaded ${filename}`);
+            toast.success(t('modelDownload.success', { name: filename }));
             onModelsRefresh?.();
           },
           error => {
             setPullProgress(null);
             setPullingModel(null);
             setCancelPull(null);
-            toast.error(`Failed to download: ${error}`);
+            toast.error(t('modelDownload.failed', { error }));
           }
         );
         setCancelPull(() => cancelFn);
       } catch (_error) {
         setPullProgress(null);
         setPullingModel(null);
-        toast.error('Failed to start download');
+        toast.error(t('modelDownload.startFailed'));
       }
     },
     [canInstallModels, onModelsRefresh, pullingModel, t]
@@ -448,21 +448,21 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
           setPullProgress(null);
           setPullingModel(null);
           setCancelPull(null);
-          toast.success(`Downloaded ${modelName}`);
+          toast.success(t('modelDownload.success', { name: modelName }));
           onModelsRefresh?.();
         },
         error => {
           setPullProgress(null);
           setPullingModel(null);
           setCancelPull(null);
-          toast.error(`Failed to download: ${error}`);
+          toast.error(t('modelDownload.failed', { error }));
         }
       );
       setCancelPull(() => cancelFn);
     } catch (_error) {
       setPullProgress(null);
       setPullingModel(null);
-      toast.error('Failed to start download');
+      toast.error(t('modelDownload.startFailed'));
     }
   };
 
@@ -472,7 +472,7 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
       setCancelPull(null);
       setPullingModel(null);
       setPullProgress(null);
-      toast.success('Download cancelled');
+      toast.success(t('modelDownload.cancelled'));
     }
   };
 

@@ -67,7 +67,9 @@ export const MediaUpload: React.FC<MediaUploadProps> = ({
       else if (file.type.includes('pdf') || file.type.includes('text')) {
         await handleDocumentFile(file);
       } else {
-        toast.error(`File type not supported: ${file.name}`);
+        toast.error(
+          t('chat.mediaUpload.unsupportedFileType', { name: file.name })
+        );
       }
     }
   };
@@ -76,12 +78,12 @@ export const MediaUpload: React.FC<MediaUploadProps> = ({
     const remainingSlots = maxImages - images.length;
 
     if (remainingSlots <= 0) {
-      toast.error(`Maximum ${maxImages} images allowed`);
+      toast.error(t('chat.mediaUpload.maxImagesAllowed', { count: maxImages }));
       return;
     }
 
     if (file.size > 10 * 1024 * 1024) {
-      toast.error(`Image ${file.name} is too large (max 10MB)`);
+      toast.error(t('chat.mediaUpload.imageTooLarge', { name: file.name }));
       return;
     }
 
@@ -96,7 +98,7 @@ export const MediaUpload: React.FC<MediaUploadProps> = ({
 
   const handleDocumentFile = async (file: File) => {
     if (file.size > 10 * 1024 * 1024) {
-      toast.error('File size must be less than 10MB');
+      toast.error(t('documents.fileSizeTooLarge'));
       return;
     }
 
@@ -109,13 +111,15 @@ export const MediaUpload: React.FC<MediaUploadProps> = ({
         const document = response.data;
         setUploadedDocuments(prev => [...prev, document]);
         onDocumentUploaded?.(document);
-        toast.success(`Document "${file.name}" uploaded`);
+        toast.success(
+          t('documents.uploadSuccessWithName', { name: file.name })
+        );
       } else {
-        toast.error(response.error || 'Failed to upload document');
+        toast.error(response.error || t('documents.uploadFailed'));
       }
     } catch (error) {
       logger.error('Document upload error:', error);
-      toast.error('Failed to upload document');
+      toast.error(t('documents.uploadFailed'));
     } finally {
       setIsUploadingDoc(false);
     }
@@ -151,13 +155,13 @@ export const MediaUpload: React.FC<MediaUploadProps> = ({
       const response = await documentsApi.deleteDocument(documentId);
       if (response.success) {
         setUploadedDocuments(prev => prev.filter(doc => doc.id !== documentId));
-        toast.success('Document removed');
+        toast.success(t('documents.removeSuccess'));
       } else {
-        toast.error(response.error || 'Failed to remove document');
+        toast.error(response.error || t('documents.removeFailed'));
       }
     } catch (error) {
       logger.error('Error removing document:', error);
-      toast.error('Failed to remove document');
+      toast.error(t('documents.removeFailed'));
     }
   };
 

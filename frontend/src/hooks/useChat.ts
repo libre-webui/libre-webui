@@ -16,6 +16,7 @@
  */
 
 import { useState, useCallback, useRef, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useChatStore } from '@/store/chatStore';
 import { useAppStore } from '@/store/appStore';
 import {
@@ -60,6 +61,7 @@ export const isDefaultSessionTitle = (title?: string) =>
   !title || DEFAULT_SESSION_TITLES.has(title);
 
 export const useChat = (sessionId: string) => {
+  const { t } = useTranslation();
   const [streamingMessage, setStreamingMessage] = useState<string>('');
   const [streamingThinking, setStreamingThinking] = useState<string>('');
   const [streamingMessageId, setStreamingMessageId] = useState<string | null>(
@@ -272,13 +274,13 @@ export const useChat = (sessionId: string) => {
         );
 
         if (response.data.source === 'fallback') {
-          toast.error('Could not generate a title; using the message preview');
+          toast.error(t('chat.toasts.titlePreviewFallback'));
         } else {
-          toast.success('Chat title generated');
+          toast.success(t('chat.toasts.titleGenerated'));
         }
       } catch (error) {
         logger.error('Failed to generate title:', error);
-        toast.error('Failed to generate chat title');
+        toast.error(t('chat.toasts.titleGenerationFailed'));
       } finally {
         setGeneratingTitleForSession(null);
       }
@@ -287,6 +289,7 @@ export const useChat = (sessionId: string) => {
       applySessionTitle,
       clearQueuedTitleGeneration,
       setGeneratingTitleForSession,
+      t,
     ]
   );
 
@@ -691,7 +694,7 @@ export const useChat = (sessionId: string) => {
       // Handle session not found error by redirecting to home
       if (errorData.code === 'SESSION_NOT_FOUND') {
         logger.warn('Session not found, redirecting to create new session...');
-        toast.error('Session not found. Creating a new session...');
+        toast.error(t('chat.toasts.sessionNotFoundRedirect'));
         // Navigate to home to create a new session
         window.location.href = '/';
         return;
@@ -730,6 +733,7 @@ export const useChat = (sessionId: string) => {
     clearQueuedTitleGeneration,
     removeMessage,
     reloadCompletedDurableGeneration,
+    t,
   ]);
 
   const sendMessage = useCallback(
@@ -762,7 +766,7 @@ export const useChat = (sessionId: string) => {
           providerId: session?.providerId,
         };
         if (!isChatModelSelectionAvailable(chatState.models, selection)) {
-          toast.error('Select an available model before sending');
+          toast.error(t('chat.model.selectBeforeSending'));
           return;
         }
 
@@ -924,7 +928,12 @@ export const useChat = (sessionId: string) => {
                       );
                     } else if (payload.type === 'error') {
                       toast.error(
-                        `${target.model}: ${String(payload.error ?? 'generation failed')}`
+                        t('chat.toasts.comparisonError', {
+                          model: target.model,
+                          error: String(
+                            payload.error ?? t('chat.toasts.generationFailed')
+                          ),
+                        })
                       );
                     }
                   },
@@ -933,7 +942,10 @@ export const useChat = (sessionId: string) => {
                 if (!compareAbort.signal.aborted) {
                   logger.error('Comparison generation failed:', error);
                   toast.error(
-                    `${target.model}: ${error instanceof Error ? error.message : 'comparison failed'}`
+                    t('chat.toasts.comparisonError', {
+                      model: target.model,
+                      error: t('chat.toasts.comparisonFailed'),
+                    })
                   );
                 }
               } finally {
@@ -1064,7 +1076,7 @@ export const useChat = (sessionId: string) => {
         setIsGenerating(false);
         streamingMessageIdRef.current = null;
         streamingThinkingRef.current = '';
-        toast.error('Failed to send message');
+        toast.error(t('chat.toasts.sendFailed'));
       }
     },
     [
@@ -1076,6 +1088,7 @@ export const useChat = (sessionId: string) => {
       maybeGenerateTitle,
       settleDurableCancellation,
       reloadCompletedDurableGeneration,
+      t,
     ]
   );
 
@@ -1164,7 +1177,7 @@ export const useChat = (sessionId: string) => {
         providerId: session.providerId,
       })
     ) {
-      toast.error('Select an available model before regenerating');
+      toast.error(t('chat.model.selectBeforeRegenerating'));
       return;
     }
 
@@ -1192,7 +1205,7 @@ export const useChat = (sessionId: string) => {
     }
 
     if (lastUserMessageIndex === -1 || lastAssistantMessageIndex === -1) {
-      toast.error('No message to regenerate');
+      toast.error(t('chat.toasts.noMessageToRegenerate'));
       return;
     }
 
@@ -1383,7 +1396,7 @@ export const useChat = (sessionId: string) => {
       setIsGenerating(false);
       streamingMessageIdRef.current = null;
       streamingThinkingRef.current = '';
-      toast.error('Failed to regenerate message');
+      toast.error(t('chat.toasts.regenerateFailed'));
     }
   }, [
     sessionId,
@@ -1393,6 +1406,7 @@ export const useChat = (sessionId: string) => {
     removeMessage,
     applyAuthoritativeSession,
     settleDurableCancellation,
+    t,
   ]);
 
   // Select a specific branch by message ID (for side-by-side UI)
@@ -1405,7 +1419,7 @@ export const useChat = (sessionId: string) => {
       // Find the message in the current session
       const message = session.messages.find(m => m.id === messageId);
       if (!message) {
-        toast.error('Message not found');
+        toast.error(t('chat.toasts.messageNotFound'));
         return;
       }
 
@@ -1454,16 +1468,18 @@ export const useChat = (sessionId: string) => {
             currentSession: updatedSession,
           }));
 
-          toast.success(`Switched to variant ${branchIndex + 1}`);
+          toast.success(
+            t('chat.toasts.branchSwitched', { number: branchIndex + 1 })
+          );
         } else {
-          toast.error(response.error || 'Failed to select branch');
+          toast.error(response.error || t('chat.toasts.branchSelectFailed'));
         }
       } catch (error) {
         logger.error('Failed to select branch:', error);
-        toast.error('Failed to select branch');
+        toast.error(t('chat.toasts.branchSelectFailed'));
       }
     },
-    [sessionId]
+    [sessionId, t]
   );
 
   // Edit a user message: drop it and everything after, then resend the
@@ -1497,10 +1513,10 @@ export const useChat = (sessionId: string) => {
         await sendMessage(newContent, editedMessage.images);
       } catch (error) {
         logger.error('Failed to edit message:', error);
-        toast.error('Failed to edit message');
+        toast.error(t('chat.toasts.editFailed'));
       }
     },
-    [sessionId, sendMessage]
+    [sessionId, sendMessage, t]
   );
 
   const decideToolApproval = useCallback(
@@ -1512,10 +1528,10 @@ export const useChat = (sessionId: string) => {
         );
       } catch (error) {
         logger.error('Failed to record the tool decision:', error);
-        toast.error('The tool decision could not be recorded');
+        toast.error(t('chat.toasts.toolDecisionFailed'));
       }
     },
-    []
+    [t]
   );
 
   /**

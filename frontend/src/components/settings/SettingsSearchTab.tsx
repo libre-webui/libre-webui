@@ -74,7 +74,7 @@ export const SettingsSearchTab: React.FC = () => {
         safeSearch,
       });
       if (!response.success || !response.data) {
-        throw new Error(response.error || 'Search settings update failed.');
+        throw new Error(response.error || t('settings.search.saveFailed'));
       }
       setEnabled(response.data.enabled);
       setUrl(response.data.url ?? '');

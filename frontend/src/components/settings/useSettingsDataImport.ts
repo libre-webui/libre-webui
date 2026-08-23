@@ -24,7 +24,10 @@ import type {
   DataArchiveExclusion,
   DataArchivePreflight,
 } from '@/utils/api/preferencesApi';
-import { parsePortableArchiveJson } from '@/utils/dataArchive';
+import {
+  parsePortableArchiveJson,
+  PortableArchiveParseError,
+} from '@/utils/dataArchive';
 
 export type ImportMergeStrategy = 'skip' | 'overwrite';
 
@@ -66,6 +69,23 @@ export function useSettingsDataImport({
   const importFileInputRef = useRef<HTMLInputElement>(null);
   const preflightRequestIdRef = useRef(0);
 
+  const translateArchiveParseError = (
+    error: PortableArchiveParseError
+  ): string => {
+    switch (error.code) {
+      case 'invalidJson':
+        return t('settings.data.archiveErrors.invalidJson');
+      case 'objectRequired':
+        return t('settings.data.archiveErrors.objectRequired');
+      case 'unsupportedVersion':
+        return t('settings.data.archiveErrors.unsupportedVersion', {
+          version: String(error.version),
+        });
+      case 'unrecognized':
+        return t('settings.data.archiveErrors.unrecognized');
+    }
+  };
+
   const resetImportState = () => {
     preflightRequestIdRef.current += 1;
     setPreflight(null);
@@ -80,7 +100,7 @@ export function useSettingsDataImport({
     try {
       const response = await preferencesApi.exportData();
       if (!response.success || !response.data) {
-        throw new Error(response.error || 'Export failed');
+        throw new Error(response.error || t('settings.data.exportFailed'));
       }
       const blob = new Blob([JSON.stringify(response.data, null, 2)], {
         type: 'application/json',
@@ -95,9 +115,11 @@ export function useSettingsDataImport({
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
-      toast.success('Portable data archive exported');
+      toast.success(t('settings.data.exportSuccess'));
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Export failed');
+      toast.error(
+        error instanceof Error ? error.message : t('settings.data.exportFailed')
+      );
     }
   };
 
@@ -123,9 +145,11 @@ export function useSettingsDataImport({
     } catch (error) {
       if (preflightRequestIdRef.current === requestId) {
         toast.error(
-          error instanceof Error
-            ? error.message
-            : t('settings.data.archiveValidationFailed')
+          error instanceof PortableArchiveParseError
+            ? translateArchiveParseError(error)
+            : error instanceof Error
+              ? error.message
+              : t('settings.data.archiveValidationFailed')
         );
       }
     } finally {
@@ -184,7 +208,7 @@ export function useSettingsDataImport({
           warnings: result.data.warnings,
           exclusions: result.data.exclusions,
         });
-        toast.success('Portable data archive imported');
+        toast.success(t('settings.data.importSuccess'));
 
         const reloads = await Promise.allSettled([
           loadPreferences(),
@@ -196,10 +220,12 @@ export function useSettingsDataImport({
         }
         window.dispatchEvent(new Event('libre:documents-updated'));
       } else {
-        throw new Error(result.error || 'Import failed');
+        throw new Error(result.error || t('settings.data.importFailed'));
       }
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Import failed');
+      toast.error(
+        error instanceof Error ? error.message : t('settings.data.importFailed')
+      );
       setImportResult(null);
     } finally {
       setImporting(false);

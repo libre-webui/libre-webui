@@ -44,6 +44,10 @@
     "name": "Libre WebUI",
     "shortName": "Libre"
   },
+  "appInitialization": {
+    "ollamaUnavailable": "Perkhidmatan Ollama tidak tersedia. Model pemalam masih boleh digunakan.",
+    "backendConnectionFailed": "Gagal menyambung ke perkhidmatan backend"
+  },
   "auth": {
     "login": {
       "title": "Selamat Kembali",
@@ -99,7 +103,11 @@
       "continueWith": "Teruskan dengan {{provider}}",
       "connectingTo": "Menyambung ke {{provider}}...",
       "github": "GitHub",
-      "huggingFace": "Hugging Face"
+      "huggingFace": "Hugging Face",
+      "loginSuccess": "Log masuk OAuth berjaya!",
+      "completionFailed": "Gagal melengkapkan pengesahan OAuth",
+      "verificationFailed": "Pengesahan OAuth tidak dapat disahkan",
+      "authenticationFailed": "Pengesahan OAuth gagal"
     },
     "checkingAuth": "Memeriksa pengesahan...",
     "welcome": "Selamat datang",
@@ -374,7 +382,8 @@
       "pullCommand": "ollama pull llama3.2:3b",
       "noModelsTooltip": "Tiada model tersedia. Sila pastikan Ollama sedang berjalan dan model telah dipasang.",
       "selectBeforePrivateChat": "Pilih model yang tersedia sebelum memulakan sembang peribadi",
-      "selectBeforeSending": "Pilih model yang tersedia sebelum menghantar"
+      "selectBeforeSending": "Pilih model yang tersedia sebelum menghantar",
+      "selectBeforeRegenerating": "Pilih model yang tersedia sebelum menjana semula"
     },
     "footer": {
       "disclaimer": "LLM boleh membuat kesilapan - sahkan maklumat penting",
@@ -385,7 +394,10 @@
     "mediaUpload": {
       "dropImagesHere": "Lepaskan imej di sini atau",
       "supportedFormats": "Sokongan: JPG, PNG, GIF, WebP (maks 10MB setiap satu)",
-      "browse": "layari"
+      "browse": "layari",
+      "unsupportedFileType": "Jenis fail tidak disokong: {{name}}",
+      "maxImagesAllowed": "Maksimum {{count}} imej dibenarkan",
+      "imageTooLarge": "Imej {{name}} terlalu besar (maksimum 10MB)"
     },
     "structuredOutput": {
       "title": "Format Respons",
@@ -456,7 +468,22 @@
       "modelSwitched": "Ditukar kepada {{model}} (model sebelumnya tidak lagi tersedia)",
       "modelsLoadFailed": "Gagal memuatkan model",
       "modelUpdated": "Model dikemas kini untuk chat semasa",
-      "modelUpdateFailed": "Gagal mengemas kini model sesi"
+      "modelUpdateFailed": "Gagal mengemas kini model sesi",
+      "titlePreviewFallback": "Tajuk tidak dapat dijana; pratonton mesej digunakan",
+      "titleGenerated": "Tajuk sembang dijana",
+      "titleGenerationFailed": "Gagal menjana tajuk sembang",
+      "sessionNotFoundRedirect": "Sesi tidak ditemui. Mencipta sesi baharu...",
+      "comparisonError": "{{model}}: {{error}}",
+      "generationFailed": "penjanaan gagal",
+      "comparisonFailed": "perbandingan gagal",
+      "sendFailed": "Gagal menghantar mesej",
+      "noMessageToRegenerate": "Tiada mesej untuk dijana semula",
+      "regenerateFailed": "Gagal menjana semula mesej",
+      "messageNotFound": "Mesej tidak ditemui",
+      "branchSwitched": "Bertukar kepada varian {{number}}",
+      "branchSelectFailed": "Gagal memilih cabang",
+      "editFailed": "Gagal mengedit mesej",
+      "toolDecisionFailed": "Keputusan alat tidak dapat direkodkan"
     },
     "documents": {
       "title": "Dokumen dalam konteks"
@@ -616,6 +643,9 @@
       }
     },
     "saveSettings": "Simpan Tetapan",
+    "preferences": {
+      "updateFailed": "Gagal mengemas kini tetapan: {{error}}"
+    },
     "model": {
       "title": "Tetapan Model",
       "defaultModel": "Model Lalai",
@@ -651,7 +681,10 @@
         "taskModelDescription": "Model yang digunakan untuk menjana tajuk perbualan"
       },
       "updatingModel": "Mengemas kini {{name}} ({{current}}/{{total}})",
-      "modelsProgress": "{{current}} daripada {{total}} model"
+      "modelsProgress": "{{current}} daripada {{total}} model",
+      "defaultModelUpdated": "Model lalai dikemas kini",
+      "allModelsUpdated": "Semua model berjaya dikemas kini!",
+      "updateAllFailed": "Gagal mengemas kini model: {{error}}"
     },
     "systemMessage": {
       "title": "Mesej Sistem",
@@ -711,6 +744,7 @@
       "modelCatalogNeedsApiKey": "Tambah kunci API yang sah untuk penyedia ini bagi memuatkan senarai model langsungnya.",
       "modelCatalogUnavailable": "Tidak dapat memuatkan senarai model penyedia.",
       "modelCatalogRefreshFailed": "Gagal memuat semula katalog model",
+      "invalidJson": "Format JSON tidak sah",
       "capability": {
         "chat": "Sembang",
         "embedding": "Pembenaman",
@@ -775,6 +809,11 @@
       "stopSequencesDescription": "Token tersuai yang akan menghentikan penjanaan apabila ditemui.",
       "resetDefaults": "Tetap Semula ke Lalai",
       "saveOptions": "Simpan Pilihan",
+      "saveSuccess": "Pilihan penjanaan berjaya dikemas kini",
+      "saveFailed": "Gagal mengemas kini pilihan penjanaan: {{error}}",
+      "modelDefaultsLoaded": "Tetapan yang disyorkan oleh {{model}} telah dimuatkan",
+      "resetSuccess": "Pilihan penjanaan ditetapkan semula kepada lalai",
+      "resetFailed": "Gagal menetapkan semula pilihan penjanaan kepada lalai: {{error}}",
       "embeddingSettings": "Tetapan Pembenaman",
       "enableEmbeddings": "Aktifkan Pembenaman Dokumen",
       "thinking": "Pemikiran",
@@ -811,7 +850,14 @@
         "chunksWithEmbeddings": "Cebisan dengan pembenaman",
         "coverage": "Liputan",
         "regenerate": "Jana Semula Pembenaman",
-        "regenerating": "Menjana semula..."
+        "regenerating": "Menjana semula...",
+        "regenerateSuccess": "Pembenaman untuk {{count}} dokumen berjaya dijana semula",
+        "regeneratePartialSuccess": "{{count}} dokumen dijana semula; {{skipped}} dilangkau",
+        "regenerateFailed": "Gagal menjana semula pembenaman: {{error}}",
+        "saveSuccess": "Tetapan pembenaman berjaya dikemas kini",
+        "saveFailed": "Gagal mengemas kini tetapan pembenaman: {{error}}",
+        "resetSuccess": "Tetapan pembenaman ditetapkan semula kepada lalai",
+        "resetFailed": "Gagal menetapkan semula tetapan pembenaman kepada lalai: {{error}}"
       },
       "collections": {
         "title": "Koleksi pengetahuan",
@@ -883,7 +929,11 @@
       "revokeSavedVoice": "Tarik balik persetujuan untuk {{name}}",
       "revokeSavedVoiceConfirm": "Tarik balik persetujuan untuk “{{name}}”? Suara yang disimpan tidak boleh digunakan lagi, tetapi rekod persetujuan dikekalkan.",
       "savedVoiceRevoked": "Persetujuan ditarik balik",
-      "savedVoiceRevokeFailed": "Gagal menarik balik persetujuan"
+      "savedVoiceRevokeFailed": "Gagal menarik balik persetujuan",
+      "savedVoiceUnavailableCleanupFailed": "Suara yang disimpan tidak tersedia dan tidak dapat dikosongkan daripada tetapan Pertuturan",
+      "saveSuccess": "Tetapan TTS berjaya disimpan",
+      "saveFailed": "Gagal menyimpan tetapan TTS: {{error}}",
+      "testFailed": "Ujian TTS gagal: {{error}}"
     },
     "imageGen": {
       "title": "Penjanaan Imej",
@@ -903,7 +953,9 @@
       "style": "Gaya",
       "styleDescription": "Pratetap gaya untuk imej yang dijana",
       "availableProviders": "Penyedia Tersedia",
-      "models": "model"
+      "models": "model",
+      "saveSuccess": "Tetapan penjanaan imej berjaya disimpan",
+      "saveFailed": "Gagal menyimpan tetapan penjanaan imej: {{error}}"
     },
     "data": {
       "title": "Pengurusan Data",
@@ -945,6 +997,16 @@
       "documents": "Dokumen",
       "warnings": "Amaran",
       "refreshAfterImportFailed": "Data telah diimport, tetapi sesetengah paparan tidak dapat disegar semula. Muat semula Libre WebUI untuk melihat semua perubahan.",
+      "exportSuccess": "Arkib data mudah alih berjaya dieksport",
+      "exportFailed": "Eksport gagal",
+      "importSuccess": "Arkib data mudah alih berjaya diimport",
+      "importFailed": "Import gagal",
+      "archiveErrors": {
+        "invalidJson": "Arkib mudah alih bukan JSON yang sah.",
+        "objectRequired": "Arkib mudah alih mesti mengandungi objek JSON.",
+        "unsupportedVersion": "Versi arkib mudah alih {{version}} tidak disokong.",
+        "unrecognized": "Fail ini bukan arkib mudah alih Libre WebUI."
+      },
       "errors": "Ralat",
       "archivedChats": {
         "title": "Sembang diarkibkan",
@@ -1202,6 +1264,23 @@
     "newChat": "Sembang baharu",
     "newWork": "Sesi Work baharu",
     "openPalette": "Buka palet arahan"
+  },
+  "modelDownload": {
+    "success": "{{name}} telah dimuat turun",
+    "failed": "Gagal memuat turun: {{error}}",
+    "startFailed": "Gagal memulakan muat turun",
+    "cancelled": "Muat turun dibatalkan"
+  },
+  "modelTools": {
+    "toasts": {
+      "fetchInfoFailed": "Gagal mendapatkan maklumat",
+      "pushSuccess": "Model berjaya dimuat naik",
+      "createSuccess": "Model berjaya dicipta",
+      "copySuccess": "Model berjaya disalin",
+      "embeddingsSuccess": "Embedding berjaya dijana (lihat konsol)",
+      "failed": "Gagal",
+      "unknownError": "Ralat tidak diketahui"
+    }
   },
   "modelManager": {
     "title": "Model",

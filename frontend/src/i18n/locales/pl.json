@@ -44,6 +44,10 @@
     "name": "Libre WebUI",
     "shortName": "Libre"
   },
+  "appInitialization": {
+    "ollamaUnavailable": "Usługa Ollama jest niedostępna. Nadal można korzystać z modeli wtyczek.",
+    "backendConnectionFailed": "Nie udało się połączyć z usługą backendu"
+  },
   "auth": {
     "login": {
       "title": "Witaj ponownie",
@@ -99,7 +103,11 @@
       "continueWith": "Kontynuuj z {{provider}}",
       "connectingTo": "Łączenie z {{provider}}...",
       "github": "GitHub",
-      "huggingFace": "Hugging Face"
+      "huggingFace": "Hugging Face",
+      "loginSuccess": "Logowanie przez OAuth zakończone pomyślnie!",
+      "completionFailed": "Nie udało się ukończyć uwierzytelniania OAuth",
+      "verificationFailed": "Weryfikacja uwierzytelniania OAuth nie powiodła się",
+      "authenticationFailed": "Uwierzytelnianie OAuth nie powiodło się"
     },
     "checkingAuth": "Sprawdzanie uwierzytelniania...",
     "welcome": "Witaj",
@@ -374,7 +382,8 @@
       "pullCommand": "ollama pull llama3.2:3b",
       "noModelsTooltip": "Brak dostępnych modeli. Upewnij się, że Ollama działa i modele są zainstalowane.",
       "selectBeforePrivateChat": "Wybierz dostępny model przed rozpoczęciem prywatnego czatu",
-      "selectBeforeSending": "Wybierz dostępny model przed wysłaniem"
+      "selectBeforeSending": "Wybierz dostępny model przed wysłaniem",
+      "selectBeforeRegenerating": "Wybierz dostępny model przed ponownym wygenerowaniem"
     },
     "footer": {
       "disclaimer": "LLM może popełniać błędy - weryfikuj ważne informacje",
@@ -385,7 +394,10 @@
     "mediaUpload": {
       "dropImagesHere": "Upuść obrazy tutaj lub",
       "supportedFormats": "Obsługiwane: JPG, PNG, GIF, WebP (maks. 10MB każdy)",
-      "browse": "przeglądaj"
+      "browse": "przeglądaj",
+      "unsupportedFileType": "Nieobsługiwany typ pliku: {{name}}",
+      "maxImagesAllowed": "Dozwolona maksymalna liczba obrazów: {{count}}",
+      "imageTooLarge": "Obraz {{name}} jest zbyt duży (maks. 10 MB)"
     },
     "structuredOutput": {
       "title": "Format odpowiedzi",
@@ -456,7 +468,22 @@
       "modelSwitched": "Przełączono na {{model}} (poprzedni model nie jest już dostępny)",
       "modelsLoadFailed": "Nie udało się załadować modeli",
       "modelUpdated": "Zaktualizowano model bieżącego czatu",
-      "modelUpdateFailed": "Nie udało się zaktualizować modelu sesji"
+      "modelUpdateFailed": "Nie udało się zaktualizować modelu sesji",
+      "titlePreviewFallback": "Nie udało się wygenerować tytułu; użyto podglądu wiadomości",
+      "titleGenerated": "Wygenerowano tytuł czatu",
+      "titleGenerationFailed": "Nie udało się wygenerować tytułu czatu",
+      "sessionNotFoundRedirect": "Nie znaleziono sesji. Tworzenie nowej sesji...",
+      "comparisonError": "{{model}}: {{error}}",
+      "generationFailed": "generowanie nie powiodło się",
+      "comparisonFailed": "porównanie nie powiodło się",
+      "sendFailed": "Nie udało się wysłać wiadomości",
+      "noMessageToRegenerate": "Brak wiadomości do ponownego wygenerowania",
+      "regenerateFailed": "Nie udało się ponownie wygenerować wiadomości",
+      "messageNotFound": "Nie znaleziono wiadomości",
+      "branchSwitched": "Przełączono na wariant {{number}}",
+      "branchSelectFailed": "Nie udało się wybrać gałęzi",
+      "editFailed": "Nie udało się edytować wiadomości",
+      "toolDecisionFailed": "Nie udało się zapisać decyzji dotyczącej narzędzia"
     },
     "documents": {
       "title": "Dokumenty w kontekście"
@@ -616,6 +643,9 @@
       }
     },
     "saveSettings": "Zapisz ustawienia",
+    "preferences": {
+      "updateFailed": "Nie udało się zaktualizować ustawień: {{error}}"
+    },
     "model": {
       "title": "Ustawienia modelu",
       "defaultModel": "Domyślny model",
@@ -651,7 +681,10 @@
         "taskModelDescription": "Model używany do generowania tytułów rozmów"
       },
       "updatingModel": "Aktualizacja {{name}} ({{current}}/{{total}})",
-      "modelsProgress": "{{current}} z {{total}} modeli"
+      "modelsProgress": "{{current}} z {{total}} modeli",
+      "defaultModelUpdated": "Zaktualizowano model domyślny",
+      "allModelsUpdated": "Wszystkie modele zostały zaktualizowane!",
+      "updateAllFailed": "Nie udało się zaktualizować modeli: {{error}}"
     },
     "systemMessage": {
       "title": "Wiadomość systemowa",
@@ -711,6 +744,7 @@
       "modelCatalogNeedsApiKey": "Dodaj prawidłowy klucz API dla tego dostawcy, aby załadować jego listę modeli na żywo.",
       "modelCatalogUnavailable": "Nie udało się załadować listy modeli dostawcy.",
       "modelCatalogRefreshFailed": "Nie udało się odświeżyć katalogu modeli",
+      "invalidJson": "Nieprawidłowy format JSON",
       "capability": {
         "chat": "Czat",
         "embedding": "Embedding",
@@ -775,6 +809,11 @@
       "stopSequencesDescription": "Własne tokeny, które zatrzymają generowanie po napotkaniu.",
       "resetDefaults": "Przywróć domyślne",
       "saveOptions": "Zapisz opcje",
+      "saveSuccess": "Zaktualizowano opcje generowania",
+      "saveFailed": "Nie udało się zaktualizować opcji generowania: {{error}}",
+      "modelDefaultsLoaded": "Wczytano ustawienia zalecane przez model {{model}}",
+      "resetSuccess": "Przywrócono domyślne opcje generowania",
+      "resetFailed": "Nie udało się przywrócić domyślnych opcji generowania: {{error}}",
       "embeddingSettings": "Ustawienia embeddingów",
       "enableEmbeddings": "Włącz embeddingi dokumentów",
       "thinking": "Myślenie",
@@ -811,7 +850,14 @@
         "chunksWithEmbeddings": "Fragmenty z embeddingami",
         "coverage": "Pokrycie",
         "regenerate": "Regeneruj embeddingi",
-        "regenerating": "Regenerowanie..."
+        "regenerating": "Regenerowanie...",
+        "regenerateSuccess": "Ponownie wygenerowano embeddingi dla {{count}} dokumentów",
+        "regeneratePartialSuccess": "Ponownie wygenerowano {{count}} dokumentów; pominięto {{skipped}}",
+        "regenerateFailed": "Nie udało się ponownie wygenerować embeddingów: {{error}}",
+        "saveSuccess": "Zaktualizowano ustawienia embeddingów",
+        "saveFailed": "Nie udało się zaktualizować ustawień embeddingów: {{error}}",
+        "resetSuccess": "Przywrócono domyślne ustawienia embeddingów",
+        "resetFailed": "Nie udało się przywrócić domyślnych ustawień embeddingów: {{error}}"
       },
       "collections": {
         "title": "Kolekcje wiedzy",
@@ -883,7 +929,11 @@
       "revokeSavedVoice": "Wycofaj zgodę dla {{name}}",
       "revokeSavedVoiceConfirm": "Wycofać zgodę dla „{{name}}”? Zapisany głos nie będzie już używany, ale zapis zgody zostanie zachowany.",
       "savedVoiceRevoked": "Zgoda wycofana",
-      "savedVoiceRevokeFailed": "Nie udało się wycofać zgody"
+      "savedVoiceRevokeFailed": "Nie udało się wycofać zgody",
+      "savedVoiceUnavailableCleanupFailed": "Zapisany głos jest niedostępny i nie udało się go usunąć z ustawień mowy",
+      "saveSuccess": "Zapisano ustawienia TTS",
+      "saveFailed": "Nie udało się zapisać ustawień TTS: {{error}}",
+      "testFailed": "Test TTS nie powiódł się: {{error}}"
     },
     "imageGen": {
       "title": "Generowanie obrazów",
@@ -903,7 +953,9 @@
       "style": "Styl",
       "styleDescription": "Preset stylu dla generowanych obrazów",
       "availableProviders": "Dostępni dostawcy",
-      "models": "modeli"
+      "models": "modeli",
+      "saveSuccess": "Zapisano ustawienia generowania obrazów",
+      "saveFailed": "Nie udało się zapisać ustawień generowania obrazów: {{error}}"
     },
     "data": {
       "title": "Zarządzanie danymi",
@@ -945,6 +997,16 @@
       "documents": "Dokumenty",
       "warnings": "Ostrzeżenia",
       "refreshAfterImportFailed": "Dane zostały zaimportowane, ale niektórych widoków nie udało się odświeżyć. Załaduj ponownie Libre WebUI, aby zobaczyć wszystkie zmiany.",
+      "exportSuccess": "Wyeksportowano przenośne archiwum danych",
+      "exportFailed": "Eksport nie powiódł się",
+      "importSuccess": "Zaimportowano przenośne archiwum danych",
+      "importFailed": "Import nie powiódł się",
+      "archiveErrors": {
+        "invalidJson": "Przenośne archiwum nie zawiera prawidłowego kodu JSON.",
+        "objectRequired": "Przenośne archiwum musi zawierać obiekt JSON.",
+        "unsupportedVersion": "Nieobsługiwana wersja przenośnego archiwum: {{version}}.",
+        "unrecognized": "Ten plik nie jest przenośnym archiwum Libre WebUI."
+      },
       "errors": "Błędy",
       "archivedChats": {
         "title": "Zarchiwizowane czaty",
@@ -1202,6 +1264,23 @@
     "newChat": "Nowy czat",
     "newWork": "Nowa sesja Work",
     "openPalette": "Otwórz paletę poleceń"
+  },
+  "modelDownload": {
+    "success": "Model {{name}} pobrany",
+    "failed": "Nie udało się pobrać modelu: {{error}}",
+    "startFailed": "Nie udało się rozpocząć pobierania",
+    "cancelled": "Pobieranie anulowane"
+  },
+  "modelTools": {
+    "toasts": {
+      "fetchInfoFailed": "Nie udało się pobrać informacji",
+      "pushSuccess": "Model przesłany",
+      "createSuccess": "Model utworzony",
+      "copySuccess": "Model skopiowany",
+      "embeddingsSuccess": "Wygenerowano embeddingi (zobacz konsolę)",
+      "failed": "Nie udało się",
+      "unknownError": "Nieznany błąd"
+    }
   },
   "modelManager": {
     "title": "Modele",

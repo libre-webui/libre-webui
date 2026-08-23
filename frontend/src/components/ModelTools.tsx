@@ -16,6 +16,7 @@
  */
 
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Button, Input, Textarea } from '@/components/ui';
 import { ollamaApi } from '@/utils/api';
 import { useChatStore } from '@/store/chatStore';
@@ -26,6 +27,7 @@ import { createLogger } from '@/utils/logger';
 const logger = createLogger('components:model-tools');
 
 export const ModelTools: React.FC = () => {
+  const { t } = useTranslation();
   const { selectedModel } = useChatStore();
   const [info, setInfo] = useState<OllamaModel | null>(null);
   const [createModelName, setCreateModelName] = useState('');
@@ -45,10 +47,13 @@ export const ModelTools: React.FC = () => {
       if (res.success) {
         setInfo(res.data || null);
       } else {
-        toast.error(res.error || 'Failed to fetch info');
+        toast.error(res.error || t('modelTools.toasts.fetchInfoFailed'));
       }
     } catch (err: unknown) {
-      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      const errorMessage =
+        err instanceof Error
+          ? err.message
+          : t('modelTools.toasts.unknownError');
       toast.error(errorMessage);
     }
     setLoading(false);
@@ -60,12 +65,15 @@ export const ModelTools: React.FC = () => {
     try {
       const res = await ollamaApi.pushModel(selectedModel);
       if (res.success) {
-        toast.success('Model pushed');
+        toast.success(t('modelTools.toasts.pushSuccess'));
       } else {
-        toast.error(res.error || 'Failed');
+        toast.error(res.error || t('modelTools.toasts.failed'));
       }
     } catch (err: unknown) {
-      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      const errorMessage =
+        err instanceof Error
+          ? err.message
+          : t('modelTools.toasts.unknownError');
       toast.error(errorMessage);
     }
     setLoading(false);
@@ -81,12 +89,15 @@ export const ModelTools: React.FC = () => {
         modelfile: createFile,
       });
       if (res.success) {
-        toast.success('Model created');
+        toast.success(t('modelTools.toasts.createSuccess'));
       } else {
-        toast.error(res.error || 'Failed');
+        toast.error(res.error || t('modelTools.toasts.failed'));
       }
     } catch (err: unknown) {
-      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      const errorMessage =
+        err instanceof Error
+          ? err.message
+          : t('modelTools.toasts.unknownError');
       toast.error(errorMessage);
     }
     setLoading(false);
@@ -98,12 +109,15 @@ export const ModelTools: React.FC = () => {
     try {
       const res = await ollamaApi.copyModel(copySrc, copyDest);
       if (res.success) {
-        toast.success('Model copied');
+        toast.success(t('modelTools.toasts.copySuccess'));
       } else {
-        toast.error(res.error || 'Failed');
+        toast.error(res.error || t('modelTools.toasts.failed'));
       }
     } catch (err: unknown) {
-      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      const errorMessage =
+        err instanceof Error
+          ? err.message
+          : t('modelTools.toasts.unknownError');
       toast.error(errorMessage);
     }
     setLoading(false);
@@ -118,13 +132,16 @@ export const ModelTools: React.FC = () => {
         prompt: embedText,
       });
       if (res.success) {
-        toast.success('Embeddings generated (see console)');
+        toast.success(t('modelTools.toasts.embeddingsSuccess'));
         logger.debug('Embeddings:', res.data);
       } else {
-        toast.error(res.error || 'Failed');
+        toast.error(res.error || t('modelTools.toasts.failed'));
       }
     } catch (err: unknown) {
-      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      const errorMessage =
+        err instanceof Error
+          ? err.message
+          : t('modelTools.toasts.unknownError');
       toast.error(errorMessage);
     }
     setLoading(false);
@@ -137,10 +154,13 @@ export const ModelTools: React.FC = () => {
       if (res.success) {
         setRunning(res.data || []);
       } else {
-        toast.error(res.error || 'Failed');
+        toast.error(res.error || t('modelTools.toasts.failed'));
       }
     } catch (err: unknown) {
-      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      const errorMessage =
+        err instanceof Error
+          ? err.message
+          : t('modelTools.toasts.unknownError');
       toast.error(errorMessage);
     }
     setLoading(false);
@@ -153,10 +173,13 @@ export const ModelTools: React.FC = () => {
       if (res.success && res.data) {
         setVersion(res.data.version);
       } else {
-        toast.error(res.error || 'Failed');
+        toast.error(res.error || t('modelTools.toasts.failed'));
       }
     } catch (err: unknown) {
-      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      const errorMessage =
+        err instanceof Error
+          ? err.message
+          : t('modelTools.toasts.unknownError');
       toast.error(errorMessage);
     }
     setLoading(false);

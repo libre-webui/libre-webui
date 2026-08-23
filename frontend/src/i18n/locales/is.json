@@ -44,6 +44,10 @@
     "name": "Libre WebUI",
     "shortName": "Libre"
   },
+  "appInitialization": {
+    "ollamaUnavailable": "Ollama-þjónustan er ekki tiltæk. Enn er hægt að nota líkön úr viðbótum.",
+    "backendConnectionFailed": "Ekki tókst að tengjast bakendaþjónustunni"
+  },
   "auth": {
     "login": {
       "title": "Velkomin/n aftur",
@@ -99,7 +103,11 @@
       "continueWith": "Halda áfram með {{provider}}",
       "connectingTo": "Tengist {{provider}}...",
       "github": "GitHub",
-      "huggingFace": "Hugging Face"
+      "huggingFace": "Hugging Face",
+      "loginSuccess": "Innskráning með OAuth tókst!",
+      "completionFailed": "Ekki tókst að ljúka OAuth-auðkenningu",
+      "verificationFailed": "Staðfesting OAuth-auðkenningar mistókst",
+      "authenticationFailed": "OAuth-auðkenning mistókst"
     },
     "checkingAuth": "Athugar auðkenningu...",
     "welcome": "Velkomin",
@@ -374,7 +382,8 @@
       "pullCommand": "ollama pull llama3.2:3b",
       "noModelsTooltip": "Engin líkön tiltæk. Gakktu úr skugga um að Ollama sé í gangi og líkön séu uppsett.",
       "selectBeforePrivateChat": "Veldu tiltækt líkan áður en þú byrjar einkaspjall",
-      "selectBeforeSending": "Veldu tiltækt líkan áður en þú sendir"
+      "selectBeforeSending": "Veldu tiltækt líkan áður en þú sendir",
+      "selectBeforeRegenerating": "Veldu tiltækt líkan áður en svarið er endurgert"
     },
     "footer": {
       "disclaimer": "Gervigreind getur gert mistök - staðfestu mikilvægar upplýsingar",
@@ -385,7 +394,10 @@
     "mediaUpload": {
       "dropImagesHere": "Slepptu myndum hér eða",
       "supportedFormats": "Styður: JPG, PNG, GIF, WebP (hámark 10MB hvor)",
-      "browse": "flettu"
+      "browse": "flettu",
+      "unsupportedFileType": "Skráargerð er ekki studd: {{name}}",
+      "maxImagesAllowed": "Að hámarki {{count}} myndir eru leyfðar",
+      "imageTooLarge": "Myndin {{name}} er of stór (hámark 10 MB)"
     },
     "structuredOutput": {
       "title": "Svarssnið",
@@ -456,7 +468,22 @@
       "modelSwitched": "Skipt yfir í {{model}} (fyrra líkan er ekki lengur tiltækt)",
       "modelsLoadFailed": "Mistókst að hlaða líkön",
       "modelUpdated": "Líkan uppfært fyrir núverandi spjall",
-      "modelUpdateFailed": "Mistókst að uppfæra líkan lotunnar"
+      "modelUpdateFailed": "Mistókst að uppfæra líkan lotunnar",
+      "titlePreviewFallback": "Ekki tókst að búa til titil; forskoðun skilaboðanna verður notuð",
+      "titleGenerated": "Titill spjalls búinn til",
+      "titleGenerationFailed": "Ekki tókst að búa til titil spjalls",
+      "sessionNotFoundRedirect": "Lota fannst ekki. Ný lota er búin til...",
+      "comparisonError": "{{model}}: {{error}}",
+      "generationFailed": "myndun mistókst",
+      "comparisonFailed": "samanburður mistókst",
+      "sendFailed": "Ekki tókst að senda skilaboð",
+      "noMessageToRegenerate": "Engin skilaboð til að endurgera",
+      "regenerateFailed": "Ekki tókst að endurgera skilaboð",
+      "messageNotFound": "Skilaboð fundust ekki",
+      "branchSwitched": "Skipt yfir í afbrigði {{number}}",
+      "branchSelectFailed": "Ekki tókst að velja grein",
+      "editFailed": "Ekki tókst að breyta skilaboðum",
+      "toolDecisionFailed": "Ekki tókst að skrá ákvörðun um verkfærið"
     },
     "documents": {
       "title": "Skjöl í samhengi"
@@ -616,6 +643,9 @@
       }
     },
     "saveSettings": "Vista stillingar",
+    "preferences": {
+      "updateFailed": "Ekki tókst að uppfæra stillingar: {{error}}"
+    },
     "model": {
       "title": "Líkanastillingar",
       "defaultModel": "Sjálfgefið líkan",
@@ -651,7 +681,10 @@
         "taskModelDescription": "Líkan notað til að búa til samtalstitla"
       },
       "updatingModel": "Uppfæri {{name}} ({{current}}/{{total}})",
-      "modelsProgress": "{{current}} af {{total}} módel"
+      "modelsProgress": "{{current}} af {{total}} módel",
+      "defaultModelUpdated": "Sjálfgefið líkan var uppfært",
+      "allModelsUpdated": "Öll líkön voru uppfærð!",
+      "updateAllFailed": "Ekki tókst að uppfæra líkön: {{error}}"
     },
     "systemMessage": {
       "title": "Kerfisskilaboð",
@@ -711,6 +744,7 @@
       "modelCatalogNeedsApiKey": "Bættu við gildum API lykli fyrir þennan veitu til að hlaða inn lifandi líkanalista.",
       "modelCatalogUnavailable": "Ekki tókst að hlaða inn líkanalista veitunnar.",
       "modelCatalogRefreshFailed": "Mistókst að uppfæra líkanaskrá",
+      "invalidJson": "Ógilt JSON-snið",
       "capability": {
         "chat": "Spjall",
         "embedding": "Ívefing",
@@ -775,6 +809,11 @@
       "stopSequencesDescription": "Sérsniðin tákn sem stöðva myndun þegar þau birtast.",
       "resetDefaults": "Endurstilla á sjálfgefið",
       "saveOptions": "Vista stillingar",
+      "saveSuccess": "Valmöguleikar myndunar voru uppfærðir",
+      "saveFailed": "Ekki tókst að uppfæra valmöguleika myndunar: {{error}}",
+      "modelDefaultsLoaded": "Stillingar sem {{model}} mælir með voru hlaðnar",
+      "resetSuccess": "Valmöguleikar myndunar voru endurstilltir",
+      "resetFailed": "Ekki tókst að endurstilla valmöguleika myndunar: {{error}}",
       "embeddingSettings": "Innfellinga stillingar",
       "enableEmbeddings": "Virkja innfellingar skjala",
       "thinking": "Hugsun",
@@ -811,7 +850,14 @@
         "chunksWithEmbeddings": "Bútar með innfellingum",
         "coverage": "Umfang",
         "regenerate": "Endurgera innfellingar",
-        "regenerating": "Endurgerar..."
+        "regenerating": "Endurgerar...",
+        "regenerateSuccess": "Innfellingar fyrir {{count}} skjöl voru endurgerðar",
+        "regeneratePartialSuccess": "Endurgerði {{count}} skjöl; sleppti {{skipped}}",
+        "regenerateFailed": "Ekki tókst að endurgera innfellingar: {{error}}",
+        "saveSuccess": "Stillingar innfellinga voru uppfærðar",
+        "saveFailed": "Ekki tókst að uppfæra stillingar innfellinga: {{error}}",
+        "resetSuccess": "Stillingar innfellinga voru endurstilltar",
+        "resetFailed": "Ekki tókst að endurstilla stillingar innfellinga: {{error}}"
       },
       "collections": {
         "title": "Þekkingarsöfn",
@@ -883,7 +929,11 @@
       "revokeSavedVoice": "Afturkalla samþykki fyrir {{name}}",
       "revokeSavedVoiceConfirm": "Afturkalla samþykki fyrir „{{name}}“? Ekki verður lengur hægt að nota vistuðu röddina, en samþykkisfærslan varðveitist.",
       "savedVoiceRevoked": "Samþykki afturkallað",
-      "savedVoiceRevokeFailed": "Ekki tókst að afturkalla samþykki"
+      "savedVoiceRevokeFailed": "Ekki tókst að afturkalla samþykki",
+      "savedVoiceUnavailableCleanupFailed": "Vistaða röddin er ekki tiltæk og ekki tókst að fjarlægja hana úr talstillingum",
+      "saveSuccess": "Talgervingarstillingar voru vistaðar",
+      "saveFailed": "Ekki tókst að vista talgervingarstillingar: {{error}}",
+      "testFailed": "Talgervingarpróf mistókst: {{error}}"
     },
     "imageGen": {
       "title": "Myndsköpun",
@@ -903,7 +953,9 @@
       "style": "Stíll",
       "styleDescription": "Stílforstilling fyrir myndaðar myndir",
       "availableProviders": "Tiltækir veitendur",
-      "models": "líkön"
+      "models": "líkön",
+      "saveSuccess": "Myndsköpunarstillingar voru vistaðar",
+      "saveFailed": "Ekki tókst að vista myndsköpunarstillingar: {{error}}"
     },
     "data": {
       "title": "Gagnastjórnun",
@@ -945,6 +997,16 @@
       "documents": "Skjöl",
       "warnings": "Viðvaranir",
       "refreshAfterImportFailed": "Gögn voru flutt inn, en ekki tókst að endurnýja sumar sýnir. Endurhlaðið Libre WebUI til að sjá allar breytingar.",
+      "exportSuccess": "Færanlegt gagnasafn var flutt út",
+      "exportFailed": "Útflutningur mistókst",
+      "importSuccess": "Færanlegt gagnasafn var flutt inn",
+      "importFailed": "Innflutningur mistókst",
+      "archiveErrors": {
+        "invalidJson": "Færanlega safnið er ekki gilt JSON.",
+        "objectRequired": "Færanlega safnið verður að innihalda JSON-hlut.",
+        "unsupportedVersion": "Óstudd útgáfa færanlegs safns: {{version}}.",
+        "unrecognized": "Þessi skrá er ekki færanlegt Libre WebUI-safn."
+      },
       "errors": "Villur",
       "archivedChats": {
         "title": "Spjall í geymslu",
@@ -1202,6 +1264,23 @@
     "newChat": "Nýtt spjall",
     "newWork": "Ný Work-lota",
     "openPalette": "Opna skipanaspjaldið"
+  },
+  "modelDownload": {
+    "success": "Líkan {{name}} sótt",
+    "failed": "Ekki tókst að sækja líkanið: {{error}}",
+    "startFailed": "Ekki tókst að hefja niðurhal",
+    "cancelled": "Hætt við niðurhal"
+  },
+  "modelTools": {
+    "toasts": {
+      "fetchInfoFailed": "Ekki tókst að sækja upplýsingar",
+      "pushSuccess": "Líkani hlaðið upp",
+      "createSuccess": "Líkan búið til",
+      "copySuccess": "Líkan afritað",
+      "embeddingsSuccess": "Innfellingar búnar til (sjá stjórnborð)",
+      "failed": "Mistókst",
+      "unknownError": "Óþekkt villa"
+    }
   },
   "modelManager": {
     "title": "Líkön",

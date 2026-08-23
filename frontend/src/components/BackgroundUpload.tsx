@@ -55,23 +55,23 @@ export const BackgroundUpload: React.FC<BackgroundUploadProps> = ({
 
   const handleFileSelect = async (file: File) => {
     if (!file.type.startsWith('image/')) {
-      toast.error('Please select a valid image file');
+      toast.error(t('personaBackground.invalidFile'));
       return;
     }
 
     if (file.size > 5 * 1024 * 1024) {
       // 5MB limit
-      toast.error('Image file size must be less than 5MB');
+      toast.error(t('personaBackground.fileTooLarge'));
       return;
     }
 
     setUploading(true);
     try {
       await uploadBackgroundImage(file);
-      toast.success('Background image uploaded successfully');
+      toast.success(t('personaBackground.uploaded'));
     } catch (error) {
       logger.error('Failed to upload background:', error);
-      toast.error('Failed to upload background image');
+      toast.error(t('personaBackground.uploadFailed'));
     } finally {
       setUploading(false);
     }
@@ -108,7 +108,7 @@ export const BackgroundUpload: React.FC<BackgroundUploadProps> = ({
 
   const handleRemoveBackground = () => {
     removeBackgroundImage();
-    toast.success('Background image removed');
+    toast.success(t('personaBackground.removed'));
   };
 
   const handleToggleBackground = async (enabled: boolean) => {

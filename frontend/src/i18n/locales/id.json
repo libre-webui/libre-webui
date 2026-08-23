@@ -44,6 +44,10 @@
     "name": "Libre WebUI",
     "shortName": "Libre"
   },
+  "appInitialization": {
+    "ollamaUnavailable": "Layanan Ollama tidak tersedia. Model plugin tetap dapat digunakan.",
+    "backendConnectionFailed": "Gagal terhubung ke layanan backend"
+  },
   "auth": {
     "login": {
       "title": "Selamat Datang Kembali",
@@ -99,7 +103,11 @@
       "continueWith": "Lanjutkan dengan {{provider}}",
       "connectingTo": "Menghubungkan ke {{provider}}...",
       "github": "GitHub",
-      "huggingFace": "Hugging Face"
+      "huggingFace": "Hugging Face",
+      "loginSuccess": "Login OAuth berhasil!",
+      "completionFailed": "Gagal menyelesaikan autentikasi OAuth",
+      "verificationFailed": "Verifikasi autentikasi OAuth gagal",
+      "authenticationFailed": "Autentikasi OAuth gagal"
     },
     "checkingAuth": "Memeriksa autentikasi...",
     "welcome": "Selamat datang",
@@ -374,7 +382,8 @@
       "pullCommand": "ollama pull llama3.2:3b",
       "noModelsTooltip": "Tidak ada model tersedia. Pastikan Ollama berjalan dan model sudah diinstal.",
       "selectBeforePrivateChat": "Pilih model yang tersedia sebelum memulai obrolan privat",
-      "selectBeforeSending": "Pilih model yang tersedia sebelum mengirim"
+      "selectBeforeSending": "Pilih model yang tersedia sebelum mengirim",
+      "selectBeforeRegenerating": "Pilih model yang tersedia sebelum meregenerasi"
     },
     "footer": {
       "disclaimer": "LLM dapat membuat kesalahan - verifikasi informasi penting",
@@ -385,7 +394,10 @@
     "mediaUpload": {
       "dropImagesHere": "Seret gambar ke sini atau",
       "supportedFormats": "Mendukung: JPG, PNG, GIF, WebP (maks 10MB per file)",
-      "browse": "telusuri"
+      "browse": "telusuri",
+      "unsupportedFileType": "Jenis file tidak didukung: {{name}}",
+      "maxImagesAllowed": "Maksimum {{count}} gambar diizinkan",
+      "imageTooLarge": "Gambar {{name}} terlalu besar (maks. 10MB)"
     },
     "structuredOutput": {
       "title": "Format Respons",
@@ -456,7 +468,22 @@
       "modelSwitched": "Berpindah ke {{model}} (model sebelumnya tidak lagi tersedia)",
       "modelsLoadFailed": "Gagal memuat model",
       "modelUpdated": "Model diperbarui untuk chat saat ini",
-      "modelUpdateFailed": "Gagal memperbarui model sesi"
+      "modelUpdateFailed": "Gagal memperbarui model sesi",
+      "titlePreviewFallback": "Judul tidak dapat dibuat; menggunakan pratinjau pesan",
+      "titleGenerated": "Judul chat berhasil dibuat",
+      "titleGenerationFailed": "Gagal membuat judul chat",
+      "sessionNotFoundRedirect": "Sesi tidak ditemukan. Membuat sesi baru...",
+      "comparisonError": "{{model}}: {{error}}",
+      "generationFailed": "pembuatan gagal",
+      "comparisonFailed": "perbandingan gagal",
+      "sendFailed": "Gagal mengirim pesan",
+      "noMessageToRegenerate": "Tidak ada pesan untuk diregenerasi",
+      "regenerateFailed": "Gagal meregenerasi pesan",
+      "messageNotFound": "Pesan tidak ditemukan",
+      "branchSwitched": "Beralih ke varian {{number}}",
+      "branchSelectFailed": "Gagal memilih cabang",
+      "editFailed": "Gagal mengedit pesan",
+      "toolDecisionFailed": "Keputusan alat tidak dapat dicatat"
     },
     "documents": {
       "title": "Dokumen dalam konteks"
@@ -616,6 +643,9 @@
       }
     },
     "saveSettings": "Simpan Pengaturan",
+    "preferences": {
+      "updateFailed": "Gagal memperbarui pengaturan: {{error}}"
+    },
     "model": {
       "title": "Pengaturan Model",
       "defaultModel": "Model Default",
@@ -651,7 +681,10 @@
         "taskModelDescription": "Model yang digunakan untuk membuat judul percakapan"
       },
       "updatingModel": "Memperbarui {{name}} ({{current}}/{{total}})",
-      "modelsProgress": "{{current}} dari {{total}} model"
+      "modelsProgress": "{{current}} dari {{total}} model",
+      "defaultModelUpdated": "Model default diperbarui",
+      "allModelsUpdated": "Semua model berhasil diperbarui!",
+      "updateAllFailed": "Gagal memperbarui model: {{error}}"
     },
     "systemMessage": {
       "title": "Pesan Sistem",
@@ -711,6 +744,7 @@
       "modelCatalogNeedsApiKey": "Tambahkan kunci API yang valid untuk penyedia ini guna memuat daftar model langsungnya.",
       "modelCatalogUnavailable": "Tidak dapat memuat daftar model penyedia.",
       "modelCatalogRefreshFailed": "Gagal memperbarui katalog model",
+      "invalidJson": "Format JSON tidak valid",
       "capability": {
         "chat": "Obrolan",
         "embedding": "Embedding",
@@ -775,6 +809,11 @@
       "stopSequencesDescription": "Token kustom yang akan menghentikan pembuatan saat ditemui.",
       "resetDefaults": "Reset ke Default",
       "saveOptions": "Simpan Opsi",
+      "saveSuccess": "Opsi pembuatan berhasil diperbarui",
+      "saveFailed": "Gagal memperbarui opsi pembuatan: {{error}}",
+      "modelDefaultsLoaded": "Pengaturan yang direkomendasikan {{model}} telah dimuat",
+      "resetSuccess": "Opsi pembuatan diatur ulang ke default",
+      "resetFailed": "Gagal mengatur ulang opsi pembuatan ke default: {{error}}",
       "embeddingSettings": "Pengaturan Embedding",
       "enableEmbeddings": "Aktifkan Embedding Dokumen",
       "thinking": "Berpikir",
@@ -811,7 +850,14 @@
         "chunksWithEmbeddings": "Chunk dengan embedding",
         "coverage": "Cakupan",
         "regenerate": "Regenerasi Embedding",
-        "regenerating": "Meregenerasi..."
+        "regenerating": "Meregenerasi...",
+        "regenerateSuccess": "Embedding untuk {{count}} dokumen berhasil diregenerasi",
+        "regeneratePartialSuccess": "{{count}} dokumen diregenerasi; {{skipped}} dilewati",
+        "regenerateFailed": "Gagal meregenerasi embedding: {{error}}",
+        "saveSuccess": "Pengaturan embedding berhasil diperbarui",
+        "saveFailed": "Gagal memperbarui pengaturan embedding: {{error}}",
+        "resetSuccess": "Pengaturan embedding diatur ulang ke default",
+        "resetFailed": "Gagal mengatur ulang pengaturan embedding ke default: {{error}}"
       },
       "collections": {
         "title": "Koleksi pengetahuan",
@@ -883,7 +929,11 @@
       "revokeSavedVoice": "Cabut persetujuan untuk {{name}}",
       "revokeSavedVoiceConfirm": "Cabut persetujuan untuk “{{name}}”? Suara tersimpan tidak dapat digunakan lagi, tetapi catatan persetujuan tetap disimpan.",
       "savedVoiceRevoked": "Persetujuan dicabut",
-      "savedVoiceRevokeFailed": "Gagal mencabut persetujuan"
+      "savedVoiceRevokeFailed": "Gagal mencabut persetujuan",
+      "savedVoiceUnavailableCleanupFailed": "Suara tersimpan tidak tersedia dan tidak dapat dihapus dari pengaturan Text-to-Speech",
+      "saveSuccess": "Pengaturan TTS berhasil disimpan",
+      "saveFailed": "Gagal menyimpan pengaturan TTS: {{error}}",
+      "testFailed": "Pengujian TTS gagal: {{error}}"
     },
     "imageGen": {
       "title": "Pembuatan Gambar",
@@ -903,7 +953,9 @@
       "style": "Gaya",
       "styleDescription": "Preset gaya untuk gambar yang dihasilkan",
       "availableProviders": "Penyedia Tersedia",
-      "models": "model"
+      "models": "model",
+      "saveSuccess": "Pengaturan pembuatan gambar berhasil disimpan",
+      "saveFailed": "Gagal menyimpan pengaturan pembuatan gambar: {{error}}"
     },
     "data": {
       "title": "Manajemen Data",
@@ -945,6 +997,16 @@
       "documents": "Dokumen",
       "warnings": "Peringatan",
       "refreshAfterImportFailed": "Data telah diimpor, tetapi beberapa tampilan tidak dapat disegarkan. Muat ulang Libre WebUI untuk melihat semua perubahan.",
+      "exportSuccess": "Arsip data portabel berhasil diekspor",
+      "exportFailed": "Ekspor gagal",
+      "importSuccess": "Arsip data portabel berhasil diimpor",
+      "importFailed": "Impor gagal",
+      "archiveErrors": {
+        "invalidJson": "Arsip portabel bukan JSON yang valid.",
+        "objectRequired": "Arsip portabel harus berisi objek JSON.",
+        "unsupportedVersion": "Versi arsip portabel {{version}} tidak didukung.",
+        "unrecognized": "File ini bukan arsip portabel Libre WebUI."
+      },
       "errors": "Error",
       "archivedChats": {
         "title": "Obrolan diarsipkan",
@@ -1202,6 +1264,23 @@
     "newChat": "Obrolan baru",
     "newWork": "Sesi Work baru",
     "openPalette": "Buka palet perintah"
+  },
+  "modelDownload": {
+    "success": "{{name}} telah diunduh",
+    "failed": "Gagal mengunduh: {{error}}",
+    "startFailed": "Gagal memulai pengunduhan",
+    "cancelled": "Pengunduhan dibatalkan"
+  },
+  "modelTools": {
+    "toasts": {
+      "fetchInfoFailed": "Gagal mengambil informasi",
+      "pushSuccess": "Model berhasil diunggah",
+      "createSuccess": "Model berhasil dibuat",
+      "copySuccess": "Model berhasil disalin",
+      "embeddingsSuccess": "Embedding berhasil dibuat (lihat konsol)",
+      "failed": "Gagal",
+      "unknownError": "Kesalahan tidak diketahui"
+    }
   },
   "modelManager": {
     "title": "Model",

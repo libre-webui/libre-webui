@@ -44,6 +44,10 @@
     "name": "Libre WebUI",
     "shortName": "Libre"
   },
+  "appInitialization": {
+    "ollamaUnavailable": "El servicio Ollama no está disponible. Los modelos de plugins aún se pueden usar.",
+    "backendConnectionFailed": "No se pudo conectar al servicio del backend"
+  },
   "auth": {
     "login": {
       "title": "Bienvenido de nuevo",
@@ -99,7 +103,11 @@
       "continueWith": "Continuar con {{provider}}",
       "connectingTo": "Conectando a {{provider}}...",
       "github": "GitHub",
-      "huggingFace": "Hugging Face"
+      "huggingFace": "Hugging Face",
+      "loginSuccess": "¡Inicio de sesión con OAuth exitoso!",
+      "completionFailed": "No se pudo completar la autenticación OAuth",
+      "verificationFailed": "Falló la verificación de la autenticación OAuth",
+      "authenticationFailed": "Falló la autenticación OAuth"
     },
     "checkingAuth": "Verificando autenticación...",
     "welcome": "Bienvenido",
@@ -374,7 +382,8 @@
       "pullCommand": "ollama pull llama3.2:3b",
       "noModelsTooltip": "No hay modelos disponibles. Asegúrate de que Ollama esté ejecutándose y los modelos estén instalados.",
       "selectBeforePrivateChat": "Selecciona un modelo disponible antes de iniciar el chat privado",
-      "selectBeforeSending": "Selecciona un modelo disponible antes de enviar"
+      "selectBeforeSending": "Selecciona un modelo disponible antes de enviar",
+      "selectBeforeRegenerating": "Selecciona un modelo disponible antes de regenerar"
     },
     "footer": {
       "disclaimer": "Los LLM pueden cometer errores - verifica la información importante",
@@ -385,7 +394,10 @@
     "mediaUpload": {
       "dropImagesHere": "Arrastra imágenes aquí o",
       "supportedFormats": "Soporta: JPG, PNG, GIF, WebP (máx. 10 MB cada una)",
-      "browse": "explorar"
+      "browse": "explorar",
+      "unsupportedFileType": "Tipo de archivo no compatible: {{name}}",
+      "maxImagesAllowed": "Se permite un máximo de {{count}} imágenes",
+      "imageTooLarge": "La imagen {{name}} es demasiado grande (máx. 10 MB)"
     },
     "structuredOutput": {
       "title": "Formato de respuesta",
@@ -456,7 +468,22 @@
       "modelSwitched": "Cambiado a {{model}} (el modelo anterior ya no está disponible)",
       "modelsLoadFailed": "No se pudieron cargar los modelos",
       "modelUpdated": "Modelo actualizado para el chat actual",
-      "modelUpdateFailed": "No se pudo actualizar el modelo de la sesión"
+      "modelUpdateFailed": "No se pudo actualizar el modelo de la sesión",
+      "titlePreviewFallback": "No se pudo generar un título; se usará la vista previa del mensaje",
+      "titleGenerated": "Título del chat generado",
+      "titleGenerationFailed": "No se pudo generar el título del chat",
+      "sessionNotFoundRedirect": "No se encontró la sesión. Creando una nueva sesión...",
+      "comparisonError": "{{model}}: {{error}}",
+      "generationFailed": "falló la generación",
+      "comparisonFailed": "falló la comparación",
+      "sendFailed": "No se pudo enviar el mensaje",
+      "noMessageToRegenerate": "No hay ningún mensaje que regenerar",
+      "regenerateFailed": "No se pudo regenerar el mensaje",
+      "messageNotFound": "No se encontró el mensaje",
+      "branchSwitched": "Se cambió a la variante {{number}}",
+      "branchSelectFailed": "No se pudo seleccionar la rama",
+      "editFailed": "No se pudo editar el mensaje",
+      "toolDecisionFailed": "No se pudo registrar la decisión de la herramienta"
     },
     "documents": {
       "title": "Documentos en contexto"
@@ -616,6 +643,9 @@
       }
     },
     "saveSettings": "Guardar configuración",
+    "preferences": {
+      "updateFailed": "No se pudo actualizar la configuración: {{error}}"
+    },
     "model": {
       "title": "Configuración del modelo",
       "defaultModel": "Modelo predeterminado",
@@ -651,7 +681,10 @@
         "taskModelDescription": "Modelo usado para generar títulos de conversación"
       },
       "updatingModel": "Actualizando {{name}} ({{current}}/{{total}})",
-      "modelsProgress": "{{current}} de {{total}} modelos"
+      "modelsProgress": "{{current}} de {{total}} modelos",
+      "defaultModelUpdated": "Modelo predeterminado actualizado",
+      "allModelsUpdated": "¡Todos los modelos se actualizaron correctamente!",
+      "updateAllFailed": "No se pudieron actualizar los modelos: {{error}}"
     },
     "systemMessage": {
       "title": "Mensaje del sistema",
@@ -711,6 +744,7 @@
       "modelCatalogNeedsApiKey": "Añade una clave de API válida para este proveedor para cargar su lista de modelos en vivo.",
       "modelCatalogUnavailable": "No se pudo cargar la lista de modelos del proveedor.",
       "modelCatalogRefreshFailed": "Error al actualizar el catálogo de modelos",
+      "invalidJson": "Formato JSON no válido",
       "capability": {
         "chat": "Chat",
         "embedding": "Embedding",
@@ -775,6 +809,11 @@
       "stopSequencesDescription": "Tokens personalizados que detendrán la generación cuando se encuentren.",
       "resetDefaults": "Restablecer predeterminados",
       "saveOptions": "Guardar opciones",
+      "saveSuccess": "Opciones de generación actualizadas correctamente",
+      "saveFailed": "No se pudieron actualizar las opciones de generación: {{error}}",
+      "modelDefaultsLoaded": "Se cargó la configuración recomendada por {{model}}",
+      "resetSuccess": "Opciones de generación restablecidas a los valores predeterminados",
+      "resetFailed": "No se pudieron restablecer las opciones de generación: {{error}}",
       "embeddingSettings": "Configuración de embeddings",
       "enableEmbeddings": "Habilitar embeddings de documentos",
       "thinking": "Razonamiento",
@@ -811,7 +850,14 @@
         "chunksWithEmbeddings": "Chunks con embeddings",
         "coverage": "Cobertura",
         "regenerate": "Regenerar embeddings",
-        "regenerating": "Regenerando..."
+        "regenerating": "Regenerando...",
+        "regenerateSuccess": "Se regeneraron los embeddings de {{count}} documentos",
+        "regeneratePartialSuccess": "Se regeneraron {{count}} documentos; se omitieron {{skipped}}",
+        "regenerateFailed": "No se pudieron regenerar los embeddings: {{error}}",
+        "saveSuccess": "Configuración de embeddings actualizada correctamente",
+        "saveFailed": "No se pudo actualizar la configuración de embeddings: {{error}}",
+        "resetSuccess": "Configuración de embeddings restablecida a los valores predeterminados",
+        "resetFailed": "No se pudo restablecer la configuración de embeddings: {{error}}"
       },
       "collections": {
         "title": "Colecciones de conocimiento",
@@ -883,7 +929,11 @@
       "revokeSavedVoice": "Retirar el consentimiento de {{name}}",
       "revokeSavedVoiceConfirm": "¿Retirar el consentimiento de «{{name}}»? La voz guardada ya no podrá usarse, pero el registro del consentimiento se conserva.",
       "savedVoiceRevoked": "Consentimiento retirado",
-      "savedVoiceRevokeFailed": "No se pudo retirar el consentimiento"
+      "savedVoiceRevokeFailed": "No se pudo retirar el consentimiento",
+      "savedVoiceUnavailableCleanupFailed": "La voz guardada no está disponible y no se pudo eliminar de la configuración de Voz",
+      "saveSuccess": "Configuración de TTS guardada correctamente",
+      "saveFailed": "No se pudo guardar la configuración de TTS: {{error}}",
+      "testFailed": "Falló la prueba de TTS: {{error}}"
     },
     "imageGen": {
       "title": "Generación de imágenes",
@@ -903,7 +953,9 @@
       "style": "Estilo",
       "styleDescription": "Preajuste de estilo para imágenes generadas",
       "availableProviders": "Proveedores disponibles",
-      "models": "modelos"
+      "models": "modelos",
+      "saveSuccess": "Configuración de generación de imágenes guardada correctamente",
+      "saveFailed": "No se pudo guardar la configuración de generación de imágenes: {{error}}"
     },
     "data": {
       "title": "Gestión de datos",
@@ -945,6 +997,16 @@
       "documents": "Documentos",
       "warnings": "Advertencias",
       "refreshAfterImportFailed": "Los datos se importaron, pero algunas vistas no se pudieron actualizar. Recarga Libre WebUI para ver todos los cambios.",
+      "exportSuccess": "Archivo de datos portátil exportado",
+      "exportFailed": "Falló la exportación",
+      "importSuccess": "Archivo de datos portátil importado",
+      "importFailed": "Falló la importación",
+      "archiveErrors": {
+        "invalidJson": "El archivo portátil no contiene JSON válido.",
+        "objectRequired": "El archivo portátil debe contener un objeto JSON.",
+        "unsupportedVersion": "Versión {{version}} del archivo portátil no compatible.",
+        "unrecognized": "Este archivo no es un archivo portátil de Libre WebUI."
+      },
       "errors": "Errores",
       "archivedChats": {
         "title": "Chats archivados",
@@ -1202,6 +1264,23 @@
     "newChat": "Nuevo chat",
     "newWork": "Nueva sesión de Work",
     "openPalette": "Abrir la paleta de comandos"
+  },
+  "modelDownload": {
+    "success": "Se descargó {{name}}",
+    "failed": "Error al descargar: {{error}}",
+    "startFailed": "Error al iniciar la descarga",
+    "cancelled": "Descarga cancelada"
+  },
+  "modelTools": {
+    "toasts": {
+      "fetchInfoFailed": "Error al obtener la información",
+      "pushSuccess": "Modelo enviado",
+      "createSuccess": "Modelo creado",
+      "copySuccess": "Modelo copiado",
+      "embeddingsSuccess": "Embeddings generados (consulta la consola)",
+      "failed": "Error",
+      "unknownError": "Error desconocido"
+    }
   },
   "modelManager": {
     "title": "Modelos",

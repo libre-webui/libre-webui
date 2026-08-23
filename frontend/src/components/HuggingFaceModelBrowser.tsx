@@ -202,20 +202,20 @@ export const HuggingFaceModelBrowser: React.FC<
             setPullProgress(null);
             setPullingModel(null);
             setCancelPull(null);
-            toast.success(`Downloaded ${filename}`);
+            toast.success(t('modelDownload.success', { name: filename }));
           },
           error => {
             setPullProgress(null);
             setPullingModel(null);
             setCancelPull(null);
-            toast.error(`Failed to download: ${error}`);
+            toast.error(t('modelDownload.failed', { error }));
           }
         );
         setCancelPull(() => cancelFn);
       } catch (_error) {
         setPullProgress(null);
         setPullingModel(null);
-        toast.error('Failed to start download');
+        toast.error(t('modelDownload.startFailed'));
       }
     },
     [canInstallModels, pullingModel, t]

@@ -323,21 +323,21 @@ export const ModelManager: React.FC = () => {
             setHfPullProgress(null);
             setHfPullingModel(null);
             setCancelHfPull(null);
-            toast.success(`Downloaded ${filename}`);
+            toast.success(t('modelDownload.success', { name: filename }));
             loadData();
           },
           error => {
             setHfPullProgress(null);
             setHfPullingModel(null);
             setCancelHfPull(null);
-            toast.error(`Failed to download: ${error}`);
+            toast.error(t('modelDownload.failed', { error }));
           }
         );
         setCancelHfPull(() => cancelFn);
       } catch (_error) {
         setHfPullProgress(null);
         setHfPullingModel(null);
-        toast.error('Failed to start download');
+        toast.error(t('modelDownload.startFailed'));
       }
     },
     [canInstallModels, hfPullingModel, loadData, t]

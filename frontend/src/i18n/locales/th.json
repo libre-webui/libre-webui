@@ -44,6 +44,10 @@
     "name": "Libre WebUI",
     "shortName": "Libre"
   },
+  "appInitialization": {
+    "ollamaUnavailable": "บริการ Ollama ไม่พร้อมใช้งาน แต่ยังสามารถใช้โมเดลจากปลั๊กอินได้",
+    "backendConnectionFailed": "ไม่สามารถเชื่อมต่อกับบริการแบ็กเอนด์ได้"
+  },
   "auth": {
     "login": {
       "title": "ยินดีต้อนรับกลับ",
@@ -99,7 +103,11 @@
       "continueWith": "ดำเนินการต่อด้วย {{provider}}",
       "connectingTo": "กำลังเชื่อมต่อกับ {{provider}}...",
       "github": "GitHub",
-      "huggingFace": "Hugging Face"
+      "huggingFace": "Hugging Face",
+      "loginSuccess": "เข้าสู่ระบบ OAuth สำเร็จ!",
+      "completionFailed": "ไม่สามารถดำเนินการยืนยันตัวตน OAuth ให้เสร็จสิ้นได้",
+      "verificationFailed": "การตรวจสอบการยืนยันตัวตน OAuth ล้มเหลว",
+      "authenticationFailed": "การยืนยันตัวตน OAuth ล้มเหลว"
     },
     "checkingAuth": "กำลังตรวจสอบการยืนยันตัวตน...",
     "welcome": "ยินดีต้อนรับ",
@@ -374,7 +382,8 @@
       "pullCommand": "ollama pull llama3.2:3b",
       "noModelsTooltip": "ไม่มีโมเดลที่ใช้ได้ กรุณาตรวจสอบให้แน่ใจว่า Ollama กำลังทำงานและติดตั้งโมเดลแล้ว",
       "selectBeforePrivateChat": "เลือกโมเดลที่พร้อมใช้งานก่อนเริ่มแชทส่วนตัว",
-      "selectBeforeSending": "เลือกโมเดลที่พร้อมใช้งานก่อนส่งข้อความ"
+      "selectBeforeSending": "เลือกโมเดลที่พร้อมใช้งานก่อนส่งข้อความ",
+      "selectBeforeRegenerating": "เลือกโมเดลที่พร้อมใช้งานก่อนสร้างคำตอบใหม่"
     },
     "footer": {
       "disclaimer": "LLM อาจทำผิดพลาด - ตรวจสอบข้อมูลสำคัญ",
@@ -385,7 +394,10 @@
     "mediaUpload": {
       "dropImagesHere": "วางรูปภาพที่นี่หรือ",
       "supportedFormats": "รองรับ: JPG, PNG, GIF, WebP (สูงสุด 10MB ต่อไฟล์)",
-      "browse": "เรียกดู"
+      "browse": "เรียกดู",
+      "unsupportedFileType": "ไม่รองรับประเภทไฟล์: {{name}}",
+      "maxImagesAllowed": "อนุญาตให้ใช้รูปภาพได้สูงสุด {{count}} รูป",
+      "imageTooLarge": "รูปภาพ {{name}} มีขนาดใหญ่เกินไป (สูงสุด 10MB)"
     },
     "structuredOutput": {
       "title": "รูปแบบการตอบกลับ",
@@ -456,7 +468,22 @@
       "modelSwitched": "สลับไปที่ {{model}} (โมเดลก่อนหน้าไม่พร้อมใช้งานอีกต่อไป)",
       "modelsLoadFailed": "ไม่สามารถโหลดโมเดลได้",
       "modelUpdated": "อัปเดตโมเดลสำหรับแชทปัจจุบันแล้ว",
-      "modelUpdateFailed": "ไม่สามารถอัปเดตโมเดลของเซสชันได้"
+      "modelUpdateFailed": "ไม่สามารถอัปเดตโมเดลของเซสชันได้",
+      "titlePreviewFallback": "ไม่สามารถสร้างชื่อเรื่องได้ จึงใช้ตัวอย่างข้อความแทน",
+      "titleGenerated": "สร้างชื่อแชทแล้ว",
+      "titleGenerationFailed": "ไม่สามารถสร้างชื่อแชทได้",
+      "sessionNotFoundRedirect": "ไม่พบเซสชัน กำลังสร้างเซสชันใหม่...",
+      "comparisonError": "{{model}}: {{error}}",
+      "generationFailed": "การสร้างล้มเหลว",
+      "comparisonFailed": "การเปรียบเทียบล้มเหลว",
+      "sendFailed": "ไม่สามารถส่งข้อความได้",
+      "noMessageToRegenerate": "ไม่มีข้อความให้สร้างใหม่",
+      "regenerateFailed": "ไม่สามารถสร้างข้อความใหม่ได้",
+      "messageNotFound": "ไม่พบข้อความ",
+      "branchSwitched": "สลับไปยังตัวเลือก {{number}} แล้ว",
+      "branchSelectFailed": "ไม่สามารถเลือกสาขาได้",
+      "editFailed": "ไม่สามารถแก้ไขข้อความได้",
+      "toolDecisionFailed": "ไม่สามารถบันทึกการตัดสินใจของเครื่องมือได้"
     },
     "documents": {
       "title": "เอกสารในบริบท"
@@ -616,6 +643,9 @@
       }
     },
     "saveSettings": "บันทึกการตั้งค่า",
+    "preferences": {
+      "updateFailed": "ไม่สามารถอัปเดตการตั้งค่าได้: {{error}}"
+    },
     "model": {
       "title": "การตั้งค่าโมเดล",
       "defaultModel": "โมเดลเริ่มต้น",
@@ -651,7 +681,10 @@
         "taskModelDescription": "โมเดลที่ใช้สำหรับสร้างชื่อเรื่องการสนทนา"
       },
       "updatingModel": "กำลังอัปเดต {{name}} ({{current}}/{{total}})",
-      "modelsProgress": "{{current}} จาก {{total}} โมเดล"
+      "modelsProgress": "{{current}} จาก {{total}} โมเดล",
+      "defaultModelUpdated": "อัปเดตโมเดลเริ่มต้นแล้ว",
+      "allModelsUpdated": "อัปเดตโมเดลทั้งหมดเรียบร้อยแล้ว!",
+      "updateAllFailed": "ไม่สามารถอัปเดตโมเดลได้: {{error}}"
     },
     "systemMessage": {
       "title": "ข้อความระบบ",
@@ -711,6 +744,7 @@
       "modelCatalogNeedsApiKey": "เพิ่ม API key ที่ถูกต้องสำหรับผู้ให้บริการนี้เพื่อโหลดรายการโมเดลสดของผู้ให้บริการ",
       "modelCatalogUnavailable": "ไม่สามารถโหลดรายการโมเดลของผู้ให้บริการได้",
       "modelCatalogRefreshFailed": "ไม่สามารถรีเฟรชแคตตาล็อกโมเดลได้",
+      "invalidJson": "รูปแบบ JSON ไม่ถูกต้อง",
       "capability": {
         "chat": "แชท",
         "embedding": "การฝังข้อมูล",
@@ -775,6 +809,11 @@
       "stopSequencesDescription": "โทเค็นกำหนดเองที่จะหยุดการสร้างเมื่อพบ",
       "resetDefaults": "รีเซ็ตเป็นค่าเริ่มต้น",
       "saveOptions": "บันทึกตัวเลือก",
+      "saveSuccess": "อัปเดตตัวเลือกการสร้างเรียบร้อยแล้ว",
+      "saveFailed": "ไม่สามารถอัปเดตตัวเลือกการสร้างได้: {{error}}",
+      "modelDefaultsLoaded": "โหลดการตั้งค่าที่ {{model}} แนะนำแล้ว",
+      "resetSuccess": "รีเซ็ตตัวเลือกการสร้างเป็นค่าเริ่มต้นแล้ว",
+      "resetFailed": "ไม่สามารถรีเซ็ตตัวเลือกการสร้างเป็นค่าเริ่มต้นได้: {{error}}",
       "embeddingSettings": "การตั้งค่า Embedding",
       "enableEmbeddings": "เปิดใช้ Document Embeddings",
       "thinking": "การคิด",
@@ -811,7 +850,14 @@
         "chunksWithEmbeddings": "Chunks ที่มี embeddings",
         "coverage": "ความครอบคลุม",
         "regenerate": "สร้าง Embeddings ใหม่",
-        "regenerating": "กำลังสร้างใหม่..."
+        "regenerating": "กำลังสร้างใหม่...",
+        "regenerateSuccess": "สร้าง embeddings สำหรับเอกสาร {{count}} รายการใหม่แล้ว",
+        "regeneratePartialSuccess": "สร้างเอกสาร {{count}} รายการใหม่แล้ว; ข้าม {{skipped}} รายการ",
+        "regenerateFailed": "ไม่สามารถสร้าง embeddings ใหม่ได้: {{error}}",
+        "saveSuccess": "อัปเดตการตั้งค่า embedding เรียบร้อยแล้ว",
+        "saveFailed": "ไม่สามารถอัปเดตการตั้งค่า embedding ได้: {{error}}",
+        "resetSuccess": "รีเซ็ตการตั้งค่า embedding เป็นค่าเริ่มต้นแล้ว",
+        "resetFailed": "ไม่สามารถรีเซ็ตการตั้งค่า embedding เป็นค่าเริ่มต้นได้: {{error}}"
       },
       "collections": {
         "title": "คอลเลกชันความรู้",
@@ -883,7 +929,11 @@
       "revokeSavedVoice": "ถอนความยินยอมของ {{name}}",
       "revokeSavedVoiceConfirm": "ถอนความยินยอมของ “{{name}}” หรือไม่? เสียงที่บันทึกไว้จะใช้ไม่ได้อีก แต่บันทึกความยินยอมจะยังคงอยู่",
       "savedVoiceRevoked": "ถอนความยินยอมแล้ว",
-      "savedVoiceRevokeFailed": "ถอนความยินยอมไม่สำเร็จ"
+      "savedVoiceRevokeFailed": "ถอนความยินยอมไม่สำเร็จ",
+      "savedVoiceUnavailableCleanupFailed": "เสียงที่บันทึกไว้ไม่พร้อมใช้งานและไม่สามารถล้างออกจากการตั้งค่าเสียงพูดได้",
+      "saveSuccess": "บันทึกการตั้งค่า TTS เรียบร้อยแล้ว",
+      "saveFailed": "ไม่สามารถบันทึกการตั้งค่า TTS ได้: {{error}}",
+      "testFailed": "การทดสอบ TTS ล้มเหลว: {{error}}"
     },
     "imageGen": {
       "title": "สร้างรูปภาพ",
@@ -903,7 +953,9 @@
       "style": "สไตล์",
       "styleDescription": "พรีเซ็ตสไตล์สำหรับรูปภาพที่สร้าง",
       "availableProviders": "ผู้ให้บริการที่มี",
-      "models": "โมเดล"
+      "models": "โมเดล",
+      "saveSuccess": "บันทึกการตั้งค่าการสร้างรูปภาพเรียบร้อยแล้ว",
+      "saveFailed": "ไม่สามารถบันทึกการตั้งค่าการสร้างรูปภาพได้: {{error}}"
     },
     "data": {
       "title": "การจัดการข้อมูล",
@@ -945,6 +997,16 @@
       "documents": "เอกสาร",
       "warnings": "คำเตือน",
       "refreshAfterImportFailed": "นำเข้าข้อมูลแล้ว แต่ไม่สามารถรีเฟรชมุมมองบางส่วนได้ โปรดโหลด Libre WebUI ใหม่เพื่อดูการเปลี่ยนแปลงทั้งหมด",
+      "exportSuccess": "ส่งออกไฟล์เก็บถาวรข้อมูลแบบพกพาแล้ว",
+      "exportFailed": "ส่งออกไม่สำเร็จ",
+      "importSuccess": "นำเข้าไฟล์เก็บถาวรข้อมูลแบบพกพาแล้ว",
+      "importFailed": "นำเข้าไม่สำเร็จ",
+      "archiveErrors": {
+        "invalidJson": "ไฟล์เก็บถาวรแบบพกพาไม่ใช่ JSON ที่ถูกต้อง",
+        "objectRequired": "ไฟล์เก็บถาวรแบบพกพาต้องมีออบเจ็กต์ JSON",
+        "unsupportedVersion": "ไม่รองรับไฟล์เก็บถาวรแบบพกพาเวอร์ชัน {{version}}",
+        "unrecognized": "ไฟล์นี้ไม่ใช่ไฟล์เก็บถาวรแบบพกพาของ Libre WebUI"
+      },
       "errors": "ข้อผิดพลาด",
       "archivedChats": {
         "title": "แชทที่เก็บถาวร",
@@ -1202,6 +1264,23 @@
     "newChat": "แชทใหม่",
     "newWork": "เซสชัน Work ใหม่",
     "openPalette": "เปิดคอมมานด์พาเลตต์"
+  },
+  "modelDownload": {
+    "success": "ดาวน์โหลด {{name}} แล้ว",
+    "failed": "ดาวน์โหลดไม่สำเร็จ: {{error}}",
+    "startFailed": "ไม่สามารถเริ่มดาวน์โหลดได้",
+    "cancelled": "ยกเลิกการดาวน์โหลดแล้ว"
+  },
+  "modelTools": {
+    "toasts": {
+      "fetchInfoFailed": "ไม่สามารถดึงข้อมูลได้",
+      "pushSuccess": "พุชโมเดลสำเร็จ",
+      "createSuccess": "สร้างโมเดลแล้ว",
+      "copySuccess": "คัดลอกโมเดลแล้ว",
+      "embeddingsSuccess": "สร้างเอ็มเบดดิงแล้ว (ดูคอนโซล)",
+      "failed": "ล้มเหลว",
+      "unknownError": "ข้อผิดพลาดที่ไม่ทราบสาเหตุ"
+    }
   },
   "modelManager": {
     "title": "โมเดล",

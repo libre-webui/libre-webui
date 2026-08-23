@@ -748,6 +748,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
             .transcribe(recording, providerModel, {
               language: i18n.language,
               signal: controller.signal,
+              fallbackMessage: t('voiceMode.transcriptionFailed'),
             })
             .then(result => {
               if (
@@ -768,7 +769,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                 toast.error(
                   error instanceof Error
                     ? error.message
-                    : t('chat.input.menu.attachFailed')
+                    : t('voiceMode.transcriptionFailed')
                 );
               }
             })

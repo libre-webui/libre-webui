@@ -44,6 +44,10 @@
     "name": "Libre WebUI",
     "shortName": "Libre"
   },
+  "appInitialization": {
+    "ollamaUnavailable": "Ollama পরিষেবা উপলব্ধ নয়। প্লাগইন মডেলগুলি এখনও ব্যবহার করা যেতে পারে।",
+    "backendConnectionFailed": "ব্যাকএন্ড পরিষেবার সাথে সংযোগ করা যায়নি"
+  },
   "auth": {
     "login": {
       "title": "স্বাগতম",
@@ -99,7 +103,11 @@
       "continueWith": "{{provider}} দিয়ে চালিয়ে যান",
       "connectingTo": "{{provider}} এ সংযোগ হচ্ছে...",
       "github": "GitHub",
-      "huggingFace": "Hugging Face"
+      "huggingFace": "Hugging Face",
+      "loginSuccess": "OAuth লগইন সফল হয়েছে!",
+      "completionFailed": "OAuth প্রমাণীকরণ সম্পন্ন করা যায়নি",
+      "verificationFailed": "OAuth প্রমাণীকরণ যাচাই করা যায়নি",
+      "authenticationFailed": "OAuth প্রমাণীকরণ ব্যর্থ হয়েছে"
     },
     "checkingAuth": "প্রমাণীকরণ যাচাই হচ্ছে...",
     "welcome": "স্বাগতম",
@@ -374,7 +382,8 @@
       "pullCommand": "ollama pull llama3.2:3b",
       "noModelsTooltip": "কোনো মডেল উপলব্ধ নেই। অনুগ্রহ করে নিশ্চিত করুন যে Ollama চলছে এবং মডেল ইনস্টল করা আছে।",
       "selectBeforePrivateChat": "ব্যক্তিগত চ্যাট শুরু করার আগে একটি উপলব্ধ মডেল নির্বাচন করুন",
-      "selectBeforeSending": "পাঠানোর আগে একটি উপলব্ধ মডেল নির্বাচন করুন"
+      "selectBeforeSending": "পাঠানোর আগে একটি উপলব্ধ মডেল নির্বাচন করুন",
+      "selectBeforeRegenerating": "পুনরায় তৈরি করার আগে একটি উপলব্ধ মডেল নির্বাচন করুন"
     },
     "footer": {
       "disclaimer": "LLM ভুল করতে পারে - গুরুত্বপূর্ণ তথ্য যাচাই করুন",
@@ -385,7 +394,10 @@
     "mediaUpload": {
       "dropImagesHere": "এখানে ছবি ছেড়ে দিন বা",
       "supportedFormats": "সমর্থিত: JPG, PNG, GIF, WebP (সর্বোচ্চ ১০MB প্রতিটি)",
-      "browse": "ব্রাউজ করুন"
+      "browse": "ব্রাউজ করুন",
+      "unsupportedFileType": "ফাইলের ধরন সমর্থিত নয়: {{name}}",
+      "maxImagesAllowed": "সর্বোচ্চ {{count}}টি ছবি অনুমোদিত",
+      "imageTooLarge": "{{name}} ছবিটি খুব বড় (সর্বোচ্চ 10MB)"
     },
     "structuredOutput": {
       "title": "রেসপন্স ফরম্যাট",
@@ -456,7 +468,22 @@
       "modelSwitched": "{{model}} এ স্যুইচ করা হয়েছে (আগের মডেলটি আর উপলব্ধ নেই)",
       "modelsLoadFailed": "মডেল লোড করা যায়নি",
       "modelUpdated": "বর্তমান চ্যাটের জন্য মডেল আপডেট হয়েছে",
-      "modelUpdateFailed": "সেশনের মডেল আপডেট করা যায়নি"
+      "modelUpdateFailed": "সেশনের মডেল আপডেট করা যায়নি",
+      "titlePreviewFallback": "শিরোনাম তৈরি করা যায়নি; বার্তার পূর্বরূপ ব্যবহার করা হচ্ছে",
+      "titleGenerated": "চ্যাটের শিরোনাম তৈরি হয়েছে",
+      "titleGenerationFailed": "চ্যাটের শিরোনাম তৈরি করা যায়নি",
+      "sessionNotFoundRedirect": "সেশন পাওয়া যায়নি। একটি নতুন সেশন তৈরি করা হচ্ছে...",
+      "comparisonError": "{{model}}: {{error}}",
+      "generationFailed": "তৈরি করা ব্যর্থ হয়েছে",
+      "comparisonFailed": "তুলনা ব্যর্থ হয়েছে",
+      "sendFailed": "বার্তা পাঠানো যায়নি",
+      "noMessageToRegenerate": "পুনরায় তৈরি করার মতো কোনো বার্তা নেই",
+      "regenerateFailed": "বার্তা পুনরায় তৈরি করা যায়নি",
+      "messageNotFound": "বার্তা পাওয়া যায়নি",
+      "branchSwitched": "{{number}} নম্বর বিকল্পে পরিবর্তন করা হয়েছে",
+      "branchSelectFailed": "শাখা নির্বাচন করা যায়নি",
+      "editFailed": "বার্তা সম্পাদনা করা যায়নি",
+      "toolDecisionFailed": "টুলের সিদ্ধান্ত রেকর্ড করা যায়নি"
     },
     "documents": {
       "title": "প্রসঙ্গে থাকা নথি"
@@ -616,6 +643,9 @@
       }
     },
     "saveSettings": "সেটিংস সংরক্ষণ করুন",
+    "preferences": {
+      "updateFailed": "সেটিংস আপডেট করা যায়নি: {{error}}"
+    },
     "model": {
       "title": "মডেল সেটিংস",
       "defaultModel": "ডিফল্ট মডেল",
@@ -651,7 +681,10 @@
         "taskModelDescription": "কথোপকথনের শিরোনাম তৈরিতে ব্যবহৃত মডেল"
       },
       "updatingModel": "{{name}} আপডেট হচ্ছে ({{current}}/{{total}})",
-      "modelsProgress": "{{total}} টি মডেলের মধ্যে {{current}} টি"
+      "modelsProgress": "{{total}} টি মডেলের মধ্যে {{current}} টি",
+      "defaultModelUpdated": "ডিফল্ট মডেল আপডেট হয়েছে",
+      "allModelsUpdated": "সব মডেল সফলভাবে আপডেট হয়েছে!",
+      "updateAllFailed": "মডেল আপডেট করা যায়নি: {{error}}"
     },
     "systemMessage": {
       "title": "সিস্টেম বার্তা",
@@ -711,6 +744,7 @@
       "modelCatalogNeedsApiKey": "এই প্রদানকারীর লাইভ মডেল তালিকা লোড করতে একটি বৈধ API কী যোগ করুন।",
       "modelCatalogUnavailable": "প্রদানকারীর মডেল তালিকা লোড করা যায়নি।",
       "modelCatalogRefreshFailed": "মডেল ক্যাটালগ রিফ্রেশ করতে ব্যর্থ",
+      "invalidJson": "অবৈধ JSON ফরম্যাট",
       "capability": {
         "chat": "চ্যাট",
         "embedding": "এম্বেডিং",
@@ -775,6 +809,11 @@
       "stopSequencesDescription": "কাস্টম টোকেন যা পাওয়া গেলে জেনারেশন বন্ধ হবে।",
       "resetDefaults": "ডিফল্টে রিসেট করুন",
       "saveOptions": "অপশন সংরক্ষণ করুন",
+      "saveSuccess": "জেনারেশন অপশন সফলভাবে আপডেট হয়েছে",
+      "saveFailed": "জেনারেশন অপশন আপডেট করা যায়নি: {{error}}",
+      "modelDefaultsLoaded": "{{model}}-এর সুপারিশকৃত সেটিংস লোড হয়েছে",
+      "resetSuccess": "জেনারেশন অপশন ডিফল্টে রিসেট হয়েছে",
+      "resetFailed": "জেনারেশন অপশন ডিফল্টে রিসেট করা যায়নি: {{error}}",
       "embeddingSettings": "এমবেডিং সেটিংস",
       "enableEmbeddings": "ডকুমেন্ট এমবেডিং সক্রিয় করুন",
       "thinking": "চিন্তা",
@@ -811,7 +850,14 @@
         "chunksWithEmbeddings": "এমবেডিং সহ চাংক",
         "coverage": "কভারেজ",
         "regenerate": "এমবেডিং পুনরায় তৈরি করুন",
-        "regenerating": "পুনরায় তৈরি হচ্ছে..."
+        "regenerating": "পুনরায় তৈরি হচ্ছে...",
+        "regenerateSuccess": "{{count}}টি ডকুমেন্টের এম্বেডিং পুনরায় তৈরি হয়েছে",
+        "regeneratePartialSuccess": "{{count}}টি ডকুমেন্ট পুনরায় তৈরি হয়েছে; {{skipped}}টি বাদ দেওয়া হয়েছে",
+        "regenerateFailed": "এম্বেডিং পুনরায় তৈরি করা যায়নি: {{error}}",
+        "saveSuccess": "এম্বেডিং সেটিংস সফলভাবে আপডেট হয়েছে",
+        "saveFailed": "এম্বেডিং সেটিংস আপডেট করা যায়নি: {{error}}",
+        "resetSuccess": "এম্বেডিং সেটিংস ডিফল্টে রিসেট হয়েছে",
+        "resetFailed": "এম্বেডিং সেটিংস ডিফল্টে রিসেট করা যায়নি: {{error}}"
       },
       "collections": {
         "title": "জ্ঞান সংগ্রহ",
@@ -883,7 +929,11 @@
       "revokeSavedVoice": "{{name}}-এর সম্মতি প্রত্যাহার করুন",
       "revokeSavedVoiceConfirm": "“{{name}}”-এর সম্মতি প্রত্যাহার করবেন? সংরক্ষিত কণ্ঠ আর ব্যবহার করা যাবে না, তবে সম্মতির রেকর্ড থেকে যাবে।",
       "savedVoiceRevoked": "সম্মতি প্রত্যাহার করা হয়েছে",
-      "savedVoiceRevokeFailed": "সম্মতি প্রত্যাহার করা যায়নি"
+      "savedVoiceRevokeFailed": "সম্মতি প্রত্যাহার করা যায়নি",
+      "savedVoiceUnavailableCleanupFailed": "সংরক্ষিত ভয়েসটি উপলব্ধ নয় এবং স্পিচ সেটিংস থেকে এটি সরানো যায়নি",
+      "saveSuccess": "TTS সেটিংস সফলভাবে সংরক্ষিত হয়েছে",
+      "saveFailed": "TTS সেটিংস সংরক্ষণ করা যায়নি: {{error}}",
+      "testFailed": "TTS পরীক্ষা ব্যর্থ হয়েছে: {{error}}"
     },
     "imageGen": {
       "title": "ইমেজ জেনারেশন",
@@ -903,7 +953,9 @@
       "style": "স্টাইল",
       "styleDescription": "তৈরি ইমেজের স্টাইল প্রিসেট",
       "availableProviders": "উপলব্ধ প্রোভাইডার",
-      "models": "মডেল"
+      "models": "মডেল",
+      "saveSuccess": "ইমেজ জেনারেশন সেটিংস সফলভাবে সংরক্ষিত হয়েছে",
+      "saveFailed": "ইমেজ জেনারেশন সেটিংস সংরক্ষণ করা যায়নি: {{error}}"
     },
     "data": {
       "title": "ডেটা ম্যানেজমেন্ট",
@@ -945,6 +997,16 @@
       "documents": "ডকুমেন্ট",
       "warnings": "সতর্কতা",
       "refreshAfterImportFailed": "ডেটা আমদানি হয়েছে, তবে কিছু দৃশ্য রিফ্রেশ করা যায়নি। সব পরিবর্তন দেখতে Libre WebUI পুনরায় লোড করুন।",
+      "exportSuccess": "পোর্টেবল ডেটা আর্কাইভ এক্সপোর্ট হয়েছে",
+      "exportFailed": "এক্সপোর্ট ব্যর্থ হয়েছে",
+      "importSuccess": "পোর্টেবল ডেটা আর্কাইভ ইমপোর্ট হয়েছে",
+      "importFailed": "ইমপোর্ট ব্যর্থ হয়েছে",
+      "archiveErrors": {
+        "invalidJson": "পোর্টেবল আর্কাইভটি বৈধ JSON নয়।",
+        "objectRequired": "পোর্টেবল আর্কাইভে একটি JSON অবজেক্ট থাকতে হবে।",
+        "unsupportedVersion": "পোর্টেবল আর্কাইভের {{version}} সংস্করণটি সমর্থিত নয়।",
+        "unrecognized": "এই ফাইলটি Libre WebUI-এর পোর্টেবল আর্কাইভ নয়।"
+      },
       "errors": "ত্রুটি",
       "archivedChats": {
         "title": "সংরক্ষণাগারভুক্ত চ্যাট",
@@ -1202,6 +1264,23 @@
     "newChat": "নতুন চ্যাট",
     "newWork": "নতুন Work সেশন",
     "openPalette": "কমান্ড প্যালেট খুলুন"
+  },
+  "modelDownload": {
+    "success": "{{name}} ডাউনলোড করা হয়েছে",
+    "failed": "ডাউনলোড ব্যর্থ হয়েছে: {{error}}",
+    "startFailed": "ডাউনলোড শুরু করা যায়নি",
+    "cancelled": "ডাউনলোড বাতিল করা হয়েছে"
+  },
+  "modelTools": {
+    "toasts": {
+      "fetchInfoFailed": "তথ্য আনা যায়নি",
+      "pushSuccess": "মডেল পুশ করা হয়েছে",
+      "createSuccess": "মডেল তৈরি করা হয়েছে",
+      "copySuccess": "মডেল কপি করা হয়েছে",
+      "embeddingsSuccess": "এম্বেডিং তৈরি করা হয়েছে (কনসোল দেখুন)",
+      "failed": "ব্যর্থ",
+      "unknownError": "অজানা ত্রুটি"
+    }
   },
   "modelManager": {
     "title": "মডেল",

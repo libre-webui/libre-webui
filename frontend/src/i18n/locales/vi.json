@@ -44,6 +44,10 @@
     "name": "Libre WebUI",
     "shortName": "Libre"
   },
+  "appInitialization": {
+    "ollamaUnavailable": "Dịch vụ Ollama không khả dụng. Vẫn có thể sử dụng các mô hình plugin.",
+    "backendConnectionFailed": "Không thể kết nối với dịch vụ backend"
+  },
   "auth": {
     "login": {
       "title": "Chào mừng trở lại",
@@ -99,7 +103,11 @@
       "continueWith": "Tiếp tục với {{provider}}",
       "connectingTo": "Đang kết nối đến {{provider}}...",
       "github": "GitHub",
-      "huggingFace": "Hugging Face"
+      "huggingFace": "Hugging Face",
+      "loginSuccess": "Đăng nhập OAuth thành công!",
+      "completionFailed": "Không thể hoàn tất xác thực OAuth",
+      "verificationFailed": "Không thể xác minh xác thực OAuth",
+      "authenticationFailed": "Xác thực OAuth thất bại"
     },
     "checkingAuth": "Đang kiểm tra xác thực...",
     "welcome": "Chào mừng",
@@ -374,7 +382,8 @@
       "pullCommand": "ollama pull llama3.2:3b",
       "noModelsTooltip": "Không có mô hình nào. Vui lòng đảm bảo Ollama đang chạy và các mô hình đã được cài đặt.",
       "selectBeforePrivateChat": "Chọn một mô hình khả dụng trước khi bắt đầu trò chuyện riêng tư",
-      "selectBeforeSending": "Chọn một mô hình khả dụng trước khi gửi"
+      "selectBeforeSending": "Chọn một mô hình khả dụng trước khi gửi",
+      "selectBeforeRegenerating": "Chọn một mô hình khả dụng trước khi tạo lại"
     },
     "footer": {
       "disclaimer": "LLM có thể mắc lỗi - hãy xác minh thông tin quan trọng",
@@ -385,7 +394,10 @@
     "mediaUpload": {
       "dropImagesHere": "Thả hình ảnh vào đây hoặc",
       "supportedFormats": "Hỗ trợ: JPG, PNG, GIF, WebP (tối đa 10MB mỗi file)",
-      "browse": "duyệt"
+      "browse": "duyệt",
+      "unsupportedFileType": "Loại tệp không được hỗ trợ: {{name}}",
+      "maxImagesAllowed": "Cho phép tối đa {{count}} hình ảnh",
+      "imageTooLarge": "Hình ảnh {{name}} quá lớn (tối đa 10MB)"
     },
     "structuredOutput": {
       "title": "Định dạng phản hồi",
@@ -456,7 +468,22 @@
       "modelSwitched": "Đã chuyển sang {{model}} (mô hình trước không còn khả dụng)",
       "modelsLoadFailed": "Không tải được mô hình",
       "modelUpdated": "Đã cập nhật mô hình cho cuộc trò chuyện hiện tại",
-      "modelUpdateFailed": "Không cập nhật được mô hình của phiên"
+      "modelUpdateFailed": "Không cập nhật được mô hình của phiên",
+      "titlePreviewFallback": "Không thể tạo tiêu đề; đang dùng bản xem trước tin nhắn",
+      "titleGenerated": "Đã tạo tiêu đề cuộc trò chuyện",
+      "titleGenerationFailed": "Không thể tạo tiêu đề cuộc trò chuyện",
+      "sessionNotFoundRedirect": "Không tìm thấy phiên. Đang tạo phiên mới...",
+      "comparisonError": "{{model}}: {{error}}",
+      "generationFailed": "quá trình tạo thất bại",
+      "comparisonFailed": "so sánh thất bại",
+      "sendFailed": "Không thể gửi tin nhắn",
+      "noMessageToRegenerate": "Không có tin nhắn nào để tạo lại",
+      "regenerateFailed": "Không thể tạo lại tin nhắn",
+      "messageNotFound": "Không tìm thấy tin nhắn",
+      "branchSwitched": "Đã chuyển sang biến thể {{number}}",
+      "branchSelectFailed": "Không thể chọn nhánh",
+      "editFailed": "Không thể chỉnh sửa tin nhắn",
+      "toolDecisionFailed": "Không thể ghi lại quyết định của công cụ"
     },
     "documents": {
       "title": "Tài liệu trong ngữ cảnh"
@@ -616,6 +643,9 @@
       }
     },
     "saveSettings": "Lưu cài đặt",
+    "preferences": {
+      "updateFailed": "Không thể cập nhật cài đặt: {{error}}"
+    },
     "model": {
       "title": "Cài đặt mô hình",
       "defaultModel": "Mô hình mặc định",
@@ -651,7 +681,10 @@
         "taskModelDescription": "Mô hình được sử dụng để tạo tiêu đề cuộc trò chuyện"
       },
       "updatingModel": "Đang cập nhật {{name}} ({{current}}/{{total}})",
-      "modelsProgress": "{{current}} trong {{total}} mô hình"
+      "modelsProgress": "{{current}} trong {{total}} mô hình",
+      "defaultModelUpdated": "Mô hình mặc định đã được cập nhật",
+      "allModelsUpdated": "Tất cả mô hình đã được cập nhật thành công!",
+      "updateAllFailed": "Không thể cập nhật mô hình: {{error}}"
     },
     "systemMessage": {
       "title": "Tin nhắn hệ thống",
@@ -711,6 +744,7 @@
       "modelCatalogNeedsApiKey": "Thêm API key hợp lệ cho nhà cung cấp này để tải danh sách mô hình trực tiếp của nó.",
       "modelCatalogUnavailable": "Không thể tải danh sách mô hình của nhà cung cấp.",
       "modelCatalogRefreshFailed": "Không thể làm mới danh mục mô hình",
+      "invalidJson": "Định dạng JSON không hợp lệ",
       "capability": {
         "chat": "Trò chuyện",
         "embedding": "Embedding",
@@ -775,6 +809,11 @@
       "stopSequencesDescription": "Các token tùy chỉnh sẽ dừng tạo khi gặp phải.",
       "resetDefaults": "Đặt lại mặc định",
       "saveOptions": "Lưu tùy chọn",
+      "saveSuccess": "Đã cập nhật tùy chọn tạo nội dung thành công",
+      "saveFailed": "Không thể cập nhật tùy chọn tạo nội dung: {{error}}",
+      "modelDefaultsLoaded": "Đã tải các cài đặt mà {{model}} đề xuất",
+      "resetSuccess": "Đã đặt lại tùy chọn tạo nội dung về mặc định",
+      "resetFailed": "Không thể đặt lại tùy chọn tạo nội dung về mặc định: {{error}}",
       "embeddingSettings": "Cài đặt nhúng",
       "enableEmbeddings": "Bật nhúng tài liệu",
       "thinking": "Suy luận",
@@ -811,7 +850,14 @@
         "chunksWithEmbeddings": "Đoạn có nhúng",
         "coverage": "Độ phủ",
         "regenerate": "Tạo lại nhúng",
-        "regenerating": "Đang tạo lại..."
+        "regenerating": "Đang tạo lại...",
+        "regenerateSuccess": "Đã tạo lại nhúng cho {{count}} tài liệu",
+        "regeneratePartialSuccess": "Đã tạo lại {{count}} tài liệu; bỏ qua {{skipped}}",
+        "regenerateFailed": "Không thể tạo lại nhúng: {{error}}",
+        "saveSuccess": "Đã cập nhật cài đặt nhúng thành công",
+        "saveFailed": "Không thể cập nhật cài đặt nhúng: {{error}}",
+        "resetSuccess": "Đã đặt lại cài đặt nhúng về mặc định",
+        "resetFailed": "Không thể đặt lại cài đặt nhúng về mặc định: {{error}}"
       },
       "collections": {
         "title": "Bộ sưu tập kiến thức",
@@ -883,7 +929,11 @@
       "revokeSavedVoice": "Rút lại sự đồng ý cho {{name}}",
       "revokeSavedVoiceConfirm": "Rút lại sự đồng ý cho “{{name}}”? Giọng nói đã lưu sẽ không dùng được nữa, nhưng hồ sơ đồng ý vẫn được giữ.",
       "savedVoiceRevoked": "Đã rút lại sự đồng ý",
-      "savedVoiceRevokeFailed": "Không thể rút lại sự đồng ý"
+      "savedVoiceRevokeFailed": "Không thể rút lại sự đồng ý",
+      "savedVoiceUnavailableCleanupFailed": "Giọng nói đã lưu không khả dụng và không thể xóa khỏi cài đặt Giọng nói",
+      "saveSuccess": "Đã lưu cài đặt TTS thành công",
+      "saveFailed": "Không thể lưu cài đặt TTS: {{error}}",
+      "testFailed": "Kiểm tra TTS thất bại: {{error}}"
     },
     "imageGen": {
       "title": "Tạo hình ảnh",
@@ -903,7 +953,9 @@
       "style": "Phong cách",
       "styleDescription": "Preset phong cách cho hình ảnh được tạo",
       "availableProviders": "Nhà cung cấp khả dụng",
-      "models": "mô hình"
+      "models": "mô hình",
+      "saveSuccess": "Đã lưu cài đặt tạo hình ảnh thành công",
+      "saveFailed": "Không thể lưu cài đặt tạo hình ảnh: {{error}}"
     },
     "data": {
       "title": "Quản lý dữ liệu",
@@ -945,6 +997,16 @@
       "documents": "Tài liệu",
       "warnings": "Cảnh báo",
       "refreshAfterImportFailed": "Dữ liệu đã được nhập, nhưng không thể làm mới một số chế độ xem. Hãy tải lại Libre WebUI để xem mọi thay đổi.",
+      "exportSuccess": "Đã xuất tệp lưu trữ dữ liệu di động",
+      "exportFailed": "Xuất thất bại",
+      "importSuccess": "Đã nhập tệp lưu trữ dữ liệu di động",
+      "importFailed": "Nhập thất bại",
+      "archiveErrors": {
+        "invalidJson": "Tệp lưu trữ di động không phải là JSON hợp lệ.",
+        "objectRequired": "Tệp lưu trữ di động phải chứa một đối tượng JSON.",
+        "unsupportedVersion": "Không hỗ trợ phiên bản {{version}} của tệp lưu trữ di động.",
+        "unrecognized": "Tệp này không phải là tệp lưu trữ di động của Libre WebUI."
+      },
       "errors": "Lỗi",
       "archivedChats": {
         "title": "Cuộc trò chuyện đã lưu trữ",
@@ -1202,6 +1264,23 @@
     "newChat": "Trò chuyện mới",
     "newWork": "Phiên Work mới",
     "openPalette": "Mở bảng lệnh"
+  },
+  "modelDownload": {
+    "success": "Đã tải xuống {{name}}",
+    "failed": "Không thể tải xuống: {{error}}",
+    "startFailed": "Không thể bắt đầu tải xuống",
+    "cancelled": "Đã hủy tải xuống"
+  },
+  "modelTools": {
+    "toasts": {
+      "fetchInfoFailed": "Không thể lấy thông tin",
+      "pushSuccess": "Đã đẩy mô hình",
+      "createSuccess": "Đã tạo mô hình",
+      "copySuccess": "Đã sao chép mô hình",
+      "embeddingsSuccess": "Đã tạo các vector nhúng (xem bảng điều khiển)",
+      "failed": "Thất bại",
+      "unknownError": "Lỗi không xác định"
+    }
   },
   "modelManager": {
     "title": "Mô hình",
