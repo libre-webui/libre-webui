@@ -208,7 +208,7 @@ Work can allow a model to:
 - Show file diffs
 - Continue work in the same environment later
 
-**[▶ Watch a real run (2:22)](https://s3.librewebui.org/media/work-computer-demo.mp4?v=1)** —
+**[▶ Watch a real run (2:22)](https://s3.librewebui.org/media/work-computer-demo.mp4?v=2)** —
 a Work agent browsing NASA's galleries on its own screen, choosing
 photos, then building and testing an interactive Three.js gallery,
 unedited, from a single prompt.

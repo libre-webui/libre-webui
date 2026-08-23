@@ -434,7 +434,7 @@ the only supported way for a model to leave a process running. Ordinary
 
 ### Screen (the Work Computer)
 
-<video controls preload="metadata" width="100%" src="https://s3.librewebui.org/media/work-computer-demo.mp4?v=1"></video>
+<video controls preload="metadata" width="100%" src="https://s3.librewebui.org/media/work-computer-demo.mp4?v=2"></video>
 
 _A real, unedited run (30x, then real time): a Work agent browsing NASA's
 image galleries on its own screen, choosing photos, then building and
