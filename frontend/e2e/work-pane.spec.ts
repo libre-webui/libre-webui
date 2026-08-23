@@ -593,6 +593,43 @@ test('the Agent tab shows identity, routines, and taught skills', async ({
   await expect(page.getByTestId('work-screen')).toBeVisible();
 });
 
+test('an agent shows an unread dot until its task is opened', async ({
+  page,
+}) => {
+  const unreadAgent = {
+    ...task('agent-unread', 'Chief of Staff', 'Inbox triage finished.'),
+    isAgent: true,
+    statusBlurb: 'Inbox at zero.',
+    // A run finished after the owner last looked.
+    lastSeenAt: createdAt - 60_000,
+  };
+  const readAgent = {
+    ...task('agent-read', 'Researcher', 'Notes compiled.'),
+    isAgent: true,
+    statusBlurb: 'Notes compiled.',
+    lastSeenAt: createdAt + 60_000,
+  };
+  const mock = await mockLibreWebUiApi(page, {
+    workTasks: [unreadAgent, readAgent],
+  });
+
+  await page.goto('/work');
+  const dots = page.getByTestId('sidebar-work-agent-unread');
+  await expect(dots).toHaveCount(1);
+  const unreadRow = page.locator(
+    '[data-testid="sidebar-work-task-item"][data-task-id="agent-unread"]'
+  );
+  await expect(
+    unreadRow.getByTestId('sidebar-work-agent-unread')
+  ).toBeVisible();
+
+  // Opening the task marks it seen and clears the dot.
+  await unreadRow.click();
+  await expect(page).toHaveURL(/\/work\/agent-unread$/);
+  await expect(dots).toHaveCount(0);
+  await expect.poll(() => mock.workTaskSeenRequests).toContain('agent-unread');
+});
+
 test('shows a readable LTR model name without changing its identifier', async ({
   page,
 }) => {

@@ -128,6 +128,7 @@ export default function WorkPage() {
     createTask,
     updateTask,
     deleteTask,
+    markTaskSeen,
     startRun,
     cancelRun,
     beginLiveRun,
@@ -417,6 +418,13 @@ export default function WorkPage() {
     ? tasks.find(task => task.id === taskId)
     : undefined;
   const selectedStatus = selectedTaskSummary?.status ?? selectedTask?.status;
+
+  // Opening a task — and watching a run reach a terminal state while it is
+  // open — advances the seen marker behind the sidebar's unread indicator.
+  useEffect(() => {
+    if (!taskId) return;
+    markTaskSeen(taskId);
+  }, [taskId, selectedStatus, markTaskSeen]);
   const selectedRun =
     selectedTask?.activeRun ?? selectedTaskSummary?.activeRun ?? null;
   const selectedRunId = selectedRun?.id;

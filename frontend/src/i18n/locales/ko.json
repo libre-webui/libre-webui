@@ -2756,7 +2756,8 @@
       "routineSaveFailed": "루틴을 저장할 수 없습니다.",
       "skills": "가르친 스킬",
       "noSkills": "아직 가르친 것이 없습니다. 화면 탭의 Teach로 절차를 한 번 시연하면 다시 실행할 수 있는 스킬이 됩니다.",
-      "skillToggleFailed": "스킬을 업데이트할 수 없습니다."
+      "skillToggleFailed": "스킬을 업데이트할 수 없습니다.",
+      "unread": "새로운 활동"
     }
   },
   "personaBackground": {

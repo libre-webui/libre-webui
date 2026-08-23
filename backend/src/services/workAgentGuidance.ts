@@ -175,6 +175,19 @@ ${skills}${taughtSkills}
 Finish with a concise summary of what changed and the checks that actually ran.`;
 }
 
+const STATUS_BLURB_REPORT_MAX_CHARS = 4_000;
+
+/**
+ * One cheap post-run request for an agent's sidebar status line. The reply
+ * is still passed through the deterministic blurb bounds, so a rambling
+ * model degrades to a truncated line rather than breaking the sidebar.
+ */
+export function buildWorkStatusBlurbPrompt(report: string): string {
+  return `You just finished a work session as a persistent agent. Reply with one status line of at most 8 words for your sidebar entry — plain text, no quotes, no markdown, no trailing period. State what you accomplished or what you need next. Base it only on this final report:
+
+${report.slice(0, STATUS_BLURB_REPORT_MAX_CHARS)}`;
+}
+
 export function buildWorkEmptyRoundNudgePrompt(): string {
   return `Your last turn contained no reply and no tool calls, so nothing happened. Continue the task now: either call the tools you need, or reply with your findings and the next step.`;
 }

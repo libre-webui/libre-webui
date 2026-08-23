@@ -2756,7 +2756,8 @@
       "routineSaveFailed": "Nie udało się zapisać rutyny.",
       "skills": "Nauczone umiejętności",
       "noSkills": "Jeszcze niczego nie nauczono. Użyj Teach na karcie Ekran, aby raz zademonstrować procedurę; stanie się powtarzalną umiejętnością.",
-      "skillToggleFailed": "Nie udało się zaktualizować umiejętności."
+      "skillToggleFailed": "Nie udało się zaktualizować umiejętności.",
+      "unread": "Nowa aktywność"
     }
   },
   "personaBackground": {

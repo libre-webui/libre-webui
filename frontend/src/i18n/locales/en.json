@@ -2756,7 +2756,8 @@
       "routineSaveFailed": "Could not save the routine.",
       "skills": "Taught skills",
       "noSkills": "Nothing taught yet. Use Teach on the Screen tab to demonstrate a procedure once; it becomes a replayable skill.",
-      "skillToggleFailed": "Could not update the skill."
+      "skillToggleFailed": "Could not update the skill.",
+      "unread": "New activity"
     }
   },
   "personaBackground": {

@@ -199,6 +199,17 @@ test('status blurbs are deterministic, single-line, and bounded', async () => {
   assert.equal(deriveStatusBlurb('##'), null);
 });
 
+test('the status-blurb request is bounded and demands one plain line', () => {
+  const { buildWorkStatusBlurbPrompt } = guidanceModule;
+  const prompt = buildWorkStatusBlurbPrompt('Inbox cleared. Two drafts ready.');
+  assert.match(prompt, /at most 8 words/);
+  assert.match(prompt, /no quotes, no markdown/);
+  assert.match(prompt, /Inbox cleared\. Two drafts ready\./);
+  // A huge report cannot balloon the request.
+  const bounded = buildWorkStatusBlurbPrompt('x'.repeat(50_000));
+  assert.ok(bounded.length < 5_000);
+});
+
 test('budget exhaustion asks for an honest no-tools handoff', () => {
   const prompt = buildWorkBudgetExhaustionPrompt();
 

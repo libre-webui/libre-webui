@@ -2756,7 +2756,8 @@
       "routineSaveFailed": "Rutinen kunde inte sparas.",
       "skills": "Inlärda färdigheter",
       "noSkills": "Inget inlärt ännu. Använd Teach på Skärm-fliken för att demonstrera en procedur en gång; den blir en återspelbar färdighet.",
-      "skillToggleFailed": "Färdigheten kunde inte uppdateras."
+      "skillToggleFailed": "Färdigheten kunde inte uppdateras.",
+      "unread": "Ny aktivitet"
     }
   },
   "personaBackground": {

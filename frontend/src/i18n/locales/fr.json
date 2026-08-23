@@ -2756,7 +2756,8 @@
       "routineSaveFailed": "Impossible d'enregistrer la routine.",
       "skills": "Compétences enseignées",
       "noSkills": "Rien d'enseigné pour l'instant. Utilisez Teach dans l'onglet Écran pour démontrer une procédure une fois ; elle devient une compétence rejouable.",
-      "skillToggleFailed": "Impossible de mettre à jour la compétence."
+      "skillToggleFailed": "Impossible de mettre à jour la compétence.",
+      "unread": "Nouvelle activité"
     }
   },
   "personaBackground": {

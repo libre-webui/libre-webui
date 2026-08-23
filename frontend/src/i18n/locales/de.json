@@ -2756,7 +2756,8 @@
       "routineSaveFailed": "Die Routine konnte nicht gespeichert werden.",
       "skills": "Beigebrachte Fähigkeiten",
       "noSkills": "Noch nichts beigebracht. Nutze Teach im Bildschirm-Tab, um einen Ablauf einmal vorzuführen; er wird zu einer wiederholbaren Fähigkeit.",
-      "skillToggleFailed": "Die Fähigkeit konnte nicht aktualisiert werden."
+      "skillToggleFailed": "Die Fähigkeit konnte nicht aktualisiert werden.",
+      "unread": "Neue Aktivität"
     }
   },
   "personaBackground": {

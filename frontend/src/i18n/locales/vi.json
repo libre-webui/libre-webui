@@ -2756,7 +2756,8 @@
       "routineSaveFailed": "Không thể lưu thói quen.",
       "skills": "Kỹ năng đã dạy",
       "noSkills": "Chưa dạy gì. Dùng Teach trong thẻ Màn hình để trình diễn một quy trình một lần; nó trở thành kỹ năng có thể phát lại.",
-      "skillToggleFailed": "Không thể cập nhật kỹ năng."
+      "skillToggleFailed": "Không thể cập nhật kỹ năng.",
+      "unread": "Hoạt động mới"
     }
   },
   "personaBackground": {

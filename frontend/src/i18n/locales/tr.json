@@ -2756,7 +2756,8 @@
       "routineSaveFailed": "Rutin kaydedilemedi.",
       "skills": "Öğretilen beceriler",
       "noSkills": "Henüz bir şey öğretilmedi. Ekran sekmesindeki Teach ile bir prosedürü bir kez gösterin; yeniden oynatılabilir bir beceri olur.",
-      "skillToggleFailed": "Beceri güncellenemedi."
+      "skillToggleFailed": "Beceri güncellenemedi.",
+      "unread": "Yeni etkinlik"
     }
   },
   "personaBackground": {

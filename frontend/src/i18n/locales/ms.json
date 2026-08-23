@@ -2756,7 +2756,8 @@
       "routineSaveFailed": "Rutin tidak dapat disimpan.",
       "skills": "Kemahiran yang diajar",
       "noSkills": "Belum ada yang diajar. Gunakan Teach pada tab Skrin untuk menunjukkan prosedur sekali; ia menjadi kemahiran yang boleh dimainkan semula.",
-      "skillToggleFailed": "Kemahiran tidak dapat dikemas kini."
+      "skillToggleFailed": "Kemahiran tidak dapat dikemas kini.",
+      "unread": "Aktiviti baharu"
     }
   },
   "personaBackground": {

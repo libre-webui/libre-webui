@@ -2756,7 +2756,8 @@
       "routineSaveFailed": "ルーティンを保存できませんでした。",
       "skills": "教えたスキル",
       "noSkills": "まだ何も教えていません。画面タブの Teach で手順を一度実演すると、再実行できるスキルになります。",
-      "skillToggleFailed": "スキルを更新できませんでした。"
+      "skillToggleFailed": "スキルを更新できませんでした。",
+      "unread": "新しいアクティビティ"
     }
   },
   "personaBackground": {

@@ -117,8 +117,8 @@ export class SQLiteWorkPersistence implements WorkPersistenceRepository {
              network_enabled, volume_name, container_name, host_path, policy_id,
              preview_url, preview_status, preview_upstream_host,
              preview_upstream_port, persona_id, status_blurb, is_agent,
-             created_at, updated_at
-           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+             last_seen_at, created_at, updated_at
+           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
           )
           .run(
             input.task.id,
@@ -140,6 +140,7 @@ export class SQLiteWorkPersistence implements WorkPersistenceRepository {
             input.task.persona_id,
             input.task.status_blurb,
             input.task.is_agent,
+            input.task.last_seen_at,
             input.task.created_at,
             input.task.updated_at
           );
@@ -479,6 +480,20 @@ export class SQLiteWorkPersistence implements WorkPersistenceRepository {
         'UPDATE work_tasks SET status = ?, status_blurb = ?, updated_at = ? WHERE id = ?'
       )
       .run(status, statusBlurb, now, taskId);
+  }
+
+  async markTaskSeen(
+    taskId: string,
+    userId: string,
+    seenAt: number
+  ): Promise<void> {
+    this.database
+      .prepare(
+        `UPDATE work_tasks SET last_seen_at = ?
+          WHERE id = ? AND user_id = ?
+            AND (last_seen_at IS NULL OR last_seen_at < ?)`
+      )
+      .run(seenAt, taskId, userId, seenAt);
   }
 
   async updatePreview(

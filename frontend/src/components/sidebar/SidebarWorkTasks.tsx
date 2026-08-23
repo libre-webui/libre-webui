@@ -268,6 +268,16 @@ export function SidebarWorkTasks({
     const isAgentRow = task.isAgent === true;
     const persona =
       isAgentRow && task.personaId ? personas[task.personaId] : undefined;
+    // Unread: a run reached a terminal state after the owner last opened
+    // the task. Pre-migration rows (no marker) never light up.
+    const unread =
+      isAgentRow &&
+      !selected &&
+      typeof task.lastSeenAt === 'number' &&
+      task.updatedAt > task.lastSeenAt &&
+      (task.status === 'completed' ||
+        task.status === 'needs_input' ||
+        task.status === 'failed');
     const rowControls = (
       <>
         {/* Relative time swaps for the row menu on hover. */}
@@ -380,7 +390,10 @@ export function SidebarWorkTasks({
               <div className='flex items-center'>
                 <h3
                   dir='auto'
-                  className='min-w-0 flex-1 truncate text-sm leading-5 text-ink'
+                  className={cn(
+                    'min-w-0 flex-1 truncate text-sm leading-5 text-ink',
+                    unread && 'font-medium'
+                  )}
                   title={taskDisplayTitle(task)}
                 >
                   {truncateText(taskDisplayTitle(task), 34)}
@@ -391,12 +404,24 @@ export function SidebarWorkTasks({
                     })}
                   </span>
                 </h3>
+                {unread && (
+                  <span
+                    data-testid='sidebar-work-agent-unread'
+                    aria-label={t('work.agent.unread', {
+                      defaultValue: 'New activity',
+                    })}
+                    className='ms-2 h-2 w-2 shrink-0 rounded-full bg-primary-500 shadow-[0_0_8px_rgb(var(--color-primary-500)/0.6)]'
+                  />
+                )}
                 {rowControls}
               </div>
               <p
                 dir='auto'
                 data-testid='sidebar-work-agent-blurb'
-                className='truncate text-[11px] leading-4 text-ink-subtle'
+                className={cn(
+                  'truncate text-[11px] leading-4',
+                  unread ? 'text-ink-muted' : 'text-ink-subtle'
+                )}
                 title={task.statusBlurb || statusLabel}
               >
                 {task.statusBlurb || statusLabel}

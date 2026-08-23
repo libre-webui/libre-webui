@@ -33,6 +33,7 @@ export interface WorkTaskRow {
   persona_id: string | null;
   status_blurb: string | null;
   is_agent: number | null;
+  last_seen_at: number | null;
   created_at: number;
   updated_at: number;
 }
@@ -187,6 +188,8 @@ export interface WorkPersistenceRepository {
     now: number,
     statusBlurb?: string | null
   ): Promise<void>;
+  /** Advance the owner's seen marker; monotonic, never rewinds. */
+  markTaskSeen(taskId: string, userId: string, seenAt: number): Promise<void>;
   updatePreview(
     taskId: string,
     status: WorkPreviewStatus,

@@ -2756,7 +2756,8 @@
       "routineSaveFailed": "Ekki tókst að vista venjuna.",
       "skills": "Kennd færni",
       "noSkills": "Ekkert kennt enn. Notaðu Teach í Skjár-flipanum til að sýna verklag einu sinni; það verður endurspilanleg færni.",
-      "skillToggleFailed": "Ekki tókst að uppfæra færnina."
+      "skillToggleFailed": "Ekki tókst að uppfæra færnina.",
+      "unread": "Ný virkni"
     }
   },
   "personaBackground": {

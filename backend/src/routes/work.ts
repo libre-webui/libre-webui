@@ -502,6 +502,27 @@ router.get(
   }
 );
 
+// The owner opened the task: advance the seen marker the agent sidebar
+// compares against updatedAt for its unread indicator. Monotonic, so a
+// stale client can never rewind it.
+router.post(
+  '/tasks/:id/seen',
+  async (
+    req: AuthenticatedRequest,
+    res: Response<ApiResponse<{ seen: true }>>
+  ): Promise<void> => {
+    try {
+      const taskId = readTaskId(req);
+      const userId = requireUserId(req);
+      await workTaskService.requireTaskRecord(taskId, userId);
+      await workTaskService.markTaskSeen(taskId, userId);
+      sendSuccess(res, { seen: true });
+    } catch (error) {
+      sendError(res, error);
+    }
+  }
+);
+
 router.get(
   '/tasks/:taskId/runs/:runId/events',
   async (req: AuthenticatedRequest, res: Response): Promise<void> => {

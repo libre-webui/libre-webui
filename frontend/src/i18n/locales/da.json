@@ -2756,7 +2756,8 @@
       "routineSaveFailed": "Rutinen kunne ikke gemmes.",
       "skills": "Lærte færdigheder",
       "noSkills": "Intet lært endnu. Brug Teach på Skærm-fanen for at demonstrere en procedure én gang; den bliver en genafspillelig færdighed.",
-      "skillToggleFailed": "Færdigheden kunne ikke opdateres."
+      "skillToggleFailed": "Færdigheden kunne ikke opdateres.",
+      "unread": "Ny aktivitet"
     }
   },
   "personaBackground": {

@@ -278,6 +278,8 @@ export class WorkTaskService {
       persona_id: identity?.personaId || null,
       status_blurb: null,
       is_agent: identity?.isAgent ? 1 : 0,
+      // The creator is looking at the task they just made.
+      last_seen_at: now,
       created_at: now,
       updated_at: now,
     };
@@ -434,6 +436,7 @@ export class WorkTaskService {
         persona_id: task.personaId || null,
         status_blurb: task.statusBlurb || null,
         is_agent: task.isAgent ? 1 : 0,
+        last_seen_at: task.lastSeenAt ?? null,
         created_at: task.createdAt,
         updated_at: task.updatedAt,
       };
@@ -967,6 +970,10 @@ export class WorkTaskService {
     );
   }
 
+  async markTaskSeen(taskId: string, userId: string): Promise<void> {
+    await getWorkPersistence().markTaskSeen(taskId, userId, Date.now());
+  }
+
   async updatePreview(
     taskId: string,
     status: WorkPreviewStatus,
@@ -1046,6 +1053,7 @@ export class WorkTaskService {
       personaId: row.persona_id || undefined,
       statusBlurb: row.status_blurb || undefined,
       isAgent: row.is_agent === 1,
+      lastSeenAt: row.last_seen_at ?? undefined,
     };
   }
 
@@ -1200,6 +1208,7 @@ const mapTaskRecord = (row: TaskRow): WorkTaskRecord => ({
   personaId: row.persona_id || undefined,
   statusBlurb: row.status_blurb || undefined,
   isAgent: row.is_agent === 1,
+  lastSeenAt: row.last_seen_at ?? undefined,
   createdAt: row.created_at,
   updatedAt: row.updated_at,
 });

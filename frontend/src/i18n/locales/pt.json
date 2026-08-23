@@ -2756,7 +2756,8 @@
       "routineSaveFailed": "Não foi possível salvar a rotina.",
       "skills": "Habilidades ensinadas",
       "noSkills": "Nada ensinado ainda. Use Teach na aba Tela para demonstrar um procedimento uma vez; ele se torna uma habilidade repetível.",
-      "skillToggleFailed": "Não foi possível atualizar a habilidade."
+      "skillToggleFailed": "Não foi possível atualizar a habilidade.",
+      "unread": "Atividade nova"
     }
   },
   "personaBackground": {

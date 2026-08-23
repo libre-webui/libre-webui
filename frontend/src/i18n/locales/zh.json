@@ -2756,7 +2756,8 @@
       "routineSaveFailed": "无法保存例行任务。",
       "skills": "教会的技能",
       "noSkills": "还没有教过任何内容。在屏幕标签页使用 Teach 演示一次流程，它就会成为可重放的技能。",
-      "skillToggleFailed": "无法更新技能。"
+      "skillToggleFailed": "无法更新技能。",
+      "unread": "新动态"
     }
   },
   "personaBackground": {

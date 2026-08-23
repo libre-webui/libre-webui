@@ -1110,6 +1110,10 @@ const AGENT_ROUTINES_REQUIRED_SCHEMA = {
   automations: ['work_task_id'],
 } as const;
 
+const AGENT_SEEN_REQUIRED_SCHEMA = {
+  work_tasks: ['last_seen_at'],
+} as const;
+
 export const IDENTITY_EMAIL_LOOKUP_SCHEMA_SQL = `
   ALTER TABLE users ADD COLUMN email_lookup TEXT;
   CREATE UNIQUE INDEX idx_users_email_lookup
@@ -1920,6 +1924,10 @@ export const AGENT_IDENTITY_SCHEMA_SQL = `
 
 export const AGENT_ROUTINES_SCHEMA_SQL = `
   ALTER TABLE automations ADD COLUMN work_task_id TEXT;
+`;
+
+export const AGENT_SEEN_SCHEMA_SQL = `
+  ALTER TABLE work_tasks ADD COLUMN last_seen_at INTEGER;
 `;
 
 const REQUIRED_SCHEMA = {
@@ -3655,6 +3663,9 @@ const collectMissingAgentRoutinesSchema = (
   database: Database.Database
 ): string[] => collectMissingColumns(database, AGENT_ROUTINES_REQUIRED_SCHEMA);
 
+const collectMissingAgentSeenSchema = (database: Database.Database): string[] =>
+  collectMissingColumns(database, AGENT_SEEN_REQUIRED_SCHEMA);
+
 const collectMissingIdentityAccountRetirementSchema = (
   database: Database.Database
 ): string[] => {
@@ -3715,6 +3726,7 @@ function collectMissingSchemaAtVersion(
     ...(version >= 24 ? collectMissingWorkTakeoverSchema(database) : []),
     ...(version >= 25 ? collectMissingAgentIdentitySchema(database) : []),
     ...(version >= 26 ? collectMissingAgentRoutinesSchema(database) : []),
+    ...(version >= 27 ? collectMissingAgentSeenSchema(database) : []),
   ];
 }
 
@@ -3822,6 +3834,8 @@ const AGENT_IDENTITY_MIGRATION_CHECKSUM =
   'cd6ea09543b8771258c0c55e95a7dc73f9b8cd838487aefe039bb82fa7bea840';
 const AGENT_ROUTINES_MIGRATION_CHECKSUM =
   '2bf5167435acf8a43f9117f379dc4f35227196c65350bb72425bac467e06750b';
+const AGENT_SEEN_MIGRATION_CHECKSUM =
+  '6e753d9adbdfb71d717ef3a6bc387f3ace6e1e91c9f73ecc6fe22c7508259197';
 
 const MIGRATIONS: readonly SQLiteMigration[] = [
   {
@@ -4288,6 +4302,20 @@ const MIGRATIONS: readonly SQLiteMigration[] = [
       if (missing.length > 0) {
         throw new Error(
           `SQLite agent routines schema is incomplete; missing ${missing.join(', ')}`
+        );
+      }
+    },
+  },
+  {
+    version: 27,
+    name: 'agent-seen',
+    checksum: AGENT_SEEN_MIGRATION_CHECKSUM,
+    apply(database) {
+      addColumnIfMissing(database, 'work_tasks', 'last_seen_at', 'INTEGER');
+      const missing = collectMissingAgentSeenSchema(database);
+      if (missing.length > 0) {
+        throw new Error(
+          `SQLite agent seen schema is incomplete; missing ${missing.join(', ')}`
         );
       }
     },

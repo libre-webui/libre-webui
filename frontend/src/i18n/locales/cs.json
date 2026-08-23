@@ -2756,7 +2756,8 @@
       "routineSaveFailed": "Rutinu se nepodařilo uložit.",
       "skills": "Naučené dovednosti",
       "noSkills": "Zatím nic naučeného. Použijte Teach na kartě Obrazovka a předveďte postup jednou; stane se opakovatelnou dovedností.",
-      "skillToggleFailed": "Dovednost se nepodařilo aktualizovat."
+      "skillToggleFailed": "Dovednost se nepodařilo aktualizovat.",
+      "unread": "Nová aktivita"
     }
   },
   "personaBackground": {

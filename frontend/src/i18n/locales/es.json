@@ -2756,7 +2756,8 @@
       "routineSaveFailed": "No se pudo guardar la rutina.",
       "skills": "Habilidades enseñadas",
       "noSkills": "Nada enseñado todavía. Usa Teach en la pestaña Pantalla para demostrar un procedimiento una vez; se convierte en una habilidad repetible.",
-      "skillToggleFailed": "No se pudo actualizar la habilidad."
+      "skillToggleFailed": "No se pudo actualizar la habilidad.",
+      "unread": "Actividad nueva"
     }
   },
   "personaBackground": {

@@ -167,7 +167,14 @@ const mergeTaskList = (
   const existingTasks = currentTasks.flatMap(current => {
     const incoming = incomingById.get(current.id);
     if (!incoming) return [];
-    return [current.updatedAt > incoming.updatedAt ? current : incoming];
+    const winner = current.updatedAt > incoming.updatedAt ? current : incoming;
+    // The seen marker is monotonic: an optimistic local bump must survive
+    // a poll response that raced the mark-seen request.
+    const lastSeenAt = Math.max(
+      current.lastSeenAt ?? 0,
+      incoming.lastSeenAt ?? 0
+    );
+    return [lastSeenAt > 0 ? { ...winner, lastSeenAt } : winner];
   });
   return [...newTasks, ...existingTasks];
 };
@@ -197,6 +204,8 @@ interface WorkState {
     payload: UpdateWorkTaskRequest
   ) => Promise<WorkTask>;
   deleteTask: (taskId: string) => Promise<void>;
+  /** Fire-and-forget: advance the seen marker for the unread indicator. */
+  markTaskSeen: (taskId: string) => void;
   startRun: (taskId: string, payload: StartWorkRunRequest) => Promise<WorkTask>;
   cancelRun: (taskId: string) => Promise<WorkTask>;
   beginLiveRun: (taskId: string, runId: string, startedAt?: number) => void;
@@ -566,6 +575,22 @@ export const useWorkStore = create<WorkState>((set, get) => {
         'Could not update the Work task.',
         taskId
       ),
+
+    markTaskSeen: taskId => {
+      const seenAt = Date.now();
+      // Optimistic: the dot clears immediately; the server marker is
+      // monotonic so a lost request only delays cross-device clearing.
+      set(state => ({
+        tasks: state.tasks.map(task =>
+          task.id === taskId ? { ...task, lastSeenAt: seenAt } : task
+        ),
+        selectedTask:
+          state.selectedTask?.id === taskId
+            ? { ...state.selectedTask, lastSeenAt: seenAt }
+            : state.selectedTask,
+      }));
+      void workApi.markTaskSeen(taskId).catch(() => undefined);
+    },
 
     deleteTask: async taskId => {
       const requestEpoch = stateEpoch;

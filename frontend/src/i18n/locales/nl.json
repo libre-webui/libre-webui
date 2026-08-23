@@ -2756,7 +2756,8 @@
       "routineSaveFailed": "De routine kon niet worden opgeslagen.",
       "skills": "Aangeleerde vaardigheden",
       "noSkills": "Nog niets aangeleerd. Gebruik Teach op het Scherm-tabblad om een procedure één keer voor te doen; die wordt een herafspeelbare vaardigheid.",
-      "skillToggleFailed": "De vaardigheid kon niet worden bijgewerkt."
+      "skillToggleFailed": "De vaardigheid kon niet worden bijgewerkt.",
+      "unread": "Nieuwe activiteit"
     }
   },
   "personaBackground": {

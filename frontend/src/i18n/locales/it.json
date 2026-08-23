@@ -2756,7 +2756,8 @@
       "routineSaveFailed": "Impossibile salvare la routine.",
       "skills": "Abilità insegnate",
       "noSkills": "Niente di insegnato finora. Usa Teach nella scheda Schermo per dimostrare una procedura una volta; diventa un'abilità ripetibile.",
-      "skillToggleFailed": "Impossibile aggiornare l'abilità."
+      "skillToggleFailed": "Impossibile aggiornare l'abilità.",
+      "unread": "Nuova attività"
     }
   },
   "personaBackground": {

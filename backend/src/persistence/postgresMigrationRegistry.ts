@@ -31,6 +31,7 @@ import { POSTGRES_WORK_COMPUTER_MIGRATION } from './postgresWorkComputerMigratio
 import { POSTGRES_WORK_TAKEOVER_MIGRATION } from './postgresWorkTakeoverMigration.js';
 import { POSTGRES_AGENT_IDENTITY_MIGRATION } from './postgresAgentIdentityMigration.js';
 import { POSTGRES_AGENT_ROUTINES_MIGRATION } from './postgresAgentRoutinesMigration.js';
+import { POSTGRES_AGENT_SEEN_MIGRATION } from './postgresAgentSeenMigration.js';
 import type { PostgresMigration } from './postgresMigrationTypes.js';
 import { validatePostgresMigrationRegistry } from './postgresMigrations.js';
 
@@ -64,6 +65,7 @@ export const POSTGRES_MIGRATIONS: readonly PostgresMigration[] =
         POSTGRES_WORK_TAKEOVER_MIGRATION,
         POSTGRES_AGENT_IDENTITY_MIGRATION,
         POSTGRES_AGENT_ROUTINES_MIGRATION,
+        POSTGRES_AGENT_SEEN_MIGRATION,
       ].map(migration => Object.freeze({ ...migration }))
     )
   );

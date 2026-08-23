@@ -2756,7 +2756,8 @@
       "routineSaveFailed": "Tidak dapat menyimpan rutinitas.",
       "skills": "Keterampilan yang diajarkan",
       "noSkills": "Belum ada yang diajarkan. Gunakan Teach di tab Layar untuk mendemonstrasikan prosedur sekali; prosedur itu menjadi keterampilan yang dapat diputar ulang.",
-      "skillToggleFailed": "Tidak dapat memperbarui keterampilan."
+      "skillToggleFailed": "Tidak dapat memperbarui keterampilan.",
+      "unread": "Aktivitas baru"
     }
   },
   "personaBackground": {

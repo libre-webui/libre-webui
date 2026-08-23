@@ -108,6 +108,8 @@ export interface WorkTaskDetail {
   statusBlurb?: string;
   /** True for a task the user hired as a persistent named agent. */
   isAgent: boolean;
+  /** When the owner last opened this task; absent = never recorded. */
+  lastSeenAt?: number;
 }
 
 export type WorkLiveEventType =
@@ -368,6 +370,8 @@ export interface WorkTaskRecord {
   statusBlurb?: string;
   /** True for a task the user hired as a persistent named agent. */
   isAgent: boolean;
+  /** When the owner last opened this task; absent = never recorded. */
+  lastSeenAt?: number;
   createdAt: number;
   updatedAt: number;
 }

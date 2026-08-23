@@ -89,6 +89,9 @@ const NOTIFICATION_TYPES: readonly NotificationType[] = [
   'media-ready',
   'media-failed',
   'budget-alert',
+  'work-run-finished',
+  'work-run-attention',
+  'work-takeover',
   'system',
 ];
 

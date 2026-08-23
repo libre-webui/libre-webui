@@ -94,6 +94,11 @@ export const workApi = {
   capabilities: (): Promise<ApiResponse<WorkCapabilities>> =>
     api.get('/work/capabilities').then(response => response.data),
 
+  markTaskSeen: (taskId: string): Promise<ApiResponse<{ seen: true }>> =>
+    api
+      .post(`/work/tasks/${encodeURIComponent(taskId)}/seen`)
+      .then(res => res.data),
+
   listTasks: (): Promise<ApiResponse<WorkTaskSummary[]>> =>
     api.get('/work/tasks').then(response => response.data),
 

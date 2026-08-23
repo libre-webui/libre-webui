@@ -26,6 +26,7 @@ import {
   buildWorkComputerAmbiguityPrompt,
   buildWorkComputerStallPrompt,
   buildWorkEmptyRoundNudgePrompt,
+  buildWorkStatusBlurbPrompt,
   workAgentSkillsForContext,
   WORK_WRITE_FILE_RECOMMENDED_CHARS,
   workToolCallBudget,
@@ -86,6 +87,9 @@ const WORK_CHAT_TOOL_CALL_ARGUMENTS_MAX_BYTES = 4_096;
 // Persona instructions share the taught-skill bound so one persona cannot
 // crowd the working context out of the system prompt.
 const PERSONA_INSTRUCTION_MAX_CHARS = 6_000;
+// A finished run should surface promptly: the colloquial status line is a
+// nicety, never worth holding the terminal event beyond this bound.
+const WORK_STATUS_BLURB_TIMEOUT_MS = 8_000;
 const INTERRUPTED_TOOL_RESULT =
   'Tool execution was interrupted; outcome unknown. Inspect the workspace before retrying.';
 
@@ -1166,13 +1170,20 @@ export class WorkAgentService {
           ) {
             return;
           }
+          const completedBlurb = await this.statusBlurbForRun(
+            task,
+            run,
+            userId,
+            finalContent,
+            controller.signal
+          );
           await workTaskService.updateRun(runId, 'completed', {
             finished: true,
           });
           await workTaskService.updateTaskStatus(
             taskId,
             'completed',
-            deriveStatusBlurb(finalContent)
+            completedBlurb
           );
           await workEventService.publish(
             taskId,
@@ -1184,6 +1195,14 @@ export class WorkAgentService {
             },
             'terminal:completed'
           );
+          if (task.isAgent === true) {
+            await this.notifyAgentLifecycle(task, {
+              type: 'work-run-finished',
+              title: `${task.title} finished its run`,
+              body: completedBlurb,
+              sourceKey: `work-run:${runId}:completed`,
+            });
+          }
           return;
         }
         const toolValidationErrors = new Map<WorkToolCall, string>();
@@ -1293,6 +1312,7 @@ export class WorkAgentService {
             const result = await this.executeTool(task, call, {
               signal: controller.signal,
               computer: computerContext,
+              runId,
             });
             toolOutput = result.content;
             toolImages = result.images;
@@ -1561,11 +1581,18 @@ export class WorkAgentService {
       await this.throwIfCancelled(runId, controller);
       if (!isActiveRunStatus((await workTaskService.getRun(runId))?.status))
         return;
+      const handoffBlurb = await this.statusBlurbForRun(
+        task,
+        run,
+        userId,
+        handoffContent,
+        controller.signal
+      );
       await workTaskService.updateRun(runId, 'needs_input', { finished: true });
       await workTaskService.updateTaskStatus(
         taskId,
         'needs_input',
-        deriveStatusBlurb(handoffContent)
+        handoffBlurb
       );
       await workEventService.publish(
         taskId,
@@ -1578,6 +1605,14 @@ export class WorkAgentService {
         },
         'terminal:needs_input'
       );
+      if (task.isAgent === true) {
+        await this.notifyAgentLifecycle(task, {
+          type: 'work-run-attention',
+          title: `${task.title} needs your input`,
+          body: handoffBlurb,
+          sourceKey: `work-run:${runId}:needs_input`,
+        });
+      }
     } catch (error) {
       const currentRun = await workTaskService.getRun(runId);
       if (currentRun?.status === 'cancelled' || controller.signal.aborted) {
@@ -1680,6 +1715,14 @@ export class WorkAgentService {
         },
         'terminal:failed'
       );
+      if (task?.isAgent === true) {
+        await this.notifyAgentLifecycle(task, {
+          type: 'work-run-attention',
+          title: `${task.title} hit an error`,
+          body: deriveStatusBlurb(message),
+          sourceKey: `work-run:${runId}:failed`,
+        });
+      }
     } finally {
       this.controllers.delete(runId);
       try {
@@ -1785,6 +1828,8 @@ export class WorkAgentService {
       // Mutable per-run state: the last computer observation, for diffing
       // consecutive screens so the model learns what its action changed.
       computer?: WorkComputerRunContext;
+      // For run-scoped notification dedupe (one takeover alert per run).
+      runId?: string;
     } = {}
   ): Promise<{
     content: string;
@@ -1976,6 +2021,18 @@ export class WorkAgentService {
           };
         }
         const reason = requiredString(args.reason, 'reason').slice(0, 1_000);
+        // The on-screen banner is visible only while the Screen tab is
+        // open and connected, so a takeover request also notifies — this
+        // is the "Chief of Staff needs you: 2FA on the CRM" moment. One
+        // notification per run: repeat requests in the same run dedupe.
+        await this.notifyAgentLifecycle(task, {
+          type: 'work-takeover',
+          title: `${task.title} needs you on its screen`,
+          body: reason,
+          sourceKey: context.runId
+            ? `work-takeover:${context.runId}`
+            : `work-takeover:${task.id}:${Date.now()}`,
+        });
         const outcome = await workScreenControlService.waitForAssist(
           task.id,
           reason,
@@ -2055,6 +2112,89 @@ export class WorkAgentService {
         409,
         'WORK_RUN_CANCELLED'
       );
+    }
+  }
+
+  /**
+   * Agent lifecycle notification, in-app plus web push. Best effort: the
+   * run and task rows are the source of truth, so a notification failure
+   * never fails the run. The source key is run-scoped because dedupe is
+   * permanent per user until the inbox cap prunes it.
+   */
+  private async notifyAgentLifecycle(
+    task: WorkTaskRecord,
+    input: {
+      type: 'work-run-finished' | 'work-run-attention' | 'work-takeover';
+      title: string;
+      body?: string | null;
+      sourceKey: string;
+    }
+  ): Promise<void> {
+    try {
+      const { notificationService } = await import('./notificationService.js');
+      await notificationService.publish({
+        userId: task.userId,
+        type: input.type,
+        title: input.title,
+        ...(input.body ? { body: input.body } : {}),
+        href: `/work/${task.id}`,
+        sourceKey: input.sourceKey,
+      });
+    } catch {
+      // Best effort only.
+    }
+  }
+
+  /**
+   * Sidebar status line for a finished run. Agents get one cheap no-tools
+   * model request for a colloquial ~8-word status ("Inbox at zero. 2
+   * replies ready."); every failure, timeout, or non-agent task falls back
+   * to the deterministic first-line blurb. The reply is passed through the
+   * same deterministic bounds, so the model can only ever produce one
+   * bounded line. WORK_STATUS_BLURB_MODEL=0 disables the model call.
+   */
+  private async statusBlurbForRun(
+    task: WorkTaskRecord,
+    run: Pick<WorkRun, 'providerType' | 'providerId' | 'model'>,
+    userId: string,
+    finalContent: string,
+    signal: AbortSignal
+  ): Promise<string | null> {
+    const deterministic = deriveStatusBlurb(finalContent);
+    if (task.isAgent !== true) return deterministic;
+    if (process.env.WORK_STATUS_BLURB_MODEL === '0') return deterministic;
+    try {
+      const response =
+        await workModelProviderService.generateChatStreamResponse(
+          {
+            model: run.model,
+            messages: [
+              {
+                role: 'user',
+                content: buildWorkStatusBlurbPrompt(finalContent),
+              },
+            ],
+            tools: [],
+            options:
+              run.providerType === 'plugin' ? { num_predict: 64 } : undefined,
+            stream: true,
+          },
+          {
+            providerType: run.providerType,
+            providerId: run.providerId,
+          },
+          userId,
+          {},
+          AbortSignal.any([
+            signal,
+            AbortSignal.timeout(WORK_STATUS_BLURB_TIMEOUT_MS),
+          ])
+        );
+      return (
+        deriveStatusBlurb(response.message?.content ?? '') ?? deterministic
+      );
+    } catch {
+      return deterministic;
     }
   }
 }

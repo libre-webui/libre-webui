@@ -201,11 +201,23 @@ always overrides them) — and the sidebar pins agents in their own **Agents**
 group above ad-hoc tasks, each with the persona avatar, an activity indicator,
 and a one-line status.
 
-The status line is deterministic, not model-generated on request: at the end
-of every run the first line of the final assistant message (bounded to 90
-characters) is stored on the task, so the sidebar answers "what did it last
-do" without opening the conversation. Failed runs store the error's first
-line the same way.
+The status line has two tiers. For hired agents, one cheap no-tools model
+request at the end of a run asks for an ~8-word status ("Inbox at zero. 2
+replies ready."); the reply is bounded to a single 90-character line and any
+failure or timeout falls back to the deterministic tier — the first line of
+the final assistant message. Ad-hoc tasks and failed runs use the
+deterministic tier only, and `WORK_STATUS_BLURB_MODEL=0` disables the model
+request entirely. Agents also carry an unread indicator: opening the task
+advances a per-task seen marker (monotonic, synced across devices), and the
+sidebar shows a dot when a run reached a terminal state after that marker.
+
+Agents report their life through [notifications](./55-NOTIFICATIONS.md)
+too — in-app and, when enabled, web push: `work-run-finished` when a run
+completes, `work-run-attention` when it stops for input or fails, and
+`work-takeover` the moment the agent asks a human to take over its screen
+(the on-screen banner is visible only while the Screen tab is open, so the
+push is what reaches you elsewhere). Each notification links straight to
+the agent.
 
 You can hire under a persona you own or one shared with you; the shared view
 never exposes the owner's persona memories. If the persona is later deleted,

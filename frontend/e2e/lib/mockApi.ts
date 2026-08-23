@@ -368,6 +368,7 @@ type MockWorkTask = {
   statusBlurb?: string | null;
   isAgent?: boolean;
   computerAvailable?: boolean;
+  lastSeenAt?: number | null;
 };
 
 type MockPersona = {
@@ -765,6 +766,7 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
     isAgent?: boolean;
   }> = [];
   const workTaskDetailRequests: string[] = [];
+  const workTaskSeenRequests: string[] = [];
   const workTaskListRequests: number[] = [];
   const workTaskDeleteRequests: string[] = [];
   const workMessagePageRequests: Array<{
@@ -1621,6 +1623,20 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
 
       if (path === '/work/capabilities' && method === 'GET') {
         await fulfillJson(route, workCapabilities);
+        return;
+      }
+
+      const workSeenMatch = path.match(/^\/work\/tasks\/([^/]+)\/seen$/);
+      if (workSeenMatch && method === 'POST') {
+        const taskId = decodeURIComponent(workSeenMatch[1]);
+        const task = workTasks.find(item => item.id === taskId);
+        if (!task) {
+          await fulfillApiError(route, 404, 'Work task not found');
+          return;
+        }
+        workTaskSeenRequests.push(taskId);
+        task.lastSeenAt = Date.now();
+        await fulfillJson(route, { seen: true });
         return;
       }
 
@@ -2778,6 +2794,7 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
     folderDeleteRequests,
     workTaskCreateRequests,
     workTaskDetailRequests,
+    workTaskSeenRequests,
     workTaskListRequests,
     workTaskDeleteRequests,
     workMessagePageRequests,
