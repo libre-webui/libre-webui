@@ -10,7 +10,6 @@ keywords:
     ai model management,
     gemma,
     llama,
-    deepseek,
     qwen,
     local ai models,
     hardware requirements,
@@ -28,10 +27,10 @@ Use these as starting points, then switch based on your hardware and task:
 
 | Model              | Good for                               | Typical fit                 |
 | ------------------ | -------------------------------------- | --------------------------- |
-| `gemma3:4b`        | Fast general chat                      | 8 GB RAM or entry GPU       |
-| `qwen3:8b`         | General chat, coding, multilingual use | 16 GB RAM or 6-8 GB VRAM    |
-| `deepseek-r1:8b`   | Reasoning-heavy prompts                | 16 GB RAM or 6-8 GB VRAM    |
-| `mistral`          | Balanced general assistant work        | 8-16 GB RAM                 |
+| `gemma4:12b`       | Fast general chat                      | 16 GB RAM or 8 GB VRAM      |
+| `qwen3.8:27b`      | General chat, coding, multilingual use | 32 GB RAM or 16-24 GB VRAM  |
+| `gemma4:26b`       | Strong chat with MoE efficiency        | 24 GB RAM or 16 GB VRAM     |
+| `gemma4:31b`       | Highest-quality dense local chat       | 32 GB RAM or 24 GB VRAM     |
 | `nomic-embed-text` | Document embeddings                    | Small local embedding model |
 
 Large models such as 30B, 70B, and MoE models can be excellent, but they need much more memory. If you are not sure, start small and move up after the model is working smoothly.
@@ -136,9 +135,9 @@ Quantized models use less memory. Q4 quantizations are usually the practical def
 
 | Task            | Model direction                                                     |
 | --------------- | ------------------------------------------------------------------- |
-| Fast chat       | `gemma3:4b`, `mistral`, small Qwen models                           |
-| Coding          | Qwen Coder, DeepSeek Coder, Codestral, provider coding models       |
-| Reasoning       | DeepSeek-R1 family, larger Qwen models, provider reasoning models   |
+| Fast chat       | `gemma4:12b` and other small current models                         |
+| Coding          | Qwen Coder, Codestral, provider coding models                       |
+| Reasoning       | Larger Qwen and Gemma models, provider reasoning models             |
 | Vision          | Multimodal models such as LLaVA, Qwen VL, or provider vision models |
 | Document search | `nomic-embed-text` or another embedding model                       |
 | Text-to-speech  | TTS plugins such as Qwen3-TTS or Kyutai TTS                         |

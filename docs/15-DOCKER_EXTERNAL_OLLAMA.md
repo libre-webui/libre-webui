@@ -31,7 +31,7 @@ curl http://localhost:11434/api/version
 Pull a model if the instance is new:
 
 ```bash
-ollama pull gemma3:4b
+ollama pull gemma4:12b
 ```
 
 ## Start Libre WebUI

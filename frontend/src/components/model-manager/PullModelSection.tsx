@@ -172,7 +172,7 @@ export function PullModelSection({
             <div className='flex flex-wrap gap-2'>
               {popularModels.map(model => (
                 <button
-                  key={model.name}
+                  key={`${model.name}-${model.size}`}
                   onClick={() => setModelName(model.name)}
                   disabled={pulling || !canInstallModels}
                   className={cn(

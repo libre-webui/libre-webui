@@ -101,7 +101,7 @@ The first account created on a fresh installation becomes the administrator.
 Install Ollama, then pull a model:
 
 ```bash
-ollama pull gemma3:4b
+ollama pull gemma4:12b
 ```
 
 Libre WebUI can now use Ollama for local inference. No cloud account or API key

@@ -16,9 +16,10 @@ Use a fast local model for routine work and switch to larger models only when th
 
 Good daily-driver examples:
 
-- `gemma3:4b` for fast everyday chat
-- `qwen3:8b` for stronger general work
-- `deepseek-r1:8b` for reasoning prompts
+- `gemma4:12b` for fast everyday chat
+- `qwen3.8:27b` for stronger general work
+- `gemma4:26b` for MoE efficiency on bigger hardware
+- `gemma4:31b` for the best dense local quality
 - `nomic-embed-text` for document embeddings
 
 Open **Models** to see which models are running. Unload models you are not using when VRAM gets tight.

@@ -58,7 +58,7 @@ ollama serve
 Pull a starter model:
 
 ```bash
-ollama pull gemma3:4b
+ollama pull gemma4:12b
 ```
 
 Verify the API:
@@ -96,9 +96,9 @@ OLLAMA_BASE_URL=http://100.x.y.z:11434 docker compose -f docker-compose.dev.exte
 For a first GPU workstation:
 
 ```bash
-ollama pull gemma3:4b
-ollama pull qwen3:8b
-ollama pull deepseek-r1:8b
+ollama pull gemma4:12b
+ollama pull qwen3.8:27b
+ollama pull gemma4:26b
 ollama pull nomic-embed-text
 ```
 

@@ -35,9 +35,9 @@ Actual speed depends on model architecture, quantization, context length, GPU dr
 ## Good Starting Models
 
 ```bash
-ollama pull gemma3:4b
-ollama pull qwen3:8b
-ollama pull deepseek-r1:8b
+ollama pull gemma4:12b
+ollama pull qwen3.8:27b
+ollama pull gemma4:26b
 ollama pull nomic-embed-text
 ```
 

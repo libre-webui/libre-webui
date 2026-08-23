@@ -47,10 +47,10 @@ from the directory where you run `npx`.
 Install [Ollama](https://ollama.com), then pull a small general model:
 
 ```bash
-ollama pull gemma3:4b
+ollama pull gemma4:12b
 ```
 
-Other good first models are `qwen3:8b`, `deepseek-r1:8b`, and `mistral`. Use the Model Manager in Libre WebUI to browse installed models, search the live Ollama Library, and pull models without leaving the app.
+Other strong choices are `gemma4:26b` (MoE), `gemma4:31b` (dense), and `qwen3.8:27b`. Use the Model Manager in Libre WebUI to browse installed models, search the live Ollama Library, and pull models without leaving the app.
 
 :::tip Embeddings for documents
 For semantic document search, also install an embedding model:

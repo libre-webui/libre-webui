@@ -223,7 +223,7 @@ If Libre WebUI runs in Docker and Ollama runs on the host, use the external Olla
 **Pull from terminal first**
 
 ```bash
-ollama pull gemma3:4b
+ollama pull gemma4:12b
 ```
 
 If the terminal pull fails, the problem is outside Libre WebUI.

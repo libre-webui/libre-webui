@@ -621,16 +621,11 @@ export const ModelManager: React.FC = () => {
     }
     // Fallback when library hasn't loaded yet
     return [
-      { name: 'deepseek-r1', category: 'reasoning', size: '7B' },
-      { name: 'llama3.2', category: 'general', size: '3B' },
-      { name: 'gemma3', category: 'general', size: '4B' },
-      { name: 'qwen2.5', category: 'general', size: '7B' },
-      { name: 'mistral', category: 'general', size: '7B' },
-      { name: 'codellama', category: 'coding', size: '7B' },
+      { name: 'gemma4', category: 'general', size: '12B' },
+      { name: 'gemma4', category: 'general', size: '26B' },
+      { name: 'gemma4', category: 'general', size: '31B' },
+      { name: 'qwen3.8', category: 'reasoning', size: '27B' },
       { name: 'nomic-embed-text', category: 'embedding', size: '137M' },
-      { name: 'llava', category: 'vision', size: '7B' },
-      { name: 'phi3', category: 'general', size: '3.8B' },
-      { name: 'gemma2', category: 'general', size: '9B' },
     ];
   }, [libraryModels]);
 
