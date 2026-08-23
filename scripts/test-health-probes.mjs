@@ -218,6 +218,7 @@ test('readiness fails closed while a valid older schema awaits migration', async
     DROP TABLE resource_grants;
     DROP TABLE user_group_members;
     DROP TABLE user_groups;
+    DELETE FROM _libre_schema_migrations WHERE version = 24;
     DELETE FROM _libre_schema_migrations WHERE version = 23;
     DELETE FROM _libre_schema_migrations WHERE version = 22;
     DELETE FROM _libre_schema_migrations WHERE version = 21;
