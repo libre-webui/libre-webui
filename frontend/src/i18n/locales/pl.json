@@ -2548,7 +2548,8 @@
     "conversation": {
       "ready": "Obszar roboczy jest gotowy",
       "empty": "Kontynuuj zadanie poniżej. Ta rozmowa i jej pliki pozostają przypisane do tego obszaru roboczego.",
-      "loadOlder": "Wczytaj starsze wiadomości"
+      "loadOlder": "Wczytaj starsze wiadomości",
+      "openFile": "Otwórz {{name}}"
     },
     "status": {
       "preparing": "Przygotowywanie izolowanego obszaru roboczego…",

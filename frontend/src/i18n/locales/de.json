@@ -2548,7 +2548,8 @@
     "conversation": {
       "ready": "Arbeitsbereich bereit",
       "empty": "Setzen Sie die Aufgabe unten fort. Diese Unterhaltung und ihre Dateien bleiben mit diesem Arbeitsbereich verknüpft.",
-      "loadOlder": "Ältere Nachrichten laden"
+      "loadOlder": "Ältere Nachrichten laden",
+      "openFile": "{{name}} öffnen"
     },
     "status": {
       "preparing": "Isolierter Arbeitsbereich wird vorbereitet…",

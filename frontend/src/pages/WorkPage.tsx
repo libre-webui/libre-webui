@@ -200,6 +200,23 @@ export default function WorkPage() {
   const setMobileSurface = (value: MobileSurface) =>
     setMobileSurfaceState({ locationKey: location.key, value });
   const [workspaceDirty, setWorkspaceDirty] = useState(false);
+  // A conversation file chip routing into the workspace pane's Files tab.
+  const [openFileRequest, setOpenFileRequest] = useState<{
+    path: string;
+    nonce: number;
+  } | null>(null);
+  const openWorkspaceFile = useCallback(
+    (path: string) => {
+      setMobileSurface('workspace');
+      setOpenFileRequest(previous => ({
+        path,
+        nonce: (previous?.nonce ?? 0) + 1,
+      }));
+    },
+    // setMobileSurface is a stable setState wrapper defined above.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    []
+  );
   const [hostPath, setHostPath] = useState('');
   const hostWorkspacesEnabled = capabilities?.hostWorkspaces?.enabled === true;
   const hostWorkspaceRoots = capabilities?.hostWorkspaces?.roots ?? [];
@@ -398,6 +415,9 @@ export default function WorkPage() {
       return;
     }
     selectTask(taskId);
+    // A pending chip request from the previous task must not fire on the
+    // freshly mounted pane of the next one.
+    setOpenFileRequest(null);
     void loadTask(taskId).catch(() => undefined);
     void loadFiles(taskId, '').catch(() => undefined);
   }, [taskId, loadFiles, loadTask, selectTask]);
@@ -1454,6 +1474,7 @@ export default function WorkPage() {
               )}
               <WorkComposer
                 variant='landing'
+                dictationOwnerKey='landing'
                 models={modelOptions}
                 selectorModels={models}
                 modelKey={freshModel?.key || ''}
@@ -1498,9 +1519,11 @@ export default function WorkPage() {
                   loading={loadingTask}
                   loadingOlder={loadingOlderMessages}
                   onLoadOlder={() => loadOlderMessages(selectedTask.id)}
+                  onOpenFile={openWorkspaceFile}
                 />
                 <WorkComposer
                   key={selectedTask.id}
+                  dictationOwnerKey={selectedTask.id}
                   models={effectiveModelOptions}
                   selectorModels={models}
                   modelKey={selectedModelKey}
@@ -1524,6 +1547,7 @@ export default function WorkPage() {
                 <WorkspacePane
                   key={selectedTask.id}
                   task={selectedTask}
+                  openFileRequest={openFileRequest}
                   persona={
                     selectedTask.personaId
                       ? personas[selectedTask.personaId]

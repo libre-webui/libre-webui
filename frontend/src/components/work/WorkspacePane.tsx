@@ -83,6 +83,12 @@ interface WorkspacePaneProps {
   task: WorkTask;
   /** Persona backing an agent task's identity panel. */
   persona?: Persona;
+  /**
+   * External request to open a file (a conversation file chip): switches
+   * to the Files tab and opens the path. The nonce distinguishes repeat
+   * clicks on the same path.
+   */
+  openFileRequest?: { path: string; nonce: number } | null;
   liveRun?: WorkLiveRun;
   files: WorkFileEntry[];
   selectedFile: WorkFile | null;
@@ -138,6 +144,7 @@ const toolName = (message: WorkMessage, fallback: string): string => {
 export function WorkspacePane({
   task,
   persona,
+  openFileRequest,
   liveRun,
   files,
   selectedFile,
@@ -343,6 +350,24 @@ export function WorkspacePane({
     setEditorBaseUpdatedAt(baseUpdatedAt);
     onDirtyChange(draft !== null && draft.content !== file.content);
   };
+
+  // A conversation file chip asked for a file: land on the Files tab and
+  // open it through the same dirty-confirm/draft-restore path as the list.
+  const handledOpenRequestRef = useRef(0);
+  useEffect(() => {
+    if (
+      !openFileRequest ||
+      openFileRequest.nonce === handledOpenRequestRef.current
+    ) {
+      return;
+    }
+    handledOpenRequestRef.current = openFileRequest.nonce;
+    setTab('files');
+    void openFile(openFileRequest.path);
+    // openFile is re-created per render; the nonce guard keeps this to one
+    // invocation per request.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [openFileRequest]);
 
   const closeFile = () => {
     if (!confirmDiscard()) return;

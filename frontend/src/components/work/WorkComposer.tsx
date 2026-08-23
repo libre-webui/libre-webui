@@ -15,11 +15,12 @@
  * limitations under the License.
  */
 
-import { ArrowUp, CircleAlert, Loader2, Square, X } from 'lucide-react';
+import { ArrowUp, CircleAlert, Loader2, Mic, Square, X } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ModelSelector } from '@/components/ModelSelector';
 import { Button } from '@/components/ui';
+import { useDictation } from '@/hooks/useDictation';
 import type { OllamaModel } from '@/types';
 import { workModelSelectionKey, type WorkModelOption } from '@/types/work';
 import { cn } from '@/utils';
@@ -32,6 +33,8 @@ interface WorkComposerProps {
   loading: boolean;
   variant?: 'landing' | 'task';
   disabled?: boolean;
+  /** Dictation ownership: a recording dies when this changes (task id). */
+  dictationOwnerKey?: string;
   remoteDisclosureDismissed: boolean;
   remoteDisclosureSaving: boolean;
   onModelChange: (modelKey: string) => void | Promise<void>;
@@ -85,6 +88,7 @@ export function WorkComposer({
   loading,
   variant = 'task',
   disabled = false,
+  dictationOwnerKey,
   remoteDisclosureDismissed,
   remoteDisclosureSaving,
   onModelChange,
@@ -96,6 +100,19 @@ export function WorkComposer({
   const { t } = useTranslation();
   const [message, setMessage] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  // Dictated text appends to whatever was typed before the mic started.
+  const dictationBaseRef = useRef('');
+  const dictation = useDictation({
+    onStart: () => {
+      dictationBaseRef.current = textareaRef.current?.value ?? '';
+    },
+    onText: text => {
+      const base = dictationBaseRef.current;
+      setMessage(base ? `${base} ${text}` : text);
+    },
+    ownerKey: dictationOwnerKey,
+  });
+  const dictationActive = dictation.phase !== 'idle';
   const desktopModelTriggerRef = useRef<HTMLButtonElement>(null);
   const mobileModelTriggerRef = useRef<HTMLButtonElement>(null);
   const selectedModel = models.find(item => item.key === modelKey);
@@ -284,6 +301,41 @@ export function WorkComposer({
               />
             </div>
 
+            {dictation.supported && (
+              <Button
+                data-testid='work-voice-input'
+                type='button'
+                variant='ghost'
+                size='sm'
+                disabled={disabled}
+                aria-pressed={dictationActive}
+                className={cn(
+                  'flex h-9 w-9 shrink-0 touch-manipulation items-center justify-center rounded-full p-0 transition-colors duration-150',
+                  dictationActive
+                    ? 'animate-pulse bg-red-50 text-red-500 dark:bg-red-900/20'
+                    : 'text-ink-muted hover:bg-surface-subtle hover:text-ink'
+                )}
+                title={
+                  dictationActive
+                    ? t('chat.input.voiceStop')
+                    : t('chat.input.voiceInput')
+                }
+                aria-label={
+                  dictationActive
+                    ? t('chat.input.voiceStop')
+                    : t('chat.input.voiceInput')
+                }
+                onClick={() => void dictation.toggle()}
+              >
+                {dictation.phase === 'starting' ? (
+                  <Loader2 className='h-4 w-4 animate-spin' />
+                ) : dictation.phase === 'transcribing' ? (
+                  <Square className='h-4 w-4 fill-current' />
+                ) : (
+                  <Mic className='h-4 w-4' />
+                )}
+              </Button>
+            )}
             {running && (
               <Button
                 data-testid='work-cancel-button'

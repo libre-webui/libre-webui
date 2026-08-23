@@ -2548,7 +2548,8 @@
     "conversation": {
       "ready": "Vinnusvæði tilbúið",
       "empty": "Haltu verkefninu áfram hér að neðan. Samtalið og skrár þess fylgja þessu vinnusvæði.",
-      "loadOlder": "Hlaða eldri skilaboðum"
+      "loadOlder": "Hlaða eldri skilaboðum",
+      "openFile": "Opna {{name}}"
     },
     "status": {
       "preparing": "Undirbý einangrað vinnusvæði…",

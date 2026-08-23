@@ -630,6 +630,140 @@ test('an agent shows an unread dot until its task is opened', async ({
   await expect.poll(() => mock.workTaskSeenRequests).toContain('agent-unread');
 });
 
+test('conversation file chips open the written file in the workspace', async ({
+  page,
+}) => {
+  const chipTask = task('chip-task', 'Landing page', 'The page is written.');
+  chipTask.messages.splice(
+    1,
+    0,
+    {
+      id: 'chip-call',
+      taskId: 'chip-task',
+      runId: 'chip-task-run',
+      role: 'tool' as const,
+      kind: 'tool_call' as const,
+      content: 'Calling write_file',
+      metadata: {
+        name: 'write_file',
+        toolCallId: 'call-write',
+        path: 'src/index.html',
+      },
+      createdAt: createdAt + 1,
+    } as (typeof chipTask.messages)[number],
+    {
+      id: 'chip-result',
+      taskId: 'chip-task',
+      runId: 'chip-task-run',
+      role: 'tool' as const,
+      kind: 'tool_result' as const,
+      content: 'Wrote src/index.html',
+      metadata: { name: 'write_file', toolCallId: 'call-write' },
+      createdAt: createdAt + 2,
+    } as (typeof chipTask.messages)[number],
+    {
+      id: 'chip-read-call',
+      taskId: 'chip-task',
+      runId: 'chip-task-run',
+      role: 'tool' as const,
+      kind: 'tool_call' as const,
+      content: 'Calling read_file',
+      metadata: {
+        name: 'read_file',
+        toolCallId: 'call-read',
+        path: 'package.json',
+      },
+      createdAt: createdAt + 3,
+    } as (typeof chipTask.messages)[number]
+  );
+  await mockLibreWebUiApi(page, {
+    workTasks: [chipTask],
+    workFiles: {
+      'chip-task': [
+        {
+          path: 'src/index.html',
+          name: 'index.html',
+          type: 'file',
+          size: 20,
+          modifiedAt: createdAt,
+        },
+      ],
+    },
+    workFileContents: {
+      'chip-task:src/index.html': '<main>calm city</main>',
+    },
+  });
+
+  await page.goto('/work/chip-task');
+
+  // Only the mutating tool produces a chip; the read does not.
+  const chips = page.getByTestId('work-file-chip');
+  await expect(chips).toHaveCount(1);
+  await expect(chips.first()).toContainText('index.html');
+  await expect(chips.first()).toHaveAttribute('data-path', 'src/index.html');
+
+  // Clicking lands on the Files tab with the file open in the editor.
+  await chips.first().click();
+  await expect(page.getByTestId('work-files-tab')).toHaveAttribute(
+    'aria-selected',
+    'true'
+  );
+  await expect(page.getByTestId('work-file-editor')).toHaveValue(
+    '<main>calm city</main>'
+  );
+});
+
+test('the Work composer takes dictation through the speech API', async ({
+  page,
+}) => {
+  // A deterministic fake recognizer: emits one transcript after start.
+  await page.addInitScript(() => {
+    class FakeRecognition {
+      lang = '';
+      continuous = false;
+      interimResults = false;
+      onresult:
+        | ((event: {
+            results: ArrayLike<ArrayLike<{ transcript: string }>>;
+          }) => void)
+        | null = null;
+      onend: (() => void) | null = null;
+      onerror: (() => void) | null = null;
+      start() {
+        setTimeout(() => {
+          this.onresult?.({
+            results: [[{ transcript: 'build a calm garden page' }]],
+          });
+        }, 50);
+      }
+      stop() {
+        this.onend?.();
+      }
+    }
+    (window as unknown as { SpeechRecognition: unknown }).SpeechRecognition =
+      FakeRecognition;
+  });
+  await mockLibreWebUiApi(page, {});
+
+  await page.goto('/work');
+  const mic = page.getByTestId('work-voice-input');
+  await expect(mic).toBeVisible();
+  await expect(mic).toHaveAttribute('aria-pressed', 'false');
+
+  await mic.click();
+  await expect(mic).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.getByTestId('work-composer-input')).toHaveValue(
+    'build a calm garden page'
+  );
+
+  // Stopping returns the button to idle and keeps the dictated text.
+  await mic.click();
+  await expect(mic).toHaveAttribute('aria-pressed', 'false');
+  await expect(page.getByTestId('work-composer-input')).toHaveValue(
+    'build a calm garden page'
+  );
+});
+
 test('shows a readable LTR model name without changing its identifier', async ({
   page,
 }) => {

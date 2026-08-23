@@ -2548,7 +2548,8 @@
     "conversation": {
       "ready": "Arbetsytan är klar",
       "empty": "Fortsätt med uppgiften nedan. Konversationen och dess filer förblir kopplade till den här arbetsytan.",
-      "loadOlder": "Läs in äldre meddelanden"
+      "loadOlder": "Läs in äldre meddelanden",
+      "openFile": "Öppna {{name}}"
     },
     "status": {
       "preparing": "Förbereder den isolerade arbetsytan…",

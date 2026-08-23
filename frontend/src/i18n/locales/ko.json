@@ -2548,7 +2548,8 @@
     "conversation": {
       "ready": "워크스페이스 준비 완료",
       "empty": "아래에서 태스크를 계속하세요. 이 대화와 파일은 해당 워크스페이스에 계속 연결됩니다.",
-      "loadOlder": "이전 메시지 불러오기"
+      "loadOlder": "이전 메시지 불러오기",
+      "openFile": "{{name}} 열기"
     },
     "status": {
       "preparing": "격리된 워크스페이스 준비 중…",

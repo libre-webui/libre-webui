@@ -2548,7 +2548,8 @@
     "conversation": {
       "ready": "Arbejdsområdet er klar",
       "empty": "Fortsæt opgaven nedenfor. Samtalen og dens filer forbliver knyttet til dette arbejdsområde.",
-      "loadOlder": "Indlæs ældre beskeder"
+      "loadOlder": "Indlæs ældre beskeder",
+      "openFile": "Åbn {{name}}"
     },
     "status": {
       "preparing": "Forbereder det isolerede arbejdsområde…",

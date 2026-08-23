@@ -2548,7 +2548,8 @@
     "conversation": {
       "ready": "Espacio de trabajo listo",
       "empty": "Continúa la tarea abajo. Esta conversación y sus archivos permanecen asociados a este espacio de trabajo.",
-      "loadOlder": "Cargar mensajes anteriores"
+      "loadOlder": "Cargar mensajes anteriores",
+      "openFile": "Abrir {{name}}"
     },
     "status": {
       "preparing": "Preparando el espacio de trabajo aislado…",

@@ -2548,7 +2548,8 @@
     "conversation": {
       "ready": "Werkruimte gereed",
       "empty": "Ga hieronder verder met de taak. Deze conversatie en de bestanden blijven aan deze werkruimte gekoppeld.",
-      "loadOlder": "Eerdere berichten laden"
+      "loadOlder": "Eerdere berichten laden",
+      "openFile": "{{name}} openen"
     },
     "status": {
       "preparing": "Geïsoleerde werkruimte voorbereiden…",

@@ -191,6 +191,15 @@ the sidebar.
 Only one run can be active for a task. A later instruction creates another run
 against the same conversation and filesystem.
 
+The composer takes dictation: a microphone button uses the browser's speech
+API where available, or a configured speech-to-text provider model as the
+fallback, and appends the transcript to whatever was already typed. In the
+conversation, files a run created or moved appear as clickable chips under
+the tool activity that produced them — clicking one opens the file in the
+workspace Files editor (and switches to the workspace surface on narrow
+screens). Chips come from mutating tools only, so a run that read twenty
+files but wrote one shows exactly that one artifact.
+
 ### Hire an agent
 
 The landing view offers **Hire as an agent** when you have personas: pick one

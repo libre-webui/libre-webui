@@ -2548,7 +2548,8 @@
     "conversation": {
       "ready": "工作区已就绪",
       "empty": "在下方继续此任务。该对话及其文件会一直关联到此工作区。",
-      "loadOlder": "加载更早的消息"
+      "loadOlder": "加载更早的消息",
+      "openFile": "打开 {{name}}"
     },
     "status": {
       "preparing": "正在准备隔离工作区…",

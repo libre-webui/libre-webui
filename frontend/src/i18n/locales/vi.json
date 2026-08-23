@@ -2548,7 +2548,8 @@
     "conversation": {
       "ready": "Không gian làm việc đã sẵn sàng",
       "empty": "Tiếp tục tác vụ bên dưới. Cuộc trò chuyện và các tệp vẫn được gắn với không gian làm việc này.",
-      "loadOlder": "Tải tin nhắn cũ hơn"
+      "loadOlder": "Tải tin nhắn cũ hơn",
+      "openFile": "Mở {{name}}"
     },
     "status": {
       "preparing": "Đang chuẩn bị không gian làm việc biệt lập…",

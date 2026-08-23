@@ -2548,7 +2548,8 @@
     "conversation": {
       "ready": "Çalışma alanı hazır",
       "empty": "Aşağıdan göreve devam edin. Bu konuşma ve dosyaları bu çalışma alanına bağlı kalır.",
-      "loadOlder": "Eski mesajları yükle"
+      "loadOlder": "Eski mesajları yükle",
+      "openFile": "{{name}} dosyasını aç"
     },
     "status": {
       "preparing": "Yalıtılmış çalışma alanı hazırlanıyor…",

@@ -2548,7 +2548,8 @@
     "conversation": {
       "ready": "Ruang kerja siap",
       "empty": "Lanjutkan tugas di bawah ini. Percakapan dan filenya tetap terhubung ke ruang kerja ini.",
-      "loadOlder": "Muat pesan lama"
+      "loadOlder": "Muat pesan lama",
+      "openFile": "Buka {{name}}"
     },
     "status": {
       "preparing": "Menyiapkan ruang kerja terisolasi…",

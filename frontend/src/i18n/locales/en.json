@@ -2548,7 +2548,8 @@
     "conversation": {
       "ready": "Workspace ready",
       "empty": "Continue the task below. This conversation and its files stay attached to this workspace.",
-      "loadOlder": "Load older messages"
+      "loadOlder": "Load older messages",
+      "openFile": "Open {{name}}"
     },
     "status": {
       "preparing": "Preparing isolated workspace…",

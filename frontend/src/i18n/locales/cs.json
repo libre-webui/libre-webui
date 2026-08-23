@@ -2548,7 +2548,8 @@
     "conversation": {
       "ready": "Pracovní prostor je připraven",
       "empty": "Pokračujte v úloze níže. Tato konverzace a její soubory zůstávají připojené k tomuto pracovnímu prostoru.",
-      "loadOlder": "Načíst starší zprávy"
+      "loadOlder": "Načíst starší zprávy",
+      "openFile": "Otevřít {{name}}"
     },
     "status": {
       "preparing": "Příprava izolovaného pracovního prostoru…",

@@ -19,6 +19,7 @@ import {
   ArrowDown,
   Brain,
   ChevronDown,
+  FileText,
   Loader2,
   User as UserIcon,
 } from 'lucide-react';
@@ -47,6 +48,41 @@ interface WorkConversationProps {
   loadingOlder: boolean;
   liveRun?: WorkLiveRun;
   onLoadOlder: () => Promise<WorkMessage[]>;
+  /** Open a workspace file from a conversation file chip. */
+  onOpenFile?: (path: string) => void;
+}
+
+const detailsRecord = (value: unknown): Record<string, unknown> | undefined =>
+  typeof value === 'object' && value !== null
+    ? (value as Record<string, unknown>)
+    : undefined;
+
+/**
+ * Files a tool group created or moved, in first-touch order. Only mutating
+ * tools produce chips: a run that read twenty files but wrote one should
+ * surface exactly that one artifact.
+ */
+function touchedFiles(tools: WorkLiveToolActivity[]): string[] {
+  const paths: string[] = [];
+  for (const tool of tools) {
+    const details =
+      detailsRecord(tool.metadata) ?? detailsRecord(tool.arguments);
+    if (!details) continue;
+    const candidate =
+      tool.name === 'write_file'
+        ? details.path
+        : tool.name === 'move_file'
+          ? details.to
+          : undefined;
+    if (
+      typeof candidate === 'string' &&
+      candidate &&
+      !paths.includes(candidate)
+    ) {
+      paths.push(candidate);
+    }
+  }
+  return paths;
 }
 
 interface WorkAvatarProps {
@@ -260,6 +296,7 @@ export function WorkConversation({
   loadingOlder,
   liveRun,
   onLoadOlder,
+  onOpenFile,
 }: WorkConversationProps) {
   const { t } = useTranslation();
   const viewportRef = useRef<HTMLDivElement>(null);
@@ -407,6 +444,7 @@ export function WorkConversation({
                   );
                 }
                 if (item.type === 'tools') {
+                  const files = onOpenFile ? touchedFiles(item.tools) : [];
                   return (
                     <div key={key} className='ms-14 space-y-1.5'>
                       {item.tools.map(tool => (
@@ -416,6 +454,37 @@ export function WorkConversation({
                           expandedByDefault={false}
                         />
                       ))}
+                      {files.length > 0 && (
+                        <div
+                          data-testid='work-file-chips'
+                          className='flex flex-wrap gap-1.5 pt-0.5'
+                        >
+                          {files.map(path => {
+                            const name =
+                              path.split('/').filter(Boolean).pop() ?? path;
+                            return (
+                              <button
+                                key={path}
+                                type='button'
+                                data-testid='work-file-chip'
+                                data-path={path}
+                                onClick={() => onOpenFile?.(path)}
+                                title={path}
+                                aria-label={t('work.conversation.openFile', {
+                                  defaultValue: 'Open {{name}}',
+                                  name,
+                                })}
+                                className='flex max-w-full items-center gap-1.5 rounded-lg border border-line bg-surface px-2 py-1 text-[11px] text-ink transition-colors hover:border-line-strong hover:bg-surface-subtle'
+                              >
+                                <FileText className='h-3 w-3 shrink-0 text-ink-muted' />
+                                <span className='truncate' dir='ltr'>
+                                  {name}
+                                </span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
                     </div>
                   );
                 }
