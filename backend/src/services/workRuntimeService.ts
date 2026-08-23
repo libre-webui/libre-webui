@@ -98,6 +98,25 @@ export interface WorkComputerCredentials {
   view: string;
 }
 
+/**
+ * A batch stopped before completing: either a focus assertion failed or the
+ * interaction context (window, title, window count) changed mid-batch, which
+ * makes the remaining actions' coordinates untrustworthy.
+ */
+export interface WorkComputerBatchFence {
+  /** 1-based count of actions that actually ran. */
+  afterAction: number;
+  reason: 'focus_assertion_failed' | 'context_changed';
+  detail: string;
+}
+
+/** Verdict on a batch's declared expectation, evaluated by the runtime. */
+export interface WorkComputerExpectationResult {
+  /** `pending` = not observed before the deadline; not proof of failure. */
+  outcome: 'passed' | 'pending';
+  unmet?: string[];
+}
+
 /** One observation of the Work Computer screen — the agent's eyes. */
 export interface WorkComputerObservation {
   width: number;
@@ -105,7 +124,31 @@ export interface WorkComputerObservation {
   cursorX: number;
   cursorY: number;
   window: string;
+  /** X window id of the active window — a context identity, unlike title. */
+  windowId?: number;
+  /** Visible top-level windows: a change usually means a modal or popup. */
+  windowCount?: number;
+  /** Active Chromium tab URL via the loopback DevTools endpoint. */
+  url?: string;
+  /**
+   * Whether the page itself holds keyboard focus. `false` while the
+   * browser's own UI (omnibox, dialogs) would receive typed text.
+   */
+  pageFocus?: boolean;
+  /** Compact descriptor of the focused page element; never field values. */
+  focusedElement?: string;
+  screenshotSha256?: string;
   screenshotBase64: string;
+  fence?: WorkComputerBatchFence;
+  expect?: WorkComputerExpectationResult;
+}
+
+/** Declared expected outcome of a computer_act batch. */
+export interface WorkComputerExpectation {
+  titleContains?: string;
+  urlContains?: string;
+  regionChanged?: { x: number; y: number; width: number; height: number };
+  withinMs?: number;
 }
 
 export type WorkComputerAction =
@@ -115,8 +158,8 @@ export type WorkComputerAction =
       x?: number;
       y?: number;
     }
-  | { type: 'type'; text: string }
-  | { type: 'key'; keys: string }
+  | { type: 'type'; text: string; focus?: string }
+  | { type: 'key'; keys: string; focus?: string }
   | {
       type: 'scroll';
       direction: 'up' | 'down';
@@ -132,6 +175,9 @@ const WORK_COMPUTER_TEXT_LIMIT = 4_000;
 const WORK_COMPUTER_WAIT_LIMIT_MS = 5_000;
 const WORK_COMPUTER_WAIT_TOTAL_LIMIT_MS = 30_000;
 const WORK_COMPUTER_COORDINATE_LIMIT = 10_000;
+const WORK_COMPUTER_FOCUS_LIMIT = 200;
+const WORK_COMPUTER_EXPECT_TEXT_LIMIT = 300;
+const WORK_COMPUTER_EXPECT_WAIT_LIMIT_MS = 15_000;
 /** xdotool key syntax: chords like ctrl+shift+t, keysyms like Return. */
 const WORK_COMPUTER_KEYS_PATTERN = /^[A-Za-z0-9_]+(\+[A-Za-z0-9_]+)*$/;
 
@@ -176,6 +222,23 @@ export function validateWorkComputerActions(
       );
     }
     return value;
+  };
+  const focusAssertion = (
+    action: Record<string, unknown>,
+    index: number
+  ): { focus?: string } => {
+    if (action.focus === undefined) return {};
+    if (
+      typeof action.focus !== 'string' ||
+      action.focus.trim().length === 0 ||
+      action.focus.length > WORK_COMPUTER_FOCUS_LIMIT
+    ) {
+      throw invalid(
+        index,
+        `"focus" must be a string of 1 to ${WORK_COMPUTER_FOCUS_LIMIT} characters.`
+      );
+    }
+    return { focus: action.focus.trim() };
   };
   let totalWaitMs = 0;
   const validated: WorkComputerAction[] = [];
@@ -225,7 +288,11 @@ export function validateWorkComputerActions(
             `"text" must be a string of 1 to ${WORK_COMPUTER_TEXT_LIMIT} characters.`
           );
         }
-        validated.push({ type: 'type', text: action.text });
+        validated.push({
+          type: 'type',
+          text: action.text,
+          ...focusAssertion(action, index),
+        });
         break;
       }
       case 'key': {
@@ -239,7 +306,11 @@ export function validateWorkComputerActions(
             '"keys" must be an xdotool key name or chord such as "Return" or "ctrl+l".'
           );
         }
-        validated.push({ type: 'key', keys: action.keys });
+        validated.push({
+          type: 'key',
+          keys: action.keys,
+          ...focusAssertion(action, index),
+        });
         break;
       }
       case 'scroll': {
@@ -300,6 +371,92 @@ export function validateWorkComputerActions(
     }
   }
   return validated;
+}
+
+/**
+ * Validate a computer_act "expect" declaration: the outcome the batch is
+ * supposed to produce, evaluated by the runtime after the actions settle so
+ * "input delivered" cannot be mistaken for "task succeeded".
+ */
+export function validateWorkComputerExpectation(
+  value: unknown
+): WorkComputerExpectation | undefined {
+  if (value === undefined || value === null) return undefined;
+  const invalid = (reason: string): WorkRuntimeError =>
+    new WorkRuntimeError(
+      `computer_act "expect" is invalid: ${reason}`,
+      400,
+      'WORK_COMPUTER_INVALID_ACTION'
+    );
+  if (typeof value !== 'object' || Array.isArray(value)) {
+    throw invalid('it must be an object.');
+  }
+  const raw = value as Record<string, unknown>;
+  const expectation: WorkComputerExpectation = {};
+  for (const key of ['titleContains', 'urlContains'] as const) {
+    if (raw[key] === undefined) continue;
+    if (
+      typeof raw[key] !== 'string' ||
+      (raw[key] as string).trim().length === 0 ||
+      (raw[key] as string).length > WORK_COMPUTER_EXPECT_TEXT_LIMIT
+    ) {
+      throw invalid(
+        `"${key}" must be a string of 1 to ${WORK_COMPUTER_EXPECT_TEXT_LIMIT} characters.`
+      );
+    }
+    expectation[key] = (raw[key] as string).trim();
+  }
+  if (raw.regionChanged !== undefined) {
+    const region =
+      raw.regionChanged &&
+      typeof raw.regionChanged === 'object' &&
+      !Array.isArray(raw.regionChanged)
+        ? (raw.regionChanged as Record<string, unknown>)
+        : undefined;
+    const bounded = (field: unknown, name: string, minimum: number): number => {
+      if (
+        typeof field !== 'number' ||
+        !Number.isInteger(field) ||
+        field < minimum ||
+        field > WORK_COMPUTER_COORDINATE_LIMIT
+      ) {
+        throw invalid(
+          `"regionChanged.${name}" must be an integer between ${minimum} and ${WORK_COMPUTER_COORDINATE_LIMIT}.`
+        );
+      }
+      return field;
+    };
+    if (!region) throw invalid('"regionChanged" must be an object.');
+    expectation.regionChanged = {
+      x: bounded(region.x, 'x', 0),
+      y: bounded(region.y, 'y', 0),
+      width: bounded(region.width, 'width', 1),
+      height: bounded(region.height, 'height', 1),
+    };
+  }
+  if (raw.withinMs !== undefined) {
+    if (
+      typeof raw.withinMs !== 'number' ||
+      !Number.isInteger(raw.withinMs) ||
+      raw.withinMs < 1 ||
+      raw.withinMs > WORK_COMPUTER_EXPECT_WAIT_LIMIT_MS
+    ) {
+      throw invalid(
+        `"withinMs" must be an integer between 1 and ${WORK_COMPUTER_EXPECT_WAIT_LIMIT_MS}.`
+      );
+    }
+    expectation.withinMs = raw.withinMs;
+  }
+  if (
+    expectation.titleContains === undefined &&
+    expectation.urlContains === undefined &&
+    expectation.regionChanged === undefined
+  ) {
+    throw invalid(
+      'declare at least one of "titleContains", "urlContains", or "regionChanged".'
+    );
+  }
+  return expectation;
 }
 
 /** How long a run waits for the shared runtime lease before conflicting. */
@@ -2205,23 +2362,27 @@ export class WorkRuntimeService {
    */
   async computerAct(
     task: WorkTaskRecord,
-    actions: unknown
+    actions: unknown,
+    expect?: unknown
   ): Promise<WorkComputerObservation> {
     const validated = validateWorkComputerActions(actions);
-    // Waits and slow synthetic typing both extend the exec deadline; the
-    // batch must never be killed mid-gesture by a fixed timeout.
-    const extraBudgetMs = validated.reduce(
-      (total, action) =>
-        total +
-        (action.type === 'wait' ? action.ms : 0) +
-        (action.type === 'type' ? action.text.length * 15 : 0),
-      0
-    );
+    const expectation = validateWorkComputerExpectation(expect);
+    // Waits, slow synthetic typing, and expectation polling all extend the
+    // exec deadline; the batch must never be killed mid-gesture by a fixed
+    // timeout.
+    const extraBudgetMs =
+      validated.reduce(
+        (total, action) =>
+          total +
+          (action.type === 'wait' ? action.ms : 0) +
+          (action.type === 'type' ? action.text.length * 15 : 0),
+        0
+      ) + (expectation ? (expectation.withinMs ?? 5_000) : 0);
     return this.withComputerSession(task, signal =>
       this.runComputerScript(
         task,
         COMPUTER_ACT_SCRIPT,
-        [JSON.stringify(validated)],
+        [JSON.stringify(validated), JSON.stringify(expectation ?? null)],
         60_000 + extraBudgetMs,
         signal
       )
@@ -2265,6 +2426,14 @@ export class WorkRuntimeService {
       cursorY?: unknown;
       window?: unknown;
       image?: unknown;
+      windowId?: unknown;
+      windowCount?: unknown;
+      url?: unknown;
+      pageFocus?: unknown;
+      focusedElement?: unknown;
+      screenshotSha256?: unknown;
+      fence?: unknown;
+      expect?: unknown;
     }>(result.stdout);
     if (
       typeof parsed.width !== 'number' ||
@@ -2280,12 +2449,63 @@ export class WorkRuntimeService {
         'WORK_COMPUTER_ACTION_FAILED'
       );
     }
+    const fence =
+      parsed.fence && typeof parsed.fence === 'object'
+        ? (parsed.fence as Record<string, unknown>)
+        : undefined;
+    const expect =
+      parsed.expect && typeof parsed.expect === 'object'
+        ? (parsed.expect as Record<string, unknown>)
+        : undefined;
     return {
       width: parsed.width,
       height: parsed.height,
       cursorX: parsed.cursorX,
       cursorY: parsed.cursorY,
       window: typeof parsed.window === 'string' ? parsed.window : '',
+      ...(typeof parsed.windowId === 'number' &&
+      Number.isFinite(parsed.windowId)
+        ? { windowId: parsed.windowId }
+        : {}),
+      ...(typeof parsed.windowCount === 'number'
+        ? { windowCount: parsed.windowCount }
+        : {}),
+      ...(typeof parsed.url === 'string' && parsed.url
+        ? { url: parsed.url.slice(0, 500) }
+        : {}),
+      ...(typeof parsed.pageFocus === 'boolean'
+        ? { pageFocus: parsed.pageFocus }
+        : {}),
+      ...(typeof parsed.focusedElement === 'string' && parsed.focusedElement
+        ? { focusedElement: parsed.focusedElement.slice(0, 200) }
+        : {}),
+      ...(typeof parsed.screenshotSha256 === 'string' && parsed.screenshotSha256
+        ? { screenshotSha256: parsed.screenshotSha256 }
+        : {}),
+      ...(fence &&
+      typeof fence.afterAction === 'number' &&
+      (fence.reason === 'focus_assertion_failed' ||
+        fence.reason === 'context_changed') &&
+      typeof fence.detail === 'string'
+        ? {
+            fence: {
+              afterAction: fence.afterAction,
+              reason: fence.reason,
+              detail: fence.detail.slice(0, 600),
+            },
+          }
+        : {}),
+      ...(expect &&
+      (expect.outcome === 'passed' || expect.outcome === 'pending')
+        ? {
+            expect: {
+              outcome: expect.outcome,
+              ...(Array.isArray(expect.unmet)
+                ? { unmet: expect.unmet.map(String).slice(0, 8) }
+                : {}),
+            },
+          }
+        : {}),
       screenshotBase64: parsed.image,
     };
   }
@@ -3926,43 +4146,141 @@ process.stdout.write(results.join('\\n'));
 
 /**
  * Shared observation core for the Work Computer scripts: cursor, active
- * window, display geometry, and a full-screen PNG captured with ImageMagick
- * from the session's Xvfb display.
+ * window, display geometry, a full-screen PNG captured with ImageMagick from
+ * the session's Xvfb display, plus best-effort semantic context — window
+ * identity and count from xdotool, and the active tab's URL, page focus, and
+ * focused-element descriptor from Chromium's loopback DevTools endpoint.
+ * Every semantic signal degrades to absent rather than failing observation.
  */
 const COMPUTER_OBSERVE_COMMON = String.raw`
 const {execFileSync} = require('node:child_process');
+const {createHash} = require('node:crypto');
 process.env.DISPLAY = ':' + (process.env.LIBRE_COMPUTER_DISPLAY || '1');
+const CDP_BASE =
+  'http://127.0.0.1:' + (process.env.LIBRE_COMPUTER_CDP_PORT || '9222');
 const out = (cmd, args, timeout = 10000) =>
   execFileSync(cmd, args, {encoding: 'utf8', timeout});
-const observe = () => {
+const attempt = fn => {
+  try { return fn(); } catch { return undefined; }
+};
+// Cheap synchronous context signals: enough to detect window, modal, and
+// title transitions between actions without capturing a screenshot.
+const frame = () => {
+  const windowId = attempt(() =>
+    Number(out('xdotool', ['getactivewindow']).trim())
+  );
+  const windowName =
+    attempt(() => out('xdotool', ['getactivewindow', 'getwindowname']).trim()) || '';
+  const windowCount = attempt(
+    () =>
+      out('xdotool', ['search', '--onlyvisible', '--name', '.'])
+        .split('\n')
+        .filter(Boolean).length
+  );
+  return {windowId, windowName, windowCount};
+};
+// Never returns page content or field values — only the identity of the
+// focused element and whether the page (vs the browser UI) holds focus.
+const FOCUS_EXPRESSION =
+  '(() => { if (!document.hasFocus()) return {focus: false}; ' +
+  'const e = document.activeElement; ' +
+  'if (!e || e === document.body) return {focus: true, el: ""}; ' +
+  'const a = n => e.getAttribute(n) || ""; ' +
+  'const label = (a("aria-label") || (e.labels && e.labels[0] && e.labels[0].textContent) || a("placeholder") || a("name") || "").trim().slice(0, 80); ' +
+  'let d = e.tagName.toLowerCase(); ' +
+  'if (e.id) d += "#" + e.id; ' +
+  'if (a("type")) d += "[type=" + a("type") + "]"; ' +
+  'if (label) d += " (" + label + ")"; ' +
+  'return {focus: true, el: d}; })()';
+const cdpProbe = async windowName => {
+  const result = {url: '', pageFocus: undefined, focusedElement: ''};
+  try {
+    const listResponse = await fetch(CDP_BASE + '/json/list', {
+      signal: AbortSignal.timeout(700),
+    });
+    const targets = (await listResponse.json()).filter(
+      t => t.type === 'page' && t.url && !String(t.url).startsWith('devtools:')
+    );
+    if (!targets.length) return result;
+    const active =
+      targets.find(
+        t => t.title && windowName && windowName.startsWith(String(t.title).slice(0, 80))
+      ) || targets[0];
+    result.url = String(active.url).slice(0, 500);
+    if (!active.webSocketDebuggerUrl) return result;
+    const probe = await new Promise(resolve => {
+      const socket = new WebSocket(active.webSocketDebuggerUrl);
+      const timer = setTimeout(() => {
+        try { socket.close(); } catch {}
+        resolve(undefined);
+      }, 900);
+      socket.onerror = () => { clearTimeout(timer); resolve(undefined); };
+      socket.onopen = () =>
+        socket.send(
+          JSON.stringify({
+            id: 1,
+            method: 'Runtime.evaluate',
+            params: {expression: FOCUS_EXPRESSION, returnByValue: true},
+          })
+        );
+      socket.onmessage = event => {
+        clearTimeout(timer);
+        try { socket.close(); } catch {}
+        try {
+          resolve(JSON.parse(event.data).result.result.value);
+        } catch { resolve(undefined); }
+      };
+    });
+    if (probe && typeof probe === 'object') {
+      result.pageFocus = probe.focus === true;
+      result.focusedElement =
+        probe.focus === true ? String(probe.el || '').slice(0, 200) : '';
+    }
+  } catch {}
+  return result;
+};
+const observe = async () => {
   const cursor = {x: 0, y: 0};
   for (const line of out('xdotool', ['getmouselocation', '--shell']).split('\n')) {
     const [key, value] = line.split('=');
     if (key === 'X') cursor.x = Number(value);
     if (key === 'Y') cursor.y = Number(value);
   }
-  let windowName = '';
-  try {
-    windowName = out('xdotool', ['getactivewindow', 'getwindowname']).trim();
-  } catch {}
+  const current = frame();
   const geometry = out('xdotool', ['getdisplaygeometry']).trim().split(' ');
   const png = execFileSync('import', ['-window', 'root', '-silent', 'png:-'], {
     timeout: 20000,
     maxBuffer: 32 * 1024 * 1024,
   });
+  const cdp = await cdpProbe(current.windowName);
   return {
     width: Number(geometry[0]),
     height: Number(geometry[1]),
     cursorX: cursor.x,
     cursorY: cursor.y,
-    window: windowName.slice(0, 300),
+    window: current.windowName.slice(0, 300),
+    ...(current.windowId !== undefined && Number.isFinite(current.windowId)
+      ? {windowId: current.windowId}
+      : {}),
+    ...(current.windowCount !== undefined
+      ? {windowCount: current.windowCount}
+      : {}),
+    ...(cdp.url ? {url: cdp.url} : {}),
+    ...(cdp.pageFocus !== undefined ? {pageFocus: cdp.pageFocus} : {}),
+    ...(cdp.focusedElement ? {focusedElement: cdp.focusedElement} : {}),
+    screenshotSha256: createHash('sha256').update(png).digest('hex'),
     image: png.toString('base64'),
   };
 };
 `;
 
-const COMPUTER_OBSERVE_SCRIPT = String.raw`${COMPUTER_OBSERVE_COMMON}
-process.stdout.write(JSON.stringify(observe()));
+export const COMPUTER_OBSERVE_SCRIPT = String.raw`${COMPUTER_OBSERVE_COMMON}
+observe().then(observation => {
+  process.stdout.write(JSON.stringify(observation));
+}).catch(error => {
+  console.error(error && error.message ? error.message : String(error));
+  process.exit(1);
+});
 `;
 
 /**
@@ -3970,8 +4288,9 @@ process.stdout.write(JSON.stringify(observe()));
  * JSON (validateWorkComputerActions runs first); every gesture goes through
  * xdotool argv — no shell interpolation anywhere.
  */
-const COMPUTER_ACT_SCRIPT = String.raw`${COMPUTER_OBSERVE_COMMON}
+export const COMPUTER_ACT_SCRIPT = String.raw`${COMPUTER_OBSERVE_COMMON}
 const actions = JSON.parse(process.argv[1] || '[]');
+const expectation = JSON.parse(process.argv[2] || 'null');
 const xdotool = args => out('xdotool', args, 120000);
 const wait = ms =>
   Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
@@ -3980,7 +4299,7 @@ const moveTo = action => {
     xdotool(['mousemove', '--sync', String(action.x), String(action.y)]);
   }
 };
-for (const action of actions) {
+const perform = action => {
   if (action.type === 'move') {
     xdotool(['mousemove', '--sync', String(action.x), String(action.y)]);
   } else if (action.type === 'click') {
@@ -4010,8 +4329,138 @@ for (const action of actions) {
     wait(action.ms);
   }
 }
-wait(400);
-process.stdout.write(JSON.stringify(observe()));
+const regionHash = region =>
+  attempt(() => {
+    const crop =
+      String(region.width) + 'x' + String(region.height) +
+      '+' + String(region.x) + '+' + String(region.y);
+    const png = execFileSync(
+      'import',
+      ['-window', 'root', '-crop', crop, '-silent', 'png:-'],
+      {timeout: 20000, maxBuffer: 32 * 1024 * 1024}
+    );
+    return createHash('sha256').update(png).digest('hex');
+  });
+const contextChanged = (action, before, after) => {
+  const mouse =
+    action.type === 'move' ||
+    action.type === 'click' ||
+    action.type === 'double_click' ||
+    action.type === 'right_click';
+  if (before.windowCount !== after.windowCount) {
+    return 'a window appeared or closed (modal, popup, or dialog)';
+  }
+  if (before.windowId !== after.windowId) {
+    // A mouse action activating the window under the cursor is the action
+    // doing its job, not context loss; anything else changing the active
+    // window is.
+    return mouse ? '' : 'the active window changed';
+  }
+  if (before.windowName !== after.windowName) return 'the window title changed';
+  return '';
+};
+const main = async () => {
+  const beforeRegion =
+    expectation && expectation.regionChanged
+      ? regionHash(expectation.regionChanged)
+      : undefined;
+  let fence;
+  for (let index = 0; index < actions.length; index++) {
+    const action = actions[index];
+    if ((action.type === 'type' || action.type === 'key') && action.focus) {
+      const current = frame();
+      const cdp = await cdpProbe(current.windowName);
+      const browserChrome =
+        cdp.pageFocus === false && /chromium/i.test(current.windowName);
+      const haystack = [
+        current.windowName,
+        cdp.url,
+        cdp.focusedElement,
+        browserChrome ? 'browser-chrome' : '',
+      ]
+        .filter(Boolean)
+        .join(' | ');
+      const needle = action.focus.toLowerCase();
+      const matches = haystack.toLowerCase().includes(needle);
+      if (!matches || (browserChrome && needle !== 'browser-chrome')) {
+        fence = {
+          afterAction: index,
+          reason: 'focus_assertion_failed',
+          detail:
+            'Action ' + String(index + 1) + ' required keyboard focus matching "' +
+            action.focus + '" but the current focus is: ' +
+            (haystack || 'unknown') +
+            (browserChrome
+              ? '. The page does NOT hold keyboard focus — typed text would go to the browser UI.'
+              : '') +
+            ' This and the remaining action(s) did not run.',
+        };
+        break;
+      }
+    }
+    const before = frame();
+    perform(action);
+    if (index < actions.length - 1) {
+      const changed = contextChanged(action, before, frame());
+      if (changed) {
+        fence = {
+          afterAction: index + 1,
+          reason: 'context_changed',
+          detail:
+            'After action ' + String(index + 1) + ', ' + changed +
+            '; the remaining ' + String(actions.length - index - 1) +
+            ' action(s) did not run because their coordinates targeted the previous screen. Observe before continuing.',
+        };
+        break;
+      }
+    }
+  }
+  wait(400);
+  let expectResult;
+  if (expectation && !fence) {
+    const deadline = Date.now() + (expectation.withinMs || 5000);
+    let unmet = [];
+    for (;;) {
+      unmet = [];
+      const current = frame();
+      if (
+        expectation.titleContains !== undefined &&
+        !current.windowName.toLowerCase().includes(expectation.titleContains.toLowerCase())
+      ) {
+        unmet.push('titleContains');
+      }
+      if (expectation.urlContains !== undefined) {
+        const cdp = await cdpProbe(current.windowName);
+        if (!cdp.url.toLowerCase().includes(expectation.urlContains.toLowerCase())) {
+          unmet.push('urlContains');
+        }
+      }
+      if (expectation.regionChanged) {
+        const currentRegion = regionHash(expectation.regionChanged);
+        if (!beforeRegion || !currentRegion || currentRegion === beforeRegion) {
+          unmet.push('regionChanged');
+        }
+      }
+      if (!unmet.length || Date.now() >= deadline) break;
+      wait(500);
+    }
+    expectResult = unmet.length
+      ? {outcome: 'pending', unmet}
+      : {outcome: 'passed'};
+  }
+  const observation = await observe();
+  process.stdout.write(
+    JSON.stringify({
+      ...observation,
+      ...(fence ? {fence} : {}),
+      ...(expectResult ? {expect: expectResult} : {}),
+    })
+  );
+};
+main().catch(error => {
+  console.error(error && error.message ? error.message : String(error));
+  process.exit(1);
+});
 `;
 
 /**

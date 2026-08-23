@@ -472,10 +472,25 @@ computer survive container restarts.
 
 Agent control: a task with the Work Computer also offers the model two
 additional tools. `computer_observe` returns a full screenshot of the
-desktop together with the cursor position and active window title, and
-`computer_act` performs a batch of up to 24 mouse and keyboard actions
-(move, click, double-click, right-click, type, key chords, scroll, wait)
-and returns the screenshot after they settle. Screenshots reach the model
+desktop together with the cursor position, active window identity, the
+browser's current URL, whether the page (vs the browser's own UI) holds
+keyboard focus, a compact descriptor of the focused element, and a
+screenshot hash — the semantic signals come from a DevTools endpoint bound
+to the container's loopback and degrade to absent on GUI images built
+before it existed. `computer_act` performs a batch of up to 24 mouse and
+keyboard actions (move, click, double-click, right-click, type, key
+chords, scroll, wait) and returns the screenshot after they settle. Three
+runtime guards keep batches honest: `type`/`key` actions can carry a
+`focus` assertion and fail closed when the asserted field does not hold
+keyboard focus (so text cannot silently land in the omnibox); a batch
+stops early when a window appears, the title changes, or focus moves
+mid-batch, since the remaining coordinates targeted the previous screen;
+and a batch can declare an expected outcome (title, URL, or a changed
+screen region) that the runtime verifies with an adaptive deadline —
+"pending" means not observed yet, never assumed success. The agent loop
+also detects grounding stalls: three identical actions against an
+unchanged screen trigger one recovery notice, and a repeat ends the run
+asking for input instead of burning the remaining rounds. Screenshots reach the model
 as real image content on every provider route — Ollama, Anthropic, Gemini,
 and OpenAI-compatible chat and Responses plugins — so the model driving the
 task should be a vision model. Only the most recent screenshots stay in the

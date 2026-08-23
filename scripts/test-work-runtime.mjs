@@ -276,6 +276,67 @@ test('workspace helpers attach to a running sandbox when the lease is held elsew
   );
 });
 
+test('computer_act validates focus assertions and expectation declarations', () => {
+  const { validateWorkComputerActions, validateWorkComputerExpectation } =
+    runtimeModule;
+
+  // Focus assertions ride on keyboard actions only and are trimmed.
+  const validated = validateWorkComputerActions([
+    { type: 'type', text: 'hello', focus: ' input#email ' },
+    { type: 'key', keys: 'Return', focus: 'Sign in' },
+    { type: 'click', x: 1, y: 2 },
+  ]);
+  assert.deepEqual(validated, [
+    { type: 'type', text: 'hello', focus: 'input#email' },
+    { type: 'key', keys: 'Return', focus: 'Sign in' },
+    { type: 'click', x: 1, y: 2 },
+  ]);
+  for (const focus of ['', '   ', 'x'.repeat(201), 42]) {
+    assert.throws(
+      () => validateWorkComputerActions([{ type: 'type', text: 'a', focus }]),
+      error => error.code === 'WORK_COMPUTER_INVALID_ACTION'
+    );
+  }
+
+  // Expectations: absent stays absent, valid shapes normalize, and every
+  // malformed field names itself.
+  assert.equal(validateWorkComputerExpectation(undefined), undefined);
+  assert.equal(validateWorkComputerExpectation(null), undefined);
+  assert.deepEqual(
+    validateWorkComputerExpectation({
+      titleContains: ' Dashboard ',
+      urlContains: 'example.test',
+      regionChanged: { x: 0, y: 0, width: 100, height: 50 },
+      withinMs: 8000,
+    }),
+    {
+      titleContains: 'Dashboard',
+      urlContains: 'example.test',
+      regionChanged: { x: 0, y: 0, width: 100, height: 50 },
+      withinMs: 8000,
+    }
+  );
+  const rejected = [
+    'not-an-object',
+    {},
+    { withinMs: 8000 },
+    { titleContains: '' },
+    { titleContains: 'x'.repeat(301) },
+    { urlContains: 7 },
+    { regionChanged: { x: 0, y: 0, width: 0, height: 50 } },
+    { regionChanged: { x: -1, y: 0, width: 10, height: 10 } },
+    { regionChanged: { x: 0, y: 0, width: 10 } },
+    { titleContains: 'ok', withinMs: 0 },
+    { titleContains: 'ok', withinMs: 20_000 },
+  ];
+  for (const value of rejected) {
+    assert.throws(
+      () => validateWorkComputerExpectation(value),
+      error => error.code === 'WORK_COMPUTER_INVALID_ACTION'
+    );
+  }
+});
+
 test('the Work Computer and screen viewers survive a lease held elsewhere', async () => {
   const sharedModule = await import(
     pathToFileURL(

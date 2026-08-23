@@ -1850,13 +1850,219 @@ test('computer tools reach the model as live screenshots and persist text-only',
     assert.ok(!message.content.includes(screenshot(index + 1)));
   }
   assert.equal(results[1].metadata.actionCount, 2);
-  assert.match(results[1].content, /Applied 2 actions/);
+  assert.match(results[1].content, /Applied 2 of 2 actions/);
   const actCall = persisted.find(
     message =>
       message.kind === 'tool_call' && message.metadata.toolCallId === 'act-1'
   );
   assert.equal(actCall.metadata.actionCount, 2);
   assert.equal(actCall.metadata.actions, 'click,type');
+});
+
+test('computer results surface fences, focus, URL, and expectation verdicts', async () => {
+  const now = Date.now();
+  const userId = 'agent-loop-computer-fence-admin';
+  getDatabase()
+    .prepare(
+      `INSERT INTO users (
+        id, username, email, password_hash, role, avatar, created_at, updated_at
+      ) VALUES (?, ?, NULL, 'unused', 'admin', NULL, ?, ?)`
+    )
+    .run(userId, userId, now, now);
+
+  replaceMethod(workRuntimeService, 'computerToolsAvailable', async () => true);
+  const receivedExpects = [];
+  replaceMethod(workRuntimeService, 'computerAct', async (_task, _actions, expect) => {
+    receivedExpects.push(expect);
+    return {
+      width: 1280,
+      height: 800,
+      cursorX: 10,
+      cursorY: 20,
+      window: 'Sign in - Chromium',
+      windowId: 41943041,
+      windowCount: 3,
+      url: 'https://example.test/login',
+      pageFocus: false,
+      screenshotSha256: 'f'.repeat(64),
+      screenshotBase64: Buffer.from('fence-png').toString('base64'),
+      fence: {
+        afterAction: 1,
+        reason: 'focus_assertion_failed',
+        detail:
+          'Action 2 required keyboard focus matching "input#email" but the current focus is: browser-chrome. This and the remaining action(s) did not run.',
+      },
+      expect: { outcome: 'pending', unmet: ['urlContains'] },
+    };
+  });
+
+  const requests = [];
+  replaceMethod(
+    workModelProviderService,
+    'generateChatStreamResponse',
+    async request => {
+      requests.push(request);
+      if (requests.length === 1) {
+        return {
+          model: request.model,
+          created_at: new Date().toISOString(),
+          message: {
+            role: 'assistant',
+            content: '',
+            tool_calls: [
+              {
+                id: 'act-fenced',
+                function: {
+                  name: 'computer_act',
+                  arguments: {
+                    actions: [
+                      { type: 'click', x: 100, y: 100 },
+                      { type: 'type', text: 'user@example.test', focus: 'input#email' },
+                    ],
+                    expect: { urlContains: 'dashboard' },
+                  },
+                },
+              },
+            ],
+          },
+          done: true,
+        };
+      }
+      return {
+        model: request.model,
+        created_at: new Date().toISOString(),
+        message: { role: 'assistant', content: 'Stopped at the fence.' },
+        done: true,
+      };
+    }
+  );
+
+  const detail = await workTaskService.createTaskWithRun(
+    userId,
+    'Log in on the computer.',
+    'test-model',
+    true,
+    { providerType: 'plugin', providerId: 'test-plugin' }
+  );
+  const runId = detail.activeRun?.id;
+  assert.ok(runId);
+  await workAgentService.execute(detail.id, runId, userId);
+
+  // The declared expectation reaches the runtime verbatim.
+  assert.deepEqual(receivedExpects, [{ urlContains: 'dashboard' }]);
+
+  const persisted = await workTaskService.getMessages(detail.id);
+  const result = persisted.find(message => message.kind === 'tool_result');
+  assert.ok(result);
+  assert.match(result.content, /BATCH STOPPED EARLY: Action 2 required keyboard focus/);
+  assert.match(result.content, /Applied 1 of 2 actions/);
+  assert.match(result.content, /Page URL: https:\/\/example\.test\/login/);
+  assert.match(result.content, /Keyboard focus: the browser UI, NOT the page/);
+  assert.match(result.content, /Declared expectation: NOT yet observed \(pending: urlContains\)/);
+  assert.match(result.content, /Screenshot sha256: ffffffffffffffff/);
+  assert.equal(result.metadata.fence.reason, 'focus_assertion_failed');
+  assert.equal(result.metadata.expect.outcome, 'pending');
+  assert.equal(result.metadata.ranCount, 1);
+  assert.equal(result.metadata.pageFocus, false);
+  assert.equal(result.metadata.windowId, 41943041);
+});
+
+test('repeated identical computer actions on an unchanged screen stall the run instead of burning rounds', async () => {
+  const now = Date.now();
+  const userId = 'agent-loop-computer-stall-admin';
+  getDatabase()
+    .prepare(
+      `INSERT INTO users (
+        id, username, email, password_hash, role, avatar, created_at, updated_at
+      ) VALUES (?, ?, NULL, 'unused', 'admin', NULL, ?, ?)`
+    )
+    .run(userId, userId, now, now);
+
+  replaceMethod(workRuntimeService, 'computerToolsAvailable', async () => true);
+  // Every act returns the exact same screen: the click never lands.
+  replaceMethod(workRuntimeService, 'computerAct', async () => ({
+    width: 1280,
+    height: 800,
+    cursorX: 640,
+    cursorY: 400,
+    window: 'Stuck page - Chromium',
+    screenshotSha256: 'a'.repeat(64),
+    screenshotBase64: Buffer.from('same-png').toString('base64'),
+  }));
+
+  const requests = [];
+  // The round loop mutates one live messages array; snapshot the tail at
+  // request time or every request "ends" with the final tool result.
+  const requestTails = [];
+  replaceMethod(
+    workModelProviderService,
+    'generateChatStreamResponse',
+    async request => {
+      requests.push(request);
+      const tail = request.messages.at(-1);
+      requestTails.push({ role: tail.role, content: tail.content });
+      if (request.tools.length === 0) {
+        // Budget handoff after the stall exhausts.
+        return {
+          model: request.model,
+          created_at: new Date().toISOString(),
+          message: {
+            role: 'assistant',
+            content: 'Stuck clicking the same dead coordinate; needs a human.',
+          },
+          done: true,
+        };
+      }
+      return {
+        model: request.model,
+        created_at: new Date().toISOString(),
+        message: {
+          role: 'assistant',
+          content: '',
+          tool_calls: [
+            {
+              id: `act-stall-${requests.length}`,
+              function: {
+                name: 'computer_act',
+                arguments: { actions: [{ type: 'click', x: 640, y: 400 }] },
+              },
+            },
+          ],
+        },
+        done: true,
+      };
+    }
+  );
+
+  const detail = await workTaskService.createTaskWithRun(
+    userId,
+    'Click the button.',
+    'test-model',
+    true,
+    { providerType: 'plugin', providerId: 'test-plugin' }
+  );
+  const runId = detail.activeRun?.id;
+  assert.ok(runId);
+  await workAgentService.execute(detail.id, runId, userId);
+
+  // Three identical no-change rounds → recovery notice; three more → the
+  // run hands off as needs_input instead of spending all 48 rounds.
+  assert.equal(requests.length, 7);
+  const recovery = requestTails[3];
+  assert.equal(recovery.role, 'user');
+  assert.match(recovery.content, /screen did not change at all/);
+  assert.equal(requests[6].tools.length, 0);
+  assert.match(
+    requestTails[6].content,
+    /repeated computer actions kept producing an unchanged screen/
+  );
+  const run = await workTaskService.getRun(runId);
+  assert.equal(run.status, 'needs_input');
+  const persisted = await workTaskService.getMessages(detail.id);
+  const handoff = persisted.find(
+    message => message.metadata?.budgetHandoff === true
+  );
+  assert.equal(handoff.metadata.budgetReason, 'computer-stall');
 });
 
 test('the computer tool schemas are offered separately from the base registry', () => {

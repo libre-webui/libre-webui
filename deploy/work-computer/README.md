@@ -66,9 +66,14 @@ connections' input inert, so a leaked watch credential cannot drive the
 screen.
 
 xdotool and ImageMagick power the agent's `computer_observe` and
-`computer_act` tools (screenshots in, OS-level input out) and remain in
-place for the upcoming takeover and teach phases, so this image will not
-need to change.
+`computer_act` tools (screenshots in, OS-level input out). Chromium also
+exposes its DevTools endpoint on the container's loopback (port 9222,
+never published): the observe/act scripts read the active tab URL, page
+focus, and focused-element identity from it for focus assertions and
+outcome verification. It shares the trust domain of the DISPLAY the
+sandbox already fully controls. Images built before this flag keep
+working — the semantic signals are simply absent, and focus assertions
+then fail closed — but rebuild to get them.
 
 Overhead relative to the base image: ~650 MB on disk; a running GUI session
 adds roughly 300–800 MB of memory depending on browser use. Size policies

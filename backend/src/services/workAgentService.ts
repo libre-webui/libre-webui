@@ -23,6 +23,7 @@ import workEventService from './workEventService.js';
 import {
   buildWorkAgentSystemPrompt,
   buildWorkBudgetExhaustionPrompt,
+  buildWorkComputerStallPrompt,
   buildWorkEmptyRoundNudgePrompt,
   workAgentSkillsForContext,
   WORK_WRITE_FILE_RECOMMENDED_CHARS,
@@ -185,12 +186,12 @@ export const WORK_WEB_SEARCH_TOOL_SCHEMA: Record<string, unknown> =
 export const WORK_COMPUTER_TOOL_SCHEMAS: Record<string, unknown>[] = [
   functionTool(
     'computer_observe',
-    "Look at the task's virtual computer screen. Returns the current screenshot with the cursor position and active window title.",
+    "Look at the task's virtual computer screen. Returns the current screenshot with the cursor position, active window, page URL, and which element holds keyboard focus.",
     {}
   ),
   functionTool(
     'computer_act',
-    'Perform batched mouse and keyboard actions on the virtual computer, then return the screenshot after they settle.',
+    'Perform batched mouse and keyboard actions on the virtual computer, then return the screenshot after they settle. The batch stops early (and tells you) if the window, title, or window count changes mid-batch — later coordinates would target the previous screen — or if a "focus" assertion fails.',
     {
       actions: {
         type: 'array',
@@ -198,7 +199,8 @@ export const WORK_COMPUTER_TOOL_SCHEMAS: Record<string, unknown>[] = [
           `Up to ${WORK_COMPUTER_ACTION_LIMIT} actions executed in order. Each action is an object with "type" plus type-specific fields: ` +
           'move {x,y}; click / double_click / right_click {x,y optional — clicks the current position without them}; ' +
           'type {text}; key {keys, an xdotool name or chord such as "Return" or "ctrl+l"}; ' +
-          'scroll {direction: "up"|"down", amount optional, x,y optional}; wait {ms, at most 5000}.',
+          'scroll {direction: "up"|"down", amount optional, x,y optional}; wait {ms, at most 5000}. ' +
+          'type and key accept an optional "focus" string: the action runs only when the focused element, page URL, or window title contains it — use it before typing anything that must land in a specific field.',
         items: {
           type: 'object',
           properties: {
@@ -219,11 +221,42 @@ export const WORK_COMPUTER_TOOL_SCHEMAS: Record<string, unknown>[] = [
             y: { type: 'integer' },
             text: { type: 'string' },
             keys: { type: 'string' },
+            focus: { type: 'string' },
             direction: { type: 'string', enum: ['up', 'down'] },
             amount: { type: 'integer' },
             ms: { type: 'integer' },
           },
           required: ['type'],
+        },
+      },
+      expect: {
+        type: 'object',
+        description:
+          'Optional expected outcome, verified by the runtime after the batch settles (polled up to withinMs, default 5000). ' +
+          'Declare it for any consequential batch so you learn whether the intent succeeded, not merely that input was delivered. ' +
+          '"pending" in the result means not observed before the deadline — re-observe before assuming failure.',
+        properties: {
+          titleContains: {
+            type: 'string',
+            description: 'The active window title should contain this text.',
+          },
+          urlContains: {
+            type: 'string',
+            description: 'The browser URL should contain this text.',
+          },
+          regionChanged: {
+            type: 'object',
+            description:
+              'Pixels in this screen region should change relative to the start of the batch.',
+            properties: {
+              x: { type: 'integer' },
+              y: { type: 'integer' },
+              width: { type: 'integer' },
+              height: { type: 'integer' },
+            },
+            required: ['x', 'y', 'width', 'height'],
+          },
+          withinMs: { type: 'integer' },
         },
       },
     },
@@ -807,6 +840,13 @@ export class WorkAgentService {
       let streamedReasoningTotal = '';
       let budgetReason = 'round';
       let emptyRoundNudges = 0;
+      // Computer-loop stall detection: an identical action against a screen
+      // whose pixels did not change is the signature of a grounding loop —
+      // a dead coordinate, a click that never lands. One recovery notice,
+      // then a handoff, instead of burning the remaining rounds.
+      let computerStallSignature = '';
+      let computerStallRepeats = 0;
+      let computerStallNudged = false;
       // Reasoning-channel models (DeepSeek and friends) sometimes place
       // their entire answer in reasoning and leave content empty. Keep the
       // last reasoning so a run can end with the model's actual findings
@@ -1214,6 +1254,45 @@ export class WorkAgentService {
           // text observation, and only the most recent screenshots stay in
           // model context so a long computer session cannot flood tokens.
           retainRecentWorkImages(messages);
+          if (
+            (call.function.name === 'computer_act' ||
+              call.function.name === 'computer_observe') &&
+            typeof toolMetadata.screenshotSha256 === 'string'
+          ) {
+            let argsSignature = '';
+            try {
+              argsSignature = JSON.stringify(
+                call.function.arguments ?? ''
+              ).slice(0, 2_000);
+            } catch {
+              argsSignature = '';
+            }
+            const signature = [
+              toolMetadata.screenshotSha256,
+              call.function.name,
+              argsSignature,
+            ].join('|');
+            if (signature === computerStallSignature) {
+              computerStallRepeats += 1;
+            } else {
+              computerStallSignature = signature;
+              computerStallRepeats = 0;
+            }
+          }
+        }
+        if (computerStallRepeats >= 2) {
+          computerStallRepeats = 0;
+          computerStallSignature = '';
+          if (!computerStallNudged) {
+            computerStallNudged = true;
+            messages.push({
+              role: 'user',
+              content: buildWorkComputerStallPrompt(),
+            });
+          } else {
+            budgetReason = 'computer-stall';
+            break roundLoop;
+          }
         }
       }
       await this.throwIfCancelled(runId, controller);
@@ -1265,7 +1344,11 @@ export class WorkAgentService {
                   ...messages,
                   {
                     role: 'user',
-                    content: `${buildWorkBudgetExhaustionPrompt()}\nThe ${budgetReason} budget was reached.`,
+                    content: `${buildWorkBudgetExhaustionPrompt()}\n${
+                      budgetReason === 'computer-stall'
+                        ? 'The run was stopped because repeated computer actions kept producing an unchanged screen even after a recovery notice.'
+                        : `The ${budgetReason} budget was reached.`
+                    }`,
                   },
                 ],
                 tools: [],
@@ -1723,7 +1806,11 @@ export class WorkAgentService {
         await this.assertComputerToolsAvailable(task);
         await this.assertComputerNotHumanControlled(task);
         const actions = Array.isArray(args.actions) ? args.actions : [];
-        const observation = await workRuntimeService.computerAct(task, actions);
+        const observation = await workRuntimeService.computerAct(
+          task,
+          actions,
+          args.expect
+        );
         return computerToolResult(observation, actions.length);
       }
       case 'request_takeover': {
@@ -2606,16 +2693,45 @@ function computerToolResult(
   observation: WorkComputerObservation,
   actionCount?: number
 ): { content: string; metadata: Record<string, unknown>; images: string[] } {
+  const ranCount = observation.fence
+    ? observation.fence.afterAction
+    : actionCount;
+  const browserChrome =
+    observation.pageFocus === false && /chromium/i.test(observation.window);
   const summary = [
+    ...(observation.fence
+      ? [`BATCH STOPPED EARLY: ${observation.fence.detail}`]
+      : []),
     ...(actionCount !== undefined
       ? [
-          `Applied ${actionCount} action${actionCount === 1 ? '' : 's'} and captured the settled screen.`,
+          `Applied ${ranCount} of ${actionCount} action${actionCount === 1 ? '' : 's'} and captured the settled screen.`,
         ]
       : []),
     `Screen ${observation.width}x${observation.height}, cursor at ${observation.cursorX},${observation.cursorY}.`,
     observation.window
-      ? `Active window: ${observation.window}`
+      ? `Active window: ${observation.window}` +
+        (observation.windowId !== undefined
+          ? ` (#${observation.windowId}${observation.windowCount !== undefined ? `, ${observation.windowCount} visible` : ''})`
+          : '')
       : 'No active window.',
+    ...(observation.url ? [`Page URL: ${observation.url}`] : []),
+    ...(browserChrome
+      ? [
+          'Keyboard focus: the browser UI, NOT the page — typed text would go to the omnibox or a browser dialog.',
+        ]
+      : observation.focusedElement
+        ? [`Focused element: ${observation.focusedElement}`]
+        : []),
+    ...(observation.expect
+      ? [
+          observation.expect.outcome === 'passed'
+            ? 'Declared expectation: PASSED.'
+            : `Declared expectation: NOT yet observed (pending${observation.expect.unmet?.length ? `: ${observation.expect.unmet.join(', ')}` : ''}) — re-observe before assuming failure.`,
+        ]
+      : []),
+    ...(observation.screenshotSha256
+      ? [`Screenshot sha256: ${observation.screenshotSha256.slice(0, 16)}`]
+      : []),
     'The screenshot accompanies this result.',
   ].join('\n');
   return {
@@ -2627,7 +2743,28 @@ function computerToolResult(
       cursorX: observation.cursorX,
       cursorY: observation.cursorY,
       window: observation.window.slice(0, 300),
+      ...(observation.windowId !== undefined
+        ? { windowId: observation.windowId }
+        : {}),
+      ...(observation.windowCount !== undefined
+        ? { windowCount: observation.windowCount }
+        : {}),
+      ...(observation.url ? { url: observation.url } : {}),
+      ...(observation.pageFocus !== undefined
+        ? { pageFocus: observation.pageFocus }
+        : {}),
+      ...(observation.focusedElement
+        ? { focusedElement: observation.focusedElement }
+        : {}),
+      ...(observation.screenshotSha256
+        ? { screenshotSha256: observation.screenshotSha256 }
+        : {}),
+      ...(observation.fence ? { fence: observation.fence } : {}),
+      ...(observation.expect ? { expect: observation.expect } : {}),
       ...(actionCount !== undefined ? { actionCount } : {}),
+      ...(ranCount !== undefined && ranCount !== actionCount
+        ? { ranCount }
+        : {}),
     },
     images: [observation.screenshotBase64],
   };

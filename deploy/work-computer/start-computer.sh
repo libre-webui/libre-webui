@@ -88,9 +88,14 @@ pgrep -f "websockify.*${AUDIO_WS_PORT}" | head -1 > "$STATE_DIR/audio-ws.pid"
 rm -f "$PROFILE_DIR/SingletonLock" "$PROFILE_DIR/SingletonSocket" \
   "$PROFILE_DIR/SingletonCookie" 2>/dev/null || true
 
+# The DevTools port serves semantic observation signals (active-tab URL,
+# focused element, page focus) to the agent's observe/act scripts. It binds
+# to the container's loopback only — the same trust domain as the DISPLAY
+# the agent already fully controls with xdotool.
 chromium \
   --no-sandbox \
   --test-type \
+  --remote-debugging-port=9222 \
   --hide-crash-restore-bubble \
   --autoplay-policy=no-user-gesture-required \
   --disable-dev-shm-usage \

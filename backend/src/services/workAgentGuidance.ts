@@ -86,9 +86,11 @@ export const WORK_AGENT_SKILLS: readonly WorkAgentSkill[] = [
     id: 'computer',
     title: 'Computer control',
     instructions: [
-      'This task has a virtual computer with a Chromium browser. computer_observe returns the current screenshot with the cursor position and active window title; computer_act performs batched mouse and keyboard actions and returns the screenshot after they settle.',
+      'This task has a virtual computer with a Chromium browser. computer_observe returns the current screenshot with the cursor position, active window, page URL, and focused element; computer_act performs batched mouse and keyboard actions and returns the screenshot after they settle.',
       'Coordinates are absolute pixels on the returned screenshot. Observe before the first action, act on what the screenshot actually shows, and re-observe instead of assuming an action worked.',
-      'Batch related actions into one computer_act call: move, click, double_click, right_click, type, key, scroll, wait. Add a wait action after navigation or before reading a slow page.',
+      'Batch related actions into one computer_act call: move, click, double_click, right_click, type, key, scroll, wait. Add a wait action after navigation or before reading a slow page. A batch stops early when the window, title, or window count changes mid-batch — that is protection, not an error: the remaining coordinates targeted the previous screen, so observe and continue from what you see.',
+      'Before typing into a specific field, set "focus" on the type action (text the focused element, URL, or window title must contain). If the result says keyboard focus is in the browser UI rather than the page, click the intended field first — typed text would go to the omnibox.',
+      'Declare "expect" on consequential batches (titleContains, urlContains, or regionChanged) so the runtime verifies the outcome. A "pending" verdict means not observed before the deadline — re-observe before treating it as failure; asynchronous pages often finish late.',
       'run_command can stop the sandbox when it finishes unless the screen is being watched; the computer session then restarts on the next computer tool call and the browser profile persists, but open pages are lost — finish a browser workflow before running commands.',
       'Never enter credentials, complete a CAPTCHA or 2FA challenge, or work around an authentication wall. Call request_takeover with a concrete reason instead — the user drives the real screen, the password never passes through you.',
       'While the user holds control your computer tools are blocked. When request_takeover reports control was handed back, computer_observe first; if no one takes over in time, report the exact blocker in your response.',
@@ -164,6 +166,10 @@ Finish with a concise summary of what changed and the checks that actually ran.`
 
 export function buildWorkEmptyRoundNudgePrompt(): string {
   return `Your last turn contained no reply and no tool calls, so nothing happened. Continue the task now: either call the tools you need, or reply with your findings and the next step.`;
+}
+
+export function buildWorkComputerStallPrompt(): string {
+  return `Your last three computer actions were identical and the screen did not change at all (the screenshot hash is unchanged) — the current approach is not working. Do not repeat the same action again. Re-observe and reconsider: check the focused element, page URL, and window; try different coordinates or scroll the target into view; take an alternative route to the goal; or call request_takeover if a human needs to intervene. If no alternative exists, stop and state the exact blocker.`;
 }
 
 export function buildWorkBudgetExhaustionPrompt(): string {
