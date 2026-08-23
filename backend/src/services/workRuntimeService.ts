@@ -79,6 +79,7 @@ export {
   formatPreviewHost,
   parseManagedContainerList,
   parsePublishedPort,
+  resolvePublishedEndpointHost,
 } from './workRuntimeDriver.js';
 export type {
   DiscoveredWorkContainer,

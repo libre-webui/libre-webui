@@ -40,6 +40,9 @@ export const WORK_RUNTIME_DEFAULTS = {
   pidsLimit: 256,
   previewPort: 4173,
   previewBind: '127.0.0.1',
+  // Optional backend-facing address for Docker-published Work ports. Empty
+  // means the backend dials previewBind, which is correct outside a container.
+  publishedHost: '',
   // Container-internal WebSocket port of the Work Computer screen bridge
   // (websockify in the GUI image). Published on previewBind when a task's
   // policy enables the GUI.
@@ -92,6 +95,13 @@ export const workRuntimeConfig = {
   // private to the Docker host, which is correct when the browser runs there.
   previewBind:
     process.env.WORK_PREVIEW_BIND || WORK_RUNTIME_DEFAULTS.previewBind,
+  // Publishing and dialing are distinct when Libre WebUI itself runs in a
+  // container: 127.0.0.1 binds safely on the Docker host, while the backend
+  // reaches that host through a runtime-specific name such as
+  // host.docker.internal.
+  publishedHost:
+    process.env.WORK_DOCKER_PUBLISHED_HOST ||
+    WORK_RUNTIME_DEFAULTS.publishedHost,
   screenPort: positiveInteger(
     process.env.WORK_COMPUTER_SCREEN_PORT,
     WORK_RUNTIME_DEFAULTS.screenPort

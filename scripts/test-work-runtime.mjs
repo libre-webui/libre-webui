@@ -44,6 +44,7 @@ const {
   formatPreviewHost,
   parseDnsServers,
   parsePublishedPort,
+  resolvePublishedEndpointHost,
   validateWorkspacePath,
 } = runtimeModule;
 const {
@@ -216,6 +217,7 @@ test('Work runtime defaults pin the image and bound resource use', () => {
     pidsLimit: 256,
     previewPort: 4173,
     previewBind: '127.0.0.1',
+    publishedHost: '',
     // Work Computer screen bridge (websockify) inside GUI-enabled sandboxes.
     screenPort: 6080,
     // Work Computer audio bridge (websockify → PulseAudio monitor).
@@ -900,6 +902,17 @@ test('preview publishing follows the configured bind address', () => {
   assert.equal(formatPreviewHost('work.example.test'), 'work.example.test');
   assert.equal(formatPreviewHost('::1'), '[::1]');
   assert.equal(formatPreviewHost('[::1]'), '[::1]');
+});
+
+test('containerized backends can dial published Work ports through a separate host', () => {
+  assert.equal(resolvePublishedEndpointHost('127.0.0.1', ''), '127.0.0.1');
+  assert.equal(
+    resolvePublishedEndpointHost('127.0.0.1', 'host.docker.internal'),
+    'host.docker.internal'
+  );
+  assert.equal(resolvePublishedEndpointHost('0.0.0.0', ''), '127.0.0.1');
+  assert.equal(resolvePublishedEndpointHost('::', ''), '::1');
+  assert.equal(resolvePublishedEndpointHost('127.0.0.1', '[::1]'), '::1');
 });
 
 test('workspace path validation normalizes contained paths', () => {

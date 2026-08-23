@@ -348,13 +348,10 @@ export class DockerWorkRuntimeDriver implements WorkRuntimeDriver {
       `${config.previewPort}/tcp`,
     ]);
     const port = parsePublishedPort(portResult.stdout, config.previewPort);
-    const configuredHost = config.previewBind.trim();
-    const host =
-      !configuredHost || configuredHost === '0.0.0.0'
-        ? '127.0.0.1'
-        : configuredHost === '::' || configuredHost === '[::]'
-          ? '::1'
-          : configuredHost.replace(/^\[|\]$/g, '');
+    const host = resolvePublishedEndpointHost(
+      config.previewBind,
+      config.publishedHost
+    );
     return port === undefined ? undefined : { host, port };
   }
 
@@ -380,13 +377,10 @@ export class DockerWorkRuntimeDriver implements WorkRuntimeDriver {
       `${containerPort}/tcp`,
     ]);
     const port = parsePublishedPort(portResult.stdout, containerPort);
-    const configuredHost = config.previewBind.trim();
-    const host =
-      !configuredHost || configuredHost === '0.0.0.0'
-        ? '127.0.0.1'
-        : configuredHost === '::' || configuredHost === '[::]'
-          ? '::1'
-          : configuredHost.replace(/^\[|\]$/g, '');
+    const host = resolvePublishedEndpointHost(
+      config.previewBind,
+      config.publishedHost
+    );
     return port === undefined ? undefined : { host, port };
   }
 
@@ -1053,6 +1047,24 @@ export function parsePublishedPort(
     if (Number.isInteger(port) && port > 0 && port <= 65535) return port;
   }
   return undefined;
+}
+
+/**
+ * Address the backend uses for Docker-published preview, screen, and audio
+ * ports. It intentionally differs from the publish bind when the backend is
+ * itself containerized: host loopback remains private, while Docker Desktop
+ * exposes it to sibling containers through host.docker.internal.
+ */
+export function resolvePublishedEndpointHost(
+  bindAddress = config.previewBind,
+  publishedHost = config.publishedHost
+): string {
+  const configuredHost = publishedHost.trim() || bindAddress.trim();
+  return !configuredHost || configuredHost === '0.0.0.0'
+    ? '127.0.0.1'
+    : configuredHost === '::' || configuredHost === '[::]'
+      ? '::1'
+      : configuredHost.replace(/^\[|\]$/g, '');
 }
 
 function objectRecord(value: unknown): Record<string, unknown> {

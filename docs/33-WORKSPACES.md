@@ -1057,6 +1057,14 @@ without opening the ephemeral Docker ports to the network. Preview documents
 receive a restrictive browser sandbox policy, and stopping or restarting a
 preview revokes its previous URL.
 
+When the backend itself runs in Docker, publishing and connecting may use
+different addresses. Keep `WORK_PREVIEW_BIND=127.0.0.1` to avoid exposing the
+ephemeral ports, and set `WORK_DOCKER_PUBLISHED_HOST` to the Docker host address
+reachable from the backend container (`host.docker.internal` on Docker
+Desktop). Native Linux deployments should pair this value with an explicitly
+reachable, non-public bind interface; mapping `host.docker.internal` alone does
+not make a host-loopback listener reachable.
+
 Concurrency is capped separately: `WORK_MAX_ACTIVE_RUNTIMES_PER_USER` defaults
 to `2` and `WORK_MAX_ACTIVE_RUNTIMES_GLOBAL` to `3`, so an administrator can
 run a second task while the first is busy. The capabilities response reports
@@ -1085,6 +1093,7 @@ Work reads these variables in the backend process:
 | `WORK_PIDS_LIMIT`                     | `256`                                                                                         | Per-container process limit                                |
 | `WORK_PREVIEW_PORT`                   | `4173`                                                                                        | Port the app must listen on inside the container           |
 | `WORK_PREVIEW_BIND`                   | `127.0.0.1`                                                                                   | Host interface the preview port is published on            |
+| `WORK_DOCKER_PUBLISHED_HOST`          | same as `WORK_PREVIEW_BIND`                                                                   | Host/IP the backend dials for Docker-published Work ports  |
 | `WORK_COMPUTER_SCREEN_PORT`           | `6080`                                                                                        | In-container WebSocket port of the screen bridge           |
 | `WORK_COMPUTER_AUDIO_PORT`            | `6081`                                                                                        | In-container WebSocket port of the audio bridge            |
 | `WORK_RUN_LEASE_WAIT_MS`              | `60000`                                                                                       | How long a run waits out a transient runtime-lease holder  |
