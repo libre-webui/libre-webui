@@ -15,6 +15,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 📚 Documentation
 
+## [0.28.0] - 2026-08-23
+
+Every Work task can now have a real computer. The Work Computer gives each sandbox a watchable virtual desktop with a browser: see the agent work live, hear its audio, take over the mouse for sign-ins, and teach it tasks by demonstrating them once on screen. Underneath, the agent's actions are verified rather than assumed — typing asserts its target field, batches stop when the screen changes under them, and outcomes are checked against declared expectations.
+
+### ✨ New Features
+
+- **The Work Computer.** A policy switch gives tasks a virtual desktop (window manager, dock, and Chromium on a 1280×800 display) with a live Screen tab: VNC over WebSocket behind one-use task-bound tickets, up to four concurrent viewers, and a browser profile that survives restarts. Administrators enable it with one click; the GUI sandbox image is now published ready to pull, and deployments behind a build-denying Docker proxy install it with pull + tag. Ships with schema migrations (SQLite v22–v24 / PostgreSQL v21–v23).
+- **The agent drives it — with receipts.** New `computer_observe` and `computer_act` tools give the model eyes and hands, and every action earns evidence: observations carry the active window, page URL, focused element, and a screenshot hash; typing can assert its target field and fails closed when focus drifted; batches fence themselves when a window, title, or context changes mid-batch; clicks report whether pixels near them changed; `scroll_until` scrolls toward target text and reports whether it became visible; batches declare expected outcomes the runtime verifies with an adaptive deadline; and repeated no-effect actions end the run asking for help instead of burning its budget.
+- **Take over the screen.** A cooperative, TTL-bounded control lease hands you the mouse and keyboard through a dual-password VNC session — watchers stay input-inert, credentials go from your keyboard to the page and never through the model, and the agent's own `request_takeover` posts a banner and waits. Policies decide whether takeover is allowed at all.
+- **Teach it by demonstration.** Record a task once on the real screen: the demonstration compiles deterministically into a natural-language playbook — click targets named by an element anchor probe, secret-looking input redacted, and an allowed scope derived from the sites the demonstration actually visited. Playbooks save as ordinary skills, load into computer-enabled runs automatically, and collect a worked/failed track record from one-click reviews on finished runs.
+- **Hear the computer.** Live audio passthrough from the sandbox over a second authenticated bridge — same tickets, same access re-checks as the screen.
+- **Message the agent mid-run.** Send a note while a run is executing; the agent picks it up at its next step without stopping.
+- **Automations can run Work tasks.** A scheduled automation can now target a Work policy and deliver its run as a Work task instead of a chat.
+- **A replay benchmark for computer use.** `npm run bench:work-computer` drives the real GUI image through adversarial browser fixtures and scores the runtime guards — the regression baseline for future loop changes.
+
+### 🔧 Improvements
+
+- The agent's desktop is presentable: a branded start page in the product's own visual language, themed search, a dock with running apps and a clock, and wallpaper support.
+- Loop telemetry: per-tool durations, rounds on every call, and a run-end summary of screenshots, fences, verdicts, and recovery nudges.
+- The Work workspace pane gained the Screen view alongside Files, Activity, Changes, Terminal, and Preview.
+
+### 🐛 Bug Fixes
+
+- Containerized backends on Docker Desktop reach published Work ports through a dedicated dial address (`WORK_DOCKER_PUBLISHED_HOST`), fixing screens and previews on Windows and macOS container installs.
+- Watching a screen no longer conflicts with the run that owns it in team deployments — and a run ending no longer stops a screen someone is watching.
+- GUI containers no longer churn on every workspace refresh, and screen connections survive helper calls.
+- Passkey sign-in accepts RS256 credentials, and the sign-in button hides when no accounts exist.
+- The one-click Work Computer setup works in containerized installs and converges on an existing image behind filtered Docker proxies.
+- Security hardening from two CodeQL passes, plus a migration-checksum false positive silenced without weakening the check.
+
+### 📚 Documentation
+
+- A complete Work Computer guide: screen, takeover, teach mode, audio, per-policy gating, and the agent's verified-action loop — with an embedded demo video of a real, unedited agent run.
+- README, documentation landing page, environment reference, and the comparison page brought current with the release.
+
 ## [0.27.0] - 2026-08-22
 
 Signing in gets serious — two-factor with recovery codes, passkeys, and a live password meter. The app now installs to your phone with real push notifications, knowledge ingests scans and audio, backups prove they restore on a schedule, artifacts get a proper split-screen panel, and the desktop app gets its real name.
