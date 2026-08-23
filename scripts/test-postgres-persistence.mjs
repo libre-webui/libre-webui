@@ -129,7 +129,7 @@ test('PostgreSQL migration registry is contiguous, checksummed, and frozen', () 
     /CREATE TABLE push_subscriptions/
   );
   assert.match(
-    POSTGRES_MIGRATIONS.at(-3)?.sql ?? '',
+    POSTGRES_MIGRATIONS.at(-4)?.sql ?? '',
     /CREATE TABLE recovery_drills/
   );
   assert.equal(
