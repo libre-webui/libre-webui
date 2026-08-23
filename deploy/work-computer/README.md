@@ -24,9 +24,13 @@ GUI and headless tasks.
 The easy path: an administrator presses **Enable** on the Work Computer
 card shown on the Work landing page. The backend builds this image from
 its bundled copy of this directory and creates a ready **Work Computer**
-policy automatically.
+policy automatically. When the image already exists on the daemon,
+**Enable** skips the build and only creates the policy.
 
-The manual path, for deployments that build images elsewhere:
+The manual path, for deployments that build images elsewhere — including
+those behind a filtered Docker API proxy (such as
+`deploy/private/docker-compose.work-proxy.yml`), which denies the build
+endpoint on purpose:
 
 1. Build (or push and pull) the image on the Docker host that runs Work
    sandboxes.

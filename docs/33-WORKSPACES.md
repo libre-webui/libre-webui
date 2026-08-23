@@ -445,11 +445,12 @@ Enabling it is one click for an administrator: the Work landing page shows
 a **Work Computer** card with an **Enable** button. Pressing it builds the
 bundled GUI image on the deployment's own Docker daemon (the first build
 takes a few minutes) and creates a ready **Work Computer** policy — no
-manual `docker build` or policy fields required. The same image can still
-be built by hand from `deploy/work-computer/` when a deployment prefers
-that. Tasks under the policy must have network access — the screen is
-reached over a loopback-published container port, exactly like the
-preview.
+manual `docker build` or policy fields required. Behind a filtered Docker
+API proxy the build endpoint is deliberately denied; build the image on
+the Docker host from `deploy/work-computer/` instead, and **Enable** then
+skips the build and only creates the policy. Tasks under the policy must
+have network access — the screen is reached over a loopback-published
+container port, exactly like the preview.
 
 Security model: the in-container VNC server binds to localhost behind two
 per-session passwords — a view-only one handed to every authorized watcher
@@ -461,9 +462,13 @@ authenticates with a one-use ticket bound to their session and the task —
 the same mechanism as the Terminal — and current Work access is re-checked
 on every connection, so revoking a user's access cuts their screens
 immediately. Up to four concurrent viewers may watch one screen, and
-watching counts as task activity for the idle sweep. The browser profile
-persists in `/workspace/.browser-profile`, so sign-ins inside the computer
-survive container restarts.
+watching counts as task activity for the idle sweep. Watching and running
+never compete: opening the screen while the agent is mid-run attaches to
+the run's own sandbox, a watched screen does not block the next run from
+starting, and the session survives the run finishing — including team
+deployments where runs execute in a separate worker process. The browser
+profile persists in `/workspace/.browser-profile`, so sign-ins inside the
+computer survive container restarts.
 
 Agent control: a task with the Work Computer also offers the model two
 additional tools. `computer_observe` returns a full screenshot of the
