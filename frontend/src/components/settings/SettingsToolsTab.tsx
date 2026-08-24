@@ -37,6 +37,11 @@ import { createLogger } from '@/utils/logger';
 
 const logger = createLogger('pages:tools');
 
+/** The backend's explanation for a failed request (e.g. the egress guard
+ * refusing a private address) — far more useful than a generic toast. */
+const apiErrorMessage = (error: unknown): string | undefined =>
+  (error as { response?: { data?: { error?: string } } }).response?.data?.error;
+
 export const SettingsToolsTab: React.FC = () => {
   const { t } = useTranslation();
   const isAdmin = useAuthStore(state => state.isAdmin());
@@ -102,7 +107,7 @@ export const SettingsToolsTab: React.FC = () => {
       }
     } catch (error) {
       logger.error('Failed to save the tool server:', error);
-      toast.error(t('toolsPage.saveFailed'));
+      toast.error(apiErrorMessage(error) || t('toolsPage.saveFailed'));
     } finally {
       setSaving(false);
     }
@@ -119,7 +124,7 @@ export const SettingsToolsTab: React.FC = () => {
       refresh();
     } catch (error) {
       logger.error('Failed to delete the tool server:', error);
-      toast.error(t('toolsPage.deleteFailed'));
+      toast.error(apiErrorMessage(error) || t('toolsPage.deleteFailed'));
     }
   };
 

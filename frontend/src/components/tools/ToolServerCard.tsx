@@ -35,6 +35,19 @@ import { createLogger } from '@/utils/logger';
 
 const logger = createLogger('components:tools');
 
+/** The backend's explanation for a failed request (e.g. the egress guard
+ * refusing a private address) — far more useful than a generic toast. */
+const apiErrorMessage = (error: unknown): string | undefined => {
+  const backendError = (error as { response?: { data?: { error?: string } } })
+    .response?.data?.error;
+  if (backendError) return backendError;
+  // A locally thrown Error carries the API's message; an Axios error's own
+  // message is just the status line, so skip it.
+  return error instanceof Error && !('response' in error) && error.message
+    ? error.message
+    : undefined;
+};
+
 interface ToolServerCardProps {
   server: ToolServerView;
   isAdmin: boolean;
@@ -93,7 +106,7 @@ export const ToolServerCard: React.FC<ToolServerCardProps> = ({
       onChanged();
     } catch (error) {
       logger.error('Failed to refresh the tool server:', error);
-      toast.error(t('toolsPage.refreshFailed'));
+      toast.error(apiErrorMessage(error) || t('toolsPage.refreshFailed'));
     } finally {
       setRefreshing(false);
     }
