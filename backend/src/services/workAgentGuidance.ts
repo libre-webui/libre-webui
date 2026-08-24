@@ -188,6 +188,10 @@ export function buildWorkStatusBlurbPrompt(report: string): string {
 ${report.slice(0, STATUS_BLURB_REPORT_MAX_CHARS)}`;
 }
 
+export function buildWorkScreenshotsUnsupportedPrompt(): string {
+  return 'Your model provider rejected screenshot image input, so screenshots are disabled for the rest of this run. Keep using the computer tools, but rely on the text observations from computer_observe — window, URL, focused element, and reported page text — and verify actions with expectations. If a step truly cannot be verified without seeing the screen, say so plainly instead of guessing.';
+}
+
 export function buildWorkEmptyRoundNudgePrompt(): string {
   return `Your last turn contained no reply and no tool calls, so nothing happened. Continue the task now: either call the tools you need, or reply with your findings and the next step.`;
 }

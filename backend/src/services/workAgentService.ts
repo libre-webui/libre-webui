@@ -26,6 +26,7 @@ import {
   buildWorkComputerAmbiguityPrompt,
   buildWorkComputerStallPrompt,
   buildWorkEmptyRoundNudgePrompt,
+  buildWorkScreenshotsUnsupportedPrompt,
   buildWorkStatusBlurbPrompt,
   workAgentSkillsForContext,
   WORK_WRITE_FILE_RECOMMENDED_CHARS,
@@ -942,6 +943,10 @@ export class WorkAgentService {
           .filter(message => message.metadata?.midRun === true)
           .map(message => message.id)
       );
+      // A text-only model rejects the screenshot images computer tools
+      // attach. That is a degradation, not a run-ending failure: after the
+      // first rejection the run continues on text observations alone.
+      let screenshotsRejected = false;
       roundLoop: for (let round = 0; round < roundLimit; round++) {
         await this.throwIfCancelled(runId, controller);
         loopStats.rounds = round + 1;
@@ -1025,6 +1030,42 @@ export class WorkAgentService {
             },
             controller.signal
           );
+        } catch (error) {
+          const providerMessage = error instanceof Error ? error.message : '';
+          const contextHasImages = messages.some(
+            message =>
+              Array.isArray(message.images) && message.images.length > 0
+          );
+          if (
+            !screenshotsRejected &&
+            contextHasImages &&
+            !controller.signal.aborted &&
+            /image/i.test(providerMessage)
+          ) {
+            // First image rejection from this provider: drop every
+            // screenshot from context, tell the model why, surface a
+            // readable note to the user, and replay the round text-only.
+            screenshotsRejected = true;
+            for (const message of messages) {
+              if (message.images) delete message.images;
+            }
+            messages.push({
+              role: 'user',
+              content: buildWorkScreenshotsUnsupportedPrompt(),
+            });
+            await workTaskService.addMessage(
+              taskId,
+              runId,
+              'assistant',
+              'error',
+              `The selected model does not accept screenshot images (provider said: ${providerMessage.slice(0, 300)}). Continuing with text-only screen observations — pick a vision-capable model to let the agent actually see the screen.`,
+              // Explanatory, not model speech: keep it out of model context.
+              { [WORK_EMPTY_MODEL_RESPONSE_METADATA_KEY]: true }
+            );
+            round -= 1;
+            continue;
+          }
+          throw error;
         } finally {
           contentStream.flush();
           reasoningStream.flush();
@@ -1372,7 +1413,9 @@ export class WorkAgentService {
             content: toolOutput,
             tool_name: call.function.name,
             tool_call_id: call.id,
-            ...(toolImages?.length ? { images: toolImages } : {}),
+            ...(toolImages?.length && !screenshotsRejected
+              ? { images: toolImages }
+              : {}),
           });
           // Screenshots are live-context-only: persisted messages keep the
           // text observation, and only the most recent screenshots stay in

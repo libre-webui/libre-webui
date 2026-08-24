@@ -578,7 +578,12 @@ expectation verdicts — is stamped on every persisted tool record and
 summarized when the run ends. Screenshots reach the model
 as real image content on every provider route — Ollama, Anthropic, Gemini,
 and OpenAI-compatible chat and Responses plugins — so the model driving the
-task should be a vision model. Only the most recent screenshots stay in the
+task should be a vision model. If the provider rejects image input (a
+text-only model), the run does not fail: screenshots are dropped for the
+rest of the run, the model is told to rely on the text observations, and a
+note in the transcript explains the degradation — but a model that cannot
+see the screen verifies far less, so prefer a vision model for computer
+tasks. Only the most recent screenshots stay in the
 model's live context, and persisted task transcripts keep the text
 observation only, never the image bytes. The agent is instructed to never
 enter credentials or complete CAPTCHA/2FA challenges; it reports the
