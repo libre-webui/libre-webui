@@ -581,7 +581,7 @@
     "title": "सेटिंग्स",
     "tabs": {
       "appearance": "दिखावट",
-      "model": "मॉडल",
+      "model": "डिफ़ॉल्ट",
       "systemMessage": "सिस्टम संदेश",
       "plugins": "प्लगइन्स",
       "search": "खोज",

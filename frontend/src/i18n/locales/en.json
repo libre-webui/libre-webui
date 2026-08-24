@@ -581,7 +581,7 @@
     "title": "Settings",
     "tabs": {
       "appearance": "Appearance",
-      "model": "Model",
+      "model": "Defaults",
       "systemMessage": "System Message",
       "plugins": "Plugins",
       "search": "Search",

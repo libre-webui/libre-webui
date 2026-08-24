@@ -581,7 +581,7 @@
     "title": "設定",
     "tabs": {
       "appearance": "外観",
-      "model": "モデル",
+      "model": "デフォルト",
       "systemMessage": "システムメッセージ",
       "plugins": "プラグイン",
       "search": "検索",

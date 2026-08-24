@@ -581,7 +581,7 @@
     "title": "সেটিংস",
     "tabs": {
       "appearance": "চেহারা",
-      "model": "মডেল",
+      "model": "ডিফল্ট",
       "systemMessage": "সিস্টেম বার্তা",
       "plugins": "প্লাগইন",
       "search": "অনুসন্ধান",

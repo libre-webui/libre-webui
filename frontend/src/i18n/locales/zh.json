@@ -581,7 +581,7 @@
     "title": "设置",
     "tabs": {
       "appearance": "外观",
-      "model": "模型",
+      "model": "默认设置",
       "systemMessage": "系统消息",
       "plugins": "插件",
       "search": "搜索",

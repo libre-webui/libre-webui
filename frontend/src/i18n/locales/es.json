@@ -581,7 +581,7 @@
     "title": "Configuración",
     "tabs": {
       "appearance": "Apariencia",
-      "model": "Modelo",
+      "model": "Predeterminados",
       "systemMessage": "Mensaje del sistema",
       "plugins": "Plugins",
       "search": "Búsqueda",

@@ -581,7 +581,7 @@
     "title": "Ayarlar",
     "tabs": {
       "appearance": "Görünüm",
-      "model": "Model",
+      "model": "Varsayılanlar",
       "systemMessage": "Sistem Mesajı",
       "plugins": "Eklentiler",
       "search": "Arama",

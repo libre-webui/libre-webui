@@ -581,7 +581,7 @@
     "title": "Ustawienia",
     "tabs": {
       "appearance": "Wygląd",
-      "model": "Model",
+      "model": "Domyślne",
       "systemMessage": "Wiadomość systemowa",
       "plugins": "Wtyczki",
       "search": "Wyszukiwanie",

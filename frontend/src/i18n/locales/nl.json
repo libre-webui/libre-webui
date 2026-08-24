@@ -581,7 +581,7 @@
     "title": "Instellingen",
     "tabs": {
       "appearance": "Weergave",
-      "model": "Model",
+      "model": "Standaardwaarden",
       "systemMessage": "Systeembericht",
       "plugins": "Plugins",
       "search": "Zoeken",

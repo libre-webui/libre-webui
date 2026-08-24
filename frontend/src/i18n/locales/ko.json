@@ -581,7 +581,7 @@
     "title": "설정",
     "tabs": {
       "appearance": "외관",
-      "model": "모델",
+      "model": "기본값",
       "systemMessage": "시스템 메시지",
       "plugins": "플러그인",
       "search": "검색",

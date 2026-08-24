@@ -581,7 +581,7 @@
     "title": "Einstellungen",
     "tabs": {
       "appearance": "Darstellung",
-      "model": "Modell",
+      "model": "Standardwerte",
       "systemMessage": "Systemnachricht",
       "plugins": "Plugins",
       "search": "Suche",

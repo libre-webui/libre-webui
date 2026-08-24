@@ -581,7 +581,7 @@
     "title": "Nastavení",
     "tabs": {
       "appearance": "Vzhled",
-      "model": "Model",
+      "model": "Výchozí nastavení",
       "systemMessage": "Systémová zpráva",
       "plugins": "Pluginy",
       "search": "Vyhledávání",

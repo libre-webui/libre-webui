@@ -581,7 +581,7 @@
     "title": "Inställningar",
     "tabs": {
       "appearance": "Utseende",
-      "model": "Modell",
+      "model": "Standardvärden",
       "systemMessage": "Systemmeddelande",
       "plugins": "Tillägg",
       "search": "Sökning",

@@ -581,7 +581,7 @@
     "title": "การตั้งค่า",
     "tabs": {
       "appearance": "รูปลักษณ์",
-      "model": "โมเดล",
+      "model": "ค่าเริ่มต้น",
       "systemMessage": "ข้อความระบบ",
       "plugins": "ปลั๊กอิน",
       "search": "ค้นหา",
