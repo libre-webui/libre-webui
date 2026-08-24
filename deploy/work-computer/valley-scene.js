@@ -1533,7 +1533,11 @@
     }
     var cs = currentSize();
     var dpr = renderer.getPixelRatio();
-    var post = new FX.Post(renderer, Math.floor(cs[0] * dpr), Math.floor(cs[1] * dpr));
+    // fx:false skips the bloom/grade pipeline entirely (~16 full-screen
+    // passes per frame) for software rasterizers; ACES + exposure stands
+    // in for the comp pass so day/night brightness still tracks.
+    var post = opts.fx === false ? null : new FX.Post(renderer, Math.floor(cs[0] * dpr), Math.floor(cs[1] * dpr));
+    if (!post) renderer.toneMapping = T.ACESFilmicToneMapping;
 
     var BASE_FOV = opts.fov || 37, BASE_ASPECT = 16 / 9;
     function resize() {
@@ -1548,7 +1552,7 @@
       camera.fov = Math.min(camera.fov, 76);
       camera.updateProjectionMatrix();
       var d = renderer.getPixelRatio();
-      post.setSize(Math.floor(s[0] * d), Math.floor(s[1] * d));
+      if (post) post.setSize(Math.floor(s[0] * d), Math.floor(s[1] * d));
     }
     resize();
     var ro = null;
@@ -1609,15 +1613,21 @@
       matGlass.color.copy(pal.zenith).lerp(new T.Color(1, 1, 1), 0.55);
 
       // grading
-      var cu = post.mComp.uniforms;
-      cu.uExp.value = K.lerp(1.14, 0.86, K.clamp01((S.elevDeg - 2) / 30)) * K.lerp(1.0, 2.1, night);
-      cu.uBloom.value = K.lerp(0.30, 0.60, sunUp) * K.lerp(1.0, 1.6, night);
-      cu.uSat.value = K.lerp(0.88, 1.02, 1 - night);
-      cu.uLift.value = K.lerp(0.2, 0.9, night);
-      cu.uVig.value = 0.40;
-      cu.uCon.value = K.lerp(1.045, 1.00, night);
-      var tint = new T.Color().copy(pal.light).lerp(new T.Color(1, 1, 1), 0.84);
-      cu.uTint.value.set(tint.r, tint.g, tint.b);
+      var exp = K.lerp(1.14, 0.86, K.clamp01((S.elevDeg - 2) / 30)) * K.lerp(1.0, 2.1, night);
+      if (post) {
+        var cu = post.mComp.uniforms;
+        cu.uExp.value = exp;
+        cu.uBloom.value = K.lerp(0.30, 0.60, sunUp) * K.lerp(1.0, 1.6, night);
+        cu.uSat.value = K.lerp(0.88, 1.02, 1 - night);
+        cu.uLift.value = K.lerp(0.2, 0.9, night);
+        cu.uVig.value = 0.40;
+        cu.uCon.value = K.lerp(1.045, 1.00, night);
+        var tint = new T.Color().copy(pal.light).lerp(new T.Color(1, 1, 1), 0.84);
+        cu.uTint.value.set(tint.r, tint.g, tint.b);
+      } else {
+        // ACES darkens midtones vs the custom comp; lift exposure a touch
+        renderer.toneMappingExposure = exp * 1.25;
+      }
       skyU.uExposure.value = 1.0;
       return S;
     }
@@ -1691,7 +1701,9 @@
       pause: function () { running = false; cancelAnimationFrame(raf); },
       resume: function () { if (running) return; running = true; clock.getDelta(); loop(); },
       isRunning: function () { return running; },
-      renderOnce: function () { frame(0); },
+      // dt (seconds) advances the animation clock between stills, so
+      // periodic re-renders show moved water/birds instead of a freeze.
+      renderOnce: function (dt) { if (dt) elapsed += dt; frame(dt || 0); },
       dispose: function () {
         running = false; cancelAnimationFrame(raf);
         if (ro) ro.disconnect();
@@ -1707,20 +1719,32 @@
       applyTime(state.hours);
       skyU.uTime.value = elapsed;
       watU.uTime.value = elapsed;
-      post.mComp.uniforms.uTime.value = elapsed;
       updatePeople(dt); updateBirds(dt);
       sky.position.copy(camera.position);
-      renderer.setRenderTarget(post.scene);
-      renderer.clear();
-      renderer.render(scene, camera);
-      var s = currentSize(), d = renderer.getPixelRatio();
-      post.render(Math.floor(s[0] * d), Math.floor(s[1] * d));
+      if (post) {
+        post.mComp.uniforms.uTime.value = elapsed;
+        renderer.setRenderTarget(post.scene);
+        renderer.clear();
+        renderer.render(scene, camera);
+        var s = currentSize(), d = renderer.getPixelRatio();
+        post.render(Math.floor(s[0] * d), Math.floor(s[1] * d));
+      } else {
+        renderer.setRenderTarget(null);
+        renderer.render(scene, camera);
+      }
       if (api.onFrame) api.onFrame();
     }
 
+    var minFrameMs = opts.fpsCap ? 1000 / opts.fpsCap : 0;
+    var lastFrameAt = 0;
     function loop() {
       if (!running) return;
       raf = requestAnimationFrame(loop);
+      if (minFrameMs) {
+        var nowMs = performance.now();
+        if (nowMs - lastFrameAt < minFrameMs) return;
+        lastFrameAt = nowMs;
+      }
       var dt = Math.min(clock.getDelta(), 0.1);
       elapsed += dt;
       frame(dt);

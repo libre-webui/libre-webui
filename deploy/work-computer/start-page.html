@@ -26,7 +26,9 @@
     flex-direction: column;
     position: relative;
     isolation: isolate;
-    background: #071018;
+    /* Sky-toned gradient so the first-frame wait under SwiftShader reads
+       as dawn, not a black void. */
+    background: linear-gradient(#26374d 0%, #071018 55%, #0b1410 100%);
     color: var(--paper);
     font-family: var(--body);
     overflow: hidden;
@@ -288,15 +290,24 @@
     const forced = window.libreForcedHour;
     const reducedMotion =
       window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    // This page only ever runs in the sandbox, where Chromium rasterizes
+    // through SwiftShader on CPU. The scene is ~2M triangles — a continuous
+    // loop manages ~0.3 fps there and pegs a core, so instead we render one
+    // full-quality still per minute; the canvas holds the last frame in
+    // between (preserveDrawingBuffer) and the sun keeps tracking the clock.
     const valley = ValleyScene.mount(document.getElementById('landscape'), {
+      autoStart: false,
+      shadows: false,
+      grass: 15000,
+      maxDPR: 0.75,
       ...(typeof forced === 'number' ? { time: forced } : {}),
-      ...(reducedMotion ? { autoStart: false } : {}),
     });
-    if (reducedMotion) valley.renderOnce();
-    document.addEventListener('visibilitychange', () => {
-      if (reducedMotion) return;
-      document.hidden ? valley.pause() : valley.resume();
-    });
+    window.libreValley = valley;
+    if (!reducedMotion) {
+      setInterval(() => {
+        if (!document.hidden) valley.renderOnce(60);
+      }, 60_000);
+    }
 
     const clock = document.getElementById('clock');
     const date = document.getElementById('date');
