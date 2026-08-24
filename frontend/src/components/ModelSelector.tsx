@@ -40,7 +40,8 @@ import {
   Zap,
 } from 'lucide-react';
 import { cn } from '@/utils';
-import type { OllamaModel } from '@/types';
+import type { OllamaModel, Persona } from '@/types';
+import { getPersonaAvatarSrc } from '@/utils/personaAvatar';
 import {
   ollamaApi,
   huggingfaceHubApi,
@@ -224,6 +225,19 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
       return model.personaName;
     }
     return undefined;
+  };
+
+  /** The persona record behind a `persona:<id>` entry, if it is loaded. */
+  const personaForModel = (model: OllamaModel): Persona | undefined => {
+    if (!model.name.startsWith('persona:')) return undefined;
+    const id = model.name.slice('persona:'.length);
+    let decoded = id;
+    try {
+      decoded = decodeURIComponent(id);
+    } catch {
+      // Not URL-encoded; use as-is.
+    }
+    return personasById[id] ?? personasById[decoded];
   };
   useImperativeHandle(
     triggerRef,
@@ -522,6 +536,20 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
           className='h-4 w-4 shrink-0 rounded-full object-cover'
         />
       );
+    }
+    // Personas show their own face, the same rounded square as everywhere
+    // else; the generic icon only stands in while personas are loading.
+    if (model.isPersona || model.isLegacySelection) {
+      const persona = personaForModel(model);
+      if (persona) {
+        return (
+          <img
+            src={getPersonaAvatarSrc(persona, 64)}
+            alt=''
+            className='h-4 w-4 shrink-0 rounded object-cover'
+          />
+        );
+      }
     }
     if (model.isLegacySelection) {
       return <Brain className='h-4 w-4 text-gray-500 dark:text-dark-600' />;

@@ -91,7 +91,7 @@ export const PersonaSelector: React.FC<PersonaSelectorProps> = ({
             <img
               src={getPersonaAvatarSrc(selectedPersona, 64)}
               alt={selectedPersona.name}
-              className='w-5 h-5 rounded-full object-cover'
+              className='w-5 h-5 rounded-md object-cover'
               onError={event =>
                 setPersonaAvatarFallback(
                   event.currentTarget,
