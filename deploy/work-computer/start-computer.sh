@@ -91,7 +91,9 @@ rm -f "$PROFILE_DIR/SingletonLock" "$PROFILE_DIR/SingletonSocket" \
 # The DevTools port serves semantic observation signals (active-tab URL,
 # focused element, page focus) to the agent's observe/act scripts. It binds
 # to the container's loopback only — the same trust domain as the DISPLAY
-# the agent already fully controls with xdotool.
+# the agent already fully controls with xdotool. The container has no physical
+# GPU, so explicit SwiftShader keeps WebGL2 available for the local Three.js
+# start page under Xvfb.
 chromium \
   --no-sandbox \
   --test-type \
@@ -99,7 +101,7 @@ chromium \
   --hide-crash-restore-bubble \
   --autoplay-policy=no-user-gesture-required \
   --disable-dev-shm-usage \
-  --disable-gpu \
+  --enable-unsafe-swiftshader \
   --no-first-run \
   --no-default-browser-check \
   --password-store=basic \
