@@ -194,10 +194,37 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
     getModelValueOverride?.(model) ?? model.name;
 
   const modelMetadata = useChatStore(state => state.modelMetadata);
+  const personasById = useChatStore(state => state.personas);
 
   const currentModel = models.find(
     model => getModelValue(model) === selectedModel
   );
+
+  /**
+   * Human name for any persona-backed entry, including the fallback rows
+   * fabricated for sessions whose persona is not in the loaded list (a
+   * legacy record without provider identity, or personas still loading).
+   * Those fallbacks only know the raw `persona:<uuid>` value, which must
+   * never reach the trigger label.
+   */
+  const personaDisplayName = (model: OllamaModel): string | undefined => {
+    if (!model.name.startsWith('persona:')) return undefined;
+    const id = model.name.slice('persona:'.length);
+    let decoded = id;
+    try {
+      decoded = decodeURIComponent(id);
+    } catch {
+      // Not URL-encoded; use as-is.
+    }
+    const persona = personasById[id] ?? personasById[decoded];
+    if (persona?.name) return persona.name;
+    // Fabricated fallbacks copy the raw id into personaName; only trust a
+    // personaName that is an actual name.
+    if (model.personaName && model.personaName !== id) {
+      return model.personaName;
+    }
+    return undefined;
+  };
   useImperativeHandle(
     triggerRef,
     () => internalTriggerRef.current as HTMLButtonElement
@@ -517,13 +544,14 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
       return named;
     }
     if (model.isLegacySelection) {
-      return `${model.name} (${t(
+      const personaLabel = personaDisplayName(model);
+      return `${personaLabel ?? model.name} (${t(
         'modelSelector.legacyProvider',
         'provider not recorded'
       )})`;
     }
     if (model.isPersona) {
-      return model.personaName || model.name;
+      return personaDisplayName(model) || model.personaName || model.name;
     }
     if (model.isAgent) {
       return model.isUnavailable
