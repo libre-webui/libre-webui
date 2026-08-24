@@ -125,7 +125,9 @@ test(
       exec(['/usr/local/bin/start-computer'], 90_000);
       settle(8);
       cdpEval("location.href = 'file:///workspace/edge-lab/edge-lab.html'");
-      settle(2);
+      // The Sunset Valley start page renders a full procedural scene under
+      // SwiftShader; navigating away from it can take beyond 2s cold.
+      settle(4);
 
       // Semantic observation reflects the loaded fixture.
       const loaded = observe();

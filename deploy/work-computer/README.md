@@ -6,11 +6,12 @@ openbox with a tint2 dock), Chromium, and a loopback-only VNC server bridged to 
 running this image under a policy with **Work Computer** enabled get a live,
 watchable screen in the Work view.
 
-The browser start page layers an offline Three.js scene over the bundled
-wallpaper. Its sun, moon, atmosphere, water light, stars, birds, and garden
-lights follow the same browser clock shown on screen. Chromium renders the
-scene through SwiftShader because the sandbox has no physical GPU; the static
-wallpaper remains the automatic fallback if WebGL is unavailable.
+The browser start page renders an offline, fully procedural Three.js valley
+city inspired by the bundled desktop wallpaper. Its terrain, river, gardens,
+architecture, sun, moon, stars, birds, and city lights follow the same browser
+clock shown on screen. Chromium renders the scene through SwiftShader because
+the sandbox has no physical GPU; the page does not load the wallpaper as a
+texture or background.
 
 ## Pull (recommended)
 

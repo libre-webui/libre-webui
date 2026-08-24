@@ -81,7 +81,7 @@ RUN chmod +x /usr/local/bin/start-computer
 # the runtime stays read-only. Drop a wallpaper.png beside this Dockerfile
 # to ship your own (the [g] glob makes it optional); otherwise a gradient
 # is generated.
-COPY start-page.html start-scene.js three.min.js tint2rc wallpaper.pn[g] /usr/local/share/libre-computer/
+COPY start-page.html valley-scene.js three.min.js tint2rc wallpaper.pn[g] /usr/local/share/libre-computer/
 # The site's own typefaces (Space Grotesk / Manrope / DM Mono), self-hosted
 # exactly like librewebui.org hosts them.
 COPY fonts /usr/local/share/libre-computer/fonts
