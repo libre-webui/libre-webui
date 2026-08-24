@@ -22,6 +22,17 @@ PROFILE_DIR="${LIBRE_COMPUTER_PROFILE_DIR:-/workspace/.browser-profile}"
 
 mkdir -p "$STATE_DIR" "$PROFILE_DIR"
 
+# Chromium re-installs command-line-loaded unpacked extensions on every
+# launch and re-indexes their declarativeNetRequest rulesets by writing
+# INTO the extension directory. The image copy is root-owned (and the
+# production rootfs read-only), which wedges browser startup — so each
+# session runs the content blockers from a writable copy on tmpfs.
+EXTENSIONS_DIR="$STATE_DIR/extensions"
+if [ ! -d "$EXTENSIONS_DIR" ] \
+  && [ -d /usr/local/share/libre-computer/extensions ]; then
+  cp -a /usr/local/share/libre-computer/extensions "$EXTENSIONS_DIR"
+fi
+
 if [ -f "$STATE_DIR/websockify.pid" ] \
   && kill -0 "$(cat "$STATE_DIR/websockify.pid")" 2>/dev/null; then
   echo "computer session already running"
@@ -63,6 +74,15 @@ echo $! > "$STATE_DIR/tint2.pid"
 export XDG_RUNTIME_DIR="$STATE_DIR/runtime"
 mkdir -p "$XDG_RUNTIME_DIR"
 chmod 700 "$XDG_RUNTIME_DIR"
+
+# A real session bus. Without one, Chromium's dbus clients fall back to
+# X11 autolaunch and retry forever; with extensions loaded that retry
+# storm can wedge browser startup before the debug endpoint ever binds.
+if [ -z "${DBUS_SESSION_BUS_ADDRESS:-}" ]; then
+  export DBUS_SESSION_BUS_ADDRESS="unix:path=$XDG_RUNTIME_DIR/bus"
+  dbus-daemon --session --address="$DBUS_SESSION_BUS_ADDRESS" \
+    --fork --nopidfile 2>/dev/null || true
+fi
 pulseaudio --daemonize=yes --exit-idle-time=-1 --log-target=file:"$STATE_DIR/pulseaudio.log" 2>/dev/null || true
 for _ in 1 2 3 4 5 6 7 8 9 10; do
   pactl info >/dev/null 2>&1 && break
@@ -97,6 +117,7 @@ rm -f "$PROFILE_DIR/SingletonLock" "$PROFILE_DIR/SingletonSocket" \
 chromium \
   --no-sandbox \
   --test-type \
+  "--load-extension=$EXTENSIONS_DIR/ubol,$EXTENSIONS_DIR/isdcac" \
   --remote-debugging-port=9222 \
   --hide-crash-restore-bubble \
   --autoplay-policy=no-user-gesture-required \
@@ -107,8 +128,23 @@ chromium \
   --password-store=basic \
   --user-data-dir="$PROFILE_DIR" \
   --start-maximized \
-  "file:///usr/local/share/libre-computer/start-page.html" >/dev/null 2>&1 &
+  "file:///usr/local/share/libre-computer/start-page.html" \
+  > "$STATE_DIR/chromium.log" 2>&1 &
 echo $! > "$STATE_DIR/chromium.pid"
+
+# The bundled content blockers compile their rulesets on first launch,
+# which can hold the debug endpoint back well past the old startup time.
+# Wait for it so "ready" means the agent can actually drive the browser;
+# a human can still watch the screen even if this times out.
+cdp_tries=0
+while ! curl -fs http://127.0.0.1:9222/json/version >/dev/null 2>&1; do
+  cdp_tries=$((cdp_tries + 1))
+  if [ "$cdp_tries" -gt 120 ]; then
+    echo "chromium debug endpoint did not come up" >&2
+    break
+  fi
+  sleep 0.5
+done
 
 # --start-maximized is unreliable under a bare WM; assert it once the
 # window exists so the browser fills the screen above the dock.

@@ -585,7 +585,13 @@ note in the transcript explains the degradation — but a model that cannot
 see the screen verifies far less, so prefer a vision model for computer
 tasks. Only the most recent screenshots stay in the
 model's live context, and persisted task transcripts keep the text
-observation only, never the image bytes. The agent is instructed to never
+observation only, never the image bytes. The browser ships with content
+blocking built in — uBlock Origin Lite for ads and trackers (pinned and
+checksum-verified at image build, filtering mode pinned by managed policy)
+and an auto-dismisser for cookie-consent banners — because ads and consent
+walls waste the agent's screenshots, tokens, and clicks. Ad requests are
+neutralized uBlock-style: known ad scripts resolve to harmless local stubs
+so pages keep working. The agent is instructed to never
 enter credentials or complete CAPTCHA/2FA challenges; it reports the
 blocker instead. For untrusted tasks, pair a GUI policy with a filtering
 DNS resolver — a desktop browser makes the network egress policy matter
