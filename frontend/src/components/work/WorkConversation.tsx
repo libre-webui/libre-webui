@@ -32,7 +32,8 @@ import {
   ToolActivityRow,
   WorkLiveRunSurface,
 } from '@/components/work/WorkLiveRunSurface';
-import type { User } from '@/types';
+import { useChatStore } from '@/store/chatStore';
+import type { Persona, User } from '@/types';
 import type {
   WorkLiveRun,
   WorkLiveToolActivity,
@@ -40,6 +41,10 @@ import type {
   WorkTask,
 } from '@/types/work';
 import { cn } from '@/utils';
+import {
+  getPersonaAvatarSrc,
+  setPersonaAvatarFallback,
+} from '@/utils/personaAvatar';
 
 interface WorkConversationProps {
   task: WorkTask;
@@ -88,13 +93,37 @@ function touchedFiles(tools: WorkLiveToolActivity[]): string[] {
 interface WorkAvatarProps {
   role: 'assistant' | 'user';
   user?: User | null;
+  persona?: Persona | null;
   size?: 'message' | 'empty';
 }
 
-function WorkAvatar({ role, user, size = 'message' }: WorkAvatarProps) {
+function WorkAvatar({
+  role,
+  user,
+  persona,
+  size = 'message',
+}: WorkAvatarProps) {
   const [failedAvatar, setFailedAvatar] = useState<string | null>(null);
 
   if (role === 'assistant') {
+    // A task driven by a persona speaks with that persona's face — the same
+    // rounded square as the agents sidebar. The Libre mark stays the default.
+    if (persona) {
+      return (
+        <img
+          src={getPersonaAvatarSrc(persona, 64)}
+          alt={persona.name}
+          data-testid='work-assistant-avatar'
+          onError={event =>
+            setPersonaAvatarFallback(event.currentTarget, persona.name, 64)
+          }
+          className={cn(
+            'shrink-0 rounded-lg object-cover',
+            size === 'empty' ? 'mx-auto mb-4 h-12 w-12' : 'mt-0.5 h-8 w-8'
+          )}
+        />
+      );
+    }
     return (
       <div
         role='img'
@@ -302,6 +331,15 @@ export function WorkConversation({
   const viewportRef = useRef<HTMLDivElement>(null);
   const followTailRef = useRef(true);
   const [showNewActivity, setShowNewActivity] = useState(false);
+  const personas = useChatStore(state => state.personas);
+  // Hired agents carry personaId; a plain task whose model is a persona
+  // carries it in the model key. Either way the persona fronts the replies.
+  const personaId =
+    task.personaId ??
+    (task.model?.startsWith('persona:')
+      ? task.model.slice('persona:'.length)
+      : null);
+  const taskPersona = personaId ? (personas[personaId] ?? null) : null;
   const messages = useMemo(
     () =>
       [...(task.messages || [])].sort(
@@ -401,7 +439,7 @@ export function WorkConversation({
         <div className='mx-auto flex min-h-full max-w-3xl flex-col px-4 py-6 md:px-6'>
           {messages.length === 0 && !liveRun ? (
             <div className='m-auto max-w-md text-center'>
-              <WorkAvatar role='assistant' size='empty' />
+              <WorkAvatar role='assistant' persona={taskPersona} size='empty' />
               <h2 className='text-lg font-semibold tracking-tight text-ink'>
                 {t('work.conversation.ready', {
                   defaultValue: 'Workspace ready',
@@ -506,6 +544,7 @@ export function WorkConversation({
                     <WorkAvatar
                       role={isUserMessage ? 'user' : 'assistant'}
                       user={isUserMessage ? currentUser : undefined}
+                      persona={isUserMessage ? undefined : taskPersona}
                     />
                     <div
                       className={cn(
@@ -541,7 +580,7 @@ export function WorkConversation({
                   className='flex gap-3'
                   data-testid='work-live-run-message'
                 >
-                  <WorkAvatar role='assistant' />
+                  <WorkAvatar role='assistant' persona={taskPersona} />
                   <div className='min-w-0 max-w-[92%] flex-1'>
                     <WorkLiveRunSurface run={liveRun} />
                   </div>

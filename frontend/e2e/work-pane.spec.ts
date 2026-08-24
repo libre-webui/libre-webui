@@ -375,6 +375,11 @@ test('hires a persona as a pinned agent with avatar and status blurb', async ({
   await expect(
     page.locator('[data-testid="sidebar-work-task-item"][data-agent="true"]')
   ).toHaveCount(2);
+
+  // The agent's replies wear the persona's face (a rounded square image),
+  // not the default Libre mark.
+  const conversationAvatar = page.getByTestId('work-assistant-avatar').first();
+  await expect(conversationAvatar).toHaveAttribute('alt', 'Chief of Staff');
 });
 
 test('the Agent tab shows identity, routines, and taught skills', async ({
