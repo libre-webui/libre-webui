@@ -498,9 +498,17 @@ the only supported way for a model to leave a process running. Ordinary
 
 ### Screen (the Work Computer)
 
-<video controls preload="metadata" width="100%" src="https://s3.librewebui.org/media/work-computer-demo.mp4?v=2"></video>
+<a href="https://librewebui.org/work-computer-demo/">
+  <img
+    src="https://s3.librewebui.org/app/screenshot.webp?v=0.28.0-7070d2c8"
+    alt="Watch a Libre WebUI Work agent research imagery and build an interactive space gallery"
+    width="2814"
+    height="1748"
+    loading="lazy"
+  />
+</a>
 
-_A real, unedited run (30x, then real time): a Work agent browsing NASA's
+_[Watch the complete demonstration](https://librewebui.org/work-computer-demo/): a real, unedited run (30x, then real time) of a Work agent browsing NASA's
 image galleries on its own screen, choosing photos, then building and
 testing an interactive Three.js gallery — all from one prompt._
 

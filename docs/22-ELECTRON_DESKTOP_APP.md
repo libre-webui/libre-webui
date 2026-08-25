@@ -14,7 +14,6 @@ keywords:
     dmg installer,
     offline ai chat,
   ]
-image: /img/social/22.png
 ---
 
 # 🖥️ Desktop App
