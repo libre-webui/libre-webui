@@ -329,7 +329,7 @@ test('the skills page lists the manifest the model would see', async ({
   await mockSkillsApi(page, [seededSkill]);
 
   await page.goto('/');
-  await openSettingsTab(page, 'Skills');
+  await openSettingsTab(page, 'skills');
   await expect(page.getByTestId('skills-page')).toBeVisible();
 
   const row = page.getByTestId('skill-row');
@@ -348,7 +348,7 @@ test('the skills page explains itself when nothing is saved yet', async ({
   await mockSkillsApi(page, []);
 
   await page.goto('/');
-  await openSettingsTab(page, 'Skills');
+  await openSettingsTab(page, 'skills');
   await expect(page.getByTestId('skills-page')).toBeVisible();
   await expect(page.getByTestId('skill-row')).toHaveCount(0);
   await expect(page.getByText('No skills yet')).toBeVisible();
@@ -361,7 +361,7 @@ test('a skill is disabled from the row switch and deleted behind a confirmation'
   const skillsApi = await mockSkillsApi(page, [seededSkill]);
 
   await page.goto('/');
-  await openSettingsTab(page, 'Skills');
+  await openSettingsTab(page, 'skills');
   const row = page.getByTestId('skill-row');
   await expect(row).toBeVisible();
 
@@ -400,7 +400,7 @@ test('skills manage manifest fields and version history through the UI', async (
   const skillsApi = await mockSkillsApi(page, []);
 
   await page.goto('/');
-  await openSettingsTab(page, 'Skills');
+  await openSettingsTab(page, 'skills');
   await expect(page.getByTestId('skills-page')).toBeVisible();
 
   // The manifest fields are what the model sees before it loads anything.
@@ -493,7 +493,7 @@ test('a skill imports from a remote store URL through the modal', async ({
   });
 
   await page.goto('/');
-  await openSettingsTab(page, 'Skills');
+  await openSettingsTab(page, 'skills');
   await page.getByTestId('skill-import-url').click();
 
   const modal = page.getByTestId('skill-import-url-modal');
@@ -538,7 +538,7 @@ test('a skill folder imports SKILL.md with its companion files', async ({
   fs.writeFileSync(path.join(folder, 'logo.png'), Buffer.from([0x89, 0x50]));
 
   await page.goto('/');
-  await openSettingsTab(page, 'Skills');
+  await openSettingsTab(page, 'skills');
   await page.getByTestId('skill-import-folder-input').setInputFiles(folder);
 
   await expect(page.getByTestId('skill-row')).toHaveCount(1);
@@ -562,7 +562,7 @@ test('the skill modal manages bundled companion files', async ({ page }) => {
   const mocks = await mockSkillsApi(page, [seededSkill]);
 
   await page.goto('/');
-  await openSettingsTab(page, 'Skills');
+  await openSettingsTab(page, 'skills');
   await page.getByTestId('skill-edit').click();
   await expect(page.getByTestId('skill-files')).toBeVisible();
 

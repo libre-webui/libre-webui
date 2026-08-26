@@ -2122,6 +2122,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                         return (
                           <button
                             key={tab.id}
+                            data-testid={`settings-tab-${tab.id}`}
                             onClick={() => setActiveTab(tab.id)}
                             className={cn(
                               'flex h-9 shrink-0 items-center gap-2 rounded-xl px-3 text-start transition-colors duration-150 touch-manipulation outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 sm:w-full',

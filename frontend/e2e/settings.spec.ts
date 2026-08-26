@@ -17,6 +17,11 @@
 
 import { expect, test, type Page } from '@playwright/test';
 import { mockLibreWebUiApi } from './lib/mockApi';
+import {
+  openSettingsModal,
+  openSettingsTab,
+  selectSettingsTab,
+} from './lib/settingsTab';
 
 const providerWorkspaceSystemInfo = {
   requiresAuth: true,
@@ -91,9 +96,8 @@ async function openPluginSettings(page: Page) {
   });
   await page.goto('/chat');
   await expect(page.getByRole('textbox', { name: 'Message...' })).toBeVisible();
-  await page.keyboard.press('Control+,');
-  await page.getByRole('tab', { name: 'Plugins' }).click();
-  await expect(page.getByTestId('provider-workspace')).toBeVisible();
+  const panel = await openSettingsTab(page, 'plugins');
+  await expect(panel.getByTestId('provider-workspace')).toBeVisible();
 }
 
 test('settings modal lazy-loads and switches languages from async locale chunks', async ({
@@ -133,10 +137,10 @@ test('vision model selection persists the exact provider-qualified model', async
   await page.goto('/chat');
   await expect(page.getByRole('textbox', { name: 'Message...' })).toBeVisible();
 
-  await page.keyboard.press('Control+,');
-  await page.getByRole('tab', { name: 'Model', exact: true }).click();
+  const settingsPanel = await openSettingsTab(page, 'models');
 
-  const visionModel = page.getByTestId('vision-model-select');
+  const visionModel = settingsPanel.getByTestId('vision-model-select');
+  await expect(visionModel).toBeVisible();
   await visionModel.selectOption({ label: 'gpt-cloud · OpenAI Cloud' });
 
   await expect
@@ -153,11 +157,10 @@ test('vision model selection persists the exact provider-qualified model', async
 
   await page.reload();
   await expect(page.getByRole('textbox', { name: 'Message...' })).toBeVisible();
-  await page.keyboard.press('Control+,');
-  await page.getByRole('tab', { name: 'Model', exact: true }).click();
-  await expect(page.getByTestId('vision-model-select')).toHaveValue(
-    'plugin:openai-cloud:gpt-cloud'
-  );
+  const reloadedSettingsPanel = await openSettingsTab(page, 'models');
+  await expect(
+    reloadedSettingsPanel.getByTestId('vision-model-select')
+  ).toHaveValue('plugin:openai-cloud:gpt-cloud');
 });
 
 test('provider workspace searches, selects, and collapses configuration on provider change', async ({
@@ -595,9 +598,9 @@ test('admin provider settings are collapsed, inherited, sparse, and retryable', 
   });
   await page.goto('/chat');
   await expect(page.getByRole('textbox', { name: 'Message...' })).toBeVisible();
-  await page.keyboard.press('Control+,');
+  const settingsPanel = await openSettingsModal(page);
 
-  await page.getByRole('tab', { name: 'Generation', exact: true }).click();
+  await selectSettingsTab(settingsPanel, 'generation');
   const generationDisclosure = page.getByRole('button', {
     name: /Advanced generation settings/,
   });
@@ -607,7 +610,7 @@ test('admin provider settings are collapsed, inherited, sparse, and retryable', 
   await expect(generationDisclosure).toHaveAttribute('aria-expanded', 'true');
   await expect(page.getByText(/^Temperature/)).toBeVisible();
 
-  await page.getByRole('tab', { name: 'Plugins' }).click();
+  await selectSettingsTab(settingsPanel, 'plugins');
   await expect(
     page.getByRole('button', { name: 'Upload Plugin', exact: true })
   ).toBeVisible();

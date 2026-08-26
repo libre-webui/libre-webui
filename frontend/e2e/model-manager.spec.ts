@@ -36,7 +36,7 @@ test('cloud library pulls append the Ollama cloud suffix automatically', async (
   });
 
   await page.goto('/');
-  await openSettingsTab(page, 'Models');
+  await openSettingsTab(page, 'model-manager');
 
   await page.getByRole('button', { name: /browse library/i }).click();
   await page.getByRole('button', { name: /^cloud$/i }).click();
