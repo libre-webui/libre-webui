@@ -1,6 +1,7 @@
 name: Docker Build Test and Push
 
 on:
+  workflow_dispatch:
   push:
     branches: [main, dev]
     tags: ['v*']
@@ -14,6 +15,9 @@ env:
 
 jobs:
   build:
+    if: >-
+      github.event_name != 'workflow_dispatch' ||
+      github.ref == 'refs/heads/dev'
     strategy:
       fail-fast: false
       matrix:

@@ -613,6 +613,20 @@ test('Docker builds gate pull requests into every branch without publishing', ()
   assert.doesNotMatch(dockerWorkflow, /pull_request_target:/);
 });
 
+test('Docker workflow limits manual publishing to the dev branch', () => {
+  const triggerStart = dockerWorkflow.indexOf('\non:\n');
+  const environmentStart = dockerWorkflow.indexOf('\nenv:\n');
+  assert.notEqual(triggerStart, -1);
+  assert.notEqual(environmentStart, -1);
+
+  const triggers = dockerWorkflow.slice(triggerStart, environmentStart);
+  assert.match(triggers, /^  workflow_dispatch:\s*$/m);
+  assert.match(
+    dockerWorkflow,
+    /^  build:\n    if: >-\n      github\.event_name != 'workflow_dispatch' \|\|\n      github\.ref == 'refs\/heads\/dev'$/m
+  );
+});
+
 test('socket-proxy Compose variant keeps the Docker socket out of the app', () => {
   const compose = fs.readFileSync(
     path.join(repoRoot, 'docker-compose.socket-proxy.yml'),
