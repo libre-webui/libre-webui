@@ -112,6 +112,7 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha,scope=build-${{ steps.platform.outputs.name }}
           cache-to: type=gha,mode=max,scope=build-${{ steps.platform.outputs.name }}
+          no-cache-filters: runner
           build-args: |
             APP_VERSION=${{ steps.version.outputs.version }}
           outputs: type=image,"name=${{ env.GHCR_REGISTRY }}/${{ env.IMAGE_NAME }},${{ env.DOCKERHUB_REGISTRY }}/${{ env.DOCKERHUB_USERNAME }}/libre-webui",push-by-digest=true,name-canonical=true,push=${{ github.event_name != 'pull_request' }}

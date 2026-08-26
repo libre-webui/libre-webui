@@ -627,6 +627,22 @@ test('Docker workflow limits manual publishing to the dev branch', () => {
   );
 });
 
+test('Docker publishing refreshes runtime security updates', () => {
+  const buildStart = dockerWorkflow.indexOf(
+    '      - name: Build and push by digest\n'
+  );
+  const exportStart = dockerWorkflow.indexOf(
+    '      # Export digest\n',
+    buildStart
+  );
+  assert.notEqual(buildStart, -1);
+  assert.notEqual(exportStart, -1);
+
+  const buildStep = dockerWorkflow.slice(buildStart, exportStart);
+  assert.match(buildStep, /uses: docker\/build-push-action@v7/);
+  assert.match(buildStep, /^          no-cache-filters: runner$/m);
+});
+
 test('socket-proxy Compose variant keeps the Docker socket out of the app', () => {
   const compose = fs.readFileSync(
     path.join(repoRoot, 'docker-compose.socket-proxy.yml'),
