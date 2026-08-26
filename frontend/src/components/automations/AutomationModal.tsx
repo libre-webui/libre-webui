@@ -134,7 +134,7 @@ function AutomationModalForm({
     return () => {
       cancelled = true;
     };
-  }, [target]);
+  }, [target, taskBound]);
 
   const valid =
     name.trim().length > 0 &&

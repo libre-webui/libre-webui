@@ -598,6 +598,50 @@ test('the Agent tab shows identity, routines, and taught skills', async ({
   await expect(page.getByTestId('work-screen')).toBeVisible();
 });
 
+test('clears a selected persona removed by a later model refresh', async ({
+  page,
+}) => {
+  const personas = [
+    {
+      id: 'persona-1',
+      name: 'Chief of Staff',
+      description: 'Keeps the inbox at zero.',
+      model: 'llama3.2:3b',
+      parameters: { system_prompt: 'Track the inbox.' },
+      user_id: 'mock-user',
+      created_at: createdAt,
+      updated_at: createdAt,
+    },
+    {
+      id: 'persona-2',
+      name: 'Researcher',
+      description: 'Compiles research notes.',
+      model: 'llama3.2:3b',
+      parameters: { system_prompt: 'Research carefully.' },
+      user_id: 'mock-user',
+      created_at: createdAt,
+      updated_at: createdAt,
+    },
+  ];
+  await mockLibreWebUiApi(page, { personas });
+  await page.goto('/work');
+
+  const personaSelect = page.getByTestId('work-persona');
+  await personaSelect.selectOption('persona-1');
+  await expect(personaSelect).toHaveValue('persona-1');
+
+  personas.splice(0, 1);
+  await page.evaluate(() => {
+    window.dispatchEvent(new Event('libre:models-changed'));
+  });
+
+  await expect(personaSelect).toHaveValue('');
+  await expect(personaSelect.locator('option')).toHaveText([
+    'No persona (one-off task)',
+    'Researcher',
+  ]);
+});
+
 test('an agent shows an unread dot until its task is opened', async ({
   page,
 }) => {
@@ -638,7 +682,32 @@ test('an agent shows an unread dot until its task is opened', async ({
 test('conversation file chips open the written file in the workspace', async ({
   page,
 }) => {
+  const fileContentRequests: string[] = [];
+  page.on('request', request => {
+    const url = new URL(request.url());
+    const match = url.pathname.match(/\/work\/tasks\/([^/]+)\/file$/);
+    if (request.method() !== 'GET' || !match) return;
+    fileContentRequests.push(
+      `${decodeURIComponent(match[1])}:${url.searchParams.get('path') ?? ''}`
+    );
+  });
+  const settleRouteEffects = async () => {
+    await page.evaluate(
+      () =>
+        new Promise<void>(resolve => {
+          requestAnimationFrame(() => {
+            requestAnimationFrame(() => resolve());
+          });
+        })
+    );
+    await page.waitForLoadState('networkidle');
+  };
   const chipTask = task('chip-task', 'Landing page', 'The page is written.');
+  const otherTask = task(
+    'other-chip-task',
+    'Other landing page',
+    'No file has been opened here.'
+  );
   chipTask.messages.splice(
     1,
     0,
@@ -682,7 +751,7 @@ test('conversation file chips open the written file in the workspace', async ({
     } as (typeof chipTask.messages)[number]
   );
   await mockLibreWebUiApi(page, {
-    workTasks: [chipTask],
+    workTasks: [chipTask, otherTask],
     workFiles: {
       'chip-task': [
         {
@@ -693,9 +762,19 @@ test('conversation file chips open the written file in the workspace', async ({
           modifiedAt: createdAt,
         },
       ],
+      'other-chip-task': [
+        {
+          path: 'src/index.html',
+          name: 'index.html',
+          type: 'file',
+          size: 22,
+          modifiedAt: createdAt,
+        },
+      ],
     },
     workFileContents: {
       'chip-task:src/index.html': '<main>calm city</main>',
+      'other-chip-task:src/index.html': '<main>other city</main>',
     },
   });
 
@@ -716,6 +795,32 @@ test('conversation file chips open the written file in the workspace', async ({
   await expect(page.getByTestId('work-file-editor')).toHaveValue(
     '<main>calm city</main>'
   );
+  await expect
+    .poll(() => fileContentRequests)
+    .toEqual(['chip-task:src/index.html']);
+
+  // The request belongs to the route visit where the chip was clicked. A
+  // pushed navigation to a task with the same path must not open its file.
+  await page.keyboard.press('ControlOrMeta+k');
+  await page.getByTestId('command-palette-input').fill('Other landing page');
+  await page
+    .getByTestId('command-palette')
+    .getByRole('button', { name: /Other landing page/ })
+    .click();
+  await expect(page).toHaveURL(/\/work\/other-chip-task$/);
+  await expect(page.getByText('No file has been opened here.')).toBeVisible();
+  await settleRouteEffects();
+  expect(fileContentRequests).toEqual(['chip-task:src/index.html']);
+  await expect(page.getByTestId('work-file-editor')).toHaveCount(0);
+
+  // Browser Back restores the original history entry and its location key;
+  // the request must nevertheless stay consumed until another chip click.
+  await page.goBack();
+  await expect(page).toHaveURL(/\/work\/chip-task$/);
+  await expect(page.getByText('The page is written.')).toBeVisible();
+  await settleRouteEffects();
+  expect(fileContentRequests).toEqual(['chip-task:src/index.html']);
+  await expect(page.getByTestId('work-file-editor')).toHaveCount(0);
 });
 
 test('the Work composer takes dictation through the speech API', async ({

@@ -83,6 +83,15 @@ type ScreenState = 'idle' | 'starting' | 'connected' | 'disconnected';
 type ScreenMode = 'view' | 'control';
 type TeachPhase = 'idle' | 'recording' | 'naming' | 'saving';
 
+interface ScreenConnection {
+  taskId: string;
+  active: boolean;
+  attempt: number;
+  mode: ScreenMode;
+  state: ScreenState;
+  error: string | null;
+}
+
 const CONTROL_STATE_POLL_MS = 3_000;
 /** Renew well inside the lease TTL (the server holds leases for 2 min). */
 const CONTROL_RENEW_MS = 60_000;
@@ -98,10 +107,52 @@ export function WorkspaceScreen({
   const { t } = useTranslation();
   const mountRef = useRef<HTMLDivElement | null>(null);
   const rfbRef = useRef<RfbClient | null>(null);
-  const [state, setState] = useState<ScreenState>('idle');
   const [mode, setMode] = useState<ScreenMode>('view');
-  const [error, setError] = useState<string | null>(null);
   const [attempt, setAttempt] = useState(0);
+  const [connection, setConnection] = useState<ScreenConnection>(() => ({
+    taskId,
+    active,
+    attempt,
+    mode,
+    state: active ? 'starting' : 'idle',
+    error: null,
+  }));
+  // Connection status belongs to one exact lifecycle. Reset it during render
+  // when that lifecycle changes so the next connection never paints stale
+  // status from the previous task, activation, retry, or control mode.
+  const connectionIsCurrent =
+    connection.taskId === taskId &&
+    connection.active === active &&
+    connection.attempt === attempt &&
+    connection.mode === mode;
+  const currentConnection: ScreenConnection = connectionIsCurrent
+    ? connection
+    : {
+        taskId,
+        active,
+        attempt,
+        mode,
+        state: active ? 'starting' : 'idle',
+        error: null,
+      };
+  if (!connectionIsCurrent) setConnection(currentConnection);
+  const { state, error } = currentConnection;
+  const updateConnection = useCallback(
+    (update: Partial<Pick<ScreenConnection, 'state' | 'error'>>) => {
+      setConnection(current => {
+        if (
+          current.taskId !== taskId ||
+          current.active !== active ||
+          current.attempt !== attempt ||
+          current.mode !== mode
+        ) {
+          return current;
+        }
+        return { ...current, ...update };
+      });
+    },
+    [taskId, active, attempt, mode]
+  );
   const [control, setControl] = useState<WorkScreenControlState>({
     agentWaiting: false,
   });
@@ -114,10 +165,14 @@ export function WorkspaceScreen({
   const teachScreenRef = useRef<{ width: number; height: number } | null>(null);
   const [audioOn, setAudioOn] = useState(false);
   const audioPlayerRef = useRef<WorkAudioPlayer | null>(null);
+  // A stop also cancels any start whose awaited player does not exist yet.
+  const audioGenerationRef = useRef(0);
 
   const stopAudio = useCallback(() => {
-    audioPlayerRef.current?.stop();
+    audioGenerationRef.current += 1;
+    const player = audioPlayerRef.current;
     audioPlayerRef.current = null;
+    player?.stop();
     setAudioOn(false);
   }, []);
 
@@ -126,16 +181,27 @@ export function WorkspaceScreen({
       stopAudio();
       return;
     }
+    const generation = audioGenerationRef.current + 1;
+    audioGenerationRef.current = generation;
     try {
       const url = await workAudioUrl(taskId);
+      if (audioGenerationRef.current !== generation) return;
       // Created inside the click handler so the AudioContext starts under a
       // user gesture, as browsers require.
-      audioPlayerRef.current = await startWorkAudioPlayer(url, () => {
+      const player = await startWorkAudioPlayer(url, () => {
+        if (audioGenerationRef.current !== generation) return;
+        audioGenerationRef.current += 1;
         audioPlayerRef.current = null;
         setAudioOn(false);
       });
+      if (audioGenerationRef.current !== generation) {
+        player.stop();
+        return;
+      }
+      audioPlayerRef.current = player;
       setAudioOn(true);
     } catch (audioError) {
+      if (audioGenerationRef.current !== generation) return;
       logger.warn('Work screen audio failed to start:', audioError);
       stopAudio();
     }
@@ -144,9 +210,9 @@ export function WorkspaceScreen({
   // Sound follows the picture: leaving the tab or losing the connection
   // stops playback.
   useEffect(() => {
-    if (!active || state !== 'connected') stopAudio();
+    if (!active || state !== 'connected') return;
+    return stopAudio;
   }, [active, state, stopAudio]);
-  useEffect(() => stopAudio, [taskId, stopAudio]);
 
   const disconnect = useCallback(() => {
     try {
@@ -158,15 +224,9 @@ export function WorkspaceScreen({
   }, []);
 
   useEffect(() => {
-    if (!active) {
-      disconnect();
-      setState('idle');
-      return;
-    }
+    if (!active) return;
     let disposed = false;
     let renewTimer: ReturnType<typeof setInterval> | undefined;
-    setState('starting');
-    setError(null);
     (async () => {
       try {
         const session = await startWorkComputer(taskId);
@@ -195,10 +255,10 @@ export function WorkspaceScreen({
         rfb.scaleViewport = true;
         rfb.background = 'transparent';
         rfb.addEventListener('connect', () => {
-          if (!disposed) setState('connected');
+          if (!disposed) updateConnection({ state: 'connected' });
         });
         rfb.addEventListener('disconnect', () => {
-          if (!disposed) setState('disconnected');
+          if (!disposed) updateConnection({ state: 'disconnected' });
         });
         rfbRef.current = rfb;
       } catch (screenError) {
@@ -207,8 +267,10 @@ export function WorkspaceScreen({
         const apiError = screenError as {
           response?: { data?: { message?: string } };
         };
-        setError(apiError.response?.data?.message ?? null);
-        setState('disconnected');
+        updateConnection({
+          error: apiError.response?.data?.message ?? null,
+          state: 'disconnected',
+        });
         if (mode === 'control') setMode('view');
       }
     })();
@@ -222,7 +284,7 @@ export function WorkspaceScreen({
         releaseWorkScreenControl(taskId).catch(() => undefined);
       }
     };
-  }, [taskId, active, attempt, mode, disconnect]);
+  }, [taskId, active, attempt, mode, disconnect, updateConnection]);
 
   // Who is driving, and is the agent asking for a human? Polled only while
   // the pane is open; the mini thumbnail has no control UI to feed.
@@ -243,7 +305,7 @@ export function WorkspaceScreen({
       disposed = true;
       clearInterval(timer);
     };
-  }, [taskId, active]);
+  }, [taskId, active, variant]);
 
   // Teach mode: observe the demonstration's pointer/key/wheel events at
   // remote-screen coordinates while the user drives. Listeners never
@@ -344,7 +406,6 @@ export function WorkspaceScreen({
   }, [teachPhase, state, mode, taskId]);
 
   const handleTakeOver = useCallback(() => {
-    setError(null);
     setMode('control');
   }, []);
 
@@ -355,7 +416,6 @@ export function WorkspaceScreen({
 
   const handleTeachStart = useCallback(() => {
     setTeachSavedName(null);
-    setError(null);
     setTeachPhase('recording');
     setMode('control');
   }, []);
@@ -402,10 +462,12 @@ export function WorkspaceScreen({
       const apiError = saveError as {
         response?: { data?: { message?: string } };
       };
-      setError(apiError.response?.data?.message ?? null);
+      updateConnection({
+        error: apiError.response?.data?.message ?? null,
+      });
       setTeachPhase('naming');
     }
-  }, [taskId, teachName]);
+  }, [taskId, teachName, updateConnection]);
 
   const driving = mode === 'control' && state === 'connected';
   const someoneElseDriving =

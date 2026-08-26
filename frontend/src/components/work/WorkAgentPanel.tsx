@@ -98,8 +98,13 @@ export function WorkAgentPanel({
 
   useEffect(() => {
     if (!active) return;
-    void loadRoutines();
-    void loadSkills();
+    // Start shared loaders after the activation commit; their state updates
+    // then arrive from the external request lifecycle.
+    const timer = window.setTimeout(() => {
+      void loadRoutines();
+      void loadSkills();
+    }, 0);
+    return () => window.clearTimeout(timer);
   }, [active, loadRoutines, loadSkills]);
 
   const toggleRoutine = async (routine: Automation) => {

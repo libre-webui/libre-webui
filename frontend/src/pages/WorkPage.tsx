@@ -197,25 +197,44 @@ export default function WorkPage() {
     mobileSurfaceState.locationKey === location.key
       ? mobileSurfaceState.value
       : 'conversation';
-  const setMobileSurface = (value: MobileSurface) =>
-    setMobileSurfaceState({ locationKey: location.key, value });
+  const setMobileSurface = useCallback(
+    (value: MobileSurface) =>
+      setMobileSurfaceState({ locationKey: location.key, value }),
+    [location.key]
+  );
   const [workspaceDirty, setWorkspaceDirty] = useState(false);
   // A conversation file chip routing into the workspace pane's Files tab.
   const [openFileRequest, setOpenFileRequest] = useState<{
+    locationKey: string;
+    taskId: string;
     path: string;
     nonce: number;
   } | null>(null);
+  // A chip click is a one-visit event. Discard it during render so a newly
+  // keyed workspace cannot observe the old request before effects run.
+  const currentOpenFileRequest =
+    openFileRequest?.locationKey === location.key &&
+    openFileRequest.taskId === taskId
+      ? openFileRequest
+      : null;
+  if (openFileRequest && !currentOpenFileRequest) {
+    setOpenFileRequest(null);
+  }
   const openWorkspaceFile = useCallback(
     (path: string) => {
+      if (!taskId) return;
       setMobileSurface('workspace');
       setOpenFileRequest(previous => ({
+        locationKey: location.key,
+        taskId,
         path,
-        nonce: (previous?.nonce ?? 0) + 1,
+        nonce:
+          previous?.locationKey === location.key && previous.taskId === taskId
+            ? previous.nonce + 1
+            : 1,
       }));
     },
-    // setMobileSurface is a stable setState wrapper defined above.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    []
+    [location.key, setMobileSurface, taskId]
   );
   const [hostPath, setHostPath] = useState('');
   const hostWorkspacesEnabled = capabilities?.hostWorkspaces?.enabled === true;
@@ -236,6 +255,11 @@ export default function WorkPage() {
       ),
     [personas]
   );
+  // Model refreshes can replace the shared persona catalog while this page
+  // stays mounted. Retry this render with an empty stale selection.
+  if (personaId && personaList.length > 0 && !personas[personaId]) {
+    setPersonaId('');
+  }
   // The picker only appears on the landing view, so refresh the list every
   // time the user returns there: an administrator may have added or deleted
   // policies since the last visit, and a stale selected id would 400 on
@@ -265,10 +289,6 @@ export default function WorkPage() {
     if (!onLanding) return;
     void loadPersonas().catch(() => {});
   }, [onLanding, loadPersonas]);
-  useEffect(() => {
-    if (!personaId) return;
-    if (personaList.length > 0 && !personas[personaId]) setPersonaId('');
-  }, [personaId, personaList.length, personas]);
   // One-click Work Computer onboarding: the backend builds the bundled GUI
   // image and creates the policy; this just presses the button and polls.
   const [computerSetupBusy, setComputerSetupBusy] = useState(false);
@@ -415,9 +435,6 @@ export default function WorkPage() {
       return;
     }
     selectTask(taskId);
-    // A pending chip request from the previous task must not fire on the
-    // freshly mounted pane of the next one.
-    setOpenFileRequest(null);
     void loadTask(taskId).catch(() => undefined);
     void loadFiles(taskId, '').catch(() => undefined);
   }, [taskId, loadFiles, loadTask, selectTask]);
@@ -1547,7 +1564,11 @@ export default function WorkPage() {
                 <WorkspacePane
                   key={selectedTask.id}
                   task={selectedTask}
-                  openFileRequest={openFileRequest}
+                  openFileRequest={
+                    currentOpenFileRequest?.taskId === selectedTask.id
+                      ? currentOpenFileRequest
+                      : null
+                  }
                   persona={
                     selectedTask.personaId
                       ? personas[selectedTask.personaId]
