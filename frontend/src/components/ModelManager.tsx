@@ -15,7 +15,13 @@
  * limitations under the License.
  */
 
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, {
+  useState,
+  useEffect,
+  useMemo,
+  useCallback,
+  useRef,
+} from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import {
@@ -50,6 +56,10 @@ import { HuggingFaceSection } from './model-manager/HuggingFaceSection';
 import { LocalModelsSection } from './model-manager/LocalModelsSection';
 import { ModelLibrarySection } from './model-manager/ModelLibrarySection';
 import { PullModelSection } from './model-manager/PullModelSection';
+import {
+  BulkOperationsSection,
+  type BulkModelUpdateProgress,
+} from './model-manager/BulkOperationsSection';
 import type {
   LibraryModel,
   ModelDetails,
@@ -82,9 +92,21 @@ const normalizeCloudPullName = (modelName: string): string => {
   return `${baseName}:${tag}-cloud`;
 };
 
-export const ModelManager: React.FC = () => {
+interface ModelManagerProps {
+  updatingAllModels: boolean;
+  updateProgress: BulkModelUpdateProgress | null;
+  onUpdateAllModels: () => void;
+}
+
+export const ModelManager: React.FC<ModelManagerProps> = ({
+  updatingAllModels,
+  updateProgress,
+  onUpdateAllModels,
+}) => {
   const { t } = useTranslation();
   const { user, systemInfo } = useAuthStore();
+  const isSettingsAdmin =
+    user?.role === 'admin' || systemInfo?.requiresAuth === false;
   // An administrator can open model downloads to all users; the backend
   // reports whether this account may pull and enforces it on every request.
   const { data: modelAccess } = useQuery({
@@ -95,10 +117,7 @@ export const ModelManager: React.FC = () => {
     },
     staleTime: 60_000,
   });
-  const canInstallModels =
-    user?.role === 'admin' ||
-    systemInfo?.requiresAuth === false ||
-    modelAccess?.allowed === true;
+  const canInstallModels = isSettingsAdmin || modelAccess?.allowed === true;
   const queryClient = useQueryClient();
   const [libraryFilter, setLibraryFilter] = useState<string>('all');
   const [librarySearch, setLibrarySearch] = useState('');
@@ -211,6 +230,15 @@ export const ModelManager: React.FC = () => {
   const runningModels: RunningModel[] = ollamaState?.runningModels ?? [];
   const ollamaVersion = ollamaState?.ollamaVersion ?? null;
   const isHealthy = ollamaState?.isHealthy ?? null;
+  const wasUpdatingAllModels = useRef(updatingAllModels);
+
+  useEffect(() => {
+    const updateFinished = wasUpdatingAllModels.current && !updatingAllModels;
+    wasUpdatingAllModels.current = updatingAllModels;
+    if (updateFinished) {
+      void refetchOllamaState();
+    }
+  }, [refetchOllamaState, updatingAllModels]);
 
   const loadData = useCallback(async () => {
     await refetchOllamaState();
@@ -870,6 +898,15 @@ export const ModelManager: React.FC = () => {
         }}
         onDeleteModel={handleDeleteModel}
       />
+
+      {isSettingsAdmin && (
+        <BulkOperationsSection
+          modelCount={models.length}
+          updating={updatingAllModels}
+          progress={updateProgress}
+          onUpdateAll={onUpdateAllModels}
+        />
+      )}
 
       {/* Advanced Actions Section */}
       <div

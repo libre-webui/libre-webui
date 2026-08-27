@@ -34,14 +34,6 @@ interface SelectOption {
   label: string;
 }
 
-interface UpdateProgress {
-  current: number;
-  total: number;
-  modelName: string;
-  status: 'starting' | 'success' | 'error';
-  error?: string;
-}
-
 interface SettingsModelsTabProps {
   models: OllamaModel[];
   selectedModel: string;
@@ -55,15 +47,12 @@ interface SettingsModelsTabProps {
   visionModelOptions: SelectOption[];
   currentTaskModel: string;
   autoTitleTaskModelOptions: SelectOption[];
-  updatingAllModels: boolean;
-  updateProgress: UpdateProgress | null;
   onModelChange: (event: ChangeEvent<HTMLSelectElement>) => void;
   onSystemMessageChange: (event: ChangeEvent<HTMLTextAreaElement>) => void;
   onSystemMessageSave: () => void;
   onAutoTitleChange: (autoTitle: boolean) => void;
   onAutoTitleTaskModelChange: (taskModel: string) => void;
   onVisionModelChange: (visionModel: string) => void;
-  onUpdateAllModels: () => void;
 }
 
 export function SettingsModelsTab({
@@ -79,15 +68,12 @@ export function SettingsModelsTab({
   visionModelOptions,
   currentTaskModel,
   autoTitleTaskModelOptions,
-  updatingAllModels,
-  updateProgress,
   onModelChange,
   onSystemMessageChange,
   onSystemMessageSave,
   onAutoTitleChange,
   onAutoTitleTaskModelChange,
   onVisionModelChange,
-  onUpdateAllModels,
 }: SettingsModelsTabProps) {
   const { user, systemInfo } = useAuthStore();
   const isSettingsAdmin =
@@ -270,42 +256,6 @@ export function SettingsModelsTab({
             </div>
           </div>
         </div>
-
-        <div className='mt-6'>
-          <div className='bg-white dark:bg-dark-100 rounded-lg p-4 border border-gray-200 dark:border-dark-300'>
-            <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3'>
-              {t('settings.model.bulkOperations')}
-            </label>
-            <div className='space-y-3'>
-              <div>
-                <h4 className='text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
-                  {t('settings.model.updateAll')}
-                </h4>
-                <p className='text-xs text-gray-500 dark:text-gray-400 mb-3'>
-                  {t('settings.model.updateAllDescription')}
-                </p>
-
-                {updatingAllModels && updateProgress && (
-                  <UpdateProgressPanel progress={updateProgress} />
-                )}
-
-                <Button
-                  onClick={onUpdateAllModels}
-                  variant='outline'
-                  size='sm'
-                  className='w-full'
-                  disabled={updatingAllModels || loading || models.length === 0}
-                >
-                  {updatingAllModels
-                    ? t('settings.model.updating')
-                    : t('settings.model.updateAllButton', {
-                        count: models.length,
-                      })}
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
 
       {isSettingsAdmin && (
@@ -338,66 +288,6 @@ function ModelInfoItem({ label, value, truncate = false }: ModelInfoItemProps) {
       >
         {value}
       </span>
-    </div>
-  );
-}
-
-interface UpdateProgressPanelProps {
-  progress: UpdateProgress;
-}
-
-function UpdateProgressPanel({ progress }: UpdateProgressPanelProps) {
-  const { t } = useTranslation();
-  const percent = Math.round((progress.current / progress.total) * 100);
-
-  return (
-    <div className='mb-4 space-y-3'>
-      <div className='flex items-center justify-between text-xs'>
-        <span className='text-gray-600 dark:text-dark-600 font-medium'>
-          {t('settings.model.updatingModel', {
-            name: progress.modelName,
-            current: progress.current,
-            total: progress.total,
-          })}
-        </span>
-        <span className='text-primary-600 dark:text-primary-400 font-semibold'>
-          {percent}%
-        </span>
-      </div>
-      <div className='w-full bg-gray-200 dark:bg-dark-300 rounded-full h-3 shadow-subtle'>
-        <div
-          className='bg-gradient-to-r from-primary-500 to-primary-600 dark:from-primary-400 dark:to-primary-500 h-3 rounded-full transition-all duration-500 ease-out shadow-glow'
-          style={{
-            width: `${(progress.current / progress.total) * 100}%`,
-          }}
-        />
-      </div>
-      <div className='text-xs flex items-center justify-between'>
-        <span className='text-gray-500 dark:text-dark-500'>
-          {t('settings.model.status')}:{' '}
-          {progress.status === 'starting' ? (
-            <span className='text-accent-500 dark:text-accent-400'>
-              {t('settings.model.statusStarting')}
-            </span>
-          ) : progress.status === 'success' ? (
-            <span className='text-success-600 dark:text-success-500'>
-              {t('settings.model.statusComplete')}
-            </span>
-          ) : progress.status === 'error' ? (
-            <span className='text-error-600 dark:text-error-500'>
-              {t('settings.model.statusError')}: {progress.error}
-            </span>
-          ) : (
-            ''
-          )}
-        </span>
-        <span className='text-gray-400 dark:text-dark-600 text-[10px]'>
-          {t('settings.model.modelsProgress', {
-            current: progress.current,
-            total: progress.total,
-          })}
-        </span>
-      </div>
     </div>
   );
 }

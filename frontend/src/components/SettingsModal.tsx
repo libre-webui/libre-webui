@@ -1434,7 +1434,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     }
   };
 
-  const handleUpdateAllModels = async () => {
+  const handleUpdateAllModels = () => {
     setUpdatingAllModels(true);
     setUpdateProgress(null);
 
@@ -1446,7 +1446,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         setUpdatingAllModels(false);
         setUpdateProgress(null);
         toast.success(t('settings.model.allModelsUpdated'));
-        loadModels(); // Refresh models list after update
       },
       error => {
         setUpdatingAllModels(false);
@@ -1684,7 +1683,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     shortcuts: 'keyboard keys hotkeys shortcut command palette',
     sessions: 'sessions devices sign out logout revoke security login',
     'api-keys': 'api key token scope secret bearer security integration',
-    'model-manager': 'models download pull delete ollama library huggingface',
+    'model-manager':
+      `models download pull update bulk refresh delete ollama library huggingface bulk operations update all models ${t(
+        'settings.model.bulkOperations'
+      )} ${t('settings.model.updateAll')}`.toLowerCase(),
     prompts: 'prompts slash command template variables library rollback',
     skills: 'skills manifest instructions slug load_skill rollback',
     tools: 'tools mcp openapi server credential approval function calling',
@@ -1825,15 +1827,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             visionModelOptions={visionModelOptions}
             currentTaskModel={currentTaskModel}
             autoTitleTaskModelOptions={autoTitleTaskModelOptions}
-            updatingAllModels={updatingAllModels}
-            updateProgress={updateProgress}
             onModelChange={handleModelChange}
             onSystemMessageChange={handleSystemMessageChange}
             onSystemMessageSave={handleSystemMessageSave}
             onAutoTitleChange={handleAutoTitleChange}
             onAutoTitleTaskModelChange={handleAutoTitleTaskModelChange}
             onVisionModelChange={handleVisionModelChange}
-            onUpdateAllModels={handleUpdateAllModels}
           />
         );
 
@@ -1904,7 +1903,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               title={t('models.title')}
               description={t('models.subtitle')}
             />
-            <ModelManager />
+            <ModelManager
+              updatingAllModels={updatingAllModels}
+              updateProgress={updateProgress}
+              onUpdateAllModels={handleUpdateAllModels}
+            />
           </div>
         );
 
