@@ -383,19 +383,11 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
             ? t('personaForm.title.edit')
             : t('personaForm.title.create')}
         </h1>
-        <div className='flex items-center gap-4 mt-1'>
-          <p className='text-gray-600 dark:text-dark-600'>
-            {persona
-              ? t('personaForm.subtitle.edit')
-              : t('personaForm.subtitle.create')}
-          </p>
-          {lastSaved && (
-            <div className='flex items-center gap-2 text-sm text-green-600 dark:text-green-400'>
-              <div className='w-2 h-2 bg-green-500 rounded-full'></div>
-              {t('personaForm.saved')} {lastSaved.toLocaleTimeString()}
-            </div>
-          )}
-        </div>
+        <p className='mt-1 text-gray-600 dark:text-dark-600'>
+          {persona
+            ? t('personaForm.subtitle.edit')
+            : t('personaForm.subtitle.create')}
+        </p>
       </div>
 
       <form onSubmit={e => e.preventDefault()} className='space-y-6'>

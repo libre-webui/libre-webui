@@ -50,20 +50,25 @@ interface SidebarWorkTasksProps {
   onExpandSidebar: () => void;
 }
 
-function compactMonogram(title: string) {
-  const words = title.trim().split(/\s+/u).filter(Boolean);
-  if (words.length === 0) return '•';
-  if (words.length === 1) {
-    return Array.from(words[0]).slice(0, 2).join('').toLocaleUpperCase();
-  }
-
-  return `${Array.from(words[0])[0]}${Array.from(words[words.length - 1])[0]}`.toLocaleUpperCase();
-}
-
 interface HoverPreviewState {
   task: WorkTaskSummary;
   top: number;
   left: number;
+}
+
+function hasUnreadAgentActivity(
+  task: WorkTaskSummary,
+  selected: boolean
+): boolean {
+  return (
+    task.isAgent === true &&
+    !selected &&
+    typeof task.lastSeenAt === 'number' &&
+    task.updatedAt > task.lastSeenAt &&
+    (task.status === 'completed' ||
+      task.status === 'needs_input' ||
+      task.status === 'failed')
+  );
 }
 
 function WorkTaskHoverPreview({ preview }: { preview: HoverPreviewState }) {
@@ -135,20 +140,10 @@ export function SidebarWorkTasks({
   // store's order so positions do not jump between polls.
   const agentTasks = tasks.filter(task => task.isAgent === true);
   const adhocTasks = tasks.filter(task => task.isAgent !== true);
-  const sortedTasks = [...tasks].sort(
-    (first, second) => second.updatedAt - first.updatedAt
-  );
-  const compactTasks =
-    agentTasks.length > 0
-      ? [
-          ...[...agentTasks].sort(
-            (first, second) => second.updatedAt - first.updatedAt
-          ),
-          ...[...adhocTasks].sort(
-            (first, second) => second.updatedAt - first.updatedAt
-          ),
-        ]
-      : sortedTasks;
+  // The compact rail mirrors Chat by omitting ordinary history. Hired agents
+  // remain pinned here because their persona identity is a durable shortcut,
+  // not an unreadable abbreviation of a one-off task.
+  const compactAgentTasks = agentTasks;
 
   const [hoverPreview, setHoverPreview] = useState<HoverPreviewState | null>(
     null
@@ -270,14 +265,7 @@ export function SidebarWorkTasks({
       isAgentRow && task.personaId ? personas[task.personaId] : undefined;
     // Unread: a run reached a terminal state after the owner last opened
     // the task. Pre-migration rows (no marker) never light up.
-    const unread =
-      isAgentRow &&
-      !selected &&
-      typeof task.lastSeenAt === 'number' &&
-      task.updatedAt > task.lastSeenAt &&
-      (task.status === 'completed' ||
-        task.status === 'needs_input' ||
-        task.status === 'failed');
+    const unread = hasUnreadAgentActivity(task, selected);
     const rowControls = (
       <>
         {/* Relative time swaps for the row menu on hover. */}
@@ -501,22 +489,43 @@ export function SidebarWorkTasks({
             </button>
 
             <div
-              data-testid='sidebar-compact-work-task-list'
+              data-testid='sidebar-compact-work-agent-list'
               className='flex w-full flex-col items-center gap-1'
             >
-              {compactTasks.map(task => {
+              {compactAgentTasks.map(task => {
                 const selected = currentTaskId === task.id;
                 const status = workStatusPresentation[task.status];
+                const statusLabel = t(status.labelKey, {
+                  defaultValue: status.label,
+                });
                 const taskTitle = taskDisplayTitle(task);
+                const persona = task.personaId
+                  ? personas[task.personaId]
+                  : undefined;
+                const unread = hasUnreadAgentActivity(task, selected);
+                const accessibleLabel = [
+                  taskTitle,
+                  t('work.tasks.status', {
+                    defaultValue: 'Status: {{status}}',
+                    status: statusLabel,
+                  }),
+                  unread
+                    ? t('work.agent.unread', { defaultValue: 'New activity' })
+                    : null,
+                ]
+                  .filter(Boolean)
+                  .join('. ');
                 return (
                   <button
                     type='button'
                     key={task.id}
                     onClick={() => onSelectTask(task.id)}
-                    data-testid='sidebar-compact-work-task'
+                    data-testid='sidebar-compact-work-agent'
+                    data-task-id={task.id}
+                    data-agent='true'
                     aria-current={selected ? 'page' : undefined}
-                    aria-label={taskTitle}
-                    title={taskTitle}
+                    aria-label={accessibleLabel}
+                    title={accessibleLabel}
                     className={cn(
                       'relative flex h-12 w-12 items-center justify-center rounded-xl outline-none transition-colors focus-visible:ring-2 focus-visible:ring-primary-500/30',
                       selected
@@ -530,11 +539,35 @@ export function SidebarWorkTasks({
                         className='absolute -start-2 h-5 w-0.5 rounded-full bg-primary-500 shadow-[0_0_12px_rgb(var(--color-primary-500)/0.55)]'
                       />
                     )}
-                    <span className='font-mono text-[11px] font-semibold tracking-[-0.03em]'>
-                      {compactMonogram(taskTitle)}
-                    </span>
+                    <img
+                      src={
+                        persona
+                          ? getPersonaAvatarSrc(persona, 64)
+                          : getPersonaAvatarFallback(taskTitle, 64)
+                      }
+                      alt=''
+                      aria-hidden='true'
+                      data-testid='sidebar-compact-work-agent-avatar'
+                      onError={event =>
+                        setPersonaAvatarFallback(
+                          event.currentTarget,
+                          persona?.name ?? taskTitle,
+                          64
+                        )
+                      }
+                      className='h-9 w-9 rounded-lg object-cover'
+                    />
+                    {unread && (
+                      <span
+                        aria-hidden='true'
+                        data-testid='sidebar-compact-work-agent-unread'
+                        className='absolute end-1.5 top-1.5 h-2 w-2 rounded-full bg-primary-500 ring-2 ring-gray-100 dark:ring-dark-50'
+                      />
+                    )}
                     <span
                       aria-hidden='true'
+                      data-testid='sidebar-compact-work-agent-status'
+                      data-status={task.status}
                       className={cn(
                         'absolute bottom-1.5 end-1.5 h-2 w-2 rounded-full border-2 border-gray-100 dark:border-dark-50',
                         status.animated && 'animate-pulse',

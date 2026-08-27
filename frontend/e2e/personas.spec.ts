@@ -118,16 +118,18 @@ test('persona editor uses one primary save action without closing', async ({
   ).toBeVisible();
   await expect(form.getByText('Saved', { exact: true })).toBeVisible();
 
-  const updateRequest = page.waitForRequest(
-    request =>
-      request.method() === 'PUT' &&
-      new URL(request.url()).pathname === '/api/personas/persona-created'
+  const updateResponse = page.waitForResponse(
+    response =>
+      response.request().method() === 'PUT' &&
+      new URL(response.url()).pathname === '/api/personas/persona-created'
   );
   await save.click();
-  await updateRequest;
+  await updateResponse;
 
   expect(createRequests).toBe(1);
   expect(updateRequests).toBe(1);
+  await expect(save).toBeEnabled();
+  await expect(form.getByRole('status')).toHaveText('Saved');
   await expect(
     page.getByRole('heading', { name: 'Edit Persona' })
   ).toBeVisible();

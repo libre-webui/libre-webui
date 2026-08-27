@@ -292,6 +292,9 @@ test('creates a persistent Work task without exposing network controls', async (
 test('hires a persona as a pinned agent with avatar and status blurb', async ({
   page,
 }) => {
+  const agentAvatar = `data:image/svg+xml,${encodeURIComponent(
+    '<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64"><rect width="64" height="64" rx="14" fill="#6d28d9"/></svg>'
+  )}`;
   const agentTask = {
     ...task(
       'agent-task-1',
@@ -301,6 +304,11 @@ test('hires a persona as a pinned agent with avatar and status blurb', async ({
     isAgent: true,
     personaId: 'persona-1',
     statusBlurb: 'Inbox at zero. 2 replies ready.',
+    lastSeenAt: createdAt - 1,
+  };
+  const adhocTask = {
+    ...task('adhoc-task-1', 'One-off refactor', 'The refactor is done.'),
+    updatedAt: createdAt + 60_000,
   };
   const mock = await mockLibreWebUiApi(page, {
     personas: [
@@ -310,15 +318,13 @@ test('hires a persona as a pinned agent with avatar and status blurb', async ({
         description: 'Keeps the inbox at zero.',
         model: 'llama3.2:3b',
         parameters: { system_prompt: 'Track the inbox.' },
+        avatar: agentAvatar,
         user_id: 'mock-user',
         created_at: createdAt,
         updated_at: createdAt,
       },
     ],
-    workTasks: [
-      agentTask,
-      task('adhoc-task-1', 'One-off refactor', 'The refactor is done.'),
-    ],
+    workTasks: [agentTask, adhocTask],
     workRunResult: {
       assistantMessage: 'Reporting for duty.',
       files: [],
@@ -344,6 +350,45 @@ test('hires a persona as a pinned agent with avatar and status blurb', async ({
     'Inbox at zero. 2 replies ready.'
   );
   await expect(rows.last()).not.toHaveAttribute('data-agent', 'true');
+
+  // The collapsed rail keeps only the pinned agent and uses its persona logo.
+  // One-off Work tasks disappear here, just as chat history does.
+  await page.getByTestId('sidebar-toggle-size').click();
+  const compactAgents = page.getByTestId('sidebar-compact-work-agent');
+  await expect(compactAgents).toHaveCount(1);
+  await expect(compactAgents.first()).toHaveAccessibleName(
+    'Chief of Staff. Status: Complete. New activity'
+  );
+  await expect(compactAgents.first()).toHaveAttribute(
+    'title',
+    'Chief of Staff. Status: Complete. New activity'
+  );
+  const compactAvatar = page.getByTestId('sidebar-compact-work-agent-avatar');
+  await expect(compactAvatar).toBeVisible();
+  await expect(compactAvatar).toHaveAttribute('src', agentAvatar);
+  await expect
+    .poll(() =>
+      compactAvatar.evaluate(image => (image as HTMLImageElement).naturalWidth)
+    )
+    .toBeGreaterThan(0);
+  await expect(
+    page.getByTestId('sidebar-compact-work-agent-status')
+  ).toHaveAttribute('data-status', 'completed');
+  await expect(
+    page.getByTestId('sidebar-compact-work-agent-unread')
+  ).toBeVisible();
+  await expect(
+    page
+      .getByTestId('sidebar')
+      .getByRole('button', { name: 'One-off refactor' })
+  ).toHaveCount(0);
+  await compactAgents.first().click();
+  await expect(page).toHaveURL(/\/work\/agent-task-1$/);
+  await expect(compactAgents.first()).toHaveAttribute('aria-current', 'page');
+  await page.getByTestId('sidebar-rail-expand').click();
+  await page.goto('/work');
+  await expect(page.getByTestId('work-landing')).toBeVisible();
+  await expect(rows).toHaveCount(2);
 
   // The landing view offers the persona picker; hiring one marks the
   // created task as an agent.

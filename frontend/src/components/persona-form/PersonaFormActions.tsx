@@ -48,7 +48,11 @@ export function PersonaFormActions({
 
       <div className='flex items-center gap-3'>
         {lastSaved && (
-          <div className='flex items-center gap-1.5 text-sm text-emerald-600 dark:text-emerald-400'>
+          <div
+            role='status'
+            aria-live='polite'
+            className='flex items-center gap-1.5 text-sm text-emerald-600 dark:text-emerald-400'
+          >
             <Check className='h-4 w-4' />
             <span>{t('personaForm.saved')}</span>
           </div>

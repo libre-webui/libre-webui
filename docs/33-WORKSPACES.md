@@ -208,7 +208,9 @@ task. An agent keeps its persona across runs — the persona's name and system
 prompt are prepended to the Work system prompt (the sandbox runtime contract
 always overrides them) — and the sidebar pins agents in their own **Agents**
 group above ad-hoc tasks, each with the persona avatar, an activity indicator,
-and a one-line status.
+and a one-line status. When the sidebar is compact, only those pinned agent
+avatars remain in the rail; one-off Work tasks return when the sidebar is
+expanded.
 
 The status line has two tiers. For hired agents, one cheap no-tools model
 request at the end of a run asks for an ~8-word status ("Inbox at zero. 2
