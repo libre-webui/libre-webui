@@ -17,27 +17,20 @@
 
 import { useTranslation } from 'react-i18next';
 import { Check } from 'lucide-react';
-import type { Persona } from '@/types';
 import { Button } from '@/components/ui/Button';
 
 interface PersonaFormActionsProps {
-  persona: Persona | null;
   submitting: boolean;
-  saveAndClose: boolean;
   lastSaved: Date | null;
   onCancel: () => void;
   onSave: () => void;
-  onSaveAndClose: () => void;
 }
 
 export function PersonaFormActions({
-  persona,
   submitting,
-  saveAndClose,
   lastSaved,
   onCancel,
   onSave,
-  onSaveAndClose,
 }: PersonaFormActionsProps) {
   const { t } = useTranslation();
 
@@ -60,22 +53,10 @@ export function PersonaFormActions({
             <span>{t('personaForm.saved')}</span>
           </div>
         )}
-        <Button
-          type='button'
-          variant='outline'
-          onClick={onSave}
-          disabled={submitting}
-        >
-          {submitting && !saveAndClose
+        <Button type='button' onClick={onSave} disabled={submitting}>
+          {submitting
             ? t('personaForm.actions.saving')
             : t('personaForm.actions.save')}
-        </Button>
-        <Button type='button' onClick={onSaveAndClose} disabled={submitting}>
-          {submitting && saveAndClose
-            ? t('personaForm.actions.saving')
-            : persona
-              ? t('personaForm.actions.saveClose')
-              : t('personaForm.actions.create')}
         </Button>
       </div>
     </div>

@@ -81,7 +81,6 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
   const [embeddingModels, setEmbeddingModels] = useState<EmbeddingModel[]>([]);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [saveAndClose, setSaveAndClose] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [activeTab, setActiveTab] = useState<PersonaFormTab>('basic');
   const [wipingMemories, setWipingMemories] = useState(false);
@@ -289,9 +288,8 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
     preferences.embeddingSettings?.model,
   ]);
 
-  const handleSubmit = async (closeAfter: boolean) => {
+  const handleSubmit = async () => {
     setSubmitting(true);
-    setSaveAndClose(closeAfter);
 
     try {
       const payload: UpdatePersonaRequest = {
@@ -313,16 +311,20 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
         ? await personaApi.updatePersona(persona.id, payload)
         : await personaApi.createPersona(formData);
 
-      if (response.success) {
+      if (response.success && response.data) {
         toast.success(
           persona
             ? t('personaForm.success.updated')
             : t('personaForm.success.created')
         );
         setLastSaved(new Date());
-        if (closeAfter) onSubmit();
+        await onSubmit(response.data);
       } else {
-        toast.error(`${t('personaForm.error.saveFailed')}: ${response.error}`);
+        toast.error(
+          response.error
+            ? `${t('personaForm.error.saveFailed')}: ${response.error}`
+            : t('personaForm.error.saveFailed')
+        );
       }
     } catch (error: unknown) {
       toast.error(
@@ -330,7 +332,6 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
       );
     } finally {
       setSubmitting(false);
-      setSaveAndClose(false);
     }
   };
 
@@ -465,13 +466,10 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
         </div>
 
         <PersonaFormActions
-          persona={persona}
           submitting={submitting}
-          saveAndClose={saveAndClose}
           lastSaved={lastSaved}
           onCancel={onCancel}
-          onSave={() => handleSubmit(false)}
-          onSaveAndClose={() => handleSubmit(true)}
+          onSave={handleSubmit}
         />
       </form>
     </div>
