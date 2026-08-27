@@ -1089,14 +1089,16 @@ backend, not merely the browser or desktop interface.
 | Source development on a local computer    | Supported under the same Docker and provider requirements.                                                                                                                                                                                                                                                                           | Supported through the development API origin on port 3001.                                        |
 | Electron desktop client                   | Conditional. Electron uses an external Libre WebUI backend and does not provide a separate Work runtime.                                                                                                                                                                                                                             | Supported through that backend's signed proxy URL.                                                |
 | Bare-metal or VM backend on a remote host | Runs, files, and provider calls work when Docker is available on that host.                                                                                                                                                                                                                                                          | Supported when the public reverse proxy preserves HTTP and WebSocket traffic.                     |
-| Standard repository Docker Compose        | Supported by default: the image ships the Docker CLI and the Compose file mounts the host Docker socket.                                                                                                                                                                                                                             | Supported through the same public Libre WebUI origin.                                             |
+| Standard repository Docker Compose        | Supported by default on Docker Desktop: the image ships the Docker CLI, Compose mounts the host Docker socket, and Work ports route through `host.docker.internal`. Native Docker Engine additionally needs a reachable non-public `WORK_PREVIEW_BIND`.                                                                                | Supported through the same public Libre WebUI origin.                                             |
 | Current Kubernetes/Helm deployment        | Supported with `--set work.enabled=true`: sandboxes run as Pods with PVC workspaces (runs, files, commands, git, interactive terminals, and the Work Computer screen and audio at the Pod IP), under a namespace-scoped Role and default-deny NetworkPolicies — no Docker socket anywhere. See the [Kubernetes guide](./KUBERNETES). | Supported when the backend runs in-cluster: the signed proxy targets the sandbox Pod IP directly. |
 
 ### Running Work when Libre WebUI is itself in Docker
 
 Every repository Compose file enables Work: the image ships the Docker CLI and
-the Compose file mounts `/var/run/docker.sock`. `docker compose up -d` is all
-that is required.
+the Compose file mounts `/var/run/docker.sock`. Docker Desktop works with the
+shipped routing defaults. Native Docker Engine additionally needs
+`WORK_PREVIEW_BIND` set to a non-public host interface reachable from sibling
+containers, as described below.
 
 Work drives the host daemon through that socket, so task containers are
 **siblings** of the Libre WebUI container rather than children. They appear in
@@ -1150,9 +1152,11 @@ When the backend itself runs in Docker, publishing and connecting may use
 different addresses. Keep `WORK_PREVIEW_BIND=127.0.0.1` to avoid exposing the
 ephemeral ports, and set `WORK_DOCKER_PUBLISHED_HOST` to the Docker host address
 reachable from the backend container (`host.docker.internal` on Docker
-Desktop). Native Linux deployments should pair this value with an explicitly
-reachable, non-public bind interface; mapping `host.docker.internal` alone does
-not make a host-loopback listener reachable.
+Desktop). The bundled Compose profiles set both values and map the host name.
+Native Linux deployments must override `WORK_PREVIEW_BIND` with the Docker
+bridge gateway (or another explicitly reachable, non-public host interface);
+mapping `host.docker.internal` alone does not make a host-loopback listener
+reachable. Never bind these raw ephemeral ports to `0.0.0.0`.
 
 Concurrency is capped separately: `WORK_MAX_ACTIVE_RUNTIMES_PER_USER` defaults
 to `2` and `WORK_MAX_ACTIVE_RUNTIMES_GLOBAL` to `3`, so an administrator can

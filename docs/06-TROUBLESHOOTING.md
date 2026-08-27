@@ -446,6 +446,7 @@ these applies:
 | `The "docker" CLI is not installed…`           | A custom image without `docker-cli`. Use the official image, or point `WORK_DOCKER_COMMAND` at a CLI.                 |
 | `No Docker daemon is reachable…`               | The socket mount was removed, or the host daemon is stopped. Restore the mount in your Compose file and start Docker. |
 | `The Docker socket is mounted but…cannot open` | The socket's group differs from the container's. Set `DOCKER_GID` in `.env` (see below) and recreate the container.   |
+| Work screen/audio closes with WebSocket `1006` and logs `screen is unreachable` | The containerized backend is dialing its own loopback. On Docker Desktop use the shipped `WORK_DOCKER_PUBLISHED_HOST=host.docker.internal`; on native Docker Engine also set `WORK_PREVIEW_BIND` to the non-public Docker bridge gateway, then recreate Libre WebUI. |
 
 Read the socket group through a container, because a macOS host reports a
 different value than the container sees:

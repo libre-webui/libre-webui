@@ -193,6 +193,11 @@ test('Compose files forward every operable platform selector', () => {
     /PLATFORM_PREFLIGHT_TMP_DIR: \/app\/backend\/temp\/preflight/
   );
   assert.match(privateCompose, /libre-webui-preflight:\/app\/backend\/temp/);
+  assert.match(privateCompose, /WORK_PREVIEW_BIND: 172\.30\.0\.1/);
+  assert.match(
+    privateCompose,
+    /WORK_DOCKER_PUBLISHED_HOST: 172\.30\.0\.1/
+  );
   assert.doesNotMatch(
     privateCompose,
     /\/app\/backend\/temp:rw,nosuid,nodev,noexec,size=512m/,
@@ -202,6 +207,48 @@ test('Compose files forward every operable platform selector', () => {
     dockerfile,
     /ENV PLATFORM_PREFLIGHT_TMP_DIR=\/app\/backend\/temp\/preflight/
   );
+});
+
+test('Compose routes Docker-published Work ports back to the backend', () => {
+  for (const filename of composeFiles) {
+    const rendered = JSON.parse(
+      execFileSync(
+        'docker',
+        ['compose', '-f', filename, 'config', '--format', 'json'],
+        { cwd: repoRoot, encoding: 'utf8' }
+      )
+    );
+    const app = rendered.services['libre-webui'];
+    assert.equal(app.environment.WORK_PREVIEW_BIND, '127.0.0.1');
+    assert.equal(
+      app.environment.WORK_DOCKER_PUBLISHED_HOST,
+      'host.docker.internal'
+    );
+    assert.deepEqual(app.extra_hosts, [
+      'host.docker.internal=host-gateway',
+    ]);
+
+    const overridden = JSON.parse(
+      execFileSync(
+        'docker',
+        ['compose', '-f', filename, 'config', '--format', 'json'],
+        {
+          cwd: repoRoot,
+          encoding: 'utf8',
+          env: {
+            ...process.env,
+            WORK_PREVIEW_BIND: '172.31.0.1',
+            WORK_DOCKER_PUBLISHED_HOST: 'work-host.internal',
+          },
+        }
+      )
+    ).services['libre-webui'];
+    assert.equal(overridden.environment.WORK_PREVIEW_BIND, '172.31.0.1');
+    assert.equal(
+      overridden.environment.WORK_DOCKER_PUBLISHED_HOST,
+      'work-host.internal'
+    );
+  }
 });
 
 test('Dockerfile describes the repository socket default accurately', () => {
@@ -417,6 +464,14 @@ test('team Work overlay gives only app and worker the filtered Docker endpoint',
   ]) {
     assert.equal(service.environment.DOCKER_HOST, endpoint);
     assert.equal(service.environment.WORK_HOST_WORKSPACES_ENABLED, 'false');
+    assert.equal(service.environment.WORK_PREVIEW_BIND, '127.0.0.1');
+    assert.equal(
+      service.environment.WORK_DOCKER_PUBLISHED_HOST,
+      'host.docker.internal'
+    );
+    assert.deepEqual(service.extra_hosts, [
+      'host.docker.internal=host-gateway',
+    ]);
     assert.doesNotMatch(
       JSON.stringify(service),
       /\/var\/run\/docker\.sock|group_add/,
