@@ -1322,7 +1322,9 @@
       "pictureTooLarge": "画像は 192 KB 未満にしてください。",
       "saving": "保存中…",
       "hide": "ユーザーに非表示にする",
-      "show": "ユーザーに表示する"
+      "show": "ユーザーに表示する",
+      "star": "{{name}}にスターを付ける",
+      "unstar": "{{name}}のスターを外す"
     },
     "pull": {
       "placeholder": "モデル名を入力（例: llama3.2:3b, deepseek-r1:14b）",

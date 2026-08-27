@@ -1322,7 +1322,9 @@
       "pictureTooLarge": "Obrázky musí být menší než 192 KB.",
       "saving": "Ukládání…",
       "hide": "Skrýt uživatelům",
-      "show": "Zobrazit uživatelům"
+      "show": "Zobrazit uživatelům",
+      "star": "Označit {{name}} hvězdičkou",
+      "unstar": "Odebrat hvězdičku z modelu {{name}}"
     },
     "pull": {
       "placeholder": "Zadejte název modelu (např. llama3.2:3b, deepseek-r1:14b)",

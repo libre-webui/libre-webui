@@ -66,6 +66,19 @@ type MockModel = {
   };
 };
 
+type MockModelCatalog = {
+  hidden: string[];
+  order: string[];
+  starred: string[];
+  metadata: Record<
+    string,
+    {
+      label?: string;
+      avatar?: string;
+    }
+  >;
+};
+
 type MockLibraryModel = {
   name: string;
   description: string;
@@ -448,6 +461,7 @@ type MockOptions = {
   sessions?: MockSession[];
   folders?: MockFolder[];
   models?: MockModel[];
+  modelCatalog?: MockModelCatalog;
   ollamaHealthy?: boolean;
   plugins?: MockPlugin[];
   pluginVariables?: Record<string, Record<string, MockPluginVariableValue>>;
@@ -659,6 +673,14 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
   const sessions = structuredClone(options.sessions ?? []);
   const folders = structuredClone(options.folders ?? []);
   let models = options.models ?? defaultModels;
+  let modelCatalog = structuredClone(
+    options.modelCatalog ?? {
+      hidden: [],
+      order: [],
+      starred: [],
+      metadata: {},
+    }
+  );
   const ollamaHealthy = options.ollamaHealthy ?? true;
   const plugins = structuredClone(options.plugins ?? []);
   const pluginVariables = structuredClone(options.pluginVariables ?? {});
@@ -699,6 +721,7 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
   );
   const preferenceUpdateRequests: Array<Partial<typeof defaultPreferences>> =
     [];
+  const modelCatalogUpdateRequests: Array<Partial<MockModelCatalog>> = [];
   const pluginVariableUpdateRequests: Array<{
     pluginId: string;
     variables: Record<string, string | number | boolean>;
@@ -2092,6 +2115,21 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
         return;
       }
 
+      if (path === '/ollama/models/visibility' && method === 'GET') {
+        await fulfillJson(route, modelCatalog);
+        return;
+      }
+
+      if (path === '/ollama/models/visibility' && method === 'PUT') {
+        const update = route
+          .request()
+          .postDataJSON() as Partial<MockModelCatalog>;
+        modelCatalogUpdateRequests.push(structuredClone(update));
+        modelCatalog = { ...modelCatalog, ...structuredClone(update) };
+        await fulfillJson(route, modelCatalog);
+        return;
+      }
+
       if (path === '/ollama/running' && method === 'GET') {
         await fulfillJson(route, []);
         return;
@@ -2766,6 +2804,7 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
     getModels: () => models,
     pullStreamUrls,
     preferenceUpdateRequests,
+    modelCatalogUpdateRequests,
     pluginCredentialUpdateRequests,
     pluginDiscoveryRequests,
     pluginVariableUpdateRequests,

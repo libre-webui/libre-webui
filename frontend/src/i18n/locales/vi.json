@@ -1322,7 +1322,9 @@
       "pictureTooLarge": "Ảnh phải nhỏ hơn 192 KB.",
       "saving": "Đang lưu…",
       "hide": "Ẩn với người dùng",
-      "show": "Hiện với người dùng"
+      "show": "Hiện với người dùng",
+      "star": "Gắn sao cho {{name}}",
+      "unstar": "Bỏ sao khỏi {{name}}"
     },
     "pull": {
       "placeholder": "Nhập tên mô hình (vd: llama3.2:3b, deepseek-r1:14b)",

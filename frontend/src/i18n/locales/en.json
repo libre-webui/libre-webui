@@ -1322,7 +1322,9 @@
       "pictureTooLarge": "Pictures must be under 192 KB.",
       "saving": "Saving…",
       "hide": "Hide from users",
-      "show": "Show to users"
+      "show": "Show to users",
+      "star": "Star {{name}}",
+      "unstar": "Remove star from {{name}}"
     },
     "pull": {
       "placeholder": "Enter model name (e.g., llama3.2:3b, deepseek-r1:14b)",

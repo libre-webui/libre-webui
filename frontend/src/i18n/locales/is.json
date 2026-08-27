@@ -1322,7 +1322,9 @@
       "pictureTooLarge": "Myndir verða að vera undir 192 KB.",
       "saving": "Vistar…",
       "hide": "Fela fyrir notendum",
-      "show": "Sýna notendum"
+      "show": "Sýna notendum",
+      "star": "Stjörnumerkja {{name}}",
+      "unstar": "Fjarlægja stjörnu af {{name}}"
     },
     "pull": {
       "placeholder": "Sláðu inn nafn líkans (t.d. llama3.2:3b, deepseek-r1:14b)",

@@ -1322,7 +1322,9 @@
       "pictureTooLarge": "图片必须小于 192 KB。",
       "saving": "正在保存…",
       "hide": "对用户隐藏",
-      "show": "对用户显示"
+      "show": "对用户显示",
+      "star": "为 {{name}} 加星",
+      "unstar": "取消 {{name}} 的星标"
     },
     "pull": {
       "placeholder": "输入模型名称（例如：llama3.2:3b、deepseek-r1:14b）",

@@ -48,7 +48,10 @@ import {
   chatModelSelectionFromModel,
   findChatModelForSelection,
 } from '@/utils/chatModelSelection';
-import { modelVisibilityKey } from '@/utils/modelVisibility';
+import {
+  modelVisibilityKey,
+  orderModelsByCatalogPriority,
+} from '@/utils/modelVisibility';
 import { isCompactionSummaryContent } from '@/utils/contextUsage';
 import type { ModelPresentation } from '@/utils/api/modelApi';
 
@@ -856,12 +859,14 @@ export const useChatStore = create<ChatState>((set, get) => ({
       // listing refinement, never a reason to blank the picker.
       let hiddenModels: string[] = [];
       let modelOrder: string[] = [];
+      let starredModels: string[] = [];
       let modelMetadata: Record<string, ModelPresentation> = {};
       try {
         const visibilityResponse = await ollamaApi.getModelVisibility();
         if (visibilityResponse.success && visibilityResponse.data) {
           hiddenModels = visibilityResponse.data.hidden ?? [];
           modelOrder = visibilityResponse.data.order ?? [];
+          starredModels = visibilityResponse.data.starred ?? [];
           modelMetadata = visibilityResponse.data.metadata ?? {};
         }
       } catch (visibilityError) {
@@ -884,16 +889,14 @@ export const useChatStore = create<ChatState>((set, get) => ({
       } catch (authError) {
         logger.warn('Could not resolve viewer role for model list:', authError);
       }
-      // The order an administrator arranged, with anything newer after it.
-      if (modelOrder.length > 0) {
-        const rank = new Map(modelOrder.map((key, index) => [key, index]));
-        allModels = [...allModels].sort((a, b) => {
-          const left =
-            rank.get(modelVisibilityKey(a)) ?? Number.MAX_SAFE_INTEGER;
-          const right =
-            rank.get(modelVisibilityKey(b)) ?? Number.MAX_SAFE_INTEGER;
-          return left - right;
-        });
+      // Starred models lead, then the administrator's manual order, with
+      // anything newly discovered retaining provider order after them.
+      if (starredModels.length > 0 || modelOrder.length > 0) {
+        allModels = orderModelsByCatalogPriority(
+          allModels,
+          modelOrder,
+          starredModels
+        );
       }
       set({ hiddenModels, modelMetadata });
 

@@ -1322,7 +1322,9 @@
       "pictureTooLarge": "Le immagini devono essere inferiori a 192 KB.",
       "saving": "Salvataggio…",
       "hide": "Nascondi agli utenti",
-      "show": "Mostra agli utenti"
+      "show": "Mostra agli utenti",
+      "star": "Aggiungi una stella a {{name}}",
+      "unstar": "Rimuovi la stella da {{name}}"
     },
     "pull": {
       "placeholder": "Inserisci nome modello (es. llama3.2:3b, deepseek-r1:14b)",

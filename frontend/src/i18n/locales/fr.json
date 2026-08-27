@@ -1322,7 +1322,9 @@
       "pictureTooLarge": "Les images doivent faire moins de 192 Ko.",
       "saving": "Enregistrement…",
       "hide": "Masquer aux utilisateurs",
-      "show": "Afficher aux utilisateurs"
+      "show": "Afficher aux utilisateurs",
+      "star": "Marquer {{name}} d’une étoile",
+      "unstar": "Retirer l’étoile de {{name}}"
     },
     "pull": {
       "placeholder": "Entrez le nom du modèle (ex: llama3.2:3b, deepseek-r1:14b)",

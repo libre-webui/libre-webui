@@ -1322,7 +1322,9 @@
       "pictureTooLarge": "사진은 192KB 미만이어야 합니다.",
       "saving": "저장 중…",
       "hide": "사용자에게 숨기기",
-      "show": "사용자에게 표시"
+      "show": "사용자에게 표시",
+      "star": "{{name}}에 별표 표시",
+      "unstar": "{{name}}에서 별표 제거"
     },
     "pull": {
       "placeholder": "모델 이름 입력 (예: llama3.2:3b, deepseek-r1:14b)",

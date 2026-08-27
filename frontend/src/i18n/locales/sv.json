@@ -1322,7 +1322,9 @@
       "pictureTooLarge": "Bilder måste vara under 192 KB.",
       "saving": "Sparar…",
       "hide": "Dölj för användare",
-      "show": "Visa för användare"
+      "show": "Visa för användare",
+      "star": "Stjärnmärk {{name}}",
+      "unstar": "Ta bort stjärnan från {{name}}"
     },
     "pull": {
       "placeholder": "Ange modellnamn (t.ex. llama3.2:3b, deepseek-r1:14b)",

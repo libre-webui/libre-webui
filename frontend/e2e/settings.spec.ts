@@ -163,6 +163,64 @@ test('vision model selection persists the exact provider-qualified model', async
   ).toHaveValue('plugin:openai-cloud:gpt-cloud');
 });
 
+test('starring a catalog model moves it to the top and persists', async ({
+  page,
+}) => {
+  const models = ['alpha-model', 'beta-model', 'gamma-model'].map(name => ({
+    name,
+    size: 1,
+    digest: `${name}-digest`,
+    modified_at: new Date('2026-08-27T00:00:00.000Z').toISOString(),
+    details: {
+      format: 'gguf',
+      family: 'test',
+      families: ['test'],
+      parameter_size: '1B',
+      quantization_level: 'Q4_0',
+    },
+  }));
+  const mockApi = await mockLibreWebUiApi(page, {
+    models,
+    modelCatalog: {
+      hidden: [],
+      order: models.map(model => model.name),
+      starred: [],
+      metadata: {},
+    },
+  });
+
+  await page.goto('/chat');
+  await expect(page.getByRole('textbox', { name: 'Message...' })).toBeVisible();
+  const settingsPanel = await openSettingsTab(page, 'models');
+  const catalog = settingsPanel.getByTestId('model-catalog');
+  const rows = catalog.getByTestId('model-catalog-row');
+
+  await expect(rows.first()).toContainText('alpha-model');
+  await catalog.getByRole('button', { name: 'Star gamma-model' }).click();
+  await expect(rows.first()).toContainText('gamma-model');
+  await expect(
+    catalog.getByRole('button', { name: 'Remove star from gamma-model' })
+  ).toHaveAttribute('aria-pressed', 'true');
+  await expect
+    .poll(() => mockApi.modelCatalogUpdateRequests.at(-1)?.starred)
+    .toEqual(['gamma-model']);
+
+  await page.reload();
+  await expect(page.getByRole('textbox', { name: 'Message...' })).toBeVisible();
+  const reloadedPanel = await openSettingsTab(page, 'models');
+  const reloadedCatalog = reloadedPanel.getByTestId('model-catalog');
+  const reloadedRows = reloadedCatalog.getByTestId('model-catalog-row');
+  await expect(reloadedRows.first()).toContainText('gamma-model');
+
+  await reloadedCatalog
+    .getByRole('button', { name: 'Remove star from gamma-model' })
+    .click();
+  await expect(reloadedRows.first()).toContainText('alpha-model');
+  await expect
+    .poll(() => mockApi.modelCatalogUpdateRequests.at(-1)?.starred)
+    .toEqual([]);
+});
+
 test('provider workspace searches, selects, and collapses configuration on provider change', async ({
   page,
 }) => {

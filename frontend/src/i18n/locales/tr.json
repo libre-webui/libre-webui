@@ -1322,7 +1322,9 @@
       "pictureTooLarge": "Görseller 192 KB'den küçük olmalı.",
       "saving": "Kaydediliyor…",
       "hide": "Kullanıcılardan gizle",
-      "show": "Kullanıcılara göster"
+      "show": "Kullanıcılara göster",
+      "star": "{{name}} modelini yıldızla",
+      "unstar": "{{name}} modelinin yıldızını kaldır"
     },
     "pull": {
       "placeholder": "Model adını girin (ör., llama3.2:3b, deepseek-r1:14b)",

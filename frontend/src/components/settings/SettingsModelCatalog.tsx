@@ -34,13 +34,17 @@ import {
   Image as ImageIcon,
   Pencil,
   Search,
+  Star,
   X,
 } from 'lucide-react';
 import { Button, Input } from '@/components/ui';
 import { useChatStore } from '@/store/chatStore';
 import { ollamaApi } from '@/utils/api';
 import type { ModelPresentation } from '@/utils/api/modelApi';
-import { modelVisibilityKey } from '@/utils/modelVisibility';
+import {
+  modelVisibilityKey,
+  orderModelsByCatalogPriority,
+} from '@/utils/modelVisibility';
 import { getErrorMessage } from '@/store/chatStoreHelpers';
 import { cn } from '@/utils';
 import type { OllamaModel } from '@/types';
@@ -63,6 +67,7 @@ export const SettingsModelCatalog: React.FC = () => {
 
   const [hidden, setHidden] = useState<string[]>([]);
   const [order, setOrder] = useState<string[]>([]);
+  const [starred, setStarred] = useState<string[]>([]);
   const [metadata, setMetadata] = useState<Record<string, ModelPresentation>>(
     {}
   );
@@ -89,9 +94,10 @@ export const SettingsModelCatalog: React.FC = () => {
       try {
         const response = await ollamaApi.getModelVisibility();
         if (cancelled || !response.success || !response.data) return;
-        const { hidden: h, order: o, metadata: m } = response.data;
+        const { hidden: h, order: o, starred: s, metadata: m } = response.data;
         setHidden(h ?? []);
         setOrder(o ?? []);
+        setStarred(s ?? []);
         setMetadata(m ?? {});
       } catch {
         // An unreadable catalog is an empty one; edits still write through.
@@ -103,22 +109,12 @@ export const SettingsModelCatalog: React.FC = () => {
   }, []);
 
   const hiddenSet = useMemo(() => new Set(hidden), [hidden]);
+  const starredSet = useMemo(() => new Set(starred), [starred]);
 
-  /** Administrator order first, then anything the providers added since. */
-  const orderedModels = useMemo(() => {
-    const byKey = new Map(
-      catalogModels.map(model => [modelVisibilityKey(model), model])
-    );
-    const ordered: OllamaModel[] = [];
-    for (const key of order) {
-      const model = byKey.get(key);
-      if (model) {
-        ordered.push(model);
-        byKey.delete(key);
-      }
-    }
-    return [...ordered, ...byKey.values()];
-  }, [catalogModels, order]);
+  const orderedModels = useMemo(
+    () => orderModelsByCatalogPriority(catalogModels, order, starred),
+    [catalogModels, order, starred]
+  );
 
   const visibleModels = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -158,6 +154,15 @@ export const SettingsModelCatalog: React.FC = () => {
       : [...new Set([...previous, ...keys])];
     setHidden(next);
     void persist({ hidden: next }, () => setHidden(previous));
+  };
+
+  const setStarredModel = (key: string, isStarred: boolean) => {
+    const previous = starred;
+    const next = isStarred
+      ? [key, ...previous.filter(entry => entry !== key)]
+      : previous.filter(entry => entry !== key);
+    setStarred(next);
+    void persist({ starred: next }, () => setStarred(previous));
   };
 
   /** Drop `fromKey` immediately above or below `toKey`, as shown while dragging. */
@@ -233,6 +238,7 @@ export const SettingsModelCatalog: React.FC = () => {
     update: Partial<{
       hidden: string[];
       order: string[];
+      starred: string[];
       metadata: Record<string, ModelPresentation>;
     }>,
     revert: () => void
@@ -331,10 +337,18 @@ export const SettingsModelCatalog: React.FC = () => {
           const key = modelVisibilityKey(model);
           const entry = metadata[key] ?? {};
           const enabled = !hiddenSet.has(key);
+          const isStarred = starredSet.has(key);
           const isEditing = editing === key;
+          const starLabel = t(
+            isStarred
+              ? 'modelManager.catalog.unstar'
+              : 'modelManager.catalog.star',
+            { name: entry.label || model.name }
+          );
           return (
             <div
               key={key}
+              data-testid='model-catalog-row'
               draggable
               onDragStart={() => setDragKey(key)}
               onDragEnd={() => {
@@ -421,6 +435,24 @@ export const SettingsModelCatalog: React.FC = () => {
                     {t('modelManager.catalog.hidden')}
                   </span>
                 )}
+                <button
+                  type='button'
+                  onClick={() => setStarredModel(key, !isStarred)}
+                  aria-pressed={isStarred}
+                  title={starLabel}
+                  aria-label={starLabel}
+                  className={cn(
+                    'flex h-7 w-7 shrink-0 items-center justify-center rounded-md transition-colors hover:bg-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-1 dark:hover:bg-dark-200 dark:focus-visible:ring-offset-dark-100',
+                    isStarred
+                      ? 'text-primary-600 dark:text-primary-400'
+                      : 'text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
+                  )}
+                >
+                  <Star
+                    className={cn('h-4 w-4', isStarred && 'fill-current')}
+                    aria-hidden='true'
+                  />
+                </button>
                 <button
                   type='button'
                   onClick={() => setEditing(isEditing ? null : key)}

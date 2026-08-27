@@ -1322,7 +1322,9 @@
       "pictureTooLarge": "Las imágenes deben pesar menos de 192 KB.",
       "saving": "Guardando…",
       "hide": "Ocultar a los usuarios",
-      "show": "Mostrar a los usuarios"
+      "show": "Mostrar a los usuarios",
+      "star": "Marcar {{name}} con estrella",
+      "unstar": "Quitar la estrella de {{name}}"
     },
     "pull": {
       "placeholder": "Ingresa nombre del modelo (ej. llama3.2:3b, deepseek-r1:14b)",

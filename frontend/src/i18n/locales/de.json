@@ -1322,7 +1322,9 @@
       "pictureTooLarge": "Bilder müssen kleiner als 192 KB sein.",
       "saving": "Wird gespeichert…",
       "hide": "Vor Benutzern ausblenden",
-      "show": "Benutzern anzeigen"
+      "show": "Benutzern anzeigen",
+      "star": "{{name}} mit Stern markieren",
+      "unstar": "Stern von {{name}} entfernen"
     },
     "pull": {
       "placeholder": "Modellname eingeben (z.B. llama3.2:3b, deepseek-r1:14b)",

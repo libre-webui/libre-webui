@@ -1322,7 +1322,9 @@
       "pictureTooLarge": "Obrazy muszą mieć mniej niż 192 KB.",
       "saving": "Zapisywanie…",
       "hide": "Ukryj przed użytkownikami",
-      "show": "Pokaż użytkownikom"
+      "show": "Pokaż użytkownikom",
+      "star": "Oznacz {{name}} gwiazdką",
+      "unstar": "Usuń gwiazdkę z {{name}}"
     },
     "pull": {
       "placeholder": "Wprowadź nazwę modelu (np. llama3.2:3b, deepseek-r1:14b)",

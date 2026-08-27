@@ -39,9 +39,11 @@ import {
   getHiddenModels,
   getModelMetadata,
   getModelOrder,
+  getStarredModels,
   setHiddenModels,
   setModelMetadata,
   setModelOrder,
+  setStarredModels,
   type ModelMetadata,
 } from '../services/modelVisibilityService.js';
 import { userModel } from '../models/userModel.js';
@@ -180,19 +182,20 @@ router.put(
   }
 );
 
-// Which models administrators hid from the shared model pickers. Read is
-// open to any authenticated user so every interface can trim its lists;
-// changing the set is admin-only. Registered before /models/:modelName so
-// "visibility" is never taken for a model name.
+// Shared model-list curation. Read is open to any authenticated user so every
+// interface can apply the same visibility, priority, order, and presentation;
+// changes are admin-only. Registered before /models/:modelName so "visibility"
+// is never taken for a model name.
 router.get(
   '/models/visibility',
   async (req: AuthenticatedRequest, res: Response): Promise<void> => {
-    const [hidden, order, metadata] = await Promise.all([
+    const [hidden, order, starred, metadata] = await Promise.all([
       getHiddenModels(),
       getModelOrder(),
+      getStarredModels(),
       getModelMetadata(),
     ]);
-    res.json({ success: true, data: { hidden, order, metadata } });
+    res.json({ success: true, data: { hidden, order, starred, metadata } });
   }
 );
 
@@ -211,13 +214,17 @@ router.put(
         body.order !== undefined
           ? await setModelOrder(body.order as string[])
           : await getModelOrder();
+      const starred =
+        body.starred !== undefined
+          ? await setStarredModels(body.starred as string[])
+          : await getStarredModels();
       const metadata =
         body.metadata !== undefined
           ? await setModelMetadata(
               body.metadata as Record<string, ModelMetadata>
             )
           : await getModelMetadata();
-      res.json({ success: true, data: { hidden, order, metadata } });
+      res.json({ success: true, data: { hidden, order, starred, metadata } });
     } catch (error: unknown) {
       res.status(400).json({
         success: false,

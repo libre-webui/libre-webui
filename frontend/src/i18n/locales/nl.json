@@ -1322,7 +1322,9 @@
       "pictureTooLarge": "Afbeeldingen moeten kleiner zijn dan 192 KB.",
       "saving": "Opslaan…",
       "hide": "Verbergen voor gebruikers",
-      "show": "Tonen aan gebruikers"
+      "show": "Tonen aan gebruikers",
+      "star": "{{name}} markeren met ster",
+      "unstar": "Ster van {{name}} verwijderen"
     },
     "pull": {
       "placeholder": "Voer modelnaam in (bijv. llama3.2:3b, deepseek-r1:14b)",

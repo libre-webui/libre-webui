@@ -1322,7 +1322,9 @@
       "pictureTooLarge": "Billeder skal fylde under 192 KB.",
       "saving": "Gemmer…",
       "hide": "Skjul for brugere",
-      "show": "Vis for brugere"
+      "show": "Vis for brugere",
+      "star": "Markér {{name}} med stjerne",
+      "unstar": "Fjern stjerne fra {{name}}"
     },
     "pull": {
       "placeholder": "Indtast modelnavn (f.eks. llama3.2:3b, deepseek-r1:14b)",

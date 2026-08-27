@@ -54,7 +54,11 @@ For Ollama Cloud results, the UI normalizes cloud model names before pulling. If
 
 The **Model Catalog** in **Settings → Defaults** lists every chat model you can
 pick, local and provider-backed alike, with a provider badge and a search box.
-Use **Make default** on any row to set the model new chats start with.
+Choose the default model above the catalog to set what new chats start with.
+
+Administrators can star a model to pin it to the top of the catalog and the
+default-model menu. Starring several models puts the most recently starred one
+first; removing a star restores the model's manual or provider position.
 
 Administrators get one more control per row: an eye toggle that hides a model from everyone else's model pickers. Hiding trims long catalogs down to the models a server actually wants people using — it is a listing refinement, not an authorization gate, so treat it as curation rather than a security boundary. Administrators always see the full list, with hidden models marked.
 

@@ -1322,7 +1322,9 @@
       "pictureTooLarge": "Gambar harus di bawah 192 KB.",
       "saving": "Menyimpan…",
       "hide": "Sembunyikan dari pengguna",
-      "show": "Tampilkan ke pengguna"
+      "show": "Tampilkan ke pengguna",
+      "star": "Beri bintang pada {{name}}",
+      "unstar": "Hapus bintang dari {{name}}"
     },
     "pull": {
       "placeholder": "Masukkan nama model (mis., llama3.2:3b, deepseek-r1:14b)",
