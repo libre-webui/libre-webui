@@ -41,7 +41,13 @@
     height: 100%;
     z-index: 0;
     pointer-events: none;
+    contain: strict;
   }
+  #landscape canvas {
+    opacity: 0;
+    transition: opacity 420ms var(--ease-out);
+  }
+  .scene-ready #landscape canvas { opacity: 1; }
 
   header {
     position: relative;
@@ -193,6 +199,7 @@
   .ready .reveal.d3 { transition-delay: 320ms; }
   @media (prefers-reduced-motion: reduce) {
     .reveal, .clock-frame #clock { opacity: 1 !important; transform: none !important; transition: none !important; }
+    #landscape canvas { transition: none; }
   }
   @media (max-width: 720px) {
     header { padding: 24px 24px 0; }
@@ -281,8 +288,6 @@
       };
     })();
   </script>
-  <script src="three.min.js"></script>
-  <script src="valley-scene.js"></script>
   <script>
     // Sunset Valley: the terraced-valley scene, driven by the real clock.
     // An ?hour= override pins the scene (and the clock readout) to that
@@ -290,25 +295,6 @@
     const forced = window.libreForcedHour;
     const reducedMotion =
       window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    // This page only ever runs in the sandbox, where Chromium rasterizes
-    // through SwiftShader on CPU. The scene is ~2M triangles — a continuous
-    // loop manages ~0.3 fps there and pegs a core, so instead we render one
-    // full-quality still per minute; the canvas holds the last frame in
-    // between (preserveDrawingBuffer) and the sun keeps tracking the clock.
-    const valley = ValleyScene.mount(document.getElementById('landscape'), {
-      autoStart: false,
-      shadows: false,
-      grass: 15000,
-      maxDPR: 0.75,
-      ...(typeof forced === 'number' ? { time: forced } : {}),
-    });
-    window.libreValley = valley;
-    if (!reducedMotion) {
-      setInterval(() => {
-        if (!document.hidden) valley.renderOnce(60);
-      }, 60_000);
-    }
-
     const clock = document.getElementById('clock');
     const date = document.getElementById('date');
     const tick = () => {
@@ -319,8 +305,78 @@
     };
     tick();
     setInterval(tick, 10_000);
+
+    const loadScript = src => new Promise((resolve, reject) => {
+      const script = document.createElement('script');
+      script.src = src;
+      script.onload = resolve;
+      script.onerror = () => reject(new Error(`Could not load ${src}`));
+      document.head.appendChild(script);
+    });
+
+    let resolveScene;
+    window.libreSceneReady = new Promise(resolve => {
+      resolveScene = resolve;
+    });
+
+    const mountScene = async () => {
+      try {
+        await loadScript('three.min.js');
+        await loadScript('valley-scene.js');
+        // The sandbox uses SwiftShader on CPU. Keep the valley rich enough to
+        // read immediately while avoiding the bloom pipeline and tens of
+        // thousands of decorative instances that dominated the first frame.
+        const valley = ValleyScene.mount(
+          document.getElementById('landscape'),
+          {
+            autoStart: false,
+            shadows: false,
+            fx: false,
+            grass: 6000,
+            vegetationScale: 0.5,
+            terrainScale: 0.6,
+            canopyDetail: 1,
+            maxDPR: 0.625,
+            ...(typeof forced === 'number' ? { time: forced } : {}),
+          }
+        );
+        window.libreValley = valley;
+        // Give SwiftShader and the compositor two frames to present the
+        // submitted still before fading it over the already-usable UI.
+        await new Promise(resolve =>
+          requestAnimationFrame(() => requestAnimationFrame(resolve))
+        );
+        document.body.classList.add('scene-ready');
+        performance.mark('libre-scene-ready');
+        resolveScene(valley);
+        if (!reducedMotion && forced === null) {
+          setInterval(() => {
+            if (!document.hidden) valley.renderOnce(300);
+          }, 300_000);
+        }
+      } catch (error) {
+        console.error('[Libre Work Computer] Valley scene failed:', error);
+        document.body.classList.add('scene-failed');
+        document.getElementById('scene-state').textContent =
+          'Libre / Work Computer';
+        resolveScene(null);
+      }
+    };
+
+    const scheduleScene = () => {
+      if ('requestIdleCallback' in window) {
+        requestIdleCallback(mountScene, { timeout: 500 });
+      } else {
+        setTimeout(mountScene, 80);
+      }
+    };
+
+    // Make the useful UI interactive before parsing Three.js or constructing
+    // the procedural scene. Two frames let the gradient and clock paint first.
     requestAnimationFrame(() => requestAnimationFrame(() => {
       document.body.classList.add('ready');
+      performance.mark('libre-interface-ready');
+      scheduleScene();
     }));
   </script>
 </body>

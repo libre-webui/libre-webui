@@ -387,8 +387,11 @@
   var GRASS_HI = K.C('#8aa04e'), GRASS_LO = K.C('#4e6d38'), DRY = K.C('#9c9a5c');
   var ROCK = K.C('#6b6152'), SOIL = K.C('#4a3f30'), SAND = K.C('#9a8a63');
 
-  function makeTerrain() {
-    var SX = 2600, SZ = 3400, NX = 300, NZ = 340;
+  function makeTerrain(detail) {
+    detail = detail === undefined ? 1 : K.clamp(detail, 0.35, 1);
+    var SX = 2600, SZ = 3400;
+    var NX = Math.max(96, Math.round(300 * detail));
+    var NZ = Math.max(108, Math.round(340 * detail));
     var g = new T.PlaneGeometry(SX, SZ, NX, NZ);
     g.rotateX(-Math.PI / 2);
     var p = g.attributes.position, n = p.count;
@@ -441,7 +444,10 @@
   /* ------------------------------------------------- merged mesh builder */
   function Builder() { this.pos = []; this.nor = []; this.col = []; this.idx = []; this.n = 0; }
   Builder.prototype.add = function (geo, mtx, color, jitter) {
-    var g = geo.index ? geo : geo.toNonIndexed();
+    // Both indexed and non-indexed geometries are handled below. Calling
+    // toNonIndexed() on an already non-indexed geometry only emits a warning
+    // and adds avoidable work while the first scene is being assembled.
+    var g = geo;
     var p = g.attributes.position, nr = g.attributes.normal;
     if (!nr) { g.computeVertexNormals(); nr = g.attributes.normal; }
     var nm = new T.Matrix3().getNormalMatrix(mtx);
@@ -822,8 +828,9 @@
   }
 
   /* ---------------------------------------------------------- vegetation */
-  function lumpyCanopy(seed, squash) {
-    var g = new T.IcosahedronGeometry(1, 2);
+  function lumpyCanopy(seed, squash, detail) {
+    detail = detail === undefined ? 2 : K.clamp(Math.round(detail), 0, 2);
+    var g = new T.IcosahedronGeometry(1, detail);
     var p = g.attributes.position, v = new T.Vector3();
     for (var i = 0; i < p.count; i++) {
       v.fromBufferAttribute(p, i);
@@ -838,7 +845,11 @@
     return g;
   }
 
-  function vegetation(rng) {
+  function vegetation(rng, density) {
+    density = density === undefined ? 1 : K.clamp(density, 0.1, 1);
+    var scaled = function (count) {
+      return Math.max(1, Math.round(count * density));
+    };
     var canopy = new T.IcosahedronGeometry(1, 1);
     var cypress = new T.ConeGeometry(1, 4.4, 7, 1);
     var trunk = new T.CylinderGeometry(0.14, 0.22, 1, 5);
@@ -854,7 +865,7 @@
     }
 
     // ---- forest on the right slope + distance
-    for (i = 0; i < 3400; i++) {
+    for (i = 0; i < scaled(3400); i++) {
       x = -900 + rng() * 1900; z = 210 - rng() * 1750;
       if (blocked(x, z)) continue;
       y = terrainH(x, z);
@@ -873,7 +884,7 @@
     }
 
     // ---- riverside groves and hedgerows on the flood plain
-    for (i = 0; i < 900; i++) {
+    for (i = 0; i < scaled(900); i++) {
       x = -260 + rng() * 900; z = -240 - rng() * 900;
       var rxx = W.riverX(z), rhh = W.riverHalf(z), dd = Math.abs(x - rxx);
       if (dd < rhh * 1.5) continue;
@@ -887,7 +898,7 @@
     }
 
     // ---- cypress accents (left terraces + right slope)
-    for (i = 0; i < 260; i++) {
+    for (i = 0; i < scaled(260); i++) {
       x = -520 + rng() * 1200; z = 160 - rng() * 900;
       if (blocked(x, z)) continue;
       y = terrainH(x, z);
@@ -896,7 +907,7 @@
     }
 
     // ---- shrubs / low bushes everywhere near the camera
-    for (i = 0; i < 3600; i++) {
+    for (i = 0; i < scaled(3600); i++) {
       x = -520 + rng() * 1100; z = 300 - rng() * 850;
       if (blocked(x, z)) continue;
       y = terrainH(x, z);
@@ -907,7 +918,7 @@
 
     // ---- wildflower meadow clumps in the near field
     data.flower = [];
-    for (i = 0; i < 1500; i++) {
+    for (i = 0; i < scaled(1500); i++) {
       var fd = 14 + Math.sqrt(rng()) * 300;
       var fz = W.camZ - fd, fx = (W.camX - fd * 0.123) + (rng() - 0.5) * (20 + fd * 1.26);
       if (blocked(fx, fz)) continue;
@@ -919,7 +930,7 @@
     }
 
     // ---- foreground orchard on the near ridge
-    for (i = 0; i < 2400; i++) {
+    for (i = 0; i < scaled(2400); i++) {
       var dcam = 32 + Math.sqrt(rng()) * 295;
       z = W.camZ - dcam;
       var axis = W.camX - dcam * 0.123;
@@ -1221,7 +1232,7 @@
 
     /* ---------------------------------------------------------- the world */
     var sky = WD.makeSky(); scene.add(sky);
-    var terrain = WD.makeTerrain(); scene.add(terrain);
+    var terrain = WD.makeTerrain(opts.terrainScale); scene.add(terrain);
     var river = WD.makeRiver(); scene.add(river);
     if (opts.debugWater) { river.material = new T.MeshBasicMaterial({ color: 0xff00ff }); }
 
@@ -1339,11 +1350,11 @@
     var warmMesh = addMerged(bWarm, matWarm, false, false);
 
     /* -------------------------------------------------------- vegetation */
-    var veg = P.vegetation(rng);
+    var veg = P.vegetation(rng, opts.vegetationScale);
     var canopy = ensureColor(veg.geo.canopy, 1, 1, 1);
-    var canopyA = ensureColor(P.lumpyCanopy(1, 0.86), 1, 1, 1);
-    var canopyB = ensureColor(P.lumpyCanopy(2, 0.72), 1, 1, 1);
-    var canopyC = ensureColor(P.lumpyCanopy(3, 0.95), 1, 1, 1);
+    var canopyA = ensureColor(P.lumpyCanopy(1, 0.86, opts.canopyDetail), 1, 1, 1);
+    var canopyB = ensureColor(P.lumpyCanopy(2, 0.72, opts.canopyDetail), 1, 1, 1);
+    var canopyC = ensureColor(P.lumpyCanopy(3, 0.95, opts.canopyDetail), 1, 1, 1);
     var cypG = ensureColor(veg.geo.cypress, 1, 1, 1);
     var trunkG = ensureColor(veg.geo.trunk, 1, 1, 1);
     var matLeaf = new T.MeshStandardMaterial({ vertexColors: true, roughness: 0.94, metalness: 0.0, flatShading: true });
@@ -1527,6 +1538,7 @@
 
     /* ----------------------------------------------------------- post FX */
     var size = new T.Vector2();
+    var resizeRenderTimer = 0, hasRendered = false;
     function currentSize() {
       var w = container.clientWidth || 1280, h = container.clientHeight || 720;
       return [Math.max(2, w), Math.max(2, h)];
@@ -1553,6 +1565,12 @@
       camera.updateProjectionMatrix();
       var d = renderer.getPixelRatio();
       if (post) post.setSize(Math.floor(s[0] * d), Math.floor(s[1] * d));
+      if (hasRendered) {
+        clearTimeout(resizeRenderTimer);
+        resizeRenderTimer = setTimeout(function () {
+          if (running) frame(0);
+        }, 80);
+      }
     }
     resize();
     var ro = null;
@@ -1706,6 +1724,7 @@
       renderOnce: function (dt) { if (dt) elapsed += dt; frame(dt || 0); },
       dispose: function () {
         running = false; cancelAnimationFrame(raf);
+        clearTimeout(resizeRenderTimer);
         if (ro) ro.disconnect();
         global.removeEventListener('resize', resize);
         renderer.dispose();
@@ -1732,6 +1751,7 @@
         renderer.setRenderTarget(null);
         renderer.render(scene, camera);
       }
+      hasRendered = true;
       if (api.onFrame) api.onFrame();
     }
 

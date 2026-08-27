@@ -20,6 +20,18 @@ const releaseWorkflow = fs.readFileSync(
   path.join(repoRoot, '.github', 'workflows', 'release.yml'),
   'utf8'
 );
+const workComputerStartPage = fs.readFileSync(
+  path.join(repoRoot, 'deploy', 'work-computer', 'start-page.html'),
+  'utf8'
+);
+const workComputerScene = fs.readFileSync(
+  path.join(repoRoot, 'deploy', 'work-computer', 'valley-scene.js'),
+  'utf8'
+);
+const workComputerStartScript = fs.readFileSync(
+  path.join(repoRoot, 'deploy', 'work-computer', 'start-computer.sh'),
+  'utf8'
+);
 const teamCompose = fs.readFileSync(
   path.join(repoRoot, 'docker-compose.team.yml'),
   'utf8'
@@ -624,6 +636,51 @@ test('Docker workflow limits manual publishing to the dev branch', () => {
   assert.match(
     dockerWorkflow,
     /^  build:\n    if: >-\n      github\.event_name != 'workflow_dispatch' \|\|\n      github\.ref == 'refs\/heads\/dev'$/m
+  );
+});
+
+test('Work Computer paints usable UI before its bounded valley scene', () => {
+  assert.doesNotMatch(
+    workComputerStartPage,
+    /<script[^>]+src=["'](?:three\.min|valley-scene)\.js["']/
+  );
+  assert.match(
+    workComputerStartPage,
+    /await loadScript\('three\.min\.js'\);[\s\S]*await loadScript\('valley-scene\.js'\);/
+  );
+  assert.ok(
+    workComputerStartPage.indexOf('tick();') <
+      workComputerStartPage.indexOf('scheduleScene();'),
+    'the clock must initialize before scene loading is scheduled'
+  );
+  assert.match(workComputerStartPage, /libre-interface-ready/);
+  assert.match(workComputerStartPage, /requestIdleCallback/);
+  assert.match(workComputerStartPage, /window\.libreSceneReady/);
+  assert.match(workComputerStartPage, /fx: false/);
+  assert.match(workComputerStartPage, /grass: 6000/);
+  assert.match(workComputerStartPage, /vegetationScale: 0\.5/);
+  assert.match(workComputerStartPage, /terrainScale: 0\.6/);
+  assert.match(workComputerStartPage, /canopyDetail: 1/);
+  assert.match(workComputerStartPage, /maxDPR: 0\.625/);
+  assert.match(workComputerStartPage, /300_000/);
+
+  assert.match(workComputerScene, /function makeTerrain\(detail\)/);
+  assert.match(workComputerScene, /function vegetation\(rng, density\)/);
+  assert.match(workComputerScene, /opts\.canopyDetail/);
+  assert.match(workComputerScene, /resizeRenderTimer/);
+  assert.doesNotMatch(workComputerScene, /\.\s*toNonIndexed\(\)/);
+  assert.match(
+    workComputerStartScript,
+    /XDG_CACHE_HOME="\$\{XDG_CACHE_HOME:-\$PROFILE_DIR\/\.cache\}"/
+  );
+  assert.match(workComputerStartScript, /SCREEN_SETUP_PID=\$!/);
+  assert.match(workComputerStartScript, /AUDIO_SETUP_PID=\$!/);
+  assert.match(workComputerStartScript, /wait "\$AUDIO_SETUP_PID"/);
+  assert.match(workComputerStartScript, /wait "\$SCREEN_SETUP_PID"/);
+  assert.ok(
+    workComputerStartScript.indexOf('SCREEN_SETUP_PID=$!') <
+      workComputerStartScript.indexOf('chromium \\\n'),
+    'the VNC surface should initialize while Chromium starts'
   );
 });
 
