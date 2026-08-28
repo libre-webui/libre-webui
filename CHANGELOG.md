@@ -15,6 +15,101 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 📚 Documentation
 
+## [0.29.0] - 2026-08-28
+
+Personas can now become persistent Work agents: hire one into a pinned sidebar
+identity, revisit its screen and taught skills, schedule routines inside its
+existing workspace, and receive notifications when it finishes or needs
+attention. Model curation gains persistent stars, while Work gets dictation,
+direct file shortcuts, and a calmer, more reliable computer sandbox.
+
+### ✨ New Features
+
+- **Hire personas as named Work agents.** Choose a persona when creating a Work
+  task and it becomes a persistent agent with that persona's name, avatar, and
+  instructions. Agents stay pinned above one-off tasks, show concise status and
+  unread activity, and remain available in the compact sidebar.
+- **A home for every agent.** The new Agent tab combines identity, a live
+  view-only screen thumbnail, scheduled routines, and taught skills. Routines
+  run inside the agent's existing conversation and workspace instead of
+  creating a fresh task, while completion, attention, and takeover
+  notifications link directly back to the agent. Ships with schema migrations
+  (SQLite v25–v27 / PostgreSQL v24–v26).
+- **Star important models.** Administrators can star models in the shared
+  catalog, placing favorites first in both the catalog and default-model
+  picker. Several stars follow most-recently-starred order, and removing one
+  restores its manual or provider position.
+- **Dictate Work instructions and open results directly.** The Work composer
+  now accepts browser speech recognition or configured speech-to-text, and
+  files created or moved by an agent appear as clickable chips that open
+  directly in the workspace editor.
+- **A living Work Computer start page.** The sandbox desktop gains an offline,
+  time-aware Sunset Valley scene and built-in, checksum-verified blocking for
+  ads, trackers, and cookie-consent banners.
+
+### 🔧 Improvements
+
+- Persona identity now carries through model selectors, header chips, and
+  assistant replies in both Chat and Work, with consistent avatar presentation.
+- Settings → Model is now **Defaults**, separating model defaults and catalog
+  curation from the **Models** manager. The existing bulk Ollama updater now
+  lives with the installed-model controls, reports per-model progress, and
+  refreshes the list when it completes.
+- The persona editor now uses one clear Save action, stays open after the server
+  confirms a create or update, and shows an accessible saved state.
+- Tool-server save and refresh failures now show the backend's specific reason
+  instead of a generic error.
+- Recommended starter models and hardware guidance now reflect the Gemma 4 and
+  Qwen 3.8 lineups rather than the older 2024 suggestions.
+
+### 🐛 Bug Fixes
+
+- Persona-backed replies resolve the persona's display name instead of exposing
+  its raw identifier in model-trigger UI.
+- Work Computer runs no longer fail when a provider rejects screenshots: the
+  run switches to text-only observations, records the degradation, and
+  continues.
+- The animated start scene renders as time-keyed stills so it remains
+  responsive under the GPU-less SwiftShader sandbox, with improved
+  initialization and the existing PNG fallback retained.
+- Containerized backends now reach Docker-published Work preview, screen, and
+  audio ports through the configured host address, including working Docker
+  Desktop defaults.
+- Work Computer audio now loads its processor from a same-origin asset, fixing
+  playback under the production Content Security Policy.
+- The cross-replica replay drill now seeds current event timestamps so retention
+  cannot remove fixtures during its assertion.
+
+### 🌍 Translations
+
+- Added 89 localized interface messages across all 25 shipped languages for
+  agents, routines, model starring, Work file links, startup and OAuth errors,
+  chat actions, uploads, settings, model operations, and portable archive
+  import/export.
+- Previously hardcoded toast messages now use the translation catalog, and
+  portable archive parse failures expose stable error codes for localized
+  validation.
+
+### 🔒 Security & Dependencies
+
+- Container builds now refresh the runner stage without reusing stale
+  OS-package layers, ensuring current Alpine and OpenSSL fixes reach security
+  scans and published images.
+- Refreshed AWS SDK, UUID, Framer Motion, i18next, Lucide, Mermaid, React
+  i18next, Vite, and PostgreSQL type dependencies.
+- Work Computer browser extensions are version-pinned and checksum-verified
+  during image construction.
+
+### 📚 Documentation
+
+- Expanded the Work, Automations, and Notifications guides for hired agents,
+  task-bound routines, unread state, Work notifications, content blocking,
+  screenshot degradation, and Docker-published port routing.
+- Updated model-management guidance for stars, the Defaults/Models split, bulk
+  updates, and the current recommended model lineup.
+- Refreshed the Work Computer screenshot and corrected documentation media
+  metadata and demo links.
+
 ## [0.28.0] - 2026-08-23
 
 Every Work task can now have a real computer. The Work Computer gives each sandbox a watchable virtual desktop with a browser: see the agent work live, hear its audio, take over the mouse for sign-ins, and teach it tasks by demonstrating them once on screen. Underneath, the agent's actions are verified rather than assumed — typing asserts its target field, batches stop when the screen changes under them, and outcomes are checked against declared expectations.
