@@ -114,7 +114,7 @@ export const SettingsApiKeysTab: React.FC = () => {
         expiresInDays: expiry,
       });
       if (!response.success || !response.data) {
-        throw new Error(response.error || 'API key creation failed.');
+        throw new Error(response.error || t('settings.apiKeys.createFailed'));
       }
       setCreatedToken(response.data.token);
       setName('');
@@ -151,7 +151,7 @@ export const SettingsApiKeysTab: React.FC = () => {
     try {
       const response = await authApi.revokeApiToken(token.id);
       if (!response.success) {
-        throw new Error(response.error || 'API key revoke failed.');
+        throw new Error(response.error || t('settings.apiKeys.revokeFailed'));
       }
       toast.success(t('settings.apiKeys.revoked', 'API key revoked.'));
       await load();

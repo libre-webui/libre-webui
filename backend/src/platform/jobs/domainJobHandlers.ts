@@ -1089,6 +1089,76 @@ const runAutomation: DurableJobHandler = async context => {
       );
       return { resultReference: `automation-run:${runId}:work-access-denied` };
     }
+    if (automation.workTaskId) {
+      // A routine bound to an agent task runs inside that task's workspace
+      // and conversation; the task carries its own model, provider, and
+      // runtime policy, so none of the automation-level resolution applies.
+      const { workTaskService, WorkConflictError } =
+        await import('../../services/workTaskService.js');
+      const boundTask = await workTaskService.getTaskRecord(
+        automation.workTaskId,
+        context.actorUserId
+      );
+      if (!boundTask) {
+        await automationService.finalizeRun(
+          runId,
+          'failed',
+          'work-task-missing',
+          { userId: context.actorUserId, automationId }
+        );
+        return { resultReference: `automation-run:${runId}:task-missing` };
+      }
+      try {
+        await workTaskService.createRun(
+          boundTask.id,
+          context.actorUserId,
+          automation.instructions,
+          boundTask.model,
+          {
+            providerType: boundTask.providerType,
+            ...(boundTask.providerId
+              ? { providerId: boundTask.providerId }
+              : {}),
+          }
+        );
+        await automationService.markRunStartedWork(runId, boundTask.id);
+        await context.reportProgress({
+          current: 2,
+          total: 2,
+          message: 'Automation run started on the agent task',
+        });
+        return {
+          resultReference: `automation-run:${runId}:work:${boundTask.id}`,
+        };
+      } catch (error) {
+        if (
+          error instanceof DurableJobExecutionError ||
+          context.signal.aborted
+        ) {
+          throw error;
+        }
+        if (error instanceof WorkConflictError) {
+          // The agent is already working (or holds a preview); this
+          // occurrence is skipped honestly instead of queueing forever.
+          await automationService.finalizeRun(
+            runId,
+            'failed',
+            'work-task-busy',
+            {
+              userId: context.actorUserId,
+              automationId,
+            }
+          );
+          return { resultReference: `automation-run:${runId}:task-busy` };
+        }
+        handlerLogger.error(`Automation Work run ${runId} failed:`, error);
+        throw new DurableJobExecutionError(
+          true,
+          'automation-work-run-failed',
+          'The automation run could not start on its agent task'
+        );
+      }
+    }
     let model = automation.model;
     let provider = decodeProvider(automation.provider ?? null);
     if (!model) {

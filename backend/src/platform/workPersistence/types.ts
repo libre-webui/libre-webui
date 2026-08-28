@@ -30,6 +30,10 @@ export interface WorkTaskRow {
   preview_status: WorkPreviewStatus;
   preview_upstream_host: string | null;
   preview_upstream_port: number | null;
+  persona_id: string | null;
+  status_blurb: string | null;
+  is_agent: number | null;
+  last_seen_at: number | null;
   created_at: number;
   updated_at: number;
 }
@@ -181,8 +185,11 @@ export interface WorkPersistenceRepository {
   updateTaskStatus(
     taskId: string,
     status: WorkTaskStatus,
-    now: number
+    now: number,
+    statusBlurb?: string | null
   ): Promise<void>;
+  /** Advance the owner's seen marker; monotonic, never rewinds. */
+  markTaskSeen(taskId: string, userId: string, seenAt: number): Promise<void>;
   updatePreview(
     taskId: string,
     status: WorkPreviewStatus,

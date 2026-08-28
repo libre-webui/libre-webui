@@ -44,6 +44,10 @@
     "name": "Libre WebUI",
     "shortName": "Libre"
   },
+  "appInitialization": {
+    "ollamaUnavailable": "Le service Ollama n’est pas disponible. Les modèles de plugins peuvent toujours être utilisés.",
+    "backendConnectionFailed": "Échec de la connexion au service backend"
+  },
   "auth": {
     "login": {
       "title": "Bon retour",
@@ -99,7 +103,11 @@
       "continueWith": "Continuer avec {{provider}}",
       "connectingTo": "Connexion à {{provider}}...",
       "github": "GitHub",
-      "huggingFace": "Hugging Face"
+      "huggingFace": "Hugging Face",
+      "loginSuccess": "Connexion OAuth réussie !",
+      "completionFailed": "Échec de la finalisation de l’authentification OAuth",
+      "verificationFailed": "Échec de la vérification de l’authentification OAuth",
+      "authenticationFailed": "Échec de l’authentification OAuth"
     },
     "checkingAuth": "Vérification de l'authentification...",
     "welcome": "Bienvenue",
@@ -374,7 +382,8 @@
       "pullCommand": "ollama pull llama3.2:3b",
       "noModelsTooltip": "Aucun modèle disponible. Veuillez vous assurer qu'Ollama est en cours d'exécution et que des modèles sont installés.",
       "selectBeforePrivateChat": "Sélectionnez un modèle disponible avant de démarrer une discussion privée",
-      "selectBeforeSending": "Sélectionnez un modèle disponible avant d'envoyer"
+      "selectBeforeSending": "Sélectionnez un modèle disponible avant d'envoyer",
+      "selectBeforeRegenerating": "Sélectionnez un modèle disponible avant de régénérer"
     },
     "footer": {
       "disclaimer": "Les LLM peuvent faire des erreurs - vérifiez les informations importantes",
@@ -385,7 +394,10 @@
     "mediaUpload": {
       "dropImagesHere": "Déposez des images ici ou",
       "supportedFormats": "Formats supportés : JPG, PNG, GIF, WebP (max 10 Mo chacun)",
-      "browse": "parcourir"
+      "browse": "parcourir",
+      "unsupportedFileType": "Type de fichier non pris en charge : {{name}}",
+      "maxImagesAllowed": "Maximum de {{count}} images autorisé",
+      "imageTooLarge": "L’image {{name}} est trop volumineuse (10 Mo max.)"
     },
     "structuredOutput": {
       "title": "Format de réponse",
@@ -456,7 +468,22 @@
       "modelSwitched": "Basculement vers {{model}} (le modèle précédent n'est plus disponible)",
       "modelsLoadFailed": "Échec du chargement des modèles",
       "modelUpdated": "Modèle mis à jour pour le chat actuel",
-      "modelUpdateFailed": "Échec de la mise à jour du modèle de session"
+      "modelUpdateFailed": "Échec de la mise à jour du modèle de session",
+      "titlePreviewFallback": "Impossible de générer un titre ; l’aperçu du message sera utilisé",
+      "titleGenerated": "Titre du chat généré",
+      "titleGenerationFailed": "Échec de la génération du titre du chat",
+      "sessionNotFoundRedirect": "Session introuvable. Création d’une nouvelle session...",
+      "comparisonError": "{{model}} : {{error}}",
+      "generationFailed": "échec de la génération",
+      "comparisonFailed": "échec de la comparaison",
+      "sendFailed": "Échec de l’envoi du message",
+      "noMessageToRegenerate": "Aucun message à régénérer",
+      "regenerateFailed": "Échec de la régénération du message",
+      "messageNotFound": "Message introuvable",
+      "branchSwitched": "Passage à la variante {{number}}",
+      "branchSelectFailed": "Échec de la sélection de la branche",
+      "editFailed": "Échec de la modification du message",
+      "toolDecisionFailed": "La décision de l’outil n’a pas pu être enregistrée"
     },
     "documents": {
       "title": "Documents dans le contexte"
@@ -554,7 +581,7 @@
     "title": "Paramètres",
     "tabs": {
       "appearance": "Apparence",
-      "model": "Modèle",
+      "model": "Par défaut",
       "systemMessage": "Message système",
       "plugins": "Plugins",
       "search": "Recherche",
@@ -616,6 +643,9 @@
       }
     },
     "saveSettings": "Enregistrer les paramètres",
+    "preferences": {
+      "updateFailed": "Échec de la mise à jour des paramètres : {{error}}"
+    },
     "model": {
       "title": "Paramètres du modèle",
       "defaultModel": "Modèle par défaut",
@@ -651,7 +681,10 @@
         "taskModelDescription": "Modèle utilisé pour générer les titres des conversations"
       },
       "updatingModel": "Mise à jour de {{name}} ({{current}}/{{total}})",
-      "modelsProgress": "{{current}} sur {{total}} modèles"
+      "modelsProgress": "{{current}} sur {{total}} modèles",
+      "defaultModelUpdated": "Modèle par défaut mis à jour",
+      "allModelsUpdated": "Tous les modèles ont été mis à jour avec succès !",
+      "updateAllFailed": "Échec de la mise à jour des modèles : {{error}}"
     },
     "systemMessage": {
       "title": "Message système",
@@ -711,6 +744,7 @@
       "modelCatalogNeedsApiKey": "Ajoutez une clé API valide pour ce fournisseur afin de charger sa liste de modèles en direct.",
       "modelCatalogUnavailable": "Impossible de charger la liste des modèles du fournisseur.",
       "modelCatalogRefreshFailed": "Échec de l'actualisation du catalogue de modèles",
+      "invalidJson": "Format JSON non valide",
       "capability": {
         "chat": "Chat",
         "embedding": "Embedding",
@@ -775,6 +809,11 @@
       "stopSequencesDescription": "Tokens personnalisés qui arrêteront la génération lorsqu'ils seront rencontrés.",
       "resetDefaults": "Réinitialiser les valeurs par défaut",
       "saveOptions": "Enregistrer les options",
+      "saveSuccess": "Options de génération mises à jour avec succès",
+      "saveFailed": "Échec de la mise à jour des options de génération : {{error}}",
+      "modelDefaultsLoaded": "Paramètres recommandés par {{model}} chargés",
+      "resetSuccess": "Options de génération réinitialisées aux valeurs par défaut",
+      "resetFailed": "Échec de la réinitialisation des options de génération : {{error}}",
       "embeddingSettings": "Paramètres d'embedding",
       "enableEmbeddings": "Activer les embeddings de documents",
       "thinking": "Réflexion",
@@ -811,7 +850,14 @@
         "chunksWithEmbeddings": "Chunks avec embeddings",
         "coverage": "Couverture",
         "regenerate": "Régénérer les embeddings",
-        "regenerating": "Régénération..."
+        "regenerating": "Régénération...",
+        "regenerateSuccess": "Embeddings régénérés pour {{count}} documents",
+        "regeneratePartialSuccess": "{{count}} documents régénérés ; {{skipped}} ignorés",
+        "regenerateFailed": "Échec de la régénération des embeddings : {{error}}",
+        "saveSuccess": "Paramètres d’embedding mis à jour avec succès",
+        "saveFailed": "Échec de la mise à jour des paramètres d’embedding : {{error}}",
+        "resetSuccess": "Paramètres d’embedding réinitialisés aux valeurs par défaut",
+        "resetFailed": "Échec de la réinitialisation des paramètres d’embedding : {{error}}"
       },
       "collections": {
         "title": "Collections de connaissances",
@@ -883,7 +929,11 @@
       "revokeSavedVoice": "Retirer le consentement pour {{name}}",
       "revokeSavedVoiceConfirm": "Retirer le consentement pour « {{name}} » ? La voix enregistrée ne pourra plus être utilisée, mais la trace du consentement est conservée.",
       "savedVoiceRevoked": "Consentement retiré",
-      "savedVoiceRevokeFailed": "Échec du retrait du consentement"
+      "savedVoiceRevokeFailed": "Échec du retrait du consentement",
+      "savedVoiceUnavailableCleanupFailed": "La voix enregistrée est indisponible et n’a pas pu être supprimée des paramètres vocaux",
+      "saveSuccess": "Paramètres TTS enregistrés avec succès",
+      "saveFailed": "Échec de l’enregistrement des paramètres TTS : {{error}}",
+      "testFailed": "Échec du test TTS : {{error}}"
     },
     "imageGen": {
       "title": "Génération d'images",
@@ -903,7 +953,9 @@
       "style": "Style",
       "styleDescription": "Preset de style pour les images générées",
       "availableProviders": "Fournisseurs disponibles",
-      "models": "modèles"
+      "models": "modèles",
+      "saveSuccess": "Paramètres de génération d’images enregistrés avec succès",
+      "saveFailed": "Échec de l’enregistrement des paramètres de génération d’images : {{error}}"
     },
     "data": {
       "title": "Gestion des données",
@@ -945,6 +997,16 @@
       "documents": "Documents",
       "warnings": "Avertissements",
       "refreshAfterImportFailed": "Les données ont été importées, mais certaines vues n’ont pas pu être actualisées. Rechargez Libre WebUI pour voir toutes les modifications.",
+      "exportSuccess": "Archive de données portable exportée",
+      "exportFailed": "Échec de l’exportation",
+      "importSuccess": "Archive de données portable importée",
+      "importFailed": "Échec de l’importation",
+      "archiveErrors": {
+        "invalidJson": "L’archive portable ne contient pas de JSON valide.",
+        "objectRequired": "L’archive portable doit contenir un objet JSON.",
+        "unsupportedVersion": "Version {{version}} de l’archive portable non prise en charge.",
+        "unrecognized": "Ce fichier n’est pas une archive portable Libre WebUI."
+      },
       "errors": "Erreurs",
       "archivedChats": {
         "title": "Discussions archivées",
@@ -1203,6 +1265,23 @@
     "newWork": "Nouvelle session Work",
     "openPalette": "Ouvrir la palette de commandes"
   },
+  "modelDownload": {
+    "success": "{{name}} téléchargé",
+    "failed": "Échec du téléchargement : {{error}}",
+    "startFailed": "Échec du démarrage du téléchargement",
+    "cancelled": "Téléchargement annulé"
+  },
+  "modelTools": {
+    "toasts": {
+      "fetchInfoFailed": "Échec de la récupération des informations",
+      "pushSuccess": "Modèle envoyé",
+      "createSuccess": "Modèle créé",
+      "copySuccess": "Modèle copié",
+      "embeddingsSuccess": "Embeddings générés (voir la console)",
+      "failed": "Échec",
+      "unknownError": "Erreur inconnue"
+    }
+  },
   "modelManager": {
     "title": "Modèles",
     "loading": "Chargement des modèles...",
@@ -1243,7 +1322,9 @@
       "pictureTooLarge": "Les images doivent faire moins de 192 Ko.",
       "saving": "Enregistrement…",
       "hide": "Masquer aux utilisateurs",
-      "show": "Afficher aux utilisateurs"
+      "show": "Afficher aux utilisateurs",
+      "star": "Marquer {{name}} d’une étoile",
+      "unstar": "Retirer l’étoile de {{name}}"
     },
     "pull": {
       "placeholder": "Entrez le nom du modèle (ex: llama3.2:3b, deepseek-r1:14b)",
@@ -2469,7 +2550,8 @@
     "conversation": {
       "ready": "Espace de travail prêt",
       "empty": "Poursuivez la tâche ci-dessous. Cette conversation et ses fichiers restent associés à cet espace de travail.",
-      "loadOlder": "Charger les messages précédents"
+      "loadOlder": "Charger les messages précédents",
+      "openFile": "Ouvrir {{name}}"
     },
     "status": {
       "preparing": "Préparation de l'espace de travail isolé…",
@@ -2510,7 +2592,8 @@
       "splitSize": "Conversation {{conversation}} %, espace de travail {{workspace}} %",
       "terminal": "Terminal",
       "git": "Git",
-      "screen": "Écran"
+      "screen": "Écran",
+      "agent": "Agent"
     },
     "files": {
       "discard": "Ignorer les modifications de fichier non enregistrées ?",
@@ -2655,6 +2738,29 @@
       "building": "Construction de l'image du bureau... la première fois prend quelques minutes.",
       "enable": "Activer",
       "retry": "Réessayer"
+    },
+    "agents": {
+      "title": "Agents"
+    },
+    "persona": {
+      "label": "Recruter comme agent (facultatif)",
+      "none": "Aucune persona (tâche ponctuelle)",
+      "hint": "Cette tâche devient un agent nommé : elle conserve la persona, reste épinglée dans la barre latérale et affiche une ligne d'état après chaque exécution.",
+      "description": "Choisissez une persona pour transformer cette tâche en agent permanent avec sa propre identité."
+    },
+    "agent": {
+      "openScreen": "Ouvrir la vue plein écran",
+      "personaLine": "Persona : {{name}}",
+      "screen": "Écran",
+      "routines": "Routines",
+      "addRoutine": "Routine",
+      "noRoutines": "Aucune routine pour l'instant. Une routine exécute une instruction selon un horaire, dans l'espace de travail de cet agent.",
+      "routineToggleFailed": "Impossible de mettre à jour la routine.",
+      "routineSaveFailed": "Impossible d'enregistrer la routine.",
+      "skills": "Compétences enseignées",
+      "noSkills": "Rien d'enseigné pour l'instant. Utilisez Teach dans l'onglet Écran pour démontrer une procédure une fois ; elle devient une compétence rejouable.",
+      "skillToggleFailed": "Impossible de mettre à jour la compétence.",
+      "unread": "Nouvelle activité"
     }
   },
   "personaBackground": {
@@ -2850,7 +2956,8 @@
       "targetChat": "Session de chat",
       "targetWork": "Tâche Work",
       "workPolicy": "Politique Work",
-      "workPolicyDefault": "Par défaut (limites globales)"
+      "workPolicyDefault": "Par défaut (limites globales)",
+      "taskBoundNote": "Cette routine s'exécute dans l'espace de travail et la conversation de l'agent, avec le modèle et l'environnement de l'agent."
     },
     "kind": {
       "once": "Une fois",

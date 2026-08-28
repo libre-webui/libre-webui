@@ -1860,6 +1860,127 @@ test('computer tools reach the model as live screenshots and persist text-only',
   assert.equal(actCall.metadata.actions, 'click,type');
 });
 
+test('a provider that rejects images degrades to text-only screen work', async () => {
+  const now = Date.now();
+  const userId = 'agent-loop-no-vision-admin';
+  getDatabase()
+    .prepare(
+      `INSERT INTO users (
+        id, username, email, password_hash, role, avatar, created_at, updated_at
+      ) VALUES (?, ?, NULL, 'unused', 'admin', NULL, ?, ?)`
+    )
+    .run(userId, userId, now, now);
+
+  const screenshot = Buffer.from('fake-png-blind').toString('base64');
+  replaceMethod(workRuntimeService, 'computerToolsAvailable', async () => true);
+  replaceMethod(workRuntimeService, 'computerObserve', async () => ({
+    width: 1280,
+    height: 800,
+    cursorX: 100,
+    cursorY: 200,
+    window: 'Chromium',
+    screenshotBase64: screenshot,
+  }));
+
+  const requests = [];
+  replaceMethod(
+    workModelProviderService,
+    'generateChatStreamResponse',
+    async request => {
+      requests.push(request);
+      const round = requests.length;
+      if (round === 1) {
+        return {
+          model: request.model,
+          created_at: new Date().toISOString(),
+          message: {
+            role: 'assistant',
+            content: '',
+            tool_calls: [
+              {
+                id: 'observe-1',
+                function: { name: 'computer_observe', arguments: {} },
+              },
+            ],
+          },
+          done: true,
+        };
+      }
+      if (round === 2) {
+        // The text-only model's provider rejects the screenshot round.
+        assert.ok(
+          request.messages.some(message => message.images?.length),
+          'the rejected round must actually carry a screenshot'
+        );
+        throw new Error(
+          'Plugin API error: 404 - {"error":{"message":"No endpoints found that support image input","code":404}}'
+        );
+      }
+      if (round === 3) {
+        // The replayed round: no images anywhere, and the model was told.
+        assert.ok(
+          request.messages.every(message => !message.images?.length),
+          'screenshots must be stripped after the rejection'
+        );
+        assert.match(
+          request.messages.at(-1).content,
+          /screenshots are disabled for the rest of this run/
+        );
+        return {
+          model: request.model,
+          created_at: new Date().toISOString(),
+          message: {
+            role: 'assistant',
+            content: '',
+            tool_calls: [
+              {
+                id: 'observe-2',
+                function: { name: 'computer_observe', arguments: {} },
+              },
+            ],
+          },
+          done: true,
+        };
+      }
+      assert.equal(round, 4);
+      // The second observation's result must not re-attach images.
+      const lastTool = request.messages.at(-1);
+      assert.equal(lastTool.role, 'tool');
+      assert.ok(!lastTool.images?.length);
+      return {
+        model: request.model,
+        created_at: new Date().toISOString(),
+        message: { role: 'assistant', content: 'Finished without eyes.' },
+        done: true,
+      };
+    }
+  );
+
+  const detail = await workTaskService.createTaskWithRun(
+    userId,
+    'Drive the computer blind.',
+    'test-model',
+    true,
+    { providerType: 'plugin', providerId: 'test-plugin' }
+  );
+  const runId = detail.activeRun?.id;
+  assert.ok(runId);
+  await workAgentService.execute(detail.id, runId, userId);
+
+  assert.equal(requests.length, 4);
+  assert.equal((await workTaskService.getRun(runId)).status, 'completed');
+
+  // The user sees an explanatory note that never re-enters model context.
+  const persisted = await workTaskService.getMessages(detail.id);
+  const note = persisted.find(
+    message =>
+      message.kind === 'error' &&
+      /does not accept screenshot images/.test(message.content)
+  );
+  assert.ok(note, 'the degradation must be visible in the transcript');
+  assert.equal(note.metadata.emptyModelResponse, true);
+});
+
 test('computer results surface fences, focus, URL, and expectation verdicts', async () => {
   const now = Date.now();
   const userId = 'agent-loop-computer-fence-admin';

@@ -14,7 +14,6 @@ keywords:
     authentik,
     oauth2 authentication,
   ]
-image: /img/social/21.png
 ---
 
 # Single Sign-On

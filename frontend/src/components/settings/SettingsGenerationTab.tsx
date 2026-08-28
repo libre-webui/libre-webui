@@ -594,7 +594,7 @@ function ContextCompactionSection() {
         prompt,
       });
       if (!response.success || !response.data) {
-        throw new Error(response.error || 'Compaction settings update failed.');
+        throw new Error(response.error || t('settings.compaction.saveFailed'));
       }
       setEnabled(response.data.enabled);
       setThresholdTokens(String(response.data.thresholdTokens));

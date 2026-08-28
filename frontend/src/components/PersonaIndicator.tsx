@@ -95,7 +95,7 @@ export const PersonaIndicator: React.FC<PersonaIndicatorProps> = ({
         <img
           src={getAvatarSrc()}
           alt={persona.name}
-          className='w-5 h-5 rounded-full object-cover'
+          className='w-5 h-5 rounded-md object-cover'
           onError={handleAvatarError}
         />
         <span className='text-sm font-medium max-w-[120px] truncate'>

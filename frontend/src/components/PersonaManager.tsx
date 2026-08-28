@@ -106,9 +106,8 @@ export const PersonaManager: React.FC = () => {
     }
   };
 
-  const handleFormSubmit = async () => {
-    setShowCreateForm(false);
-    setEditingPersona(null);
+  const handleFormSubmit = async (savedPersona: Persona) => {
+    setEditingPersona(savedPersona);
     await reloadPersonas();
   };
 

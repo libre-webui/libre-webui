@@ -19,7 +19,7 @@ import type { CreatePersonaRequest, PersonaParameters, Persona } from '@/types';
 
 export interface PersonaFormProps {
   persona: Persona | null;
-  onSubmit: () => void;
+  onSubmit: (savedPersona: Persona) => void | Promise<void>;
   onCancel: () => void;
 }
 

@@ -228,7 +228,9 @@ Chat and Work are peer modes in the primary sidebar header. The active mode is
 visibly selected; Work tasks use the main sidebar list instead of introducing a
 second navigation rail. Each task row keeps its position while status changes,
 shows the task title, model, updated time, and labeled status color, and exposes
-deletion even when that task is selected.
+deletion even when that task is selected. In the compact rail, ordinary chat
+and Work history is hidden; hired agents remain pinned as persona avatars with
+their status and unread activity conveyed accessibly.
 
 On wide screens, Work divides the main surface into conversation and workspace
 panes with a draggable, keyboard-operable separator. The default conversation

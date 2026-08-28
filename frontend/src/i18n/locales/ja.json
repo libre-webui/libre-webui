@@ -44,6 +44,10 @@
     "name": "Libre WebUI",
     "shortName": "Libre"
   },
+  "appInitialization": {
+    "ollamaUnavailable": "Ollama サービスを利用できません。プラグインモデルは引き続き使用できる場合があります。",
+    "backendConnectionFailed": "バックエンドサービスへの接続に失敗しました"
+  },
   "auth": {
     "login": {
       "title": "おかえりなさい",
@@ -99,7 +103,11 @@
       "continueWith": "{{provider}}で続行",
       "connectingTo": "{{provider}}に接続中...",
       "github": "GitHub",
-      "huggingFace": "Hugging Face"
+      "huggingFace": "Hugging Face",
+      "loginSuccess": "OAuth ログインに成功しました！",
+      "completionFailed": "OAuth 認証を完了できませんでした",
+      "verificationFailed": "OAuth 認証の検証に失敗しました",
+      "authenticationFailed": "OAuth 認証に失敗しました"
     },
     "checkingAuth": "認証を確認中...",
     "welcome": "ようこそ",
@@ -374,7 +382,8 @@
       "pullCommand": "ollama pull llama3.2:3b",
       "noModelsTooltip": "利用可能なモデルがありません。Ollamaが実行中でモデルがインストールされていることを確認してください。",
       "selectBeforePrivateChat": "プライベートチャットを開始する前に利用可能なモデルを選択してください",
-      "selectBeforeSending": "送信する前に利用可能なモデルを選択してください"
+      "selectBeforeSending": "送信する前に利用可能なモデルを選択してください",
+      "selectBeforeRegenerating": "再生成する前に利用可能なモデルを選択してください"
     },
     "footer": {
       "disclaimer": "LLMは間違えることがあります - 重要な情報は確認してください",
@@ -385,7 +394,10 @@
     "mediaUpload": {
       "dropImagesHere": "ここに画像をドロップするか",
       "supportedFormats": "対応形式: JPG, PNG, GIF, WebP（最大10MB）",
-      "browse": "参照"
+      "browse": "参照",
+      "unsupportedFileType": "サポートされていないファイル形式です: {{name}}",
+      "maxImagesAllowed": "画像は最大 {{count}} 枚まで追加できます",
+      "imageTooLarge": "画像 {{name}} は大きすぎます（最大 10 MB）"
     },
     "structuredOutput": {
       "title": "レスポンス形式",
@@ -456,7 +468,22 @@
       "modelSwitched": "{{model}} に切り替えました（以前のモデルは利用できなくなりました）",
       "modelsLoadFailed": "モデルの読み込みに失敗しました",
       "modelUpdated": "現在のチャットのモデルが更新されました",
-      "modelUpdateFailed": "セッションモデルの更新に失敗しました"
+      "modelUpdateFailed": "セッションモデルの更新に失敗しました",
+      "titlePreviewFallback": "タイトルを生成できなかったため、メッセージのプレビューを使用します",
+      "titleGenerated": "チャットタイトルを生成しました",
+      "titleGenerationFailed": "チャットタイトルの生成に失敗しました",
+      "sessionNotFoundRedirect": "セッションが見つかりません。新しいセッションを作成しています...",
+      "comparisonError": "{{model}}: {{error}}",
+      "generationFailed": "生成に失敗しました",
+      "comparisonFailed": "比較に失敗しました",
+      "sendFailed": "メッセージの送信に失敗しました",
+      "noMessageToRegenerate": "再生成するメッセージがありません",
+      "regenerateFailed": "メッセージの再生成に失敗しました",
+      "messageNotFound": "メッセージが見つかりません",
+      "branchSwitched": "バリエーション {{number}} に切り替えました",
+      "branchSelectFailed": "分岐の選択に失敗しました",
+      "editFailed": "メッセージの編集に失敗しました",
+      "toolDecisionFailed": "ツールの判断を記録できませんでした"
     },
     "documents": {
       "title": "コンテキスト内のドキュメント"
@@ -554,7 +581,7 @@
     "title": "設定",
     "tabs": {
       "appearance": "外観",
-      "model": "モデル",
+      "model": "デフォルト",
       "systemMessage": "システムメッセージ",
       "plugins": "プラグイン",
       "search": "検索",
@@ -616,6 +643,9 @@
       }
     },
     "saveSettings": "設定を保存",
+    "preferences": {
+      "updateFailed": "設定の更新に失敗しました: {{error}}"
+    },
     "model": {
       "title": "モデル設定",
       "defaultModel": "デフォルトモデル",
@@ -651,7 +681,10 @@
         "taskModelDescription": "会話タイトルの生成に使用するモデル"
       },
       "updatingModel": "{{name}} を更新中 ({{current}}/{{total}})",
-      "modelsProgress": "{{total}} モデル中 {{current}}"
+      "modelsProgress": "{{total}} モデル中 {{current}}",
+      "defaultModelUpdated": "デフォルトモデルを更新しました",
+      "allModelsUpdated": "すべてのモデルを更新しました！",
+      "updateAllFailed": "モデルの更新に失敗しました: {{error}}"
     },
     "systemMessage": {
       "title": "システムメッセージ",
@@ -711,6 +744,7 @@
       "modelCatalogNeedsApiKey": "このプロバイダーのライブモデルリストを読み込むには、有効なAPIキーを追加してください。",
       "modelCatalogUnavailable": "プロバイダーのモデルリストを読み込めませんでした。",
       "modelCatalogRefreshFailed": "モデルカタログの更新に失敗しました",
+      "invalidJson": "JSON 形式が無効です",
       "capability": {
         "chat": "チャット",
         "embedding": "エンベディング",
@@ -775,6 +809,11 @@
       "stopSequencesDescription": "検出されると生成を停止するカスタムトークン。",
       "resetDefaults": "デフォルトにリセット",
       "saveOptions": "オプションを保存",
+      "saveSuccess": "生成オプションを更新しました",
+      "saveFailed": "生成オプションの更新に失敗しました: {{error}}",
+      "modelDefaultsLoaded": "{{model}} が推奨する設定を読み込みました",
+      "resetSuccess": "生成オプションをデフォルトに戻しました",
+      "resetFailed": "生成オプションのリセットに失敗しました: {{error}}",
       "embeddingSettings": "埋め込み設定",
       "enableEmbeddings": "ドキュメント埋め込みを有効にする",
       "thinking": "思考",
@@ -811,7 +850,14 @@
         "chunksWithEmbeddings": "埋め込み済みチャンク",
         "coverage": "カバレッジ",
         "regenerate": "埋め込みを再生成",
-        "regenerating": "再生成中..."
+        "regenerating": "再生成中...",
+        "regenerateSuccess": "{{count}} 件のドキュメントの埋め込みを再生成しました",
+        "regeneratePartialSuccess": "{{count}} 件のドキュメントを再生成し、{{skipped}} 件をスキップしました",
+        "regenerateFailed": "埋め込みの再生成に失敗しました: {{error}}",
+        "saveSuccess": "埋め込み設定を更新しました",
+        "saveFailed": "埋め込み設定の更新に失敗しました: {{error}}",
+        "resetSuccess": "埋め込み設定をデフォルトに戻しました",
+        "resetFailed": "埋め込み設定のリセットに失敗しました: {{error}}"
       },
       "collections": {
         "title": "ナレッジコレクション",
@@ -883,7 +929,11 @@
       "revokeSavedVoice": "{{name}} の同意を撤回",
       "revokeSavedVoiceConfirm": "「{{name}}」の同意を撤回しますか？保存した声は使用できなくなりますが、同意の記録は保持されます。",
       "savedVoiceRevoked": "同意を撤回しました",
-      "savedVoiceRevokeFailed": "同意を撤回できませんでした"
+      "savedVoiceRevokeFailed": "同意を撤回できませんでした",
+      "savedVoiceUnavailableCleanupFailed": "保存された音声を利用できず、音声設定からも削除できませんでした",
+      "saveSuccess": "TTS 設定を保存しました",
+      "saveFailed": "TTS 設定の保存に失敗しました: {{error}}",
+      "testFailed": "TTS テストに失敗しました: {{error}}"
     },
     "imageGen": {
       "title": "画像生成",
@@ -903,7 +953,9 @@
       "style": "スタイル",
       "styleDescription": "生成画像のスタイルプリセット",
       "availableProviders": "利用可能なプロバイダー",
-      "models": "モデル"
+      "models": "モデル",
+      "saveSuccess": "画像生成設定を保存しました",
+      "saveFailed": "画像生成設定の保存に失敗しました: {{error}}"
     },
     "data": {
       "title": "データ管理",
@@ -945,6 +997,16 @@
       "documents": "ドキュメント",
       "warnings": "警告",
       "refreshAfterImportFailed": "データはインポートされましたが、一部の画面を更新できませんでした。すべての変更を表示するには Libre WebUI を再読み込みしてください。",
+      "exportSuccess": "ポータブルデータアーカイブをエクスポートしました",
+      "exportFailed": "エクスポートに失敗しました",
+      "importSuccess": "ポータブルデータアーカイブをインポートしました",
+      "importFailed": "インポートに失敗しました",
+      "archiveErrors": {
+        "invalidJson": "ポータブルアーカイブは有効な JSON ではありません。",
+        "objectRequired": "ポータブルアーカイブには JSON オブジェクトが必要です。",
+        "unsupportedVersion": "ポータブルアーカイブのバージョン {{version}} はサポートされていません。",
+        "unrecognized": "このファイルは Libre WebUI のポータブルアーカイブではありません。"
+      },
       "errors": "エラー",
       "archivedChats": {
         "title": "アーカイブ済みチャット",
@@ -1203,6 +1265,23 @@
     "newWork": "新しい Work セッション",
     "openPalette": "コマンドパレットを開く"
   },
+  "modelDownload": {
+    "success": "{{name}}をダウンロードしました",
+    "failed": "ダウンロードに失敗しました: {{error}}",
+    "startFailed": "ダウンロードを開始できませんでした",
+    "cancelled": "ダウンロードがキャンセルされました"
+  },
+  "modelTools": {
+    "toasts": {
+      "fetchInfoFailed": "情報の取得に失敗しました",
+      "pushSuccess": "モデルをプッシュしました",
+      "createSuccess": "モデルを作成しました",
+      "copySuccess": "モデルをコピーしました",
+      "embeddingsSuccess": "埋め込みを生成しました（コンソールを確認してください）",
+      "failed": "失敗しました",
+      "unknownError": "不明なエラー"
+    }
+  },
   "modelManager": {
     "title": "モデル",
     "loading": "モデルを読み込み中...",
@@ -1243,7 +1322,9 @@
       "pictureTooLarge": "画像は 192 KB 未満にしてください。",
       "saving": "保存中…",
       "hide": "ユーザーに非表示にする",
-      "show": "ユーザーに表示する"
+      "show": "ユーザーに表示する",
+      "star": "{{name}}にスターを付ける",
+      "unstar": "{{name}}のスターを外す"
     },
     "pull": {
       "placeholder": "モデル名を入力（例: llama3.2:3b, deepseek-r1:14b）",
@@ -2469,7 +2550,8 @@
     "conversation": {
       "ready": "ワークスペースの準備ができました",
       "empty": "下からタスクを続けてください。この会話とファイルは、このワークスペースに紐づいたまま保持されます。",
-      "loadOlder": "過去のメッセージを読み込む"
+      "loadOlder": "過去のメッセージを読み込む",
+      "openFile": "{{name}} を開く"
     },
     "status": {
       "preparing": "隔離ワークスペースを準備中…",
@@ -2510,7 +2592,8 @@
       "splitSize": "会話 {{conversation}}%、ワークスペース {{workspace}}%",
       "terminal": "ターミナル",
       "git": "Git",
-      "screen": "画面"
+      "screen": "画面",
+      "agent": "エージェント"
     },
     "files": {
       "discard": "未保存のファイル変更を破棄しますか？",
@@ -2655,6 +2738,29 @@
       "building": "デスクトップイメージをビルド中... 初回は数分かかります。",
       "enable": "有効にする",
       "retry": "再試行"
+    },
+    "agents": {
+      "title": "エージェント"
+    },
+    "persona": {
+      "label": "エージェントとして雇う（任意）",
+      "none": "ペルソナなし（単発タスク）",
+      "hint": "このタスクは名前付きエージェントになります。ペルソナを保持し、サイドバーに固定され、実行のたびに1行のステータスを報告します。",
+      "description": "ペルソナを選ぶと、このタスクは独自のアイデンティティを持つ永続的なエージェントになります。"
+    },
+    "agent": {
+      "openScreen": "全画面ビューを開く",
+      "personaLine": "ペルソナ: {{name}}",
+      "screen": "画面",
+      "routines": "ルーティン",
+      "addRoutine": "ルーティン",
+      "noRoutines": "まだルーティンがありません。ルーティンはスケジュールに従って、このエージェントのワークスペース内で指示を実行します。",
+      "routineToggleFailed": "ルーティンを更新できませんでした。",
+      "routineSaveFailed": "ルーティンを保存できませんでした。",
+      "skills": "教えたスキル",
+      "noSkills": "まだ何も教えていません。画面タブの Teach で手順を一度実演すると、再実行できるスキルになります。",
+      "skillToggleFailed": "スキルを更新できませんでした。",
+      "unread": "新しいアクティビティ"
     }
   },
   "personaBackground": {
@@ -2850,7 +2956,8 @@
       "targetChat": "チャットセッション",
       "targetWork": "Work タスク",
       "workPolicy": "Work ポリシー",
-      "workPolicyDefault": "デフォルト（全体の制限）"
+      "workPolicyDefault": "デフォルト（全体の制限）",
+      "taskBoundNote": "このルーティンはエージェント自身のワークスペースと会話の中で、エージェントのモデルとランタイムで実行されます。"
     },
     "kind": {
       "once": "1回のみ",

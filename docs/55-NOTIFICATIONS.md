@@ -36,6 +36,9 @@ reading the list, not replaying the stream.
 | `share`             | Someone shares a resource with you                               |
 | `automation-failed` | One of your automations fails (unless it opted out)              |
 | `calendar-reminder` | An event with a reminder offset reaches its reminder time        |
+| `work-run-finished` | One of your hired Work agents completes a run                    |
+| `work-run-attention`| A hired agent stops for input or hits an error                   |
+| `work-takeover`     | A Work agent asks you to take over its screen                    |
 | `system`            | Instance-level announcements                                     |
 
 Notifications are always published to the affected user only; a mention

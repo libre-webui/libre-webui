@@ -20,6 +20,18 @@ const releaseWorkflow = fs.readFileSync(
   path.join(repoRoot, '.github', 'workflows', 'release.yml'),
   'utf8'
 );
+const workComputerStartPage = fs.readFileSync(
+  path.join(repoRoot, 'deploy', 'work-computer', 'start-page.html'),
+  'utf8'
+);
+const workComputerScene = fs.readFileSync(
+  path.join(repoRoot, 'deploy', 'work-computer', 'valley-scene.js'),
+  'utf8'
+);
+const workComputerStartScript = fs.readFileSync(
+  path.join(repoRoot, 'deploy', 'work-computer', 'start-computer.sh'),
+  'utf8'
+);
 const teamCompose = fs.readFileSync(
   path.join(repoRoot, 'docker-compose.team.yml'),
   'utf8'
@@ -181,6 +193,11 @@ test('Compose files forward every operable platform selector', () => {
     /PLATFORM_PREFLIGHT_TMP_DIR: \/app\/backend\/temp\/preflight/
   );
   assert.match(privateCompose, /libre-webui-preflight:\/app\/backend\/temp/);
+  assert.match(privateCompose, /WORK_PREVIEW_BIND: 172\.30\.0\.1/);
+  assert.match(
+    privateCompose,
+    /WORK_DOCKER_PUBLISHED_HOST: 172\.30\.0\.1/
+  );
   assert.doesNotMatch(
     privateCompose,
     /\/app\/backend\/temp:rw,nosuid,nodev,noexec,size=512m/,
@@ -190,6 +207,48 @@ test('Compose files forward every operable platform selector', () => {
     dockerfile,
     /ENV PLATFORM_PREFLIGHT_TMP_DIR=\/app\/backend\/temp\/preflight/
   );
+});
+
+test('Compose routes Docker-published Work ports back to the backend', () => {
+  for (const filename of composeFiles) {
+    const rendered = JSON.parse(
+      execFileSync(
+        'docker',
+        ['compose', '-f', filename, 'config', '--format', 'json'],
+        { cwd: repoRoot, encoding: 'utf8' }
+      )
+    );
+    const app = rendered.services['libre-webui'];
+    assert.equal(app.environment.WORK_PREVIEW_BIND, '127.0.0.1');
+    assert.equal(
+      app.environment.WORK_DOCKER_PUBLISHED_HOST,
+      'host.docker.internal'
+    );
+    assert.deepEqual(app.extra_hosts, [
+      'host.docker.internal=host-gateway',
+    ]);
+
+    const overridden = JSON.parse(
+      execFileSync(
+        'docker',
+        ['compose', '-f', filename, 'config', '--format', 'json'],
+        {
+          cwd: repoRoot,
+          encoding: 'utf8',
+          env: {
+            ...process.env,
+            WORK_PREVIEW_BIND: '172.31.0.1',
+            WORK_DOCKER_PUBLISHED_HOST: 'work-host.internal',
+          },
+        }
+      )
+    ).services['libre-webui'];
+    assert.equal(overridden.environment.WORK_PREVIEW_BIND, '172.31.0.1');
+    assert.equal(
+      overridden.environment.WORK_DOCKER_PUBLISHED_HOST,
+      'work-host.internal'
+    );
+  }
 });
 
 test('Dockerfile describes the repository socket default accurately', () => {
@@ -405,6 +464,14 @@ test('team Work overlay gives only app and worker the filtered Docker endpoint',
   ]) {
     assert.equal(service.environment.DOCKER_HOST, endpoint);
     assert.equal(service.environment.WORK_HOST_WORKSPACES_ENABLED, 'false');
+    assert.equal(service.environment.WORK_PREVIEW_BIND, '127.0.0.1');
+    assert.equal(
+      service.environment.WORK_DOCKER_PUBLISHED_HOST,
+      'host.docker.internal'
+    );
+    assert.deepEqual(service.extra_hosts, [
+      'host.docker.internal=host-gateway',
+    ]);
     assert.doesNotMatch(
       JSON.stringify(service),
       /\/var\/run\/docker\.sock|group_add/,
@@ -611,6 +678,81 @@ test('Docker builds gate pull requests into every branch without publishing', ()
     /merge:\s+if: github\.event_name != 'pull_request'/
   );
   assert.doesNotMatch(dockerWorkflow, /pull_request_target:/);
+});
+
+test('Docker workflow limits manual publishing to the dev branch', () => {
+  const triggerStart = dockerWorkflow.indexOf('\non:\n');
+  const environmentStart = dockerWorkflow.indexOf('\nenv:\n');
+  assert.notEqual(triggerStart, -1);
+  assert.notEqual(environmentStart, -1);
+
+  const triggers = dockerWorkflow.slice(triggerStart, environmentStart);
+  assert.match(triggers, /^  workflow_dispatch:\s*$/m);
+  assert.match(
+    dockerWorkflow,
+    /^  build:\n    if: >-\n      github\.event_name != 'workflow_dispatch' \|\|\n      github\.ref == 'refs\/heads\/dev'$/m
+  );
+});
+
+test('Work Computer paints usable UI before its bounded valley scene', () => {
+  assert.doesNotMatch(
+    workComputerStartPage,
+    /<script[^>]+src=["'](?:three\.min|valley-scene)\.js["']/
+  );
+  assert.match(
+    workComputerStartPage,
+    /await loadScript\('three\.min\.js'\);[\s\S]*await loadScript\('valley-scene\.js'\);/
+  );
+  assert.ok(
+    workComputerStartPage.indexOf('tick();') <
+      workComputerStartPage.indexOf('scheduleScene();'),
+    'the clock must initialize before scene loading is scheduled'
+  );
+  assert.match(workComputerStartPage, /libre-interface-ready/);
+  assert.match(workComputerStartPage, /requestIdleCallback/);
+  assert.match(workComputerStartPage, /window\.libreSceneReady/);
+  assert.match(workComputerStartPage, /fx: false/);
+  assert.match(workComputerStartPage, /grass: 6000/);
+  assert.match(workComputerStartPage, /vegetationScale: 0\.5/);
+  assert.match(workComputerStartPage, /terrainScale: 0\.6/);
+  assert.match(workComputerStartPage, /canopyDetail: 1/);
+  assert.match(workComputerStartPage, /maxDPR: 0\.625/);
+  assert.match(workComputerStartPage, /300_000/);
+
+  assert.match(workComputerScene, /function makeTerrain\(detail\)/);
+  assert.match(workComputerScene, /function vegetation\(rng, density\)/);
+  assert.match(workComputerScene, /opts\.canopyDetail/);
+  assert.match(workComputerScene, /resizeRenderTimer/);
+  assert.doesNotMatch(workComputerScene, /\.\s*toNonIndexed\(\)/);
+  assert.match(
+    workComputerStartScript,
+    /XDG_CACHE_HOME="\$\{XDG_CACHE_HOME:-\$PROFILE_DIR\/\.cache\}"/
+  );
+  assert.match(workComputerStartScript, /SCREEN_SETUP_PID=\$!/);
+  assert.match(workComputerStartScript, /AUDIO_SETUP_PID=\$!/);
+  assert.match(workComputerStartScript, /wait "\$AUDIO_SETUP_PID"/);
+  assert.match(workComputerStartScript, /wait "\$SCREEN_SETUP_PID"/);
+  assert.ok(
+    workComputerStartScript.indexOf('SCREEN_SETUP_PID=$!') <
+      workComputerStartScript.indexOf('chromium \\\n'),
+    'the VNC surface should initialize while Chromium starts'
+  );
+});
+
+test('Docker publishing refreshes runtime security updates', () => {
+  const buildStart = dockerWorkflow.indexOf(
+    '      - name: Build and push by digest\n'
+  );
+  const exportStart = dockerWorkflow.indexOf(
+    '      # Export digest\n',
+    buildStart
+  );
+  assert.notEqual(buildStart, -1);
+  assert.notEqual(exportStart, -1);
+
+  const buildStep = dockerWorkflow.slice(buildStart, exportStart);
+  assert.match(buildStep, /uses: docker\/build-push-action@v7/);
+  assert.match(buildStep, /^          no-cache-filters: runner$/m);
 });
 
 test('socket-proxy Compose variant keeps the Docker socket out of the app', () => {

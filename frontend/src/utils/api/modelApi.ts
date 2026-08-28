@@ -119,6 +119,7 @@ export interface ModelPresentation {
 export interface ModelCatalogConfig {
   hidden: string[];
   order: string[];
+  starred: string[];
   metadata: Record<string, ModelPresentation>;
 }
 
@@ -159,11 +160,16 @@ export const ollamaApi = {
     return api.put('/ollama/models/access', { mode }).then(res => res.data);
   },
 
-  // Which models administrators hid from the shared model pickers. Ollama
-  // models are keyed by name, plugin models by `${pluginId}/${modelName}`.
+  // Shared model-list curation. Ollama models are keyed by name, plugin
+  // models by `${pluginId}/${modelName}`.
   getModelVisibility: (): Promise<ApiResponse<ModelCatalogConfig>> => {
     if (isDemoMode()) {
-      return createDemoResponse({ hidden: [], order: [], metadata: {} });
+      return createDemoResponse({
+        hidden: [],
+        order: [],
+        starred: [],
+        metadata: {},
+      });
     }
     return api.get('/ollama/models/visibility').then(res => res.data);
   },
@@ -175,6 +181,7 @@ export const ollamaApi = {
       return createDemoResponse({
         hidden: update.hidden ?? [],
         order: update.order ?? [],
+        starred: update.starred ?? [],
         metadata: update.metadata ?? {},
       });
     }

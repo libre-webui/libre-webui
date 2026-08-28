@@ -33,6 +33,7 @@ import {
   TerminalSquare,
   WandSparkles,
   MonitorPlay,
+  UserRound,
 } from 'lucide-react';
 import {
   useEffect,
@@ -44,12 +45,14 @@ import {
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui';
+import { WorkAgentPanel } from '@/components/work/WorkAgentPanel';
 import { WorkLiveRunSurface } from '@/components/work/WorkLiveRunSurface';
 import { WorkspaceCodeEditor } from '@/components/work/WorkspaceCodeEditor';
 import { WorkspaceDiffView } from '@/components/work/WorkspaceDiffView';
 import { WorkspaceGitPanel } from '@/components/work/WorkspaceGitPanel';
 import { WorkspaceTerminal } from '@/components/work/WorkspaceTerminal';
 import { isRTL } from '@/i18n';
+import type { Persona } from '@/types';
 import type {
   WorkCapabilities,
   WorkFile,
@@ -74,10 +77,18 @@ import { diffWorkLines, workDiffStats } from '@/utils/workDiff';
 import { WorkspaceScreen } from './WorkspaceScreen';
 
 type WorkspaceTab =
-  'files' | 'activity' | 'git' | 'terminal' | 'preview' | 'screen';
+  'agent' | 'files' | 'activity' | 'git' | 'terminal' | 'preview' | 'screen';
 
 interface WorkspacePaneProps {
   task: WorkTask;
+  /** Persona backing an agent task's identity panel. */
+  persona?: Persona;
+  /**
+   * External request to open a file (a conversation file chip): switches
+   * to the Files tab and opens the path. The nonce distinguishes repeat
+   * clicks on the same path.
+   */
+  openFileRequest?: { path: string; nonce: number } | null;
   liveRun?: WorkLiveRun;
   files: WorkFileEntry[];
   selectedFile: WorkFile | null;
@@ -132,6 +143,8 @@ const toolName = (message: WorkMessage, fallback: string): string => {
 
 export function WorkspacePane({
   task,
+  persona,
+  openFileRequest,
   liveRun,
   files,
   selectedFile,
@@ -148,7 +161,10 @@ export function WorkspacePane({
 }: WorkspacePaneProps) {
   const { t, i18n } = useTranslation();
   const rtl = isRTL(i18n.language);
-  const [tab, setTab] = useState<WorkspaceTab>('files');
+  // An agent opens on its identity panel; ad-hoc tasks keep Files first.
+  const [tab, setTab] = useState<WorkspaceTab>(
+    task.isAgent ? 'agent' : 'files'
+  );
   const [currentPath, setCurrentPath] = useState('');
   const [editorContent, setEditorContent] = useState('');
   const [editorBaseUpdatedAt, setEditorBaseUpdatedAt] = useState<
@@ -335,6 +351,24 @@ export function WorkspacePane({
     onDirtyChange(draft !== null && draft.content !== file.content);
   };
 
+  // A conversation file chip asked for a file: land on the Files tab and
+  // open it through the same dirty-confirm/draft-restore path as the list.
+  const handledOpenRequestRef = useRef(0);
+  useEffect(() => {
+    if (
+      !openFileRequest ||
+      openFileRequest.nonce === handledOpenRequestRef.current
+    ) {
+      return;
+    }
+    handledOpenRequestRef.current = openFileRequest.nonce;
+    setTab('files');
+    void openFile(openFileRequest.path);
+    // openFile is re-created per render; the nonce guard keeps this to one
+    // invocation per request.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [openFileRequest]);
+
   const closeFile = () => {
     if (!confirmDiscard()) return;
     openFileGeneration.current += 1;
@@ -455,6 +489,17 @@ export function WorkspacePane({
     icon: typeof FilesIcon;
     testId: string;
   }> = [
+    // Hired agents lead with their identity panel.
+    ...(task.isAgent
+      ? [
+          {
+            id: 'agent' as const,
+            label: t('work.workspace.agent', { defaultValue: 'Agent' }),
+            icon: UserRound,
+            testId: 'work-agent-tab',
+          },
+        ]
+      : []),
     {
       id: 'files',
       label: t('work.workspace.files', { defaultValue: 'Files' }),
@@ -1053,6 +1098,22 @@ export function WorkspacePane({
                     })
                   : undefined
             }
+          />
+        </div>
+      )}
+
+      {tab === 'agent' && (
+        <div
+          id='work-workspace-panel-agent'
+          role='tabpanel'
+          aria-labelledby='work-workspace-tab-agent'
+          className='min-h-0 flex-1 overflow-y-auto scrollbar-thin'
+        >
+          <WorkAgentPanel
+            task={task}
+            persona={persona}
+            active={tab === 'agent'}
+            onOpenScreen={() => setTab('screen')}
           />
         </div>
       )}

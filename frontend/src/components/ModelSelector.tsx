@@ -40,7 +40,8 @@ import {
   Zap,
 } from 'lucide-react';
 import { cn } from '@/utils';
-import type { OllamaModel } from '@/types';
+import type { OllamaModel, Persona } from '@/types';
+import { getPersonaAvatarSrc } from '@/utils/personaAvatar';
 import {
   ollamaApi,
   huggingfaceHubApi,
@@ -194,10 +195,50 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
     getModelValueOverride?.(model) ?? model.name;
 
   const modelMetadata = useChatStore(state => state.modelMetadata);
+  const personasById = useChatStore(state => state.personas);
 
   const currentModel = models.find(
     model => getModelValue(model) === selectedModel
   );
+
+  /**
+   * Human name for any persona-backed entry, including the fallback rows
+   * fabricated for sessions whose persona is not in the loaded list (a
+   * legacy record without provider identity, or personas still loading).
+   * Those fallbacks only know the raw `persona:<uuid>` value, which must
+   * never reach the trigger label.
+   */
+  const personaDisplayName = (model: OllamaModel): string | undefined => {
+    if (!model.name.startsWith('persona:')) return undefined;
+    const id = model.name.slice('persona:'.length);
+    let decoded = id;
+    try {
+      decoded = decodeURIComponent(id);
+    } catch {
+      // Not URL-encoded; use as-is.
+    }
+    const persona = personasById[id] ?? personasById[decoded];
+    if (persona?.name) return persona.name;
+    // Fabricated fallbacks copy the raw id into personaName; only trust a
+    // personaName that is an actual name.
+    if (model.personaName && model.personaName !== id) {
+      return model.personaName;
+    }
+    return undefined;
+  };
+
+  /** The persona record behind a `persona:<id>` entry, if it is loaded. */
+  const personaForModel = (model: OllamaModel): Persona | undefined => {
+    if (!model.name.startsWith('persona:')) return undefined;
+    const id = model.name.slice('persona:'.length);
+    let decoded = id;
+    try {
+      decoded = decodeURIComponent(id);
+    } catch {
+      // Not URL-encoded; use as-is.
+    }
+    return personasById[id] ?? personasById[decoded];
+  };
   useImperativeHandle(
     triggerRef,
     () => internalTriggerRef.current as HTMLButtonElement
@@ -316,21 +357,21 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
             setPullProgress(null);
             setPullingModel(null);
             setCancelPull(null);
-            toast.success(`Downloaded ${filename}`);
+            toast.success(t('modelDownload.success', { name: filename }));
             onModelsRefresh?.();
           },
           error => {
             setPullProgress(null);
             setPullingModel(null);
             setCancelPull(null);
-            toast.error(`Failed to download: ${error}`);
+            toast.error(t('modelDownload.failed', { error }));
           }
         );
         setCancelPull(() => cancelFn);
       } catch (_error) {
         setPullProgress(null);
         setPullingModel(null);
-        toast.error('Failed to start download');
+        toast.error(t('modelDownload.startFailed'));
       }
     },
     [canInstallModels, onModelsRefresh, pullingModel, t]
@@ -448,21 +489,21 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
           setPullProgress(null);
           setPullingModel(null);
           setCancelPull(null);
-          toast.success(`Downloaded ${modelName}`);
+          toast.success(t('modelDownload.success', { name: modelName }));
           onModelsRefresh?.();
         },
         error => {
           setPullProgress(null);
           setPullingModel(null);
           setCancelPull(null);
-          toast.error(`Failed to download: ${error}`);
+          toast.error(t('modelDownload.failed', { error }));
         }
       );
       setCancelPull(() => cancelFn);
     } catch (_error) {
       setPullProgress(null);
       setPullingModel(null);
-      toast.error('Failed to start download');
+      toast.error(t('modelDownload.startFailed'));
     }
   };
 
@@ -472,7 +513,7 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
       setCancelPull(null);
       setPullingModel(null);
       setPullProgress(null);
-      toast.success('Download cancelled');
+      toast.success(t('modelDownload.cancelled'));
     }
   };
 
@@ -496,6 +537,20 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
         />
       );
     }
+    // Personas show their own face, the same rounded square as everywhere
+    // else; the generic icon only stands in while personas are loading.
+    if (model.isPersona || model.isLegacySelection) {
+      const persona = personaForModel(model);
+      if (persona) {
+        return (
+          <img
+            src={getPersonaAvatarSrc(persona, 64)}
+            alt=''
+            className='h-4 w-4 shrink-0 rounded object-cover'
+          />
+        );
+      }
+    }
     if (model.isLegacySelection) {
       return <Brain className='h-4 w-4 text-gray-500 dark:text-dark-600' />;
     }
@@ -517,13 +572,14 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
       return named;
     }
     if (model.isLegacySelection) {
-      return `${model.name} (${t(
+      const personaLabel = personaDisplayName(model);
+      return `${personaLabel ?? model.name} (${t(
         'modelSelector.legacyProvider',
         'provider not recorded'
       )})`;
     }
     if (model.isPersona) {
-      return model.personaName || model.name;
+      return personaDisplayName(model) || model.personaName || model.name;
     }
     if (model.isAgent) {
       return model.isUnavailable

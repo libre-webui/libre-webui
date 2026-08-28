@@ -62,6 +62,20 @@ is saved, and its network default and resource limits apply to every task
 the automation launches. Only direct model providers run in Work, and the
 model must support tools — the same rules as the Work composer.
 
+### Agent routines
+
+A Work-target automation can instead bind to an **existing** Work task via
+`workTaskId` — the shape behind the Routines section on an
+[agent's detail panel](./33-WORKSPACES.md). A bound routine does not create a
+new task per fire: each occurrence starts a run inside that task's own
+workspace and conversation, using the task's model, provider, and runtime
+policy, so the automation-level model and policy fields do not apply and any
+supplied policy is dropped at save time. The binding is validated when the
+automation is saved (the task must exist and belong to the caller). At fire
+time, a deleted task fails the run as `work-task-missing`, and a task that is
+already running — or holding a live preview — fails the occurrence honestly
+as `work-task-busy` instead of queueing behind it.
+
 ## API
 
 All endpoints require authentication and operate only on the caller's own

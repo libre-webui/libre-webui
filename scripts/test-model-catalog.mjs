@@ -92,6 +92,7 @@ const asJson = { 'Content-Type': 'application/json' };
 test('the catalog starts empty and every read fails open', async () => {
   assert.deepEqual(await catalog.getHiddenModels(), []);
   assert.deepEqual(await catalog.getModelOrder(), []);
+  assert.deepEqual(await catalog.getStarredModels(), []);
   assert.deepEqual(await catalog.getModelMetadata(), {});
 });
 
@@ -107,6 +108,20 @@ test('model order is stored, deduped, and returned in sequence', async () => {
   assert.throws(() => catalog.normalizeModelOrder('nope'));
   assert.throws(() => catalog.normalizeModelOrder([42]));
   assert.throws(() => catalog.normalizeModelOrder(['']));
+});
+
+test('starred models are stored, deduped, and returned in priority order', async () => {
+  const saved = await catalog.setStarredModels([
+    'openai/gpt-test',
+    'qwen3:8b',
+    'openai/gpt-test',
+    '  llama3.2:3b  ',
+  ]);
+  assert.deepEqual(saved, ['openai/gpt-test', 'qwen3:8b', 'llama3.2:3b']);
+  assert.deepEqual(await catalog.getStarredModels(), saved);
+  assert.throws(() => catalog.normalizeStarredModels('nope'));
+  assert.throws(() => catalog.normalizeStarredModels([42]));
+  assert.throws(() => catalog.normalizeStarredModels(['']));
 });
 
 test('a model can carry an administrator label and picture', async () => {
@@ -163,13 +178,18 @@ test('pictures must be image data URLs within the size ceiling', () => {
   assert.throws(() => catalog.normalizeModelMetadata({ m: 'string' }));
 });
 
-test('hidden models, order, and metadata are stored independently', async () => {
+test('hidden models, order, stars, and metadata are stored independently', async () => {
   await catalog.setHiddenModels(['openai/gpt-test']);
   assert.deepEqual(await catalog.getHiddenModels(), ['openai/gpt-test']);
-  // Changing visibility must not disturb the other two settings.
+  // Changing visibility must not disturb the other catalog settings.
   assert.deepEqual(await catalog.getModelOrder(), [
     'qwen3:8b',
     'openai/gpt-test',
+    'llama3.2:3b',
+  ]);
+  assert.deepEqual(await catalog.getStarredModels(), [
+    'openai/gpt-test',
+    'qwen3:8b',
     'llama3.2:3b',
   ]);
   assert.equal(
@@ -198,6 +218,24 @@ test('a reorder survives the round trip the UI makes', async () => {
   assert.deepEqual(read.data.order, wanted, 'a fresh read returns it');
 });
 
+test('star priority survives the round trip the UI makes', async () => {
+  const wanted = ['gemma3:12b', 'openai/gpt-test'];
+  const put = await fetch(`${baseUrl}/models/visibility`, {
+    method: 'PUT',
+    headers: { Authorization: `Bearer ${adminToken}`, ...asJson },
+    body: JSON.stringify({ starred: wanted }),
+  });
+  assert.equal(put.status, 200);
+  const saved = await put.json();
+  assert.deepEqual(saved.data.starred, wanted, 'the PUT echoes star priority');
+
+  const get = await fetch(`${baseUrl}/models/visibility`, {
+    headers: { Authorization: `Bearer ${adminToken}` },
+  });
+  const read = await get.json();
+  assert.deepEqual(read.data.starred, wanted, 'a fresh read returns it');
+});
+
 test('sending only one field leaves the others untouched', async () => {
   await fetch(`${baseUrl}/models/visibility`, {
     method: 'PUT',
@@ -213,7 +251,27 @@ test('sending only one field leaves the others untouched', async () => {
     ['gemma3:12b', 'qwen3:8b', 'llama3.2:3b'],
     'the order set earlier is still there'
   );
+  assert.deepEqual(
+    read.data.starred,
+    ['gemma3:12b', 'openai/gpt-test'],
+    'the stars set earlier are still there'
+  );
   assert.equal(read.data.metadata['qwen3:8b'].label, 'House');
+});
+
+test('invalid star settings are rejected without changing saved priority', async () => {
+  const bad = await fetch(`${baseUrl}/models/visibility`, {
+    method: 'PUT',
+    headers: { Authorization: `Bearer ${adminToken}`, ...asJson },
+    body: JSON.stringify({ starred: 'gemma3:12b' }),
+  });
+  assert.equal(bad.status, 400);
+
+  const get = await fetch(`${baseUrl}/models/visibility`, {
+    headers: { Authorization: `Bearer ${adminToken}` },
+  });
+  const read = await get.json();
+  assert.deepEqual(read.data.starred, ['gemma3:12b', 'openai/gpt-test']);
 });
 
 test('only administrators can change the catalog', async () => {

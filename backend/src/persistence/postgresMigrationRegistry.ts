@@ -29,6 +29,9 @@ import { POSTGRES_MFA_PUSH_RECOVERY_MIGRATION } from './postgresMfaPushRecoveryM
 import { POSTGRES_AUTOMATION_WORK_TARGET_MIGRATION } from './postgresAutomationWorkTargetMigration.js';
 import { POSTGRES_WORK_COMPUTER_MIGRATION } from './postgresWorkComputerMigration.js';
 import { POSTGRES_WORK_TAKEOVER_MIGRATION } from './postgresWorkTakeoverMigration.js';
+import { POSTGRES_AGENT_IDENTITY_MIGRATION } from './postgresAgentIdentityMigration.js';
+import { POSTGRES_AGENT_ROUTINES_MIGRATION } from './postgresAgentRoutinesMigration.js';
+import { POSTGRES_AGENT_SEEN_MIGRATION } from './postgresAgentSeenMigration.js';
 import type { PostgresMigration } from './postgresMigrationTypes.js';
 import { validatePostgresMigrationRegistry } from './postgresMigrations.js';
 
@@ -60,6 +63,9 @@ export const POSTGRES_MIGRATIONS: readonly PostgresMigration[] =
         POSTGRES_AUTOMATION_WORK_TARGET_MIGRATION,
         POSTGRES_WORK_COMPUTER_MIGRATION,
         POSTGRES_WORK_TAKEOVER_MIGRATION,
+        POSTGRES_AGENT_IDENTITY_MIGRATION,
+        POSTGRES_AGENT_ROUTINES_MIGRATION,
+        POSTGRES_AGENT_SEEN_MIGRATION,
       ].map(migration => Object.freeze({ ...migration }))
     )
   );

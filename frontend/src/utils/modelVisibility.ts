@@ -27,3 +27,33 @@ export function modelVisibilityKey(model: OllamaModel): string {
     ? `${model.pluginId}/${model.name}`
     : model.name;
 }
+
+/**
+ * Applies shared catalog priority without mutating provider results. Starred
+ * keys lead in their saved sequence, configured order follows, and anything
+ * newly discovered keeps its provider position at the end.
+ */
+export function orderModelsByCatalogPriority(
+  models: readonly OllamaModel[],
+  order: readonly string[],
+  starred: readonly string[]
+): OllamaModel[] {
+  const priority = new Map<string, number>();
+  for (const key of [...starred, ...order]) {
+    if (!priority.has(key)) priority.set(key, priority.size);
+  }
+
+  return models
+    .map((model, index) => ({
+      model,
+      index,
+      priority:
+        priority.get(modelVisibilityKey(model)) ?? Number.MAX_SAFE_INTEGER,
+    }))
+    .sort((left, right) =>
+      left.priority === right.priority
+        ? left.index - right.index
+        : left.priority - right.priority
+    )
+    .map(entry => entry.model);
+}

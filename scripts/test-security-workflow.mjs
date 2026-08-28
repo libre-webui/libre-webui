@@ -51,6 +51,7 @@ test('security workflow covers dependency, SAST, secret, SBOM, and image gates',
   assert.match(secrets, /scanners: secret/);
   assert.match(container, /uses: docker\/build-push-action@v7/);
   assert.match(container, /push: false/);
+  assert.match(container, /^          no-cache-filters: runner$/m);
   assert.match(container, /image: libre-webui:security-/);
   assert.match(container, /scanners: vuln/);
   assert.match(container, /severity: HIGH,CRITICAL/);

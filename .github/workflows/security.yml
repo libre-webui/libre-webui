@@ -190,6 +190,7 @@ jobs:
           build-args: APP_VERSION=security-${{ github.sha }}
           cache-from: type=gha,scope=security-image
           cache-to: type=gha,mode=max,scope=security-image
+          no-cache-filters: runner
 
       - name: Generate CycloneDX image SBOM
         uses: anchore/sbom-action@v0

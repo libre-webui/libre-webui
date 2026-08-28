@@ -224,7 +224,7 @@ test('the prompt library lists what the API returns', async ({ page }) => {
   await mockPromptsApi(page, [seededPrompt]);
 
   await page.goto('/');
-  await openSettingsTab(page, 'Prompts');
+  await openSettingsTab(page, 'prompts');
   await expect(page.getByTestId('prompts-page')).toBeVisible();
 
   const row = page.getByTestId('prompt-row');
@@ -242,7 +242,7 @@ test('the prompt library explains itself when nothing is saved yet', async ({
   await mockPromptsApi(page, []);
 
   await page.goto('/');
-  await openSettingsTab(page, 'Prompts');
+  await openSettingsTab(page, 'prompts');
   await expect(page.getByTestId('prompts-page')).toBeVisible();
   await expect(page.getByTestId('prompt-row')).toHaveCount(0);
   await expect(page.getByText('No prompts yet')).toBeVisible();
@@ -255,7 +255,7 @@ test('a prompt is created from the modal and lands in the list', async ({
   const promptsApi = await mockPromptsApi(page, []);
 
   await page.goto('/');
-  await openSettingsTab(page, 'Prompts');
+  await openSettingsTab(page, 'prompts');
   await expect(page.getByTestId('prompts-page')).toBeVisible();
 
   await page.getByTestId('prompt-new').click();
@@ -291,7 +291,7 @@ test('prompt library round-trips create, versions, and rollback through the UI',
   const promptsApi = await mockPromptsApi(page, []);
 
   await page.goto('/');
-  await openSettingsTab(page, 'Prompts');
+  await openSettingsTab(page, 'prompts');
   await expect(page.getByTestId('prompts-page')).toBeVisible();
 
   // Create the first version.

@@ -128,6 +128,7 @@ export default function WorkPage() {
     createTask,
     updateTask,
     deleteTask,
+    markTaskSeen,
     startRun,
     cancelRun,
     beginLiveRun,
@@ -196,9 +197,45 @@ export default function WorkPage() {
     mobileSurfaceState.locationKey === location.key
       ? mobileSurfaceState.value
       : 'conversation';
-  const setMobileSurface = (value: MobileSurface) =>
-    setMobileSurfaceState({ locationKey: location.key, value });
+  const setMobileSurface = useCallback(
+    (value: MobileSurface) =>
+      setMobileSurfaceState({ locationKey: location.key, value }),
+    [location.key]
+  );
   const [workspaceDirty, setWorkspaceDirty] = useState(false);
+  // A conversation file chip routing into the workspace pane's Files tab.
+  const [openFileRequest, setOpenFileRequest] = useState<{
+    locationKey: string;
+    taskId: string;
+    path: string;
+    nonce: number;
+  } | null>(null);
+  // A chip click is a one-visit event. Discard it during render so a newly
+  // keyed workspace cannot observe the old request before effects run.
+  const currentOpenFileRequest =
+    openFileRequest?.locationKey === location.key &&
+    openFileRequest.taskId === taskId
+      ? openFileRequest
+      : null;
+  if (openFileRequest && !currentOpenFileRequest) {
+    setOpenFileRequest(null);
+  }
+  const openWorkspaceFile = useCallback(
+    (path: string) => {
+      if (!taskId) return;
+      setMobileSurface('workspace');
+      setOpenFileRequest(previous => ({
+        locationKey: location.key,
+        taskId,
+        path,
+        nonce:
+          previous?.locationKey === location.key && previous.taskId === taskId
+            ? previous.nonce + 1
+            : 1,
+      }));
+    },
+    [location.key, setMobileSurface, taskId]
+  );
   const [hostPath, setHostPath] = useState('');
   const hostWorkspacesEnabled = capabilities?.hostWorkspaces?.enabled === true;
   const hostWorkspaceRoots = capabilities?.hostWorkspaces?.roots ?? [];
@@ -206,6 +243,23 @@ export default function WorkPage() {
   // (the common case) renders no picker at all.
   const [policies, setPolicies] = useState<WorkPolicy[]>([]);
   const [policyId, setPolicyId] = useState('');
+  // Hiring a persona turns the task into a persistent named agent pinned
+  // above ad-hoc tasks in the sidebar.
+  const personas = useChatStore(state => state.personas);
+  const loadPersonas = useChatStore(state => state.loadPersonas);
+  const [personaId, setPersonaId] = useState('');
+  const personaList = useMemo(
+    () =>
+      Object.values(personas).sort((left, right) =>
+        left.name.localeCompare(right.name)
+      ),
+    [personas]
+  );
+  // Model refreshes can replace the shared persona catalog while this page
+  // stays mounted. Retry this render with an empty stale selection.
+  if (personaId && personaList.length > 0 && !personas[personaId]) {
+    setPersonaId('');
+  }
   // The picker only appears on the landing view, so refresh the list every
   // time the user returns there: an administrator may have added or deleted
   // policies since the last visit, and a stale selected id would 400 on
@@ -229,6 +283,12 @@ export default function WorkPage() {
       cancelled = true;
     };
   }, [onLanding]);
+  // Personas back the "hire an agent" picker; refresh on each landing visit
+  // and drop a selection whose persona has since been deleted.
+  useEffect(() => {
+    if (!onLanding) return;
+    void loadPersonas().catch(() => {});
+  }, [onLanding, loadPersonas]);
   // One-click Work Computer onboarding: the backend builds the bundled GUI
   // image and creates the policy; this just presses the button and polls.
   const [computerSetupBusy, setComputerSetupBusy] = useState(false);
@@ -395,6 +455,13 @@ export default function WorkPage() {
     ? tasks.find(task => task.id === taskId)
     : undefined;
   const selectedStatus = selectedTaskSummary?.status ?? selectedTask?.status;
+
+  // Opening a task — and watching a run reach a terminal state while it is
+  // open — advances the seen marker behind the sidebar's unread indicator.
+  useEffect(() => {
+    if (!taskId) return;
+    markTaskSeen(taskId);
+  }, [taskId, selectedStatus, markTaskSeen]);
   const selectedRun =
     selectedTask?.activeRun ?? selectedTaskSummary?.activeRun ?? null;
   const selectedRunId = selectedRun?.id;
@@ -687,6 +754,7 @@ export default function WorkPage() {
             ? { hostPath: hostPath.trim() }
             : {}),
           ...(policyId ? { policyId } : {}),
+          ...(personaId ? { personaId, isAgent: true } : {}),
         });
         navigate(`/work/${task.id}`);
       }
@@ -1312,6 +1380,47 @@ export default function WorkPage() {
                   </select>
                 </div>
               )}
+              {personaList.length > 0 && (
+                <div className='mt-8 w-full max-w-2xl'>
+                  <label
+                    htmlFor='work-persona'
+                    className='mb-1.5 block text-xs font-medium text-ink-muted'
+                  >
+                    {t('work.persona.label', {
+                      defaultValue: 'Hire as an agent (optional)',
+                    })}
+                  </label>
+                  <select
+                    id='work-persona'
+                    data-testid='work-persona'
+                    value={personaId}
+                    onChange={event => setPersonaId(event.target.value)}
+                    className='w-full rounded-xl border border-line bg-surface px-3 py-2 text-[13px] text-ink outline-none transition-colors focus:border-line-strong focus-visible:ring-2 focus-visible:ring-primary-500/30'
+                  >
+                    <option value=''>
+                      {t('work.persona.none', {
+                        defaultValue: 'No persona (one-off task)',
+                      })}
+                    </option>
+                    {personaList.map(persona => (
+                      <option key={persona.id} value={persona.id}>
+                        {persona.name}
+                      </option>
+                    ))}
+                  </select>
+                  <p className='mt-1.5 text-[11px] leading-relaxed text-ink-subtle'>
+                    {personaId
+                      ? t('work.persona.hint', {
+                          defaultValue:
+                            'This task becomes a named agent: it keeps the persona, stays pinned in the sidebar, and reports a one-line status after each run.',
+                        })
+                      : t('work.persona.description', {
+                          defaultValue:
+                            'Pick a persona to turn this task into a persistent agent with its own identity.',
+                        })}
+                  </p>
+                </div>
+              )}
               {!hasComputerPolicy && authenticatedUser?.role === 'admin' && (
                 <div
                   className='mt-8 flex w-full max-w-2xl items-center justify-between gap-4 rounded-xl border border-line bg-surface px-4 py-3'
@@ -1382,6 +1491,7 @@ export default function WorkPage() {
               )}
               <WorkComposer
                 variant='landing'
+                dictationOwnerKey='landing'
                 models={modelOptions}
                 selectorModels={models}
                 modelKey={freshModel?.key || ''}
@@ -1426,9 +1536,11 @@ export default function WorkPage() {
                   loading={loadingTask}
                   loadingOlder={loadingOlderMessages}
                   onLoadOlder={() => loadOlderMessages(selectedTask.id)}
+                  onOpenFile={openWorkspaceFile}
                 />
                 <WorkComposer
                   key={selectedTask.id}
+                  dictationOwnerKey={selectedTask.id}
                   models={effectiveModelOptions}
                   selectorModels={models}
                   modelKey={selectedModelKey}
@@ -1452,6 +1564,16 @@ export default function WorkPage() {
                 <WorkspacePane
                   key={selectedTask.id}
                   task={selectedTask}
+                  openFileRequest={
+                    currentOpenFileRequest?.taskId === selectedTask.id
+                      ? currentOpenFileRequest
+                      : null
+                  }
+                  persona={
+                    selectedTask.personaId
+                      ? personas[selectedTask.personaId]
+                      : undefined
+                  }
                   liveRun={liveRun}
                   files={files}
                   selectedFile={selectedFile}

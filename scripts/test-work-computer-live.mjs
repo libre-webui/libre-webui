@@ -54,7 +54,7 @@ const CDP_EVAL_SCRIPT = [
   "    const timer = setTimeout(() => reject(new Error('cdp timeout')), 5000);",
   '    socket.onopen = () => socket.send(JSON.stringify({',
   "      id: 1, method: 'Runtime.evaluate',",
-  '      params: {expression, returnByValue: true},',
+  '      params: {expression, returnByValue: true, awaitPromise: true},',
   '    }));',
   '    socket.onmessage = event => {',
   '      clearTimeout(timer);',
@@ -123,9 +123,47 @@ test(
       docker(['cp', path.join(FIXTURES, 'edge-lab.html'), `${NAME}:/workspace/edge-lab/edge-lab.html`]);
       docker(['cp', path.join(FIXTURES, 'edge-lab.js'), `${NAME}:/workspace/edge-lab/edge-lab.js`]);
       exec(['/usr/local/bin/start-computer'], 90_000);
-      settle(8);
+      const startReady = cdpEval(
+        [
+          '(async () => {',
+          'if (window.libreSceneReady) await window.libreSceneReady;',
+          'return {',
+          "interfaceReady: performance.getEntriesByName('libre-interface-ready')[0]?.startTime ?? null,",
+          "sceneReady: performance.getEntriesByName('libre-scene-ready')[0]?.startTime ?? null",
+          '};',
+          '})()',
+        ].join('')
+      );
+      assert.ok(
+        Number.isFinite(startReady.interfaceReady),
+        JSON.stringify(startReady)
+      );
+      assert.ok(
+        startReady.interfaceReady < 1_500,
+        `start-page interface took ${startReady.interfaceReady}ms`
+      );
+      assert.ok(
+        Number.isFinite(startReady.sceneReady),
+        JSON.stringify(startReady)
+      );
+      assert.ok(startReady.sceneReady >= startReady.interfaceReady);
+      assert.ok(
+        startReady.sceneReady < 8_000,
+        `start-page scene took ${startReady.sceneReady}ms`
+      );
       cdpEval("location.href = 'file:///workspace/edge-lab/edge-lab.html'");
-      settle(2);
+      let loadedUrl = '';
+      const navigationDeadline = Date.now() + 15_000;
+      while (Date.now() < navigationDeadline) {
+        try {
+          loadedUrl = String(cdpEval('location.href'));
+        } catch {
+          // The old page target can close between navigation and discovery.
+        }
+        if (/edge-lab\.html$/.test(loadedUrl)) break;
+        settle(0.25);
+      }
+      assert.match(loadedUrl, /edge-lab\.html$/);
 
       // Semantic observation reflects the loaded fixture.
       const loaded = observe();

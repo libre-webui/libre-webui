@@ -17,7 +17,144 @@
 
 import { expect, test } from '@playwright/test';
 import { mockLibreWebUiApi } from './lib/mockApi';
-import { openSettingsTab } from './lib/settingsTab';
+import { openSettingsTab, selectSettingsTab } from './lib/settingsTab';
+
+const authenticatedSystemInfo = {
+  requiresAuth: true,
+  hasUsers: true,
+  userCount: 2,
+  version: '0.28.0-e2e',
+  turnstile: { enabled: false },
+};
+
+test('bulk model updates are scoped to the Ollama model manager', async ({
+  page,
+}) => {
+  await mockLibreWebUiApi(page, {
+    authRole: 'admin',
+    systemInfo: authenticatedSystemInfo,
+  });
+  await page.addInitScript(() => {
+    localStorage.setItem('auth-token', 'e2e-token');
+  });
+  await page.route('**/api/ollama/models/pull-all/stream', async route => {
+    await route.fulfill({
+      status: 200,
+      headers: {
+        'content-type': 'text/event-stream',
+        'cache-control': 'no-cache',
+      },
+      body: [
+        'data: {"type":"progress","current":1,"total":1,"modelName":"llama3.2:3b","status":"success"}',
+        '',
+        'data: {"type":"complete"}',
+        '',
+        '',
+      ].join('\n'),
+    });
+  });
+
+  await page.goto('/');
+  const panel = await openSettingsTab(page, 'models');
+
+  await expect(panel.getByText('Bulk Operations', { exact: true })).toHaveCount(
+    0
+  );
+  await expect(
+    panel.getByRole('button', { name: 'Update All', exact: true })
+  ).toHaveCount(0);
+
+  await selectSettingsTab(panel, 'model-manager');
+  const bulkOperations = panel.getByTestId('model-manager-bulk-operations');
+  await expect(bulkOperations).toBeVisible();
+  await expect(
+    bulkOperations.getByRole('heading', {
+      name: 'Bulk Operations',
+      exact: true,
+    })
+  ).toBeVisible();
+
+  const updateRequest = page.waitForRequest(request => {
+    const url = new URL(request.url());
+    return (
+      request.method() === 'GET' &&
+      url.pathname === '/api/ollama/models/pull-all/stream'
+    );
+  });
+  await bulkOperations
+    .getByRole('button', { name: 'Update All', exact: true })
+    .click();
+  await updateRequest;
+  await expect(
+    page.getByText('All models updated successfully!')
+  ).toBeVisible();
+});
+
+test('bulk model updates expose their progress accessibly', async ({
+  page,
+}) => {
+  await mockLibreWebUiApi(page, {
+    authRole: 'admin',
+    systemInfo: authenticatedSystemInfo,
+  });
+  await page.addInitScript(() => {
+    localStorage.setItem('auth-token', 'e2e-token');
+  });
+  await page.route('**/api/ollama/models/pull-all/stream', async route => {
+    await route.fulfill({
+      status: 200,
+      headers: {
+        'content-type': 'text/event-stream',
+        'cache-control': 'no-cache',
+      },
+      body: [
+        'data: {"type":"progress","current":1,"total":2,"modelName":"llama3.2:3b","status":"success"}',
+        '',
+        '',
+      ].join('\n'),
+    });
+  });
+
+  await page.goto('/chat');
+  const panel = await openSettingsTab(page, 'model-manager');
+  const bulkOperations = panel.getByTestId('model-manager-bulk-operations');
+  await bulkOperations
+    .getByRole('button', { name: 'Update All', exact: true })
+    .click();
+
+  await expect(bulkOperations).toHaveAttribute('aria-busy', 'true');
+  await expect(
+    bulkOperations.getByRole('button', { name: 'Updating models...' })
+  ).toBeDisabled();
+  await expect(
+    bulkOperations.getByRole('progressbar', { name: 'Update All Models' })
+  ).toHaveAttribute('aria-valuenow', '50');
+  await expect(bulkOperations).toContainText('Updating llama3.2:3b (1/2)');
+});
+
+test('bulk model updates stay hidden when the account cannot use the admin endpoint', async ({
+  page,
+}) => {
+  await mockLibreWebUiApi(page, {
+    authRole: 'user',
+    systemInfo: authenticatedSystemInfo,
+  });
+  await page.addInitScript(() => {
+    localStorage.setItem('auth-token', 'e2e-token');
+  });
+
+  await page.goto('/chat');
+  const panel = await openSettingsTab(page, 'model-manager');
+
+  await expect(
+    panel.getByText(
+      'Model installation is restricted to administrators on this instance.'
+    )
+  ).toBeVisible();
+  await expect(panel.getByTestId('model-manager-bulk-operations')).toHaveCount(
+    0
+  );
+});
 
 test('cloud library pulls append the Ollama cloud suffix automatically', async ({
   page,
@@ -36,7 +173,7 @@ test('cloud library pulls append the Ollama cloud suffix automatically', async (
   });
 
   await page.goto('/');
-  await openSettingsTab(page, 'Models');
+  await openSettingsTab(page, 'model-manager');
 
   await page.getByRole('button', { name: /browse library/i }).click();
   await page.getByRole('button', { name: /^cloud$/i }).click();

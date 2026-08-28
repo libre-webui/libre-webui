@@ -64,6 +64,10 @@ import {
   isCompactionSummaryContent,
 } from '@/utils/contextUsage';
 import { LogoMark } from '@/components/LogoMark';
+import {
+  getPersonaAvatarSrc,
+  setPersonaAvatarFallback,
+} from '@/utils/personaAvatar';
 import { useAppStore } from '@/store/appStore';
 import { useAuthStore } from '@/store/authStore';
 import { useChatStore } from '@/store/chatStore';
@@ -105,26 +109,35 @@ interface ChatMessageProps {
 interface ChatAvatarProps {
   role: 'assistant' | 'user';
   user?: { username?: string; avatar?: string | null } | null;
-  personaAvatar?: string | null;
+  persona?: { name: string; avatar?: string | null } | null;
   modelAvatar?: string | null;
 }
 
 /** Message avatars matching the Work conversation: the Libre mark for the
  * assistant (or the persona's avatar) and the account avatar for the user. */
-function ChatAvatar({
-  role,
-  user,
-  personaAvatar,
-  modelAvatar,
-}: ChatAvatarProps) {
+function ChatAvatar({ role, user, persona, modelAvatar }: ChatAvatarProps) {
   const [failedAvatar, setFailedAvatar] = useState<string | null>(null);
 
   if (role === 'assistant') {
-    // A persona's own picture wins; otherwise the administrator's picture for
-    // the model that answered.
-    const persona = (personaAvatar?.trim() || modelAvatar?.trim()) ?? '';
-    const personaImage =
-      persona.startsWith('data:') && persona !== failedAvatar ? persona : '';
+    // A persona answers with its own face in the same rounded square as the
+    // agents sidebar; anything else keeps the round mark.
+    if (persona) {
+      return (
+        <img
+          src={getPersonaAvatarSrc(persona, 64)}
+          alt={persona.name}
+          data-testid='chat-assistant-avatar'
+          onError={event =>
+            setPersonaAvatarFallback(event.currentTarget, persona.name, 64)
+          }
+          className='mt-0.5 h-8 w-8 shrink-0 rounded-lg object-cover'
+        />
+      );
+    }
+    // Otherwise the administrator's picture for the model that answered.
+    const mark = modelAvatar?.trim() ?? '';
+    const markImage =
+      mark.startsWith('data:') && mark !== failedAvatar ? mark : '';
     return (
       <div
         role='img'
@@ -132,16 +145,16 @@ function ChatAvatar({
         data-testid='chat-assistant-avatar'
         className='mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full border border-black/[0.07] bg-white text-gray-900 shadow-sm dark:border-white/[0.09] dark:bg-dark-200 dark:text-dark-950'
       >
-        {personaImage ? (
+        {markImage ? (
           <img
-            src={personaImage}
+            src={markImage}
             alt=''
             className='h-full w-full object-cover'
-            onError={() => setFailedAvatar(persona)}
+            onError={() => setFailedAvatar(mark)}
           />
-        ) : persona ? (
+        ) : mark ? (
           <span aria-hidden='true' className='text-base leading-none'>
-            {persona}
+            {mark}
           </span>
         ) : (
           <LogoMark label={null} className='h-4 w-4' />
@@ -636,7 +649,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
         {!isUser && !isSystem && (
           <ChatAvatar
             role='assistant'
-            personaAvatar={currentPersona?.avatar}
+            persona={currentPersona}
             modelAvatar={modelPresentation?.avatar}
           />
         )}

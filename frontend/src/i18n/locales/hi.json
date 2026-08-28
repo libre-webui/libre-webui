@@ -44,6 +44,10 @@
     "name": "Libre WebUI",
     "shortName": "Libre"
   },
+  "appInitialization": {
+    "ollamaUnavailable": "Ollama सेवा उपलब्ध नहीं है। प्लगइन मॉडल अब भी उपयोग किए जा सकते हैं।",
+    "backendConnectionFailed": "बैकएंड सेवा से कनेक्ट करने में विफल"
+  },
   "auth": {
     "login": {
       "title": "वापसी पर स्वागत है",
@@ -99,7 +103,11 @@
       "continueWith": "{{provider}} के साथ जारी रखें",
       "connectingTo": "{{provider}} से कनेक्ट हो रहा है...",
       "github": "GitHub",
-      "huggingFace": "Hugging Face"
+      "huggingFace": "Hugging Face",
+      "loginSuccess": "OAuth लॉगिन सफल रहा!",
+      "completionFailed": "OAuth प्रमाणीकरण पूरा करने में विफल",
+      "verificationFailed": "OAuth प्रमाणीकरण सत्यापन विफल",
+      "authenticationFailed": "OAuth प्रमाणीकरण विफल"
     },
     "checkingAuth": "प्रमाणीकरण जाँच रहा है...",
     "welcome": "स्वागत है",
@@ -374,7 +382,8 @@
       "pullCommand": "ollama pull llama3.2:3b",
       "noModelsTooltip": "कोई मॉडल उपलब्ध नहीं। कृपया सुनिश्चित करें कि Ollama चल रहा है और मॉडल इंस्टॉल हैं।",
       "selectBeforePrivateChat": "निजी चैट शुरू करने से पहले एक उपलब्ध मॉडल चुनें",
-      "selectBeforeSending": "भेजने से पहले एक उपलब्ध मॉडल चुनें"
+      "selectBeforeSending": "भेजने से पहले एक उपलब्ध मॉडल चुनें",
+      "selectBeforeRegenerating": "पुनर्जनित करने से पहले एक उपलब्ध मॉडल चुनें"
     },
     "footer": {
       "disclaimer": "LLM गलतियाँ कर सकता है - महत्वपूर्ण जानकारी की पुष्टि करें",
@@ -385,7 +394,10 @@
     "mediaUpload": {
       "dropImagesHere": "यहाँ छवियाँ छोड़ें या",
       "supportedFormats": "समर्थित: JPG, PNG, GIF, WebP (अधिकतम 10MB प्रत्येक)",
-      "browse": "ब्राउज़ करें"
+      "browse": "ब्राउज़ करें",
+      "unsupportedFileType": "फ़ाइल प्रकार समर्थित नहीं है: {{name}}",
+      "maxImagesAllowed": "अधिकतम {{count}} छवियों की अनुमति है",
+      "imageTooLarge": "छवि {{name}} बहुत बड़ी है (अधिकतम 10MB)"
     },
     "structuredOutput": {
       "title": "प्रतिक्रिया प्रारूप",
@@ -456,7 +468,22 @@
       "modelSwitched": "{{model}} पर स्विच किया गया (पिछला मॉडल अब उपलब्ध नहीं है)",
       "modelsLoadFailed": "मॉडल लोड करने में विफल",
       "modelUpdated": "वर्तमान चैट के लिए मॉडल अपडेट हुआ",
-      "modelUpdateFailed": "सत्र मॉडल अपडेट करने में विफल"
+      "modelUpdateFailed": "सत्र मॉडल अपडेट करने में विफल",
+      "titlePreviewFallback": "शीर्षक जनरेट नहीं किया जा सका; संदेश पूर्वावलोकन का उपयोग किया जा रहा है",
+      "titleGenerated": "चैट शीर्षक जनरेट किया गया",
+      "titleGenerationFailed": "चैट शीर्षक जनरेट करने में विफल",
+      "sessionNotFoundRedirect": "सत्र नहीं मिला। नया सत्र बनाया जा रहा है...",
+      "comparisonError": "{{model}}: {{error}}",
+      "generationFailed": "जेनरेशन विफल",
+      "comparisonFailed": "तुलना विफल",
+      "sendFailed": "संदेश भेजने में विफल",
+      "noMessageToRegenerate": "पुनर्जनित करने के लिए कोई संदेश नहीं",
+      "regenerateFailed": "संदेश पुनर्जनित करने में विफल",
+      "messageNotFound": "संदेश नहीं मिला",
+      "branchSwitched": "वैरिएंट {{number}} पर स्विच किया गया",
+      "branchSelectFailed": "ब्रांच चुनने में विफल",
+      "editFailed": "संदेश संपादित करने में विफल",
+      "toolDecisionFailed": "उपकरण का निर्णय रिकॉर्ड नहीं किया जा सका"
     },
     "documents": {
       "title": "संदर्भ में दस्तावेज़"
@@ -554,7 +581,7 @@
     "title": "सेटिंग्स",
     "tabs": {
       "appearance": "दिखावट",
-      "model": "मॉडल",
+      "model": "डिफ़ॉल्ट",
       "systemMessage": "सिस्टम संदेश",
       "plugins": "प्लगइन्स",
       "search": "खोज",
@@ -616,6 +643,9 @@
       }
     },
     "saveSettings": "सेटिंग्स सहेजें",
+    "preferences": {
+      "updateFailed": "सेटिंग्स अपडेट करने में विफल: {{error}}"
+    },
     "model": {
       "title": "मॉडल सेटिंग्स",
       "defaultModel": "डिफ़ॉल्ट मॉडल",
@@ -651,7 +681,10 @@
         "taskModelDescription": "बातचीत शीर्षक बनाने के लिए उपयोग किया जाने वाला मॉडल"
       },
       "updatingModel": "{{name}} अपडेट हो रहा है ({{current}}/{{total}})",
-      "modelsProgress": "{{total}} मॉडलों में से {{current}}"
+      "modelsProgress": "{{total}} मॉडलों में से {{current}}",
+      "defaultModelUpdated": "डिफ़ॉल्ट मॉडल अपडेट किया गया",
+      "allModelsUpdated": "सभी मॉडल सफलतापूर्वक अपडेट किए गए!",
+      "updateAllFailed": "मॉडल अपडेट करने में विफल: {{error}}"
     },
     "systemMessage": {
       "title": "सिस्टम संदेश",
@@ -711,6 +744,7 @@
       "modelCatalogNeedsApiKey": "इस प्रदाता की लाइव मॉडल सूची लोड करने के लिए एक मान्य API कुंजी जोड़ें।",
       "modelCatalogUnavailable": "प्रदाता की मॉडल सूची लोड नहीं की जा सकी।",
       "modelCatalogRefreshFailed": "मॉडल कैटलॉग रिफ्रेश करने में विफल",
+      "invalidJson": "अमान्य JSON प्रारूप",
       "capability": {
         "chat": "चैट",
         "embedding": "एम्बेडिंग",
@@ -775,6 +809,11 @@
       "stopSequencesDescription": "कस्टम टोकन जो मिलने पर जनरेशन रोक देंगे।",
       "resetDefaults": "डिफ़ॉल्ट पर रीसेट करें",
       "saveOptions": "विकल्प सहेजें",
+      "saveSuccess": "जेनरेशन विकल्प सफलतापूर्वक अपडेट किए गए",
+      "saveFailed": "जेनरेशन विकल्प अपडेट करने में विफल: {{error}}",
+      "modelDefaultsLoaded": "{{model}} द्वारा सुझाई गई सेटिंग्स लोड की गईं",
+      "resetSuccess": "जेनरेशन विकल्प डिफ़ॉल्ट पर रीसेट किए गए",
+      "resetFailed": "जेनरेशन विकल्प डिफ़ॉल्ट पर रीसेट करने में विफल: {{error}}",
       "embeddingSettings": "एम्बेडिंग सेटिंग्स",
       "enableEmbeddings": "दस्तावेज़ एम्बेडिंग सक्षम करें",
       "thinking": "सोच",
@@ -811,7 +850,14 @@
         "chunksWithEmbeddings": "एम्बेडिंग वाले चंक",
         "coverage": "कवरेज",
         "regenerate": "एम्बेडिंग पुनर्जनित करें",
-        "regenerating": "पुनर्जनित हो रहा है..."
+        "regenerating": "पुनर्जनित हो रहा है...",
+        "regenerateSuccess": "{{count}} दस्तावेज़ों के एम्बेडिंग पुनर्जनित किए गए",
+        "regeneratePartialSuccess": "{{count}} दस्तावेज़ पुनर्जनित किए गए; {{skipped}} छोड़ दिए गए",
+        "regenerateFailed": "एम्बेडिंग पुनर्जनित करने में विफल: {{error}}",
+        "saveSuccess": "एम्बेडिंग सेटिंग्स सफलतापूर्वक अपडेट की गईं",
+        "saveFailed": "एम्बेडिंग सेटिंग्स अपडेट करने में विफल: {{error}}",
+        "resetSuccess": "एम्बेडिंग सेटिंग्स डिफ़ॉल्ट पर रीसेट की गईं",
+        "resetFailed": "एम्बेडिंग सेटिंग्स डिफ़ॉल्ट पर रीसेट करने में विफल: {{error}}"
       },
       "collections": {
         "title": "ज्ञान संग्रह",
@@ -883,7 +929,11 @@
       "revokeSavedVoice": "{{name}} के लिए सहमति वापस लें",
       "revokeSavedVoiceConfirm": "“{{name}}” के लिए सहमति वापस लें? सहेजी गई आवाज़ अब उपयोग नहीं की जा सकेगी, लेकिन सहमति का रिकॉर्ड बना रहेगा।",
       "savedVoiceRevoked": "सहमति वापस ली गई",
-      "savedVoiceRevokeFailed": "सहमति वापस नहीं ली जा सकी"
+      "savedVoiceRevokeFailed": "सहमति वापस नहीं ली जा सकी",
+      "savedVoiceUnavailableCleanupFailed": "सहेजी गई आवाज़ उपलब्ध नहीं है और उसे स्पीच सेटिंग्स से हटाया नहीं जा सका",
+      "saveSuccess": "TTS सेटिंग्स सफलतापूर्वक सहेजी गईं",
+      "saveFailed": "TTS सेटिंग्स सहेजने में विफल: {{error}}",
+      "testFailed": "TTS परीक्षण विफल: {{error}}"
     },
     "imageGen": {
       "title": "छवि जनरेशन",
@@ -903,7 +953,9 @@
       "style": "शैली",
       "styleDescription": "जनरेट छवियों के लिए शैली प्रीसेट",
       "availableProviders": "उपलब्ध प्रदाता",
-      "models": "मॉडल"
+      "models": "मॉडल",
+      "saveSuccess": "छवि निर्माण सेटिंग्स सफलतापूर्वक सहेजी गईं",
+      "saveFailed": "छवि निर्माण सेटिंग्स सहेजने में विफल: {{error}}"
     },
     "data": {
       "title": "डेटा प्रबंधन",
@@ -945,6 +997,16 @@
       "documents": "दस्तावेज़",
       "warnings": "चेतावनियाँ",
       "refreshAfterImportFailed": "डेटा आयात हो गया, लेकिन कुछ दृश्य रीफ़्रेश नहीं हो सके। सभी परिवर्तन देखने के लिए Libre WebUI को पुनः लोड करें।",
+      "exportSuccess": "पोर्टेबल डेटा आर्काइव एक्सपोर्ट किया गया",
+      "exportFailed": "एक्सपोर्ट विफल",
+      "importSuccess": "पोर्टेबल डेटा आर्काइव इंपोर्ट किया गया",
+      "importFailed": "इंपोर्ट विफल",
+      "archiveErrors": {
+        "invalidJson": "पोर्टेबल आर्काइव मान्य JSON नहीं है।",
+        "objectRequired": "पोर्टेबल आर्काइव में एक JSON ऑब्जेक्ट होना चाहिए।",
+        "unsupportedVersion": "पोर्टेबल आर्काइव संस्करण {{version}} समर्थित नहीं है।",
+        "unrecognized": "यह फ़ाइल Libre WebUI का पोर्टेबल आर्काइव नहीं है।"
+      },
       "errors": "त्रुटियाँ",
       "archivedChats": {
         "title": "संग्रहीत चैट",
@@ -1203,6 +1265,23 @@
     "newWork": "नया Work सत्र",
     "openPalette": "कमांड पैलेट खोलें"
   },
+  "modelDownload": {
+    "success": "{{name}} डाउनलोड किया गया",
+    "failed": "डाउनलोड नहीं हो सका: {{error}}",
+    "startFailed": "डाउनलोड शुरू नहीं किया जा सका",
+    "cancelled": "डाउनलोड रद्द कर दिया गया"
+  },
+  "modelTools": {
+    "toasts": {
+      "fetchInfoFailed": "जानकारी प्राप्त नहीं की जा सकी",
+      "pushSuccess": "मॉडल पुश किया गया",
+      "createSuccess": "मॉडल बनाया गया",
+      "copySuccess": "मॉडल कॉपी किया गया",
+      "embeddingsSuccess": "एम्बेडिंग जनरेट की गईं (कंसोल देखें)",
+      "failed": "विफल",
+      "unknownError": "अज्ञात त्रुटि"
+    }
+  },
   "modelManager": {
     "title": "मॉडल",
     "loading": "मॉडल लोड हो रहे हैं...",
@@ -1243,7 +1322,9 @@
       "pictureTooLarge": "चित्र 192 KB से छोटे होने चाहिए।",
       "saving": "सहेजा जा रहा है…",
       "hide": "उपयोगकर्ताओं से छिपाएँ",
-      "show": "उपयोगकर्ताओं को दिखाएँ"
+      "show": "उपयोगकर्ताओं को दिखाएँ",
+      "star": "{{name}} को स्टार करें",
+      "unstar": "{{name}} से स्टार हटाएँ"
     },
     "pull": {
       "placeholder": "मॉडल नाम दर्ज करें (जैसे, llama3.2:3b, deepseek-r1:14b)",
@@ -2469,7 +2550,8 @@
     "conversation": {
       "ready": "वर्कस्पेस तैयार है",
       "empty": "नीचे टास्क जारी रखें। यह बातचीत और इसकी फ़ाइलें इसी वर्कस्पेस से जुड़ी रहेंगी।",
-      "loadOlder": "पुराने संदेश लोड करें"
+      "loadOlder": "पुराने संदेश लोड करें",
+      "openFile": "{{name}} खोलें"
     },
     "status": {
       "preparing": "अलग-थलग वर्कस्पेस तैयार हो रहा है…",
@@ -2510,7 +2592,8 @@
       "splitSize": "बातचीत {{conversation}}%, वर्कस्पेस {{workspace}}%",
       "terminal": "टर्मिनल",
       "git": "Git",
-      "screen": "स्क्रीन"
+      "screen": "स्क्रीन",
+      "agent": "एजेंट"
     },
     "files": {
       "discard": "सेव न किए गए फ़ाइल बदलाव छोड़ें?",
@@ -2655,6 +2738,29 @@
       "building": "डेस्कटॉप इमेज बन रही है... पहली बार कुछ मिनट लग सकते हैं।",
       "enable": "चालू करें",
       "retry": "पुनः प्रयास करें"
+    },
+    "agents": {
+      "title": "एजेंट"
+    },
+    "persona": {
+      "label": "एजेंट के रूप में नियुक्त करें (वैकल्पिक)",
+      "none": "कोई पर्सोना नहीं (एक बार का कार्य)",
+      "hint": "यह कार्य एक नामित एजेंट बन जाता है: यह पर्सोना बनाए रखता है, साइडबार में पिन रहता है और हर रन के बाद एक पंक्ति की स्थिति बताता है।",
+      "description": "इस कार्य को अपनी पहचान वाले स्थायी एजेंट में बदलने के लिए एक पर्सोना चुनें।"
+    },
+    "agent": {
+      "openScreen": "पूर्ण स्क्रीन दृश्य खोलें",
+      "personaLine": "पर्सोना: {{name}}",
+      "screen": "स्क्रीन",
+      "routines": "रूटीन",
+      "addRoutine": "रूटीन",
+      "noRoutines": "अभी कोई रूटीन नहीं है। रूटीन एक निर्देश को समयसूची पर, इस एजेंट के वर्कस्पेस के भीतर चलाता है।",
+      "routineToggleFailed": "रूटीन अपडेट नहीं हो सका।",
+      "routineSaveFailed": "रूटीन सहेजा नहीं जा सका।",
+      "skills": "सिखाए गए कौशल",
+      "noSkills": "अभी कुछ नहीं सिखाया गया। स्क्रीन टैब में Teach का उपयोग कर एक बार प्रक्रिया दिखाएँ; वह दोहराने योग्य कौशल बन जाती है।",
+      "skillToggleFailed": "कौशल अपडेट नहीं हो सका।",
+      "unread": "नई गतिविधि"
     }
   },
   "personaBackground": {
@@ -2850,7 +2956,8 @@
       "targetChat": "चैट सत्र",
       "targetWork": "Work कार्य",
       "workPolicy": "Work नीति",
-      "workPolicyDefault": "डिफ़ॉल्ट (वैश्विक सीमाएँ)"
+      "workPolicyDefault": "डिफ़ॉल्ट (वैश्विक सीमाएँ)",
+      "taskBoundNote": "यह रूटीन एजेंट के अपने वर्कस्पेस और बातचीत के भीतर, एजेंट के मॉडल और रनटाइम के साथ चलता है।"
     },
     "kind": {
       "once": "एक बार",

@@ -44,6 +44,10 @@
     "name": "Libre WebUI",
     "shortName": "Libre"
   },
+  "appInitialization": {
+    "ollamaUnavailable": "Il servizio Ollama non è disponibile. È comunque possibile utilizzare i modelli dei plugin.",
+    "backendConnectionFailed": "Connessione al servizio backend non riuscita"
+  },
   "auth": {
     "login": {
       "title": "Bentornato",
@@ -99,7 +103,11 @@
       "continueWith": "Continua con {{provider}}",
       "connectingTo": "Connessione a {{provider}}...",
       "github": "GitHub",
-      "huggingFace": "Hugging Face"
+      "huggingFace": "Hugging Face",
+      "loginSuccess": "Accesso OAuth riuscito!",
+      "completionFailed": "Impossibile completare l’autenticazione OAuth",
+      "verificationFailed": "Verifica dell’autenticazione OAuth non riuscita",
+      "authenticationFailed": "Autenticazione OAuth non riuscita"
     },
     "checkingAuth": "Verifica autenticazione...",
     "welcome": "Benvenuto",
@@ -374,7 +382,8 @@
       "pullCommand": "ollama pull llama3.2:3b",
       "noModelsTooltip": "Nessun modello disponibile. Assicurati che Ollama sia in esecuzione e i modelli siano installati.",
       "selectBeforePrivateChat": "Seleziona un modello disponibile prima di avviare la chat privata",
-      "selectBeforeSending": "Seleziona un modello disponibile prima di inviare"
+      "selectBeforeSending": "Seleziona un modello disponibile prima di inviare",
+      "selectBeforeRegenerating": "Seleziona un modello disponibile prima di rigenerare"
     },
     "footer": {
       "disclaimer": "Gli LLM possono commettere errori - verifica le informazioni importanti",
@@ -385,7 +394,10 @@
     "mediaUpload": {
       "dropImagesHere": "Trascina le immagini qui o",
       "supportedFormats": "Supportati: JPG, PNG, GIF, WebP (max 10 MB ciascuno)",
-      "browse": "sfoglia"
+      "browse": "sfoglia",
+      "unsupportedFileType": "Tipo di file non supportato: {{name}}",
+      "maxImagesAllowed": "Sono consentite al massimo {{count}} immagini",
+      "imageTooLarge": "L’immagine {{name}} è troppo grande (max 10 MB)"
     },
     "structuredOutput": {
       "title": "Formato risposta",
@@ -456,7 +468,22 @@
       "modelSwitched": "Passato a {{model}} (il modello precedente non è più disponibile)",
       "modelsLoadFailed": "Impossibile caricare i modelli",
       "modelUpdated": "Modello aggiornato per la chat corrente",
-      "modelUpdateFailed": "Impossibile aggiornare il modello della sessione"
+      "modelUpdateFailed": "Impossibile aggiornare il modello della sessione",
+      "titlePreviewFallback": "Impossibile generare un titolo; verrà usata l’anteprima del messaggio",
+      "titleGenerated": "Titolo della chat generato",
+      "titleGenerationFailed": "Impossibile generare il titolo della chat",
+      "sessionNotFoundRedirect": "Sessione non trovata. Creazione di una nuova sessione...",
+      "comparisonError": "{{model}}: {{error}}",
+      "generationFailed": "generazione non riuscita",
+      "comparisonFailed": "confronto non riuscito",
+      "sendFailed": "Impossibile inviare il messaggio",
+      "noMessageToRegenerate": "Nessun messaggio da rigenerare",
+      "regenerateFailed": "Impossibile rigenerare il messaggio",
+      "messageNotFound": "Messaggio non trovato",
+      "branchSwitched": "Passato alla variante {{number}}",
+      "branchSelectFailed": "Impossibile selezionare il ramo",
+      "editFailed": "Impossibile modificare il messaggio",
+      "toolDecisionFailed": "Impossibile registrare la decisione sullo strumento"
     },
     "documents": {
       "title": "Documenti nel contesto"
@@ -554,7 +581,7 @@
     "title": "Impostazioni",
     "tabs": {
       "appearance": "Aspetto",
-      "model": "Modello",
+      "model": "Predefiniti",
       "systemMessage": "Messaggio di sistema",
       "plugins": "Plugin",
       "search": "Ricerca",
@@ -616,6 +643,9 @@
       }
     },
     "saveSettings": "Salva impostazioni",
+    "preferences": {
+      "updateFailed": "Impossibile aggiornare le impostazioni: {{error}}"
+    },
     "model": {
       "title": "Impostazioni modello",
       "defaultModel": "Modello predefinito",
@@ -651,7 +681,10 @@
         "taskModelDescription": "Modello usato per generare titoli conversazioni"
       },
       "updatingModel": "Aggiornamento di {{name}} ({{current}}/{{total}})",
-      "modelsProgress": "{{current}} di {{total}} modelli"
+      "modelsProgress": "{{current}} di {{total}} modelli",
+      "defaultModelUpdated": "Modello predefinito aggiornato",
+      "allModelsUpdated": "Tutti i modelli sono stati aggiornati correttamente!",
+      "updateAllFailed": "Impossibile aggiornare i modelli: {{error}}"
     },
     "systemMessage": {
       "title": "Messaggio di sistema",
@@ -711,6 +744,7 @@
       "modelCatalogNeedsApiKey": "Aggiungi una chiave API valida per questo provider per caricare il suo elenco modelli in tempo reale.",
       "modelCatalogUnavailable": "Impossibile caricare l'elenco modelli del provider.",
       "modelCatalogRefreshFailed": "Aggiornamento del catalogo modelli non riuscito",
+      "invalidJson": "Formato JSON non valido",
       "capability": {
         "chat": "Chat",
         "embedding": "Embedding",
@@ -775,6 +809,11 @@
       "stopSequencesDescription": "Token personalizzati che interrompono la generazione quando incontrati.",
       "resetDefaults": "Ripristina predefiniti",
       "saveOptions": "Salva opzioni",
+      "saveSuccess": "Opzioni di generazione aggiornate correttamente",
+      "saveFailed": "Impossibile aggiornare le opzioni di generazione: {{error}}",
+      "modelDefaultsLoaded": "Caricate le impostazioni consigliate da {{model}}",
+      "resetSuccess": "Opzioni di generazione ripristinate ai valori predefiniti",
+      "resetFailed": "Impossibile ripristinare le opzioni di generazione: {{error}}",
       "embeddingSettings": "Impostazioni embedding",
       "enableEmbeddings": "Abilita embedding documenti",
       "thinking": "Ragionamento",
@@ -811,7 +850,14 @@
         "chunksWithEmbeddings": "Chunk con embedding",
         "coverage": "Copertura",
         "regenerate": "Rigenera embedding",
-        "regenerating": "Rigenerazione..."
+        "regenerating": "Rigenerazione...",
+        "regenerateSuccess": "Embedding rigenerati per {{count}} documenti",
+        "regeneratePartialSuccess": "Rigenerati {{count}} documenti; {{skipped}} ignorati",
+        "regenerateFailed": "Impossibile rigenerare gli embedding: {{error}}",
+        "saveSuccess": "Impostazioni degli embedding aggiornate correttamente",
+        "saveFailed": "Impossibile aggiornare le impostazioni degli embedding: {{error}}",
+        "resetSuccess": "Impostazioni degli embedding ripristinate ai valori predefiniti",
+        "resetFailed": "Impossibile ripristinare le impostazioni degli embedding: {{error}}"
       },
       "collections": {
         "title": "Raccolte di conoscenza",
@@ -883,7 +929,11 @@
       "revokeSavedVoice": "Revoca il consenso per {{name}}",
       "revokeSavedVoiceConfirm": "Revocare il consenso per «{{name}}»? La voce salvata non potrà più essere usata, ma la traccia del consenso viene conservata.",
       "savedVoiceRevoked": "Consenso revocato",
-      "savedVoiceRevokeFailed": "Impossibile revocare il consenso"
+      "savedVoiceRevokeFailed": "Impossibile revocare il consenso",
+      "savedVoiceUnavailableCleanupFailed": "La voce salvata non è disponibile e non è stato possibile rimuoverla dalle impostazioni vocali",
+      "saveSuccess": "Impostazioni TTS salvate correttamente",
+      "saveFailed": "Impossibile salvare le impostazioni TTS: {{error}}",
+      "testFailed": "Test TTS non riuscito: {{error}}"
     },
     "imageGen": {
       "title": "Generazione immagini",
@@ -903,7 +953,9 @@
       "style": "Stile",
       "styleDescription": "Preset stile per le immagini generate",
       "availableProviders": "Provider disponibili",
-      "models": "modelli"
+      "models": "modelli",
+      "saveSuccess": "Impostazioni di generazione delle immagini salvate correttamente",
+      "saveFailed": "Impossibile salvare le impostazioni di generazione delle immagini: {{error}}"
     },
     "data": {
       "title": "Gestione dati",
@@ -945,6 +997,16 @@
       "documents": "Documenti",
       "warnings": "Avvisi",
       "refreshAfterImportFailed": "I dati sono stati importati, ma non è stato possibile aggiornare alcune viste. Ricarica Libre WebUI per vedere tutte le modifiche.",
+      "exportSuccess": "Archivio dati portatile esportato",
+      "exportFailed": "Esportazione non riuscita",
+      "importSuccess": "Archivio dati portatile importato",
+      "importFailed": "Importazione non riuscita",
+      "archiveErrors": {
+        "invalidJson": "L’archivio portatile non contiene JSON valido.",
+        "objectRequired": "L’archivio portatile deve contenere un oggetto JSON.",
+        "unsupportedVersion": "Versione {{version}} dell’archivio portatile non supportata.",
+        "unrecognized": "Questo file non è un archivio portatile di Libre WebUI."
+      },
       "errors": "Errori",
       "archivedChats": {
         "title": "Chat archiviate",
@@ -1203,6 +1265,23 @@
     "newWork": "Nuova sessione Work",
     "openPalette": "Apri la palette dei comandi"
   },
+  "modelDownload": {
+    "success": "{{name}} scaricato",
+    "failed": "Download non riuscito: {{error}}",
+    "startFailed": "Impossibile avviare il download",
+    "cancelled": "Download annullato"
+  },
+  "modelTools": {
+    "toasts": {
+      "fetchInfoFailed": "Impossibile recuperare le informazioni",
+      "pushSuccess": "Modello inviato",
+      "createSuccess": "Modello creato",
+      "copySuccess": "Modello copiato",
+      "embeddingsSuccess": "Embedding generati (vedi la console)",
+      "failed": "Operazione non riuscita",
+      "unknownError": "Errore sconosciuto"
+    }
+  },
   "modelManager": {
     "title": "Modelli",
     "loading": "Caricamento modelli...",
@@ -1243,7 +1322,9 @@
       "pictureTooLarge": "Le immagini devono essere inferiori a 192 KB.",
       "saving": "Salvataggio…",
       "hide": "Nascondi agli utenti",
-      "show": "Mostra agli utenti"
+      "show": "Mostra agli utenti",
+      "star": "Aggiungi una stella a {{name}}",
+      "unstar": "Rimuovi la stella da {{name}}"
     },
     "pull": {
       "placeholder": "Inserisci nome modello (es. llama3.2:3b, deepseek-r1:14b)",
@@ -2469,7 +2550,8 @@
     "conversation": {
       "ready": "Spazio di lavoro pronto",
       "empty": "Continua l'attività qui sotto. Questa conversazione e i relativi file restano associati allo spazio di lavoro.",
-      "loadOlder": "Carica messaggi precedenti"
+      "loadOlder": "Carica messaggi precedenti",
+      "openFile": "Apri {{name}}"
     },
     "status": {
       "preparing": "Preparazione dello spazio di lavoro isolato…",
@@ -2510,7 +2592,8 @@
       "splitSize": "Conversazione {{conversation}}%, spazio di lavoro {{workspace}}%",
       "terminal": "Terminale",
       "git": "Git",
-      "screen": "Schermo"
+      "screen": "Schermo",
+      "agent": "Agente"
     },
     "files": {
       "discard": "Ignorare le modifiche al file non salvate?",
@@ -2655,6 +2738,29 @@
       "building": "Compilazione dell'immagine desktop... la prima volta richiede qualche minuto.",
       "enable": "Attiva",
       "retry": "Riprova"
+    },
+    "agents": {
+      "title": "Agenti"
+    },
+    "persona": {
+      "label": "Assumi come agente (facoltativo)",
+      "none": "Nessuna persona (attività una tantum)",
+      "hint": "Questa attività diventa un agente con nome: mantiene la persona, resta fissata nella barra laterale e riporta una riga di stato dopo ogni esecuzione.",
+      "description": "Scegli una persona per trasformare questa attività in un agente permanente con una propria identità."
+    },
+    "agent": {
+      "openScreen": "Apri la vista a schermo intero",
+      "personaLine": "Persona: {{name}}",
+      "screen": "Schermo",
+      "routines": "Routine",
+      "addRoutine": "Routine",
+      "noRoutines": "Ancora nessuna routine. Una routine esegue un'istruzione secondo una pianificazione, nello spazio di lavoro di questo agente.",
+      "routineToggleFailed": "Impossibile aggiornare la routine.",
+      "routineSaveFailed": "Impossibile salvare la routine.",
+      "skills": "Abilità insegnate",
+      "noSkills": "Niente di insegnato finora. Usa Teach nella scheda Schermo per dimostrare una procedura una volta; diventa un'abilità ripetibile.",
+      "skillToggleFailed": "Impossibile aggiornare l'abilità.",
+      "unread": "Nuova attività"
     }
   },
   "personaBackground": {
@@ -2850,7 +2956,8 @@
       "targetChat": "Sessione di chat",
       "targetWork": "Attività Work",
       "workPolicy": "Politica Work",
-      "workPolicyDefault": "Predefinita (limiti globali)"
+      "workPolicyDefault": "Predefinita (limiti globali)",
+      "taskBoundNote": "Questa routine viene eseguita nello spazio di lavoro e nella conversazione dell'agente, con il modello e il runtime dell'agente."
     },
     "kind": {
       "once": "Una volta",

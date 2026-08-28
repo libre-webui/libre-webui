@@ -37,11 +37,12 @@ Large models such as 30B, 70B, and MoE models can be excellent, but they need mu
 
 ## Model Manager
 
-Open **Settings → Model** to:
+Open **Settings → Models** to:
 
 - Pull models from Ollama by name.
 - Search the live Ollama Library instead of relying on a static list.
 - View installed and running models.
+- Update every installed Ollama model in one operation.
 - Stop or unload running models.
 - Delete models you no longer need.
 - Pull Hugging Face GGUF models through Ollama when compatible.
@@ -51,7 +52,13 @@ For Ollama Cloud results, the UI normalizes cloud model names before pulling. If
 
 ## Model Catalog and Visibility
 
-The **Model Catalog** at the top of the Models tab in Settings lists every chat model you can pick, local and provider-backed alike, with a provider badge and a search box. Use **Make default** on any row to set the model new chats start with.
+The **Model Catalog** in **Settings → Defaults** lists every chat model you can
+pick, local and provider-backed alike, with a provider badge and a search box.
+Choose the default model above the catalog to set what new chats start with.
+
+Administrators can star a model to pin it to the top of the catalog and the
+default-model menu. Starring several models puts the most recently starred one
+first; removing a star restores the model's manual or provider position.
 
 Administrators get one more control per row: an eye toggle that hides a model from everyone else's model pickers. Hiding trims long catalogs down to the models a server actually wants people using — it is a listing refinement, not an authorization gate, so treat it as curation rather than a security boundary. Administrators always see the full list, with hidden models marked.
 
@@ -68,7 +75,7 @@ You can keep local models for private work and enable provider plugins for tasks
 ## Default Vision Model
 
 You can chat with a fast text model and still send images. Pick a vision model
-under **Settings → Model → Specialized Models → Vision Model**; whenever the
+under **Settings → Defaults → Specialized Models → Vision Model**; whenever the
 outgoing chat context contains images — a new attachment, an image earlier in
 the session, or history in an incognito chat — that turn is routed to the
 configured vision model instead of the session model. Text-only turns keep the
@@ -83,13 +90,10 @@ handle images itself.
 The selection stores the exact provider identity (Ollama or a specific plugin)
 together with the model name, so a provider cannot capture an identically named
 model. If the saved selection loses that identity — for example the model or
-provider is no longer available — an image-bearing turn fails with:
-
-> The configured vision model has no provider identity. Re-select it in
-> Settings > Model > Vision Model.
-
-Re-selecting the model in Settings repairs it. Failing loudly is deliberate;
-Libre WebUI does not silently substitute another provider.
+provider is no longer available — an image-bearing turn fails. Re-select the
+model under **Settings → Defaults → Specialized Models → Vision Model** to
+repair it. Failing loudly is deliberate; Libre WebUI does not silently
+substitute another provider.
 
 ## Models for Work
 

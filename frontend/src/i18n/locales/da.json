@@ -44,6 +44,10 @@
     "name": "Libre WebUI",
     "shortName": "Libre"
   },
+  "appInitialization": {
+    "ollamaUnavailable": "Ollama-tjenesten er ikke tilgængelig. Pluginmodeller kan stadig bruges.",
+    "backendConnectionFailed": "Kunne ikke oprette forbindelse til backendtjenesten"
+  },
   "auth": {
     "login": {
       "title": "Velkommen tilbage",
@@ -99,7 +103,11 @@
       "continueWith": "Fortsæt med {{provider}}",
       "connectingTo": "Opretter forbindelse til {{provider}}...",
       "github": "GitHub",
-      "huggingFace": "Hugging Face"
+      "huggingFace": "Hugging Face",
+      "loginSuccess": "OAuth-login lykkedes!",
+      "completionFailed": "Kunne ikke fuldføre OAuth-godkendelsen",
+      "verificationFailed": "Bekræftelse af OAuth-godkendelsen mislykkedes",
+      "authenticationFailed": "OAuth-godkendelsen mislykkedes"
     },
     "checkingAuth": "Kontrollerer godkendelse...",
     "welcome": "Velkommen",
@@ -374,7 +382,8 @@
       "pullCommand": "ollama pull llama3.2:3b",
       "noModelsTooltip": "Ingen modeller tilgængelige. Sørg venligst for, at Ollama kører, og at modeller er installeret.",
       "selectBeforePrivateChat": "Vælg en tilgængelig model, før du starter en privat chat",
-      "selectBeforeSending": "Vælg en tilgængelig model, før du sender"
+      "selectBeforeSending": "Vælg en tilgængelig model, før du sender",
+      "selectBeforeRegenerating": "Vælg en tilgængelig model, før svaret genereres igen"
     },
     "footer": {
       "disclaimer": "LLM kan begå fejl - verificer vigtige oplysninger",
@@ -385,7 +394,10 @@
     "mediaUpload": {
       "dropImagesHere": "Slip billeder her eller",
       "supportedFormats": "Understøtter: JPG, PNG, GIF, WebP (maks. 10 MB hver)",
-      "browse": "gennemse"
+      "browse": "gennemse",
+      "unsupportedFileType": "Filtypen understøttes ikke: {{name}}",
+      "maxImagesAllowed": "Der må højst være {{count}} billeder",
+      "imageTooLarge": "Billedet {{name}} er for stort (maks. 10 MB)"
     },
     "structuredOutput": {
       "title": "Svarformat",
@@ -456,7 +468,22 @@
       "modelSwitched": "Skiftet til {{model}} (forrige model er ikke længere tilgængelig)",
       "modelsLoadFailed": "Kunne ikke indlæse modeller",
       "modelUpdated": "Model opdateret for den aktuelle chat",
-      "modelUpdateFailed": "Kunne ikke opdatere sessionens model"
+      "modelUpdateFailed": "Kunne ikke opdatere sessionens model",
+      "titlePreviewFallback": "Kunne ikke generere en titel; bruger forhåndsvisningen af beskeden",
+      "titleGenerated": "Chattitel genereret",
+      "titleGenerationFailed": "Kunne ikke generere chattitel",
+      "sessionNotFoundRedirect": "Sessionen blev ikke fundet. Opretter en ny session...",
+      "comparisonError": "{{model}}: {{error}}",
+      "generationFailed": "generering mislykkedes",
+      "comparisonFailed": "sammenligning mislykkedes",
+      "sendFailed": "Kunne ikke sende beskeden",
+      "noMessageToRegenerate": "Der er ingen besked at generere igen",
+      "regenerateFailed": "Kunne ikke generere beskeden igen",
+      "messageNotFound": "Beskeden blev ikke fundet",
+      "branchSwitched": "Skiftede til variant {{number}}",
+      "branchSelectFailed": "Kunne ikke vælge gren",
+      "editFailed": "Kunne ikke redigere beskeden",
+      "toolDecisionFailed": "Beslutningen om værktøjet kunne ikke registreres"
     },
     "documents": {
       "title": "Dokumenter i kontekst"
@@ -554,7 +581,7 @@
     "title": "Indstillinger",
     "tabs": {
       "appearance": "Udseende",
-      "model": "Model",
+      "model": "Standarder",
       "systemMessage": "Systembesked",
       "plugins": "Plugins",
       "search": "Søgning",
@@ -616,6 +643,9 @@
       }
     },
     "saveSettings": "Gem indstillinger",
+    "preferences": {
+      "updateFailed": "Kunne ikke opdatere indstillingerne: {{error}}"
+    },
     "model": {
       "title": "Modelindstillinger",
       "defaultModel": "Standardmodel",
@@ -651,7 +681,10 @@
         "taskModelDescription": "Model brugt til at generere samtaletitler"
       },
       "updatingModel": "Opdaterer {{name}} ({{current}}/{{total}})",
-      "modelsProgress": "{{current}} af {{total}} modeller"
+      "modelsProgress": "{{current}} af {{total}} modeller",
+      "defaultModelUpdated": "Standardmodellen blev opdateret",
+      "allModelsUpdated": "Alle modeller blev opdateret!",
+      "updateAllFailed": "Kunne ikke opdatere modellerne: {{error}}"
     },
     "systemMessage": {
       "title": "Systembesked",
@@ -711,6 +744,7 @@
       "modelCatalogNeedsApiKey": "Tilføj en gyldig API-nøgle for denne udbyder for at indlæse dens live modelliste.",
       "modelCatalogUnavailable": "Kunne ikke indlæse udbyderens modelliste.",
       "modelCatalogRefreshFailed": "Kunne ikke opdatere modelkataloget",
+      "invalidJson": "Ugyldigt JSON-format",
       "capability": {
         "chat": "Chat",
         "embedding": "Embedding",
@@ -775,6 +809,11 @@
       "stopSequencesDescription": "Tilpassede tokens, der stopper generering, når de stødes på.",
       "resetDefaults": "Nulstil til standard",
       "saveOptions": "Gem indstillinger",
+      "saveSuccess": "Genereringsindstillingerne blev opdateret",
+      "saveFailed": "Kunne ikke opdatere genereringsindstillingerne: {{error}}",
+      "modelDefaultsLoaded": "Indlæste de indstillinger, som {{model}} anbefaler",
+      "resetSuccess": "Genereringsindstillingerne blev nulstillet til standard",
+      "resetFailed": "Kunne ikke nulstille genereringsindstillingerne: {{error}}",
       "embeddingSettings": "Embedding-indstillinger",
       "enableEmbeddings": "Aktiver dokument-embeddings",
       "thinking": "Tænkning",
@@ -811,7 +850,14 @@
         "chunksWithEmbeddings": "Chunks med embeddings",
         "coverage": "Dækning",
         "regenerate": "Regenerer embeddings",
-        "regenerating": "Regenererer..."
+        "regenerating": "Regenererer...",
+        "regenerateSuccess": "Regenererede embeddings for {{count}} dokumenter",
+        "regeneratePartialSuccess": "Regenererede {{count}} dokumenter; sprang {{skipped}} over",
+        "regenerateFailed": "Kunne ikke regenerere embeddings: {{error}}",
+        "saveSuccess": "Embedding-indstillingerne blev opdateret",
+        "saveFailed": "Kunne ikke opdatere embedding-indstillingerne: {{error}}",
+        "resetSuccess": "Embedding-indstillingerne blev nulstillet til standard",
+        "resetFailed": "Kunne ikke nulstille embedding-indstillingerne: {{error}}"
       },
       "collections": {
         "title": "Videnssamlinger",
@@ -883,7 +929,11 @@
       "revokeSavedVoice": "Træk samtykke tilbage for {{name}}",
       "revokeSavedVoiceConfirm": "Træk samtykke tilbage for “{{name}}”? Den gemte stemme kan ikke længere bruges, men samtykkeregistreringen bevares.",
       "savedVoiceRevoked": "Samtykke trukket tilbage",
-      "savedVoiceRevokeFailed": "Kunne ikke trække samtykke tilbage"
+      "savedVoiceRevokeFailed": "Kunne ikke trække samtykke tilbage",
+      "savedVoiceUnavailableCleanupFailed": "Den gemte stemme er ikke tilgængelig og kunne ikke fjernes fra taleindstillingerne",
+      "saveSuccess": "TTS-indstillingerne blev gemt",
+      "saveFailed": "Kunne ikke gemme TTS-indstillingerne: {{error}}",
+      "testFailed": "TTS-testen mislykkedes: {{error}}"
     },
     "imageGen": {
       "title": "Billedgenerering",
@@ -903,7 +953,9 @@
       "style": "Stil",
       "styleDescription": "Stilforudindstilling for genererede billeder",
       "availableProviders": "Tilgængelige udbydere",
-      "models": "modeller"
+      "models": "modeller",
+      "saveSuccess": "Indstillingerne for billedgenerering blev gemt",
+      "saveFailed": "Kunne ikke gemme indstillingerne for billedgenerering: {{error}}"
     },
     "data": {
       "title": "Dataadministration",
@@ -945,6 +997,16 @@
       "documents": "Dokumenter",
       "warnings": "Advarsler",
       "refreshAfterImportFailed": "Data blev importeret, men nogle visninger kunne ikke opdateres. Genindlæs Libre WebUI for at se alle ændringer.",
+      "exportSuccess": "Det flytbare dataarkiv blev eksporteret",
+      "exportFailed": "Eksporten mislykkedes",
+      "importSuccess": "Det flytbare dataarkiv blev importeret",
+      "importFailed": "Importen mislykkedes",
+      "archiveErrors": {
+        "invalidJson": "Det flytbare arkiv indeholder ikke gyldig JSON.",
+        "objectRequired": "Det flytbare arkiv skal indeholde et JSON-objekt.",
+        "unsupportedVersion": "Version {{version}} af det flytbare arkiv understøttes ikke.",
+        "unrecognized": "Denne fil er ikke et flytbart Libre WebUI-arkiv."
+      },
       "errors": "Fejl",
       "archivedChats": {
         "title": "Arkiverede chats",
@@ -1203,6 +1265,23 @@
     "newWork": "Ny Work-session",
     "openPalette": "Åbn kommandopaletten"
   },
+  "modelDownload": {
+    "success": "Model {{name}} hentet",
+    "failed": "Kunne ikke hente modellen: {{error}}",
+    "startFailed": "Kunne ikke starte hentningen",
+    "cancelled": "Hentning annulleret"
+  },
+  "modelTools": {
+    "toasts": {
+      "fetchInfoFailed": "Kunne ikke hente oplysninger",
+      "pushSuccess": "Modellen blev uploadet",
+      "createSuccess": "Modellen blev oprettet",
+      "copySuccess": "Modellen blev kopieret",
+      "embeddingsSuccess": "Embeddings genereret (se konsollen)",
+      "failed": "Mislykkedes",
+      "unknownError": "Ukendt fejl"
+    }
+  },
   "modelManager": {
     "title": "Modeller",
     "loading": "Indlæser modeller...",
@@ -1243,7 +1322,9 @@
       "pictureTooLarge": "Billeder skal fylde under 192 KB.",
       "saving": "Gemmer…",
       "hide": "Skjul for brugere",
-      "show": "Vis for brugere"
+      "show": "Vis for brugere",
+      "star": "Markér {{name}} med stjerne",
+      "unstar": "Fjern stjerne fra {{name}}"
     },
     "pull": {
       "placeholder": "Indtast modelnavn (f.eks. llama3.2:3b, deepseek-r1:14b)",
@@ -2469,7 +2550,8 @@
     "conversation": {
       "ready": "Arbejdsområdet er klar",
       "empty": "Fortsæt opgaven nedenfor. Samtalen og dens filer forbliver knyttet til dette arbejdsområde.",
-      "loadOlder": "Indlæs ældre beskeder"
+      "loadOlder": "Indlæs ældre beskeder",
+      "openFile": "Åbn {{name}}"
     },
     "status": {
       "preparing": "Forbereder det isolerede arbejdsområde…",
@@ -2510,7 +2592,8 @@
       "splitSize": "Samtale {{conversation}} %, arbejdsområde {{workspace}} %",
       "terminal": "Terminal",
       "git": "Git",
-      "screen": "Skærm"
+      "screen": "Skærm",
+      "agent": "Agent"
     },
     "files": {
       "discard": "Kassér ændringer i filen, der ikke er gemt?",
@@ -2655,6 +2738,29 @@
       "building": "Skrivebordsaftrykket bygges... første gang kan det tage nogle minutter.",
       "enable": "Aktivér",
       "retry": "Prøv igen"
+    },
+    "agents": {
+      "title": "Agenter"
+    },
+    "persona": {
+      "label": "Ansæt som agent (valgfrit)",
+      "none": "Ingen persona (engangsopgave)",
+      "hint": "Denne opgave bliver en navngiven agent: den beholder personaen, forbliver fastgjort i sidepanelet og rapporterer en statuslinje efter hver kørsel.",
+      "description": "Vælg en persona for at gøre denne opgave til en vedvarende agent med sin egen identitet."
+    },
+    "agent": {
+      "openScreen": "Åbn fuld skærmvisning",
+      "personaLine": "Persona: {{name}}",
+      "screen": "Skærm",
+      "routines": "Rutiner",
+      "addRoutine": "Rutine",
+      "noRoutines": "Ingen rutiner endnu. En rutine kører en instruktion efter en tidsplan inde i denne agents arbejdsområde.",
+      "routineToggleFailed": "Rutinen kunne ikke opdateres.",
+      "routineSaveFailed": "Rutinen kunne ikke gemmes.",
+      "skills": "Lærte færdigheder",
+      "noSkills": "Intet lært endnu. Brug Teach på Skærm-fanen for at demonstrere en procedure én gang; den bliver en genafspillelig færdighed.",
+      "skillToggleFailed": "Færdigheden kunne ikke opdateres.",
+      "unread": "Ny aktivitet"
     }
   },
   "personaBackground": {
@@ -2850,7 +2956,8 @@
       "targetChat": "Chatsession",
       "targetWork": "Work-opgave",
       "workPolicy": "Work-politik",
-      "workPolicyDefault": "Standard (globale grænser)"
+      "workPolicyDefault": "Standard (globale grænser)",
+      "taskBoundNote": "Denne rutine kører inde i agentens eget arbejdsområde og samtale, med agentens model og runtime."
     },
     "kind": {
       "once": "Én gang",

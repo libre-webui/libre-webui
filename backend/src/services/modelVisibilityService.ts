@@ -16,9 +16,9 @@
  */
 
 /**
- * Which models administrators removed from the shared model pickers. The set
- * is a persisted system setting holding hidden model keys: an Ollama model is
- * keyed by its plain name, a plugin model by `${pluginId}/${modelName}`.
+ * Administrator curation for the shared model lists: hidden entries, starred
+ * priority, manual order, labels, and pictures. An Ollama model is keyed by
+ * its plain name, a plugin model by `${pluginId}/${modelName}`.
  *
  * Visibility is a listing refinement, not an authorization gate: hidden
  * models drop out of the pickers non-administrators see, while administrators
@@ -97,6 +97,7 @@ export async function setHiddenModels(keys: string[]): Promise<string[]> {
 }
 
 export const MODEL_ORDER_KEY = 'model_order';
+export const MODEL_STARRED_KEY = 'model_starred';
 export const MODEL_METADATA_KEY = 'model_metadata';
 
 /** Data URLs are stored inline, so each one stays small enough to serve. */
@@ -158,6 +159,52 @@ export function normalizeModelOrder(keys: unknown): string[] {
 export async function setModelOrder(keys: string[]): Promise<string[]> {
   const normalized = normalizeModelOrder(keys);
   await setSystemSetting(MODEL_ORDER_KEY, JSON.stringify(normalized));
+  return normalized;
+}
+
+/** Models administrators pinned ahead of the ordinary catalog order. */
+export async function getStarredModels(): Promise<string[]> {
+  try {
+    const raw = await getSystemSetting(MODEL_STARRED_KEY);
+    if (!raw) return [];
+    const parsed: unknown = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter(
+      (key): key is string => typeof key === 'string' && key.length > 0
+    );
+  } catch (error) {
+    logger.warn('Could not read starred models; using catalog order:', error);
+    return [];
+  }
+}
+
+export function normalizeStarredModels(keys: unknown): string[] {
+  if (!Array.isArray(keys)) {
+    throw new Error('starred must be an array of model keys.');
+  }
+  if (keys.length > MODEL_VISIBILITY_MAX_KEYS) {
+    throw new Error(
+      `At most ${MODEL_VISIBILITY_MAX_KEYS} models can be starred.`
+    );
+  }
+  const deduped = new Set<string>();
+  for (const key of keys) {
+    if (typeof key !== 'string' || !key.trim()) {
+      throw new Error('Every starred model key must be a non-empty string.');
+    }
+    if (key.trim().length > MODEL_KEY_MAX_CHARS) {
+      throw new Error(
+        `Model keys are limited to ${MODEL_KEY_MAX_CHARS} characters.`
+      );
+    }
+    deduped.add(key.trim());
+  }
+  return [...deduped];
+}
+
+export async function setStarredModels(keys: string[]): Promise<string[]> {
+  const normalized = normalizeStarredModels(keys);
+  await setSystemSetting(MODEL_STARRED_KEY, JSON.stringify(normalized));
   return normalized;
 }
 
@@ -255,6 +302,9 @@ export default {
   getModelOrder,
   setModelOrder,
   normalizeModelOrder,
+  getStarredModels,
+  setStarredModels,
+  normalizeStarredModels,
   getModelMetadata,
   setModelMetadata,
   normalizeModelMetadata,

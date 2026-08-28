@@ -35,7 +35,11 @@ export const sttApi = {
   transcribe: async (
     audio: Blob,
     model: STTModel,
-    options: { language?: string; signal?: AbortSignal } = {}
+    options: {
+      language?: string;
+      signal?: AbortSignal;
+      fallbackMessage?: string;
+    } = {}
   ): Promise<STTTranscription> => {
     const form = new FormData();
     const extension = extensionForAudioType(audio.type);
@@ -50,7 +54,10 @@ export const sttApi = {
     );
     if (!response.data.success || !response.data.data) {
       throw new Error(
-        response.data.message || response.data.error || 'Transcription failed'
+        response.data.message ||
+          response.data.error ||
+          options.fallbackMessage ||
+          'Transcription failed'
       );
     }
     return response.data.data;

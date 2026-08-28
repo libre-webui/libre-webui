@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { expect, Page } from '@playwright/test';
+import { expect, type Locator, type Page } from '@playwright/test';
 
 /**
  * Opens the settings modal with the Ctrl+, shortcut. The keydown is dispatched
@@ -47,16 +47,17 @@ export async function openSettingsModal(page: Page) {
   return panel;
 }
 
-/**
- * Opens the settings modal and switches to a tab by its visible label. Exact
- * matching matters: the defaults tab is "Model" and the manager tab is
- * "Models".
- */
-export async function openSettingsTab(page: Page, label: string) {
-  const panel = await openSettingsModal(page);
-  const tab = panel.getByRole('tab', { name: label, exact: true });
+/** Switches tabs by the stable internal ID instead of translated copy. */
+export async function selectSettingsTab(panel: Locator, tabId: string) {
+  const tab = panel.getByTestId(`settings-tab-${tabId}`);
   await tab.scrollIntoViewIfNeeded();
   await tab.click();
   await expect(tab).toHaveAttribute('aria-selected', 'true');
+}
+
+/** Opens the settings modal and selects a tab by its stable internal ID. */
+export async function openSettingsTab(page: Page, tabId: string) {
+  const panel = await openSettingsModal(page);
+  await selectSettingsTab(panel, tabId);
   return panel;
 }

@@ -289,6 +289,636 @@ test('creates a persistent Work task without exposing network controls', async (
   );
 });
 
+test('hires a persona as a pinned agent with avatar and status blurb', async ({
+  page,
+}) => {
+  const agentAvatar = `data:image/svg+xml,${encodeURIComponent(
+    '<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64"><rect width="64" height="64" rx="14" fill="#6d28d9"/></svg>'
+  )}`;
+  const agentTask = {
+    ...task(
+      'agent-task-1',
+      'Chief of Staff',
+      'Inbox triage finished for today.'
+    ),
+    isAgent: true,
+    personaId: 'persona-1',
+    statusBlurb: 'Inbox at zero. 2 replies ready.',
+    lastSeenAt: createdAt - 1,
+  };
+  const adhocTask = {
+    ...task('adhoc-task-1', 'One-off refactor', 'The refactor is done.'),
+    updatedAt: createdAt + 60_000,
+  };
+  const mock = await mockLibreWebUiApi(page, {
+    personas: [
+      {
+        id: 'persona-1',
+        name: 'Chief of Staff',
+        description: 'Keeps the inbox at zero.',
+        model: 'llama3.2:3b',
+        parameters: { system_prompt: 'Track the inbox.' },
+        avatar: agentAvatar,
+        user_id: 'mock-user',
+        created_at: createdAt,
+        updated_at: createdAt,
+      },
+    ],
+    workTasks: [agentTask, adhocTask],
+    workRunResult: {
+      assistantMessage: 'Reporting for duty.',
+      files: [],
+    },
+  });
+
+  await page.goto('/work');
+  await expect(page.getByTestId('work-landing')).toBeVisible();
+
+  // Hired agents sit in their own pinned group above ad-hoc tasks.
+  await expect(
+    page.getByRole('heading', { name: 'Agents', exact: true })
+  ).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: 'Work tasks', exact: true })
+  ).toBeVisible();
+  const rows = page.getByTestId('sidebar-work-task-item');
+  await expect(rows).toHaveCount(2);
+  await expect(rows.first()).toHaveAttribute('data-agent', 'true');
+  await expect(rows.first()).toContainText('Chief of Staff');
+  await expect(page.getByTestId('sidebar-work-agent-avatar')).toBeVisible();
+  await expect(page.getByTestId('sidebar-work-agent-blurb')).toHaveText(
+    'Inbox at zero. 2 replies ready.'
+  );
+  await expect(rows.last()).not.toHaveAttribute('data-agent', 'true');
+
+  // The collapsed rail keeps only the pinned agent and uses its persona logo.
+  // One-off Work tasks disappear here, just as chat history does.
+  await page.getByTestId('sidebar-toggle-size').click();
+  const compactAgents = page.getByTestId('sidebar-compact-work-agent');
+  await expect(compactAgents).toHaveCount(1);
+  await expect(compactAgents.first()).toHaveAccessibleName(
+    'Chief of Staff. Status: Complete. New activity'
+  );
+  await expect(compactAgents.first()).toHaveAttribute(
+    'title',
+    'Chief of Staff. Status: Complete. New activity'
+  );
+  const compactAvatar = page.getByTestId('sidebar-compact-work-agent-avatar');
+  await expect(compactAvatar).toBeVisible();
+  await expect(compactAvatar).toHaveAttribute('src', agentAvatar);
+  await expect
+    .poll(() =>
+      compactAvatar.evaluate(image => (image as HTMLImageElement).naturalWidth)
+    )
+    .toBeGreaterThan(0);
+  await expect(
+    page.getByTestId('sidebar-compact-work-agent-status')
+  ).toHaveAttribute('data-status', 'completed');
+  await expect(
+    page.getByTestId('sidebar-compact-work-agent-unread')
+  ).toBeVisible();
+  await expect(
+    page
+      .getByTestId('sidebar')
+      .getByRole('button', { name: 'One-off refactor' })
+  ).toHaveCount(0);
+  await compactAgents.first().click();
+  await expect(page).toHaveURL(/\/work\/agent-task-1$/);
+  await expect(compactAgents.first()).toHaveAttribute('aria-current', 'page');
+  await page.getByTestId('sidebar-rail-expand').click();
+  await page.goto('/work');
+  await expect(page.getByTestId('work-landing')).toBeVisible();
+  await expect(rows).toHaveCount(2);
+
+  // The landing view offers the persona picker; hiring one marks the
+  // created task as an agent.
+  const personaSelect = page.getByTestId('work-persona');
+  await expect(personaSelect).toBeVisible();
+  await personaSelect.selectOption('persona-1');
+  await expect(
+    page.getByText(
+      'This task becomes a named agent: it keeps the persona, stays pinned in the sidebar, and reports a one-line status after each run.'
+    )
+  ).toBeVisible();
+
+  await page.getByTestId('work-composer-input').fill('Clear my inbox');
+  await page.getByTestId('work-submit-button').click();
+
+  await expect(page).toHaveURL(/\/work\/work-task-3$/);
+  expect(mock.workTaskCreateRequests).toEqual([
+    {
+      message: 'Clear my inbox',
+      model: 'llama3.2:3b',
+      providerType: 'ollama',
+      networkEnabled: true,
+      personaId: 'persona-1',
+      isAgent: true,
+    },
+  ]);
+  // The new hire joins the pinned agent group immediately.
+  await expect(page.getByTestId('sidebar-work-task-item')).toHaveCount(3);
+  await expect(
+    page.locator('[data-testid="sidebar-work-task-item"][data-agent="true"]')
+  ).toHaveCount(2);
+
+  // The agent's replies wear the persona's face (a rounded square image),
+  // not the default Libre mark.
+  const conversationAvatar = page.getByTestId('work-assistant-avatar').first();
+  await expect(conversationAvatar).toHaveAttribute('alt', 'Chief of Staff');
+});
+
+test('the Agent tab shows identity, routines, and taught skills', async ({
+  page,
+}) => {
+  const agentTask = {
+    ...task('agent-task-1', 'Chief of Staff', 'Inbox triage finished.'),
+    isAgent: true,
+    personaId: 'persona-1',
+    statusBlurb: 'Inbox at zero. 2 replies ready.',
+    computerAvailable: true,
+  };
+  await mockLibreWebUiApi(page, {
+    personas: [
+      {
+        id: 'persona-1',
+        name: 'Chief of Staff',
+        model: 'llama3.2:3b',
+        parameters: { system_prompt: 'Track the inbox.' },
+        user_id: 'mock-user',
+        created_at: createdAt,
+        updated_at: createdAt,
+      },
+    ],
+    workTasks: [agentTask],
+  });
+
+  // Specific routes registered after the broad mock take precedence.
+  const automations = [
+    {
+      id: 'routine-1',
+      name: 'Morning briefing',
+      instructions: 'Summarize the inbox.',
+      triggers: [{ kind: 'daily', hour: 8, minute: 0 }],
+      notify: 'app',
+      status: 'active',
+      target: 'work',
+      workTaskId: 'agent-task-1',
+      createdAt,
+      updatedAt: createdAt,
+    },
+    {
+      id: 'routine-2',
+      name: 'Unrelated chat digest',
+      instructions: 'Digest.',
+      triggers: [{ kind: 'daily', hour: 9, minute: 0 }],
+      notify: 'app',
+      status: 'active',
+      target: 'chat',
+      createdAt,
+      updatedAt: createdAt,
+    },
+  ];
+  const automationCreates: Array<Record<string, unknown>> = [];
+  const pauses: string[] = [];
+  await page.route(
+    /\/api\/automations(?:\/[^/]+\/(?:pause|resume))?$/,
+    route => {
+      const method = route.request().method();
+      const url = new URL(route.request().url());
+      if (method === 'GET') {
+        return route.fulfill({
+          contentType: 'application/json',
+          body: JSON.stringify({ success: true, data: automations }),
+        });
+      }
+      if (method === 'POST' && url.pathname.endsWith('/api/automations')) {
+        const body = route.request().postDataJSON() as Record<string, unknown>;
+        automationCreates.push(body);
+        const created = {
+          ...automations[0],
+          ...body,
+          id: `routine-${automations.length + 1}`,
+        };
+        automations.push(created as (typeof automations)[number]);
+        return route.fulfill({
+          contentType: 'application/json',
+          body: JSON.stringify({ success: true, data: created }),
+        });
+      }
+      if (method === 'POST' && url.pathname.endsWith('/pause')) {
+        const id = url.pathname.split('/').at(-2) as string;
+        pauses.push(id);
+        const target = automations.find(item => item.id === id);
+        if (target) target.status = 'paused';
+        return route.fulfill({
+          contentType: 'application/json',
+          body: JSON.stringify({ success: true, data: target }),
+        });
+      }
+      return route.fulfill({
+        contentType: 'application/json',
+        body: JSON.stringify({ success: true, data: null }),
+      });
+    }
+  );
+  const skillUpdates: Array<{ id: string; enabled: boolean }> = [];
+  await page.route(/\/api\/skills(?:\/[^/]+)?$/, route => {
+    const method = route.request().method();
+    if (method === 'GET') {
+      return route.fulfill({
+        contentType: 'application/json',
+        body: JSON.stringify({
+          success: true,
+          data: [
+            {
+              id: 'skill-1',
+              slug: 'taught-crm-export',
+              name: 'CRM export',
+              description: 'Taught on the Work Computer: CRM export',
+              instructions: '## Steps\n1. Open the CRM.',
+              enabled: true,
+              version: 3,
+              createdAt,
+              updatedAt: createdAt,
+              ownerUserId: 'mock-user',
+            },
+            {
+              id: 'skill-2',
+              slug: 'ordinary-skill',
+              name: 'Ordinary skill',
+              description: 'Not taught',
+              instructions: 'n/a',
+              enabled: true,
+              version: 1,
+              createdAt,
+              updatedAt: createdAt,
+              ownerUserId: 'mock-user',
+            },
+          ],
+        }),
+      });
+    }
+    if (method === 'PUT') {
+      const id = new URL(route.request().url()).pathname.split('/').at(-1);
+      const body = route.request().postDataJSON() as { enabled: boolean };
+      skillUpdates.push({ id: id as string, enabled: body.enabled });
+      return route.fulfill({
+        contentType: 'application/json',
+        body: JSON.stringify({ success: true, data: {} }),
+      });
+    }
+    return route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({ success: true, data: null }),
+    });
+  });
+
+  await page.goto('/work/agent-task-1');
+
+  // An agent opens on its identity panel.
+  const agentTab = page.getByTestId('work-agent-tab');
+  await expect(agentTab).toBeVisible();
+  await expect(agentTab).toHaveAttribute('aria-selected', 'true');
+  const panel = page.getByTestId('work-agent-panel');
+  await expect(panel).toBeVisible();
+  await expect(page.getByTestId('work-agent-avatar')).toBeVisible();
+  await expect(page.getByTestId('work-agent-blurb')).toHaveText(
+    'Inbox at zero. 2 replies ready.'
+  );
+  await expect(panel.getByText('Persona: Chief of Staff')).toBeVisible();
+
+  // The mini screen tile expands to the full Screen tab.
+  await expect(page.getByTestId('work-screen-mini')).toBeVisible();
+
+  // Only the routine bound to this task appears, with a schedule phrase.
+  const routines = page.getByTestId('work-agent-routine');
+  await expect(routines).toHaveCount(1);
+  await expect(routines.first()).toContainText('Morning briefing');
+  await expect(routines.first()).toContainText('Daily at');
+  await expect(panel.getByText('Unrelated chat digest')).toHaveCount(0);
+
+  // Pause round-trips through the API.
+  await page.getByTestId('work-agent-routine-toggle').click();
+  await expect.poll(() => pauses).toEqual(['routine-1']);
+
+  // Inline creation is task-bound: no target/policy/model controls, and the
+  // payload carries the binding.
+  await page.getByTestId('work-agent-add-routine').click();
+  const modal = page.getByTestId('automation-modal');
+  await expect(modal).toBeVisible();
+  await expect(page.getByTestId('automation-task-bound-note')).toBeVisible();
+  await expect(page.getByTestId('automation-target')).toBeHidden();
+  await page.getByTestId('automation-name').fill('Evening wrap-up');
+  await page
+    .getByTestId('automation-instructions')
+    .fill('Write the wrap-up note.');
+  await page.getByTestId('automation-save').click();
+  await expect(modal).toHaveCount(0);
+  expect(automationCreates).toHaveLength(1);
+  expect(automationCreates[0]).toMatchObject({
+    name: 'Evening wrap-up',
+    target: 'work',
+    workTaskId: 'agent-task-1',
+  });
+  expect(automationCreates[0].workPolicyId).toBeUndefined();
+  expect(automationCreates[0].model).toBeUndefined();
+  await expect(page.getByTestId('work-agent-routine')).toHaveCount(2);
+
+  // Only taught skills list, and the toggle persists through the API.
+  const skills = page.getByTestId('work-agent-skill');
+  await expect(skills).toHaveCount(1);
+  await expect(skills.first()).toContainText('CRM export');
+  await expect(panel.getByText('Ordinary skill')).toHaveCount(0);
+  await skills.first().getByRole('switch').click();
+  await expect
+    .poll(() => skillUpdates)
+    .toEqual([{ id: 'skill-1', enabled: false }]);
+
+  // Expanding the mini screen lands on the full Screen tab.
+  await page.getByTestId('work-screen-mini-expand').click();
+  await expect(page.getByTestId('work-screen-tab')).toHaveAttribute(
+    'aria-selected',
+    'true'
+  );
+  await expect(page.getByTestId('work-screen')).toBeVisible();
+});
+
+test('clears a selected persona removed by a later model refresh', async ({
+  page,
+}) => {
+  const personas = [
+    {
+      id: 'persona-1',
+      name: 'Chief of Staff',
+      description: 'Keeps the inbox at zero.',
+      model: 'llama3.2:3b',
+      parameters: { system_prompt: 'Track the inbox.' },
+      user_id: 'mock-user',
+      created_at: createdAt,
+      updated_at: createdAt,
+    },
+    {
+      id: 'persona-2',
+      name: 'Researcher',
+      description: 'Compiles research notes.',
+      model: 'llama3.2:3b',
+      parameters: { system_prompt: 'Research carefully.' },
+      user_id: 'mock-user',
+      created_at: createdAt,
+      updated_at: createdAt,
+    },
+  ];
+  await mockLibreWebUiApi(page, { personas });
+  await page.goto('/work');
+
+  const personaSelect = page.getByTestId('work-persona');
+  await personaSelect.selectOption('persona-1');
+  await expect(personaSelect).toHaveValue('persona-1');
+
+  personas.splice(0, 1);
+  await page.evaluate(() => {
+    window.dispatchEvent(new Event('libre:models-changed'));
+  });
+
+  await expect(personaSelect).toHaveValue('');
+  await expect(personaSelect.locator('option')).toHaveText([
+    'No persona (one-off task)',
+    'Researcher',
+  ]);
+});
+
+test('an agent shows an unread dot until its task is opened', async ({
+  page,
+}) => {
+  const unreadAgent = {
+    ...task('agent-unread', 'Chief of Staff', 'Inbox triage finished.'),
+    isAgent: true,
+    statusBlurb: 'Inbox at zero.',
+    // A run finished after the owner last looked.
+    lastSeenAt: createdAt - 60_000,
+  };
+  const readAgent = {
+    ...task('agent-read', 'Researcher', 'Notes compiled.'),
+    isAgent: true,
+    statusBlurb: 'Notes compiled.',
+    lastSeenAt: createdAt + 60_000,
+  };
+  const mock = await mockLibreWebUiApi(page, {
+    workTasks: [unreadAgent, readAgent],
+  });
+
+  await page.goto('/work');
+  const dots = page.getByTestId('sidebar-work-agent-unread');
+  await expect(dots).toHaveCount(1);
+  const unreadRow = page.locator(
+    '[data-testid="sidebar-work-task-item"][data-task-id="agent-unread"]'
+  );
+  await expect(
+    unreadRow.getByTestId('sidebar-work-agent-unread')
+  ).toBeVisible();
+
+  // Opening the task marks it seen and clears the dot.
+  await unreadRow.click();
+  await expect(page).toHaveURL(/\/work\/agent-unread$/);
+  await expect(dots).toHaveCount(0);
+  await expect.poll(() => mock.workTaskSeenRequests).toContain('agent-unread');
+});
+
+test('conversation file chips open the written file in the workspace', async ({
+  page,
+}) => {
+  const fileContentRequests: string[] = [];
+  page.on('request', request => {
+    const url = new URL(request.url());
+    const match = url.pathname.match(/\/work\/tasks\/([^/]+)\/file$/);
+    if (request.method() !== 'GET' || !match) return;
+    fileContentRequests.push(
+      `${decodeURIComponent(match[1])}:${url.searchParams.get('path') ?? ''}`
+    );
+  });
+  const settleRouteEffects = async () => {
+    await page.evaluate(
+      () =>
+        new Promise<void>(resolve => {
+          requestAnimationFrame(() => {
+            requestAnimationFrame(() => resolve());
+          });
+        })
+    );
+    await page.waitForLoadState('networkidle');
+  };
+  const chipTask = task('chip-task', 'Landing page', 'The page is written.');
+  const otherTask = task(
+    'other-chip-task',
+    'Other landing page',
+    'No file has been opened here.'
+  );
+  chipTask.messages.splice(
+    1,
+    0,
+    {
+      id: 'chip-call',
+      taskId: 'chip-task',
+      runId: 'chip-task-run',
+      role: 'tool' as const,
+      kind: 'tool_call' as const,
+      content: 'Calling write_file',
+      metadata: {
+        name: 'write_file',
+        toolCallId: 'call-write',
+        path: 'src/index.html',
+      },
+      createdAt: createdAt + 1,
+    } as (typeof chipTask.messages)[number],
+    {
+      id: 'chip-result',
+      taskId: 'chip-task',
+      runId: 'chip-task-run',
+      role: 'tool' as const,
+      kind: 'tool_result' as const,
+      content: 'Wrote src/index.html',
+      metadata: { name: 'write_file', toolCallId: 'call-write' },
+      createdAt: createdAt + 2,
+    } as (typeof chipTask.messages)[number],
+    {
+      id: 'chip-read-call',
+      taskId: 'chip-task',
+      runId: 'chip-task-run',
+      role: 'tool' as const,
+      kind: 'tool_call' as const,
+      content: 'Calling read_file',
+      metadata: {
+        name: 'read_file',
+        toolCallId: 'call-read',
+        path: 'package.json',
+      },
+      createdAt: createdAt + 3,
+    } as (typeof chipTask.messages)[number]
+  );
+  await mockLibreWebUiApi(page, {
+    workTasks: [chipTask, otherTask],
+    workFiles: {
+      'chip-task': [
+        {
+          path: 'src/index.html',
+          name: 'index.html',
+          type: 'file',
+          size: 20,
+          modifiedAt: createdAt,
+        },
+      ],
+      'other-chip-task': [
+        {
+          path: 'src/index.html',
+          name: 'index.html',
+          type: 'file',
+          size: 22,
+          modifiedAt: createdAt,
+        },
+      ],
+    },
+    workFileContents: {
+      'chip-task:src/index.html': '<main>calm city</main>',
+      'other-chip-task:src/index.html': '<main>other city</main>',
+    },
+  });
+
+  await page.goto('/work/chip-task');
+
+  // Only the mutating tool produces a chip; the read does not.
+  const chips = page.getByTestId('work-file-chip');
+  await expect(chips).toHaveCount(1);
+  await expect(chips.first()).toContainText('index.html');
+  await expect(chips.first()).toHaveAttribute('data-path', 'src/index.html');
+
+  // Clicking lands on the Files tab with the file open in the editor.
+  await chips.first().click();
+  await expect(page.getByTestId('work-files-tab')).toHaveAttribute(
+    'aria-selected',
+    'true'
+  );
+  await expect(page.getByTestId('work-file-editor')).toHaveValue(
+    '<main>calm city</main>'
+  );
+  await expect
+    .poll(() => fileContentRequests)
+    .toEqual(['chip-task:src/index.html']);
+
+  // The request belongs to the route visit where the chip was clicked. A
+  // pushed navigation to a task with the same path must not open its file.
+  await page.keyboard.press('ControlOrMeta+k');
+  await page.getByTestId('command-palette-input').fill('Other landing page');
+  await page
+    .getByTestId('command-palette')
+    .getByRole('button', { name: /Other landing page/ })
+    .click();
+  await expect(page).toHaveURL(/\/work\/other-chip-task$/);
+  await expect(page.getByText('No file has been opened here.')).toBeVisible();
+  await settleRouteEffects();
+  expect(fileContentRequests).toEqual(['chip-task:src/index.html']);
+  await expect(page.getByTestId('work-file-editor')).toHaveCount(0);
+
+  // Browser Back restores the original history entry and its location key;
+  // the request must nevertheless stay consumed until another chip click.
+  await page.goBack();
+  await expect(page).toHaveURL(/\/work\/chip-task$/);
+  await expect(page.getByText('The page is written.')).toBeVisible();
+  await settleRouteEffects();
+  expect(fileContentRequests).toEqual(['chip-task:src/index.html']);
+  await expect(page.getByTestId('work-file-editor')).toHaveCount(0);
+});
+
+test('the Work composer takes dictation through the speech API', async ({
+  page,
+}) => {
+  // A deterministic fake recognizer: emits one transcript after start.
+  await page.addInitScript(() => {
+    class FakeRecognition {
+      lang = '';
+      continuous = false;
+      interimResults = false;
+      onresult:
+        | ((event: {
+            results: ArrayLike<ArrayLike<{ transcript: string }>>;
+          }) => void)
+        | null = null;
+      onend: (() => void) | null = null;
+      onerror: (() => void) | null = null;
+      start() {
+        setTimeout(() => {
+          this.onresult?.({
+            results: [[{ transcript: 'build a calm garden page' }]],
+          });
+        }, 50);
+      }
+      stop() {
+        this.onend?.();
+      }
+    }
+    (window as unknown as { SpeechRecognition: unknown }).SpeechRecognition =
+      FakeRecognition;
+  });
+  await mockLibreWebUiApi(page, {});
+
+  await page.goto('/work');
+  const mic = page.getByTestId('work-voice-input');
+  await expect(mic).toBeVisible();
+  await expect(mic).toHaveAttribute('aria-pressed', 'false');
+
+  await mic.click();
+  await expect(mic).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.getByTestId('work-composer-input')).toHaveValue(
+    'build a calm garden page'
+  );
+
+  // Stopping returns the button to idle and keeps the dictated text.
+  await mic.click();
+  await expect(mic).toHaveAttribute('aria-pressed', 'false');
+  await expect(page.getByTestId('work-composer-input')).toHaveValue(
+    'build a calm garden page'
+  );
+});
+
 test('shows a readable LTR model name without changing its identifier', async ({
   page,
 }) => {

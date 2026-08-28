@@ -25,7 +25,7 @@ Current upload support:
 - Spreadsheets (`.xlsx`, with per-sheet provenance) and CSV/TSV
 - Source code (TypeScript, Python, Go, Rust, SQL, YAML, and other common languages)
 - Images (`.png`, `.jpg`, `.webp`, `.gif`) — the text is read by your
-  configured vision model (Settings → Model → Vision Model)
+  configured vision model (Settings → Defaults → Vision Model)
 - Audio (`.wav`, `.webm`) — transcribed through your speech-to-text
   provider, behind the same STT access gate as voice input
 - Maximum file size: 10 MB

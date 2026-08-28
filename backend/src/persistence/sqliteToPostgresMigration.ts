@@ -890,11 +890,17 @@ const TABLE_MAPPINGS: readonly TableMapping[] = Object.freeze([
       'policy_id',
       'preview_url',
       'preview_status',
+      'persona_id',
+      'status_blurb',
+      'is_agent',
+      'last_seen_at',
       'created_at',
       'updated_at',
     ],
     ['id'],
-    { integers: [...timestamps, 'network_enabled'] }
+    {
+      integers: [...timestamps, 'network_enabled', 'is_agent', 'last_seen_at'],
+    }
   ),
   table(
     'work_runs',
@@ -1081,6 +1087,9 @@ const TABLE_MAPPINGS: readonly TableMapping[] = Object.freeze([
       'model',
       'notify',
       'status',
+      'target',
+      'work_policy_id',
+      'work_task_id',
       'next_run_at',
       'last_run_at',
       'created_at',
@@ -1102,6 +1111,7 @@ const TABLE_MAPPINGS: readonly TableMapping[] = Object.freeze([
       'status',
       'session_id',
       'assistant_message_id',
+      'work_task_id',
       'error',
       'seen_at',
       'created_at',

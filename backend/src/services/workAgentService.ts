@@ -26,6 +26,8 @@ import {
   buildWorkComputerAmbiguityPrompt,
   buildWorkComputerStallPrompt,
   buildWorkEmptyRoundNudgePrompt,
+  buildWorkScreenshotsUnsupportedPrompt,
+  buildWorkStatusBlurbPrompt,
   workAgentSkillsForContext,
   WORK_WRITE_FILE_RECOMMENDED_CHARS,
   workToolCallBudget,
@@ -50,6 +52,7 @@ import workTaskService, {
   WORK_MESSAGE_METADATA_MAX_BYTES,
   WorkConflictError,
   WorkNotFoundError,
+  deriveStatusBlurb,
 } from './workTaskService.js';
 import { OllamaChatMessage, OllamaChatResponse } from '../types/index.js';
 import {
@@ -82,6 +85,12 @@ const WORK_EMPTY_ROUND_NUDGE_LIMIT = 2;
 // Cross-run replay only needs the shape of past tool calls, not full
 // write_file payloads; bound each persisted argument set.
 const WORK_CHAT_TOOL_CALL_ARGUMENTS_MAX_BYTES = 4_096;
+// Persona instructions share the taught-skill bound so one persona cannot
+// crowd the working context out of the system prompt.
+const PERSONA_INSTRUCTION_MAX_CHARS = 6_000;
+// A finished run should surface promptly: the colloquial status line is a
+// nicety, never worth holding the terminal event beyond this bound.
+const WORK_STATUS_BLURB_TIMEOUT_MS = 8_000;
 const INTERRUPTED_TOOL_RESULT =
   'Tool execution was interrupted; outcome unknown. Inspect the workspace before retrying.';
 
@@ -791,6 +800,43 @@ export class WorkAgentService {
           logger.warn(`Could not load taught skills for run ${runId}:`, error);
         }
       }
+      let persona: { name: string; instructions?: string } | undefined;
+      if (task.personaId) {
+        try {
+          const { personaService } = await import('./personaService.js');
+          const record = await personaService.getBasicPersonaById(
+            task.personaId,
+            userId
+          );
+          if (record) {
+            const instructions = record.parameters?.system_prompt
+              ?.trim()
+              .slice(0, PERSONA_INSTRUCTION_MAX_CHARS);
+            persona = {
+              name: record.name,
+              ...(instructions ? { instructions } : {}),
+            };
+            await workEventService.publish(
+              taskId,
+              runId,
+              'skill_loaded',
+              {
+                id: `persona:${record.id}`,
+                name: record.name,
+                description: 'Persona identity this agent runs under.',
+              },
+              `skill:persona:${record.id}`,
+              durableAttemptIdentity
+            );
+          } else {
+            logger.warn(
+              `Persona ${task.personaId} for task ${taskId} is no longer accessible; running without it.`
+            );
+          }
+        } catch (error) {
+          logger.warn(`Could not load persona for run ${runId}:`, error);
+        }
+      }
       for (const skill of workAgentSkillsForContext({ computerAvailable })) {
         await workEventService.publish(
           taskId,
@@ -850,7 +896,8 @@ export class WorkAgentService {
         computerAvailable,
         taughtSkills,
         providerStateScope,
-        run
+        run,
+        persona
       );
       let totalToolCalls = 0;
       let accumulatedInputTokens = 0;
@@ -896,6 +943,10 @@ export class WorkAgentService {
           .filter(message => message.metadata?.midRun === true)
           .map(message => message.id)
       );
+      // A text-only model rejects the screenshot images computer tools
+      // attach. That is a degradation, not a run-ending failure: after the
+      // first rejection the run continues on text observations alone.
+      let screenshotsRejected = false;
       roundLoop: for (let round = 0; round < roundLimit; round++) {
         await this.throwIfCancelled(runId, controller);
         loopStats.rounds = round + 1;
@@ -979,6 +1030,42 @@ export class WorkAgentService {
             },
             controller.signal
           );
+        } catch (error) {
+          const providerMessage = error instanceof Error ? error.message : '';
+          const contextHasImages = messages.some(
+            message =>
+              Array.isArray(message.images) && message.images.length > 0
+          );
+          if (
+            !screenshotsRejected &&
+            contextHasImages &&
+            !controller.signal.aborted &&
+            /image/i.test(providerMessage)
+          ) {
+            // First image rejection from this provider: drop every
+            // screenshot from context, tell the model why, surface a
+            // readable note to the user, and replay the round text-only.
+            screenshotsRejected = true;
+            for (const message of messages) {
+              if (message.images) delete message.images;
+            }
+            messages.push({
+              role: 'user',
+              content: buildWorkScreenshotsUnsupportedPrompt(),
+            });
+            await workTaskService.addMessage(
+              taskId,
+              runId,
+              'assistant',
+              'error',
+              `The selected model does not accept screenshot images (provider said: ${providerMessage.slice(0, 300)}). Continuing with text-only screen observations — pick a vision-capable model to let the agent actually see the screen.`,
+              // Explanatory, not model speech: keep it out of model context.
+              { [WORK_EMPTY_MODEL_RESPONSE_METADATA_KEY]: true }
+            );
+            round -= 1;
+            continue;
+          }
+          throw error;
         } finally {
           contentStream.flush();
           reasoningStream.flush();
@@ -1124,10 +1211,21 @@ export class WorkAgentService {
           ) {
             return;
           }
+          const completedBlurb = await this.statusBlurbForRun(
+            task,
+            run,
+            userId,
+            finalContent,
+            controller.signal
+          );
           await workTaskService.updateRun(runId, 'completed', {
             finished: true,
           });
-          await workTaskService.updateTaskStatus(taskId, 'completed');
+          await workTaskService.updateTaskStatus(
+            taskId,
+            'completed',
+            completedBlurb
+          );
           await workEventService.publish(
             taskId,
             runId,
@@ -1138,6 +1236,14 @@ export class WorkAgentService {
             },
             'terminal:completed'
           );
+          if (task.isAgent === true) {
+            await this.notifyAgentLifecycle(task, {
+              type: 'work-run-finished',
+              title: `${task.title} finished its run`,
+              body: completedBlurb,
+              sourceKey: `work-run:${runId}:completed`,
+            });
+          }
           return;
         }
         const toolValidationErrors = new Map<WorkToolCall, string>();
@@ -1247,6 +1353,7 @@ export class WorkAgentService {
             const result = await this.executeTool(task, call, {
               signal: controller.signal,
               computer: computerContext,
+              runId,
             });
             toolOutput = result.content;
             toolImages = result.images;
@@ -1306,7 +1413,9 @@ export class WorkAgentService {
             content: toolOutput,
             tool_name: call.function.name,
             tool_call_id: call.id,
-            ...(toolImages?.length ? { images: toolImages } : {}),
+            ...(toolImages?.length && !screenshotsRejected
+              ? { images: toolImages }
+              : {}),
           });
           // Screenshots are live-context-only: persisted messages keep the
           // text observation, and only the most recent screenshots stay in
@@ -1515,8 +1624,19 @@ export class WorkAgentService {
       await this.throwIfCancelled(runId, controller);
       if (!isActiveRunStatus((await workTaskService.getRun(runId))?.status))
         return;
+      const handoffBlurb = await this.statusBlurbForRun(
+        task,
+        run,
+        userId,
+        handoffContent,
+        controller.signal
+      );
       await workTaskService.updateRun(runId, 'needs_input', { finished: true });
-      await workTaskService.updateTaskStatus(taskId, 'needs_input');
+      await workTaskService.updateTaskStatus(
+        taskId,
+        'needs_input',
+        handoffBlurb
+      );
       await workEventService.publish(
         taskId,
         runId,
@@ -1528,6 +1648,14 @@ export class WorkAgentService {
         },
         'terminal:needs_input'
       );
+      if (task.isAgent === true) {
+        await this.notifyAgentLifecycle(task, {
+          type: 'work-run-attention',
+          title: `${task.title} needs your input`,
+          body: handoffBlurb,
+          sourceKey: `work-run:${runId}:needs_input`,
+        });
+      }
     } catch (error) {
       const currentRun = await workTaskService.getRun(runId);
       if (currentRun?.status === 'cancelled' || controller.signal.aborted) {
@@ -1605,7 +1733,11 @@ export class WorkAgentService {
         error: message,
         finished: true,
       });
-      await workTaskService.updateTaskStatus(taskId, 'failed');
+      await workTaskService.updateTaskStatus(
+        taskId,
+        'failed',
+        deriveStatusBlurb(message)
+      );
       await workEventService.publish(
         taskId,
         runId,
@@ -1626,6 +1758,14 @@ export class WorkAgentService {
         },
         'terminal:failed'
       );
+      if (task?.isAgent === true) {
+        await this.notifyAgentLifecycle(task, {
+          type: 'work-run-attention',
+          title: `${task.title} hit an error`,
+          body: deriveStatusBlurb(message),
+          sourceKey: `work-run:${runId}:failed`,
+        });
+      }
     } finally {
       this.controllers.delete(runId);
       try {
@@ -1697,7 +1837,8 @@ export class WorkAgentService {
     computerAvailable: boolean,
     taughtSkills: readonly { name: string; instructions: string }[],
     providerStateScope?: string,
-    provider: Pick<WorkRun, 'providerType' | 'providerId' | 'model'> = task
+    provider: Pick<WorkRun, 'providerType' | 'providerId' | 'model'> = task,
+    persona?: { name: string; instructions?: string }
   ): Promise<OllamaChatMessage[]> {
     const persisted = restorePersistedWorkContext(
       await workTaskService.getRecentModelContextMessages(task.id, 30),
@@ -1711,6 +1852,7 @@ export class WorkAgentService {
           networkEnabled: task.networkEnabled,
           computerAvailable,
           ...(taughtSkills.length > 0 ? { taughtSkills } : {}),
+          ...(persona ? { persona } : {}),
           previewPort: workRuntimeService.previewPort,
           roundBudget: roundLimit,
           commandTimeoutMs: workRuntimeService.limits.commandTimeoutMs,
@@ -1729,6 +1871,8 @@ export class WorkAgentService {
       // Mutable per-run state: the last computer observation, for diffing
       // consecutive screens so the model learns what its action changed.
       computer?: WorkComputerRunContext;
+      // For run-scoped notification dedupe (one takeover alert per run).
+      runId?: string;
     } = {}
   ): Promise<{
     content: string;
@@ -1920,6 +2064,18 @@ export class WorkAgentService {
           };
         }
         const reason = requiredString(args.reason, 'reason').slice(0, 1_000);
+        // The on-screen banner is visible only while the Screen tab is
+        // open and connected, so a takeover request also notifies — this
+        // is the "Chief of Staff needs you: 2FA on the CRM" moment. One
+        // notification per run: repeat requests in the same run dedupe.
+        await this.notifyAgentLifecycle(task, {
+          type: 'work-takeover',
+          title: `${task.title} needs you on its screen`,
+          body: reason,
+          sourceKey: context.runId
+            ? `work-takeover:${context.runId}`
+            : `work-takeover:${task.id}:${Date.now()}`,
+        });
         const outcome = await workScreenControlService.waitForAssist(
           task.id,
           reason,
@@ -1999,6 +2155,89 @@ export class WorkAgentService {
         409,
         'WORK_RUN_CANCELLED'
       );
+    }
+  }
+
+  /**
+   * Agent lifecycle notification, in-app plus web push. Best effort: the
+   * run and task rows are the source of truth, so a notification failure
+   * never fails the run. The source key is run-scoped because dedupe is
+   * permanent per user until the inbox cap prunes it.
+   */
+  private async notifyAgentLifecycle(
+    task: WorkTaskRecord,
+    input: {
+      type: 'work-run-finished' | 'work-run-attention' | 'work-takeover';
+      title: string;
+      body?: string | null;
+      sourceKey: string;
+    }
+  ): Promise<void> {
+    try {
+      const { notificationService } = await import('./notificationService.js');
+      await notificationService.publish({
+        userId: task.userId,
+        type: input.type,
+        title: input.title,
+        ...(input.body ? { body: input.body } : {}),
+        href: `/work/${task.id}`,
+        sourceKey: input.sourceKey,
+      });
+    } catch {
+      // Best effort only.
+    }
+  }
+
+  /**
+   * Sidebar status line for a finished run. Agents get one cheap no-tools
+   * model request for a colloquial ~8-word status ("Inbox at zero. 2
+   * replies ready."); every failure, timeout, or non-agent task falls back
+   * to the deterministic first-line blurb. The reply is passed through the
+   * same deterministic bounds, so the model can only ever produce one
+   * bounded line. WORK_STATUS_BLURB_MODEL=0 disables the model call.
+   */
+  private async statusBlurbForRun(
+    task: WorkTaskRecord,
+    run: Pick<WorkRun, 'providerType' | 'providerId' | 'model'>,
+    userId: string,
+    finalContent: string,
+    signal: AbortSignal
+  ): Promise<string | null> {
+    const deterministic = deriveStatusBlurb(finalContent);
+    if (task.isAgent !== true) return deterministic;
+    if (process.env.WORK_STATUS_BLURB_MODEL === '0') return deterministic;
+    try {
+      const response =
+        await workModelProviderService.generateChatStreamResponse(
+          {
+            model: run.model,
+            messages: [
+              {
+                role: 'user',
+                content: buildWorkStatusBlurbPrompt(finalContent),
+              },
+            ],
+            tools: [],
+            options:
+              run.providerType === 'plugin' ? { num_predict: 64 } : undefined,
+            stream: true,
+          },
+          {
+            providerType: run.providerType,
+            providerId: run.providerId,
+          },
+          userId,
+          {},
+          AbortSignal.any([
+            signal,
+            AbortSignal.timeout(WORK_STATUS_BLURB_TIMEOUT_MS),
+          ])
+        );
+      return (
+        deriveStatusBlurb(response.message?.content ?? '') ?? deterministic
+      );
+    } catch {
+      return deterministic;
     }
   }
 }

@@ -66,6 +66,19 @@ type MockModel = {
   };
 };
 
+type MockModelCatalog = {
+  hidden: string[];
+  order: string[];
+  starred: string[];
+  metadata: Record<
+    string,
+    {
+      label?: string;
+      avatar?: string;
+    }
+  >;
+};
+
 type MockLibraryModel = {
   name: string;
   description: string;
@@ -364,6 +377,23 @@ type MockWorkTask = {
   previewUrl?: string | null;
   previewStatus: 'stopped' | 'starting' | 'running' | 'failed';
   workspacePath: '/workspace';
+  personaId?: string | null;
+  statusBlurb?: string | null;
+  isAgent?: boolean;
+  computerAvailable?: boolean;
+  lastSeenAt?: number | null;
+};
+
+type MockPersona = {
+  id: string;
+  name: string;
+  description?: string;
+  model: string;
+  parameters: Record<string, unknown>;
+  avatar?: string;
+  user_id: string;
+  created_at: number;
+  updated_at: number;
 };
 
 type MockWorkFile = {
@@ -431,6 +461,7 @@ type MockOptions = {
   sessions?: MockSession[];
   folders?: MockFolder[];
   models?: MockModel[];
+  modelCatalog?: MockModelCatalog;
   ollamaHealthy?: boolean;
   plugins?: MockPlugin[];
   pluginVariables?: Record<string, Record<string, MockPluginVariableValue>>;
@@ -474,6 +505,7 @@ type MockOptions = {
   workFileUpdateFailure?: string;
   workRunResult?: MockWorkRunResult;
   workTaskTransition?: MockWorkTaskTransition;
+  personas?: MockPersona[];
 };
 
 const defaultSystemInfo: MockSystemInfo = {
@@ -641,6 +673,14 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
   const sessions = structuredClone(options.sessions ?? []);
   const folders = structuredClone(options.folders ?? []);
   let models = options.models ?? defaultModels;
+  let modelCatalog = structuredClone(
+    options.modelCatalog ?? {
+      hidden: [],
+      order: [],
+      starred: [],
+      metadata: {},
+    }
+  );
   const ollamaHealthy = options.ollamaHealthy ?? true;
   const plugins = structuredClone(options.plugins ?? []);
   const pluginVariables = structuredClone(options.pluginVariables ?? {});
@@ -681,6 +721,7 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
   );
   const preferenceUpdateRequests: Array<Partial<typeof defaultPreferences>> =
     [];
+  const modelCatalogUpdateRequests: Array<Partial<MockModelCatalog>> = [];
   const pluginVariableUpdateRequests: Array<{
     pluginId: string;
     variables: Record<string, string | number | boolean>;
@@ -744,8 +785,11 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
     providerType: 'ollama' | 'plugin';
     providerId?: string;
     networkEnabled: boolean;
+    personaId?: string;
+    isAgent?: boolean;
   }> = [];
   const workTaskDetailRequests: string[] = [];
+  const workTaskSeenRequests: string[] = [];
   const workTaskListRequests: number[] = [];
   const workTaskDeleteRequests: string[] = [];
   const workMessagePageRequests: Array<{
@@ -1605,6 +1649,20 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
         return;
       }
 
+      const workSeenMatch = path.match(/^\/work\/tasks\/([^/]+)\/seen$/);
+      if (workSeenMatch && method === 'POST') {
+        const taskId = decodeURIComponent(workSeenMatch[1]);
+        const task = workTasks.find(item => item.id === taskId);
+        if (!task) {
+          await fulfillApiError(route, 404, 'Work task not found');
+          return;
+        }
+        workTaskSeenRequests.push(taskId);
+        task.lastSeenAt = Date.now();
+        await fulfillJson(route, { seen: true });
+        return;
+      }
+
       if (path === '/work/tasks' && method === 'GET') {
         const requestIndex = workTaskListRequests.length;
         workTaskListRequests.push(Date.now());
@@ -1646,6 +1704,8 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
           providerType: 'ollama' | 'plugin';
           providerId?: string;
           networkEnabled: boolean;
+          personaId?: string;
+          isAgent?: boolean;
         };
         const now = Date.now();
         const task: MockWorkTask = {
@@ -1665,6 +1725,10 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
           previewUrl: null,
           previewStatus: 'stopped',
           workspacePath: '/workspace',
+          ...(request.personaId ? { personaId: request.personaId } : {}),
+          ...(request.isAgent === true || request.personaId
+            ? { isAgent: true }
+            : {}),
         };
 
         workTaskCreateRequests.push(request);
@@ -2051,6 +2115,21 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
         return;
       }
 
+      if (path === '/ollama/models/visibility' && method === 'GET') {
+        await fulfillJson(route, modelCatalog);
+        return;
+      }
+
+      if (path === '/ollama/models/visibility' && method === 'PUT') {
+        const update = route
+          .request()
+          .postDataJSON() as Partial<MockModelCatalog>;
+        modelCatalogUpdateRequests.push(structuredClone(update));
+        modelCatalog = { ...modelCatalog, ...structuredClone(update) };
+        await fulfillJson(route, modelCatalog);
+        return;
+      }
+
       if (path === '/ollama/running' && method === 'GET') {
         await fulfillJson(route, []);
         return;
@@ -2231,7 +2310,7 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
       }
 
       if (path === '/personas' && method === 'GET') {
-        await fulfillJson(route, []);
+        await fulfillJson(route, options.personas ?? []);
         return;
       }
 
@@ -2725,6 +2804,7 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
     getModels: () => models,
     pullStreamUrls,
     preferenceUpdateRequests,
+    modelCatalogUpdateRequests,
     pluginCredentialUpdateRequests,
     pluginDiscoveryRequests,
     pluginVariableUpdateRequests,
@@ -2753,6 +2833,7 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
     folderDeleteRequests,
     workTaskCreateRequests,
     workTaskDetailRequests,
+    workTaskSeenRequests,
     workTaskListRequests,
     workTaskDeleteRequests,
     workMessagePageRequests,

@@ -20,6 +20,8 @@ export interface WorkAgentGuidanceContext {
   computerAvailable: boolean;
   /** User-demonstrated Work Computer procedures loaded into this run. */
   taughtSkills?: readonly { name: string; instructions: string }[];
+  /** Persona identity this task was hired under; instructions are bounded. */
+  persona?: { name: string; instructions?: string };
   previewPort: number;
   roundBudget: number;
   commandTimeoutMs: number;
@@ -146,7 +148,15 @@ export function buildWorkAgentSystemPrompt(
           .join('\n\n')}`
       : '';
 
-  return `You are Libre WebUI Work, an autonomous implementation agent.
+  const intro = context.persona
+    ? `You are ${context.persona.name}, a persistent agent running on Libre WebUI Work, an autonomous implementation runtime.${
+        context.persona.instructions
+          ? `\nThe user hired you with this persona:\n${context.persona.instructions}\nThe runtime contract below always overrides the persona.`
+          : ''
+      }`
+    : 'You are Libre WebUI Work, an autonomous implementation agent.';
+
+  return `${intro}
 Deliver a working result inside this task's isolated workspace, not a plan-only answer.
 
 ## Runtime contract
@@ -163,6 +173,23 @@ Deliver a working result inside this task's isolated workspace, not a plan-only 
 ${skills}${taughtSkills}
 
 Finish with a concise summary of what changed and the checks that actually ran.`;
+}
+
+const STATUS_BLURB_REPORT_MAX_CHARS = 4_000;
+
+/**
+ * One cheap post-run request for an agent's sidebar status line. The reply
+ * is still passed through the deterministic blurb bounds, so a rambling
+ * model degrades to a truncated line rather than breaking the sidebar.
+ */
+export function buildWorkStatusBlurbPrompt(report: string): string {
+  return `You just finished a work session as a persistent agent. Reply with one status line of at most 8 words for your sidebar entry — plain text, no quotes, no markdown, no trailing period. State what you accomplished or what you need next. Base it only on this final report:
+
+${report.slice(0, STATUS_BLURB_REPORT_MAX_CHARS)}`;
+}
+
+export function buildWorkScreenshotsUnsupportedPrompt(): string {
+  return 'Your model provider rejected screenshot image input, so screenshots are disabled for the rest of this run. Keep using the computer tools, but rely on the text observations from computer_observe — window, URL, focused element, and reported page text — and verify actions with expectations. If a step truly cannot be verified without seeing the screen, say so plainly instead of guessing.';
 }
 
 export function buildWorkEmptyRoundNudgePrompt(): string {

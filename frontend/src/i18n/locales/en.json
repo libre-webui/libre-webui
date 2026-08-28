@@ -44,6 +44,10 @@
     "name": "Libre WebUI",
     "shortName": "Libre"
   },
+  "appInitialization": {
+    "ollamaUnavailable": "Ollama service is not available. Plugin models may still be used.",
+    "backendConnectionFailed": "Failed to connect to the backend service"
+  },
   "auth": {
     "login": {
       "title": "Welcome Back",
@@ -99,7 +103,11 @@
       "continueWith": "Continue with {{provider}}",
       "connectingTo": "Connecting to {{provider}}...",
       "github": "GitHub",
-      "huggingFace": "Hugging Face"
+      "huggingFace": "Hugging Face",
+      "loginSuccess": "OAuth login successful!",
+      "completionFailed": "Failed to complete OAuth authentication",
+      "verificationFailed": "OAuth authentication verification failed",
+      "authenticationFailed": "OAuth authentication failed"
     },
     "checkingAuth": "Checking authentication...",
     "welcome": "Welcome",
@@ -374,7 +382,8 @@
       "pullCommand": "ollama pull llama3.2:3b",
       "noModelsTooltip": "No models available. Please ensure Ollama is running and models are installed.",
       "selectBeforePrivateChat": "Select an available model before starting private chat",
-      "selectBeforeSending": "Select an available model before sending"
+      "selectBeforeSending": "Select an available model before sending",
+      "selectBeforeRegenerating": "Select an available model before regenerating"
     },
     "footer": {
       "disclaimer": "LLM can make mistakes - verify important information",
@@ -385,7 +394,10 @@
     "mediaUpload": {
       "dropImagesHere": "Drop images here or",
       "supportedFormats": "Supports: JPG, PNG, GIF, WebP (max 10MB each)",
-      "browse": "browse"
+      "browse": "browse",
+      "unsupportedFileType": "File type not supported: {{name}}",
+      "maxImagesAllowed": "Maximum {{count}} images allowed",
+      "imageTooLarge": "Image {{name}} is too large (max 10MB)"
     },
     "structuredOutput": {
       "title": "Response Format",
@@ -456,7 +468,22 @@
       "modelSwitched": "Switched to {{model}} (previous model no longer available)",
       "modelsLoadFailed": "Failed to load models",
       "modelUpdated": "Model updated for current chat",
-      "modelUpdateFailed": "Failed to update session model"
+      "modelUpdateFailed": "Failed to update session model",
+      "titlePreviewFallback": "Could not generate a title; using the message preview",
+      "titleGenerated": "Chat title generated",
+      "titleGenerationFailed": "Failed to generate chat title",
+      "sessionNotFoundRedirect": "Session not found. Creating a new session...",
+      "comparisonError": "{{model}}: {{error}}",
+      "generationFailed": "generation failed",
+      "comparisonFailed": "comparison failed",
+      "sendFailed": "Failed to send message",
+      "noMessageToRegenerate": "No message to regenerate",
+      "regenerateFailed": "Failed to regenerate message",
+      "messageNotFound": "Message not found",
+      "branchSwitched": "Switched to variant {{number}}",
+      "branchSelectFailed": "Failed to select branch",
+      "editFailed": "Failed to edit message",
+      "toolDecisionFailed": "The tool decision could not be recorded"
     },
     "documents": {
       "title": "Documents in context"
@@ -554,7 +581,7 @@
     "title": "Settings",
     "tabs": {
       "appearance": "Appearance",
-      "model": "Model",
+      "model": "Defaults",
       "systemMessage": "System Message",
       "plugins": "Plugins",
       "search": "Search",
@@ -616,6 +643,9 @@
       }
     },
     "saveSettings": "Save Settings",
+    "preferences": {
+      "updateFailed": "Failed to update settings: {{error}}"
+    },
     "model": {
       "title": "Model Settings",
       "defaultModel": "Default Model",
@@ -651,7 +681,10 @@
         "taskModelDescription": "Model used for generating conversation titles"
       },
       "updatingModel": "Updating {{name}} ({{current}}/{{total}})",
-      "modelsProgress": "{{current}} of {{total}} models"
+      "modelsProgress": "{{current}} of {{total}} models",
+      "defaultModelUpdated": "Default model updated",
+      "allModelsUpdated": "All models updated successfully!",
+      "updateAllFailed": "Failed to update models: {{error}}"
     },
     "systemMessage": {
       "title": "System Message",
@@ -711,6 +744,7 @@
       "modelCatalogNeedsApiKey": "Add a valid API key for this provider to load its live model list.",
       "modelCatalogUnavailable": "Could not load the provider's model list.",
       "modelCatalogRefreshFailed": "Failed to refresh the model catalog",
+      "invalidJson": "Invalid JSON format",
       "capability": {
         "chat": "Chat",
         "embedding": "Embedding",
@@ -775,6 +809,11 @@
       "stopSequencesDescription": "Custom tokens that will stop generation when encountered.",
       "resetDefaults": "Reset to Defaults",
       "saveOptions": "Save Options",
+      "saveSuccess": "Generation options updated successfully",
+      "saveFailed": "Failed to update generation options: {{error}}",
+      "modelDefaultsLoaded": "Loaded the settings {{model}} recommends",
+      "resetSuccess": "Generation options reset to defaults",
+      "resetFailed": "Failed to reset generation options: {{error}}",
       "embeddingSettings": "Embedding Settings",
       "enableEmbeddings": "Enable Document Embeddings",
       "thinking": "Thinking",
@@ -811,7 +850,14 @@
         "chunksWithEmbeddings": "Chunks with embeddings",
         "coverage": "Coverage",
         "regenerate": "Regenerate Embeddings",
-        "regenerating": "Regenerating..."
+        "regenerating": "Regenerating...",
+        "regenerateSuccess": "Regenerated embeddings for {{count}} documents",
+        "regeneratePartialSuccess": "Regenerated {{count}} documents; skipped {{skipped}}",
+        "regenerateFailed": "Failed to regenerate embeddings: {{error}}",
+        "saveSuccess": "Embedding settings updated successfully",
+        "saveFailed": "Failed to update embedding settings: {{error}}",
+        "resetSuccess": "Embedding settings reset to defaults",
+        "resetFailed": "Failed to reset embedding settings: {{error}}"
       },
       "collections": {
         "title": "Knowledge collections",
@@ -883,7 +929,11 @@
       "revokeSavedVoice": "Withdraw consent for {{name}}",
       "revokeSavedVoiceConfirm": "Withdraw consent for “{{name}}”? The saved voice can no longer be used, but the consent record is kept.",
       "savedVoiceRevoked": "Consent withdrawn",
-      "savedVoiceRevokeFailed": "Failed to withdraw consent"
+      "savedVoiceRevokeFailed": "Failed to withdraw consent",
+      "savedVoiceUnavailableCleanupFailed": "The saved voice is unavailable and could not be cleared from Speech settings",
+      "saveSuccess": "TTS settings saved successfully",
+      "saveFailed": "Failed to save TTS settings: {{error}}",
+      "testFailed": "TTS test failed: {{error}}"
     },
     "imageGen": {
       "title": "Image Generation",
@@ -903,7 +953,9 @@
       "style": "Style",
       "styleDescription": "Style preset for generated images",
       "availableProviders": "Available Providers",
-      "models": "models"
+      "models": "models",
+      "saveSuccess": "Image generation settings saved successfully",
+      "saveFailed": "Failed to save image generation settings: {{error}}"
     },
     "data": {
       "title": "Data Management",
@@ -945,6 +997,16 @@
       "documents": "Documents",
       "warnings": "Warnings",
       "refreshAfterImportFailed": "Data was imported, but some views could not be refreshed. Reload Libre WebUI to see every change.",
+      "exportSuccess": "Portable data archive exported",
+      "exportFailed": "Export failed",
+      "importSuccess": "Portable data archive imported",
+      "importFailed": "Import failed",
+      "archiveErrors": {
+        "invalidJson": "Portable archive is not valid JSON.",
+        "objectRequired": "Portable archive must contain a JSON object.",
+        "unsupportedVersion": "Unsupported portable archive version {{version}}.",
+        "unrecognized": "This file is not a Libre WebUI portable archive."
+      },
       "errors": "Errors",
       "archivedChats": {
         "title": "Archived chats",
@@ -1203,6 +1265,23 @@
     "newWork": "New Work session",
     "openPalette": "Open command palette"
   },
+  "modelDownload": {
+    "success": "Downloaded {{name}}",
+    "failed": "Failed to download: {{error}}",
+    "startFailed": "Failed to start download",
+    "cancelled": "Download cancelled"
+  },
+  "modelTools": {
+    "toasts": {
+      "fetchInfoFailed": "Failed to fetch info",
+      "pushSuccess": "Model pushed",
+      "createSuccess": "Model created",
+      "copySuccess": "Model copied",
+      "embeddingsSuccess": "Embeddings generated (see console)",
+      "failed": "Failed",
+      "unknownError": "Unknown error"
+    }
+  },
   "modelManager": {
     "title": "Models",
     "loading": "Loading models...",
@@ -1243,7 +1322,9 @@
       "pictureTooLarge": "Pictures must be under 192 KB.",
       "saving": "Saving…",
       "hide": "Hide from users",
-      "show": "Show to users"
+      "show": "Show to users",
+      "star": "Star {{name}}",
+      "unstar": "Remove star from {{name}}"
     },
     "pull": {
       "placeholder": "Enter model name (e.g., llama3.2:3b, deepseek-r1:14b)",
@@ -2469,7 +2550,8 @@
     "conversation": {
       "ready": "Workspace ready",
       "empty": "Continue the task below. This conversation and its files stay attached to this workspace.",
-      "loadOlder": "Load older messages"
+      "loadOlder": "Load older messages",
+      "openFile": "Open {{name}}"
     },
     "status": {
       "preparing": "Preparing isolated workspace…",
@@ -2510,7 +2592,8 @@
       "splitSize": "Conversation {{conversation}}%, workspace {{workspace}}%",
       "terminal": "Terminal",
       "git": "Git",
-      "screen": "Screen"
+      "screen": "Screen",
+      "agent": "Agent"
     },
     "files": {
       "discard": "Discard unsaved file changes?",
@@ -2655,6 +2738,29 @@
       "building": "Building the desktop image… the first time takes a few minutes.",
       "enable": "Enable",
       "retry": "Retry"
+    },
+    "agents": {
+      "title": "Agents"
+    },
+    "persona": {
+      "label": "Hire as an agent (optional)",
+      "none": "No persona (one-off task)",
+      "hint": "This task becomes a named agent: it keeps the persona, stays pinned in the sidebar, and reports a one-line status after each run.",
+      "description": "Pick a persona to turn this task into a persistent agent with its own identity."
+    },
+    "agent": {
+      "openScreen": "Open the full screen view",
+      "personaLine": "Persona: {{name}}",
+      "screen": "Screen",
+      "routines": "Routines",
+      "addRoutine": "Routine",
+      "noRoutines": "No routines yet. A routine runs an instruction on a schedule, inside this agent’s workspace.",
+      "routineToggleFailed": "Could not update the routine.",
+      "routineSaveFailed": "Could not save the routine.",
+      "skills": "Taught skills",
+      "noSkills": "Nothing taught yet. Use Teach on the Screen tab to demonstrate a procedure once; it becomes a replayable skill.",
+      "skillToggleFailed": "Could not update the skill.",
+      "unread": "New activity"
     }
   },
   "personaBackground": {
@@ -2850,7 +2956,8 @@
       "targetChat": "Chat session",
       "targetWork": "Work task",
       "workPolicy": "Work policy",
-      "workPolicyDefault": "Default (global limits)"
+      "workPolicyDefault": "Default (global limits)",
+      "taskBoundNote": "This routine runs inside the agent's own workspace and conversation, with the agent's model and runtime."
     },
     "kind": {
       "once": "Once",

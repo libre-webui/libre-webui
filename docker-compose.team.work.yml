@@ -17,9 +17,13 @@ services:
   libre-webui:
     environment:
       DOCKER_HOST: tcp://docker-socket-proxy:2375
+      WORK_PREVIEW_BIND: ${WORK_PREVIEW_BIND:-127.0.0.1}
+      WORK_DOCKER_PUBLISHED_HOST: ${WORK_DOCKER_PUBLISHED_HOST:-host.docker.internal}
       # Host workspaces are deliberately unavailable through this production
       # overlay; task state remains in Docker-managed workspace volumes.
       WORK_HOST_WORKSPACES_ENABLED: 'false'
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
     depends_on:
       docker-socket-proxy:
         condition: service_started
@@ -30,7 +34,11 @@ services:
   durable-worker:
     environment:
       DOCKER_HOST: tcp://docker-socket-proxy:2375
+      WORK_PREVIEW_BIND: ${WORK_PREVIEW_BIND:-127.0.0.1}
+      WORK_DOCKER_PUBLISHED_HOST: ${WORK_DOCKER_PUBLISHED_HOST:-host.docker.internal}
       WORK_HOST_WORKSPACES_ENABLED: 'false'
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
     depends_on:
       docker-socket-proxy:
         condition: service_started

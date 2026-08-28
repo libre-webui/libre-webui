@@ -29,6 +29,7 @@ services:
       # stays off until an administrator enables it in Settings > Search.
       SEARXNG_URL: http://searxng:8080
       WORK_PREVIEW_BIND: 172.30.0.1
+      WORK_DOCKER_PUBLISHED_HOST: 172.30.0.1
       # Stop a Work sandbox after this much inactivity (no command, terminal,
       # or preview traffic). Bounds how long an unwatched preview holds one of
       # the global admission slots; the workspace persists and restarts on

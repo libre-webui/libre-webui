@@ -792,6 +792,37 @@ test('packed npm artifact serves SPA routes from a dot-directory install', async
     fs.renameSync(packedRoot, movedRoot);
     linkInstalledDependencies(movedRoot);
 
+    const packedAssets = path.join(movedRoot, 'frontend', 'dist', 'assets');
+    const workAudioAssets = fs
+      .readdirSync(packedAssets)
+      .filter(file => /^workAudioProcessor-[\w-]+\.js$/.test(file));
+    assert.equal(
+      workAudioAssets.length,
+      1,
+      'the production build must emit one external Work audio processor'
+    );
+    const workAudioAsset = workAudioAssets[0];
+    assert.match(
+      fs.readFileSync(path.join(packedAssets, workAudioAsset), 'utf8'),
+      /registerProcessor\(['"]libre-work-audio['"]/
+    );
+    const packedScripts = [
+      ...fs
+        .readdirSync(packedAssets)
+        .filter(file => file.endsWith('.js') && file !== workAudioAsset)
+        .map(file => path.join(packedAssets, file)),
+      ...fs
+        .readdirSync(path.join(movedRoot, 'frontend', 'dist', 'js'))
+        .filter(file => file.endsWith('.js'))
+        .map(file => path.join(movedRoot, 'frontend', 'dist', 'js', file)),
+    ];
+    assert.ok(
+      packedScripts.some(file =>
+        fs.readFileSync(file, 'utf8').includes(workAudioAsset)
+      ),
+      'an application chunk must reference the external Work audio processor'
+    );
+
     const portProbe = http.createServer();
     const backendPort = await startServer(portProbe);
     await new Promise(resolve => portProbe.close(resolve));
@@ -826,7 +857,33 @@ test('packed npm artifact serves SPA routes from a dot-directory install', async
         backendProcess
       );
 
-      for (const route of ['/', '/login', '/c/some-session-id']) {
+      const rootResponse = await fetch(`http://127.0.0.1:${backendPort}/`);
+      assert.equal(rootResponse.status, 200);
+      const contentSecurityPolicy =
+        rootResponse.headers.get('content-security-policy') ?? '';
+      const scriptSources =
+        contentSecurityPolicy
+          .split(';')
+          .map(directive => directive.trim())
+          .find(directive => directive.startsWith('script-src ')) ?? '';
+      assert.match(scriptSources, /'self'/);
+      assert.doesNotMatch(scriptSources, /(?:^|\s)(?:blob:|data:)(?:\s|$)/);
+      assert.match(await rootResponse.text(), /id="root"/);
+
+      const workletResponse = await fetch(
+        `http://127.0.0.1:${backendPort}/assets/${workAudioAsset}`
+      );
+      assert.equal(workletResponse.status, 200);
+      assert.match(
+        workletResponse.headers.get('content-type') ?? '',
+        /javascript/
+      );
+      assert.match(
+        await workletResponse.text(),
+        /registerProcessor\(['"]libre-work-audio['"]/
+      );
+
+      for (const route of ['/login', '/c/some-session-id']) {
         const response = await fetch(`http://127.0.0.1:${backendPort}${route}`);
         assert.equal(
           response.status,

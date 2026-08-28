@@ -32,10 +32,17 @@ import { replaceWorkTextNul } from './workTextSafety.js';
 type StoredTaskRow = QueryResultRow &
   Omit<
     WorkTaskRow,
-    'network_enabled' | 'preview_upstream_port' | 'created_at' | 'updated_at'
+    | 'network_enabled'
+    | 'preview_upstream_port'
+    | 'is_agent'
+    | 'last_seen_at'
+    | 'created_at'
+    | 'updated_at'
   > & {
     network_enabled: number | string;
     preview_upstream_port: number | string | null;
+    is_agent: number | string | null;
+    last_seen_at: number | string | null;
     created_at: number | string;
     updated_at: number | string;
   };
@@ -83,6 +90,8 @@ const taskRow = (row: StoredTaskRow): WorkTaskRow => ({
     row.preview_upstream_port,
     'preview upstream port'
   ),
+  is_agent: nullableInteger(row.is_agent, 'agent flag'),
+  last_seen_at: nullableInteger(row.last_seen_at, 'seen time'),
   created_at: integer(row.created_at, 'created time'),
   updated_at: integer(row.updated_at, 'updated time'),
 });
@@ -232,8 +241,9 @@ export class PostgresWorkPersistence implements WorkPersistenceRepository {
              id, user_id, title, model, provider_type, provider_id, status,
              network_enabled, volume_name, container_name, host_path, policy_id,
              preview_url, preview_status, preview_upstream_host,
-             preview_upstream_port, created_at, updated_at
-           ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18)`,
+             preview_upstream_port, persona_id, status_blurb, is_agent,
+             last_seen_at, created_at, updated_at
+           ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22)`,
           this.taskValues(input.task)
         );
         await this.insertRun(client, input.run);
@@ -571,11 +581,37 @@ export class PostgresWorkPersistence implements WorkPersistenceRepository {
   async updateTaskStatus(
     taskId: string,
     status: WorkTaskStatus,
-    now: number
+    now: number,
+    statusBlurb?: string | null
+  ): Promise<void> {
+    if (statusBlurb === undefined) {
+      await this.database.query(
+        'UPDATE work_tasks SET status = $1, updated_at = $2 WHERE id = $3',
+        [status, now, taskId]
+      );
+      return;
+    }
+    await this.database.query(
+      'UPDATE work_tasks SET status = $1, status_blurb = $2, updated_at = $3 WHERE id = $4',
+      [
+        status,
+        statusBlurb === null ? null : replaceWorkTextNul(statusBlurb),
+        now,
+        taskId,
+      ]
+    );
+  }
+
+  async markTaskSeen(
+    taskId: string,
+    userId: string,
+    seenAt: number
   ): Promise<void> {
     await this.database.query(
-      'UPDATE work_tasks SET status = $1, updated_at = $2 WHERE id = $3',
-      [status, now, taskId]
+      `UPDATE work_tasks SET last_seen_at = $1
+        WHERE id = $2 AND user_id = $3
+          AND (last_seen_at IS NULL OR last_seen_at < $1)`,
+      [seenAt, taskId, userId]
     );
   }
 
@@ -899,6 +935,10 @@ export class PostgresWorkPersistence implements WorkPersistenceRepository {
       row.preview_status,
       row.preview_upstream_host,
       row.preview_upstream_port,
+      row.persona_id ?? null,
+      row.status_blurb ? replaceWorkTextNul(row.status_blurb) : null,
+      row.is_agent ?? null,
+      row.last_seen_at ?? null,
       row.created_at,
       row.updated_at,
     ];

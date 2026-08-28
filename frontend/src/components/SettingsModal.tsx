@@ -72,7 +72,12 @@ import { useChatStore } from '@/store/chatStore';
 import { getErrorMessage } from '@/store/chatStoreHelpers';
 import { useAppStore } from '@/store/appStore';
 import { usePluginStore } from '@/store/pluginStore';
-import { EmbeddingModel, GenerationOptions, Theme } from '@/types';
+import {
+  ChatProviderType,
+  EmbeddingModel,
+  GenerationOptions,
+  Theme,
+} from '@/types';
 import { normalizeTheme } from '@/utils/theme';
 import { triggerHapticFeedback } from '@/utils/haptics';
 import { resolveAppVersion } from '@/utils/appVersion';
@@ -608,7 +613,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         toast.error(
           getErrorMessage(
             error,
-            'The saved voice is unavailable and could not be cleared from Speech settings'
+            t('settings.tts.savedVoiceUnavailableCleanupFailed')
           )
         );
       });
@@ -620,6 +625,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     modelResolvedTtsSettings.voiceProfileId,
     selectedTtsModel,
     setPreferences,
+    t,
     ttsVoiceProfiles,
   ]);
 
@@ -773,7 +779,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   const handleSaveApiKey = async (pluginId: string) => {
     const apiKey = pluginApiKeys[pluginId];
     if (!apiKey?.trim()) {
-      toast.error('Please enter an API key');
+      toast.error(t('settings.plugins.apiKey.enterKey'));
       return;
     }
 
@@ -781,7 +787,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     try {
       const response = await pluginApi.setApiKey(pluginId, apiKey.trim());
       if (response.success) {
-        toast.success('API key saved successfully');
+        toast.success(t('settings.plugins.apiKey.saved'));
         await queryClient.invalidateQueries({
           queryKey: ['plugin-credentials'],
         });
@@ -793,10 +799,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         setPluginApiKeys(prev => ({ ...prev, [pluginId]: '' }));
         setShowApiKey(prev => ({ ...prev, [pluginId]: false }));
       } else {
-        toast.error(response.error || 'Failed to save API key');
+        toast.error(response.error || t('settings.plugins.apiKey.saveFailed'));
       }
     } catch (_error) {
-      toast.error('Failed to save API key');
+      toast.error(t('settings.plugins.apiKey.saveFailed'));
     } finally {
       setSavingApiKey(null);
     }
@@ -807,7 +813,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     try {
       const response = await pluginApi.deleteApiKey(pluginId);
       if (response.success) {
-        toast.success('API key removed');
+        toast.success(t('settings.plugins.apiKey.removed'));
         await queryClient.invalidateQueries({
           queryKey: ['plugin-credentials'],
         });
@@ -818,10 +824,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         ]);
         setPluginApiKeys(prev => ({ ...prev, [pluginId]: '' }));
       } else {
-        toast.error(response.error || 'Failed to remove API key');
+        toast.error(
+          response.error || t('settings.plugins.apiKey.removeFailed')
+        );
       }
     } catch (_error) {
-      toast.error('Failed to remove API key');
+      toast.error(t('settings.plugins.apiKey.removeFailed'));
     } finally {
       setSavingApiKey(null);
     }
@@ -906,7 +914,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     try {
       const response = await ttsApi.revokeVoiceProfile(profile.id);
       if (!response.success) {
-        throw new Error(response.error || 'Failed to revoke consent');
+        throw new Error(
+          response.error || t('settings.tts.savedVoiceRevokeFailed')
+        );
       }
       const updated = response.data;
       queryClient.setQueryData<TTSVoiceProfile[]>(
@@ -1025,12 +1035,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       });
       if (response.success && response.data) {
         setPreferences(response.data);
-        toast.success('TTS settings saved successfully');
+        toast.success(t('settings.tts.saveSuccess'));
       }
     } catch (error: unknown) {
       const errorMessage =
         error instanceof Error ? error.message : String(error);
-      toast.error('Failed to save TTS settings: ' + errorMessage);
+      toast.error(t('settings.tts.saveFailed', { error: errorMessage }));
     }
   };
 
@@ -1072,19 +1082,19 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         };
 
         audio.onerror = () => {
-          toast.error('Failed to play audio');
+          toast.error(t('ttsButton.playbackFailed'));
           setTestingTTS(false);
           testAudioRef.current = null;
         };
 
         await audio.play();
       } else {
-        throw new Error(response.message || 'Failed to generate speech');
+        throw new Error(response.message || t('ttsButton.generateFailed'));
       }
     } catch (error: unknown) {
       const errorMessage =
         error instanceof Error ? error.message : String(error);
-      toast.error('TTS test failed: ' + errorMessage);
+      toast.error(t('settings.tts.testFailed', { error: errorMessage }));
       setTestingTTS(false);
     }
   };
@@ -1120,12 +1130,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       });
       if (response.success && response.data) {
         setPreferences(response.data);
-        toast.success('Image generation settings saved successfully');
+        toast.success(t('settings.imageGen.saveSuccess'));
       }
     } catch (error: unknown) {
       const errorMessage =
         error instanceof Error ? error.message : String(error);
-      toast.error('Failed to save image generation settings: ' + errorMessage);
+      toast.error(t('settings.imageGen.saveFailed', { error: errorMessage }));
     }
   };
 
@@ -1147,33 +1157,26 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       if (response.success && response.data) {
         toast.success(
           response.data.documentsSkipped > 0
-            ? `Regenerated ${response.data.documentsRegenerated} documents; skipped ${response.data.documentsSkipped}`
-            : `Regenerated embeddings for ${response.data.documentsRegenerated} documents`
+            ? t('settings.documents.embeddings.regeneratePartialSuccess', {
+                count: response.data.documentsRegenerated,
+                skipped: response.data.documentsSkipped,
+              })
+            : t('settings.documents.embeddings.regenerateSuccess', {
+                count: response.data.documentsRegenerated,
+              })
         );
         await queryClient.invalidateQueries({ queryKey: ['embedding-status'] });
       }
     } catch (error: unknown) {
       const errorMessage =
         error instanceof Error ? error.message : String(error);
-      toast.error('Failed to regenerate embeddings: ' + errorMessage);
+      toast.error(
+        t('settings.documents.embeddings.regenerateFailed', {
+          error: errorMessage,
+        })
+      );
     } finally {
       setRegeneratingEmbeddings(false);
-    }
-  };
-
-  const handleUpdatePreferences = async (
-    updates: Partial<typeof preferences>
-  ) => {
-    try {
-      const response = await preferencesApi.updatePreferences(updates);
-      if (response.success && response.data) {
-        setPreferences(response.data);
-        toast.success('Settings updated successfully');
-      }
-    } catch (error: unknown) {
-      const errorMessage =
-        error instanceof Error ? error.message : String(error);
-      toast.error('Failed to update settings: ' + errorMessage);
     }
   };
 
@@ -1211,7 +1214,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       ]);
     } catch (_error) {
       clearPluginError();
-      toast.error('Invalid JSON format');
+      toast.error(t('settings.plugins.invalidJson'));
     }
   };
 
@@ -1327,7 +1330,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     preferencesApi.updatePreferences({ showUsername }).catch(error => {
       const errorMessage =
         error instanceof Error ? error.message : String(error);
-      toast.error('Failed to update settings: ' + errorMessage);
+      toast.error(
+        t('settings.preferences.updateFailed', { error: errorMessage })
+      );
     });
   };
 
@@ -1338,7 +1343,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       .catch(error => {
         const errorMessage =
           error instanceof Error ? error.message : String(error);
-        toast.error('Failed to update settings: ' + errorMessage);
+        toast.error(
+          t('settings.preferences.updateFailed', { error: errorMessage })
+        );
       });
   };
 
@@ -1347,7 +1354,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     preferencesApi.updatePreferences({ autoOpenArtifactPanel }).catch(error => {
       const errorMessage =
         error instanceof Error ? error.message : String(error);
-      toast.error('Failed to update settings: ' + errorMessage);
+      toast.error(
+        t('settings.preferences.updateFailed', { error: errorMessage })
+      );
     });
   };
 
@@ -1357,40 +1366,47 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     preferencesApi.updatePreferences({ hapticFeedbackEnabled }).catch(error => {
       const errorMessage =
         error instanceof Error ? error.message : String(error);
-      toast.error('Failed to update settings: ' + errorMessage);
+      toast.error(
+        t('settings.preferences.updateFailed', { error: errorMessage })
+      );
     });
   };
 
-  const handleModelChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+  const handleModelChange = async (
+    event: React.ChangeEvent<HTMLSelectElement>
+  ) => {
+    let model = '';
+    let providerType: ChatProviderType | null = null;
+    let providerId: string | null = null;
+
     if (!event.target.value) {
-      useChatStore.setState({
-        selectedModel: '',
-        selectedProviderType: null,
-        selectedProviderId: null,
-      });
-      void handleUpdatePreferences({
-        defaultModel: '',
-        defaultProviderType: null,
-        defaultProviderId: null,
-      });
-      return;
+      model = '';
+    } else {
+      const selection = chatModelSelectionFromKey(
+        defaultSelectorModels,
+        event.target.value
+      );
+      if (!selection) return;
+      model = selection.model;
+      providerType = selection.providerType ?? null;
+      providerId = selection.providerId ?? null;
     }
-    const selection = chatModelSelectionFromKey(
-      defaultSelectorModels,
-      event.target.value
-    );
-    if (!selection) return;
-    setSelectedModel(
-      selection.model,
-      selection.providerType,
-      selection.providerId
-    );
+
     setPreferences({
-      defaultModel: selection.model,
-      defaultProviderType: selection.providerType,
-      defaultProviderId: selection.providerId,
+      defaultModel: model,
+      defaultProviderType: providerType,
+      defaultProviderId: providerId,
     });
-    toast.success('Default model updated');
+    const result = await setSelectedModel(model, providerType, providerId);
+    if (result.success) {
+      toast.success(t('settings.model.defaultModelUpdated'));
+    } else {
+      toast.error(
+        t('settings.preferences.updateFailed', {
+          error: result.error || t('errors.generic'),
+        })
+      );
+    }
   };
 
   const handleSystemMessageChange = (
@@ -1399,10 +1415,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     setTempSystemMessage(event.target.value);
   };
 
-  const handleSystemMessageSave = () => {
-    setSystemMessage(tempSystemMessage);
-    handleUpdatePreferences({ systemMessage: tempSystemMessage });
-    toast.success('System message updated');
+  const handleSystemMessageSave = async () => {
+    const saved = await setSystemMessage(tempSystemMessage);
+    if (saved) {
+      toast.success(t('settings.systemMessage.saved'));
+    } else {
+      toast.error(t('settings.systemMessage.saveFailed'));
+    }
   };
 
   const handleClearAllHistory = async () => {
@@ -1412,11 +1431,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       )
     ) {
       await clearAllSessions();
-      toast.success('All chat sessions deleted');
     }
   };
 
-  const handleUpdateAllModels = async () => {
+  const handleUpdateAllModels = () => {
     setUpdatingAllModels(true);
     setUpdateProgress(null);
 
@@ -1427,13 +1445,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       () => {
         setUpdatingAllModels(false);
         setUpdateProgress(null);
-        toast.success('All models updated successfully!');
-        loadModels(); // Refresh models list after update
+        toast.success(t('settings.model.allModelsUpdated'));
       },
       error => {
         setUpdatingAllModels(false);
         setUpdateProgress(null);
-        toast.error('Failed to update models: ' + error);
+        toast.error(t('settings.model.updateAllFailed', { error }));
       }
     );
   };
@@ -1532,12 +1549,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         : await preferencesApi.setGenerationOptions(tempGenerationOptions);
       if (response.success && response.data) {
         setPreferences(response.data);
-        toast.success('Generation options updated successfully');
+        toast.success(t('settings.generation.saveSuccess'));
       }
     } catch (error: unknown) {
       const errorMessage =
         error instanceof Error ? error.message : String(error);
-      toast.error('Failed to update generation options: ' + errorMessage);
+      toast.error(t('settings.generation.saveFailed', { error: errorMessage }));
     }
   };
 
@@ -1564,14 +1581,18 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         });
         toast.success(
           forModel
-            ? `Loaded the settings ${selectedModel} recommends`
-            : 'Generation options reset to defaults'
+            ? t('settings.generation.modelDefaultsLoaded', {
+                model: selectedModel,
+              })
+            : t('settings.generation.resetSuccess')
         );
       }
     } catch (error: unknown) {
       const errorMessage =
         error instanceof Error ? error.message : String(error);
-      toast.error('Failed to reset generation options: ' + errorMessage);
+      toast.error(
+        t('settings.generation.resetFailed', { error: errorMessage })
+      );
     }
   };
 
@@ -1611,12 +1632,16 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       );
       if (response.success && response.data) {
         setPreferences(response.data);
-        toast.success('Embedding settings updated successfully');
+        toast.success(t('settings.documents.embeddings.saveSuccess'));
       }
     } catch (error: unknown) {
       const errorMessage =
         error instanceof Error ? error.message : String(error);
-      toast.error('Failed to update embedding settings: ' + errorMessage);
+      toast.error(
+        t('settings.documents.embeddings.saveFailed', {
+          error: errorMessage,
+        })
+      );
     }
   };
 
@@ -1626,12 +1651,16 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       if (response.success && response.data) {
         setPreferences(response.data);
         setEmbeddingSettings(response.data.embeddingSettings || {});
-        toast.success('Embedding settings reset to defaults');
+        toast.success(t('settings.documents.embeddings.resetSuccess'));
       }
     } catch (error: unknown) {
       const errorMessage =
         error instanceof Error ? error.message : String(error);
-      toast.error('Failed to reset embedding settings: ' + errorMessage);
+      toast.error(
+        t('settings.documents.embeddings.resetFailed', {
+          error: errorMessage,
+        })
+      );
     }
   };
 
@@ -1654,7 +1683,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     shortcuts: 'keyboard keys hotkeys shortcut command palette',
     sessions: 'sessions devices sign out logout revoke security login',
     'api-keys': 'api key token scope secret bearer security integration',
-    'model-manager': 'models download pull delete ollama library huggingface',
+    'model-manager':
+      `models download pull update bulk refresh delete ollama library huggingface bulk operations update all models ${t(
+        'settings.model.bulkOperations'
+      )} ${t('settings.model.updateAll')}`.toLowerCase(),
     prompts: 'prompts slash command template variables library rollback',
     skills: 'skills manifest instructions slug load_skill rollback',
     tools: 'tools mcp openapi server credential approval function calling',
@@ -1795,15 +1827,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             visionModelOptions={visionModelOptions}
             currentTaskModel={currentTaskModel}
             autoTitleTaskModelOptions={autoTitleTaskModelOptions}
-            updatingAllModels={updatingAllModels}
-            updateProgress={updateProgress}
             onModelChange={handleModelChange}
             onSystemMessageChange={handleSystemMessageChange}
             onSystemMessageSave={handleSystemMessageSave}
             onAutoTitleChange={handleAutoTitleChange}
             onAutoTitleTaskModelChange={handleAutoTitleTaskModelChange}
             onVisionModelChange={handleVisionModelChange}
-            onUpdateAllModels={handleUpdateAllModels}
           />
         );
 
@@ -1874,7 +1903,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               title={t('models.title')}
               description={t('models.subtitle')}
             />
-            <ModelManager />
+            <ModelManager
+              updatingAllModels={updatingAllModels}
+              updateProgress={updateProgress}
+              onUpdateAllModels={handleUpdateAllModels}
+            />
           </div>
         );
 
@@ -2092,6 +2125,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                         return (
                           <button
                             key={tab.id}
+                            data-testid={`settings-tab-${tab.id}`}
                             onClick={() => setActiveTab(tab.id)}
                             className={cn(
                               'flex h-9 shrink-0 items-center gap-2 rounded-xl px-3 text-start transition-colors duration-150 touch-manipulation outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 sm:w-full',

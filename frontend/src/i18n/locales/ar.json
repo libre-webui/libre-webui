@@ -44,6 +44,10 @@
     "name": "Libre WebUI",
     "shortName": "Libre"
   },
+  "appInitialization": {
+    "ollamaUnavailable": "خدمة Ollama غير متاحة. لا يزال من الممكن استخدام نماذج الإضافات.",
+    "backendConnectionFailed": "تعذّر الاتصال بخدمة الواجهة الخلفية"
+  },
   "auth": {
     "login": {
       "title": "مرحباً بعودتك",
@@ -99,7 +103,11 @@
       "continueWith": "المتابعة مع {{provider}}",
       "connectingTo": "جاري الاتصال بـ {{provider}}...",
       "github": "GitHub",
-      "huggingFace": "Hugging Face"
+      "huggingFace": "Hugging Face",
+      "loginSuccess": "تم تسجيل الدخول عبر OAuth بنجاح!",
+      "completionFailed": "تعذّر إكمال مصادقة OAuth",
+      "verificationFailed": "فشل التحقق من مصادقة OAuth",
+      "authenticationFailed": "فشلت مصادقة OAuth"
     },
     "checkingAuth": "جاري التحقق من المصادقة...",
     "welcome": "مرحباً",
@@ -374,7 +382,8 @@
       "pullCommand": "ollama pull llama3.2:3b",
       "noModelsTooltip": "لا توجد نماذج متاحة. يرجى التأكد من تشغيل Ollama وتثبيت النماذج.",
       "selectBeforePrivateChat": "اختر نموذجاً متاحاً قبل بدء محادثة خاصة",
-      "selectBeforeSending": "اختر نموذجاً متاحاً قبل الإرسال"
+      "selectBeforeSending": "اختر نموذجاً متاحاً قبل الإرسال",
+      "selectBeforeRegenerating": "اختر نموذجاً متاحاً قبل إعادة التوليد"
     },
     "footer": {
       "disclaimer": "قد يرتكب الذكاء الاصطناعي أخطاء - تحقق من المعلومات المهمة",
@@ -385,7 +394,10 @@
     "mediaUpload": {
       "dropImagesHere": "أفلت الصور هنا أو",
       "supportedFormats": "يدعم: JPG، PNG، GIF، WebP (حد أقصى 10 ميجابايت لكل صورة)",
-      "browse": "تصفح"
+      "browse": "تصفح",
+      "unsupportedFileType": "نوع الملف غير مدعوم: {{name}}",
+      "maxImagesAllowed": "الحد الأقصى المسموح به هو {{count}} صور",
+      "imageTooLarge": "الصورة {{name}} كبيرة جداً (الحد الأقصى 10 ميغابايت)"
     },
     "structuredOutput": {
       "title": "تنسيق الاستجابة",
@@ -456,7 +468,22 @@
       "modelSwitched": "تم التبديل إلى {{model}} (النموذج السابق لم يعد متوفرًا)",
       "modelsLoadFailed": "فشل تحميل النماذج",
       "modelUpdated": "تم تحديث النموذج للمحادثة الحالية",
-      "modelUpdateFailed": "فشل تحديث نموذج الجلسة"
+      "modelUpdateFailed": "فشل تحديث نموذج الجلسة",
+      "titlePreviewFallback": "تعذّر إنشاء عنوان؛ ستُستخدم معاينة الرسالة",
+      "titleGenerated": "تم إنشاء عنوان المحادثة",
+      "titleGenerationFailed": "تعذّر إنشاء عنوان المحادثة",
+      "sessionNotFoundRedirect": "لم يتم العثور على الجلسة. جارٍ إنشاء جلسة جديدة...",
+      "comparisonError": "{{model}}: {{error}}",
+      "generationFailed": "فشل التوليد",
+      "comparisonFailed": "فشلت المقارنة",
+      "sendFailed": "تعذّر إرسال الرسالة",
+      "noMessageToRegenerate": "لا توجد رسالة لإعادة توليدها",
+      "regenerateFailed": "تعذّرت إعادة توليد الرسالة",
+      "messageNotFound": "لم يتم العثور على الرسالة",
+      "branchSwitched": "تم التبديل إلى البديل {{number}}",
+      "branchSelectFailed": "تعذّر تحديد الفرع",
+      "editFailed": "تعذّر تعديل الرسالة",
+      "toolDecisionFailed": "تعذّر تسجيل قرار الأداة"
     },
     "documents": {
       "title": "مستندات في السياق"
@@ -554,7 +581,7 @@
     "title": "الإعدادات",
     "tabs": {
       "appearance": "المظهر",
-      "model": "النموذج",
+      "model": "الافتراضيات",
       "systemMessage": "رسالة النظام",
       "plugins": "الإضافات",
       "search": "البحث",
@@ -616,6 +643,9 @@
       }
     },
     "saveSettings": "حفظ الإعدادات",
+    "preferences": {
+      "updateFailed": "تعذّر تحديث الإعدادات: {{error}}"
+    },
     "model": {
       "title": "إعدادات النموذج",
       "defaultModel": "النموذج الافتراضي",
@@ -651,7 +681,10 @@
         "taskModelDescription": "النموذج المستخدم لتوليد عناوين المحادثات"
       },
       "updatingModel": "تحديث {{name}} ({{current}}/{{total}})",
-      "modelsProgress": "{{current}} من {{total}} نماذج"
+      "modelsProgress": "{{current}} من {{total}} نماذج",
+      "defaultModelUpdated": "تم تحديث النموذج الافتراضي",
+      "allModelsUpdated": "تم تحديث جميع النماذج بنجاح!",
+      "updateAllFailed": "تعذّر تحديث النماذج: {{error}}"
     },
     "systemMessage": {
       "title": "رسالة النظام",
@@ -711,6 +744,7 @@
       "modelCatalogNeedsApiKey": "أضف مفتاح API صالح لهذا المزود لتحميل قائمة نماذجه المباشرة.",
       "modelCatalogUnavailable": "تعذر تحميل قائمة نماذج المزود.",
       "modelCatalogRefreshFailed": "فشل تحديث كتالوج النماذج",
+      "invalidJson": "تنسيق JSON غير صالح",
       "capability": {
         "chat": "دردشة",
         "embedding": "تضمين",
@@ -775,6 +809,11 @@
       "stopSequencesDescription": "رموز مخصصة ستوقف التوليد عند مصادفتها.",
       "resetDefaults": "إعادة تعيين الافتراضيات",
       "saveOptions": "حفظ الخيارات",
+      "saveSuccess": "تم تحديث خيارات التوليد بنجاح",
+      "saveFailed": "تعذّر تحديث خيارات التوليد: {{error}}",
+      "modelDefaultsLoaded": "تم تحميل الإعدادات التي يوصي بها {{model}}",
+      "resetSuccess": "تمت إعادة خيارات التوليد إلى الإعدادات الافتراضية",
+      "resetFailed": "تعذّرت إعادة خيارات التوليد إلى الإعدادات الافتراضية: {{error}}",
       "embeddingSettings": "إعدادات التضمين",
       "enableEmbeddings": "تفعيل تضمين المستندات",
       "thinking": "التفكير",
@@ -811,7 +850,14 @@
         "chunksWithEmbeddings": "قطع مع تضمينات",
         "coverage": "التغطية",
         "regenerate": "إعادة توليد التضمينات",
-        "regenerating": "جاري إعادة التوليد..."
+        "regenerating": "جاري إعادة التوليد...",
+        "regenerateSuccess": "تمت إعادة توليد التضمينات لـ {{count}} مستندات",
+        "regeneratePartialSuccess": "تمت إعادة توليد {{count}} مستندات؛ تم تخطي {{skipped}}",
+        "regenerateFailed": "تعذّرت إعادة توليد التضمينات: {{error}}",
+        "saveSuccess": "تم تحديث إعدادات التضمين بنجاح",
+        "saveFailed": "تعذّر تحديث إعدادات التضمين: {{error}}",
+        "resetSuccess": "تمت إعادة إعدادات التضمين إلى القيم الافتراضية",
+        "resetFailed": "تعذّرت إعادة إعدادات التضمين إلى القيم الافتراضية: {{error}}"
       },
       "collections": {
         "title": "مجموعات المعرفة",
@@ -883,7 +929,11 @@
       "revokeSavedVoice": "سحب الموافقة عن {{name}}",
       "revokeSavedVoiceConfirm": "هل تريد سحب الموافقة عن «{{name}}»؟ لن يعود بالإمكان استخدام الصوت المحفوظ، لكن سجل الموافقة سيبقى.",
       "savedVoiceRevoked": "تم سحب الموافقة",
-      "savedVoiceRevokeFailed": "فشل سحب الموافقة"
+      "savedVoiceRevokeFailed": "فشل سحب الموافقة",
+      "savedVoiceUnavailableCleanupFailed": "الصوت المحفوظ غير متاح وتعذّر مسحه من إعدادات تحويل النص إلى كلام",
+      "saveSuccess": "تم حفظ إعدادات تحويل النص إلى كلام بنجاح",
+      "saveFailed": "تعذّر حفظ إعدادات تحويل النص إلى كلام: {{error}}",
+      "testFailed": "فشل اختبار تحويل النص إلى كلام: {{error}}"
     },
     "imageGen": {
       "title": "توليد الصور",
@@ -903,7 +953,9 @@
       "style": "الأسلوب",
       "styleDescription": "إعداد الأسلوب المسبق للصور المولدة",
       "availableProviders": "المزودون المتاحون",
-      "models": "نماذج"
+      "models": "نماذج",
+      "saveSuccess": "تم حفظ إعدادات إنشاء الصور بنجاح",
+      "saveFailed": "تعذّر حفظ إعدادات إنشاء الصور: {{error}}"
     },
     "data": {
       "title": "إدارة البيانات",
@@ -945,6 +997,16 @@
       "documents": "المستندات",
       "warnings": "تحذيرات",
       "refreshAfterImportFailed": "تم استيراد البيانات، لكن تعذّر تحديث بعض العروض. أعد تحميل Libre WebUI لرؤية جميع التغييرات.",
+      "exportSuccess": "تم تصدير أرشيف البيانات القابل للنقل",
+      "exportFailed": "فشل التصدير",
+      "importSuccess": "تم استيراد أرشيف البيانات القابل للنقل",
+      "importFailed": "فشل الاستيراد",
+      "archiveErrors": {
+        "invalidJson": "أرشيف البيانات القابل للنقل ليس بتنسيق JSON صالح.",
+        "objectRequired": "يجب أن يحتوي أرشيف البيانات القابل للنقل على كائن JSON.",
+        "unsupportedVersion": "إصدار أرشيف البيانات القابل للنقل {{version}} غير مدعوم.",
+        "unrecognized": "هذا الملف ليس أرشيف بيانات قابلاً للنقل خاصاً بـ Libre WebUI."
+      },
       "errors": "أخطاء",
       "archivedChats": {
         "title": "المحادثات المؤرشفة",
@@ -1203,6 +1265,23 @@
     "newWork": "جلسة عمل جديدة",
     "openPalette": "فتح لوحة الأوامر"
   },
+  "modelDownload": {
+    "success": "تم تنزيل {{name}}",
+    "failed": "تعذّر التنزيل: {{error}}",
+    "startFailed": "تعذّر بدء التنزيل",
+    "cancelled": "تم إلغاء التنزيل"
+  },
+  "modelTools": {
+    "toasts": {
+      "fetchInfoFailed": "تعذّر جلب المعلومات",
+      "pushSuccess": "تم رفع النموذج",
+      "createSuccess": "تم إنشاء النموذج",
+      "copySuccess": "تم نسخ النموذج",
+      "embeddingsSuccess": "تم إنشاء التضمينات (راجع وحدة التحكم)",
+      "failed": "فشل",
+      "unknownError": "خطأ غير معروف"
+    }
+  },
   "modelManager": {
     "title": "النماذج",
     "loading": "جاري تحميل النماذج...",
@@ -1243,7 +1322,9 @@
       "pictureTooLarge": "يجب أن تكون الصور أقل من 192 كيلوبايت.",
       "saving": "جارٍ الحفظ…",
       "hide": "إخفاؤه عن المستخدمين",
-      "show": "إظهاره للمستخدمين"
+      "show": "إظهاره للمستخدمين",
+      "star": "تمييز {{name}} بنجمة",
+      "unstar": "إزالة النجمة من {{name}}"
     },
     "pull": {
       "placeholder": "أدخل اسم النموذج (مثل llama3.2:3b، deepseek-r1:14b)",
@@ -2469,7 +2550,8 @@
     "conversation": {
       "ready": "مساحة العمل جاهزة",
       "empty": "تابع المهمة أدناه. تظل هذه المحادثة وملفاتها مرتبطة بمساحة العمل هذه.",
-      "loadOlder": "تحميل الرسائل الأقدم"
+      "loadOlder": "تحميل الرسائل الأقدم",
+      "openFile": "فتح {{name}}"
     },
     "status": {
       "preparing": "جارٍ تجهيز مساحة العمل المعزولة…",
@@ -2510,7 +2592,8 @@
       "splitSize": "المحادثة {{conversation}}٪، مساحة العمل {{workspace}}٪",
       "terminal": "الطرفية",
       "git": "Git",
-      "screen": "الشاشة"
+      "screen": "الشاشة",
+      "agent": "الوكيل"
     },
     "files": {
       "discard": "هل تريد تجاهل التغييرات غير المحفوظة في الملف؟",
@@ -2655,6 +2738,29 @@
       "building": "يجري تجهيز صورة سطح المكتب... قد يستغرق ذلك بضع دقائق أول مرة.",
       "enable": "تفعيل",
       "retry": "إعادة المحاولة"
+    },
+    "agents": {
+      "title": "الوكلاء"
+    },
+    "persona": {
+      "label": "توظيف كوكيل (اختياري)",
+      "none": "بدون شخصية (مهمة لمرة واحدة)",
+      "hint": "تصبح هذه المهمة وكيلاً مسمى: تحتفظ بالشخصية، وتبقى مثبتة في الشريط الجانبي، وتعرض سطر حالة واحدًا بعد كل تشغيل.",
+      "description": "اختر شخصية لتحويل هذه المهمة إلى وكيل دائم بهوية خاصة به."
+    },
+    "agent": {
+      "openScreen": "فتح عرض الشاشة الكاملة",
+      "personaLine": "الشخصية: {{name}}",
+      "screen": "الشاشة",
+      "routines": "الروتينات",
+      "addRoutine": "روتين",
+      "noRoutines": "لا توجد روتينات بعد. الروتين ينفّذ تعليمات وفق جدول زمني داخل مساحة عمل هذا الوكيل.",
+      "routineToggleFailed": "تعذّر تحديث الروتين.",
+      "routineSaveFailed": "تعذّر حفظ الروتين.",
+      "skills": "المهارات المعلَّمة",
+      "noSkills": "لم يتم تعليم أي شيء بعد. استخدم «علِّم» في تبويب الشاشة لعرض إجراء مرة واحدة؛ فيصبح مهارة قابلة لإعادة التشغيل.",
+      "skillToggleFailed": "تعذّر تحديث المهارة.",
+      "unread": "نشاط جديد"
     }
   },
   "personaBackground": {
@@ -2850,7 +2956,8 @@
       "targetChat": "جلسة محادثة",
       "targetWork": "مهمة Work",
       "workPolicy": "سياسة Work",
-      "workPolicyDefault": "افتراضي (حدود عامة)"
+      "workPolicyDefault": "افتراضي (حدود عامة)",
+      "taskBoundNote": "ينفَّذ هذا الروتين داخل مساحة عمل الوكيل ومحادثته، بنموذج الوكيل وبيئة تشغيله."
     },
     "kind": {
       "once": "مرة واحدة",

@@ -20,6 +20,7 @@ import test from 'node:test';
 import {
   computePortableArchiveDigest,
   parsePortableArchiveJson,
+  PortableArchiveParseError,
 } from './dataArchive';
 
 test('canonical digest ignores object key order and the integrity field', async () => {
@@ -67,16 +68,31 @@ test('accepts the legacy archive so the backend can migrate it', () => {
 });
 
 test('rejects malformed JSON, unrelated files, and future versions', () => {
-  assert.throws(() => parsePortableArchiveJson('{'), /not valid JSON/);
+  assert.throws(
+    () => parsePortableArchiveJson('{'),
+    error =>
+      error instanceof PortableArchiveParseError && error.code === 'invalidJson'
+  );
+  assert.throws(
+    () => parsePortableArchiveJson('[]'),
+    error =>
+      error instanceof PortableArchiveParseError &&
+      error.code === 'objectRequired'
+  );
   assert.throws(
     () => parsePortableArchiveJson(JSON.stringify({ format: 'other' })),
-    /not a Libre WebUI/
+    error =>
+      error instanceof PortableArchiveParseError &&
+      error.code === 'unrecognized'
   );
   assert.throws(
     () =>
       parsePortableArchiveJson(
         JSON.stringify({ format: 'libre-webui-user-data', version: 4 })
       ),
-    /Unsupported portable archive version 4/
+    error =>
+      error instanceof PortableArchiveParseError &&
+      error.code === 'unsupportedVersion' &&
+      error.version === 4
   );
 });

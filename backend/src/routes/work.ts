@@ -399,6 +399,30 @@ router.post(
           );
         }
       }
+      const requestedPersonaId =
+        typeof req.body?.personaId === 'string'
+          ? req.body.personaId.trim()
+          : '';
+      if (requestedPersonaId.length > 128) {
+        throw new WorkRouteError('The persona reference is invalid.', 400);
+      }
+      if (requestedPersonaId) {
+        // A task can run under a persona the creating user owns or holds a
+        // read grant on; the shared view never exposes the owner's memories.
+        const { personaService } =
+          await import('../services/personaService.js');
+        const persona = await personaService.getBasicPersonaById(
+          requestedPersonaId,
+          userId
+        );
+        if (!persona) {
+          throw new WorkRouteError(
+            'The selected persona no longer exists.',
+            400
+          );
+        }
+      }
+      const isAgent = req.body?.isAgent === true || Boolean(requestedPersonaId);
       await workModelProviderService.assertModelSupportsTools(
         model,
         provider,
@@ -411,7 +435,11 @@ router.post(
         policy?.networkDefault ?? true,
         provider,
         hostPath,
-        policy?.id
+        policy?.id,
+        {
+          personaId: requestedPersonaId || undefined,
+          isAgent,
+        }
       );
       const runId = detail.activeRun?.id;
       if (!runId) {
@@ -468,6 +496,27 @@ router.get(
           Math.min(limit, 200)
         )
       );
+    } catch (error) {
+      sendError(res, error);
+    }
+  }
+);
+
+// The owner opened the task: advance the seen marker the agent sidebar
+// compares against updatedAt for its unread indicator. Monotonic, so a
+// stale client can never rewind it.
+router.post(
+  '/tasks/:id/seen',
+  async (
+    req: AuthenticatedRequest,
+    res: Response<ApiResponse<{ seen: true }>>
+  ): Promise<void> => {
+    try {
+      const taskId = readTaskId(req);
+      const userId = requireUserId(req);
+      await workTaskService.requireTaskRecord(taskId, userId);
+      await workTaskService.markTaskSeen(taskId, userId);
+      sendSuccess(res, { seen: true });
     } catch (error) {
       sendError(res, error);
     }

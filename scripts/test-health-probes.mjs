@@ -166,6 +166,11 @@ test('readiness fails closed while a valid older schema awaits migration', async
     DROP TABLE platform_blob_quota_objects;
     DROP TABLE platform_blob_quota_usage;
     DROP TABLE platform_resource_deletion_tombstones;
+    ALTER TABLE automations DROP COLUMN work_task_id;
+    ALTER TABLE work_tasks DROP COLUMN last_seen_at;
+    ALTER TABLE work_tasks DROP COLUMN persona_id;
+    ALTER TABLE work_tasks DROP COLUMN status_blurb;
+    ALTER TABLE work_tasks DROP COLUMN is_agent;
     ALTER TABLE work_tasks DROP COLUMN preview_upstream_port;
     ALTER TABLE work_tasks DROP COLUMN preview_upstream_host;
     DROP TABLE platform_events;
@@ -218,6 +223,9 @@ test('readiness fails closed while a valid older schema awaits migration', async
     DROP TABLE resource_grants;
     DROP TABLE user_group_members;
     DROP TABLE user_groups;
+    DELETE FROM _libre_schema_migrations WHERE version = 27;
+    DELETE FROM _libre_schema_migrations WHERE version = 26;
+    DELETE FROM _libre_schema_migrations WHERE version = 25;
     DELETE FROM _libre_schema_migrations WHERE version = 24;
     DELETE FROM _libre_schema_migrations WHERE version = 23;
     DELETE FROM _libre_schema_migrations WHERE version = 22;

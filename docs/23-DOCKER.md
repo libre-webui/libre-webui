@@ -45,6 +45,24 @@ than the container sees, because Docker Desktop proxies the socket through a
 VM. If the group is wrong, the Work page names the problem instead of failing
 silently. See [Work: Isolated Workspaces](./WORKSPACES).
 
+Work previews and the Work Computer publish random ports only on a private host
+interface. Docker Desktop works with the Compose defaults: host loopback for
+the bind and `host.docker.internal` for the backend connection. Native Docker
+Engine cannot reach a host-loopback listener from a sibling container. Set the
+bind to its non-public Docker bridge gateway instead:
+
+```bash
+echo "WORK_PREVIEW_BIND=$(docker network inspect bridge \
+  --format '{{(index .IPAM.Config 0).Gateway}}')" >> .env
+echo "WORK_DOCKER_PUBLISHED_HOST=host.docker.internal" >> .env
+docker compose up -d --force-recreate libre-webui
+```
+
+The Compose files map `host.docker.internal` through `host-gateway`. Never use
+`WORK_PREVIEW_BIND=0.0.0.0`; that would publish unauthenticated ephemeral task
+ports on every host interface instead of keeping them behind Libre WebUI's
+signed proxy.
+
 ## Bundled Ollama
 
 Runs Libre WebUI and Ollama in one Compose stack:

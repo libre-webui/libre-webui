@@ -6,6 +6,15 @@ openbox with a tint2 dock), Chromium, and a loopback-only VNC server bridged to 
 running this image under a policy with **Work Computer** enabled get a live,
 watchable screen in the Work view.
 
+The browser start page renders an offline, fully procedural Three.js valley
+city inspired by the bundled desktop wallpaper. Its terrain, river, gardens,
+architecture, sun, moon, stars, birds, and city lights follow the same browser
+clock shown on screen. Chromium renders the scene through SwiftShader because
+the sandbox has no physical GPU; the page does not load the wallpaper as a
+texture or background. The clock, search field, and links paint first; the
+bounded-detail valley loads during browser idle time, then holds a still frame
+with infrequent time-of-day refreshes instead of continuously using a CPU core.
+
 ## Pull (recommended)
 
 CI publishes this image on every change to this directory, built on the
@@ -62,7 +71,9 @@ isolated profile persisted at `/workspace/.browser-profile` (logins survive
 container restarts), x11vnc bound to `127.0.0.1`, and websockify listening
 on container port 6080 — the only network-reachable surface. The backend
 publishes that port on the Docker host's loopback and re-authenticates
-every viewer with a one-use, task-bound ticket.
+every viewer with a one-use, task-bound ticket. Screen, audio, wallpaper, and
+browser initialization overlap, while startup still waits for every required
+surface before reporting the session ready.
 
 Audio: PulseAudio plays into a null sink; its monitor is captured per
 connection (`socat` + `parec`, raw s16le 44.1 kHz stereo) and served over a

@@ -44,6 +44,10 @@
     "name": "Libre WebUI",
     "shortName": "Libre"
   },
+  "appInitialization": {
+    "ollamaUnavailable": "O serviço Ollama não está disponível. Os modelos de plugins ainda podem ser usados.",
+    "backendConnectionFailed": "Falha ao conectar ao serviço de backend"
+  },
   "auth": {
     "login": {
       "title": "Bem-vindo de volta",
@@ -99,7 +103,11 @@
       "continueWith": "Continuar com {{provider}}",
       "connectingTo": "Conectando ao {{provider}}...",
       "github": "GitHub",
-      "huggingFace": "Hugging Face"
+      "huggingFace": "Hugging Face",
+      "loginSuccess": "Login OAuth realizado com sucesso!",
+      "completionFailed": "Falha ao concluir a autenticação OAuth",
+      "verificationFailed": "Falha na verificação da autenticação OAuth",
+      "authenticationFailed": "Falha na autenticação OAuth"
     },
     "checkingAuth": "Verificando autenticação...",
     "welcome": "Bem-vindo",
@@ -374,7 +382,8 @@
       "pullCommand": "ollama pull llama3.2:3b",
       "noModelsTooltip": "Nenhum modelo disponível. Verifique se o Ollama está em execução e se os modelos estão instalados.",
       "selectBeforePrivateChat": "Selecione um modelo disponível antes de iniciar o chat privado",
-      "selectBeforeSending": "Selecione um modelo disponível antes de enviar"
+      "selectBeforeSending": "Selecione um modelo disponível antes de enviar",
+      "selectBeforeRegenerating": "Selecione um modelo disponível antes de regenerar"
     },
     "footer": {
       "disclaimer": "IAs podem cometer erros - verifique informações importantes",
@@ -385,7 +394,10 @@
     "mediaUpload": {
       "dropImagesHere": "Solte as imagens aqui ou",
       "supportedFormats": "Formatos suportados: JPG, PNG, GIF, WebP (máx. 10MB cada)",
-      "browse": "procure"
+      "browse": "procure",
+      "unsupportedFileType": "Tipo de arquivo não suportado: {{name}}",
+      "maxImagesAllowed": "É permitido um máximo de {{count}} imagens",
+      "imageTooLarge": "A imagem {{name}} é muito grande (máx. 10 MB)"
     },
     "structuredOutput": {
       "title": "Formato de Resposta",
@@ -456,7 +468,22 @@
       "modelSwitched": "Alterado para {{model}} (o modelo anterior não está mais disponível)",
       "modelsLoadFailed": "Falha ao carregar os modelos",
       "modelUpdated": "Modelo atualizado para o chat atual",
-      "modelUpdateFailed": "Falha ao atualizar o modelo da sessão"
+      "modelUpdateFailed": "Falha ao atualizar o modelo da sessão",
+      "titlePreviewFallback": "Não foi possível gerar um título; a prévia da mensagem será usada",
+      "titleGenerated": "Título do chat gerado",
+      "titleGenerationFailed": "Falha ao gerar o título do chat",
+      "sessionNotFoundRedirect": "Sessão não encontrada. Criando uma nova sessão...",
+      "comparisonError": "{{model}}: {{error}}",
+      "generationFailed": "falha na geração",
+      "comparisonFailed": "falha na comparação",
+      "sendFailed": "Falha ao enviar a mensagem",
+      "noMessageToRegenerate": "Não há mensagem para regenerar",
+      "regenerateFailed": "Falha ao regenerar a mensagem",
+      "messageNotFound": "Mensagem não encontrada",
+      "branchSwitched": "Alternado para a variante {{number}}",
+      "branchSelectFailed": "Falha ao selecionar a ramificação",
+      "editFailed": "Falha ao editar a mensagem",
+      "toolDecisionFailed": "Não foi possível registrar a decisão da ferramenta"
     },
     "documents": {
       "title": "Documentos no contexto"
@@ -554,7 +581,7 @@
     "title": "Configurações",
     "tabs": {
       "appearance": "Aparência",
-      "model": "Modelo",
+      "model": "Padrões",
       "systemMessage": "Mensagem do Sistema",
       "plugins": "Plugins",
       "search": "Pesquisa",
@@ -616,6 +643,9 @@
       }
     },
     "saveSettings": "Salvar Configurações",
+    "preferences": {
+      "updateFailed": "Falha ao atualizar as configurações: {{error}}"
+    },
     "model": {
       "title": "Configurações do Modelo",
       "defaultModel": "Modelo Padrão",
@@ -651,7 +681,10 @@
         "taskModelDescription": "Modelo usado para gerar títulos das conversas"
       },
       "updatingModel": "Atualizando {{name}} ({{current}}/{{total}})",
-      "modelsProgress": "{{current}} de {{total}} modelos"
+      "modelsProgress": "{{current}} de {{total}} modelos",
+      "defaultModelUpdated": "Modelo padrão atualizado",
+      "allModelsUpdated": "Todos os modelos foram atualizados com sucesso!",
+      "updateAllFailed": "Falha ao atualizar os modelos: {{error}}"
     },
     "systemMessage": {
       "title": "Mensagem do Sistema",
@@ -711,6 +744,7 @@
       "modelCatalogNeedsApiKey": "Adicione uma chave de API válida para este provedor carregar a lista de modelos em tempo real.",
       "modelCatalogUnavailable": "Não foi possível carregar a lista de modelos do provedor.",
       "modelCatalogRefreshFailed": "Falha ao atualizar o catálogo de modelos",
+      "invalidJson": "Formato JSON inválido",
       "capability": {
         "chat": "Chat",
         "embedding": "Embedding",
@@ -775,6 +809,11 @@
       "stopSequencesDescription": "Tokens personalizados que interromperão a geração quando encontrados.",
       "resetDefaults": "Restaurar Padrões",
       "saveOptions": "Salvar Opções",
+      "saveSuccess": "Opções de geração atualizadas com sucesso",
+      "saveFailed": "Falha ao atualizar as opções de geração: {{error}}",
+      "modelDefaultsLoaded": "As configurações recomendadas por {{model}} foram carregadas",
+      "resetSuccess": "Opções de geração restauradas para os valores padrão",
+      "resetFailed": "Falha ao restaurar as opções de geração: {{error}}",
       "embeddingSettings": "Configurações de Embedding",
       "enableEmbeddings": "Ativar Embeddings de Documentos",
       "thinking": "Raciocínio",
@@ -811,7 +850,14 @@
         "chunksWithEmbeddings": "Chunks com embeddings",
         "coverage": "Cobertura",
         "regenerate": "Regenerar Embeddings",
-        "regenerating": "Regenerando..."
+        "regenerating": "Regenerando...",
+        "regenerateSuccess": "Embeddings regenerados para {{count}} documentos",
+        "regeneratePartialSuccess": "{{count}} documentos regenerados; {{skipped}} ignorados",
+        "regenerateFailed": "Falha ao regenerar os embeddings: {{error}}",
+        "saveSuccess": "Configurações de embeddings atualizadas com sucesso",
+        "saveFailed": "Falha ao atualizar as configurações de embeddings: {{error}}",
+        "resetSuccess": "Configurações de embeddings restauradas para os valores padrão",
+        "resetFailed": "Falha ao restaurar as configurações de embeddings: {{error}}"
       },
       "collections": {
         "title": "Coleções de conhecimento",
@@ -883,7 +929,11 @@
       "revokeSavedVoice": "Retirar o consentimento de {{name}}",
       "revokeSavedVoiceConfirm": "Retirar o consentimento de “{{name}}”? A voz salva não poderá mais ser usada, mas o registro do consentimento é mantido.",
       "savedVoiceRevoked": "Consentimento retirado",
-      "savedVoiceRevokeFailed": "Falha ao retirar o consentimento"
+      "savedVoiceRevokeFailed": "Falha ao retirar o consentimento",
+      "savedVoiceUnavailableCleanupFailed": "A voz salva não está disponível e não pôde ser removida das configurações de Voz",
+      "saveSuccess": "Configurações de TTS salvas com sucesso",
+      "saveFailed": "Falha ao salvar as configurações de TTS: {{error}}",
+      "testFailed": "Falha no teste de TTS: {{error}}"
     },
     "imageGen": {
       "title": "Geração de Imagens",
@@ -903,7 +953,9 @@
       "style": "Estilo",
       "styleDescription": "Predefinição de estilo para imagens geradas",
       "availableProviders": "Provedores Disponíveis",
-      "models": "modelos"
+      "models": "modelos",
+      "saveSuccess": "Configurações de geração de imagens salvas com sucesso",
+      "saveFailed": "Falha ao salvar as configurações de geração de imagens: {{error}}"
     },
     "data": {
       "title": "Gerenciamento de Dados",
@@ -945,6 +997,16 @@
       "documents": "Documentos",
       "warnings": "Avisos",
       "refreshAfterImportFailed": "Os dados foram importados, mas algumas telas não puderam ser atualizadas. Recarregue o Libre WebUI para ver todas as alterações.",
+      "exportSuccess": "Arquivo de dados portátil exportado",
+      "exportFailed": "Falha na exportação",
+      "importSuccess": "Arquivo de dados portátil importado",
+      "importFailed": "Falha na importação",
+      "archiveErrors": {
+        "invalidJson": "O arquivo portátil não contém um JSON válido.",
+        "objectRequired": "O arquivo portátil deve conter um objeto JSON.",
+        "unsupportedVersion": "A versão {{version}} do arquivo portátil não é suportada.",
+        "unrecognized": "Este arquivo não é um arquivo portátil do Libre WebUI."
+      },
       "errors": "Erros",
       "archivedChats": {
         "title": "Conversas arquivadas",
@@ -1203,6 +1265,23 @@
     "newWork": "Nova sessão do Work",
     "openPalette": "Abrir a paleta de comandos"
   },
+  "modelDownload": {
+    "success": "{{name}} baixado",
+    "failed": "Falha ao baixar: {{error}}",
+    "startFailed": "Falha ao iniciar o download",
+    "cancelled": "Download cancelado"
+  },
+  "modelTools": {
+    "toasts": {
+      "fetchInfoFailed": "Falha ao obter informações",
+      "pushSuccess": "Modelo enviado",
+      "createSuccess": "Modelo criado",
+      "copySuccess": "Modelo copiado",
+      "embeddingsSuccess": "Embeddings gerados (consulte o console)",
+      "failed": "Falha",
+      "unknownError": "Erro desconhecido"
+    }
+  },
   "modelManager": {
     "title": "Modelos",
     "loading": "Carregando modelos...",
@@ -1243,7 +1322,9 @@
       "pictureTooLarge": "As imagens têm de ter menos de 192 KB.",
       "saving": "A guardar…",
       "hide": "Ocultar dos utilizadores",
-      "show": "Mostrar aos utilizadores"
+      "show": "Mostrar aos utilizadores",
+      "star": "Marcar {{name}} com estrela",
+      "unstar": "Remover estrela de {{name}}"
     },
     "pull": {
       "placeholder": "Digite o nome do modelo (ex.: llama3.2:3b, deepseek-r1:14b)",
@@ -2469,7 +2550,8 @@
     "conversation": {
       "ready": "Espaço de trabalho pronto",
       "empty": "Continue a tarefa abaixo. Esta conversa e seus arquivos permanecem vinculados a este espaço de trabalho.",
-      "loadOlder": "Carregar mensagens anteriores"
+      "loadOlder": "Carregar mensagens anteriores",
+      "openFile": "Abrir {{name}}"
     },
     "status": {
       "preparing": "Preparando o espaço de trabalho isolado…",
@@ -2510,7 +2592,8 @@
       "splitSize": "Conversa {{conversation}}%, espaço de trabalho {{workspace}}%",
       "terminal": "Terminal",
       "git": "Git",
-      "screen": "Tela"
+      "screen": "Tela",
+      "agent": "Agente"
     },
     "files": {
       "discard": "Descartar alterações não salvas no arquivo?",
@@ -2655,6 +2738,29 @@
       "building": "Construindo a imagem do desktop... a primeira vez leva alguns minutos.",
       "enable": "Ativar",
       "retry": "Tentar novamente"
+    },
+    "agents": {
+      "title": "Agentes"
+    },
+    "persona": {
+      "label": "Contratar como agente (opcional)",
+      "none": "Sem persona (tarefa única)",
+      "hint": "Esta tarefa torna-se um agente nomeado: mantém a persona, fica fixada na barra lateral e informa uma linha de status após cada execução.",
+      "description": "Escolha uma persona para transformar esta tarefa em um agente persistente com identidade própria."
+    },
+    "agent": {
+      "openScreen": "Abrir a visualização em tela cheia",
+      "personaLine": "Persona: {{name}}",
+      "screen": "Tela",
+      "routines": "Rotinas",
+      "addRoutine": "Rotina",
+      "noRoutines": "Ainda não há rotinas. Uma rotina executa uma instrução conforme um agendamento, dentro do espaço de trabalho deste agente.",
+      "routineToggleFailed": "Não foi possível atualizar a rotina.",
+      "routineSaveFailed": "Não foi possível salvar a rotina.",
+      "skills": "Habilidades ensinadas",
+      "noSkills": "Nada ensinado ainda. Use Teach na aba Tela para demonstrar um procedimento uma vez; ele se torna uma habilidade repetível.",
+      "skillToggleFailed": "Não foi possível atualizar a habilidade.",
+      "unread": "Atividade nova"
     }
   },
   "personaBackground": {
@@ -2850,7 +2956,8 @@
       "targetChat": "Sessão de chat",
       "targetWork": "Tarefa do Work",
       "workPolicy": "Política do Work",
-      "workPolicyDefault": "Padrão (limites globais)"
+      "workPolicyDefault": "Padrão (limites globais)",
+      "taskBoundNote": "Esta rotina é executada dentro do espaço de trabalho e da conversa do próprio agente, com o modelo e o runtime do agente."
     },
     "kind": {
       "once": "Uma vez",

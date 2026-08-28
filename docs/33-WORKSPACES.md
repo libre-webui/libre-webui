@@ -191,6 +191,72 @@ the sidebar.
 Only one run can be active for a task. A later instruction creates another run
 against the same conversation and filesystem.
 
+The composer takes dictation: a microphone button uses the browser's speech
+API where available, or a configured speech-to-text provider model as the
+fallback, and appends the transcript to whatever was already typed. In the
+conversation, files a run created or moved appear as clickable chips under
+the tool activity that produced them — clicking one opens the file in the
+workspace Files editor (and switches to the workspace surface on narrow
+screens). Chips come from mutating tools only, so a run that read twenty
+files but wrote one shows exactly that one artifact.
+
+### Hire an agent
+
+The landing view offers **Hire as an agent** when you have personas: pick one
+and the created task becomes a persistent named agent instead of a one-off
+task. An agent keeps its persona across runs — the persona's name and system
+prompt are prepended to the Work system prompt (the sandbox runtime contract
+always overrides them) — and the sidebar pins agents in their own **Agents**
+group above ad-hoc tasks, each with the persona avatar, an activity indicator,
+and a one-line status. When the sidebar is compact, only those pinned agent
+avatars remain in the rail; one-off Work tasks return when the sidebar is
+expanded.
+
+The status line has two tiers. For hired agents, one cheap no-tools model
+request at the end of a run asks for an ~8-word status ("Inbox at zero. 2
+replies ready."); the reply is bounded to a single 90-character line and any
+failure or timeout falls back to the deterministic tier — the first line of
+the final assistant message. Ad-hoc tasks and failed runs use the
+deterministic tier only, and `WORK_STATUS_BLURB_MODEL=0` disables the model
+request entirely. Agents also carry an unread indicator: opening the task
+advances a per-task seen marker (monotonic, synced across devices), and the
+sidebar shows a dot when a run reached a terminal state after that marker.
+
+Agents report their life through [notifications](./55-NOTIFICATIONS.md)
+too — in-app and, when enabled, web push: `work-run-finished` when a run
+completes, `work-run-attention` when it stops for input or fails, and
+`work-takeover` the moment the agent asks a human to take over its screen
+(the on-screen banner is visible only while the Screen tab is open, so the
+push is what reaches you elsewhere). Each notification links straight to
+the agent.
+
+You can hire under a persona you own or one shared with you; the shared view
+never exposes the owner's persona memories. If the persona is later deleted,
+the agent keeps running without it and a warning is logged. The API accepts
+`personaId` and `isAgent` on task creation; a task created with a persona is
+an agent automatically.
+
+### The Agent tab
+
+An agent's workspace pane opens on an extra first tab, **Agent** — the
+agent's own page:
+
+- **Identity**: persona avatar, name, activity indicator, and the latest
+  status line.
+- **Screen**: when the task's policy grants the Work Computer, a compact
+  live view-only thumbnail of the agent's screen. It is a real viewer
+  (counted against the per-task viewer budget); clicking it opens the full
+  Screen tab where takeover, teach, and audio live.
+- **Routines**: [automations](./48-AUTOMATIONS.md) bound to this task. Each
+  fire runs inside the agent's own workspace and conversation with the
+  agent's model and runtime — not a fresh task — so a morning-briefing
+  routine accumulates in one place. Rows show the schedule in words with a
+  pause/resume toggle, and the inline **+ Routine** form is already bound to
+  the agent. An occurrence that fires while the agent is busy fails honestly
+  as `work-task-busy` instead of queueing.
+- **Taught skills**: procedures demonstrated in teach mode, with an
+  enable/disable switch per skill.
+
 ### Understand task status
 
 The interface maps durable backend states to a smaller user-facing set:
@@ -434,9 +500,17 @@ the only supported way for a model to leave a process running. Ordinary
 
 ### Screen (the Work Computer)
 
-<video controls preload="metadata" width="100%" src="https://s3.librewebui.org/media/work-computer-demo.mp4?v=2"></video>
+<a href="https://librewebui.org/work-computer-demo/">
+  <img
+    src="https://s3.librewebui.org/app/screenshot.webp?v=0.28.0-7070d2c8"
+    alt="Watch a Libre WebUI Work agent research imagery and build an interactive space gallery"
+    width="2814"
+    height="1748"
+    loading="lazy"
+  />
+</a>
 
-_A real, unedited run (30x, then real time): a Work agent browsing NASA's
+_[Watch the complete demonstration](https://librewebui.org/work-computer-demo/): a real, unedited run (30x, then real time) of a Work agent browsing NASA's
 image galleries on its own screen, choosing photos, then building and
 testing an interactive Three.js gallery — all from one prompt._
 
@@ -514,9 +588,20 @@ expectation verdicts — is stamped on every persisted tool record and
 summarized when the run ends. Screenshots reach the model
 as real image content on every provider route — Ollama, Anthropic, Gemini,
 and OpenAI-compatible chat and Responses plugins — so the model driving the
-task should be a vision model. Only the most recent screenshots stay in the
+task should be a vision model. If the provider rejects image input (a
+text-only model), the run does not fail: screenshots are dropped for the
+rest of the run, the model is told to rely on the text observations, and a
+note in the transcript explains the degradation — but a model that cannot
+see the screen verifies far less, so prefer a vision model for computer
+tasks. Only the most recent screenshots stay in the
 model's live context, and persisted task transcripts keep the text
-observation only, never the image bytes. The agent is instructed to never
+observation only, never the image bytes. The browser ships with content
+blocking built in — uBlock Origin Lite for ads and trackers (pinned and
+checksum-verified at image build, filtering mode pinned by managed policy)
+and an auto-dismisser for cookie-consent banners — because ads and consent
+walls waste the agent's screenshots, tokens, and clicks. Ad requests are
+neutralized uBlock-style: known ad scripts resolve to harmless local stubs
+so pages keep working. The agent is instructed to never
 enter credentials or complete CAPTCHA/2FA challenges; it reports the
 blocker instead. For untrusted tasks, pair a GUI policy with a filtering
 DNS resolver — a desktop browser makes the network egress policy matter
@@ -1006,14 +1091,16 @@ backend, not merely the browser or desktop interface.
 | Source development on a local computer    | Supported under the same Docker and provider requirements.                                                                                                                                                                                                                                                                           | Supported through the development API origin on port 3001.                                        |
 | Electron desktop client                   | Conditional. Electron uses an external Libre WebUI backend and does not provide a separate Work runtime.                                                                                                                                                                                                                             | Supported through that backend's signed proxy URL.                                                |
 | Bare-metal or VM backend on a remote host | Runs, files, and provider calls work when Docker is available on that host.                                                                                                                                                                                                                                                          | Supported when the public reverse proxy preserves HTTP and WebSocket traffic.                     |
-| Standard repository Docker Compose        | Supported by default: the image ships the Docker CLI and the Compose file mounts the host Docker socket.                                                                                                                                                                                                                             | Supported through the same public Libre WebUI origin.                                             |
+| Standard repository Docker Compose        | Supported by default on Docker Desktop: the image ships the Docker CLI, Compose mounts the host Docker socket, and Work ports route through `host.docker.internal`. Native Docker Engine additionally needs a reachable non-public `WORK_PREVIEW_BIND`.                                                                                | Supported through the same public Libre WebUI origin.                                             |
 | Current Kubernetes/Helm deployment        | Supported with `--set work.enabled=true`: sandboxes run as Pods with PVC workspaces (runs, files, commands, git, interactive terminals, and the Work Computer screen and audio at the Pod IP), under a namespace-scoped Role and default-deny NetworkPolicies — no Docker socket anywhere. See the [Kubernetes guide](./KUBERNETES). | Supported when the backend runs in-cluster: the signed proxy targets the sandbox Pod IP directly. |
 
 ### Running Work when Libre WebUI is itself in Docker
 
 Every repository Compose file enables Work: the image ships the Docker CLI and
-the Compose file mounts `/var/run/docker.sock`. `docker compose up -d` is all
-that is required.
+the Compose file mounts `/var/run/docker.sock`. Docker Desktop works with the
+shipped routing defaults. Native Docker Engine additionally needs
+`WORK_PREVIEW_BIND` set to a non-public host interface reachable from sibling
+containers, as described below.
 
 Work drives the host daemon through that socket, so task containers are
 **siblings** of the Libre WebUI container rather than children. They appear in
@@ -1067,9 +1154,11 @@ When the backend itself runs in Docker, publishing and connecting may use
 different addresses. Keep `WORK_PREVIEW_BIND=127.0.0.1` to avoid exposing the
 ephemeral ports, and set `WORK_DOCKER_PUBLISHED_HOST` to the Docker host address
 reachable from the backend container (`host.docker.internal` on Docker
-Desktop). Native Linux deployments should pair this value with an explicitly
-reachable, non-public bind interface; mapping `host.docker.internal` alone does
-not make a host-loopback listener reachable.
+Desktop). The bundled Compose profiles set both values and map the host name.
+Native Linux deployments must override `WORK_PREVIEW_BIND` with the Docker
+bridge gateway (or another explicitly reachable, non-public host interface);
+mapping `host.docker.internal` alone does not make a host-loopback listener
+reachable. Never bind these raw ephemeral ports to `0.0.0.0`.
 
 Concurrency is capped separately: `WORK_MAX_ACTIVE_RUNTIMES_PER_USER` defaults
 to `2` and `WORK_MAX_ACTIVE_RUNTIMES_GLOBAL` to `3`, so an administrator can

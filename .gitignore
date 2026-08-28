@@ -89,7 +89,7 @@ docker-compose.dev.external-ollama.watchtower.yml
 plugins/openclaw-agent.json
 
 # Local Codex instructions
-/AGENTS.md
+/AGENTS-DEV.md
 
 # Local security audit (contains deployment-sensitive findings)
 /PRIVATE_DEPLOYMENT_SECURITY_AUDIT.md

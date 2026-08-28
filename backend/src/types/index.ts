@@ -246,6 +246,9 @@ export type NotificationType =
   | 'media-ready'
   | 'media-failed'
   | 'budget-alert'
+  | 'work-run-finished'
+  | 'work-run-attention'
+  | 'work-takeover'
   | 'system';
 
 export interface NotificationView {
@@ -288,6 +291,8 @@ export interface Automation {
   target: AutomationTarget;
   /** Named Work policy applied when the target is 'work'. */
   workPolicyId?: string;
+  /** Existing Work task (agent) each fire runs inside; absent = new task per fire. */
+  workTaskId?: string;
   nextRunAt?: number;
   lastRunAt?: number;
   createdAt: number;

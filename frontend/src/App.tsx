@@ -292,16 +292,16 @@ const AppContent: React.FC = () => {
               const { login } = useAuthStore.getState();
               login(data.data.user, data.data.token, data.data.systemInfo);
               logger.debug('OAuth login successful');
-              toast.success('OAuth login successful!');
+              toast.success(t('auth.oauth.loginSuccess'));
             } else {
-              toast.error('Failed to complete OAuth authentication');
+              toast.error(t('auth.oauth.completionFailed'));
             }
           } else {
-            toast.error('OAuth authentication verification failed');
+            toast.error(t('auth.oauth.verificationFailed'));
           }
         } catch (error) {
           logger.error('OAuth processing error:', error);
-          toast.error('OAuth authentication failed');
+          toast.error(t('auth.oauth.authenticationFailed'));
         }
 
         // Clean up URL regardless of success/failure
@@ -318,7 +318,7 @@ const AppContent: React.FC = () => {
     };
 
     processOAuthCallback();
-  }, []);
+  }, [t]);
 
   // Initialize the app only after OAuth is processed
   useInitializeApp();

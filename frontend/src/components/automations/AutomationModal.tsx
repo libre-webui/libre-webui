@@ -29,6 +29,7 @@ import type { AutomationPayload } from '@/utils/api/automationsApi';
 import { isTriggerValid } from '@/utils/automationSchedule';
 import { workApi } from '@/utils/api';
 import type { WorkPolicy } from '@/types/work';
+import { cn } from '@/utils';
 import { TriggerEditor } from './TriggerEditor';
 
 interface AutomationModalProps {
@@ -36,6 +37,12 @@ interface AutomationModalProps {
   automation: Automation | null;
   /** Prefill for a new automation (template); ignored while editing. */
   initial?: Partial<AutomationPayload> | null;
+  /**
+   * Bind the routine to an existing Work task (agent). Forces the work
+   * target and hides target/policy/model controls: every fire runs inside
+   * that task with the task's own model and runtime.
+   */
+  fixedWorkTaskId?: string;
   models: OllamaModel[];
   saving: boolean;
   onClose: () => void;
@@ -58,6 +65,7 @@ export function AutomationModal({
   open,
   automation,
   initial,
+  fixedWorkTaskId,
   models,
   saving,
   onClose,
@@ -69,6 +77,7 @@ export function AutomationModal({
       key={automation?.id ?? initial?.name ?? 'new'}
       automation={automation}
       initial={initial}
+      fixedWorkTaskId={fixedWorkTaskId}
       models={models}
       saving={saving}
       onClose={onClose}
@@ -82,12 +91,14 @@ export function AutomationModal({
 function AutomationModalForm({
   automation,
   initial,
+  fixedWorkTaskId,
   models,
   saving,
   onClose,
   onSave,
 }: Omit<AutomationModalProps, 'open'>) {
   const { t } = useTranslation();
+  const taskBound = Boolean(fixedWorkTaskId ?? automation?.workTaskId);
   const [name, setName] = useState(automation?.name ?? initial?.name ?? '');
   const [instructions, setInstructions] = useState(
     automation?.instructions ?? initial?.instructions ?? ''
@@ -110,7 +121,7 @@ function AutomationModalForm({
   // picker, mirroring the Work composer.
   const [policies, setPolicies] = useState<WorkPolicy[]>([]);
   useEffect(() => {
-    if (target !== 'work') return;
+    if (target !== 'work' || taskBound) return;
     let cancelled = false;
     workApi
       .listPolicies()
@@ -123,7 +134,7 @@ function AutomationModalForm({
     return () => {
       cancelled = true;
     };
-  }, [target]);
+  }, [target, taskBound]);
 
   const valid =
     name.trim().length > 0 &&
@@ -133,6 +144,19 @@ function AutomationModalForm({
 
   const handleSave = () => {
     if (!valid) return;
+    if (taskBound) {
+      // The bound task supplies model, provider, and runtime; none of the
+      // automation-level routing fields apply.
+      onSave({
+        name: name.trim(),
+        instructions: instructions.trim(),
+        triggers,
+        notify,
+        target: 'work',
+        workTaskId: fixedWorkTaskId ?? automation?.workTaskId,
+      });
+      return;
+    }
     const picked = models.find(item => item.name === model);
     onSave({
       name: name.trim(),
@@ -253,7 +277,19 @@ function AutomationModalForm({
             />
           </div>
 
-          <div className='grid grid-cols-2 gap-3'>
+          {taskBound && (
+            <p
+              data-testid='automation-task-bound-note'
+              className='rounded-lg bg-primary-500/10 px-3 py-2 text-[12px] leading-relaxed text-primary-700 dark:text-primary-300'
+            >
+              {t('automations.form.taskBoundNote', {
+                defaultValue:
+                  "This routine runs inside the agent's own workspace and conversation, with the agent's model and runtime.",
+              })}
+            </p>
+          )}
+
+          <div className={cn('grid grid-cols-2 gap-3', taskBound && 'hidden')}>
             <div>
               <label htmlFor='automation-target' className={labelClass}>
                 {t('automations.form.target')}
@@ -295,7 +331,7 @@ function AutomationModalForm({
           </div>
 
           <div className='grid grid-cols-2 gap-3'>
-            <div>
+            <div className={cn(taskBound && 'hidden')}>
               <label htmlFor='automation-model' className={labelClass}>
                 {t('automations.form.model')}
               </label>

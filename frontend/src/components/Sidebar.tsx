@@ -438,6 +438,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           {isWorkRoute && showWork ? (
             <SidebarWorkTasks
               tasks={workTasks}
+              personas={personas}
               currentTaskId={currentWorkTaskId}
               loading={loadingWorkTasks}
               actionLoading={workActionLoading}
