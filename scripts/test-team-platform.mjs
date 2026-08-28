@@ -612,6 +612,9 @@ test(
     // generations against the bounded SSE catch-up. Seed this in one SQL
     // statement so the three-replica route regression remains deterministic.
     const chatStreamId = `chat:${sessionId}`;
+    // Retention is active during this drill. Sequence controls replay order;
+    // the event timestamp must remain fresh enough to survive the sweep.
+    const priorEventOccurredAt = Date.now();
     sql(`
       INSERT INTO platform_event_stream_heads (stream_id, last_sequence)
       VALUES ('${chatStreamId}', 10001);
@@ -621,7 +624,7 @@ test(
       SELECT md5('${sessionId}:prior:' || sequence)::uuid,
              repeat('0', 64), '${chatStreamId}', sequence, 'chat.stream.v1',
              'prior-assistant-' || sequence, NULL, 'reference',
-             'prior-chat-event', sequence
+             'prior-chat-event', ${priorEventOccurredAt}
         FROM generate_series(1, 10001) AS sequence;
     `);
     assert.equal(
