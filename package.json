@@ -1,6 +1,6 @@
 {
   "name": "libre-webui",
-  "version": "0.28.0",
+  "version": "0.29.0",
   "description": "A local-first workspace for chat, private knowledge, artifacts, and isolated model-driven work.",
   "bin": {
     "libre-webui": "bin/cli.js"
