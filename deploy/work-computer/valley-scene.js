@@ -154,7 +154,6 @@
     };
   });
 
-  var _tmpA = new T.Color(), _tmpB = new T.Color();
   function palAt(deg) {
     var i = 0;
     while (i < PAL.length - 2 && deg > PAL[i + 1].deg) i++;
@@ -439,7 +438,6 @@
 (function (global) {
   'use strict';
   var T = global.THREE, K = global.ValleyScene._core;
-  var W = K.W, terrainH = K.terrainH;
 
   /* ------------------------------------------------- merged mesh builder */
   function Builder() { this.pos = []; this.nor = []; this.col = []; this.idx = []; this.n = 0; }
@@ -488,7 +486,6 @@
   };
   Builder.prototype.empty = function () { return this.n === 0; };
 
-  var M4 = function () { return new T.Matrix4(); };
   function trs(x, y, z, rx, ry, rz, sx, sy, sz) {
     var m = new T.Matrix4();
     m.compose(new T.Vector3(x, y, z),
@@ -706,7 +703,7 @@
 (function (global) {
   'use strict';
   var T = global.THREE, K = global.ValleyScene._core, B = global.ValleyScene._build;
-  var W = K.W, terrainH = K.terrainH, trs = B.trs, Builder = B.Builder;
+  var W = K.W, terrainH = K.terrainH, trs = B.trs;
 
   /* ------------------------------------------------------------ promenade */
   function promY(z) { return Math.max(terrainH(W.promX(z), z), 1.2) + 2.4; }
@@ -874,7 +871,6 @@
       if (rng() > dens) continue;
       if (z > 80 && Math.abs(x - W.camX) < 520) continue;
       s = 3.0 + rng() * 6.5;
-      var far = K.clamp01((-z) / 900);
       var e = { x: x, y: y, z: z, s: s, sy: s * (0.85 + rng() * 0.55), r: rng() * 6.28 };
       var pick = rng();
       if (pick < 0.085 && z > -760) data.autumn.push(e);
@@ -975,8 +971,8 @@
    ===================================================================== */
 (function (global) {
   'use strict';
-  var T = global.THREE, K = global.ValleyScene._core, B = global.ValleyScene._build, P = global.ValleyScene._parts;
-  var W = K.W, terrainH = K.terrainH, trs = B.trs, Builder = B.Builder;
+  var T = global.THREE, K = global.ValleyScene._core, B = global.ValleyScene._build;
+  var trs = B.trs, Builder = B.Builder;
 
   /* --------------------------------------------------------- small props */
   function figureGeo() {
@@ -1347,11 +1343,10 @@
     addMerged(bGlass, matGlass, false, false);
     addMerged(bFlower, matFlower, false, false);
     addMerged(bDeck, matDeck, false, true);
-    var warmMesh = addMerged(bWarm, matWarm, false, false);
+    addMerged(bWarm, matWarm, false, false);
 
     /* -------------------------------------------------------- vegetation */
     var veg = P.vegetation(rng, opts.vegetationScale);
-    var canopy = ensureColor(veg.geo.canopy, 1, 1, 1);
     var canopyA = ensureColor(P.lumpyCanopy(1, 0.86, opts.canopyDetail), 1, 1, 1);
     var canopyB = ensureColor(P.lumpyCanopy(2, 0.72, opts.canopyDetail), 1, 1, 1);
     var canopyC = ensureColor(P.lumpyCanopy(3, 0.95, opts.canopyDetail), 1, 1, 1);
@@ -1537,7 +1532,6 @@
     })();
 
     /* ----------------------------------------------------------- post FX */
-    var size = new T.Vector2();
     var resizeRenderTimer = 0, hasRendered = false;
     function currentSize() {
       var w = container.clientWidth || 1280, h = container.clientHeight || 720;
