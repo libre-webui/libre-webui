@@ -297,6 +297,7 @@ export type NotificationType =
   | 'work-run-finished'
   | 'work-run-attention'
   | 'work-takeover'
+  | 'work-approval'
   | 'system';
 
 export interface AppNotification {

@@ -1728,7 +1728,8 @@
       "guiEnabled": "Work Computer (GUI + przeglądarka)",
       "takeoverEnabled": "Zezwól na przejęcie ekranu",
       "computerPreset": "Work Computer",
-      "computerPresetHint": "Work Computer wymaga obrazu GUI: zbuduj go z deploy/work-computer w repozytorium i oznacz libre-work-computer:latest."
+      "computerPresetHint": "Work Computer wymaga obrazu GUI: zbuduj go z deploy/work-computer w repozytorium i oznacz libre-work-computer:latest.",
+      "approvalsRequired": "Wymagaj zgody na działania zmieniające dane"
     },
     "modelAccess": {
       "title": "Pobieranie modeli",
@@ -2760,7 +2761,22 @@
       "skills": "Nauczone umiejętności",
       "noSkills": "Jeszcze niczego nie nauczono. Użyj Teach na karcie Ekran, aby raz zademonstrować procedurę; stanie się powtarzalną umiejętnością.",
       "skillToggleFailed": "Nie udało się zaktualizować umiejętności.",
-      "unread": "Nowa aktywność"
+      "unread": "Nowa aktywność",
+      "approvals": "Automatyczna weryfikacja",
+      "approvalsHint": "Gdy jest włączona, polecenia, usuwanie i przenoszenie plików oraz działania na komputerze czekają na Twoją zgodę.",
+      "approvalsPolicyForced": "Polityka Work tego agenta wymaga zgody na działania zmieniające dane.",
+      "approvalsToggleFailed": "Nie udało się zaktualizować ustawień zgody.",
+      "approvalRuleLine": "Zawsze dozwolone",
+      "approvalRuleDelete": "Usuń regułę",
+      "approvalRuleDeleteFailed": "Nie udało się usunąć reguły."
+    },
+    "approval": {
+      "title": "Wymagana zgoda",
+      "description": "Agent chce uruchomić {{tool}}. To działanie może zmienić dane lub zadziałać poza rozmową.",
+      "allowOnce": "Pozwól raz",
+      "allowAlways": "Pozwalaj zawsze",
+      "deny": "Odmów",
+      "failed": "Nie udało się wysłać decyzji."
     }
   },
   "personaBackground": {

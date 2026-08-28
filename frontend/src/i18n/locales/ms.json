@@ -1728,7 +1728,8 @@
       "guiEnabled": "Work Computer (GUI + pelayar)",
       "takeoverEnabled": "Benarkan pengambilalihan skrin",
       "computerPreset": "Work Computer",
-      "computerPresetHint": "Work Computer memerlukan imej GUI: bina daripada deploy/work-computer dalam repositori dan tag sebagai libre-work-computer:latest."
+      "computerPresetHint": "Work Computer memerlukan imej GUI: bina daripada deploy/work-computer dalam repositori dan tag sebagai libre-work-computer:latest.",
+      "approvalsRequired": "Perlukan kelulusan untuk tindakan yang mengubah data"
     },
     "modelAccess": {
       "title": "Muat turun model",
@@ -2760,7 +2761,22 @@
       "skills": "Kemahiran yang diajar",
       "noSkills": "Belum ada yang diajar. Gunakan Teach pada tab Skrin untuk menunjukkan prosedur sekali; ia menjadi kemahiran yang boleh dimainkan semula.",
       "skillToggleFailed": "Kemahiran tidak dapat dikemas kini.",
-      "unread": "Aktiviti baharu"
+      "unread": "Aktiviti baharu",
+      "approvals": "Semakan Auto",
+      "approvalsHint": "Apabila dihidupkan, arahan, pemadaman dan pemindahan fail, serta tindakan komputer akan dijeda sehingga anda meluluskannya.",
+      "approvalsPolicyForced": "Dasar Work ejen ini memerlukan kelulusan untuk tindakan yang mengubah data.",
+      "approvalsToggleFailed": "Tetapan kelulusan tidak dapat dikemas kini.",
+      "approvalRuleLine": "Sentiasa dibenarkan",
+      "approvalRuleDelete": "Buang peraturan",
+      "approvalRuleDeleteFailed": "Peraturan tidak dapat dibuang."
+    },
+    "approval": {
+      "title": "Kelulusan diperlukan",
+      "description": "Ejen mahu menjalankan {{tool}}. Tindakan ini boleh mengubah data atau bertindak di luar perbualan.",
+      "allowOnce": "Izinkan sekali",
+      "allowAlways": "Izinkan sentiasa",
+      "deny": "Tolak",
+      "failed": "Keputusan tidak dapat dihantar."
     }
   },
   "personaBackground": {

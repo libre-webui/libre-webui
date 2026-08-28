@@ -24,6 +24,7 @@ const eventTypes = new Set<WorkRunEventType>([
   'assistant_delta',
   'tool_call',
   'tool_result',
+  'approval',
   'usage',
   'skill_loaded',
   'error',

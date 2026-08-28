@@ -1728,7 +1728,8 @@
       "guiEnabled": "Work Computer (GUI + браузер)",
       "takeoverEnabled": "Дозволити перехоплення керування екраном",
       "computerPreset": "Work Computer",
-      "computerPresetHint": "Для Work Computer потрібен GUI-образ: зберіть його з deploy/work-computer у репозиторії та позначте libre-work-computer:latest."
+      "computerPresetHint": "Для Work Computer потрібен GUI-образ: зберіть його з deploy/work-computer у репозиторії та позначте libre-work-computer:latest.",
+      "approvalsRequired": "Вимагати схвалення для дій із побічними ефектами"
     },
     "modelAccess": {
       "title": "Завантаження моделей",
@@ -2760,7 +2761,22 @@
       "skills": "Навчені навички",
       "noSkills": "Поки нічого не навчено. Скористайтеся Teach на вкладці «Екран», щоб один раз показати процедуру; вона стане відтворюваною навичкою.",
       "skillToggleFailed": "Не вдалося оновити навичку.",
-      "unread": "Нова активність"
+      "unread": "Нова активність",
+      "approvals": "Автоперевірка",
+      "approvalsHint": "Коли увімкнено, команди, видалення та переміщення файлів і дії на комп'ютері призупиняються, доки ви їх не схвалите.",
+      "approvalsPolicyForced": "Політика Work цього агента вимагає схвалення для дій із побічними ефектами.",
+      "approvalsToggleFailed": "Не вдалося оновити схвалення.",
+      "approvalRuleLine": "Завжди дозволено",
+      "approvalRuleDelete": "Видалити правило",
+      "approvalRuleDeleteFailed": "Не вдалося видалити правило."
+    },
+    "approval": {
+      "title": "Потрібне схвалення",
+      "description": "Агент хоче виконати {{tool}}. Ця дія може змінити дані або вплинути на щось поза цією розмовою.",
+      "allowOnce": "Дозволити один раз",
+      "allowAlways": "Дозволяти завжди",
+      "deny": "Відхилити",
+      "failed": "Не вдалося надіслати рішення."
     }
   },
   "personaBackground": {

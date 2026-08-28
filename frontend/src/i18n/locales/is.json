@@ -1728,7 +1728,8 @@
       "guiEnabled": "Work Computer (viðmót + vafri)",
       "takeoverEnabled": "Leyfa yfirtöku á skjánum",
       "computerPreset": "Work Computer",
-      "computerPresetHint": "Work Computer þarf GUI-myndina: byggðu hana úr deploy/work-computer í geymslunni og merktu libre-work-computer:latest."
+      "computerPresetHint": "Work Computer þarf GUI-myndina: byggðu hana úr deploy/work-computer í geymslunni og merktu libre-work-computer:latest.",
+      "approvalsRequired": "Krefjast samþykkis fyrir aðgerðir með hliðarverkunum"
     },
     "modelAccess": {
       "title": "Niðurhal líkana",
@@ -2760,7 +2761,22 @@
       "skills": "Kennd færni",
       "noSkills": "Ekkert kennt enn. Notaðu Teach í Skjár-flipanum til að sýna verklag einu sinni; það verður endurspilanleg færni.",
       "skillToggleFailed": "Ekki tókst að uppfæra færnina.",
-      "unread": "Ný virkni"
+      "unread": "Ný virkni",
+      "approvals": "Sjálfvirk yfirferð",
+      "approvalsHint": "Þegar kveikt er bíða skipanir, eyðing og færsla skráa og tölvuaðgerðir þar til þú samþykkir þær.",
+      "approvalsPolicyForced": "Work-stefna þessa fulltrúa krefst samþykkis fyrir aðgerðir með hliðarverkunum.",
+      "approvalsToggleFailed": "Ekki tókst að uppfæra samþykki.",
+      "approvalRuleLine": "Alltaf leyft",
+      "approvalRuleDelete": "Fjarlægja reglu",
+      "approvalRuleDeleteFailed": "Ekki tókst að fjarlægja regluna."
+    },
+    "approval": {
+      "title": "Samþykkis er þörf",
+      "description": "Fulltrúinn vill keyra {{tool}}. Þessi aðgerð getur breytt gögnum eða haft áhrif utan spjallsins.",
+      "allowOnce": "Leyfa einu sinni",
+      "allowAlways": "Leyfa alltaf",
+      "deny": "Hafna",
+      "failed": "Ekki tókst að senda ákvörðunina."
     }
   },
   "personaBackground": {

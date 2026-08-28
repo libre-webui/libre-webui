@@ -1728,7 +1728,8 @@
       "guiEnabled": "Work Computer (واجهة + متصفح)",
       "takeoverEnabled": "السماح بالاستحواذ على الشاشة",
       "computerPreset": "Work Computer",
-      "computerPresetHint": "يتطلب الـ Work Computer صورة الواجهة الرسومية: ابنها من deploy/work-computer في المستودع بوسم libre-work-computer:latest."
+      "computerPresetHint": "يتطلب الـ Work Computer صورة الواجهة الرسومية: ابنها من deploy/work-computer في المستودع بوسم libre-work-computer:latest.",
+      "approvalsRequired": "طلب موافقة على الإجراءات ذات الأثر"
     },
     "modelAccess": {
       "title": "تنزيل النماذج",
@@ -2760,7 +2761,22 @@
       "skills": "المهارات المعلَّمة",
       "noSkills": "لم يتم تعليم أي شيء بعد. استخدم «علِّم» في تبويب الشاشة لعرض إجراء مرة واحدة؛ فيصبح مهارة قابلة لإعادة التشغيل.",
       "skillToggleFailed": "تعذّر تحديث المهارة.",
-      "unread": "نشاط جديد"
+      "unread": "نشاط جديد",
+      "approvals": "المراجعة التلقائية",
+      "approvalsHint": "عند التفعيل تتوقّف الأوامر وحذف الملفات ونقلها وإجراءات Work Computer إلى أن توافق عليها.",
+      "approvalsPolicyForced": "تفرض سياسة Work الخاصة بهذا الوكيل الموافقة على الإجراءات ذات الأثر.",
+      "approvalsToggleFailed": "تعذّر تحديث إعدادات الموافقة.",
+      "approvalRuleLine": "مسموح دائمًا",
+      "approvalRuleDelete": "إزالة القاعدة",
+      "approvalRuleDeleteFailed": "تعذّرت إزالة القاعدة."
+    },
+    "approval": {
+      "title": "الموافقة مطلوبة",
+      "description": "يريد الوكيل تشغيل {{tool}}. قد يغيّر هذا الإجراء بيانات أو يتصرّف خارج هذه المحادثة.",
+      "allowOnce": "السماح مرة واحدة",
+      "allowAlways": "السماح دائمًا",
+      "deny": "رفض",
+      "failed": "تعذّر إرسال القرار."
     }
   },
   "personaBackground": {

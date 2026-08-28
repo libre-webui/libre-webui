@@ -859,6 +859,9 @@ const TABLE_MAPPINGS: readonly TableMapping[] = Object.freeze([
       'network_default',
       'workspace_size',
       'idle_timeout_ms',
+      'gui_enabled',
+      'takeover_enabled',
+      'approvals_required',
       'created_at',
       'updated_at',
     ],
@@ -869,6 +872,9 @@ const TABLE_MAPPINGS: readonly TableMapping[] = Object.freeze([
         'pids_limit',
         'network_default',
         'idle_timeout_ms',
+        'gui_enabled',
+        'takeover_enabled',
+        'approvals_required',
       ],
     }
   ),
@@ -894,12 +900,19 @@ const TABLE_MAPPINGS: readonly TableMapping[] = Object.freeze([
       'status_blurb',
       'is_agent',
       'last_seen_at',
+      'approvals_enabled',
       'created_at',
       'updated_at',
     ],
     ['id'],
     {
-      integers: [...timestamps, 'network_enabled', 'is_agent', 'last_seen_at'],
+      integers: [
+        ...timestamps,
+        'network_enabled',
+        'is_agent',
+        'last_seen_at',
+        'approvals_enabled',
+      ],
     }
   ),
   table(
@@ -939,6 +952,35 @@ const TABLE_MAPPINGS: readonly TableMapping[] = Object.freeze([
       integers: [...timestamps, 'message_index'],
       projectSourceRow: projectWorkMessageRow,
     }
+  ),
+  table(
+    'work_approvals',
+    'work_approvals',
+    [
+      'id',
+      'task_id',
+      'run_id',
+      'user_id',
+      'tool_call_id',
+      'tool_name',
+      'summary',
+      'status',
+      'scope',
+      'created_at',
+      'resolved_at',
+      'expires_at',
+    ],
+    ['id'],
+    {
+      integers: [...timestamps, 'resolved_at', 'expires_at'],
+    }
+  ),
+  table(
+    'work_approval_rules',
+    'work_approval_rules',
+    ['id', 'task_id', 'user_id', 'tool_name', 'pattern', 'created_at'],
+    ['id'],
+    { integers: timestamps }
   ),
   table(
     'user_groups',

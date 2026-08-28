@@ -30,6 +30,8 @@ import type {
   WorkGitStatus,
   WorkMessagePage,
   WorkComputerSetupStatus,
+  WorkApprovalPending,
+  WorkApprovalsState,
   WorkPolicy,
   WorkPolicyInput,
   WorkTask,
@@ -97,6 +99,38 @@ export const workApi = {
   markTaskSeen: (taskId: string): Promise<ApiResponse<{ seen: true }>> =>
     api
       .post(`/work/tasks/${encodeURIComponent(taskId)}/seen`)
+      .then(res => res.data),
+
+  getApprovals: (taskId: string): Promise<ApiResponse<WorkApprovalsState>> =>
+    api.get(`${taskPath(taskId)}/approvals`).then(res => res.data),
+
+  setApprovalsEnabled: (
+    taskId: string,
+    enabled: boolean | null
+  ): Promise<ApiResponse<{ approvalsEnabled: boolean }>> =>
+    api.put(`${taskPath(taskId)}/approvals`, { enabled }).then(res => res.data),
+
+  decideApproval: (
+    taskId: string,
+    approvalId: string,
+    approve: boolean,
+    scope: 'once' | 'always' = 'once'
+  ): Promise<ApiResponse<WorkApprovalPending>> =>
+    api
+      .post(`${taskPath(taskId)}/approvals/${encodeURIComponent(approvalId)}`, {
+        approve,
+        scope,
+      })
+      .then(res => res.data),
+
+  deleteApprovalRule: (
+    taskId: string,
+    ruleId: string
+  ): Promise<ApiResponse<{ deleted: true }>> =>
+    api
+      .delete(
+        `${taskPath(taskId)}/approval-rules/${encodeURIComponent(ruleId)}`
+      )
       .then(res => res.data),
 
   listTasks: (): Promise<ApiResponse<WorkTaskSummary[]>> =>

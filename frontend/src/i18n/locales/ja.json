@@ -1728,7 +1728,8 @@
       "guiEnabled": "Work Computer（GUI + ブラウザ）",
       "takeoverEnabled": "画面の操作引き継ぎを許可",
       "computerPreset": "Work Computer",
-      "computerPresetHint": "Work Computer には GUI イメージが必要です。リポジトリの deploy/work-computer からビルドし、libre-work-computer:latest とタグ付けしてください。"
+      "computerPresetHint": "Work Computer には GUI イメージが必要です。リポジトリの deploy/work-computer からビルドし、libre-work-computer:latest とタグ付けしてください。",
+      "approvalsRequired": "副作用のある操作に承認を必須にする"
     },
     "modelAccess": {
       "title": "モデルのダウンロード",
@@ -2760,7 +2761,22 @@
       "skills": "教えたスキル",
       "noSkills": "まだ何も教えていません。画面タブの Teach で手順を一度実演すると、再実行できるスキルになります。",
       "skillToggleFailed": "スキルを更新できませんでした。",
-      "unread": "新しいアクティビティ"
+      "unread": "新しいアクティビティ",
+      "approvals": "自動レビュー",
+      "approvalsHint": "オンにすると、コマンド、ファイルの削除や移動、コンピュータ操作は承認するまで一時停止します。",
+      "approvalsPolicyForced": "このエージェントの Work ポリシーでは、副作用のある操作に承認が必要です。",
+      "approvalsToggleFailed": "承認の設定を更新できませんでした。",
+      "approvalRuleLine": "常に許可",
+      "approvalRuleDelete": "ルールを削除",
+      "approvalRuleDeleteFailed": "ルールを削除できませんでした。"
+    },
+    "approval": {
+      "title": "承認が必要です",
+      "description": "エージェントが {{tool}} を実行しようとしています。この操作はデータを変更したり、会話の外で動作したりする可能性があります。",
+      "allowOnce": "一度許可する",
+      "allowAlways": "常に許可する",
+      "deny": "拒否",
+      "failed": "判断を送信できませんでした。"
     }
   },
   "personaBackground": {

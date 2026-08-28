@@ -106,6 +106,8 @@ export interface WorkPolicyRecord {
   guiEnabled?: boolean;
   /** False disables human takeover of the screen; unset/true allows it. */
   takeoverEnabled?: boolean;
+  /** True forces side-effecting agent actions to wait for user approval. */
+  approvalsRequired?: boolean;
   createdAt: number;
   updatedAt: number;
 }
@@ -121,6 +123,7 @@ export interface WorkPolicyInput {
   idleTimeoutMs?: number | null;
   guiEnabled?: boolean | null;
   takeoverEnabled?: boolean | null;
+  approvalsRequired?: boolean | null;
 }
 
 type PolicyRow = WorkPolicyRow;
@@ -143,6 +146,10 @@ function mapPolicy(row: PolicyRow): WorkPolicyRecord {
     guiEnabled: row.gui_enabled === null ? undefined : Boolean(row.gui_enabled),
     takeoverEnabled:
       row.takeover_enabled === null ? undefined : Boolean(row.takeover_enabled),
+    approvalsRequired:
+      row.approvals_required === null
+        ? undefined
+        : Boolean(row.approvals_required),
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -159,6 +166,7 @@ export function validateWorkPolicyInput(input: WorkPolicyInput): {
   idleTimeoutMs: number | null;
   guiEnabled: boolean | null;
   takeoverEnabled: boolean | null;
+  approvalsRequired: boolean | null;
 } {
   const name = typeof input.name === 'string' ? input.name.trim() : '';
   if (!name || name.length > NAME_MAX_LENGTH || name.includes('\u0000')) {
@@ -270,6 +278,11 @@ export function validateWorkPolicyInput(input: WorkPolicyInput): {
       ? null
       : Boolean(input.takeoverEnabled);
 
+  const approvalsRequired =
+    input.approvalsRequired === null || input.approvalsRequired === undefined
+      ? null
+      : Boolean(input.approvalsRequired);
+
   return {
     name,
     image,
@@ -281,6 +294,7 @@ export function validateWorkPolicyInput(input: WorkPolicyInput): {
     idleTimeoutMs,
     guiEnabled,
     takeoverEnabled,
+    approvalsRequired,
   };
 }
 
@@ -317,6 +331,12 @@ export class WorkPolicyService {
           fields.takeoverEnabled === null
             ? null
             : fields.takeoverEnabled
+              ? 1
+              : 0,
+        approvals_required:
+          fields.approvalsRequired === null
+            ? null
+            : fields.approvalsRequired
               ? 1
               : 0,
         created_at: now,
@@ -368,6 +388,12 @@ export class WorkPolicyService {
           fields.takeoverEnabled === null
             ? null
             : fields.takeoverEnabled
+              ? 1
+              : 0,
+        approvals_required:
+          fields.approvalsRequired === null
+            ? null
+            : fields.approvalsRequired
               ? 1
               : 0,
         created_at: existing.createdAt,
@@ -440,6 +466,8 @@ export class WorkPolicyService {
       guiEnabled: policy.guiEnabled === true,
       // Takeover defaults to allowed; only an explicit false disables it.
       takeoverEnabled: policy.takeoverEnabled !== false,
+      // Approvals default to off; only an explicit true forces review.
+      approvalsRequired: policy.approvalsRequired === true,
     };
   }
 

@@ -42,6 +42,7 @@ import workPolicyService, {
   type WorkPolicyRecord,
 } from '../services/workPolicyService.js';
 import workRuntimeService from '../services/workRuntimeService.js';
+import workApprovalService from '../services/workApprovalService.js';
 import { WorkRuntimeError } from '../services/workRuntimeShared.js';
 import workScreenControlService, {
   WORK_SCREEN_CONTROL_TTL_MS,
@@ -517,6 +518,116 @@ router.post(
       await workTaskService.requireTaskRecord(taskId, userId);
       await workTaskService.markTaskSeen(taskId, userId);
       sendSuccess(res, { seen: true });
+    } catch (error) {
+      sendError(res, error);
+    }
+  }
+);
+
+// A5 approvals: pending decisions plus the task's Auto Review state.
+router.get(
+  '/tasks/:id/approvals',
+  async (
+    req: AuthenticatedRequest,
+    res: Response<ApiResponse>
+  ): Promise<void> => {
+    try {
+      const taskId = readTaskId(req);
+      const userId = requireUserId(req);
+      const task = await workTaskService.requireTaskRecord(taskId, userId);
+      const policy = await workPolicyService.resolve(task.policyId);
+      sendSuccess(res, {
+        pending: await workApprovalService.listPending(taskId),
+        rules: await workApprovalService.rulesForTask(taskId),
+        approvalsEnabled: task.approvalsEnabled === true,
+        policyRequired: policy.approvalsRequired === true,
+      });
+    } catch (error) {
+      sendError(res, error);
+    }
+  }
+);
+
+// The per-task Auto Review master switch; null clears back to off.
+router.put(
+  '/tasks/:id/approvals',
+  async (
+    req: AuthenticatedRequest,
+    res: Response<ApiResponse<{ approvalsEnabled: boolean }>>
+  ): Promise<void> => {
+    try {
+      const taskId = readTaskId(req);
+      const userId = requireUserId(req);
+      const raw = req.body?.enabled;
+      if (raw !== true && raw !== false && raw !== null) {
+        throw new WorkRouteError(
+          'Field "enabled" must be true, false, or null.',
+          400
+        );
+      }
+      await workTaskService.setTaskApprovals(taskId, userId, raw);
+      sendSuccess(res, { approvalsEnabled: raw === true });
+    } catch (error) {
+      sendError(res, error);
+    }
+  }
+);
+
+// Decide a pending approval: allow once, allow always, or deny. The waiting
+// run polls the decision row, so this works from any replica.
+router.post(
+  '/tasks/:id/approvals/:approvalId',
+  async (
+    req: AuthenticatedRequest,
+    res: Response<ApiResponse>
+  ): Promise<void> => {
+    try {
+      const taskId = readTaskId(req);
+      const userId = requireUserId(req);
+      await workTaskService.requireTaskRecord(taskId, userId);
+      if (typeof req.body?.approve !== 'boolean') {
+        throw new WorkRouteError('Field "approve" must be a boolean.', 400);
+      }
+      const scope = req.body?.scope === 'always' ? 'always' : 'once';
+      const decided = await workApprovalService.decide(
+        taskId,
+        String(req.params.approvalId || ''),
+        userId,
+        { approve: req.body.approve === true, scope }
+      );
+      if (!decided) {
+        throw new WorkRouteError(
+          'This approval was already decided or has expired.',
+          409
+        );
+      }
+      sendSuccess(res, decided);
+    } catch (error) {
+      sendError(res, error);
+    }
+  }
+);
+
+// Remove an Always-allow rule from the task's Auto Review list.
+router.delete(
+  '/tasks/:id/approval-rules/:ruleId',
+  async (
+    req: AuthenticatedRequest,
+    res: Response<ApiResponse<{ deleted: true }>>
+  ): Promise<void> => {
+    try {
+      const taskId = readTaskId(req);
+      const userId = requireUserId(req);
+      await workTaskService.requireTaskRecord(taskId, userId);
+      const deleted = await workApprovalService.deleteRule(
+        taskId,
+        String(req.params.ruleId || ''),
+        userId
+      );
+      if (!deleted) {
+        throw new WorkRouteError('This approval rule no longer exists.', 404);
+      }
+      sendSuccess(res, { deleted: true });
     } catch (error) {
       sendError(res, error);
     }

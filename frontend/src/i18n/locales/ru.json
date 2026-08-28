@@ -1728,7 +1728,8 @@
       "guiEnabled": "Work Computer (GUI + браузер)",
       "takeoverEnabled": "Разрешить перехват управления экраном",
       "computerPreset": "Work Computer",
-      "computerPresetHint": "Для Work Computer нужен GUI-образ: соберите его из deploy/work-computer в репозитории и пометьте libre-work-computer:latest."
+      "computerPresetHint": "Для Work Computer нужен GUI-образ: соберите его из deploy/work-computer в репозитории и пометьте libre-work-computer:latest.",
+      "approvalsRequired": "Требовать одобрение для действий, изменяющих данные"
     },
     "modelAccess": {
       "title": "Загрузка моделей",
@@ -2760,7 +2761,22 @@
       "skills": "Обученные навыки",
       "noSkills": "Пока ничему не обучено. Используйте Teach на вкладке «Экран», чтобы один раз показать процедуру; она станет воспроизводимым навыком.",
       "skillToggleFailed": "Не удалось обновить навык.",
-      "unread": "Новая активность"
+      "unread": "Новая активность",
+      "approvals": "Автопроверка",
+      "approvalsHint": "Когда включено, команды, удаление и перемещение файлов, а также действия на компьютере ставятся на паузу до вашего одобрения.",
+      "approvalsPolicyForced": "Политика Work этого агента требует одобрения для действий, изменяющих данные.",
+      "approvalsToggleFailed": "Не удалось обновить настройки одобрения.",
+      "approvalRuleLine": "Всегда разрешено",
+      "approvalRuleDelete": "Удалить правило",
+      "approvalRuleDeleteFailed": "Не удалось удалить правило."
+    },
+    "approval": {
+      "title": "Нужно одобрение",
+      "description": "Агент хочет выполнить {{tool}}. Это действие может изменить данные или затронуть что-то за пределами разговора.",
+      "allowOnce": "Разрешить один раз",
+      "allowAlways": "Разрешать всегда",
+      "deny": "Отклонить",
+      "failed": "Не удалось отправить решение."
     }
   },
   "personaBackground": {

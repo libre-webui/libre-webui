@@ -1728,7 +1728,8 @@
       "guiEnabled": "Work Computer (GUI + browser)",
       "takeoverEnabled": "Allow screen takeover",
       "computerPreset": "Work Computer",
-      "computerPresetHint": "The Work Computer needs the GUI image: build it from deploy/work-computer in the repository and tag it libre-work-computer:latest."
+      "computerPresetHint": "The Work Computer needs the GUI image: build it from deploy/work-computer in the repository and tag it libre-work-computer:latest.",
+      "approvalsRequired": "Require approval for side-effecting actions"
     },
     "modelAccess": {
       "title": "Model downloads",
@@ -2760,7 +2761,22 @@
       "skills": "Taught skills",
       "noSkills": "Nothing taught yet. Use Teach on the Screen tab to demonstrate a procedure once; it becomes a replayable skill.",
       "skillToggleFailed": "Could not update the skill.",
-      "unread": "New activity"
+      "unread": "New activity",
+      "approvals": "Auto Review",
+      "approvalsHint": "When on, commands, file deletions and moves, and computer actions pause until you approve them.",
+      "approvalsPolicyForced": "This agent’s Work policy requires approval for side-effecting actions.",
+      "approvalsToggleFailed": "Could not update approvals.",
+      "approvalRuleLine": "Always allowed",
+      "approvalRuleDelete": "Remove rule",
+      "approvalRuleDeleteFailed": "Could not remove the rule."
+    },
+    "approval": {
+      "title": "Approval needed",
+      "description": "The agent wants to run {{tool}}. This action can change data or act outside the conversation.",
+      "allowOnce": "Allow once",
+      "allowAlways": "Always allow",
+      "deny": "Deny",
+      "failed": "Could not send the decision."
     }
   },
   "personaBackground": {

@@ -12,6 +12,9 @@ import {
   type CreateWorkRunBundle,
   type CreateWorkTaskBundle,
   type WorkAdmissionLimits,
+  type WorkApprovalRow,
+  type WorkApprovalRuleRow,
+  type WorkApprovalScope,
   type WorkMessageRow,
   type WorkPersistenceRepository,
   type WorkPolicyRow,
@@ -117,8 +120,8 @@ export class SQLiteWorkPersistence implements WorkPersistenceRepository {
              network_enabled, volume_name, container_name, host_path, policy_id,
              preview_url, preview_status, preview_upstream_host,
              preview_upstream_port, persona_id, status_blurb, is_agent,
-             last_seen_at, created_at, updated_at
-           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+             last_seen_at, approvals_enabled, created_at, updated_at
+           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
           )
           .run(
             input.task.id,
@@ -141,6 +144,7 @@ export class SQLiteWorkPersistence implements WorkPersistenceRepository {
             input.task.status_blurb,
             input.task.is_agent,
             input.task.last_seen_at,
+            input.task.approvals_enabled,
             input.task.created_at,
             input.task.updated_at
           );
@@ -496,6 +500,126 @@ export class SQLiteWorkPersistence implements WorkPersistenceRepository {
       .run(seenAt, taskId, userId, seenAt);
   }
 
+  async setTaskApprovals(
+    taskId: string,
+    userId: string,
+    enabled: number | null,
+    now: number
+  ): Promise<boolean> {
+    return (
+      this.database
+        .prepare(
+          `UPDATE work_tasks SET approvals_enabled = ?, updated_at = ?
+            WHERE id = ? AND user_id = ?`
+        )
+        .run(enabled, now, taskId, userId).changes === 1
+    );
+  }
+
+  async insertApproval(row: WorkApprovalRow): Promise<void> {
+    this.database
+      .prepare(
+        `INSERT INTO work_approvals (
+           id, task_id, run_id, user_id, tool_call_id, tool_name, summary,
+           status, scope, created_at, resolved_at, expires_at
+         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      )
+      .run(
+        row.id,
+        row.task_id,
+        row.run_id,
+        row.user_id,
+        row.tool_call_id,
+        row.tool_name,
+        row.summary,
+        row.status,
+        row.scope,
+        row.created_at,
+        row.resolved_at,
+        row.expires_at
+      );
+  }
+
+  async findApproval(
+    approvalId: string,
+    taskId: string
+  ): Promise<WorkApprovalRow | undefined> {
+    return this.database
+      .prepare('SELECT * FROM work_approvals WHERE id = ? AND task_id = ?')
+      .get(approvalId, taskId) as WorkApprovalRow | undefined;
+  }
+
+  async resolvePendingApproval(
+    approvalId: string,
+    taskId: string,
+    status: 'approved' | 'denied',
+    scope: WorkApprovalScope,
+    resolvedAt: number
+  ): Promise<WorkApprovalRow | undefined> {
+    const changed =
+      this.database
+        .prepare(
+          `UPDATE work_approvals SET status = ?, scope = ?, resolved_at = ?
+            WHERE id = ? AND task_id = ? AND status = 'pending'`
+        )
+        .run(status, scope, resolvedAt, approvalId, taskId).changes === 1;
+    if (!changed) return undefined;
+    return this.findApproval(approvalId, taskId);
+  }
+
+  async expirePendingApprovals(now: number): Promise<void> {
+    this.database
+      .prepare(
+        `UPDATE work_approvals SET status = 'expired', resolved_at = ?
+          WHERE status = 'pending' AND expires_at <= ?`
+      )
+      .run(now, now);
+  }
+
+  async listPendingApprovals(taskId: string): Promise<WorkApprovalRow[]> {
+    return this.database
+      .prepare(
+        `SELECT * FROM work_approvals
+          WHERE task_id = ? AND status = 'pending'
+          ORDER BY created_at ASC`
+      )
+      .all(taskId) as WorkApprovalRow[];
+  }
+
+  async insertApprovalRule(row: WorkApprovalRuleRow): Promise<void> {
+    this.database
+      .prepare(
+        `INSERT INTO work_approval_rules (
+           id, task_id, user_id, tool_name, pattern, created_at
+         ) VALUES (?, ?, ?, ?, ?, ?)`
+      )
+      .run(
+        row.id,
+        row.task_id,
+        row.user_id,
+        row.tool_name,
+        row.pattern,
+        row.created_at
+      );
+  }
+
+  async listApprovalRules(taskId: string): Promise<WorkApprovalRuleRow[]> {
+    return this.database
+      .prepare(
+        `SELECT * FROM work_approval_rules
+          WHERE task_id = ? ORDER BY created_at ASC`
+      )
+      .all(taskId) as WorkApprovalRuleRow[];
+  }
+
+  async deleteApprovalRule(ruleId: string, taskId: string): Promise<boolean> {
+    return (
+      this.database
+        .prepare('DELETE FROM work_approval_rules WHERE id = ? AND task_id = ?')
+        .run(ruleId, taskId).changes === 1
+    );
+  }
+
   async updatePreview(
     taskId: string,
     status: WorkPreviewStatus,
@@ -597,8 +721,8 @@ export class SQLiteWorkPersistence implements WorkPersistenceRepository {
           `INSERT INTO work_policies (
              id, name, image, memory_limit, cpu_limit, pids_limit,
              network_default, workspace_size, idle_timeout_ms, gui_enabled,
-             takeover_enabled, created_at, updated_at
-           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+             takeover_enabled, approvals_required, created_at, updated_at
+           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
         )
         .run(...this.policyValues(row));
     } catch (error) {
@@ -617,7 +741,7 @@ export class SQLiteWorkPersistence implements WorkPersistenceRepository {
             `UPDATE work_policies SET name = ?, image = ?, memory_limit = ?,
                cpu_limit = ?, pids_limit = ?, network_default = ?,
                workspace_size = ?, idle_timeout_ms = ?, gui_enabled = ?,
-               takeover_enabled = ?, updated_at = ?
+               takeover_enabled = ?, approvals_required = ?, updated_at = ?
              WHERE id = ?`
           )
           .run(
@@ -631,6 +755,7 @@ export class SQLiteWorkPersistence implements WorkPersistenceRepository {
             row.idle_timeout_ms,
             row.gui_enabled,
             row.takeover_enabled,
+            row.approvals_required,
             row.updated_at,
             row.id
           ).changes === 1
@@ -806,6 +931,7 @@ export class SQLiteWorkPersistence implements WorkPersistenceRepository {
       row.idle_timeout_ms,
       row.gui_enabled,
       row.takeover_enabled,
+      row.approvals_required,
       row.created_at,
       row.updated_at,
     ];

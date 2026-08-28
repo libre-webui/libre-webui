@@ -44,10 +44,24 @@ export type WorkRunEventType =
   | 'assistant_delta'
   | 'tool_call'
   | 'tool_result'
+  | 'approval'
   | 'usage'
   | 'skill_loaded'
   | 'error'
   | 'done';
+
+export type WorkApprovalDecisionStatus =
+  'pending' | 'approved' | 'denied' | 'expired';
+
+/** An approval the live run is blocked on (or just resolved). */
+export interface WorkLiveApproval {
+  approvalId: string;
+  toolCallId: string;
+  name: string;
+  summary?: Record<string, unknown>;
+  status: WorkApprovalDecisionStatus;
+  expiresAt?: number;
+}
 
 export type WorkRunConnectionState =
   'idle' | 'connecting' | 'connected' | 'reconnecting' | 'closed' | 'error';
@@ -124,6 +138,8 @@ export interface WorkLiveRun {
   finishedAt?: number;
   error?: string;
   terminal: boolean;
+  /** Approval the run is currently blocked on, when one is pending. */
+  pendingApproval?: WorkLiveApproval;
 }
 
 export interface WorkModelSelection {
@@ -265,6 +281,8 @@ export interface WorkTaskSummary {
   isAgent?: boolean;
   /** When the owner last opened this task; absent = never recorded. */
   lastSeenAt?: number | null;
+  /** Per-task opt-in to action approvals; absent = off (policy may force). */
+  approvalsEnabled?: boolean | null;
 }
 
 export interface WorkTask extends WorkTaskSummary {
@@ -353,6 +371,7 @@ export interface WorkPolicy {
   idleTimeoutMs?: number;
   guiEnabled?: boolean;
   takeoverEnabled?: boolean;
+  approvalsRequired?: boolean;
   createdAt: number;
   updatedAt: number;
 }
@@ -376,6 +395,29 @@ export interface WorkPolicyInput {
   idleTimeoutMs?: number | null;
   guiEnabled?: boolean | null;
   takeoverEnabled?: boolean | null;
+  approvalsRequired?: boolean | null;
+}
+
+/** A pending approval as returned by the task approvals endpoint. */
+export interface WorkApprovalPending extends WorkLiveApproval {
+  taskId: string;
+  runId: string;
+  createdAt: number;
+}
+
+export interface WorkApprovalRule {
+  id: string;
+  taskId: string;
+  toolName: string;
+  pattern?: string;
+  createdAt: number;
+}
+
+export interface WorkApprovalsState {
+  pending: WorkApprovalPending[];
+  rules: WorkApprovalRule[];
+  approvalsEnabled: boolean;
+  policyRequired: boolean;
 }
 
 export interface StartWorkRunRequest {

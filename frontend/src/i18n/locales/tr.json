@@ -1728,7 +1728,8 @@
       "guiEnabled": "Work Computer (GUI + tarayıcı)",
       "takeoverEnabled": "Ekranı devralmaya izin ver",
       "computerPreset": "Work Computer",
-      "computerPresetHint": "Work Computer, GUI imajını gerektirir: depodaki deploy/work-computer klasöründen derleyin ve libre-work-computer:latest olarak etiketleyin."
+      "computerPresetHint": "Work Computer, GUI imajını gerektirir: depodaki deploy/work-computer klasöründen derleyin ve libre-work-computer:latest olarak etiketleyin.",
+      "approvalsRequired": "Yan etkili eylemler için onay iste"
     },
     "modelAccess": {
       "title": "Model indirmeleri",
@@ -2760,7 +2761,22 @@
       "skills": "Öğretilen beceriler",
       "noSkills": "Henüz bir şey öğretilmedi. Ekran sekmesindeki Teach ile bir prosedürü bir kez gösterin; yeniden oynatılabilir bir beceri olur.",
       "skillToggleFailed": "Beceri güncellenemedi.",
-      "unread": "Yeni etkinlik"
+      "unread": "Yeni etkinlik",
+      "approvals": "Otomatik İnceleme",
+      "approvalsHint": "Açıkken komutlar, dosya silme ve taşıma işlemleri ile bilgisayar eylemleri siz onaylayana kadar duraklatılır.",
+      "approvalsPolicyForced": "Bu ajanın Work ilkesi, yan etkili eylemler için onay gerektiriyor.",
+      "approvalsToggleFailed": "Onaylar güncellenemedi.",
+      "approvalRuleLine": "Her zaman izinli",
+      "approvalRuleDelete": "Kuralı kaldır",
+      "approvalRuleDeleteFailed": "Kural kaldırılamadı."
+    },
+    "approval": {
+      "title": "Onay gerekiyor",
+      "description": "Ajan {{tool}} aracını çalıştırmak istiyor. Bu eylem verileri değiştirebilir veya sohbetin dışında işlem yapabilir.",
+      "allowOnce": "Bir kez izin ver",
+      "allowAlways": "Her zaman izin ver",
+      "deny": "Reddet",
+      "failed": "Karar gönderilemedi."
     }
   },
   "personaBackground": {

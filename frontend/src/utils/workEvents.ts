@@ -16,6 +16,7 @@
  */
 
 import type {
+  WorkLiveApproval,
   WorkLiveRun,
   WorkLiveRunPhase,
   WorkLiveSegment,
@@ -388,6 +389,34 @@ const applySnapshot = (
       firstNumber(live, 'finishedAt', 'finished_at') ?? current.finishedAt,
     error: firstString(live, 'error', 'message') ?? current.error,
     terminal,
+    pendingApproval: terminal
+      ? undefined
+      : asRecord(live.pendingApproval ?? live.pending_approval)
+        ? approvalFrom(
+            asRecord(live.pendingApproval ?? live.pending_approval) ?? {}
+          )
+        : current.pendingApproval,
+  };
+};
+
+const approvalFrom = (
+  data: Record<string, unknown>
+): WorkLiveApproval | undefined => {
+  const approvalId = firstString(data, 'approvalId', 'approval_id');
+  const toolCallId = firstString(data, 'toolCallId', 'tool_call_id');
+  const name = firstString(data, 'name', 'toolName', 'tool_name');
+  if (!approvalId || !toolCallId || !name) return undefined;
+  const status = firstString(data, 'status');
+  return {
+    approvalId,
+    toolCallId,
+    name,
+    summary: asRecord(data.summary),
+    status:
+      status === 'approved' || status === 'denied' || status === 'expired'
+        ? status
+        : 'pending',
+    expiresAt: firstNumber(data, 'expiresAt', 'expires_at'),
   };
 };
 
@@ -502,7 +531,23 @@ export const applyWorkRunEvent = (
           event.timestamp,
         durationMs: firstNumber(event.data, 'durationMs', 'duration_ms'),
       }),
+      // A result for the gated call clears its approval card even when the
+      // resolution event was lost (crash-reconciled runs).
+      pendingApproval:
+        next.pendingApproval?.toolCallId === result.id
+          ? undefined
+          : next.pendingApproval,
     };
+  } else if (event.type === 'approval') {
+    const approval = approvalFrom(event.data);
+    if (approval) {
+      next =
+        approval.status === 'pending'
+          ? { ...next, pendingApproval: approval }
+          : next.pendingApproval?.approvalId === approval.approvalId
+            ? { ...next, pendingApproval: undefined }
+            : next;
+    }
   } else if (event.type === 'usage') {
     next = { ...next, usage: usageFrom(event.data, next.usage) };
   } else if (event.type === 'skill_loaded') {
@@ -523,6 +568,7 @@ export const applyWorkRunEvent = (
       finishedAt:
         firstNumber(event.data, 'finishedAt', 'finished_at') || event.timestamp,
       terminal: event.data.terminal !== false,
+      pendingApproval: undefined,
     };
   } else if (event.type === 'done') {
     const phase = phaseFrom(
@@ -539,6 +585,7 @@ export const applyWorkRunEvent = (
       finishedAt:
         firstNumber(event.data, 'finishedAt', 'finished_at') || event.timestamp,
       terminal: true,
+      pendingApproval: undefined,
     };
   }
 

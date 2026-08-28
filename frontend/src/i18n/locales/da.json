@@ -1728,7 +1728,8 @@
       "guiEnabled": "Work Computer (GUI + browser)",
       "takeoverEnabled": "Tillad overtagelse af skærmen",
       "computerPreset": "Work Computer",
-      "computerPresetHint": "Work Computer kræver GUI-imaget: byg det fra deploy/work-computer i repositoriet og tag det libre-work-computer:latest."
+      "computerPresetHint": "Work Computer kræver GUI-imaget: byg det fra deploy/work-computer i repositoriet og tag det libre-work-computer:latest.",
+      "approvalsRequired": "Kræv godkendelse af handlinger med sideeffekter"
     },
     "modelAccess": {
       "title": "Modeldownloads",
@@ -2760,7 +2761,22 @@
       "skills": "Lærte færdigheder",
       "noSkills": "Intet lært endnu. Brug Teach på Skærm-fanen for at demonstrere en procedure én gang; den bliver en genafspillelig færdighed.",
       "skillToggleFailed": "Færdigheden kunne ikke opdateres.",
-      "unread": "Ny aktivitet"
+      "unread": "Ny aktivitet",
+      "approvals": "Automatisk gennemgang",
+      "approvalsHint": "Når den er slået til, sættes kommandoer, sletning og flytning af filer samt handlinger på Work Computer på pause, indtil du godkender dem.",
+      "approvalsPolicyForced": "Denne agents Work-politik kræver godkendelse af handlinger med sideeffekter.",
+      "approvalsToggleFailed": "Godkendelserne kunne ikke opdateres.",
+      "approvalRuleLine": "Altid tilladt",
+      "approvalRuleDelete": "Fjern regel",
+      "approvalRuleDeleteFailed": "Reglen kunne ikke fjernes."
+    },
+    "approval": {
+      "title": "Godkendelse påkrævet",
+      "description": "Agenten vil køre {{tool}}. Handlingen kan ændre data eller få virkning uden for denne samtale.",
+      "allowOnce": "Tillad én gang",
+      "allowAlways": "Tillad altid",
+      "deny": "Afvis",
+      "failed": "Beslutningen kunne ikke sendes."
     }
   },
   "personaBackground": {

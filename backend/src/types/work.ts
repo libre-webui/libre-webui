@@ -110,6 +110,8 @@ export interface WorkTaskDetail {
   isAgent: boolean;
   /** When the owner last opened this task; absent = never recorded. */
   lastSeenAt?: number;
+  /** Per-task opt-in to action approvals; absent = off (policy may force). */
+  approvalsEnabled?: boolean;
 }
 
 export type WorkLiveEventType =
@@ -119,10 +121,24 @@ export type WorkLiveEventType =
   | 'assistant_delta'
   | 'tool_call'
   | 'tool_result'
+  | 'approval'
   | 'usage'
   | 'skill_loaded'
   | 'error'
   | 'done';
+
+export type WorkApprovalDecisionStatus =
+  'pending' | 'approved' | 'denied' | 'expired';
+
+/** A pending (or just-resolved) approval as seen by the live run stream. */
+export interface WorkLiveApproval {
+  approvalId: string;
+  toolCallId: string;
+  name: string;
+  summary?: Record<string, unknown>;
+  status: WorkApprovalDecisionStatus;
+  expiresAt?: number;
+}
 
 export interface WorkLiveRunSnapshotTool {
   id: string;
@@ -158,6 +174,8 @@ export interface WorkLiveRunSnapshot {
   terminal: boolean;
   error?: string;
   budgetReason?: string;
+  /** Approval the run is currently blocked on, when one is pending. */
+  pendingApproval?: WorkLiveApproval;
 }
 
 export interface WorkLiveEventDataMap {
@@ -199,6 +217,7 @@ export interface WorkLiveEventDataMap {
     outcomeUnknown?: boolean;
     message?: WorkMessage;
   };
+  approval: WorkLiveApproval;
   usage: {
     inputTokens?: number;
     outputTokens?: number;
@@ -372,6 +391,8 @@ export interface WorkTaskRecord {
   isAgent: boolean;
   /** When the owner last opened this task; absent = never recorded. */
   lastSeenAt?: number;
+  /** Per-task opt-in to action approvals; absent = off (policy may force). */
+  approvalsEnabled?: boolean;
   createdAt: number;
   updatedAt: number;
 }

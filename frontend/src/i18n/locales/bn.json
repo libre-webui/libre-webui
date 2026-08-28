@@ -1728,7 +1728,8 @@
       "guiEnabled": "Work Computer (GUI + ব্রাউজার)",
       "takeoverEnabled": "স্ক্রিন টেকওভারের অনুমতি দিন",
       "computerPreset": "Work Computer",
-      "computerPresetHint": "Work Computer-এর জন্য GUI ইমেজ দরকার: রিপোজিটরির deploy/work-computer থেকে বিল্ড করে libre-work-computer:latest ট্যাগ দিন।"
+      "computerPresetHint": "Work Computer-এর জন্য GUI ইমেজ দরকার: রিপোজিটরির deploy/work-computer থেকে বিল্ড করে libre-work-computer:latest ট্যাগ দিন।",
+      "approvalsRequired": "প্রভাব ফেলে এমন কাজের জন্য অনুমোদন বাধ্যতামূলক করুন"
     },
     "modelAccess": {
       "title": "মডেল ডাউনলোড",
@@ -2760,7 +2761,22 @@
       "skills": "শেখানো দক্ষতা",
       "noSkills": "এখনও কিছু শেখানো হয়নি। স্ক্রিন ট্যাবে Teach ব্যবহার করে একবার একটি পদ্ধতি দেখান; এটি পুনরায় চালানো যায় এমন দক্ষতা হয়ে যায়।",
       "skillToggleFailed": "দক্ষতা আপডেট করা যায়নি।",
-      "unread": "নতুন কার্যকলাপ"
+      "unread": "নতুন কার্যকলাপ",
+      "approvals": "অটো রিভিউ",
+      "approvalsHint": "চালু থাকলে কমান্ড, ফাইল মুছে ফেলা ও সরানো এবং Work Computer-এর অ্যাকশন আপনার অনুমোদন না পাওয়া পর্যন্ত থেমে থাকে।",
+      "approvalsPolicyForced": "এই এজেন্টের Work নীতি অনুযায়ী প্রভাব ফেলে এমন কাজের জন্য অনুমোদন বাধ্যতামূলক।",
+      "approvalsToggleFailed": "অনুমোদনের সেটিং আপডেট করা যায়নি।",
+      "approvalRuleLine": "সবসময় অনুমোদিত",
+      "approvalRuleDelete": "নিয়ম সরান",
+      "approvalRuleDeleteFailed": "নিয়মটি সরানো যায়নি।"
+    },
+    "approval": {
+      "title": "অনুমোদন দরকার",
+      "description": "এজেন্ট {{tool}} চালাতে চায়। এই কাজটি তথ্য বদলে দিতে পারে বা কথোপকথনের বাইরে প্রভাব ফেলতে পারে।",
+      "allowOnce": "একবার অনুমতি দিন",
+      "allowAlways": "সবসময় অনুমতি দিন",
+      "deny": "প্রত্যাখ্যান করুন",
+      "failed": "সিদ্ধান্তটি পাঠানো যায়নি।"
     }
   },
   "personaBackground": {

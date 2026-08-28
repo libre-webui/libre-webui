@@ -1728,7 +1728,8 @@
       "guiEnabled": "Work Computer (GUI + trình duyệt)",
       "takeoverEnabled": "Cho phép tiếp quản màn hình",
       "computerPreset": "Work Computer",
-      "computerPresetHint": "Work Computer cần image GUI: dựng từ deploy/work-computer trong kho mã và gắn thẻ libre-work-computer:latest."
+      "computerPresetHint": "Work Computer cần image GUI: dựng từ deploy/work-computer trong kho mã và gắn thẻ libre-work-computer:latest.",
+      "approvalsRequired": "Yêu cầu phê duyệt cho các hành động có tác động ra bên ngoài"
     },
     "modelAccess": {
       "title": "Tải mô hình",
@@ -2760,7 +2761,22 @@
       "skills": "Kỹ năng đã dạy",
       "noSkills": "Chưa dạy gì. Dùng Teach trong thẻ Màn hình để trình diễn một quy trình một lần; nó trở thành kỹ năng có thể phát lại.",
       "skillToggleFailed": "Không thể cập nhật kỹ năng.",
-      "unread": "Hoạt động mới"
+      "unread": "Hoạt động mới",
+      "approvals": "Tự động duyệt",
+      "approvalsHint": "Khi bật, các lệnh, thao tác xóa và di chuyển tệp, cùng hành động trên máy tính sẽ tạm dừng cho đến khi bạn phê duyệt.",
+      "approvalsPolicyForced": "Chính sách Work của tác nhân này yêu cầu phê duyệt cho các hành động có tác động ra bên ngoài.",
+      "approvalsToggleFailed": "Không thể cập nhật phê duyệt.",
+      "approvalRuleLine": "Luôn được phép",
+      "approvalRuleDelete": "Xóa quy tắc",
+      "approvalRuleDeleteFailed": "Không thể xóa quy tắc."
+    },
+    "approval": {
+      "title": "Cần phê duyệt",
+      "description": "Tác nhân muốn chạy {{tool}}. Hành động này có thể thay đổi dữ liệu hoặc tác động bên ngoài cuộc trò chuyện.",
+      "allowOnce": "Cho phép một lần",
+      "allowAlways": "Luôn cho phép",
+      "deny": "Từ chối",
+      "failed": "Không thể gửi quyết định."
     }
   },
   "personaBackground": {

@@ -15,6 +15,9 @@ import {
   type CreateWorkRunBundle,
   type CreateWorkTaskBundle,
   type WorkAdmissionLimits,
+  type WorkApprovalRow,
+  type WorkApprovalRuleRow,
+  type WorkApprovalScope,
   type WorkMessageRow,
   type WorkPersistenceRepository,
   type WorkPolicyRow,
@@ -109,6 +112,26 @@ const messageRow = (row: StoredMessageRow): WorkMessageRow => {
     created_at: integer(row.created_at, 'message created time'),
   };
 };
+type StoredApprovalRow = QueryResultRow &
+  Omit<WorkApprovalRow, 'created_at' | 'resolved_at' | 'expires_at'> & {
+    created_at: number | string;
+    resolved_at: number | string | null;
+    expires_at: number | string;
+  };
+type StoredApprovalRuleRow = QueryResultRow &
+  Omit<WorkApprovalRuleRow, 'created_at'> & {
+    created_at: number | string;
+  };
+const approvalRow = (row: StoredApprovalRow): WorkApprovalRow => ({
+  ...row,
+  created_at: integer(row.created_at, 'approval created time'),
+  resolved_at: nullableInteger(row.resolved_at, 'approval resolved time'),
+  expires_at: integer(row.expires_at, 'approval expiry time'),
+});
+const approvalRuleRow = (row: StoredApprovalRuleRow): WorkApprovalRuleRow => ({
+  ...row,
+  created_at: integer(row.created_at, 'approval rule created time'),
+});
 const policyRow = (row: StoredPolicyRow): WorkPolicyRow => ({
   ...row,
   pids_limit: nullableInteger(row.pids_limit, 'policy pids limit'),
@@ -242,8 +265,8 @@ export class PostgresWorkPersistence implements WorkPersistenceRepository {
              network_enabled, volume_name, container_name, host_path, policy_id,
              preview_url, preview_status, preview_upstream_host,
              preview_upstream_port, persona_id, status_blurb, is_agent,
-             last_seen_at, created_at, updated_at
-           ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22)`,
+             last_seen_at, approvals_enabled, created_at, updated_at
+           ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23)`,
           this.taskValues(input.task)
         );
         await this.insertRun(client, input.run);
@@ -615,6 +638,121 @@ export class PostgresWorkPersistence implements WorkPersistenceRepository {
     );
   }
 
+  async setTaskApprovals(
+    taskId: string,
+    userId: string,
+    enabled: number | null,
+    now: number
+  ): Promise<boolean> {
+    const result = await this.database.query(
+      `UPDATE work_tasks SET approvals_enabled = $1, updated_at = $2
+        WHERE id = $3 AND user_id = $4`,
+      [enabled, now, taskId, userId]
+    );
+    return result.rowCount === 1;
+  }
+
+  async insertApproval(row: WorkApprovalRow): Promise<void> {
+    await this.database.query(
+      `INSERT INTO work_approvals (
+         id, task_id, run_id, user_id, tool_call_id, tool_name, summary,
+         status, scope, created_at, resolved_at, expires_at
+       ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)`,
+      [
+        row.id,
+        row.task_id,
+        row.run_id,
+        row.user_id,
+        row.tool_call_id,
+        row.tool_name,
+        row.summary,
+        row.status,
+        row.scope,
+        row.created_at,
+        row.resolved_at,
+        row.expires_at,
+      ]
+    );
+  }
+
+  async findApproval(
+    approvalId: string,
+    taskId: string
+  ): Promise<WorkApprovalRow | undefined> {
+    const result = await this.database.query<StoredApprovalRow>(
+      'SELECT * FROM work_approvals WHERE id = $1 AND task_id = $2',
+      [approvalId, taskId]
+    );
+    return result.rows[0] ? approvalRow(result.rows[0]) : undefined;
+  }
+
+  async resolvePendingApproval(
+    approvalId: string,
+    taskId: string,
+    status: 'approved' | 'denied',
+    scope: WorkApprovalScope,
+    resolvedAt: number
+  ): Promise<WorkApprovalRow | undefined> {
+    const result = await this.database.query<StoredApprovalRow>(
+      `UPDATE work_approvals SET status = $1, scope = $2, resolved_at = $3
+        WHERE id = $4 AND task_id = $5 AND status = 'pending'
+        RETURNING *`,
+      [status, scope, resolvedAt, approvalId, taskId]
+    );
+    return result.rows[0] ? approvalRow(result.rows[0]) : undefined;
+  }
+
+  async expirePendingApprovals(now: number): Promise<void> {
+    await this.database.query(
+      `UPDATE work_approvals SET status = 'expired', resolved_at = $1
+        WHERE status = 'pending' AND expires_at <= $1`,
+      [now]
+    );
+  }
+
+  async listPendingApprovals(taskId: string): Promise<WorkApprovalRow[]> {
+    const result = await this.database.query<StoredApprovalRow>(
+      `SELECT * FROM work_approvals
+        WHERE task_id = $1 AND status = 'pending'
+        ORDER BY created_at ASC`,
+      [taskId]
+    );
+    return result.rows.map(approvalRow);
+  }
+
+  async insertApprovalRule(row: WorkApprovalRuleRow): Promise<void> {
+    await this.database.query(
+      `INSERT INTO work_approval_rules (
+         id, task_id, user_id, tool_name, pattern, created_at
+       ) VALUES ($1,$2,$3,$4,$5,$6)`,
+      [
+        row.id,
+        row.task_id,
+        row.user_id,
+        row.tool_name,
+        row.pattern,
+        row.created_at,
+      ]
+    );
+  }
+
+  async listApprovalRules(taskId: string): Promise<WorkApprovalRuleRow[]> {
+    const result = await this.database.query<StoredApprovalRuleRow>(
+      `SELECT * FROM work_approval_rules
+        WHERE task_id = $1 ORDER BY created_at ASC`,
+      [taskId]
+    );
+    return result.rows.map(approvalRuleRow);
+  }
+
+  async deleteApprovalRule(ruleId: string, taskId: string): Promise<boolean> {
+    const result = await this.database.query(
+      'DELETE FROM work_approval_rules WHERE id = $1 AND task_id = $2',
+      [ruleId, taskId]
+    );
+    return result.rowCount === 1;
+  }
+
   async updatePreview(
     taskId: string,
     status: WorkPreviewStatus,
@@ -715,8 +853,9 @@ export class PostgresWorkPersistence implements WorkPersistenceRepository {
       await this.database.query(
         `INSERT INTO work_policies (
            id,name,image,memory_limit,cpu_limit,pids_limit,network_default,
-           workspace_size,idle_timeout_ms,gui_enabled,takeover_enabled,created_at,updated_at)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)`,
+           workspace_size,idle_timeout_ms,gui_enabled,takeover_enabled,
+           approvals_required,created_at,updated_at)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)`,
         this.policyValues(row)
       );
     } catch (error) {
@@ -732,7 +871,8 @@ export class PostgresWorkPersistence implements WorkPersistenceRepository {
       const result = await this.database.query(
         `UPDATE work_policies SET name=$1,image=$2,memory_limit=$3,cpu_limit=$4,
          pids_limit=$5,network_default=$6,workspace_size=$7,idle_timeout_ms=$8,
-         gui_enabled=$9,takeover_enabled=$10,updated_at=$11 WHERE id=$12`,
+         gui_enabled=$9,takeover_enabled=$10,approvals_required=$11,
+         updated_at=$12 WHERE id=$13`,
         [
           row.name,
           row.image,
@@ -744,6 +884,7 @@ export class PostgresWorkPersistence implements WorkPersistenceRepository {
           row.idle_timeout_ms,
           row.gui_enabled,
           row.takeover_enabled,
+          row.approvals_required,
           row.updated_at,
           row.id,
         ]
@@ -939,6 +1080,7 @@ export class PostgresWorkPersistence implements WorkPersistenceRepository {
       row.status_blurb ? replaceWorkTextNul(row.status_blurb) : null,
       row.is_agent ?? null,
       row.last_seen_at ?? null,
+      row.approvals_enabled ?? null,
       row.created_at,
       row.updated_at,
     ];
@@ -957,6 +1099,7 @@ export class PostgresWorkPersistence implements WorkPersistenceRepository {
       row.idle_timeout_ms,
       row.gui_enabled,
       row.takeover_enabled,
+      row.approvals_required,
       row.created_at,
       row.updated_at,
     ];

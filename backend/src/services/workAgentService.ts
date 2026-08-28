@@ -33,6 +33,9 @@ import {
   workToolCallBudget,
 } from './workAgentGuidance.js';
 import workPolicyService from './workPolicyService.js';
+import workApprovalService, {
+  GATED_WORK_TOOLS,
+} from './workApprovalService.js';
 import workRuntimeService, {
   WORK_COMPUTER_ACTION_LIMIT,
   WorkCommandResult,
@@ -890,6 +893,13 @@ export class WorkAgentService {
           providerSelection,
           userId
         );
+      // A5 approvals: whether side-effecting tool calls pause for review.
+      // Resolved once per run — the policy force-flag or the task opt-in;
+      // per-call rules are re-read at gate time so an Always-allow decision
+      // takes effect on the very next call.
+      const approvalsActive =
+        (await workPolicyService.resolve(task.policyId)).approvalsRequired ===
+          true || task.approvalsEnabled === true;
       const messages = await this.contextMessages(
         task,
         roundLimit,
@@ -897,7 +907,8 @@ export class WorkAgentService {
         taughtSkills,
         providerStateScope,
         run,
-        persona
+        persona,
+        approvalsActive
       );
       let totalToolCalls = 0;
       let accumulatedInputTokens = 0;
@@ -1350,14 +1361,36 @@ export class WorkAgentService {
                 'WORK_TOOL_BATCH_NOT_EXECUTED'
               );
             }
-            const result = await this.executeTool(task, call, {
-              signal: controller.signal,
-              computer: computerContext,
-              runId,
-            });
-            toolOutput = result.content;
-            toolImages = result.images;
-            toolMetadata = { ...toolMetadata, ...result.metadata };
+            const approvalVerdict =
+              approvalsActive && GATED_WORK_TOOLS.has(call.function.name)
+                ? await this.awaitToolApproval(
+                    task,
+                    call,
+                    toolCallMetadata,
+                    runId,
+                    userId,
+                    controller.signal,
+                    durableAttemptIdentity
+                  )
+                : 'approved';
+            if (approvalVerdict === 'denied') {
+              toolOutput =
+                'The user denied this action. Do not retry it as-is; adjust your plan or ask the user what to do instead.';
+              toolMetadata = { ...toolMetadata, approval: 'denied' };
+            } else if (approvalVerdict === 'expired') {
+              toolOutput =
+                'This action was not executed: the approval request timed out with no decision from the user.';
+              toolMetadata = { ...toolMetadata, approval: 'expired' };
+            } else {
+              const result = await this.executeTool(task, call, {
+                signal: controller.signal,
+                computer: computerContext,
+                runId,
+              });
+              toolOutput = result.content;
+              toolImages = result.images;
+              toolMetadata = { ...toolMetadata, ...result.metadata };
+            }
           } catch (error) {
             toolOutput =
               error instanceof Error
@@ -1421,6 +1454,12 @@ export class WorkAgentService {
           // text observation, and only the most recent screenshots stay in
           // model context so a long computer session cannot flood tokens.
           retainRecentWorkImages(messages);
+          // An unanswered approval hands the run off instead of burning the
+          // remaining budget on decisions no one is there to make.
+          if (toolMetadata.approval === 'expired') {
+            budgetReason = 'approval-timeout';
+            break roundLoop;
+          }
           if (
             (call.function.name === 'computer_act' ||
               call.function.name === 'computer_observe') &&
@@ -1528,7 +1567,9 @@ export class WorkAgentService {
                     content: `${buildWorkBudgetExhaustionPrompt()}\n${
                       budgetReason === 'computer-stall'
                         ? 'The run was stopped because repeated computer actions kept producing an unchanged screen even after a recovery notice.'
-                        : `The ${budgetReason} budget was reached.`
+                        : budgetReason === 'approval-timeout'
+                          ? 'The run was stopped because an action was still waiting for user approval when the request timed out.'
+                          : `The ${budgetReason} budget was reached.`
                     }`,
                   },
                 ],
@@ -1838,7 +1879,8 @@ export class WorkAgentService {
     taughtSkills: readonly { name: string; instructions: string }[],
     providerStateScope?: string,
     provider: Pick<WorkRun, 'providerType' | 'providerId' | 'model'> = task,
-    persona?: { name: string; instructions?: string }
+    persona?: { name: string; instructions?: string },
+    approvalsActive?: boolean
   ): Promise<OllamaChatMessage[]> {
     const persisted = restorePersistedWorkContext(
       await workTaskService.getRecentModelContextMessages(task.id, 30),
@@ -1853,6 +1895,7 @@ export class WorkAgentService {
           computerAvailable,
           ...(taughtSkills.length > 0 ? { taughtSkills } : {}),
           ...(persona ? { persona } : {}),
+          ...(approvalsActive ? { approvalsActive } : {}),
           previewPort: workRuntimeService.previewPort,
           roundBudget: roundLimit,
           commandTimeoutMs: workRuntimeService.limits.commandTimeoutMs,
@@ -2164,10 +2207,96 @@ export class WorkAgentService {
    * never fails the run. The source key is run-scoped because dedupe is
    * permanent per user until the inbox cap prunes it.
    */
+  /**
+   * The approval gate. Rules are re-read per call so an Always-allow
+   * decision covers the very next matching call; a pending approval rides
+   * the event stream (and the snapshot) so any open view can decide, and
+   * notifies because the user may not be watching. Denial and timeout come
+   * back as verdicts the dispatch loop turns into ordinary tool results —
+   * never silent execution.
+   */
+  private async awaitToolApproval(
+    task: WorkTaskRecord,
+    call: WorkToolCall,
+    summary: Record<string, unknown>,
+    runId: string,
+    userId: string,
+    signal: AbortSignal,
+    durableAttemptIdentity: Parameters<typeof workEventService.publish>[5]
+  ): Promise<'approved' | 'denied' | 'expired'> {
+    if (
+      await workApprovalService.callIsPreapproved(
+        task.id,
+        call.function.name,
+        summary
+      )
+    ) {
+      return 'approved';
+    }
+    const pending = await workApprovalService.createPending({
+      taskId: task.id,
+      runId,
+      userId,
+      toolCallId: call.id,
+      toolName: call.function.name,
+      summary,
+    });
+    await workEventService.publish(
+      task.id,
+      runId,
+      'approval',
+      {
+        approvalId: pending.approvalId,
+        toolCallId: call.id,
+        name: call.function.name,
+        summary: pending.summary,
+        status: 'pending',
+        expiresAt: pending.expiresAt,
+      },
+      `approval:${pending.approvalId}:pending`,
+      durableAttemptIdentity
+    );
+    await this.notifyAgentLifecycle(task, {
+      type: 'work-approval',
+      title: `${task.title} is waiting for your approval`,
+      body: summarizeApprovalBody(call.function.name, summary),
+      sourceKey: `work-approval:${pending.approvalId}`,
+    });
+    const verdict = await workApprovalService.waitForDecision(
+      task.id,
+      pending.approvalId,
+      signal
+    );
+    const status =
+      verdict.status === 'approved'
+        ? 'approved'
+        : verdict.status === 'denied'
+          ? 'denied'
+          : 'expired';
+    await workEventService.publish(
+      task.id,
+      runId,
+      'approval',
+      {
+        approvalId: pending.approvalId,
+        toolCallId: call.id,
+        name: call.function.name,
+        status,
+      },
+      `approval:${pending.approvalId}:resolved`,
+      durableAttemptIdentity
+    );
+    return status;
+  }
+
   private async notifyAgentLifecycle(
     task: WorkTaskRecord,
     input: {
-      type: 'work-run-finished' | 'work-run-attention' | 'work-takeover';
+      type:
+        | 'work-run-finished'
+        | 'work-run-attention'
+        | 'work-takeover'
+        | 'work-approval';
       title: string;
       body?: string | null;
       sourceKey: string;
@@ -2934,6 +3063,38 @@ function validateToolCallArguments(call: WorkToolCall): string | undefined {
 
 function isActiveRunStatus(status: unknown): boolean {
   return status === 'queued' || status === 'preparing' || status === 'running';
+}
+
+/** One-line human description of a gated call for the approval notification. */
+function summarizeApprovalBody(
+  toolName: string,
+  summary: Record<string, unknown>
+): string {
+  switch (toolName) {
+    case 'run_command':
+      return typeof summary.command === 'string'
+        ? `Run: ${summary.command.slice(0, 200)}`
+        : 'Run a command';
+    case 'delete_file':
+      return typeof summary.path === 'string'
+        ? `Delete ${summary.path}`
+        : 'Delete a file';
+    case 'move_file':
+      return typeof summary.from === 'string' && typeof summary.to === 'string'
+        ? `Move ${summary.from} to ${summary.to}`
+        : 'Move a file';
+    case 'computer_act': {
+      const count =
+        typeof summary.actionCount === 'number' ? summary.actionCount : null;
+      return count === 1
+        ? '1 computer action on the screen'
+        : count !== null
+          ? `${count} computer actions on the screen`
+          : 'Computer actions on the screen';
+    }
+    default:
+      return toolName;
+  }
 }
 
 function summarizeToolCall(call: WorkToolCall): Record<string, unknown> {

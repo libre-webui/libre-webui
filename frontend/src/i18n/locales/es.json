@@ -1728,7 +1728,8 @@
       "guiEnabled": "Work Computer (GUI + navegador)",
       "takeoverEnabled": "Permitir tomar el control de la pantalla",
       "computerPreset": "Work Computer",
-      "computerPresetHint": "El Work Computer necesita la imagen GUI: constrúyela desde deploy/work-computer en el repositorio y etiquétala libre-work-computer:latest."
+      "computerPresetHint": "El Work Computer necesita la imagen GUI: constrúyela desde deploy/work-computer en el repositorio y etiquétala libre-work-computer:latest.",
+      "approvalsRequired": "Exigir aprobación para las acciones con efectos secundarios"
     },
     "modelAccess": {
       "title": "Descarga de modelos",
@@ -2760,7 +2761,22 @@
       "skills": "Habilidades enseñadas",
       "noSkills": "Nada enseñado todavía. Usa Teach en la pestaña Pantalla para demostrar un procedimiento una vez; se convierte en una habilidad repetible.",
       "skillToggleFailed": "No se pudo actualizar la habilidad.",
-      "unread": "Actividad nueva"
+      "unread": "Actividad nueva",
+      "approvals": "Revisión automática",
+      "approvalsHint": "Cuando está activa, los comandos, el borrado y el movimiento de archivos y las acciones en el Work Computer se pausan hasta que los apruebes.",
+      "approvalsPolicyForced": "La política de Work de este agente exige aprobación para las acciones con efectos secundarios.",
+      "approvalsToggleFailed": "No se pudieron actualizar las aprobaciones.",
+      "approvalRuleLine": "Permitido siempre",
+      "approvalRuleDelete": "Quitar la regla",
+      "approvalRuleDeleteFailed": "No se pudo quitar la regla."
+    },
+    "approval": {
+      "title": "Se necesita aprobación",
+      "description": "El agente quiere ejecutar {{tool}}. Esta acción puede cambiar datos o actuar fuera de esta conversación.",
+      "allowOnce": "Permitir una vez",
+      "allowAlways": "Permitir siempre",
+      "deny": "Rechazar",
+      "failed": "No se pudo enviar la decisión."
     }
   },
   "personaBackground": {

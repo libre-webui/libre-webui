@@ -154,6 +154,8 @@ export interface ResolvedWorkRuntimePolicy {
   guiEnabled?: boolean;
   /** Human takeover of the screen; defaults to allowed when undefined. */
   takeoverEnabled?: boolean;
+  /** Forces user approval for side-effecting agent actions when true. */
+  approvalsRequired?: boolean;
 }
 
 /** The resolution of "no policy": exactly the global configuration. */

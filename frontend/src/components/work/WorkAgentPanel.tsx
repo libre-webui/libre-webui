@@ -15,16 +15,17 @@
  * limitations under the License.
  */
 
-import { GraduationCap, Pause, Play, Plus } from 'lucide-react';
+import { GraduationCap, Pause, Play, Plus, ShieldCheck, X } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { AutomationModal } from '@/components/automations/AutomationModal';
 import { Switch } from '@/components/ui';
 import type { Automation, Persona } from '@/types';
-import type { WorkTask } from '@/types/work';
+import type { WorkApprovalsState, WorkTask } from '@/types/work';
 import { cn } from '@/utils';
 import { automationsApi, skillsApi } from '@/utils/api';
+import { workApi } from '@/utils/api/workApi';
 import type { Skill } from '@/utils/api/skillsApi';
 import { describeTriggers } from '@/utils/automationSchedule';
 import {
@@ -65,6 +66,8 @@ export function WorkAgentPanel({
   const [routineSaving, setRoutineSaving] = useState(false);
   const [skills, setSkills] = useState<Skill[]>([]);
   const [skillsLoaded, setSkillsLoaded] = useState(false);
+  const [approvals, setApprovals] = useState<WorkApprovalsState | null>(null);
+  const [approvalsLoaded, setApprovalsLoaded] = useState(false);
 
   const loadRoutines = useCallback(async () => {
     try {
@@ -96,6 +99,17 @@ export function WorkAgentPanel({
     }
   }, []);
 
+  const loadApprovals = useCallback(async () => {
+    try {
+      const response = await workApi.getApprovals(task.id);
+      if (response.success && response.data) setApprovals(response.data);
+    } catch {
+      // Same quiet degradation as routines.
+    } finally {
+      setApprovalsLoaded(true);
+    }
+  }, [task.id]);
+
   useEffect(() => {
     if (!active) return;
     // Start shared loaders after the activation commit; their state updates
@@ -103,9 +117,41 @@ export function WorkAgentPanel({
     const timer = window.setTimeout(() => {
       void loadRoutines();
       void loadSkills();
+      void loadApprovals();
     }, 0);
     return () => window.clearTimeout(timer);
-  }, [active, loadRoutines, loadSkills]);
+  }, [active, loadRoutines, loadSkills, loadApprovals]);
+
+  const toggleApprovals = async (enabled: boolean) => {
+    // Optimistic: the switch answers immediately, rolls back on failure.
+    const previous = approvals;
+    setApprovals(current =>
+      current ? { ...current, approvalsEnabled: enabled } : current
+    );
+    try {
+      await workApi.setApprovalsEnabled(task.id, enabled ? true : null);
+    } catch {
+      setApprovals(previous);
+      toast.error(
+        t('work.agent.approvalsToggleFailed', {
+          defaultValue: 'Could not update approvals.',
+        })
+      );
+    }
+  };
+
+  const removeApprovalRule = async (ruleId: string) => {
+    try {
+      await workApi.deleteApprovalRule(task.id, ruleId);
+      await loadApprovals();
+    } catch {
+      toast.error(
+        t('work.agent.approvalRuleDeleteFailed', {
+          defaultValue: 'Could not remove the rule.',
+        })
+      );
+    }
+  };
 
   const toggleRoutine = async (routine: Automation) => {
     setRoutineBusyId(routine.id);
@@ -313,6 +359,74 @@ export function WorkAgentPanel({
                   ) : (
                     <Play className='h-3.5 w-3.5' />
                   )}
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      {/* Auto Review: which side-effecting actions pause for approval. */}
+      <section data-testid='work-agent-approvals'>
+        <div className='mb-2 flex items-center justify-between'>
+          <h4 className={cn(sectionTitle, 'mb-0')}>
+            {t('work.agent.approvals', { defaultValue: 'Auto Review' })}
+          </h4>
+          <Switch
+            checked={
+              approvals?.policyRequired === true ||
+              approvals?.approvalsEnabled === true
+            }
+            disabled={!approvalsLoaded || approvals?.policyRequired === true}
+            onChange={enabled => void toggleApprovals(enabled)}
+          />
+        </div>
+        <p className='text-xs leading-relaxed text-ink-subtle'>
+          {approvals?.policyRequired === true
+            ? t('work.agent.approvalsPolicyForced', {
+                defaultValue:
+                  'This agent’s Work policy requires approval for side-effecting actions.',
+              })
+            : t('work.agent.approvalsHint', {
+                defaultValue:
+                  'When on, commands, file deletions and moves, and computer actions pause until you approve them.',
+              })}
+        </p>
+        {approvals && approvals.rules.length > 0 && (
+          <ul className='mt-2 space-y-1'>
+            {approvals.rules.map(rule => (
+              <li
+                key={rule.id}
+                data-testid='work-agent-approval-rule'
+                className='flex items-center gap-3 rounded-xl border border-line bg-surface px-3 py-2'
+              >
+                <ShieldCheck className='h-4 w-4 shrink-0 text-ink-muted' />
+                <div className='min-w-0 flex-1'>
+                  <p className='truncate text-[13px] leading-5 text-ink'>
+                    <code dir='ltr'>{rule.toolName}</code>
+                    {rule.pattern && (
+                      <>
+                        {' · '}
+                        <code dir='ltr'>{rule.pattern}</code>
+                      </>
+                    )}
+                  </p>
+                  <p className='truncate text-[11px] text-ink-subtle'>
+                    {t('work.agent.approvalRuleLine', {
+                      defaultValue: 'Always allowed',
+                    })}
+                  </p>
+                </div>
+                <button
+                  type='button'
+                  data-testid='work-agent-approval-rule-delete'
+                  onClick={() => void removeApprovalRule(rule.id)}
+                  aria-label={t('work.agent.approvalRuleDelete', {
+                    defaultValue: 'Remove rule',
+                  })}
+                  className='flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-ink-muted transition-colors hover:bg-surface-subtle hover:text-ink'
+                >
+                  <X className='h-3.5 w-3.5' />
                 </button>
               </li>
             ))}

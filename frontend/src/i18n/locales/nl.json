@@ -1728,7 +1728,8 @@
       "guiEnabled": "Work Computer (GUI + browser)",
       "takeoverEnabled": "Overname van het scherm toestaan",
       "computerPreset": "Work Computer",
-      "computerPresetHint": "De Work Computer vereist de GUI-image: bouw die vanuit deploy/work-computer in de repository en tag als libre-work-computer:latest."
+      "computerPresetHint": "De Work Computer vereist de GUI-image: bouw die vanuit deploy/work-computer in de repository en tag als libre-work-computer:latest.",
+      "approvalsRequired": "Goedkeuring vereisen voor acties die gegevens wijzigen"
     },
     "modelAccess": {
       "title": "Modeldownloads",
@@ -2760,7 +2761,22 @@
       "skills": "Aangeleerde vaardigheden",
       "noSkills": "Nog niets aangeleerd. Gebruik Teach op het Scherm-tabblad om een procedure één keer voor te doen; die wordt een herafspeelbare vaardigheid.",
       "skillToggleFailed": "De vaardigheid kon niet worden bijgewerkt.",
-      "unread": "Nieuwe activiteit"
+      "unread": "Nieuwe activiteit",
+      "approvals": "Automatische controle",
+      "approvalsHint": "Als dit aanstaat, pauzeren commando's, het verwijderen en verplaatsen van bestanden en computeracties totdat je ze goedkeurt.",
+      "approvalsPolicyForced": "Het Work-beleid van deze agent vereist goedkeuring voor acties die gegevens wijzigen.",
+      "approvalsToggleFailed": "De goedkeuringsinstelling kon niet worden bijgewerkt.",
+      "approvalRuleLine": "Altijd toegestaan",
+      "approvalRuleDelete": "Regel verwijderen",
+      "approvalRuleDeleteFailed": "De regel kon niet worden verwijderd."
+    },
+    "approval": {
+      "title": "Goedkeuring nodig",
+      "description": "De agent wil {{tool}} uitvoeren. Deze actie kan gegevens wijzigen of iets doen buiten het gesprek.",
+      "allowOnce": "Eén keer toestaan",
+      "allowAlways": "Altijd toestaan",
+      "deny": "Weigeren",
+      "failed": "De beslissing kon niet worden verzonden."
     }
   },
   "personaBackground": {

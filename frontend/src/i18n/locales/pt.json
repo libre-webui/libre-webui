@@ -1728,7 +1728,8 @@
       "guiEnabled": "Work Computer (GUI + navegador)",
       "takeoverEnabled": "Permitir assumir o controlo do ecrã",
       "computerPreset": "Work Computer",
-      "computerPresetHint": "O Work Computer precisa da imagem GUI: construa a partir de deploy/work-computer no repositório e marque como libre-work-computer:latest."
+      "computerPresetHint": "O Work Computer precisa da imagem GUI: construa a partir de deploy/work-computer no repositório e marque como libre-work-computer:latest.",
+      "approvalsRequired": "Exigir aprovação para ações que alteram dados"
     },
     "modelAccess": {
       "title": "Download de modelos",
@@ -2760,7 +2761,22 @@
       "skills": "Habilidades ensinadas",
       "noSkills": "Nada ensinado ainda. Use Teach na aba Tela para demonstrar um procedimento uma vez; ele se torna uma habilidade repetível.",
       "skillToggleFailed": "Não foi possível atualizar a habilidade.",
-      "unread": "Atividade nova"
+      "unread": "Atividade nova",
+      "approvals": "Revisão automática",
+      "approvalsHint": "Quando ativado, comandos, exclusões e movimentações de arquivos e ações no computador ficam pausados até você aprovar.",
+      "approvalsPolicyForced": "A política do Work deste agente exige aprovação para ações que alteram dados.",
+      "approvalsToggleFailed": "Não foi possível atualizar as aprovações.",
+      "approvalRuleLine": "Sempre permitido",
+      "approvalRuleDelete": "Remover regra",
+      "approvalRuleDeleteFailed": "Não foi possível remover a regra."
+    },
+    "approval": {
+      "title": "Aprovação necessária",
+      "description": "O agente quer executar {{tool}}. Esta ação pode alterar dados ou agir fora da conversa.",
+      "allowOnce": "Permitir uma vez",
+      "allowAlways": "Permitir sempre",
+      "deny": "Recusar",
+      "failed": "Não foi possível enviar a decisão."
     }
   },
   "personaBackground": {

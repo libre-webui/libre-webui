@@ -301,3 +301,66 @@ test('treats needs-input completion as a terminal yellow state', () => {
     'work.statusLabels.needsInput'
   );
 });
+
+test('a pending approval blocks the run until resolved, and results clear it', () => {
+  const pendingEvent = event(1, 'approval', {
+    approvalId: 'approval-1',
+    toolCallId: 'call-1',
+    name: 'run_command',
+    summary: { command: 'npm run build' },
+    status: 'pending',
+    expiresAt: 9_000,
+  });
+  const pending = applyWorkRunEvent(
+    createWorkLiveRun('task-1', 'run-1'),
+    pendingEvent
+  );
+  assert.equal(pending.pendingApproval?.approvalId, 'approval-1');
+  assert.equal(pending.pendingApproval?.toolCallId, 'call-1');
+  assert.deepEqual(pending.pendingApproval?.summary, {
+    command: 'npm run build',
+  });
+
+  // A resolution for the same approval clears the card.
+  const resolved = applyWorkRunEvent(
+    pending,
+    event(2, 'approval', {
+      approvalId: 'approval-1',
+      toolCallId: 'call-1',
+      name: 'run_command',
+      status: 'approved',
+    })
+  );
+  assert.equal(resolved.pendingApproval, undefined);
+
+  // A resolution for a different approval leaves the current card alone.
+  const unrelated = applyWorkRunEvent(
+    applyWorkRunEvent(createWorkLiveRun('task-1', 'run-1'), pendingEvent),
+    event(2, 'approval', {
+      approvalId: 'approval-other',
+      toolCallId: 'call-other',
+      name: 'delete_file',
+      status: 'denied',
+    })
+  );
+  assert.equal(unrelated.pendingApproval?.approvalId, 'approval-1');
+
+  // A tool result for the gated call clears the card even when the
+  // resolution event was lost (crash-reconciled runs), and terminal events
+  // never leave a stale card behind.
+  const clearedByResult = applyWorkRunEvent(
+    applyWorkRunEvent(createWorkLiveRun('task-1', 'run-1'), pendingEvent),
+    event(2, 'tool_result', {
+      toolCallId: 'call-1',
+      name: 'run_command',
+      content: 'interrupted',
+    })
+  );
+  assert.equal(clearedByResult.pendingApproval, undefined);
+
+  const clearedByDone = applyWorkRunEvent(
+    applyWorkRunEvent(createWorkLiveRun('task-1', 'run-1'), pendingEvent),
+    event(2, 'done', { status: 'needs_input' })
+  );
+  assert.equal(clearedByDone.pendingApproval, undefined);
+});

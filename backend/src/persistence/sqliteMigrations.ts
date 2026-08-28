@@ -1114,6 +1114,33 @@ const AGENT_SEEN_REQUIRED_SCHEMA = {
   work_tasks: ['last_seen_at'],
 } as const;
 
+const WORK_APPROVALS_REQUIRED_SCHEMA = {
+  work_policies: ['approvals_required'],
+  work_tasks: ['approvals_enabled'],
+  work_approvals: [
+    'id',
+    'task_id',
+    'run_id',
+    'user_id',
+    'tool_call_id',
+    'tool_name',
+    'summary',
+    'status',
+    'scope',
+    'created_at',
+    'resolved_at',
+    'expires_at',
+  ],
+  work_approval_rules: [
+    'id',
+    'task_id',
+    'user_id',
+    'tool_name',
+    'pattern',
+    'created_at',
+  ],
+} as const;
+
 export const IDENTITY_EMAIL_LOOKUP_SCHEMA_SQL = `
   ALTER TABLE users ADD COLUMN email_lookup TEXT;
   CREATE UNIQUE INDEX idx_users_email_lookup
@@ -1930,6 +1957,46 @@ export const AGENT_SEEN_SCHEMA_SQL = `
   ALTER TABLE work_tasks ADD COLUMN last_seen_at INTEGER;
 `;
 
+export const WORK_APPROVALS_TABLES_SQL = `
+  CREATE TABLE IF NOT EXISTS work_approvals (
+    id TEXT PRIMARY KEY,
+    task_id TEXT NOT NULL REFERENCES work_tasks(id) ON DELETE CASCADE,
+    run_id TEXT NOT NULL,
+    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    tool_call_id TEXT NOT NULL,
+    tool_name TEXT NOT NULL,
+    summary TEXT,
+    status TEXT NOT NULL CHECK (status IN ('pending', 'approved', 'denied', 'expired')),
+    scope TEXT NOT NULL CHECK (scope IN ('once', 'always')),
+    created_at INTEGER NOT NULL,
+    resolved_at INTEGER,
+    expires_at INTEGER NOT NULL
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_work_approvals_task
+    ON work_approvals(task_id, status, created_at);
+
+  CREATE TABLE IF NOT EXISTS work_approval_rules (
+    id TEXT PRIMARY KEY,
+    task_id TEXT NOT NULL REFERENCES work_tasks(id) ON DELETE CASCADE,
+    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    tool_name TEXT NOT NULL,
+    pattern TEXT,
+    created_at INTEGER NOT NULL
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_work_approval_rules_task
+    ON work_approval_rules(task_id);
+`;
+
+// No CHECK on the added columns: SQLite cannot DROP a column referenced by
+// an inline CHECK, which would make the documented rollback impossible. The
+// service layer normalizes the values; PostgreSQL keeps real constraints.
+export const WORK_APPROVALS_SCHEMA_SQL = `
+  ALTER TABLE work_policies ADD COLUMN approvals_required INTEGER;
+  ALTER TABLE work_tasks ADD COLUMN approvals_enabled INTEGER;
+${WORK_APPROVALS_TABLES_SQL}`;
+
 const REQUIRED_SCHEMA = {
   ...LEGACY_REQUIRED_SCHEMA,
   users: [
@@ -2238,6 +2305,8 @@ const REQUIRED_PRIMARY_KEYS: Readonly<Record<string, readonly string[]>> = {
   webauthn_credentials: ['id'],
   push_subscriptions: ['id'],
   recovery_drills: ['id'],
+  work_approvals: ['id'],
+  work_approval_rules: ['id'],
 };
 
 const REQUIRED_UNIQUE_KEYS: Readonly<Record<string, readonly string[][]>> = {
@@ -2644,6 +2713,34 @@ const REQUIRED_FOREIGN_KEYS: readonly RequiredForeignKey[] = [
     referencedColumns: ['id'],
     onDelete: 'CASCADE',
   },
+  {
+    table: 'work_approvals',
+    columns: ['task_id'],
+    referencedTable: 'work_tasks',
+    referencedColumns: ['id'],
+    onDelete: 'CASCADE',
+  },
+  {
+    table: 'work_approvals',
+    columns: ['user_id'],
+    referencedTable: 'users',
+    referencedColumns: ['id'],
+    onDelete: 'CASCADE',
+  },
+  {
+    table: 'work_approval_rules',
+    columns: ['task_id'],
+    referencedTable: 'work_tasks',
+    referencedColumns: ['id'],
+    onDelete: 'CASCADE',
+  },
+  {
+    table: 'work_approval_rules',
+    columns: ['user_id'],
+    referencedTable: 'users',
+    referencedColumns: ['id'],
+    onDelete: 'CASCADE',
+  },
 ];
 
 const REQUIRED_INDEXES: readonly RequiredIndex[] = [
@@ -3007,6 +3104,16 @@ const REQUIRED_INDEXES: readonly RequiredIndex[] = [
     table: 'recovery_drills',
     columns: ['started_at'],
   },
+  {
+    name: 'idx_work_approvals_task',
+    table: 'work_approvals',
+    columns: ['task_id', 'status', 'created_at'],
+  },
+  {
+    name: 'idx_work_approval_rules_task',
+    table: 'work_approval_rules',
+    columns: ['task_id'],
+  },
 ];
 
 const REQUIRED_TABLE_SQL_FRAGMENTS: Readonly<
@@ -3076,6 +3183,10 @@ const REQUIRED_TABLE_SQL_FRAGMENTS: Readonly<
   recovery_drills: [
     "status IN ('running', 'passed', 'failed')",
     "origin IN ('scheduled', 'manual')",
+  ],
+  work_approvals: [
+    "status IN ('pending', 'approved', 'denied', 'expired')",
+    "scope IN ('once', 'always')",
   ],
 };
 
@@ -3666,6 +3777,16 @@ const collectMissingAgentRoutinesSchema = (
 const collectMissingAgentSeenSchema = (database: Database.Database): string[] =>
   collectMissingColumns(database, AGENT_SEEN_REQUIRED_SCHEMA);
 
+const collectMissingWorkApprovalsSchema = (
+  database: Database.Database
+): string[] => [
+  ...collectMissingColumns(database, WORK_APPROVALS_REQUIRED_SCHEMA),
+  ...collectMissingStructuralInvariants(database).filter(
+    item =>
+      item.includes('work_approvals') || item.includes('work_approval_rules')
+  ),
+];
+
 const collectMissingIdentityAccountRetirementSchema = (
   database: Database.Database
 ): string[] => {
@@ -3727,6 +3848,7 @@ function collectMissingSchemaAtVersion(
     ...(version >= 25 ? collectMissingAgentIdentitySchema(database) : []),
     ...(version >= 26 ? collectMissingAgentRoutinesSchema(database) : []),
     ...(version >= 27 ? collectMissingAgentSeenSchema(database) : []),
+    ...(version >= 28 ? collectMissingWorkApprovalsSchema(database) : []),
   ];
 }
 
@@ -3836,6 +3958,8 @@ const AGENT_ROUTINES_MIGRATION_CHECKSUM =
   '2bf5167435acf8a43f9117f379dc4f35227196c65350bb72425bac467e06750b';
 const AGENT_SEEN_MIGRATION_CHECKSUM =
   '6e753d9adbdfb71d717ef3a6bc387f3ace6e1e91c9f73ecc6fe22c7508259197';
+const WORK_APPROVALS_MIGRATION_CHECKSUM =
+  '09ece410455c755a5c4b6b6f2bc1f6cc3191b58a40a119cffe337f8a1e6eae21';
 
 const MIGRATIONS: readonly SQLiteMigration[] = [
   {
@@ -4316,6 +4440,32 @@ const MIGRATIONS: readonly SQLiteMigration[] = [
       if (missing.length > 0) {
         throw new Error(
           `SQLite agent seen schema is incomplete; missing ${missing.join(', ')}`
+        );
+      }
+    },
+  },
+  {
+    version: 28,
+    name: 'work-approvals',
+    checksum: WORK_APPROVALS_MIGRATION_CHECKSUM,
+    apply(database) {
+      addColumnIfMissing(
+        database,
+        'work_policies',
+        'approvals_required',
+        'INTEGER'
+      );
+      addColumnIfMissing(
+        database,
+        'work_tasks',
+        'approvals_enabled',
+        'INTEGER'
+      );
+      database.exec(WORK_APPROVALS_TABLES_SQL);
+      const missing = collectMissingWorkApprovalsSchema(database);
+      if (missing.length > 0) {
+        throw new Error(
+          `SQLite work approvals schema is incomplete; missing ${missing.join(', ')}`
         );
       }
     },

@@ -1728,7 +1728,8 @@
       "guiEnabled": "Work Computer (GUI + Browser)",
       "takeoverEnabled": "Übernahme des Bildschirms erlauben",
       "computerPreset": "Work Computer",
-      "computerPresetHint": "Der Work Computer benötigt das GUI-Image: aus deploy/work-computer im Repository bauen und als libre-work-computer:latest taggen."
+      "computerPresetHint": "Der Work Computer benötigt das GUI-Image: aus deploy/work-computer im Repository bauen und als libre-work-computer:latest taggen.",
+      "approvalsRequired": "Freigabe für Aktionen mit Nebenwirkungen verlangen"
     },
     "modelAccess": {
       "title": "Modell-Downloads",
@@ -2760,7 +2761,22 @@
       "skills": "Beigebrachte Fähigkeiten",
       "noSkills": "Noch nichts beigebracht. Nutze Teach im Bildschirm-Tab, um einen Ablauf einmal vorzuführen; er wird zu einer wiederholbaren Fähigkeit.",
       "skillToggleFailed": "Die Fähigkeit konnte nicht aktualisiert werden.",
-      "unread": "Neue Aktivität"
+      "unread": "Neue Aktivität",
+      "approvals": "Automatische Prüfung",
+      "approvalsHint": "Wenn aktiv, pausieren Befehle, das Löschen und Verschieben von Dateien sowie Aktionen am Work Computer, bis du sie freigibst.",
+      "approvalsPolicyForced": "Die Work-Richtlinie dieses Agenten verlangt eine Freigabe für Aktionen mit Nebenwirkungen.",
+      "approvalsToggleFailed": "Die Freigaben konnten nicht aktualisiert werden.",
+      "approvalRuleLine": "Immer zugelassen",
+      "approvalRuleDelete": "Regel entfernen",
+      "approvalRuleDeleteFailed": "Die Regel konnte nicht entfernt werden."
+    },
+    "approval": {
+      "title": "Freigabe nötig",
+      "description": "Der Agent möchte {{tool}} ausführen. Diese Aktion kann Daten verändern oder außerhalb dieses Chats wirken.",
+      "allowOnce": "Einmal zulassen",
+      "allowAlways": "Immer zulassen",
+      "deny": "Ablehnen",
+      "failed": "Die Entscheidung konnte nicht gesendet werden."
     }
   },
   "personaBackground": {

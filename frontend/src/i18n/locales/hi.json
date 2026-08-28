@@ -1728,7 +1728,8 @@
       "guiEnabled": "Work Computer (GUI + ब्राउज़र)",
       "takeoverEnabled": "स्क्रीन टेकओवर की अनुमति दें",
       "computerPreset": "Work Computer",
-      "computerPresetHint": "Work Computer को GUI इमेज चाहिए: रिपॉज़िटरी के deploy/work-computer से बनाएँ और libre-work-computer:latest टैग करें।"
+      "computerPresetHint": "Work Computer को GUI इमेज चाहिए: रिपॉज़िटरी के deploy/work-computer से बनाएँ और libre-work-computer:latest टैग करें।",
+      "approvalsRequired": "दुष्प्रभाव वाली क्रियाओं के लिए अनुमोदन आवश्यक करें"
     },
     "modelAccess": {
       "title": "मॉडल डाउनलोड",
@@ -2760,7 +2761,22 @@
       "skills": "सिखाए गए कौशल",
       "noSkills": "अभी कुछ नहीं सिखाया गया। स्क्रीन टैब में Teach का उपयोग कर एक बार प्रक्रिया दिखाएँ; वह दोहराने योग्य कौशल बन जाती है।",
       "skillToggleFailed": "कौशल अपडेट नहीं हो सका।",
-      "unread": "नई गतिविधि"
+      "unread": "नई गतिविधि",
+      "approvals": "स्वतः समीक्षा",
+      "approvalsHint": "चालू होने पर कमांड, फ़ाइल हटाने और स्थानांतरित करने तथा कंप्यूटर क्रियाएँ आपकी अनुमति मिलने तक रुकी रहती हैं।",
+      "approvalsPolicyForced": "इस एजेंट की Work नीति दुष्प्रभाव वाली क्रियाओं के लिए अनुमोदन अनिवार्य करती है।",
+      "approvalsToggleFailed": "अनुमोदन सेटिंग अपडेट नहीं हो सकी।",
+      "approvalRuleLine": "हमेशा अनुमत",
+      "approvalRuleDelete": "नियम हटाएँ",
+      "approvalRuleDeleteFailed": "नियम हटाया नहीं जा सका।"
+    },
+    "approval": {
+      "title": "अनुमोदन चाहिए",
+      "description": "एजेंट {{tool}} चलाना चाहता है। यह क्रिया डेटा बदल सकती है या बातचीत के बाहर काम कर सकती है।",
+      "allowOnce": "एक बार अनुमति दें",
+      "allowAlways": "हमेशा अनुमति दें",
+      "deny": "अस्वीकार करें",
+      "failed": "निर्णय भेजा नहीं जा सका।"
     }
   },
   "personaBackground": {

@@ -1728,7 +1728,8 @@
       "guiEnabled": "Work Computer (GUI + เบราว์เซอร์)",
       "takeoverEnabled": "อนุญาตให้เข้าควบคุมหน้าจอ",
       "computerPreset": "Work Computer",
-      "computerPresetHint": "Work Computer ต้องใช้อิมเมจ GUI: สร้างจาก deploy/work-computer ในรีโพซิทอรีแล้วแท็กเป็น libre-work-computer:latest"
+      "computerPresetHint": "Work Computer ต้องใช้อิมเมจ GUI: สร้างจาก deploy/work-computer ในรีโพซิทอรีแล้วแท็กเป็น libre-work-computer:latest",
+      "approvalsRequired": "ต้องอนุมัติก่อนการกระทำที่มีผลข้างเคียง"
     },
     "modelAccess": {
       "title": "การดาวน์โหลดโมเดล",
@@ -2760,7 +2761,22 @@
       "skills": "ทักษะที่สอน",
       "noSkills": "ยังไม่ได้สอนอะไร ใช้ Teach ในแท็บหน้าจอเพื่อสาธิตขั้นตอนหนึ่งครั้ง แล้วมันจะกลายเป็นทักษะที่เล่นซ้ำได้",
       "skillToggleFailed": "ไม่สามารถอัปเดตทักษะได้",
-      "unread": "กิจกรรมใหม่"
+      "unread": "กิจกรรมใหม่",
+      "approvals": "ตรวจอนุมัติอัตโนมัติ",
+      "approvalsHint": "เมื่อเปิดใช้งาน คำสั่ง การลบและย้ายไฟล์ และการกระทำบนคอมพิวเตอร์จะหยุดรอจนกว่าคุณจะอนุมัติ",
+      "approvalsPolicyForced": "นโยบาย Work ของเอเจนต์นี้กำหนดให้ต้องอนุมัติการกระทำที่มีผลข้างเคียง",
+      "approvalsToggleFailed": "ไม่สามารถอัปเดตการอนุมัติได้",
+      "approvalRuleLine": "อนุญาตเสมอ",
+      "approvalRuleDelete": "ลบกฎ",
+      "approvalRuleDeleteFailed": "ไม่สามารถลบกฎได้"
+    },
+    "approval": {
+      "title": "ต้องได้รับการอนุมัติ",
+      "description": "เอเจนต์ต้องการเรียกใช้ {{tool}} การกระทำนี้อาจเปลี่ยนข้อมูลหรือดำเนินการนอกบทสนทนานี้",
+      "allowOnce": "อนุญาตครั้งเดียว",
+      "allowAlways": "อนุญาตเสมอ",
+      "deny": "ปฏิเสธ",
+      "failed": "ไม่สามารถส่งผลการตัดสินใจได้"
     }
   },
   "personaBackground": {

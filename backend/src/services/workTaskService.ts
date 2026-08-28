@@ -280,6 +280,7 @@ export class WorkTaskService {
       is_agent: identity?.isAgent ? 1 : 0,
       // The creator is looking at the task they just made.
       last_seen_at: now,
+      approvals_enabled: null,
       created_at: now,
       updated_at: now,
     };
@@ -437,6 +438,12 @@ export class WorkTaskService {
         status_blurb: task.statusBlurb || null,
         is_agent: task.isAgent ? 1 : 0,
         last_seen_at: task.lastSeenAt ?? null,
+        approvals_enabled:
+          task.approvalsEnabled === undefined
+            ? null
+            : task.approvalsEnabled
+              ? 1
+              : 0,
         created_at: task.createdAt,
         updated_at: task.updatedAt,
       };
@@ -974,6 +981,23 @@ export class WorkTaskService {
     await getWorkPersistence().markTaskSeen(taskId, userId, Date.now());
   }
 
+  /** Per-task approvals opt-in; null clears back to the default (off). */
+  async setTaskApprovals(
+    taskId: string,
+    userId: string,
+    enabled: boolean | null
+  ): Promise<void> {
+    const updated = await getWorkPersistence().setTaskApprovals(
+      taskId,
+      userId,
+      enabled === null ? null : enabled ? 1 : 0,
+      Date.now()
+    );
+    if (!updated) {
+      throw new WorkNotFoundError();
+    }
+  }
+
   async updatePreview(
     taskId: string,
     status: WorkPreviewStatus,
@@ -1054,6 +1078,10 @@ export class WorkTaskService {
       statusBlurb: row.status_blurb || undefined,
       isAgent: row.is_agent === 1,
       lastSeenAt: row.last_seen_at ?? undefined,
+      approvalsEnabled:
+        row.approvals_enabled === null
+          ? undefined
+          : row.approvals_enabled === 1,
     };
   }
 
@@ -1209,6 +1237,8 @@ const mapTaskRecord = (row: TaskRow): WorkTaskRecord => ({
   statusBlurb: row.status_blurb || undefined,
   isAgent: row.is_agent === 1,
   lastSeenAt: row.last_seen_at ?? undefined,
+  approvalsEnabled:
+    row.approvals_enabled === null ? undefined : row.approvals_enabled === 1,
   createdAt: row.created_at,
   updatedAt: row.updated_at,
 });

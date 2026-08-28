@@ -1728,7 +1728,8 @@
       "guiEnabled": "Work Computer (GUI + webbläsare)",
       "takeoverEnabled": "Tillåt övertagande av skärmen",
       "computerPreset": "Work Computer",
-      "computerPresetHint": "Work Computer kräver GUI-avbilden: bygg den från deploy/work-computer i repositoriet och tagga den libre-work-computer:latest."
+      "computerPresetHint": "Work Computer kräver GUI-avbilden: bygg den från deploy/work-computer i repositoriet och tagga den libre-work-computer:latest.",
+      "approvalsRequired": "Kräv godkännande för åtgärder med sidoeffekter"
     },
     "modelAccess": {
       "title": "Modellnedladdningar",
@@ -2760,7 +2761,22 @@
       "skills": "Inlärda färdigheter",
       "noSkills": "Inget inlärt ännu. Använd Teach på Skärm-fliken för att demonstrera en procedur en gång; den blir en återspelbar färdighet.",
       "skillToggleFailed": "Färdigheten kunde inte uppdateras.",
-      "unread": "Ny aktivitet"
+      "unread": "Ny aktivitet",
+      "approvals": "Automatisk granskning",
+      "approvalsHint": "När det är på pausas kommandon, borttagning och flytt av filer samt datoråtgärder tills du godkänner dem.",
+      "approvalsPolicyForced": "Den här agentens Work-policy kräver godkännande för åtgärder med sidoeffekter.",
+      "approvalsToggleFailed": "Godkännandena kunde inte uppdateras.",
+      "approvalRuleLine": "Alltid tillåten",
+      "approvalRuleDelete": "Ta bort regel",
+      "approvalRuleDeleteFailed": "Regeln kunde inte tas bort."
+    },
+    "approval": {
+      "title": "Godkännande krävs",
+      "description": "Agenten vill köra {{tool}}. Åtgärden kan ändra data eller agera utanför konversationen.",
+      "allowOnce": "Tillåt en gång",
+      "allowAlways": "Tillåt alltid",
+      "deny": "Neka",
+      "failed": "Beslutet kunde inte skickas."
     }
   },
   "personaBackground": {

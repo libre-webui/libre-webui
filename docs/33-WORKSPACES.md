@@ -254,8 +254,38 @@ agent's own page:
   pause/resume toggle, and the inline **+ Routine** form is already bound to
   the agent. An occurrence that fires while the agent is busy fails honestly
   as `work-task-busy` instead of queueing.
+- **Auto Review**: the per-agent approvals switch and the Always-allow rules
+  the agent has collected (remove a rule to close its scope again). When the
+  task's policy forces review, the switch is locked on.
 - **Taught skills**: procedures demonstrated in teach mode, with an
   enable/disable switch per skill.
+
+### Action approvals (Auto Review)
+
+Side-effecting actions can pause for your decision before they run. When
+approvals are active for a task — its Work policy sets **Require approval
+for side-effecting actions**, or the agent's **Auto Review** switch is on —
+the run stops before executing `run_command`, `computer_act`, `delete_file`,
+or `move_file` and shows a decision card in the conversation:
+**Allow once**, **Always allow**, or **Deny**.
+
+- **Allow once** runs exactly this call and asks again next time.
+- **Always allow** runs the call and persists a rule on the task: tool-wide
+  for file and computer actions, scoped to the command's program (its first
+  token) for `run_command` — approving `npm run build` pre-approves future
+  `npm` commands, not the whole shell. Rules are listed in the Agent tab's
+  Auto Review section and can be removed there.
+- **Deny** refuses the call. The model is told the user denied the action
+  and must not retry it as-is; the run continues with that answer.
+
+A pending approval also raises a notification (in-app, and web push when
+enabled), because the run may be minutes into unattended work when it hits
+the gate. If nobody decides within five minutes the request expires, the
+action is not executed, and the run ends as **Needs input** with a normal
+handoff instead of waiting out its budget.
+
+Approvals gate actions, not visibility: `write_file` and the read-only tools
+stay ungated, and every decision lands in the security audit log.
 
 ### Understand task status
 
@@ -1267,6 +1297,10 @@ administrative policy/access endpoints remain admin-only.
 | `POST`   | `/tasks/:id/messages`               | Message the agent during an active run            |
 | `GET`    | `/tasks/:taskId/runs/:runId/events` | Stream authenticated live run events using SSE    |
 | `POST`   | `/tasks/:id/cancel`                 | Cancel the active run                             |
+| `GET`    | `/tasks/:id/approvals`              | Pending approvals plus the task's Auto Review state |
+| `PUT`    | `/tasks/:id/approvals`              | Toggle the per-task approvals opt-in              |
+| `POST`   | `/tasks/:id/approvals/:approvalId`  | Decide a pending approval (allow once/always, deny) |
+| `DELETE` | `/tasks/:id/approval-rules/:ruleId` | Remove an Always-allow rule                       |
 | `GET`    | `/computer/setup`                   | Work Computer setup status (admin)                |
 | `POST`   | `/computer/setup`                   | Build the GUI image and create the policy (admin) |
 | `POST`   | `/tasks/:id/computer/start`         | Start the task's Work Computer session            |

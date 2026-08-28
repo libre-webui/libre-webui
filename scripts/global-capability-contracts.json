@@ -2116,7 +2116,8 @@
         {
           "file": "docs/33-WORKSPACES.md",
           "patterns": [
-            "Select \\*\\*Work\\*\\* beside \\*\\*Chat\\*\\* in the sidebar"
+            "Select \\*\\*Work\\*\\* beside \\*\\*Chat\\*\\* in the sidebar",
+            "\\*\\*Allow once\\*\\*, \\*\\*Always allow\\*\\*, or \\*\\*Deny\\*\\*"
           ]
         }
       ],
@@ -2126,6 +2127,12 @@
           "runner": "test:package",
           "name": "runtime limits expose admission capacity and live occupancy",
           "behaviorPatterns": ["maxActiveRuntimesGlobal", "activeRuntimeCounts"]
+        },
+        {
+          "file": "scripts/test-work-approvals.mjs",
+          "runner": "test:package",
+          "name": "approval decisions gate side-effecting Work actions",
+          "behaviorPatterns": ["resolvePendingApproval", "ruleCovers"]
         },
         {
           "file": "scripts/test-websocket-tickets.mjs",
@@ -2311,6 +2318,30 @@
           "mount": "/api/work",
           "method": "POST",
           "path": "/tasks/:id/seen"
+        },
+        {
+          "file": "backend/src/routes/work.ts",
+          "mount": "/api/work",
+          "method": "GET",
+          "path": "/tasks/:id/approvals"
+        },
+        {
+          "file": "backend/src/routes/work.ts",
+          "mount": "/api/work",
+          "method": "PUT",
+          "path": "/tasks/:id/approvals"
+        },
+        {
+          "file": "backend/src/routes/work.ts",
+          "mount": "/api/work",
+          "method": "POST",
+          "path": "/tasks/:id/approvals/:approvalId"
+        },
+        {
+          "file": "backend/src/routes/work.ts",
+          "mount": "/api/work",
+          "method": "DELETE",
+          "path": "/tasks/:id/approval-rules/:ruleId"
         },
         {
           "file": "backend/src/routes/work.ts",

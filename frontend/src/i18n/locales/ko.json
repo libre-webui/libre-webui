@@ -1728,7 +1728,8 @@
       "guiEnabled": "Work Computer (GUI + 브라우저)",
       "takeoverEnabled": "화면 제어 인계 허용",
       "computerPreset": "Work Computer",
-      "computerPresetHint": "Work Computer에는 GUI 이미지가 필요합니다. 저장소의 deploy/work-computer에서 빌드해 libre-work-computer:latest 태그를 지정하세요."
+      "computerPresetHint": "Work Computer에는 GUI 이미지가 필요합니다. 저장소의 deploy/work-computer에서 빌드해 libre-work-computer:latest 태그를 지정하세요.",
+      "approvalsRequired": "데이터를 바꾸는 작업에 승인 요구"
     },
     "modelAccess": {
       "title": "모델 다운로드",
@@ -2760,7 +2761,22 @@
       "skills": "가르친 스킬",
       "noSkills": "아직 가르친 것이 없습니다. 화면 탭의 Teach로 절차를 한 번 시연하면 다시 실행할 수 있는 스킬이 됩니다.",
       "skillToggleFailed": "스킬을 업데이트할 수 없습니다.",
-      "unread": "새로운 활동"
+      "unread": "새로운 활동",
+      "approvals": "자동 검토",
+      "approvalsHint": "켜 두면 명령 실행, 파일 삭제와 이동, 컴퓨터 조작이 승인할 때까지 멈춰 있습니다.",
+      "approvalsPolicyForced": "이 에이전트의 Work 정책은 데이터를 바꾸는 작업에 승인을 요구합니다.",
+      "approvalsToggleFailed": "승인 설정을 업데이트할 수 없습니다.",
+      "approvalRuleLine": "항상 허용됨",
+      "approvalRuleDelete": "규칙 삭제",
+      "approvalRuleDeleteFailed": "규칙을 삭제할 수 없습니다."
+    },
+    "approval": {
+      "title": "승인이 필요합니다",
+      "description": "에이전트가 {{tool}}을(를) 실행하려고 합니다. 이 작업은 데이터를 바꾸거나 대화 밖에서 동작할 수 있습니다.",
+      "allowOnce": "한 번만 허용",
+      "allowAlways": "항상 허용",
+      "deny": "거부",
+      "failed": "결정을 보낼 수 없습니다."
     }
   },
   "personaBackground": {

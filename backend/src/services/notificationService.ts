@@ -92,6 +92,7 @@ const NOTIFICATION_TYPES: readonly NotificationType[] = [
   'work-run-finished',
   'work-run-attention',
   'work-takeover',
+  'work-approval',
   'system',
 ];
 

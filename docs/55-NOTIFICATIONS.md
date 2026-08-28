@@ -39,6 +39,7 @@ reading the list, not replaying the stream.
 | `work-run-finished` | One of your hired Work agents completes a run                    |
 | `work-run-attention`| A hired agent stops for input or hits an error                   |
 | `work-takeover`     | A Work agent asks you to take over its screen                    |
+| `work-approval`     | A Work run is waiting for you to approve a side-effecting action |
 | `system`            | Instance-level announcements                                     |
 
 Notifications are always published to the affected user only; a mention

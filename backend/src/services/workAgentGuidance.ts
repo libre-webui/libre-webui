@@ -22,6 +22,8 @@ export interface WorkAgentGuidanceContext {
   taughtSkills?: readonly { name: string; instructions: string }[];
   /** Persona identity this task was hired under; instructions are bounded. */
   persona?: { name: string; instructions?: string };
+  /** True when side-effecting tool calls pause for the user's approval. */
+  approvalsActive?: boolean;
   previewPort: number;
   roundBudget: number;
   commandTimeoutMs: number;
@@ -168,7 +170,11 @@ Deliver a working result inside this task's isolated workspace, not a plan-only 
 - Commands default to ${formatInteger(context.commandTimeoutMs)} ms and can request at most ${formatInteger(MAX_COMMAND_TIMEOUT_MS)} ms.
 - Command and search output is bounded to ${formatInteger(context.maxOutputChars)} characters, so prefer focused output.
 - This run has a provider-agnostic budget of ${formatInteger(context.roundBudget)} model rounds and ${formatInteger(toolBudget)} tool calls.
-- A browser preview must listen on 0.0.0.0:${context.previewPort}.
+- A browser preview must listen on 0.0.0.0:${context.previewPort}.${
+    context.approvalsActive
+      ? '\n- Side-effecting actions (commands, file deletion and moves, computer actions) pause until the user approves them. A denied action must not be retried as-is; adjust the plan or ask. If an approval goes unanswered, the run ends with a handoff.'
+      : ''
+  }
 
 ${skills}${taughtSkills}
 

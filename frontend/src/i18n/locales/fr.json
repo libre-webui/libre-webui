@@ -1728,7 +1728,8 @@
       "guiEnabled": "Work Computer (GUI + navigateur)",
       "takeoverEnabled": "Autoriser la prise de contrôle de l'écran",
       "computerPreset": "Work Computer",
-      "computerPresetHint": "Le Work Computer requiert l'image GUI : construisez-la depuis deploy/work-computer du dépôt et taguez-la libre-work-computer:latest."
+      "computerPresetHint": "Le Work Computer requiert l'image GUI : construisez-la depuis deploy/work-computer du dépôt et taguez-la libre-work-computer:latest.",
+      "approvalsRequired": "Exiger une approbation pour les actions à effet de bord"
     },
     "modelAccess": {
       "title": "Téléchargement de modèles",
@@ -2760,7 +2761,22 @@
       "skills": "Compétences enseignées",
       "noSkills": "Rien d'enseigné pour l'instant. Utilisez Teach dans l'onglet Écran pour démontrer une procédure une fois ; elle devient une compétence rejouable.",
       "skillToggleFailed": "Impossible de mettre à jour la compétence.",
-      "unread": "Nouvelle activité"
+      "unread": "Nouvelle activité",
+      "approvals": "Revue automatique",
+      "approvalsHint": "Lorsque l'option est active, les commandes, les suppressions et déplacements de fichiers ainsi que les actions sur l'ordinateur sont mis en pause jusqu'à votre approbation.",
+      "approvalsPolicyForced": "La politique Work de cet agent exige une approbation pour les actions à effet de bord.",
+      "approvalsToggleFailed": "Impossible de mettre à jour les approbations.",
+      "approvalRuleLine": "Toujours autorisé",
+      "approvalRuleDelete": "Supprimer la règle",
+      "approvalRuleDeleteFailed": "Impossible de supprimer la règle."
+    },
+    "approval": {
+      "title": "Approbation requise",
+      "description": "L'agent veut exécuter {{tool}}. Cette action peut modifier des données ou agir en dehors de la conversation.",
+      "allowOnce": "Autoriser une fois",
+      "allowAlways": "Toujours autoriser",
+      "deny": "Refuser",
+      "failed": "Impossible d'envoyer la décision."
     }
   },
   "personaBackground": {

@@ -1728,7 +1728,8 @@
       "guiEnabled": "Work Computer (GUI + peramban)",
       "takeoverEnabled": "Izinkan pengambilalihan layar",
       "computerPreset": "Work Computer",
-      "computerPresetHint": "Work Computer memerlukan image GUI: bangun dari deploy/work-computer di repositori dan beri tag libre-work-computer:latest."
+      "computerPresetHint": "Work Computer memerlukan image GUI: bangun dari deploy/work-computer di repositori dan beri tag libre-work-computer:latest.",
+      "approvalsRequired": "Wajibkan persetujuan untuk aksi yang menimbulkan efek samping"
     },
     "modelAccess": {
       "title": "Unduhan model",
@@ -2760,7 +2761,22 @@
       "skills": "Keterampilan yang diajarkan",
       "noSkills": "Belum ada yang diajarkan. Gunakan Teach di tab Layar untuk mendemonstrasikan prosedur sekali; prosedur itu menjadi keterampilan yang dapat diputar ulang.",
       "skillToggleFailed": "Tidak dapat memperbarui keterampilan.",
-      "unread": "Aktivitas baru"
+      "unread": "Aktivitas baru",
+      "approvals": "Tinjauan Otomatis",
+      "approvalsHint": "Saat aktif, perintah, penghapusan dan pemindahan berkas, serta aksi komputer dijeda sampai Anda menyetujuinya.",
+      "approvalsPolicyForced": "Kebijakan Work agen ini mewajibkan persetujuan untuk aksi yang menimbulkan efek samping.",
+      "approvalsToggleFailed": "Tidak dapat memperbarui persetujuan.",
+      "approvalRuleLine": "Selalu diizinkan",
+      "approvalRuleDelete": "Hapus aturan",
+      "approvalRuleDeleteFailed": "Tidak dapat menghapus aturan."
+    },
+    "approval": {
+      "title": "Perlu persetujuan",
+      "description": "Agen ingin menjalankan {{tool}}. Aksi ini dapat mengubah data atau bertindak di luar percakapan.",
+      "allowOnce": "Izinkan sekali",
+      "allowAlways": "Izinkan selalu",
+      "deny": "Tolak",
+      "failed": "Tidak dapat mengirim keputusan."
     }
   },
   "personaBackground": {

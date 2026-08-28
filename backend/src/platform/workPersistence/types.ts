@@ -34,6 +34,7 @@ export interface WorkTaskRow {
   status_blurb: string | null;
   is_agent: number | null;
   last_seen_at: number | null;
+  approvals_enabled: number | null;
   created_at: number;
   updated_at: number;
 }
@@ -75,8 +76,36 @@ export interface WorkPolicyRow {
   idle_timeout_ms: number | null;
   gui_enabled: number | null;
   takeover_enabled: number | null;
+  approvals_required: number | null;
   created_at: number;
   updated_at: number;
+}
+
+export type WorkApprovalStatus = 'pending' | 'approved' | 'denied' | 'expired';
+export type WorkApprovalScope = 'once' | 'always';
+
+export interface WorkApprovalRow {
+  id: string;
+  task_id: string;
+  run_id: string;
+  user_id: string;
+  tool_call_id: string;
+  tool_name: string;
+  summary: string | null;
+  status: WorkApprovalStatus;
+  scope: WorkApprovalScope;
+  created_at: number;
+  resolved_at: number | null;
+  expires_at: number;
+}
+
+export interface WorkApprovalRuleRow {
+  id: string;
+  task_id: string;
+  user_id: string;
+  tool_name: string;
+  pattern: string | null;
+  created_at: number;
 }
 
 export interface WorkAdmissionLimits {
@@ -190,6 +219,31 @@ export interface WorkPersistenceRepository {
   ): Promise<void>;
   /** Advance the owner's seen marker; monotonic, never rewinds. */
   markTaskSeen(taskId: string, userId: string, seenAt: number): Promise<void>;
+  /** Set the per-task approvals opt-in; null clears back to the default. */
+  setTaskApprovals(
+    taskId: string,
+    userId: string,
+    enabled: number | null,
+    now: number
+  ): Promise<boolean>;
+  insertApproval(row: WorkApprovalRow): Promise<void>;
+  findApproval(
+    approvalId: string,
+    taskId: string
+  ): Promise<WorkApprovalRow | undefined>;
+  /** Resolve a pending approval exactly once; undefined when already resolved. */
+  resolvePendingApproval(
+    approvalId: string,
+    taskId: string,
+    status: Extract<WorkApprovalStatus, 'approved' | 'denied'>,
+    scope: WorkApprovalScope,
+    resolvedAt: number
+  ): Promise<WorkApprovalRow | undefined>;
+  expirePendingApprovals(now: number): Promise<void>;
+  listPendingApprovals(taskId: string): Promise<WorkApprovalRow[]>;
+  insertApprovalRule(row: WorkApprovalRuleRow): Promise<void>;
+  listApprovalRules(taskId: string): Promise<WorkApprovalRuleRow[]>;
+  deleteApprovalRule(ruleId: string, taskId: string): Promise<boolean>;
   updatePreview(
     taskId: string,
     status: WorkPreviewStatus,

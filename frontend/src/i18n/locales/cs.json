@@ -1728,7 +1728,8 @@
       "guiEnabled": "Work Computer (GUI + prohlížeč)",
       "takeoverEnabled": "Povolit převzetí obrazovky",
       "computerPreset": "Work Computer",
-      "computerPresetHint": "Work Computer vyžaduje GUI image: sestavte jej z deploy/work-computer v repozitáři a označte libre-work-computer:latest."
+      "computerPresetHint": "Work Computer vyžaduje GUI image: sestavte jej z deploy/work-computer v repozitáři a označte libre-work-computer:latest.",
+      "approvalsRequired": "Vyžadovat schválení akcí s vedlejšími účinky"
     },
     "modelAccess": {
       "title": "Stahování modelů",
@@ -2760,7 +2761,22 @@
       "skills": "Naučené dovednosti",
       "noSkills": "Zatím nic naučeného. Použijte Teach na kartě Obrazovka a předveďte postup jednou; stane se opakovatelnou dovedností.",
       "skillToggleFailed": "Dovednost se nepodařilo aktualizovat.",
-      "unread": "Nová aktivita"
+      "unread": "Nová aktivita",
+      "approvals": "Automatická kontrola",
+      "approvalsHint": "Když je zapnutá, příkazy, mazání a přesuny souborů i akce na Work Computeru se pozastaví, dokud je neschválíte.",
+      "approvalsPolicyForced": "Zásada Work u tohoto agenta vyžaduje schválení akcí s vedlejšími účinky.",
+      "approvalsToggleFailed": "Schvalování se nepodařilo aktualizovat.",
+      "approvalRuleLine": "Vždy povoleno",
+      "approvalRuleDelete": "Odebrat pravidlo",
+      "approvalRuleDeleteFailed": "Pravidlo se nepodařilo odebrat."
+    },
+    "approval": {
+      "title": "Je potřeba schválení",
+      "description": "Agent chce spustit {{tool}}. Tato akce může změnit data nebo zasáhnout mimo tuto konverzaci.",
+      "allowOnce": "Povolit jednou",
+      "allowAlways": "Povolit vždy",
+      "deny": "Odmítnout",
+      "failed": "Rozhodnutí se nepodařilo odeslat."
     }
   },
   "personaBackground": {

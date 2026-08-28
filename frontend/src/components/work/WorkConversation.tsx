@@ -28,6 +28,7 @@ import { useTranslation } from 'react-i18next';
 import { RichMessageContent } from '@/components/ui/RichMessageContent';
 import { LogoMark } from '@/components/LogoMark';
 import { StreamingMessageContent } from '@/components/ui/StreamingMessageContent';
+import { WorkApprovalCard } from '@/components/work/WorkApprovalCard';
 import {
   ToolActivityRow,
   WorkLiveRunSurface,
@@ -583,6 +584,13 @@ export function WorkConversation({
                   <WorkAvatar role='assistant' persona={taskPersona} />
                   <div className='min-w-0 max-w-[92%] flex-1'>
                     <WorkLiveRunSurface run={liveRun} />
+                    {liveRun.pendingApproval && (
+                      <WorkApprovalCard
+                        taskId={task.id}
+                        approval={liveRun.pendingApproval}
+                        className='mt-2'
+                      />
+                    )}
                   </div>
                 </article>
               )}

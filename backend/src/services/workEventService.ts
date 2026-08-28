@@ -624,6 +624,14 @@ function cloneSnapshot(snapshot: WorkLiveRunSnapshot): WorkLiveRunSnapshot {
     })),
     usage: snapshot.usage ? { ...snapshot.usage } : undefined,
     skills: snapshot.skills.map(skill => ({ ...skill })),
+    pendingApproval: snapshot.pendingApproval
+      ? {
+          ...snapshot.pendingApproval,
+          summary: snapshot.pendingApproval.summary
+            ? { ...snapshot.pendingApproval.summary }
+            : undefined,
+        }
+      : undefined,
   };
 }
 
@@ -661,6 +669,11 @@ function updateSnapshot(
       });
       return;
     case 'tool_result': {
+      // A result for the gated call also clears its pending approval; this
+      // covers crash-reconciled calls whose resolution event never fired.
+      if (snapshot.pendingApproval?.toolCallId === event.data.toolCallId) {
+        snapshot.pendingApproval = undefined;
+      }
       const existing = snapshot.tools.find(
         tool => tool.id === event.data.toolCallId
       );
@@ -684,6 +697,16 @@ function updateSnapshot(
       });
       return;
     }
+    case 'approval':
+      // Only a pending approval blocks the run; a resolution clears it.
+      if (event.data.status === 'pending') {
+        snapshot.pendingApproval = { ...event.data };
+      } else if (
+        snapshot.pendingApproval?.approvalId === event.data.approvalId
+      ) {
+        snapshot.pendingApproval = undefined;
+      }
+      return;
     case 'usage':
       snapshot.usage = { ...snapshot.usage, ...event.data };
       return;
@@ -704,6 +727,7 @@ function updateSnapshot(
       snapshot.error = event.data.error ?? snapshot.error;
       snapshot.budgetReason = event.data.budgetReason ?? snapshot.budgetReason;
       snapshot.terminal = true;
+      snapshot.pendingApproval = undefined;
       return;
     case 'snapshot':
       return;

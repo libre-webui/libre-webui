@@ -1728,7 +1728,8 @@
       "guiEnabled": "Work Computer（GUI + 浏览器）",
       "takeoverEnabled": "允许接管屏幕",
       "computerPreset": "Work Computer",
-      "computerPresetHint": "Work Computer 需要 GUI 镜像：从仓库的 deploy/work-computer 构建并标记为 libre-work-computer:latest。"
+      "computerPresetHint": "Work Computer 需要 GUI 镜像：从仓库的 deploy/work-computer 构建并标记为 libre-work-computer:latest。",
+      "approvalsRequired": "有副作用的操作需要批准"
     },
     "modelAccess": {
       "title": "模型下载",
@@ -2760,7 +2761,22 @@
       "skills": "教会的技能",
       "noSkills": "还没有教过任何内容。在屏幕标签页使用 Teach 演示一次流程，它就会成为可重放的技能。",
       "skillToggleFailed": "无法更新技能。",
-      "unread": "新动态"
+      "unread": "新动态",
+      "approvals": "自动审核",
+      "approvalsHint": "开启后，命令、文件删除和移动以及计算机操作都会暂停，等待你批准。",
+      "approvalsPolicyForced": "此智能体的 Work 策略要求对有副作用的操作进行批准。",
+      "approvalsToggleFailed": "无法更新审批设置。",
+      "approvalRuleLine": "始终允许",
+      "approvalRuleDelete": "移除规则",
+      "approvalRuleDeleteFailed": "无法移除该规则。"
+    },
+    "approval": {
+      "title": "需要批准",
+      "description": "智能体想要运行 {{tool}}。此操作可能改动数据或在本对话之外执行。",
+      "allowOnce": "允许一次",
+      "allowAlways": "始终允许",
+      "deny": "拒绝",
+      "failed": "无法发送该决定。"
     }
   },
   "personaBackground": {

@@ -1728,7 +1728,8 @@
       "guiEnabled": "Work Computer (GUI + browser)",
       "takeoverEnabled": "Consenti la presa di controllo dello schermo",
       "computerPreset": "Work Computer",
-      "computerPresetHint": "Il Work Computer richiede l'immagine GUI: compilala da deploy/work-computer nel repository e taggala libre-work-computer:latest."
+      "computerPresetHint": "Il Work Computer richiede l'immagine GUI: compilala da deploy/work-computer nel repository e taggala libre-work-computer:latest.",
+      "approvalsRequired": "Richiedi l'approvazione per le azioni con effetti collaterali"
     },
     "modelAccess": {
       "title": "Download dei modelli",
@@ -2760,7 +2761,22 @@
       "skills": "Abilità insegnate",
       "noSkills": "Niente di insegnato finora. Usa Teach nella scheda Schermo per dimostrare una procedura una volta; diventa un'abilità ripetibile.",
       "skillToggleFailed": "Impossibile aggiornare l'abilità.",
-      "unread": "Nuova attività"
+      "unread": "Nuova attività",
+      "approvals": "Revisione automatica",
+      "approvalsHint": "Quando è attiva, i comandi, le eliminazioni e gli spostamenti di file e le azioni sul computer restano in pausa finché non li approvi.",
+      "approvalsPolicyForced": "La politica Work di questo agente richiede l'approvazione per le azioni con effetti collaterali.",
+      "approvalsToggleFailed": "Impossibile aggiornare le approvazioni.",
+      "approvalRuleLine": "Sempre consentito",
+      "approvalRuleDelete": "Rimuovi la regola",
+      "approvalRuleDeleteFailed": "Impossibile rimuovere la regola."
+    },
+    "approval": {
+      "title": "Serve l'approvazione",
+      "description": "L'agente vuole eseguire {{tool}}. Questa azione può modificare dati o agire fuori dalla conversazione.",
+      "allowOnce": "Consenti una volta",
+      "allowAlways": "Consenti sempre",
+      "deny": "Rifiuta",
+      "failed": "Impossibile inviare la decisione."
     }
   },
   "personaBackground": {
