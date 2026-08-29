@@ -234,6 +234,11 @@ export interface WorkDelegationSource {
   fromAgent: string;
 }
 
+// How long an unanswered takeover request keeps the screen session alive
+// after its wait times out, so a user arriving late from the notification
+// still finds the screen the agent was blocked on.
+export const WORK_TAKEOVER_GRACE_MS = 15 * 60_000;
+
 // Delegation stays shallow by design: a delegated run cannot delegate
 // further, so two agents can never ping-pong requests at each other.
 export const WORK_DELEGATION_MAX_PEERS = 12;
@@ -2408,14 +2413,53 @@ export class WorkAgentService {
             ? `work-takeover:${context.runId}`
             : `work-takeover:${task.id}:${Date.now()}`,
         });
-        const outcome = await workScreenControlService.waitForAssist(
-          task.id,
-          reason,
-          {
-            timeoutMs: WORK_SCREEN_ASSIST_TIMEOUT_MS,
-            signal: context.signal,
+        // Hold the screen session for the whole wait — and, when nobody
+        // answers in time, through a grace window after it. Without the
+        // hold, a run_command settle or run-end cleanup stops the sandbox,
+        // and a user who arrives from the notification a few minutes late
+        // takes over a fresh start page instead of the screen the agent
+        // was blocked on.
+        let releaseTakeoverHold: (() => Promise<void>) | undefined;
+        try {
+          releaseTakeoverHold =
+            await workRuntimeService.beginScreenSession(task);
+        } catch (error) {
+          // Best effort: a hold failure must never block the request.
+          logger.warn(
+            `Could not hold the screen for a takeover request on ${task.id}:`,
+            error
+          );
+        }
+        let holdThroughGrace = false;
+        let outcome: Awaited<
+          ReturnType<typeof workScreenControlService.waitForAssist>
+        >;
+        try {
+          outcome = await workScreenControlService.waitForAssist(
+            task.id,
+            reason,
+            {
+              timeoutMs: WORK_SCREEN_ASSIST_TIMEOUT_MS,
+              signal: context.signal,
+            }
+          );
+          holdThroughGrace = outcome === 'timeout';
+        } finally {
+          if (releaseTakeoverHold) {
+            const release = releaseTakeoverHold;
+            if (holdThroughGrace) {
+              const timer = setTimeout(
+                () => void release(),
+                WORK_TAKEOVER_GRACE_MS
+              );
+              timer.unref?.();
+            } else {
+              // An active takeover (or a cancelled run) carries its own
+              // viewer holds — or none should remain at all.
+              void release();
+            }
           }
-        );
+        }
         if (outcome === 'released') {
           return {
             content:

@@ -2777,3 +2777,107 @@ test('a user message sent mid-run reaches the model at the next round', async ()
     /no active run/i
   );
 });
+
+test('an unanswered takeover keeps the screen held through a grace window', async () => {
+  const { default: workScreenControlService } = await distModule(
+    'services/workScreenControlService.js'
+  );
+  const now = Date.now();
+  const userId = 'agent-loop-takeover-grace-admin';
+  getDatabase()
+    .prepare(
+      `INSERT INTO users (
+        id, username, email, password_hash, role, avatar, created_at, updated_at
+      ) VALUES (?, ?, NULL, 'unused', 'admin', NULL, ?, ?)`
+    )
+    .run(userId, userId, now, now);
+
+  replaceMethod(workRuntimeService, 'computerToolsAvailable', async () => true);
+  const holds = { acquired: 0, released: 0 };
+  replaceMethod(workRuntimeService, 'beginScreenSession', async () => {
+    holds.acquired += 1;
+    return async () => {
+      holds.released += 1;
+    };
+  });
+  const assistOutcomes = ['timeout', 'released'];
+  replaceMethod(
+    workScreenControlService,
+    'waitForAssist',
+    async () => assistOutcomes.shift() ?? 'timeout'
+  );
+
+  const script = [];
+  replaceMethod(
+    workModelProviderService,
+    'generateChatStreamResponse',
+    async request => {
+      const step = script.shift();
+      assert.ok(step, 'no scripted provider turn left');
+      return step(request);
+    }
+  );
+  const takeoverTurn = id => request => ({
+    model: request.model,
+    created_at: new Date().toISOString(),
+    message: {
+      role: 'assistant',
+      content: '',
+      tool_calls: [
+        {
+          id,
+          function: {
+            name: 'request_takeover',
+            arguments: { reason: 'Please sign in for me.' },
+          },
+        },
+      ],
+    },
+    done: true,
+  });
+  const finalTurn = content => request => ({
+    model: request.model,
+    created_at: new Date().toISOString(),
+    message: { role: 'assistant', content },
+    done: true,
+  });
+
+  // Scenario 1: nobody answers. The hold must survive the run so a late
+  // takeover finds the screen the agent was blocked on, not a fresh start
+  // page (the HF-quota bug, 2026-08-29).
+  script.push(takeoverTurn('grace-1'), finalTurn('Nobody came; stopping.'));
+  const first = await workTaskService.createTaskWithRun(
+    userId,
+    'Blocked on a sign-in.',
+    'test-model',
+    true,
+    { providerType: 'plugin', providerId: 'test-plugin' }
+  );
+  await workAgentService.execute(first.id, first.activeRun.id, userId);
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(holds.acquired, 1);
+  assert.equal(
+    holds.released,
+    0,
+    'a timed-out request must keep its hold for the grace window'
+  );
+
+  // Scenario 2: the user takes over and hands back — the wait's own hold
+  // releases promptly, because the viewer connection carries its own.
+  script.push(takeoverTurn('grace-2'), finalTurn('Handed back; continuing.'));
+  const second = await workTaskService.createTaskWithRun(
+    userId,
+    'Another sign-in.',
+    'test-model',
+    true,
+    { providerType: 'plugin', providerId: 'test-plugin' }
+  );
+  await workAgentService.execute(second.id, second.activeRun.id, userId);
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(holds.acquired, 2);
+  assert.equal(
+    holds.released,
+    1,
+    'an answered request releases the wait hold promptly'
+  );
+});
