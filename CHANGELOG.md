@@ -15,6 +15,86 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 📚 Documentation
 
+## [0.30.0] - 2026-08-29
+
+Hired agents become governable and connected: approve their risky actions
+before they run, let them delegate work to each other with @-mentions, fire
+routines from external systems through webhooks, and hand agents the same
+MCP and OpenAPI tool servers chat already uses — all without giving up
+per-agent sandboxes.
+
+### ✨ New Features
+
+- **Approve actions before they run (Auto Review).** When a Work policy
+  requires review — or an agent's new Auto Review switch is on — the run
+  pauses before `run_command`, `computer_act`, `delete_file`, `move_file`,
+  or a delegation and shows a decision card in the conversation: **Allow
+  once**, **Always allow**, or **Deny**. Always-allow persists a scoped
+  rule (the command's program for shell commands, the one target for
+  delegation), listed and removable in the Agent tab; denial reaches the
+  model as an answer, never a silent skip; an unanswered request expires
+  after five minutes and the run hands off as **Needs input**. Pending
+  approvals notify (in-app and push) and every decision lands in the
+  security audit log. Ships with schema migrations (SQLite v28 /
+  PostgreSQL v27).
+- **Agents delegate to each other.** Type `@` in the Work composer to
+  mention another hired agent, and agents carry a peer roster with a new
+  `message_agent` tool. Delegation is asynchronous message-passing between
+  separate sandboxes: the target runs in its own task (its conversation
+  shows **Delegated by** the sender) and its report is delivered back into
+  the delegating conversation — mid-run if the delegator is still working,
+  as a waiting message if it is idle. Delegated runs cannot delegate
+  further, busy targets refuse honestly, and a report never auto-starts a
+  run, so agents cannot ping-pong each other.
+- **Webhook triggers for automations.** An external system — CI, a cron
+  service, home automation — can now fire an automation with a POST and a
+  per-automation secret. The secret is generated in the edit dialog, shown
+  exactly once, stored only as a hash, compared in constant time, and
+  rotatable; a paused automation refuses external fires. Webhook fires use
+  the same manual-run path as Run now, so history, settling, and
+  notifications behave identically. Ships with a schema migration (SQLite
+  v29 / PostgreSQL v28).
+- **Connected tools for Work agents.** Agents can call the MCP and OpenAPI
+  tool servers configured under Settings → Tools, through the same
+  hardened backend gateway as chat (SSRF-guarded egress, per-user
+  credentials, size and time caps) — never from inside the sandbox.
+  Offline tasks offer none, servers missing a personal credential are
+  filtered out at offer time instead of failing mid-run, persona
+  tool-server bindings scope what a hired agent sees, and tools the server
+  classifies as side-effecting pause behind Auto Review while read-only
+  tools run free.
+
+### 🔧 Improvements
+
+- Finished Work runs show a **run summary**: rounds, tool calls,
+  screenshots, safety fences, verification verdicts, and recovery nudges,
+  plus why a run handed off early — live, after reconnects, and on
+  persisted handoff messages.
+- The chat composer's dictation now runs on the same engine as the Work
+  composer, keeping the transcription-source picker (browser speech or a
+  named provider model) while removing a duplicated recorder
+  implementation.
+
+### 🐛 Bug Fixes
+
+- Migrating a SQLite deployment to PostgreSQL no longer silently drops the
+  Work policy columns for the Work Computer and screen-takeover settings —
+  or any of the newer policy and task fields — during import.
+
+### 🌍 Translations
+
+- 35 new interface messages across all 25 shipped languages for action
+  approvals, Auto Review rules, agent mentions and delegation labels, run
+  summaries, and webhook management.
+
+### 📚 Documentation
+
+- The Workspaces guide covers action approvals, delegation between agents,
+  and connected tool servers, with the API table brought current; the
+  Automations guide documents webhook triggers with a copy-paste example;
+  the chat tools guide notes the shared Work boundary; the notifications
+  reference lists the approval notification type.
+
 ## [0.29.0] - 2026-08-28
 
 Personas can now become persistent Work agents: hire one into a pinned sidebar
