@@ -2576,7 +2576,19 @@
       "skillsLoaded": "वर्कस्पेस कौशल · {{count}}",
       "skillWorked": "यह प्रक्रिया सफल रही",
       "skillFailed": "यह प्रक्रिया विफल रही",
-      "skillTraceSaved": "नोट किया गया"
+      "skillTraceSaved": "नोट किया गया",
+      "stats": {
+        "title": "रन सारांश",
+        "rounds": "राउंड",
+        "toolCalls": "टूल कॉल",
+        "screenshots": "स्क्रीनशॉट",
+        "fences": "रोक",
+        "checksPassed": "जाँचें सफल",
+        "checksPending": "जाँचें लंबित",
+        "stallNudges": "रुकावट संकेत",
+        "ambiguityNudges": "पुनः स्थिरीकरण संकेत",
+        "stoppedBy": "रुकने का कारण"
+      }
     },
     "runtime": {
       "unavailable": "रनटाइम उपलब्ध नहीं है",

@@ -2576,7 +2576,19 @@
       "skillsLoaded": "Workspace skills · {{count}}",
       "skillWorked": "This procedure worked",
       "skillFailed": "This procedure failed",
-      "skillTraceSaved": "noted"
+      "skillTraceSaved": "noted",
+      "stats": {
+        "title": "Run summary",
+        "rounds": "Rounds",
+        "toolCalls": "Tool calls",
+        "screenshots": "Screenshots",
+        "fences": "Fences",
+        "checksPassed": "Checks passed",
+        "checksPending": "Checks pending",
+        "stallNudges": "Stall nudges",
+        "ambiguityNudges": "Re-grounding nudges",
+        "stoppedBy": "Stopped by"
+      }
     },
     "runtime": {
       "unavailable": "Runtime unavailable",

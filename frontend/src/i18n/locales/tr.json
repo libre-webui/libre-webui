@@ -2576,7 +2576,19 @@
       "skillsLoaded": "Çalışma alanı becerileri · {{count}}",
       "skillWorked": "Bu prosedür işe yaradı",
       "skillFailed": "Bu prosedür başarısız oldu",
-      "skillTraceSaved": "kaydedildi"
+      "skillTraceSaved": "kaydedildi",
+      "stats": {
+        "title": "Çalıştırma özeti",
+        "rounds": "Turlar",
+        "toolCalls": "Araç çağrıları",
+        "screenshots": "Ekran görüntüleri",
+        "fences": "Kesintiler",
+        "checksPassed": "Geçen kontroller",
+        "checksPending": "Bekleyen kontroller",
+        "stallNudges": "Takılma uyarıları",
+        "ambiguityNudges": "Yeniden hizalama uyarıları",
+        "stoppedBy": "Durduran"
+      }
     },
     "runtime": {
       "unavailable": "Çalışma ortamı kullanılamıyor",

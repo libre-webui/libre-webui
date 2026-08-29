@@ -22,6 +22,7 @@ import type {
   WorkLiveSegment,
   WorkLiveToolActivity,
   WorkRunEvent,
+  WorkRunLoopStats,
   WorkRunSkill,
   WorkRunUsage,
 } from '@/types/work';
@@ -389,6 +390,10 @@ const applySnapshot = (
       firstNumber(live, 'finishedAt', 'finished_at') ?? current.finishedAt,
     error: firstString(live, 'error', 'message') ?? current.error,
     terminal,
+    budgetReason:
+      firstString(live, 'budgetReason', 'budget_reason') ??
+      current.budgetReason,
+    loopStats: loopStatsFrom(live.loopStats) ?? current.loopStats,
     pendingApproval: terminal
       ? undefined
       : asRecord(live.pendingApproval ?? live.pending_approval)
@@ -397,6 +402,30 @@ const applySnapshot = (
           )
         : current.pendingApproval,
   };
+};
+
+const LOOP_STAT_KEYS = [
+  'rounds',
+  'toolCalls',
+  'screenshots',
+  'fences',
+  'expectationsPassed',
+  'expectationsPending',
+  'stallNudges',
+  'ambiguityNudges',
+] as const;
+
+export const loopStatsFrom = (value: unknown): WorkRunLoopStats | undefined => {
+  const record = asRecord(value);
+  if (!record) return undefined;
+  const stats: WorkRunLoopStats = {};
+  for (const key of LOOP_STAT_KEYS) {
+    const entry = record[key];
+    if (typeof entry === 'number' && Number.isFinite(entry)) {
+      stats[key] = entry;
+    }
+  }
+  return Object.keys(stats).length > 0 ? stats : undefined;
 };
 
 const approvalFrom = (
@@ -585,6 +614,10 @@ export const applyWorkRunEvent = (
       finishedAt:
         firstNumber(event.data, 'finishedAt', 'finished_at') || event.timestamp,
       terminal: true,
+      budgetReason:
+        firstString(event.data, 'budgetReason', 'budget_reason') ??
+        next.budgetReason,
+      loopStats: loopStatsFrom(event.data.loopStats) ?? next.loopStats,
       pendingApproval: undefined,
     };
   }

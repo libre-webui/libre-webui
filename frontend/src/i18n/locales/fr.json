@@ -2576,7 +2576,19 @@
       "skillsLoaded": "Compétences d’espace de travail · {{count}}",
       "skillWorked": "Cette procédure a fonctionné",
       "skillFailed": "Cette procédure a échoué",
-      "skillTraceSaved": "noté"
+      "skillTraceSaved": "noté",
+      "stats": {
+        "title": "Résumé de l’exécution",
+        "rounds": "Tours",
+        "toolCalls": "Appels d’outils",
+        "screenshots": "Captures d’écran",
+        "fences": "Coupures",
+        "checksPassed": "Vérifications réussies",
+        "checksPending": "Vérifications en attente",
+        "stallNudges": "Rappels de blocage",
+        "ambiguityNudges": "Rappels de réancrage",
+        "stoppedBy": "Arrêté par"
+      }
     },
     "runtime": {
       "unavailable": "Environnement d'exécution indisponible",

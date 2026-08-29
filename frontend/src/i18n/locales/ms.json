@@ -2576,7 +2576,19 @@
       "skillsLoaded": "Kemahiran ruang kerja · {{count}}",
       "skillWorked": "Prosedur ini berjaya",
       "skillFailed": "Prosedur ini gagal",
-      "skillTraceSaved": "dicatat"
+      "skillTraceSaved": "dicatat",
+      "stats": {
+        "title": "Ringkasan larian",
+        "rounds": "Pusingan",
+        "toolCalls": "Panggilan alat",
+        "screenshots": "Tangkapan skrin",
+        "fences": "Penahan",
+        "checksPassed": "Semakan lulus",
+        "checksPending": "Semakan tertunda",
+        "stallNudges": "Peringatan tersekat",
+        "ambiguityNudges": "Peringatan penjajaran semula",
+        "stoppedBy": "Dihentikan oleh"
+      }
     },
     "runtime": {
       "unavailable": "Masa jalan tidak tersedia",

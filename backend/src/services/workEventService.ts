@@ -624,6 +624,7 @@ function cloneSnapshot(snapshot: WorkLiveRunSnapshot): WorkLiveRunSnapshot {
     })),
     usage: snapshot.usage ? { ...snapshot.usage } : undefined,
     skills: snapshot.skills.map(skill => ({ ...skill })),
+    loopStats: snapshot.loopStats ? { ...snapshot.loopStats } : undefined,
     pendingApproval: snapshot.pendingApproval
       ? {
           ...snapshot.pendingApproval,
@@ -726,6 +727,7 @@ function updateSnapshot(
       snapshot.phase = event.data.status;
       snapshot.error = event.data.error ?? snapshot.error;
       snapshot.budgetReason = event.data.budgetReason ?? snapshot.budgetReason;
+      snapshot.loopStats = event.data.loopStats ?? snapshot.loopStats;
       snapshot.terminal = true;
       snapshot.pendingApproval = undefined;
       return;

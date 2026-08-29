@@ -2576,7 +2576,19 @@
       "skillsLoaded": "Arbeitsbereichsfähigkeiten · {{count}}",
       "skillWorked": "Dieser Ablauf hat funktioniert",
       "skillFailed": "Dieser Ablauf ist fehlgeschlagen",
-      "skillTraceSaved": "vermerkt"
+      "skillTraceSaved": "vermerkt",
+      "stats": {
+        "title": "Lauf-Zusammenfassung",
+        "rounds": "Runden",
+        "toolCalls": "Tool-Aufrufe",
+        "screenshots": "Screenshots",
+        "fences": "Abbrüche",
+        "checksPassed": "Prüfungen bestanden",
+        "checksPending": "Prüfungen ausstehend",
+        "stallNudges": "Stillstand-Hinweise",
+        "ambiguityNudges": "Neuausrichtungs-Hinweise",
+        "stoppedBy": "Gestoppt durch"
+      }
     },
     "runtime": {
       "unavailable": "Laufzeit nicht verfügbar",

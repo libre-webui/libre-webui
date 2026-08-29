@@ -364,3 +364,35 @@ test('a pending approval blocks the run until resolved, and results clear it', (
   );
   assert.equal(clearedByDone.pendingApproval, undefined);
 });
+
+test('terminal events carry loop telemetry into the live run', () => {
+  const done = applyWorkRunEvent(
+    createWorkLiveRun('task-1', 'run-1'),
+    event(1, 'done', {
+      status: 'needs_input',
+      budgetReason: 'approval-timeout',
+      loopStats: { rounds: 7, toolCalls: 12, fences: 2, screenshots: 0 },
+    })
+  );
+  assert.equal(done.budgetReason, 'approval-timeout');
+  assert.deepEqual(done.loopStats, {
+    rounds: 7,
+    toolCalls: 12,
+    fences: 2,
+    screenshots: 0,
+  });
+
+  // Snapshots replay the same telemetry after a reconnect.
+  const replayed = applyWorkRunEvent(
+    createWorkLiveRun('task-1', 'run-1'),
+    event(0, 'snapshot', {
+      liveRun: {
+        status: 'completed',
+        terminal: true,
+        loopStats: { rounds: 3, toolCalls: 4 },
+      },
+    })
+  );
+  assert.deepEqual(replayed.loopStats, { rounds: 3, toolCalls: 4 });
+  assert.equal(replayed.terminal, true);
+});

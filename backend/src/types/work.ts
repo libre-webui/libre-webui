@@ -152,6 +152,18 @@ export interface WorkLiveRunSnapshotTool {
   finishedAt?: number;
 }
 
+/** Loop telemetry: how a run spent its budget, for the run view. */
+export interface WorkLoopStats {
+  rounds: number;
+  toolCalls: number;
+  screenshots: number;
+  fences: number;
+  expectationsPassed: number;
+  expectationsPending: number;
+  stallNudges: number;
+  ambiguityNudges: number;
+}
+
 export interface WorkLiveRunSnapshot {
   status?: WorkRunStatus;
   phase?: string;
@@ -174,6 +186,8 @@ export interface WorkLiveRunSnapshot {
   terminal: boolean;
   error?: string;
   budgetReason?: string;
+  /** Loop telemetry captured from the run's terminal event. */
+  loopStats?: WorkLoopStats;
   /** Approval the run is currently blocked on, when one is pending. */
   pendingApproval?: WorkLiveApproval;
 }
@@ -241,16 +255,7 @@ export interface WorkLiveEventDataMap {
     error?: string;
     budgetReason?: string;
     /** Loop telemetry: how the run spent its budget, for the run view. */
-    loopStats?: {
-      rounds: number;
-      toolCalls: number;
-      screenshots: number;
-      fences: number;
-      expectationsPassed: number;
-      expectationsPending: number;
-      stallNudges: number;
-      ambiguityNudges: number;
-    };
+    loopStats?: WorkLoopStats;
   };
 }
 

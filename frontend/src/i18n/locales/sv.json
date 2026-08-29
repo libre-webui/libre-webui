@@ -2576,7 +2576,19 @@
       "skillsLoaded": "Arbetsytefärdigheter · {{count}}",
       "skillWorked": "Den här proceduren fungerade",
       "skillFailed": "Den här proceduren misslyckades",
-      "skillTraceSaved": "noterat"
+      "skillTraceSaved": "noterat",
+      "stats": {
+        "title": "Körningssammanfattning",
+        "rounds": "Rundor",
+        "toolCalls": "Verktygsanrop",
+        "screenshots": "Skärmbilder",
+        "fences": "Avbrott",
+        "checksPassed": "Kontroller godkända",
+        "checksPending": "Väntande kontroller",
+        "stallNudges": "Stoppåminnelser",
+        "ambiguityNudges": "Omorienteringspåminnelser",
+        "stoppedBy": "Stoppad av"
+      }
     },
     "runtime": {
       "unavailable": "Körmiljön är inte tillgänglig",

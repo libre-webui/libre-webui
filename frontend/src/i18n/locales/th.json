@@ -2576,7 +2576,19 @@
       "skillsLoaded": "ทักษะพื้นที่ทำงาน · {{count}}",
       "skillWorked": "ขั้นตอนนี้สำเร็จ",
       "skillFailed": "ขั้นตอนนี้ล้มเหลว",
-      "skillTraceSaved": "บันทึกแล้ว"
+      "skillTraceSaved": "บันทึกแล้ว",
+      "stats": {
+        "title": "สรุปการทำงาน",
+        "rounds": "รอบ",
+        "toolCalls": "การเรียกเครื่องมือ",
+        "screenshots": "ภาพหน้าจอ",
+        "fences": "การหยุดกลางคัน",
+        "checksPassed": "การตรวจสอบผ่าน",
+        "checksPending": "การตรวจสอบค้างอยู่",
+        "stallNudges": "การแจ้งเตือนหยุดชะงัก",
+        "ambiguityNudges": "การแจ้งเตือนปรับตำแหน่งใหม่",
+        "stoppedBy": "หยุดโดย"
+      }
     },
     "runtime": {
       "unavailable": "รันไทม์ไม่พร้อมใช้งาน",

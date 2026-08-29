@@ -2576,7 +2576,19 @@
       "skillsLoaded": "Færni vinnusvæðis · {{count}}",
       "skillWorked": "Þetta ferli virkaði",
       "skillFailed": "Þetta ferli mistókst",
-      "skillTraceSaved": "skráð"
+      "skillTraceSaved": "skráð",
+      "stats": {
+        "title": "Samantekt keyrslu",
+        "rounds": "Umferðir",
+        "toolCalls": "Verkfærakall",
+        "screenshots": "Skjámyndir",
+        "fences": "Stöðvanir",
+        "checksPassed": "Prófanir staðnar",
+        "checksPending": "Prófanir í bið",
+        "stallNudges": "Ábendingar um stöðnun",
+        "ambiguityNudges": "Ábendingar um endurfestingu",
+        "stoppedBy": "Stöðvað af"
+      }
     },
     "runtime": {
       "unavailable": "Keyrsluumhverfi ekki tiltækt",

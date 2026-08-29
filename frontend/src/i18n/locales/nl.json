@@ -2576,7 +2576,19 @@
       "skillsLoaded": "Werkruimtevaardigheden · {{count}}",
       "skillWorked": "Deze procedure werkte",
       "skillFailed": "Deze procedure mislukte",
-      "skillTraceSaved": "genoteerd"
+      "skillTraceSaved": "genoteerd",
+      "stats": {
+        "title": "Samenvatting van de run",
+        "rounds": "Rondes",
+        "toolCalls": "Tool-aanroepen",
+        "screenshots": "Schermafbeeldingen",
+        "fences": "Onderbrekingen",
+        "checksPassed": "Controles geslaagd",
+        "checksPending": "Controles in behandeling",
+        "stallNudges": "Vastloopmeldingen",
+        "ambiguityNudges": "Herijkingsmeldingen",
+        "stoppedBy": "Gestopt door"
+      }
     },
     "runtime": {
       "unavailable": "Runtime niet beschikbaar",

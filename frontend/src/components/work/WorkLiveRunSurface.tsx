@@ -27,6 +27,7 @@ import {
 import { useCallback, useEffect, useId, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StreamingMessageContent } from '@/components/ui/StreamingMessageContent';
+import { WorkRunStats } from '@/components/work/WorkRunStats';
 import type {
   WorkLiveRun,
   WorkLiveSegment,
@@ -582,6 +583,14 @@ export function WorkLiveRunSurface({
             </span>
           )}
         </div>
+      )}
+
+      {run.terminal && run.loopStats && (
+        <WorkRunStats
+          stats={run.loopStats}
+          budgetReason={run.budgetReason}
+          className='mt-2'
+        />
       )}
 
       {active && !run.reasoning && !run.response && run.tools.length === 0 && (

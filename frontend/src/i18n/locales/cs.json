@@ -2576,7 +2576,19 @@
       "skillsLoaded": "Dovednosti pracovního prostoru · {{count}}",
       "skillWorked": "Tento postup fungoval",
       "skillFailed": "Tento postup selhal",
-      "skillTraceSaved": "zaznamenáno"
+      "skillTraceSaved": "zaznamenáno",
+      "stats": {
+        "title": "Souhrn běhu",
+        "rounds": "Kola",
+        "toolCalls": "Volání nástrojů",
+        "screenshots": "Snímky obrazovky",
+        "fences": "Pojistky",
+        "checksPassed": "Úspěšné kontroly",
+        "checksPending": "Čekající kontroly",
+        "stallNudges": "Upozornění na zaseknutí",
+        "ambiguityNudges": "Upozornění na přeorientování",
+        "stoppedBy": "Zastaveno kvůli"
+      }
     },
     "runtime": {
       "unavailable": "Běhové prostředí není dostupné",

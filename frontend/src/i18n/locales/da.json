@@ -2576,7 +2576,19 @@
       "skillsLoaded": "Arbejdsområdefærdigheder · {{count}}",
       "skillWorked": "Denne procedure virkede",
       "skillFailed": "Denne procedure fejlede",
-      "skillTraceSaved": "noteret"
+      "skillTraceSaved": "noteret",
+      "stats": {
+        "title": "Kørselsoversigt",
+        "rounds": "Runder",
+        "toolCalls": "Værktøjskald",
+        "screenshots": "Skærmbilleder",
+        "fences": "Afbrydelser",
+        "checksPassed": "Kontroller bestået",
+        "checksPending": "Afventende kontroller",
+        "stallNudges": "Stilstandspåmindelser",
+        "ambiguityNudges": "Genforankringspåmindelser",
+        "stoppedBy": "Stoppet af"
+      }
     },
     "runtime": {
       "unavailable": "Kørselsmiljø ikke tilgængeligt",

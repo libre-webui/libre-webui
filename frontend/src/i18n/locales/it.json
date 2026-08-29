@@ -2576,7 +2576,19 @@
       "skillsLoaded": "Competenze dell’area di lavoro · {{count}}",
       "skillWorked": "Questa procedura ha funzionato",
       "skillFailed": "Questa procedura è fallita",
-      "skillTraceSaved": "annotato"
+      "skillTraceSaved": "annotato",
+      "stats": {
+        "title": "Riepilogo esecuzione",
+        "rounds": "Round",
+        "toolCalls": "Chiamate strumenti",
+        "screenshots": "Screenshot",
+        "fences": "Interruzioni",
+        "checksPassed": "Verifiche superate",
+        "checksPending": "Verifiche in sospeso",
+        "stallNudges": "Avvisi di stallo",
+        "ambiguityNudges": "Avvisi di riancoraggio",
+        "stoppedBy": "Fermato da"
+      }
     },
     "runtime": {
       "unavailable": "Runtime non disponibile",

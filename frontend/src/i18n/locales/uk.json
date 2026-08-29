@@ -2576,7 +2576,19 @@
       "skillsLoaded": "Навички робочого простору · {{count}}",
       "skillWorked": "Ця процедура спрацювала",
       "skillFailed": "Ця процедура не спрацювала",
-      "skillTraceSaved": "занотовано"
+      "skillTraceSaved": "занотовано",
+      "stats": {
+        "title": "Підсумок запуску",
+        "rounds": "Раунди",
+        "toolCalls": "Виклики інструментів",
+        "screenshots": "Знімки екрана",
+        "fences": "Переривання",
+        "checksPassed": "Перевірок пройдено",
+        "checksPending": "Перевірок в очікуванні",
+        "stallNudges": "Сигнали про застій",
+        "ambiguityNudges": "Сигнали переналаштування",
+        "stoppedBy": "Зупинено через"
+      }
     },
     "runtime": {
       "unavailable": "Середовище виконання недоступне",

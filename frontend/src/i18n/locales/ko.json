@@ -2576,7 +2576,19 @@
       "skillsLoaded": "워크스페이스 기술 · {{count}}",
       "skillWorked": "이 절차가 성공했습니다",
       "skillFailed": "이 절차가 실패했습니다",
-      "skillTraceSaved": "기록됨"
+      "skillTraceSaved": "기록됨",
+      "stats": {
+        "title": "실행 요약",
+        "rounds": "라운드",
+        "toolCalls": "도구 호출",
+        "screenshots": "스크린샷",
+        "fences": "중단 방지",
+        "checksPassed": "검증 통과",
+        "checksPending": "검증 대기",
+        "stallNudges": "정체 알림",
+        "ambiguityNudges": "재정렬 알림",
+        "stoppedBy": "중지 사유"
+      }
     },
     "runtime": {
       "unavailable": "런타임을 사용할 수 없습니다",

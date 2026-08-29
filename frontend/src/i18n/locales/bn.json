@@ -2576,7 +2576,19 @@
       "skillsLoaded": "ওয়ার্কস্পেস দক্ষতা · {{count}}",
       "skillWorked": "এই পদ্ধতিটি কাজ করেছে",
       "skillFailed": "এই পদ্ধতিটি ব্যর্থ হয়েছে",
-      "skillTraceSaved": "নোট করা হয়েছে"
+      "skillTraceSaved": "নোট করা হয়েছে",
+      "stats": {
+        "title": "রান সারাংশ",
+        "rounds": "রাউন্ড",
+        "toolCalls": "টুল কল",
+        "screenshots": "স্ক্রিনশট",
+        "fences": "ফেন্স",
+        "checksPassed": "সফল যাচাই",
+        "checksPending": "অমীমাংসিত যাচাই",
+        "stallNudges": "স্থবিরতা সংকেত",
+        "ambiguityNudges": "পুনঃনির্ধারণ সংকেত",
+        "stoppedBy": "বন্ধ হওয়ার কারণ"
+      }
     },
     "runtime": {
       "unavailable": "রানটাইম পাওয়া যাচ্ছে না",

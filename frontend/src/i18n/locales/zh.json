@@ -2576,7 +2576,19 @@
       "skillsLoaded": "工作区技能 · {{count}}",
       "skillWorked": "此流程成功",
       "skillFailed": "此流程失败",
-      "skillTraceSaved": "已记录"
+      "skillTraceSaved": "已记录",
+      "stats": {
+        "title": "运行摘要",
+        "rounds": "轮次",
+        "toolCalls": "工具调用",
+        "screenshots": "截图",
+        "fences": "中断保护",
+        "checksPassed": "检查通过",
+        "checksPending": "检查待定",
+        "stallNudges": "停滞提醒",
+        "ambiguityNudges": "重新定位提醒",
+        "stoppedBy": "停止原因"
+      }
     },
     "runtime": {
       "unavailable": "运行时不可用",

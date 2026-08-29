@@ -119,6 +119,18 @@ export interface WorkRunSkill {
   description?: string;
 }
 
+/** Loop telemetry: how a run spent its budget, for the run view. */
+export interface WorkRunLoopStats {
+  rounds?: number;
+  toolCalls?: number;
+  screenshots?: number;
+  fences?: number;
+  expectationsPassed?: number;
+  expectationsPending?: number;
+  stallNudges?: number;
+  ambiguityNudges?: number;
+}
+
 export interface WorkLiveRun {
   taskId: string;
   runId: string;
@@ -138,6 +150,10 @@ export interface WorkLiveRun {
   finishedAt?: number;
   error?: string;
   terminal: boolean;
+  /** Why the run handed off early, when it did (budget, stall, approval). */
+  budgetReason?: string;
+  /** Loop telemetry captured from the run's terminal event. */
+  loopStats?: WorkRunLoopStats;
   /** Approval the run is currently blocked on, when one is pending. */
   pendingApproval?: WorkLiveApproval;
 }

@@ -2576,7 +2576,19 @@
       "skillsLoaded": "ワークスペーススキル · {{count}}",
       "skillWorked": "この手順は成功しました",
       "skillFailed": "この手順は失敗しました",
-      "skillTraceSaved": "記録済み"
+      "skillTraceSaved": "記録済み",
+      "stats": {
+        "title": "実行サマリー",
+        "rounds": "ラウンド",
+        "toolCalls": "ツール呼び出し",
+        "screenshots": "スクリーンショット",
+        "fences": "フェンス",
+        "checksPassed": "検証成功",
+        "checksPending": "検証保留",
+        "stallNudges": "停滞通知",
+        "ambiguityNudges": "再確認通知",
+        "stoppedBy": "停止理由"
+      }
     },
     "runtime": {
       "unavailable": "ランタイムを利用できません",

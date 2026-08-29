@@ -2576,7 +2576,19 @@
       "skillsLoaded": "مهارات مساحة العمل · {{count}}",
       "skillWorked": "نجح هذا الإجراء",
       "skillFailed": "فشل هذا الإجراء",
-      "skillTraceSaved": "تم التدوين"
+      "skillTraceSaved": "تم التدوين",
+      "stats": {
+        "title": "ملخص التشغيل",
+        "rounds": "الجولات",
+        "toolCalls": "استدعاءات الأدوات",
+        "screenshots": "لقطات الشاشة",
+        "fences": "الحواجز",
+        "checksPassed": "فحوصات ناجحة",
+        "checksPending": "فحوصات معلقة",
+        "stallNudges": "تنبيهات التوقف",
+        "ambiguityNudges": "تنبيهات إعادة التثبيت",
+        "stoppedBy": "توقف بسبب"
+      }
     },
     "runtime": {
       "unavailable": "بيئة التشغيل غير متاحة",

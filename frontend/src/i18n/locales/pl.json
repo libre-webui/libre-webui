@@ -2576,7 +2576,19 @@
       "skillsLoaded": "Umiejętności obszaru roboczego · {{count}}",
       "skillWorked": "Ta procedura zadziałała",
       "skillFailed": "Ta procedura zawiodła",
-      "skillTraceSaved": "odnotowano"
+      "skillTraceSaved": "odnotowano",
+      "stats": {
+        "title": "Podsumowanie przebiegu",
+        "rounds": "Rundy",
+        "toolCalls": "Wywołania narzędzi",
+        "screenshots": "Zrzuty ekranu",
+        "fences": "Przerwania",
+        "checksPassed": "Kontrole zaliczone",
+        "checksPending": "Kontrole oczekujące",
+        "stallNudges": "Powiadomienia o zastoju",
+        "ambiguityNudges": "Powiadomienia o ponownym ukierunkowaniu",
+        "stoppedBy": "Zatrzymane przez"
+      }
     },
     "runtime": {
       "unavailable": "Środowisko uruchomieniowe niedostępne",

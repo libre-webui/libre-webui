@@ -2576,7 +2576,19 @@
       "skillsLoaded": "Навыки рабочего пространства · {{count}}",
       "skillWorked": "Эта процедура сработала",
       "skillFailed": "Эта процедура не сработала",
-      "skillTraceSaved": "отмечено"
+      "skillTraceSaved": "отмечено",
+      "stats": {
+        "title": "Сводка запуска",
+        "rounds": "Раунды",
+        "toolCalls": "Вызовы инструментов",
+        "screenshots": "Скриншоты",
+        "fences": "Прерывания",
+        "checksPassed": "Проверок пройдено",
+        "checksPending": "Проверок в ожидании",
+        "stallNudges": "Сигналы о застое",
+        "ambiguityNudges": "Сигналы перенастройки",
+        "stoppedBy": "Остановлено из-за"
+      }
     },
     "runtime": {
       "unavailable": "Среда выполнения недоступна",

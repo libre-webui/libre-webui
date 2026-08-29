@@ -2576,7 +2576,19 @@
       "skillsLoaded": "Kỹ năng không gian làm việc · {{count}}",
       "skillWorked": "Quy trình này đã thành công",
       "skillFailed": "Quy trình này đã thất bại",
-      "skillTraceSaved": "đã ghi nhận"
+      "skillTraceSaved": "đã ghi nhận",
+      "stats": {
+        "title": "Tóm tắt phiên chạy",
+        "rounds": "Vòng",
+        "toolCalls": "Lượt gọi công cụ",
+        "screenshots": "Ảnh chụp màn hình",
+        "fences": "Lần chặn",
+        "checksPassed": "Kiểm tra đạt",
+        "checksPending": "Kiểm tra đang chờ",
+        "stallNudges": "Nhắc kẹt tiến độ",
+        "ambiguityNudges": "Nhắc định hướng lại",
+        "stoppedBy": "Dừng bởi"
+      }
     },
     "runtime": {
       "unavailable": "Môi trường chạy không khả dụng",

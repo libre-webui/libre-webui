@@ -29,6 +29,8 @@ import { RichMessageContent } from '@/components/ui/RichMessageContent';
 import { LogoMark } from '@/components/LogoMark';
 import { StreamingMessageContent } from '@/components/ui/StreamingMessageContent';
 import { WorkApprovalCard } from '@/components/work/WorkApprovalCard';
+import { WorkRunStats } from '@/components/work/WorkRunStats';
+import { loopStatsFrom } from '@/utils/workEvents';
 import {
   ToolActivityRow,
   WorkLiveRunSurface,
@@ -552,6 +554,11 @@ export function WorkConversation({
                 const reportFrom = agentAttribution(
                   message.metadata?.delegationReport
                 );
+                // Budget handoffs persist their loop telemetry; surface it
+                // under the handoff text so finished runs keep their story.
+                const messageLoopStats = loopStatsFrom(
+                  message.metadata?.loopStats
+                );
                 return (
                   <article
                     key={message.id}
@@ -606,6 +613,17 @@ export function WorkConversation({
                         <RichMessageContent
                           content={message.content}
                           className='text-sm text-ink'
+                        />
+                      )}
+                      {!isUserMessage && messageLoopStats && (
+                        <WorkRunStats
+                          stats={messageLoopStats}
+                          budgetReason={
+                            typeof message.metadata?.budgetReason === 'string'
+                              ? message.metadata.budgetReason
+                              : undefined
+                          }
+                          className='mt-1.5'
                         />
                       )}
                     </div>
