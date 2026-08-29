@@ -3026,7 +3026,17 @@
         "description": "Un plan de rapport d'état le premier de chaque mois."
       }
     },
-    "openTask": "Ouvrir la tâche"
+    "openTask": "Ouvrir la tâche",
+    "webhook": {
+      "title": "Déclencheur webhook",
+      "enabledHint": "Les systèmes externes peuvent déclencher cette automatisation avec le secret. La rotation invalide le secret précédent.",
+      "disabledHint": "Laissez un système externe (CI, cron, domotique) déclencher cette automatisation via un POST et un secret.",
+      "rotate": "Renouveler le secret",
+      "enable": "Activer",
+      "disable": "Désactiver",
+      "revealHint": "Affiché une seule fois. Envoyez-le comme jeton Bearer ou dans l’en-tête X-Libre-Webhook-Secret.",
+      "failed": "Impossible de mettre à jour le webhook."
+    }
   },
   "home": {
     "active": "actif",

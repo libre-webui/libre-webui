@@ -3026,7 +3026,17 @@
         "description": "每月一日的状态报告提纲。"
       }
     },
-    "openTask": "打开任务"
+    "openTask": "打开任务",
+    "webhook": {
+      "title": "Webhook 触发器",
+      "enabledHint": "外部系统可以使用该密钥触发此自动化。轮换后旧密钥立即失效。",
+      "disabledHint": "允许外部系统（CI、cron、家庭自动化）通过 POST 和密钥触发此自动化。",
+      "rotate": "轮换密钥",
+      "enable": "启用",
+      "disable": "禁用",
+      "revealHint": "仅显示一次。请作为 Bearer 令牌或 X-Libre-Webhook-Secret 请求头发送。",
+      "failed": "无法更新 Webhook。"
+    }
   },
   "home": {
     "active": "活跃",

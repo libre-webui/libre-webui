@@ -3026,7 +3026,17 @@
         "description": "매월 1일 상태 보고서 개요."
       }
     },
-    "openTask": "작업 열기"
+    "openTask": "작업 열기",
+    "webhook": {
+      "title": "웹훅 트리거",
+      "enabledHint": "외부 시스템이 이 시크릿으로 자동화를 실행할 수 있습니다. 교체하면 이전 시크릿은 무효화됩니다.",
+      "disabledHint": "외부 시스템(CI, cron, 홈 오토메이션)이 POST와 시크릿으로 이 자동화를 실행하도록 허용합니다.",
+      "rotate": "시크릿 교체",
+      "enable": "활성화",
+      "disable": "비활성화",
+      "revealHint": "한 번만 표시됩니다. Bearer 토큰이나 X-Libre-Webhook-Secret 헤더로 보내세요.",
+      "failed": "웹훅을 업데이트하지 못했습니다."
+    }
   },
   "home": {
     "active": "활성",

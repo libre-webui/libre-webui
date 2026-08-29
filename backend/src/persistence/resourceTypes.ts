@@ -585,6 +585,8 @@ export interface StoredAutomationRecord {
   work_policy_id: string | null;
   /** Existing Work task (agent) this routine runs inside; null = new task per fire. */
   work_task_id: string | null;
+  /** SHA-256 of the inbound webhook secret; null = webhook firing disabled. */
+  webhook_secret_hash: string | null;
   next_run_at: number | null;
   last_run_at: number | null;
   created_at: number;
@@ -638,6 +640,13 @@ export interface AutomationRepository {
     userId: string,
     status: string,
     nextRunAt: number | null,
+    updatedAt: number
+  ): Promise<boolean>;
+  /** Rotate or clear the inbound webhook secret hash; null disables firing. */
+  setWebhookSecretHash(
+    automationId: string,
+    userId: string,
+    secretHash: string | null,
     updatedAt: number
   ): Promise<boolean>;
   deleteByOwner(automationId: string, userId: string): Promise<boolean>;

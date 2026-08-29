@@ -3026,7 +3026,17 @@
         "description": "Szkic raportu stanu pierwszego dnia każdego miesiąca."
       }
     },
-    "openTask": "Otwórz zadanie"
+    "openTask": "Otwórz zadanie",
+    "webhook": {
+      "title": "Wyzwalacz webhook",
+      "enabledHint": "Systemy zewnętrzne mogą uruchamiać tę automatyzację przy użyciu sekretu. Rotacja unieważnia poprzedni sekret.",
+      "disabledHint": "Pozwól systemowi zewnętrznemu (CI, cron, automatyka domowa) uruchamiać tę automatyzację przez POST i sekret.",
+      "rotate": "Rotuj sekret",
+      "enable": "Włącz",
+      "disable": "Wyłącz",
+      "revealHint": "Wyświetlane tylko raz. Wyślij jako token Bearer lub nagłówek X-Libre-Webhook-Secret.",
+      "failed": "Nie udało się zaktualizować webhooka."
+    }
   },
   "home": {
     "active": "aktywny",

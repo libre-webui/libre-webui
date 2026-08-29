@@ -437,3 +437,113 @@ test('the scheduler fires due automations once and settles stalled runs', async 
     .get(runId);
   assert.equal(manualRun.status, 'queued');
 });
+
+test('webhook secrets gate inbound fires with constant-time checks', async () => {
+  // A fresh automation starts with the webhook disabled.
+  const createResponse = await fetch(baseUrl, {
+    method: 'POST',
+    headers: headersFor(ownerToken),
+    body: JSON.stringify({
+      name: 'Webhook target',
+      instructions: 'Summarize the release.',
+      triggers: [{ kind: 'daily', hour: 6, minute: 0 }],
+    }),
+  });
+  assert.equal(createResponse.status, 200);
+  const automation = (await createResponse.json()).data;
+  assert.equal(automation.webhookEnabled, false);
+
+  // Disabled webhook: any fire attempt is refused without an id oracle.
+  const disabledFire = await fetch(`${baseUrl}/${automation.id}/webhook`, {
+    method: 'POST',
+  });
+  assert.equal(disabledFire.status, 401);
+  const missingFire = await fetch(`${baseUrl}/never-existed/webhook`, {
+    method: 'POST',
+    headers: { 'X-Libre-Webhook-Secret': 'lwh_guess' },
+  });
+  assert.equal(missingFire.status, 401);
+
+  // Only the owner can mint the secret; it is returned exactly once.
+  const strangerRotate = await fetch(
+    `${baseUrl}/${automation.id}/webhook-secret`,
+    { method: 'POST', headers: headersFor(strangerToken) }
+  );
+  assert.equal(strangerRotate.status, 404);
+  const rotateResponse = await fetch(
+    `${baseUrl}/${automation.id}/webhook-secret`,
+    { method: 'POST', headers: headersFor(ownerToken) }
+  );
+  assert.equal(rotateResponse.status, 200);
+  const { secret, path: hookPath } = (await rotateResponse.json()).data;
+  assert.match(secret, /^lwh_[A-Za-z0-9_-]{40,}$/);
+  assert.equal(hookPath, `/api/automations/${automation.id}/webhook`);
+  const listed = await fetch(baseUrl, { headers: headersFor(ownerToken) });
+  assert.equal(
+    (await listed.json()).data.find(item => item.id === automation.id)
+      .webhookEnabled,
+    true
+  );
+
+  // A wrong secret is refused; the right one fires a queued run.
+  const wrongFire = await fetch(`${baseUrl}/${automation.id}/webhook`, {
+    method: 'POST',
+    headers: { 'X-Libre-Webhook-Secret': 'lwh_wrong' },
+  });
+  assert.equal(wrongFire.status, 401);
+  const fired = await fetch(`${baseUrl}/${automation.id}/webhook`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${secret}` },
+  });
+  assert.equal(fired.status, 202);
+  const { runId } = (await fired.json()).data;
+  const queued = database
+    .prepare('SELECT status, user_id FROM automation_runs WHERE id = ?')
+    .get(runId);
+  assert.equal(queued.status, 'queued');
+  assert.equal(queued.user_id, 'automation-owner');
+  const job = await durableRuntime.service.getByIdempotency(
+    'automation-owner',
+    automationRunIdempotencyScope(automation.id),
+    `manual:${runId}`
+  );
+  assert.ok(job, 'the webhook fire enqueues the standard manual-run job');
+
+  // A pause means pause for external callers.
+  await fetch(`${baseUrl}/${automation.id}/pause`, {
+    method: 'POST',
+    headers: headersFor(ownerToken),
+  });
+  const pausedFire = await fetch(`${baseUrl}/${automation.id}/webhook`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${secret}` },
+  });
+  assert.equal(pausedFire.status, 409);
+  await fetch(`${baseUrl}/${automation.id}/resume`, {
+    method: 'POST',
+    headers: headersFor(ownerToken),
+  });
+
+  // Rotation invalidates the previous secret; disabling closes the door.
+  const rotatedAgain = await fetch(
+    `${baseUrl}/${automation.id}/webhook-secret`,
+    { method: 'POST', headers: headersFor(ownerToken) }
+  );
+  const nextSecret = (await rotatedAgain.json()).data.secret;
+  assert.notEqual(nextSecret, secret);
+  const staleFire = await fetch(`${baseUrl}/${automation.id}/webhook`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${secret}` },
+  });
+  assert.equal(staleFire.status, 401);
+  const disableResponse = await fetch(
+    `${baseUrl}/${automation.id}/webhook-secret`,
+    { method: 'DELETE', headers: headersFor(ownerToken) }
+  );
+  assert.equal(disableResponse.status, 200);
+  const closedFire = await fetch(`${baseUrl}/${automation.id}/webhook`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${nextSecret}` },
+  });
+  assert.equal(closedFire.status, 401);
+});

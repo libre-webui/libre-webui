@@ -1114,6 +1114,10 @@ const AGENT_SEEN_REQUIRED_SCHEMA = {
   work_tasks: ['last_seen_at'],
 } as const;
 
+const AUTOMATION_WEBHOOKS_REQUIRED_SCHEMA = {
+  automations: ['webhook_secret_hash'],
+} as const;
+
 const WORK_APPROVALS_REQUIRED_SCHEMA = {
   work_policies: ['approvals_required'],
   work_tasks: ['approvals_enabled'],
@@ -1955,6 +1959,10 @@ export const AGENT_ROUTINES_SCHEMA_SQL = `
 
 export const AGENT_SEEN_SCHEMA_SQL = `
   ALTER TABLE work_tasks ADD COLUMN last_seen_at INTEGER;
+`;
+
+export const AUTOMATION_WEBHOOKS_SCHEMA_SQL = `
+  ALTER TABLE automations ADD COLUMN webhook_secret_hash TEXT;
 `;
 
 export const WORK_APPROVALS_TABLES_SQL = `
@@ -3777,6 +3785,11 @@ const collectMissingAgentRoutinesSchema = (
 const collectMissingAgentSeenSchema = (database: Database.Database): string[] =>
   collectMissingColumns(database, AGENT_SEEN_REQUIRED_SCHEMA);
 
+const collectMissingAutomationWebhooksSchema = (
+  database: Database.Database
+): string[] =>
+  collectMissingColumns(database, AUTOMATION_WEBHOOKS_REQUIRED_SCHEMA);
+
 const collectMissingWorkApprovalsSchema = (
   database: Database.Database
 ): string[] => [
@@ -3849,6 +3862,7 @@ function collectMissingSchemaAtVersion(
     ...(version >= 26 ? collectMissingAgentRoutinesSchema(database) : []),
     ...(version >= 27 ? collectMissingAgentSeenSchema(database) : []),
     ...(version >= 28 ? collectMissingWorkApprovalsSchema(database) : []),
+    ...(version >= 29 ? collectMissingAutomationWebhooksSchema(database) : []),
   ];
 }
 
@@ -3960,6 +3974,8 @@ const AGENT_SEEN_MIGRATION_CHECKSUM =
   '6e753d9adbdfb71d717ef3a6bc387f3ace6e1e91c9f73ecc6fe22c7508259197';
 const WORK_APPROVALS_MIGRATION_CHECKSUM =
   '09ece410455c755a5c4b6b6f2bc1f6cc3191b58a40a119cffe337f8a1e6eae21';
+const AUTOMATION_WEBHOOKS_MIGRATION_CHECKSUM =
+  'a136ac591774852516f4de5c4f97d607259d57aa7d16db37249bc1c3e2dcd776';
 
 const MIGRATIONS: readonly SQLiteMigration[] = [
   {
@@ -4466,6 +4482,25 @@ const MIGRATIONS: readonly SQLiteMigration[] = [
       if (missing.length > 0) {
         throw new Error(
           `SQLite work approvals schema is incomplete; missing ${missing.join(', ')}`
+        );
+      }
+    },
+  },
+  {
+    version: 29,
+    name: 'automation-webhooks',
+    checksum: AUTOMATION_WEBHOOKS_MIGRATION_CHECKSUM,
+    apply(database) {
+      addColumnIfMissing(
+        database,
+        'automations',
+        'webhook_secret_hash',
+        'TEXT'
+      );
+      const missing = collectMissingAutomationWebhooksSchema(database);
+      if (missing.length > 0) {
+        throw new Error(
+          `SQLite automation webhooks schema is incomplete; missing ${missing.join(', ')}`
         );
       }
     },

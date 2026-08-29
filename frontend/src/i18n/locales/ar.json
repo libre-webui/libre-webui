@@ -3026,7 +3026,17 @@
         "description": "مخطط تقرير حالة في أول كل شهر."
       }
     },
-    "openTask": "فتح المهمة"
+    "openTask": "فتح المهمة",
+    "webhook": {
+      "title": "مشغّل Webhook",
+      "enabledHint": "يمكن للأنظمة الخارجية تشغيل هذه الأتمتة باستخدام السر. التدوير يبطل السر السابق.",
+      "disabledHint": "اسمح لنظام خارجي (CI أو cron أو أتمتة المنزل) بتشغيل هذه الأتمتة عبر POST وسر.",
+      "rotate": "تدوير السر",
+      "enable": "تفعيل",
+      "disable": "تعطيل",
+      "revealHint": "يُعرض مرة واحدة. أرسله كرمز Bearer أو ضمن ترويسة X-Libre-Webhook-Secret.",
+      "failed": "تعذر تحديث الـ webhook."
+    }
   },
   "home": {
     "active": "نشط",

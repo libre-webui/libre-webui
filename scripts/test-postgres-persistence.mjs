@@ -82,98 +82,104 @@ test('PostgreSQL migration registry is contiguous, checksummed, and frozen', () 
     POSTGRES_MIGRATIONS.map(migration => migration.version),
     [
       1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
-      21, 22, 23, 24, 25, 26, 27,
+      21, 22, 23, 24, 25, 26, 27, 28,
     ]
   );
   validatePostgresMigrationRegistry(POSTGRES_MIGRATIONS);
   assert.equal(Object.isFrozen(POSTGRES_MIGRATIONS), true);
   assert.equal(POSTGRES_MIGRATIONS.every(Object.isFrozen), true);
-  assert.equal(SQLITE_MIGRATION_CONTRACT.at(-1)?.version, 28);
-  assert.equal(SQLITE_MIGRATION_CONTRACT.at(-1)?.name, 'work-approvals');
-  assert.equal(SQLITE_MIGRATION_CONTRACT.at(-2)?.version, 27);
-  assert.equal(SQLITE_MIGRATION_CONTRACT.at(-2)?.name, 'agent-seen');
-  assert.equal(POSTGRES_MIGRATIONS.at(-8)?.version, 20);
-  assert.equal(POSTGRES_MIGRATIONS.at(-8)?.name, 'mfa-push-recovery');
+  assert.equal(SQLITE_MIGRATION_CONTRACT.at(-1)?.version, 29);
+  assert.equal(SQLITE_MIGRATION_CONTRACT.at(-1)?.name, 'automation-webhooks');
+  assert.equal(SQLITE_MIGRATION_CONTRACT.at(-2)?.version, 28);
+  assert.equal(SQLITE_MIGRATION_CONTRACT.at(-2)?.name, 'work-approvals');
+  assert.equal(POSTGRES_MIGRATIONS.at(-9)?.version, 20);
+  assert.equal(POSTGRES_MIGRATIONS.at(-9)?.name, 'mfa-push-recovery');
   assert.match(
-    POSTGRES_MIGRATIONS.at(-8)?.sql ?? '',
+    POSTGRES_MIGRATIONS.at(-9)?.sql ?? '',
     /CREATE TABLE user_mfa/
   );
   assert.match(
-    POSTGRES_MIGRATIONS.at(-8)?.sql ?? '',
+    POSTGRES_MIGRATIONS.at(-9)?.sql ?? '',
     /CREATE TABLE webauthn_credentials/
   );
-  assert.equal(POSTGRES_MIGRATIONS.at(-7)?.version, 21);
-  assert.equal(POSTGRES_MIGRATIONS.at(-7)?.name, 'automation-work-target');
+  assert.equal(POSTGRES_MIGRATIONS.at(-8)?.version, 21);
+  assert.equal(POSTGRES_MIGRATIONS.at(-8)?.name, 'automation-work-target');
   assert.match(
-    POSTGRES_MIGRATIONS.at(-7)?.sql ?? '',
+    POSTGRES_MIGRATIONS.at(-8)?.sql ?? '',
     /ALTER TABLE automations ADD COLUMN target/
   );
   assert.match(
-    POSTGRES_MIGRATIONS.at(-7)?.sql ?? '',
+    POSTGRES_MIGRATIONS.at(-8)?.sql ?? '',
     /ALTER TABLE automation_runs ADD COLUMN work_task_id/
   );
-  assert.equal(POSTGRES_MIGRATIONS.at(-6)?.version, 22);
-  assert.equal(POSTGRES_MIGRATIONS.at(-6)?.name, 'work-computer');
+  assert.equal(POSTGRES_MIGRATIONS.at(-7)?.version, 22);
+  assert.equal(POSTGRES_MIGRATIONS.at(-7)?.name, 'work-computer');
   assert.match(
-    POSTGRES_MIGRATIONS.at(-6)?.sql ?? '',
+    POSTGRES_MIGRATIONS.at(-7)?.sql ?? '',
     /ALTER TABLE work_policies ADD COLUMN gui_enabled/
   );
-  assert.equal(POSTGRES_MIGRATIONS.at(-5)?.version, 23);
-  assert.equal(POSTGRES_MIGRATIONS.at(-5)?.name, 'work-takeover');
+  assert.equal(POSTGRES_MIGRATIONS.at(-6)?.version, 23);
+  assert.equal(POSTGRES_MIGRATIONS.at(-6)?.name, 'work-takeover');
   assert.match(
-    POSTGRES_MIGRATIONS.at(-5)?.sql ?? '',
+    POSTGRES_MIGRATIONS.at(-6)?.sql ?? '',
     /ALTER TABLE work_policies ADD COLUMN takeover_enabled/
   );
-  assert.equal(POSTGRES_MIGRATIONS.at(-4)?.version, 24);
-  assert.equal(POSTGRES_MIGRATIONS.at(-4)?.name, 'agent-identity');
+  assert.equal(POSTGRES_MIGRATIONS.at(-5)?.version, 24);
+  assert.equal(POSTGRES_MIGRATIONS.at(-5)?.name, 'agent-identity');
   assert.match(
-    POSTGRES_MIGRATIONS.at(-4)?.sql ?? '',
+    POSTGRES_MIGRATIONS.at(-5)?.sql ?? '',
     /ALTER TABLE work_tasks ADD COLUMN persona_id/
   );
   assert.match(
-    POSTGRES_MIGRATIONS.at(-4)?.sql ?? '',
+    POSTGRES_MIGRATIONS.at(-5)?.sql ?? '',
     /ALTER TABLE work_tasks ADD COLUMN status_blurb/
   );
   assert.match(
-    POSTGRES_MIGRATIONS.at(-4)?.sql ?? '',
+    POSTGRES_MIGRATIONS.at(-5)?.sql ?? '',
     /ALTER TABLE work_tasks ADD COLUMN is_agent/
   );
-  assert.equal(POSTGRES_MIGRATIONS.at(-3)?.version, 25);
-  assert.equal(POSTGRES_MIGRATIONS.at(-3)?.name, 'agent-routines');
+  assert.equal(POSTGRES_MIGRATIONS.at(-4)?.version, 25);
+  assert.equal(POSTGRES_MIGRATIONS.at(-4)?.name, 'agent-routines');
   assert.match(
-    POSTGRES_MIGRATIONS.at(-3)?.sql ?? '',
+    POSTGRES_MIGRATIONS.at(-4)?.sql ?? '',
     /ALTER TABLE automations ADD COLUMN work_task_id/
   );
-  assert.equal(POSTGRES_MIGRATIONS.at(-2)?.version, 26);
-  assert.equal(POSTGRES_MIGRATIONS.at(-2)?.name, 'agent-seen');
+  assert.equal(POSTGRES_MIGRATIONS.at(-3)?.version, 26);
+  assert.equal(POSTGRES_MIGRATIONS.at(-3)?.name, 'agent-seen');
   assert.match(
-    POSTGRES_MIGRATIONS.at(-2)?.sql ?? '',
+    POSTGRES_MIGRATIONS.at(-3)?.sql ?? '',
     /ALTER TABLE work_tasks ADD COLUMN last_seen_at/
   );
-  assert.equal(POSTGRES_MIGRATIONS.at(-1)?.version, 27);
-  assert.equal(POSTGRES_MIGRATIONS.at(-1)?.name, 'work-approvals');
+  assert.equal(POSTGRES_MIGRATIONS.at(-2)?.version, 27);
+  assert.equal(POSTGRES_MIGRATIONS.at(-2)?.name, 'work-approvals');
   assert.match(
-    POSTGRES_MIGRATIONS.at(-1)?.sql ?? '',
+    POSTGRES_MIGRATIONS.at(-2)?.sql ?? '',
     /ALTER TABLE work_policies ADD COLUMN approvals_required/
   );
   assert.match(
-    POSTGRES_MIGRATIONS.at(-1)?.sql ?? '',
+    POSTGRES_MIGRATIONS.at(-2)?.sql ?? '',
     /ALTER TABLE work_tasks ADD COLUMN approvals_enabled/
   );
   assert.match(
-    POSTGRES_MIGRATIONS.at(-1)?.sql ?? '',
+    POSTGRES_MIGRATIONS.at(-2)?.sql ?? '',
     /CREATE TABLE work_approvals/
   );
   assert.match(
-    POSTGRES_MIGRATIONS.at(-1)?.sql ?? '',
+    POSTGRES_MIGRATIONS.at(-2)?.sql ?? '',
     /CREATE TABLE work_approval_rules/
   );
+  assert.equal(POSTGRES_MIGRATIONS.at(-1)?.version, 28);
+  assert.equal(POSTGRES_MIGRATIONS.at(-1)?.name, 'automation-webhooks');
   assert.match(
-    POSTGRES_MIGRATIONS.at(-8)?.sql ?? '',
+    POSTGRES_MIGRATIONS.at(-1)?.sql ?? '',
+    /ALTER TABLE automations ADD COLUMN webhook_secret_hash/
+  );
+  assert.match(
+    POSTGRES_MIGRATIONS.at(-9)?.sql ?? '',
     /CREATE TABLE push_subscriptions/
   );
   assert.match(
-    POSTGRES_MIGRATIONS.at(-8)?.sql ?? '',
+    POSTGRES_MIGRATIONS.at(-9)?.sql ?? '',
     /CREATE TABLE recovery_drills/
   );
   assert.equal(
@@ -422,7 +428,7 @@ test(
         initializePostgresPersistence(config, codec),
       ]);
       assert.equal(first.schemaCompatibility.status, 'compatible');
-      assert.equal(second.schemaCompatibility.currentVersion, 27);
+      assert.equal(second.schemaCompatibility.currentVersion, 28);
       assert.equal((await first.health()).ready, true);
 
       const assertStructuralDamage = async (mutation, expected) => {
@@ -3261,6 +3267,12 @@ test(
       `ALTER TABLE work_messages
          DROP CONSTRAINT work_messages_content_json_string_check`
     );
+    await target.query(
+      'ALTER TABLE automations DROP COLUMN webhook_secret_hash'
+    );
+    await target.query(
+      'DELETE FROM libre_schema_migrations WHERE version = 28'
+    );
     await target.query('DROP TABLE work_approval_rules');
     await target.query('DROP TABLE work_approvals');
     await target.query('ALTER TABLE work_tasks DROP COLUMN approvals_enabled');
@@ -3436,7 +3448,7 @@ test(
     assert.equal(prefixDryRun.sourceFingerprint, dryRun.sourceFingerprint);
     assert.match(
       prefixDryRun.warnings.join('\n'),
-      /exact version 10 migration-ledger prefix.*--resume can safely apply through version 27/i
+      /exact version 10 migration-ledger prefix.*--resume can safely apply through version 28/i
     );
     const codec = {
       encrypt: value => value,
@@ -3466,7 +3478,7 @@ test(
       resumed.tables.every(row => row.status === 'verified'),
       true
     );
-    assert.equal(resumed.targetSchemaVersion, 27);
+    assert.equal(resumed.targetSchemaVersion, 28);
     const resumedState = await target.query(
       `SELECT
          (SELECT MAX(version)::text FROM libre_schema_migrations)
@@ -3479,7 +3491,7 @@ test(
          (SELECT COUNT(*)::text FROM work_messages) AS work_messages`
     );
     assert.deepEqual(resumedState.rows[0], {
-      schema_version: '27',
+      schema_version: '28',
       import_status: 'complete',
       journal_count: String(dryRun.tables.length),
       work_journal: '1',

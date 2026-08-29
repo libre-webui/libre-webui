@@ -1340,6 +1340,24 @@
           "mount": "/api/automations",
           "method": "POST",
           "path": "/:automationId/run"
+        },
+        {
+          "file": "backend/src/routes/automations.ts",
+          "mount": "/api/automations",
+          "method": "POST",
+          "path": "/:automationId/webhook"
+        },
+        {
+          "file": "backend/src/routes/automations.ts",
+          "mount": "/api/automations",
+          "method": "POST",
+          "path": "/:automationId/webhook-secret"
+        },
+        {
+          "file": "backend/src/routes/automations.ts",
+          "mount": "/api/automations",
+          "method": "DELETE",
+          "path": "/:automationId/webhook-secret"
         }
       ],
       "contractSurfaces": {

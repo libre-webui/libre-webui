@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 
+import { createHash, randomBytes, timingSafeEqual } from 'node:crypto';
 import { v4 as uuidv4 } from 'uuid';
 import type {
   Automation,
@@ -69,6 +70,20 @@ export const decodeProvider = (
   };
 };
 
+export const hashWebhookSecret = (secret: string): string =>
+  createHash('sha256').update(secret).digest('hex');
+
+/** Constant-time check of a presented webhook secret against the stored hash. */
+export const webhookSecretMatches = (
+  storedHash: string | null,
+  presented: string
+): boolean => {
+  if (!storedHash || !presented) return false;
+  const expected = Buffer.from(storedHash, 'hex');
+  const actual = Buffer.from(hashWebhookSecret(presented), 'hex');
+  return expected.length === actual.length && timingSafeEqual(expected, actual);
+};
+
 const mapAutomationRow = (row: StoredAutomationRecord): Automation => ({
   id: row.id,
   name: encryptionService.decrypt(row.name),
@@ -83,6 +98,7 @@ const mapAutomationRow = (row: StoredAutomationRecord): Automation => ({
   ...(row.work_task_id !== null ? { workTaskId: row.work_task_id } : {}),
   ...(row.next_run_at !== null ? { nextRunAt: row.next_run_at } : {}),
   ...(row.last_run_at !== null ? { lastRunAt: row.last_run_at } : {}),
+  webhookEnabled: row.webhook_secret_hash !== null,
   createdAt: row.created_at,
   updatedAt: row.updated_at,
 });
@@ -240,6 +256,9 @@ class AutomationService {
       target,
       work_policy_id: workPolicyId,
       work_task_id: workTaskId,
+      // The upsert never touches the stored hash; the field only matters
+      // for brand-new rows, which start with the webhook disabled.
+      webhook_secret_hash: existing?.webhook_secret_hash ?? null,
       // Editing reschedules from now; a paused automation stays dormant.
       next_run_at: status === 'active' ? nextRunAt(triggers, now) : null,
       last_run_at: existing?.last_run_at ?? null,
@@ -299,6 +318,41 @@ class AutomationService {
     userId: string
   ): Promise<boolean> {
     return repositories().automations.deleteByOwner(automationId, userId);
+  }
+
+  /**
+   * Generate (or rotate) the inbound webhook secret. Only its SHA-256 is
+   * stored, so the plaintext is shown exactly once; rotating invalidates
+   * the previous secret immediately.
+   */
+  async rotateWebhookSecret(
+    automationId: string,
+    userId: string
+  ): Promise<string | undefined> {
+    const secret = `lwh_${randomBytes(32).toString('base64url')}`;
+    const updated = await repositories().automations.setWebhookSecretHash(
+      automationId,
+      userId,
+      hashWebhookSecret(secret),
+      Date.now()
+    );
+    return updated ? secret : undefined;
+  }
+
+  async disableWebhook(automationId: string, userId: string): Promise<boolean> {
+    return repositories().automations.setWebhookSecretHash(
+      automationId,
+      userId,
+      null,
+      Date.now()
+    );
+  }
+
+  /** Look up an automation for the unauthenticated webhook fire path. */
+  async getAutomationRecordById(
+    automationId: string
+  ): Promise<StoredAutomationRecord | null> {
+    return repositories().automations.findById(automationId);
   }
 
   // ----- runs -----

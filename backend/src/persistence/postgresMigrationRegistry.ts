@@ -33,6 +33,7 @@ import { POSTGRES_AGENT_IDENTITY_MIGRATION } from './postgresAgentIdentityMigrat
 import { POSTGRES_AGENT_ROUTINES_MIGRATION } from './postgresAgentRoutinesMigration.js';
 import { POSTGRES_AGENT_SEEN_MIGRATION } from './postgresAgentSeenMigration.js';
 import { POSTGRES_WORK_APPROVALS_MIGRATION } from './postgresWorkApprovalsMigration.js';
+import { POSTGRES_AUTOMATION_WEBHOOKS_MIGRATION } from './postgresAutomationWebhooksMigration.js';
 import type { PostgresMigration } from './postgresMigrationTypes.js';
 import { validatePostgresMigrationRegistry } from './postgresMigrations.js';
 
@@ -68,6 +69,7 @@ export const POSTGRES_MIGRATIONS: readonly PostgresMigration[] =
         POSTGRES_AGENT_ROUTINES_MIGRATION,
         POSTGRES_AGENT_SEEN_MIGRATION,
         POSTGRES_WORK_APPROVALS_MIGRATION,
+        POSTGRES_AUTOMATION_WEBHOOKS_MIGRATION,
       ].map(migration => Object.freeze({ ...migration }))
     )
   );

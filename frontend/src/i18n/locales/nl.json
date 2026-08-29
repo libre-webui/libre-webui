@@ -3026,7 +3026,17 @@
         "description": "Een opzet voor een statusrapport op de eerste van elke maand."
       }
     },
-    "openTask": "Taak openen"
+    "openTask": "Taak openen",
+    "webhook": {
+      "title": "Webhook-trigger",
+      "enabledHint": "Externe systemen kunnen deze automatisering starten met het geheim. Roteren maakt het vorige geheim ongeldig.",
+      "disabledHint": "Laat een extern systeem (CI, cron, domotica) deze automatisering starten met een POST en een geheim.",
+      "rotate": "Geheim roteren",
+      "enable": "Inschakelen",
+      "disable": "Uitschakelen",
+      "revealHint": "Wordt één keer getoond. Stuur het als Bearer-token of X-Libre-Webhook-Secret-header.",
+      "failed": "De webhook kon niet worden bijgewerkt."
+    }
   },
   "home": {
     "active": "actief",

@@ -79,6 +79,20 @@ export const automationsApi = {
   ): Promise<ApiResponse<{ runId: string }>> =>
     api.post(`/automations/${automationId}/run`).then(res => res.data),
 
+  rotateWebhookSecret: (
+    automationId: string
+  ): Promise<ApiResponse<{ secret: string; path: string }>> =>
+    api
+      .post(`/automations/${automationId}/webhook-secret`)
+      .then(res => res.data),
+
+  disableWebhook: (
+    automationId: string
+  ): Promise<ApiResponse<{ webhookEnabled: boolean }>> =>
+    api
+      .delete(`/automations/${automationId}/webhook-secret`)
+      .then(res => res.data),
+
   getOccurrences: (
     from: number,
     to: number

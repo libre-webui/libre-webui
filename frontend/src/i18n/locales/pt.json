@@ -3026,7 +3026,17 @@
         "description": "Um esboço de relatório de status no primeiro dia de cada mês."
       }
     },
-    "openTask": "Abrir tarefa"
+    "openTask": "Abrir tarefa",
+    "webhook": {
+      "title": "Gatilho webhook",
+      "enabledHint": "Sistemas externos podem disparar esta automação com o segredo. A rotação invalida o segredo anterior.",
+      "disabledHint": "Permita que um sistema externo (CI, cron, automação residencial) dispare esta automação com um POST e um segredo.",
+      "rotate": "Rotacionar segredo",
+      "enable": "Ativar",
+      "disable": "Desativar",
+      "revealHint": "Mostrado apenas uma vez. Envie como token Bearer ou no cabeçalho X-Libre-Webhook-Secret.",
+      "failed": "Não foi possível atualizar o webhook."
+    }
   },
   "home": {
     "active": "ativo",

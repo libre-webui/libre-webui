@@ -3026,7 +3026,17 @@
         "description": "Uno schema di report di stato il primo di ogni mese."
       }
     },
-    "openTask": "Apri attività"
+    "openTask": "Apri attività",
+    "webhook": {
+      "title": "Trigger webhook",
+      "enabledHint": "I sistemi esterni possono avviare questa automazione con il segreto. La rotazione invalida il segreto precedente.",
+      "disabledHint": "Consenti a un sistema esterno (CI, cron, domotica) di avviare questa automazione con un POST e un segreto.",
+      "rotate": "Ruota segreto",
+      "enable": "Attiva",
+      "disable": "Disattiva",
+      "revealHint": "Mostrato una sola volta. Invialo come token Bearer o nell’header X-Libre-Webhook-Secret.",
+      "failed": "Impossibile aggiornare il webhook."
+    }
   },
   "home": {
     "active": "attivo",

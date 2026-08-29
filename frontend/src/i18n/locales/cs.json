@@ -3026,7 +3026,17 @@
         "description": "Osnova stavové zprávy prvního dne v měsíci."
       }
     },
-    "openTask": "Otevřít úlohu"
+    "openTask": "Otevřít úlohu",
+    "webhook": {
+      "title": "Webhook spouštěč",
+      "enabledHint": "Externí systémy mohou tuto automatizaci spustit pomocí tajného klíče. Rotace zneplatní předchozí klíč.",
+      "disabledHint": "Umožněte externímu systému (CI, cron, domácí automatizace) spustit tuto automatizaci přes POST a tajný klíč.",
+      "rotate": "Obměnit klíč",
+      "enable": "Povolit",
+      "disable": "Zakázat",
+      "revealHint": "Zobrazeno jen jednou. Odešlete jako Bearer token nebo hlavičku X-Libre-Webhook-Secret.",
+      "failed": "Webhook se nepodařilo aktualizovat."
+    }
   },
   "home": {
     "active": "aktivní",

@@ -3026,7 +3026,17 @@
         "description": "Kerangka laporan status setiap tanggal satu."
       }
     },
-    "openTask": "Buka tugas"
+    "openTask": "Buka tugas",
+    "webhook": {
+      "title": "Pemicu webhook",
+      "enabledHint": "Sistem eksternal dapat menjalankan otomatisasi ini dengan rahasia tersebut. Rotasi membatalkan rahasia sebelumnya.",
+      "disabledHint": "Izinkan sistem eksternal (CI, cron, otomasi rumah) menjalankan otomatisasi ini lewat POST dan sebuah rahasia.",
+      "rotate": "Rotasi rahasia",
+      "enable": "Aktifkan",
+      "disable": "Nonaktifkan",
+      "revealHint": "Ditampilkan sekali saja. Kirim sebagai token Bearer atau header X-Libre-Webhook-Secret.",
+      "failed": "Webhook tidak dapat diperbarui."
+    }
   },
   "home": {
     "active": "aktif",

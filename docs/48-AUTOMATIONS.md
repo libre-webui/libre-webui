@@ -76,25 +76,53 @@ time, a deleted task fails the run as `work-task-missing`, and a task that is
 already running — or holding a live preview — fails the occurrence honestly
 as `work-task-busy` instead of queueing behind it.
 
+## Webhook triggers
+
+Beyond the schedule, an automation can be fired by an external system — a CI
+pipeline, a cron service, home automation. In the automation's edit dialog,
+**Webhook trigger → Enable** generates a per-automation secret; only its
+SHA-256 is stored, so the plaintext is shown exactly once. Rotating the
+secret invalidates the previous one immediately, and disabling the webhook
+closes the endpoint again.
+
+The external system fires the automation with:
+
+```bash
+curl -X POST https://your-host/api/automations/<automationId>/webhook \
+  -H "Authorization: Bearer lwh_..."
+```
+
+(`X-Libre-Webhook-Secret: lwh_...` works as an alternative header.) The
+response is `202` with the queued run id — the same manual-run path as
+**Run now**, so runs settle, notify, and appear in history identically. The
+secret comparison is constant-time, a missing automation and a wrong secret
+answer identically (no automation-id oracle), and a paused automation
+answers `409`: unlike the owner's Run now, an external caller cannot fire
+through a pause.
+
 ## API
 
-All endpoints require authentication and operate only on the caller's own
-automations.
+All endpoints except the webhook fire require authentication and operate
+only on the caller's own automations; the webhook fire authenticates with
+the per-automation secret instead.
 
-| Method   | Path                                     | Purpose                       |
-| -------- | ---------------------------------------- | ----------------------------- |
-| `GET`    | `/api/automations`                       | List automations              |
-| `POST`   | `/api/automations`                       | Create an automation          |
-| `GET`    | `/api/automations/occurrences?from=&to=` | Upcoming computed occurrences |
-| `GET`    | `/api/automations/runs`                  | Run history (filterable)      |
-| `GET`    | `/api/automations/runs/summary`          | Unseen count + 30-day buckets |
-| `POST`   | `/api/automations/runs/seen`             | Mark finished runs as seen    |
-| `GET`    | `/api/automations/:automationId`         | Read one automation           |
-| `PUT`    | `/api/automations/:automationId`         | Update an automation          |
-| `DELETE` | `/api/automations/:automationId`         | Delete an automation          |
-| `POST`   | `/api/automations/:automationId/pause`   | Pause the schedule            |
-| `POST`   | `/api/automations/:automationId/resume`  | Resume the schedule           |
-| `POST`   | `/api/automations/:automationId/run`     | Run now (202 with a run id)   |
+| Method   | Path                                             | Purpose                       |
+| -------- | ------------------------------------------------ | ----------------------------- |
+| `GET`    | `/api/automations`                               | List automations              |
+| `POST`   | `/api/automations`                               | Create an automation          |
+| `GET`    | `/api/automations/occurrences?from=&to=`         | Upcoming computed occurrences |
+| `GET`    | `/api/automations/runs`                          | Run history (filterable)      |
+| `GET`    | `/api/automations/runs/summary`                  | Unseen count + 30-day buckets |
+| `POST`   | `/api/automations/runs/seen`                     | Mark finished runs as seen    |
+| `GET`    | `/api/automations/:automationId`                 | Read one automation           |
+| `PUT`    | `/api/automations/:automationId`                 | Update an automation          |
+| `DELETE` | `/api/automations/:automationId`                 | Delete an automation          |
+| `POST`   | `/api/automations/:automationId/pause`           | Pause the schedule            |
+| `POST`   | `/api/automations/:automationId/resume`          | Resume the schedule           |
+| `POST`   | `/api/automations/:automationId/run`             | Run now (202 with a run id)   |
+| `POST`   | `/api/automations/:automationId/webhook`         | Fire via secret (202)         |
+| `POST`   | `/api/automations/:automationId/webhook-secret`  | Generate/rotate the secret    |
+| `DELETE` | `/api/automations/:automationId/webhook-secret`  | Disable the webhook           |
 
 A user may keep up to 50 automations; names are limited to 200 characters and
 instructions to 20,000.

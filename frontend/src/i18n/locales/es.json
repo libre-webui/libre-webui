@@ -3026,7 +3026,17 @@
         "description": "Un esquema de informe de estado el primer día de cada mes."
       }
     },
-    "openTask": "Abrir tarea"
+    "openTask": "Abrir tarea",
+    "webhook": {
+      "title": "Disparador webhook",
+      "enabledHint": "Los sistemas externos pueden lanzar esta automatización con el secreto. Rotarlo invalida el secreto anterior.",
+      "disabledHint": "Permite que un sistema externo (CI, cron, domótica) lance esta automatización con un POST y un secreto.",
+      "rotate": "Rotar secreto",
+      "enable": "Activar",
+      "disable": "Desactivar",
+      "revealHint": "Se muestra una sola vez. Envíalo como token Bearer o en la cabecera X-Libre-Webhook-Secret.",
+      "failed": "No se pudo actualizar el webhook."
+    }
   },
   "home": {
     "active": "activo",

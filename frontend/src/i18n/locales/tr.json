@@ -3026,7 +3026,17 @@
         "description": "Her ayın birinde bir durum raporu taslağı."
       }
     },
-    "openTask": "Görevi aç"
+    "openTask": "Görevi aç",
+    "webhook": {
+      "title": "Webhook tetikleyici",
+      "enabledHint": "Harici sistemler bu otomasyonu gizli anahtarla tetikleyebilir. Döndürme önceki anahtarı geçersiz kılar.",
+      "disabledHint": "Harici bir sistemin (CI, cron, ev otomasyonu) bu otomasyonu POST ve gizli anahtarla tetiklemesine izin verin.",
+      "rotate": "Anahtarı döndür",
+      "enable": "Etkinleştir",
+      "disable": "Devre dışı bırak",
+      "revealHint": "Yalnızca bir kez gösterilir. Bearer belirteci veya X-Libre-Webhook-Secret üst bilgisi olarak gönderin.",
+      "failed": "Webhook güncellenemedi."
+    }
   },
   "home": {
     "active": "etkin",

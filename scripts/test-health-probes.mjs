@@ -170,6 +170,7 @@ test('readiness fails closed while a valid older schema awaits migration', async
     DROP TABLE work_approvals;
     ALTER TABLE work_tasks DROP COLUMN approvals_enabled;
     ALTER TABLE work_policies DROP COLUMN approvals_required;
+    ALTER TABLE automations DROP COLUMN webhook_secret_hash;
     ALTER TABLE automations DROP COLUMN work_task_id;
     ALTER TABLE work_tasks DROP COLUMN last_seen_at;
     ALTER TABLE work_tasks DROP COLUMN persona_id;
@@ -227,6 +228,7 @@ test('readiness fails closed while a valid older schema awaits migration', async
     DROP TABLE resource_grants;
     DROP TABLE user_group_members;
     DROP TABLE user_groups;
+    DELETE FROM _libre_schema_migrations WHERE version = 29;
     DELETE FROM _libre_schema_migrations WHERE version = 28;
     DELETE FROM _libre_schema_migrations WHERE version = 27;
     DELETE FROM _libre_schema_migrations WHERE version = 26;

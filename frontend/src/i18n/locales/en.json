@@ -3026,7 +3026,17 @@
         "description": "A status report outline on the first of each month."
       }
     },
-    "openTask": "Open task"
+    "openTask": "Open task",
+    "webhook": {
+      "title": "Webhook trigger",
+      "enabledHint": "External systems can fire this automation with the secret. Rotating invalidates the previous secret.",
+      "disabledHint": "Let an external system (CI, cron, home automation) fire this automation with a POST and a secret.",
+      "rotate": "Rotate secret",
+      "enable": "Enable",
+      "disable": "Disable",
+      "revealHint": "Shown once. Send it as a Bearer token or an X-Libre-Webhook-Secret header.",
+      "failed": "Could not update the webhook."
+    }
   },
   "home": {
     "active": "active",

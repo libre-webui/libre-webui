@@ -16,7 +16,9 @@
  */
 
 import express from 'express';
-import automationService from '../services/automationService.js';
+import automationService, {
+  webhookSecretMatches,
+} from '../services/automationService.js';
 import automationSchedulerService from '../services/automationSchedulerService.js';
 import type { AutomationInput } from '../services/automationService.js';
 import { ApiResponse, Automation, AutomationRun } from '../types/index.js';
@@ -28,6 +30,53 @@ import {
 } from '../utils/automationSchedule.js';
 
 const router = express.Router();
+
+// Inbound webhook firing, declared before the router-wide authenticate so
+// external systems (CI, cron services, home automation) can fire with only
+// the per-automation secret. The constant-time hash comparison IS the
+// authentication; a missing automation and a wrong secret answer
+// identically so the endpoint is not an automation-id oracle.
+router.post('/:automationId/webhook', async (req, res) => {
+  try {
+    const automationId = String(req.params.automationId || '');
+    const authorization = req.headers.authorization;
+    const headerSecret = req.headers['x-libre-webhook-secret'];
+    const presented =
+      typeof headerSecret === 'string' && headerSecret
+        ? headerSecret
+        : typeof authorization === 'string' &&
+            authorization.startsWith('Bearer ')
+          ? authorization.slice('Bearer '.length)
+          : '';
+    const record =
+      await automationService.getAutomationRecordById(automationId);
+    if (
+      !record ||
+      !webhookSecretMatches(record.webhook_secret_hash, presented)
+    ) {
+      res
+        .status(401)
+        .json({ success: false, error: 'Invalid webhook credentials' });
+      return;
+    }
+    // A pause means pause: unlike the owner's Run now, an external caller
+    // cannot fire a paused automation.
+    if (record.status !== 'active') {
+      res
+        .status(409)
+        .json({ success: false, error: 'This automation is paused' });
+      return;
+    }
+    const runId = await automationSchedulerService.runNow(
+      automationId,
+      record.user_id
+    );
+    res.status(202).json({ success: true, data: { runId } });
+  } catch (error) {
+    sendAutomationError(res, error, 'Failed to fire the automation webhook');
+  }
+});
+
 router.use(authenticate);
 
 const userIdOf = (req: AuthenticatedRequest): string =>
@@ -300,6 +349,55 @@ router.post('/:automationId/run', async (req: AuthenticatedRequest, res) => {
     res.status(202).json({ success: true, data: { runId } } as ApiResponse);
   } catch (error) {
     sendAutomationError(res, error, 'Failed to start the automation run');
+  }
+});
+
+// Generate or rotate the inbound webhook secret. The plaintext is returned
+// exactly once; only its hash is stored.
+router.post('/:automationId/webhook-secret', async (req, res) => {
+  try {
+    const userId = userIdOf(req as AuthenticatedRequest);
+    const automationId = req.params.automationId as string;
+    const secret = await automationService.rotateWebhookSecret(
+      automationId,
+      userId
+    );
+    if (!secret) {
+      res.status(404).json({
+        success: false,
+        error: 'Automation not found',
+      } as ApiResponse);
+      return;
+    }
+    res.json({
+      success: true,
+      data: {
+        secret,
+        path: `/api/automations/${encodeURIComponent(automationId)}/webhook`,
+      },
+    } as ApiResponse);
+  } catch (error) {
+    sendAutomationError(res, error, 'Failed to rotate the webhook secret');
+  }
+});
+
+router.delete('/:automationId/webhook-secret', async (req, res) => {
+  try {
+    const userId = userIdOf(req as AuthenticatedRequest);
+    const disabled = await automationService.disableWebhook(
+      req.params.automationId as string,
+      userId
+    );
+    if (!disabled) {
+      res.status(404).json({
+        success: false,
+        error: 'Automation not found',
+      } as ApiResponse);
+      return;
+    }
+    res.json({ success: true, data: { webhookEnabled: false } } as ApiResponse);
+  } catch (error) {
+    sendAutomationError(res, error, 'Failed to disable the webhook');
   }
 });
 

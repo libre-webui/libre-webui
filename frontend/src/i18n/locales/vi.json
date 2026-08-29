@@ -3026,7 +3026,17 @@
         "description": "Dàn ý báo cáo tình trạng vào ngày đầu mỗi tháng."
       }
     },
-    "openTask": "Mở tác vụ"
+    "openTask": "Mở tác vụ",
+    "webhook": {
+      "title": "Kích hoạt bằng webhook",
+      "enabledHint": "Hệ thống bên ngoài có thể kích hoạt tự động hóa này bằng khóa bí mật. Xoay vòng sẽ vô hiệu hóa khóa cũ.",
+      "disabledHint": "Cho phép hệ thống bên ngoài (CI, cron, nhà thông minh) kích hoạt tự động hóa này bằng POST và một khóa bí mật.",
+      "rotate": "Xoay vòng khóa",
+      "enable": "Bật",
+      "disable": "Tắt",
+      "revealHint": "Chỉ hiển thị một lần. Gửi dưới dạng token Bearer hoặc header X-Libre-Webhook-Secret.",
+      "failed": "Không thể cập nhật webhook."
+    }
   },
   "home": {
     "active": "đang hoạt động",

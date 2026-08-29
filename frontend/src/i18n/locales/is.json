@@ -3026,7 +3026,17 @@
         "description": "Uppkast að stöðuskýrslu fyrsta dag hvers mánaðar."
       }
     },
-    "openTask": "Opna verkefni"
+    "openTask": "Opna verkefni",
+    "webhook": {
+      "title": "Webhook-ræsing",
+      "enabledHint": "Ytri kerfi geta ræst þessa sjálfvirkni með leyninu. Endurnýjun ógildir fyrra leyni.",
+      "disabledHint": "Leyfðu ytra kerfi (CI, cron, heimastýringu) að ræsa þessa sjálfvirkni með POST og leyni.",
+      "rotate": "Endurnýja leyni",
+      "enable": "Virkja",
+      "disable": "Óvirkja",
+      "revealHint": "Birt aðeins einu sinni. Sendu það sem Bearer-tákn eða X-Libre-Webhook-Secret-haus.",
+      "failed": "Ekki tókst að uppfæra webhook."
+    }
   },
   "home": {
     "active": "virkt",

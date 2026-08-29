@@ -3026,7 +3026,17 @@
         "description": "Rangka laporan status pada satu haribulan setiap bulan."
       }
     },
-    "openTask": "Buka tugas"
+    "openTask": "Buka tugas",
+    "webhook": {
+      "title": "Pencetus webhook",
+      "enabledHint": "Sistem luaran boleh melancarkan automasi ini dengan rahsia tersebut. Putaran membatalkan rahsia sebelumnya.",
+      "disabledHint": "Benarkan sistem luaran (CI, cron, automasi rumah) melancarkan automasi ini melalui POST dan satu rahsia.",
+      "rotate": "Putar rahsia",
+      "enable": "Dayakan",
+      "disable": "Nyahdayakan",
+      "revealHint": "Dipaparkan sekali sahaja. Hantar sebagai token Bearer atau pengepala X-Libre-Webhook-Secret.",
+      "failed": "Webhook tidak dapat dikemas kini."
+    }
   },
   "home": {
     "active": "aktif",

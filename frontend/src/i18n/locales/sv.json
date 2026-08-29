@@ -3026,7 +3026,17 @@
         "description": "En statusrapportskiss den första varje månad."
       }
     },
-    "openTask": "Öppna uppgift"
+    "openTask": "Öppna uppgift",
+    "webhook": {
+      "title": "Webhook-utlösare",
+      "enabledHint": "Externa system kan starta den här automatiseringen med hemligheten. Rotation ogiltigförklarar den tidigare hemligheten.",
+      "disabledHint": "Låt ett externt system (CI, cron, hemautomation) starta den här automatiseringen med en POST och en hemlighet.",
+      "rotate": "Rotera hemlighet",
+      "enable": "Aktivera",
+      "disable": "Inaktivera",
+      "revealHint": "Visas bara en gång. Skicka den som Bearer-token eller X-Libre-Webhook-Secret-header.",
+      "failed": "Webhooken kunde inte uppdateras."
+    }
   },
   "home": {
     "active": "aktiv",

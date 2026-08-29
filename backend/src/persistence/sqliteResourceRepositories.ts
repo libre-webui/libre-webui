@@ -2145,6 +2145,23 @@ class SQLiteAutomationRepository implements AutomationRepository {
     );
   }
 
+  async setWebhookSecretHash(
+    automationId: string,
+    userId: string,
+    secretHash: string | null,
+    updatedAt: number
+  ): Promise<boolean> {
+    return (
+      this.database
+        .prepare(
+          `UPDATE automations
+           SET webhook_secret_hash = ?, updated_at = ?
+           WHERE id = ? AND user_id = ?`
+        )
+        .run(secretHash, updatedAt, automationId, userId).changes > 0
+    );
+  }
+
   async deleteByOwner(automationId: string, userId: string): Promise<boolean> {
     return (
       this.database

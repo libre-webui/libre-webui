@@ -2449,6 +2449,26 @@ class PostgresAutomationRepository implements AutomationRepository {
     );
   }
 
+  async setWebhookSecretHash(
+    automationId: string,
+    userId: string,
+    secretHash: string | null,
+    updatedAt: number
+  ): Promise<boolean> {
+    return (
+      changes(
+        (
+          await this.database.query(
+            `UPDATE automations
+              SET webhook_secret_hash = $1, updated_at = $2
+              WHERE id = $3 AND user_id = $4`,
+            [secretHash, updatedAt, automationId, userId]
+          )
+        ).rowCount
+      ) > 0
+    );
+  }
+
   async deleteByOwner(automationId: string, userId: string): Promise<boolean> {
     return (
       changes(

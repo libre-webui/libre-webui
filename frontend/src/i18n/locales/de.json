@@ -3026,7 +3026,17 @@
         "description": "Eine Statusbericht-Gliederung am Ersten jedes Monats."
       }
     },
-    "openTask": "Aufgabe öffnen"
+    "openTask": "Aufgabe öffnen",
+    "webhook": {
+      "title": "Webhook-Auslöser",
+      "enabledHint": "Externe Systeme können diese Automatisierung mit dem Secret auslösen. Beim Rotieren wird das vorherige Secret ungültig.",
+      "disabledHint": "Lass ein externes System (CI, Cron, Heimautomatisierung) diese Automatisierung per POST und Secret auslösen.",
+      "rotate": "Secret rotieren",
+      "enable": "Aktivieren",
+      "disable": "Deaktivieren",
+      "revealHint": "Wird nur einmal angezeigt. Sende es als Bearer-Token oder X-Libre-Webhook-Secret-Header.",
+      "failed": "Der Webhook konnte nicht aktualisiert werden."
+    }
   },
   "home": {
     "active": "aktiv",

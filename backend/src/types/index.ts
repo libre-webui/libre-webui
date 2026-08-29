@@ -296,6 +296,8 @@ export interface Automation {
   workTaskId?: string;
   nextRunAt?: number;
   lastRunAt?: number;
+  /** True when an inbound webhook secret is set for this automation. */
+  webhookEnabled: boolean;
   createdAt: number;
   updatedAt: number;
 }

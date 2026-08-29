@@ -26,6 +26,8 @@ import type {
   OllamaModel,
 } from '@/types';
 import type { AutomationPayload } from '@/utils/api/automationsApi';
+import { automationsApi } from '@/utils/api/automationsApi';
+import toast from 'react-hot-toast';
 import { isTriggerValid } from '@/utils/automationSchedule';
 import { workApi } from '@/utils/api';
 import type { WorkPolicy } from '@/types/work';
@@ -135,6 +137,52 @@ function AutomationModalForm({
       cancelled = true;
     };
   }, [target, taskBound]);
+
+  // Webhook trigger: rotation reveals the plaintext secret exactly once.
+  const [webhookEnabled, setWebhookEnabled] = useState(
+    automation?.webhookEnabled === true
+  );
+  const [webhookReveal, setWebhookReveal] = useState<{
+    secret: string;
+    path: string;
+  } | null>(null);
+  const [webhookBusy, setWebhookBusy] = useState(false);
+  const rotateWebhook = async () => {
+    if (!automation) return;
+    setWebhookBusy(true);
+    try {
+      const response = await automationsApi.rotateWebhookSecret(automation.id);
+      if (!response.success || !response.data) throw new Error(response.error);
+      setWebhookEnabled(true);
+      setWebhookReveal(response.data);
+    } catch {
+      toast.error(
+        t('automations.webhook.failed', {
+          defaultValue: 'Could not update the webhook.',
+        })
+      );
+    } finally {
+      setWebhookBusy(false);
+    }
+  };
+  const disableWebhook = async () => {
+    if (!automation) return;
+    setWebhookBusy(true);
+    try {
+      const response = await automationsApi.disableWebhook(automation.id);
+      if (!response.success) throw new Error(response.error);
+      setWebhookEnabled(false);
+      setWebhookReveal(null);
+    } catch {
+      toast.error(
+        t('automations.webhook.failed', {
+          defaultValue: 'Could not update the webhook.',
+        })
+      );
+    } finally {
+      setWebhookBusy(false);
+    }
+  };
 
   const valid =
     name.trim().length > 0 &&
@@ -364,6 +412,89 @@ function AutomationModalForm({
               </select>
             </div>
           </div>
+
+          {automation && (
+            <div
+              data-testid='automation-webhook'
+              className='rounded-xl border border-gray-200 p-3 dark:border-dark-300'
+            >
+              <div className='flex items-center justify-between gap-3'>
+                <div className='min-w-0'>
+                  <p className='text-sm font-medium text-gray-900 dark:text-gray-100'>
+                    {t('automations.webhook.title', {
+                      defaultValue: 'Webhook trigger',
+                    })}
+                  </p>
+                  <p className='mt-0.5 text-xs text-gray-500 dark:text-dark-600'>
+                    {webhookEnabled
+                      ? t('automations.webhook.enabledHint', {
+                          defaultValue:
+                            'External systems can fire this automation with the secret. Rotating invalidates the previous secret.',
+                        })
+                      : t('automations.webhook.disabledHint', {
+                          defaultValue:
+                            'Let an external system (CI, cron, home automation) fire this automation with a POST and a secret.',
+                        })}
+                  </p>
+                </div>
+                <div className='flex shrink-0 gap-2'>
+                  <button
+                    type='button'
+                    data-testid='automation-webhook-rotate'
+                    onClick={() => void rotateWebhook()}
+                    disabled={webhookBusy}
+                    className='rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-100 disabled:opacity-50 dark:border-dark-300 dark:text-dark-700 dark:hover:bg-dark-200'
+                  >
+                    {webhookEnabled
+                      ? t('automations.webhook.rotate', {
+                          defaultValue: 'Rotate secret',
+                        })
+                      : t('automations.webhook.enable', {
+                          defaultValue: 'Enable',
+                        })}
+                  </button>
+                  {webhookEnabled && (
+                    <button
+                      type='button'
+                      data-testid='automation-webhook-disable'
+                      onClick={() => void disableWebhook()}
+                      disabled={webhookBusy}
+                      className='rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-100 disabled:opacity-50 dark:border-dark-300 dark:text-dark-700 dark:hover:bg-dark-200'
+                    >
+                      {t('automations.webhook.disable', {
+                        defaultValue: 'Disable',
+                      })}
+                    </button>
+                  )}
+                </div>
+              </div>
+              {webhookReveal && (
+                <div
+                  data-testid='automation-webhook-secret'
+                  className='mt-2 space-y-1 rounded-lg bg-gray-50 p-2 dark:bg-dark-100'
+                >
+                  <p className='text-[11px] text-gray-500 dark:text-dark-600'>
+                    {t('automations.webhook.revealHint', {
+                      defaultValue:
+                        'Shown once. Send it as a Bearer token or an X-Libre-Webhook-Secret header.',
+                    })}
+                  </p>
+                  <code
+                    dir='ltr'
+                    className='block break-all font-mono text-xs text-gray-800 dark:text-gray-200'
+                  >
+                    POST {webhookReveal.path}
+                  </code>
+                  <code
+                    dir='ltr'
+                    className='block break-all font-mono text-xs text-gray-800 dark:text-gray-200'
+                  >
+                    {webhookReveal.secret}
+                  </code>
+                </div>
+              )}
+            </div>
+          )}
 
           <div className='flex justify-end gap-3 border-t border-gray-200 pt-4 dark:border-dark-300'>
             <button

@@ -3026,7 +3026,17 @@
         "description": "毎月1日にステータスレポートの骨子を作成。"
       }
     },
-    "openTask": "タスクを開く"
+    "openTask": "タスクを開く",
+    "webhook": {
+      "title": "Webhook トリガー",
+      "enabledHint": "外部システムはこのシークレットで自動化を起動できます。ローテーションすると以前のシークレットは無効になります。",
+      "disabledHint": "外部システム（CI、cron、ホームオートメーション）が POST とシークレットでこの自動化を起動できるようにします。",
+      "rotate": "シークレットを更新",
+      "enable": "有効にする",
+      "disable": "無効にする",
+      "revealHint": "表示は一度だけです。Bearer トークンまたは X-Libre-Webhook-Secret ヘッダーとして送信してください。",
+      "failed": "Webhook を更新できませんでした。"
+    }
   },
   "home": {
     "active": "アクティブ",

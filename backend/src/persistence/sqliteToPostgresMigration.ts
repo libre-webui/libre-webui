@@ -1132,6 +1132,7 @@ const TABLE_MAPPINGS: readonly TableMapping[] = Object.freeze([
       'target',
       'work_policy_id',
       'work_task_id',
+      'webhook_secret_hash',
       'next_run_at',
       'last_run_at',
       'created_at',
