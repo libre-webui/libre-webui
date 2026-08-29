@@ -195,6 +195,37 @@ export const WORK_WEB_SEARCH_TOOL_SCHEMA: Record<string, unknown> =
     ['query']
   );
 
+/** How the delegating run finds out where a report must go. */
+export interface WorkDelegationSource {
+  fromTaskId: string;
+  fromRunId: string;
+  fromAgent: string;
+}
+
+// Delegation stays shallow by design: a delegated run cannot delegate
+// further, so two agents can never ping-pong requests at each other.
+export const WORK_DELEGATION_MAX_PEERS = 12;
+const WORK_DELEGATION_MESSAGE_MAX_CHARS = 8_000;
+const WORK_DELEGATION_REPORT_MAX_CHARS = 20_000;
+
+// Offered per run, only to hired agents with at least one peer and never
+// inside a delegated run: coordination flows by messages between separate
+// sandboxes, not by shared computers.
+export const WORK_MESSAGE_AGENT_TOOL_SCHEMA: Record<string, unknown> =
+  functionTool(
+    'message_agent',
+    "Delegate a request to another of the user's hired agents by name. Asynchronous: this returns immediately, the other agent works in its own separate workspace, and its report arrives in this conversation as a message when it finishes. The other agent cannot see this conversation or this workspace.",
+    {
+      agent: stringProperty(
+        "The target agent's exact name, as listed in your peer roster."
+      ),
+      message: stringProperty(
+        'The request to send. Include every detail the agent needs, because it cannot see this conversation.'
+      ),
+    },
+    ['agent', 'message']
+  );
+
 // Offered only when the task's policy enables the Work Computer and the
 // task has network access: the agent's eyes and hands on the GUI session.
 export const WORK_COMPUTER_TOOL_SCHEMAS: Record<string, unknown>[] = [
@@ -305,12 +336,18 @@ export const WORK_COMPUTER_TOOL_SCHEMAS: Record<string, unknown>[] = [
   ),
 ];
 
-export async function workToolSchemasForTask(task: {
-  networkEnabled: boolean;
-  userId: string;
-  policyId?: string | null;
-}): Promise<Record<string, unknown>[]> {
+export async function workToolSchemasForTask(
+  task: {
+    networkEnabled: boolean;
+    userId: string;
+    policyId?: string | null;
+  },
+  options: { messageAgent?: boolean } = {}
+): Promise<Record<string, unknown>[]> {
   const schemas = [...WORK_TOOL_SCHEMAS];
+  if (options.messageAgent === true) {
+    schemas.push(WORK_MESSAGE_AGENT_TOOL_SCHEMA);
+  }
   if (
     task.networkEnabled &&
     (await isWebSearchAvailable()) &&
@@ -322,6 +359,35 @@ export async function workToolSchemasForTask(task: {
     schemas.push(...WORK_COMPUTER_TOOL_SCHEMAS);
   }
   return schemas;
+}
+
+/** The delegation marker on the message that started a run, if any. */
+export function delegationSourceOf(
+  messages: readonly {
+    runId?: string | null;
+    role: string;
+    metadata?: Record<string, unknown> | null;
+  }[],
+  runId: string
+): WorkDelegationSource | undefined {
+  for (const message of messages) {
+    if (message.runId !== runId || message.role !== 'user') continue;
+    const delegation = message.metadata?.delegation;
+    if (!delegation || typeof delegation !== 'object') continue;
+    const source = delegation as Record<string, unknown>;
+    if (
+      typeof source.fromTaskId === 'string' &&
+      typeof source.fromRunId === 'string' &&
+      typeof source.fromAgent === 'string'
+    ) {
+      return {
+        fromTaskId: source.fromTaskId,
+        fromRunId: source.fromRunId,
+        fromAgent: source.fromAgent,
+      };
+    }
+  }
+  return undefined;
 }
 
 export class WorkAgentService {
@@ -757,6 +823,7 @@ export class WorkAgentService {
     );
     this.controllers.set(runId, controller);
     let task: WorkTaskRecord | undefined;
+    let runDelegation: WorkDelegationSource | undefined;
     let releaseExecutionLease: (() => void) | undefined;
     let executionContainerSettled = false;
     const settleExecutionContainer = async (): Promise<void> => {
@@ -900,6 +967,23 @@ export class WorkAgentService {
       const approvalsActive =
         (await workPolicyService.resolve(task.policyId)).approvalsRequired ===
           true || task.approvalsEnabled === true;
+      // A6 delegation: a run started by another agent reports back on
+      // completion and cannot delegate further (no ping-pong loops). Peers
+      // are the user's other hired agents, injected into the roster.
+      runDelegation = delegationSourceOf(
+        await workTaskService.getMessages(taskId),
+        runId
+      );
+      const peerAgents =
+        task.isAgent === true && !runDelegation
+          ? (await workTaskService.listTaskRecords(userId))
+              .filter(record => record.isAgent && record.id !== task!.id)
+              .slice(0, WORK_DELEGATION_MAX_PEERS)
+              .map(record => ({
+                name: record.title,
+                ...(record.statusBlurb ? { status: record.statusBlurb } : {}),
+              }))
+          : [];
       const messages = await this.contextMessages(
         task,
         roundLimit,
@@ -908,7 +992,9 @@ export class WorkAgentService {
         providerStateScope,
         run,
         persona,
-        approvalsActive
+        approvalsActive,
+        peerAgents,
+        runDelegation
       );
       let totalToolCalls = 0;
       let accumulatedInputTokens = 0;
@@ -1016,7 +1102,9 @@ export class WorkAgentService {
             {
               model: run.model,
               messages,
-              tools: await workToolSchemasForTask(task),
+              tools: await workToolSchemasForTask(task, {
+                messageAgent: peerAgents.length > 0,
+              }),
               stream: true,
             },
             providerSelection,
@@ -1255,6 +1343,12 @@ export class WorkAgentService {
               sourceKey: `work-run:${runId}:completed`,
             });
           }
+          await this.reportDelegationOutcome(
+            task,
+            runDelegation,
+            'completed',
+            finalContent
+          );
           return;
         }
         const toolValidationErrors = new Map<WorkToolCall, string>();
@@ -1386,6 +1480,7 @@ export class WorkAgentService {
                 signal: controller.signal,
                 computer: computerContext,
                 runId,
+                delegated: runDelegation !== undefined,
               });
               toolOutput = result.content;
               toolImages = result.images;
@@ -1697,6 +1792,12 @@ export class WorkAgentService {
           sourceKey: `work-run:${runId}:needs_input`,
         });
       }
+      await this.reportDelegationOutcome(
+        task,
+        runDelegation,
+        'needs_input',
+        handoffContent
+      );
     } catch (error) {
       const currentRun = await workTaskService.getRun(runId);
       if (currentRun?.status === 'cancelled' || controller.signal.aborted) {
@@ -1722,6 +1823,11 @@ export class WorkAgentService {
                   error: 'Cancelled by user.',
                 },
                 'terminal:cancelled'
+              );
+              await this.reportDelegationOutcome(
+                task,
+                runDelegation,
+                'cancelled'
               );
             }
           } catch (cleanupError) {
@@ -1757,6 +1863,13 @@ export class WorkAgentService {
             },
             'terminal:cancelled'
           );
+          if (task) {
+            await this.reportDelegationOutcome(
+              task,
+              runDelegation,
+              'cancelled'
+            );
+          }
         }
         return;
       }
@@ -1806,6 +1919,14 @@ export class WorkAgentService {
           body: deriveStatusBlurb(message),
           sourceKey: `work-run:${runId}:failed`,
         });
+      }
+      if (task) {
+        await this.reportDelegationOutcome(
+          task,
+          runDelegation,
+          'failed',
+          message
+        );
       }
     } finally {
       this.controllers.delete(runId);
@@ -1880,7 +2001,9 @@ export class WorkAgentService {
     providerStateScope?: string,
     provider: Pick<WorkRun, 'providerType' | 'providerId' | 'model'> = task,
     persona?: { name: string; instructions?: string },
-    approvalsActive?: boolean
+    approvalsActive?: boolean,
+    peerAgents: readonly { name: string; status?: string }[] = [],
+    delegatedBy?: WorkDelegationSource
   ): Promise<OllamaChatMessage[]> {
     const persisted = restorePersistedWorkContext(
       await workTaskService.getRecentModelContextMessages(task.id, 30),
@@ -1896,6 +2019,8 @@ export class WorkAgentService {
           ...(taughtSkills.length > 0 ? { taughtSkills } : {}),
           ...(persona ? { persona } : {}),
           ...(approvalsActive ? { approvalsActive } : {}),
+          ...(peerAgents.length > 0 ? { peerAgents } : {}),
+          ...(delegatedBy ? { delegatedBy: delegatedBy.fromAgent } : {}),
           previewPort: workRuntimeService.previewPort,
           roundBudget: roundLimit,
           commandTimeoutMs: workRuntimeService.limits.commandTimeoutMs,
@@ -1916,6 +2041,8 @@ export class WorkAgentService {
       computer?: WorkComputerRunContext;
       // For run-scoped notification dedupe (one takeover alert per run).
       runId?: string;
+      // True when this run was itself delegated; delegation stays depth 1.
+      delegated?: boolean;
     } = {}
   ): Promise<{
     content: string;
@@ -2094,6 +2221,76 @@ export class WorkAgentService {
         }
         return result;
       }
+      case 'message_agent': {
+        if (context.delegated === true) {
+          return {
+            content:
+              'This run was itself delegated by another agent, and delegated runs cannot delegate further. Complete the request yourself and include any blocker in your report.',
+            metadata: { outcome: 'depth-limited' },
+          };
+        }
+        const agentName = requiredString(args.agent, 'agent')
+          .trim()
+          .slice(0, 200);
+        const message = requiredString(args.message, 'message').slice(
+          0,
+          WORK_DELEGATION_MESSAGE_MAX_CHARS
+        );
+        const peers = (
+          await workTaskService.listTaskRecords(task.userId)
+        ).filter(record => record.isAgent && record.id !== task.id);
+        const target = peers.find(
+          record =>
+            record.title.trim().toLowerCase() === agentName.toLowerCase()
+        );
+        if (!target) {
+          const roster = peers
+            .slice(0, WORK_DELEGATION_MAX_PEERS)
+            .map(record => record.title)
+            .join(', ');
+          return {
+            content: roster
+              ? `No hired agent is named "${agentName}". The user's agents are: ${roster}. Use the exact name, or handle the request yourself.`
+              : 'The user has no other hired agents, so there is no one to delegate to. Handle the request yourself.',
+            metadata: { outcome: 'unknown-agent' },
+          };
+        }
+        try {
+          const detail = await workTaskService.createRun(
+            target.id,
+            task.userId,
+            message,
+            undefined,
+            undefined,
+            {
+              delegation: {
+                fromTaskId: task.id,
+                fromRunId: context.runId ?? '',
+                fromAgent: task.title,
+              },
+            }
+          );
+          return {
+            content: `Delegated to ${target.title}. It works in its own separate workspace and cannot see this conversation; its report will arrive here as a message when it finishes. Continue with other work or wrap up your response.`,
+            metadata: {
+              outcome: 'delegated',
+              delegatedTaskId: target.id,
+              ...(detail.activeRun?.id
+                ? { delegatedRunId: detail.activeRun.id }
+                : {}),
+              delegatedAgent: target.title,
+            },
+          };
+        } catch (error) {
+          if (error instanceof WorkConflictError) {
+            return {
+              content: `${target.title} is busy with another run right now. Try again later, do the work yourself, or tell the user.`,
+              metadata: { outcome: 'busy' },
+            };
+          }
+          throw error;
+        }
+      }
       case 'request_takeover': {
         await this.assertComputerToolsAvailable(task);
         if (
@@ -2207,6 +2404,65 @@ export class WorkAgentService {
    * never fails the run. The source key is run-scoped because dedupe is
    * permanent per user until the inbox cap prunes it.
    */
+  /**
+   * Deliver a delegated run's outcome back into the delegating agent's
+   * conversation. Mid-run when the delegator is still working (picked up at
+   * its next round boundary), an ordinary conversation message otherwise —
+   * never an auto-started run, so two agents cannot ping-pong each other.
+   * Best effort: the delegated run's own rows are the source of truth.
+   */
+  private async reportDelegationOutcome(
+    task: WorkTaskRecord,
+    delegation: WorkDelegationSource | undefined,
+    status: 'completed' | 'needs_input' | 'failed' | 'cancelled',
+    summary?: string
+  ): Promise<void> {
+    if (!delegation) return;
+    try {
+      const delegator = await workTaskService.getTaskRecord(
+        delegation.fromTaskId,
+        task.userId
+      );
+      if (!delegator) return;
+      const statusLine =
+        status === 'completed'
+          ? 'finished'
+          : status === 'needs_input'
+            ? 'stopped and needs input'
+            : status === 'failed'
+              ? 'failed'
+              : 'was cancelled';
+      const bounded = (summary ?? '')
+        .trim()
+        .slice(0, WORK_DELEGATION_REPORT_MAX_CHARS);
+      const content = `Report from ${task.title} — the delegated request ${statusLine}.\n\n${
+        bounded || '(no summary was produced)'
+      }`;
+      const activeRun = await workTaskService.getActiveRun(
+        delegation.fromTaskId
+      );
+      const deliverMidRun =
+        activeRun !== undefined && isActiveRunStatus(activeRun.status);
+      await workTaskService.addMessage(
+        delegation.fromTaskId,
+        deliverMidRun ? activeRun.id : undefined,
+        'user',
+        'message',
+        content,
+        {
+          ...(deliverMidRun ? { midRun: true } : {}),
+          delegationReport: {
+            fromTaskId: task.id,
+            fromAgent: task.title,
+            status,
+          },
+        }
+      );
+    } catch (error) {
+      logger.warn(`Delegation report from task ${task.id} failed:`, error);
+    }
+  }
+
   /**
    * The approval gate. Rules are re-read per call so an Always-allow
    * decision covers the very next matching call; a pending approval rides
@@ -3056,6 +3312,8 @@ function validateToolCallArguments(call: WorkToolCall): string | undefined {
       return invalidRequiredString('reason');
     case 'run_command':
       return invalidRequiredString('command');
+    case 'message_agent':
+      return invalidRequiredString('agent') || invalidRequiredString('message');
     default:
       return `The model requested an unknown tool: ${call.function.name}.`;
   }
@@ -3083,6 +3341,10 @@ function summarizeApprovalBody(
       return typeof summary.from === 'string' && typeof summary.to === 'string'
         ? `Move ${summary.from} to ${summary.to}`
         : 'Move a file';
+    case 'message_agent':
+      return typeof summary.agent === 'string'
+        ? `Delegate to ${summary.agent}`
+        : 'Delegate to another agent';
     case 'computer_act': {
       const count =
         typeof summary.actionCount === 'number' ? summary.actionCount : null;
@@ -3143,6 +3405,10 @@ function summarizeToolCall(call: WorkToolCall): Record<string, unknown> {
       if (typeof args.timeout_ms === 'number') {
         metadata.timeoutMs = args.timeout_ms;
       }
+      break;
+    case 'message_agent':
+      includeString('agent', args.agent, 200);
+      includeString('message', args.message, 500);
       break;
     case 'start_preview':
       includeString('command', args.command, 2_000);

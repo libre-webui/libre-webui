@@ -2546,13 +2546,16 @@
       "remoteDismiss": "हटाएँ",
       "remoteDismissLabel": "रिमोट प्रोवाइडर सूचना हटाएँ",
       "remoteDismissFailed": "रिमोट प्रोवाइडर की पसंद सेव नहीं की जा सकी।",
-      "noModelSelected": "काम के अनुकूल कोई मॉडल चुना नहीं गया है।"
+      "noModelSelected": "काम के अनुकूल कोई मॉडल चुना नहीं गया है।",
+      "mentionAgents": "किसी एजेंट का उल्लेख करें"
     },
     "conversation": {
       "ready": "वर्कस्पेस तैयार है",
       "empty": "नीचे टास्क जारी रखें। यह बातचीत और इसकी फ़ाइलें इसी वर्कस्पेस से जुड़ी रहेंगी।",
       "loadOlder": "पुराने संदेश लोड करें",
-      "openFile": "{{name}} खोलें"
+      "openFile": "{{name}} खोलें",
+      "delegatedBy": "{{agent}} द्वारा सौंपा गया",
+      "reportFrom": "{{agent}} से रिपोर्ट"
     },
     "status": {
       "preparing": "अलग-थलग वर्कस्पेस तैयार हो रहा है…",

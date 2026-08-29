@@ -2546,13 +2546,16 @@
       "remoteDismiss": "Kapat",
       "remoteDismissLabel": "Uzak sağlayıcı bildirimini kapat",
       "remoteDismissFailed": "Uzak sağlayıcı tercihi kaydedilemedi.",
-      "noModelSelected": "Çalışma ile uyumlu bir model seçilmedi."
+      "noModelSelected": "Çalışma ile uyumlu bir model seçilmedi.",
+      "mentionAgents": "Bir ajandan bahset"
     },
     "conversation": {
       "ready": "Çalışma alanı hazır",
       "empty": "Aşağıdan göreve devam edin. Bu konuşma ve dosyaları bu çalışma alanına bağlı kalır.",
       "loadOlder": "Eski mesajları yükle",
-      "openFile": "{{name}} dosyasını aç"
+      "openFile": "{{name}} dosyasını aç",
+      "delegatedBy": "{{agent}} tarafından devredildi",
+      "reportFrom": "{{agent}} raporu"
     },
     "status": {
       "preparing": "Yalıtılmış çalışma alanı hazırlanıyor…",

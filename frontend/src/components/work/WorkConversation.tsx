@@ -534,6 +534,24 @@ export function WorkConversation({
                   task.status === 'running' &&
                   message.id === lastAssistantId &&
                   message.runId === task.activeRun?.id;
+                // A6 delegation: user-role rows written by agents get an
+                // attribution line — the initiating request in the target's
+                // conversation, and the report in the delegator's.
+                const agentAttribution = (
+                  value: unknown
+                ): string | undefined =>
+                  value && typeof value === 'object'
+                    ? typeof (value as { fromAgent?: unknown }).fromAgent ===
+                      'string'
+                      ? ((value as { fromAgent: string }).fromAgent as string)
+                      : undefined
+                    : undefined;
+                const delegatedBy = agentAttribution(
+                  message.metadata?.delegation
+                );
+                const reportFrom = agentAttribution(
+                  message.metadata?.delegationReport
+                );
                 return (
                   <article
                     key={message.id}
@@ -555,12 +573,30 @@ export function WorkConversation({
                       )}
                     >
                       {isUserMessage ? (
-                        <p
-                          dir='auto'
-                          className='whitespace-pre-wrap break-words text-sm leading-relaxed'
-                        >
-                          {message.content}
-                        </p>
+                        <>
+                          {(delegatedBy || reportFrom) && (
+                            <p
+                              data-testid='work-delegation-label'
+                              className='mb-1 text-[11px] font-medium uppercase tracking-wide opacity-70'
+                            >
+                              {delegatedBy
+                                ? t('work.conversation.delegatedBy', {
+                                    defaultValue: 'Delegated by {{agent}}',
+                                    agent: delegatedBy,
+                                  })
+                                : t('work.conversation.reportFrom', {
+                                    defaultValue: 'Report from {{agent}}',
+                                    agent: reportFrom,
+                                  })}
+                            </p>
+                          )}
+                          <p
+                            dir='auto'
+                            className='whitespace-pre-wrap break-words text-sm leading-relaxed'
+                          >
+                            {message.content}
+                          </p>
+                        </>
                       ) : streaming ? (
                         <StreamingMessageContent
                           content={message.content}

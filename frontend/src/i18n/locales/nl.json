@@ -2546,13 +2546,16 @@
       "remoteDismiss": "Verbergen",
       "remoteDismissLabel": "Melding over externe aanbieder verbergen",
       "remoteDismissFailed": "De voorkeur voor de externe aanbieder kon niet worden opgeslagen.",
-      "noModelSelected": "Er is geen model geselecteerd dat de Werk-modus ondersteunt."
+      "noModelSelected": "Er is geen model geselecteerd dat de Werk-modus ondersteunt.",
+      "mentionAgents": "Een agent vermelden"
     },
     "conversation": {
       "ready": "Werkruimte gereed",
       "empty": "Ga hieronder verder met de taak. Deze conversatie en de bestanden blijven aan deze werkruimte gekoppeld.",
       "loadOlder": "Eerdere berichten laden",
-      "openFile": "{{name}} openen"
+      "openFile": "{{name}} openen",
+      "delegatedBy": "Gedelegeerd door {{agent}}",
+      "reportFrom": "Rapport van {{agent}}"
     },
     "status": {
       "preparing": "Geïsoleerde werkruimte voorbereiden…",

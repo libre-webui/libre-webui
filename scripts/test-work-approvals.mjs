@@ -70,7 +70,7 @@ test('approval decisions gate side-effecting Work actions', async () => {
   // write_file (workspace-contained, high-frequency) stay ungated.
   assert.deepEqual(
     [...GATED_WORK_TOOLS].sort(),
-    ['computer_act', 'delete_file', 'move_file', 'run_command']
+    ['computer_act', 'delete_file', 'message_agent', 'move_file', 'run_command']
   );
 
   const pending = await workApprovalService.createPending({
@@ -158,6 +158,29 @@ test('approval decisions gate side-effecting Work actions', async () => {
     ruleCovers({ tool_name: 'computer_act', pattern: null }, 'run_command', {
       command: 'ls',
     }),
+    false
+  );
+
+  // Delegation rules scope to the target agent's name, case-insensitively,
+  // so one Always-allow does not open delegation to every agent.
+  assert.equal(
+    deriveRulePattern('message_agent', { agent: 'Chief of Staff' }),
+    'chief of staff'
+  );
+  assert.equal(
+    ruleCovers(
+      { tool_name: 'message_agent', pattern: 'chief of staff' },
+      'message_agent',
+      { agent: 'chief of STAFF' }
+    ),
+    true
+  );
+  assert.equal(
+    ruleCovers(
+      { tool_name: 'message_agent', pattern: 'chief of staff' },
+      'message_agent',
+      { agent: 'Researcher' }
+    ),
     false
   );
 });

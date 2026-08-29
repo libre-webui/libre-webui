@@ -2546,13 +2546,16 @@
       "remoteDismiss": "Skrýt",
       "remoteDismissLabel": "Skrýt upozornění na vzdáleného poskytovatele",
       "remoteDismissFailed": "Předvolbu vzdáleného poskytovatele se nepodařilo uložit.",
-      "noModelSelected": "Není vybrán žádný model kompatibilní s režimem Práce."
+      "noModelSelected": "Není vybrán žádný model kompatibilní s režimem Práce.",
+      "mentionAgents": "Zmínit agenta"
     },
     "conversation": {
       "ready": "Pracovní prostor je připraven",
       "empty": "Pokračujte v úloze níže. Tato konverzace a její soubory zůstávají připojené k tomuto pracovnímu prostoru.",
       "loadOlder": "Načíst starší zprávy",
-      "openFile": "Otevřít {{name}}"
+      "openFile": "Otevřít {{name}}",
+      "delegatedBy": "Delegováno agentem {{agent}}",
+      "reportFrom": "Zpráva od agenta {{agent}}"
     },
     "status": {
       "preparing": "Příprava izolovaného pracovního prostoru…",

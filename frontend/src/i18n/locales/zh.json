@@ -2546,13 +2546,16 @@
       "remoteDismiss": "关闭",
       "remoteDismissLabel": "关闭远程提供商提示",
       "remoteDismissFailed": "无法保存远程提供商偏好设置。",
-      "noModelSelected": "尚未选择兼容工作模式的模型。"
+      "noModelSelected": "尚未选择兼容工作模式的模型。",
+      "mentionAgents": "提及智能体"
     },
     "conversation": {
       "ready": "工作区已就绪",
       "empty": "在下方继续此任务。该对话及其文件会一直关联到此工作区。",
       "loadOlder": "加载更早的消息",
-      "openFile": "打开 {{name}}"
+      "openFile": "打开 {{name}}",
+      "delegatedBy": "由 {{agent}} 委派",
+      "reportFrom": "来自 {{agent}} 的报告"
     },
     "status": {
       "preparing": "正在准备隔离工作区…",

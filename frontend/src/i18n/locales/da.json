@@ -2546,13 +2546,16 @@
       "remoteDismiss": "Skjul",
       "remoteDismissLabel": "Skjul meddelelsen om fjernudbyderen",
       "remoteDismissFailed": "Indstillingen for fjernudbyderen kunne ikke gemmes.",
-      "noModelSelected": "Der er ikke valgt en model, der er kompatibel med Arbejde."
+      "noModelSelected": "Der er ikke valgt en model, der er kompatibel med Arbejde.",
+      "mentionAgents": "Nævn en agent"
     },
     "conversation": {
       "ready": "Arbejdsområdet er klar",
       "empty": "Fortsæt opgaven nedenfor. Samtalen og dens filer forbliver knyttet til dette arbejdsområde.",
       "loadOlder": "Indlæs ældre beskeder",
-      "openFile": "Åbn {{name}}"
+      "openFile": "Åbn {{name}}",
+      "delegatedBy": "Uddelegeret af {{agent}}",
+      "reportFrom": "Rapport fra {{agent}}"
     },
     "status": {
       "preparing": "Forbereder det isolerede arbejdsområde…",

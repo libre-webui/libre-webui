@@ -343,7 +343,8 @@ export class WorkTaskService {
     userId: string,
     message: string,
     model?: string,
-    provider?: WorkProviderSelection
+    provider?: WorkProviderSelection,
+    messageMetadata?: Record<string, unknown>
   ): Promise<WorkTaskDetail> {
     return this.withUserLifecycleLease(userId, assertHeld =>
       this.createRunWithLeaseHeld(
@@ -352,7 +353,8 @@ export class WorkTaskService {
         message,
         model,
         provider,
-        assertHeld
+        assertHeld,
+        messageMetadata
       )
     );
   }
@@ -363,7 +365,8 @@ export class WorkTaskService {
     message: string,
     model?: string,
     provider?: WorkProviderSelection,
-    assertHeld: () => Promise<void> = async () => undefined
+    assertHeld: () => Promise<void> = async () => undefined,
+    messageMetadata?: Record<string, unknown>
   ): Promise<WorkTaskDetail> {
     const task = await this.requireMutableTaskRecord(taskId, userId);
     if (await this.getActiveRun(taskId)) {
@@ -399,7 +402,7 @@ export class WorkTaskService {
       role: 'user',
       kind: 'message',
       content: message,
-      metadata: null,
+      metadata: serializeMetadata(messageMetadata) ?? null,
       message_index: 0,
       created_at: now,
     };

@@ -33,6 +33,8 @@ interface WorkComposerProps {
   loading: boolean;
   variant?: 'landing' | 'task';
   disabled?: boolean;
+  /** Hired agents offered by the @-mention picker (excludes this task). */
+  mentionAgents?: Array<{ id: string; name: string }>;
   /** Dictation ownership: a recording dies when this changes (task id). */
   dictationOwnerKey?: string;
   remoteDisclosureDismissed: boolean;
@@ -88,6 +90,7 @@ export function WorkComposer({
   loading,
   variant = 'task',
   disabled = false,
+  mentionAgents,
   dictationOwnerKey,
   remoteDisclosureDismissed,
   remoteDisclosureSaving,
@@ -163,6 +166,51 @@ export function WorkComposer({
       return;
     }
     if (await onSubmit(trimmed)) setMessage('');
+  };
+
+  // @-mention picker over the user's other hired agents. The mention is
+  // plain text; the agent's roster and message_agent tool do the rest.
+  const [mention, setMention] = useState<{
+    start: number;
+    end: number;
+    query: string;
+  } | null>(null);
+  const [mentionIndex, setMentionIndex] = useState(0);
+  const detectMention = (value: string, caret: number) => {
+    if (!mentionAgents?.length) {
+      setMention(null);
+      return;
+    }
+    const match = /(?:^|\s)@([^\n@]{0,60})$/.exec(value.slice(0, caret));
+    if (!match) {
+      setMention(null);
+      return;
+    }
+    const query = match[1];
+    setMention({ start: caret - query.length - 1, end: caret, query });
+    setMentionIndex(0);
+  };
+  const mentionMatches =
+    mention === null
+      ? []
+      : (mentionAgents ?? []).filter(agent =>
+          agent.name
+            .toLowerCase()
+            .startsWith(mention.query.trimStart().toLowerCase())
+        );
+  const mentionOpen = mention !== null && mentionMatches.length > 0;
+  const applyMention = (agent: { id: string; name: string }) => {
+    if (!mention) return;
+    const next = `${message.slice(0, mention.start)}@${agent.name} ${message.slice(mention.end)}`;
+    const caret = mention.start + agent.name.length + 2;
+    setMessage(next);
+    setMention(null);
+    requestAnimationFrame(() => {
+      const textarea = textareaRef.current;
+      if (!textarea) return;
+      textarea.focus();
+      textarea.setSelectionRange(caret, caret);
+    });
   };
 
   return (
@@ -245,12 +293,46 @@ export function WorkComposer({
       )}
 
       <form
-        className='mx-auto w-full max-w-3xl'
+        className='relative mx-auto w-full max-w-3xl'
         onSubmit={event => {
           event.preventDefault();
           void submit();
         }}
       >
+        {mentionOpen && (
+          <div
+            data-testid='work-mention-menu'
+            role='listbox'
+            aria-label={t('work.composer.mentionAgents', {
+              defaultValue: 'Mention an agent',
+            })}
+            className='absolute bottom-full start-2 z-40 mb-2 w-64 overflow-hidden rounded-xl border border-line bg-surface-overlay shadow-overlay backdrop-blur'
+          >
+            {mentionMatches.slice(0, 6).map((agent, index) => (
+              <button
+                key={agent.id}
+                type='button'
+                role='option'
+                aria-selected={index === mentionIndex}
+                data-testid='work-mention-option'
+                className={cn(
+                  'flex w-full items-center gap-2 px-3 py-2 text-start text-sm transition-colors',
+                  index === mentionIndex
+                    ? 'bg-primary-500/10 text-ink'
+                    : 'text-ink-muted hover:bg-surface-subtle hover:text-ink'
+                )}
+                onMouseDown={event => {
+                  event.preventDefault();
+                  applyMention(agent);
+                }}
+              >
+                <span dir='auto' className='truncate'>
+                  @{agent.name}
+                </span>
+              </button>
+            ))}
+          </div>
+        )}
         <div
           data-testid='work-composer-surface'
           className={cn(
@@ -264,8 +346,44 @@ export function WorkComposer({
             data-testid='work-composer-input'
             dir='auto'
             value={message}
-            onChange={event => setMessage(event.target.value)}
+            onChange={event => {
+              setMessage(event.target.value);
+              detectMention(
+                event.target.value,
+                event.target.selectionStart ?? event.target.value.length
+              );
+            }}
+            onClick={event =>
+              detectMention(
+                event.currentTarget.value,
+                event.currentTarget.selectionStart ??
+                  event.currentTarget.value.length
+              )
+            }
+            onBlur={() => setMention(null)}
             onKeyDown={event => {
+              if (mentionOpen) {
+                if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+                  event.preventDefault();
+                  const shown = Math.min(mentionMatches.length, 6);
+                  setMentionIndex(current =>
+                    event.key === 'ArrowDown'
+                      ? (current + 1) % shown
+                      : (current - 1 + shown) % shown
+                  );
+                  return;
+                }
+                if (event.key === 'Enter' || event.key === 'Tab') {
+                  event.preventDefault();
+                  applyMention(mentionMatches[mentionIndex]);
+                  return;
+                }
+                if (event.key === 'Escape') {
+                  event.preventDefault();
+                  setMention(null);
+                  return;
+                }
+              }
               if (event.key === 'Enter' && !event.shiftKey) {
                 event.preventDefault();
                 void submit();

@@ -2546,13 +2546,16 @@
       "remoteDismiss": "閉じる",
       "remoteDismissLabel": "リモートプロバイダーの通知を閉じる",
       "remoteDismissFailed": "リモートプロバイダーの設定を保存できませんでした。",
-      "noModelSelected": "作業対応モデルが選択されていません。"
+      "noModelSelected": "作業対応モデルが選択されていません。",
+      "mentionAgents": "エージェントをメンション"
     },
     "conversation": {
       "ready": "ワークスペースの準備ができました",
       "empty": "下からタスクを続けてください。この会話とファイルは、このワークスペースに紐づいたまま保持されます。",
       "loadOlder": "過去のメッセージを読み込む",
-      "openFile": "{{name}} を開く"
+      "openFile": "{{name}} を開く",
+      "delegatedBy": "{{agent}} から委任",
+      "reportFrom": "{{agent}} からの報告"
     },
     "status": {
       "preparing": "隔離ワークスペースを準備中…",

@@ -2546,13 +2546,16 @@
       "remoteDismiss": "Đóng",
       "remoteDismissLabel": "Đóng thông báo về nhà cung cấp từ xa",
       "remoteDismissFailed": "Không thể lưu tùy chọn nhà cung cấp từ xa.",
-      "noModelSelected": "Chưa chọn mô hình tương thích với chế độ Công việc."
+      "noModelSelected": "Chưa chọn mô hình tương thích với chế độ Công việc.",
+      "mentionAgents": "Nhắc đến một agent"
     },
     "conversation": {
       "ready": "Không gian làm việc đã sẵn sàng",
       "empty": "Tiếp tục tác vụ bên dưới. Cuộc trò chuyện và các tệp vẫn được gắn với không gian làm việc này.",
       "loadOlder": "Tải tin nhắn cũ hơn",
-      "openFile": "Mở {{name}}"
+      "openFile": "Mở {{name}}",
+      "delegatedBy": "Được ủy quyền bởi {{agent}}",
+      "reportFrom": "Báo cáo từ {{agent}}"
     },
     "status": {
       "preparing": "Đang chuẩn bị không gian làm việc biệt lập…",

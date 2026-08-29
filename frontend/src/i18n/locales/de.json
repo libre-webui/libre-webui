@@ -2546,13 +2546,16 @@
       "remoteDismiss": "Ausblenden",
       "remoteDismissLabel": "Hinweis zum Remote-Anbieter ausblenden",
       "remoteDismissFailed": "Die Einstellung für den Remote-Anbieter konnte nicht gespeichert werden.",
-      "noModelSelected": "Es ist kein mit Arbeit kompatibles Modell ausgewählt."
+      "noModelSelected": "Es ist kein mit Arbeit kompatibles Modell ausgewählt.",
+      "mentionAgents": "Agent erwähnen"
     },
     "conversation": {
       "ready": "Arbeitsbereich bereit",
       "empty": "Setzen Sie die Aufgabe unten fort. Diese Unterhaltung und ihre Dateien bleiben mit diesem Arbeitsbereich verknüpft.",
       "loadOlder": "Ältere Nachrichten laden",
-      "openFile": "{{name}} öffnen"
+      "openFile": "{{name}} öffnen",
+      "delegatedBy": "Delegiert von {{agent}}",
+      "reportFrom": "Bericht von {{agent}}"
     },
     "status": {
       "preparing": "Isolierter Arbeitsbereich wird vorbereitet…",

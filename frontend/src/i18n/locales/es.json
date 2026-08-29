@@ -2546,13 +2546,16 @@
       "remoteDismiss": "Ocultar",
       "remoteDismissLabel": "Ocultar aviso del proveedor remoto",
       "remoteDismissFailed": "No se pudo guardar la preferencia del proveedor remoto.",
-      "noModelSelected": "No hay ningún modelo compatible con el modo Trabajo seleccionado."
+      "noModelSelected": "No hay ningún modelo compatible con el modo Trabajo seleccionado.",
+      "mentionAgents": "Mencionar un agente"
     },
     "conversation": {
       "ready": "Espacio de trabajo listo",
       "empty": "Continúa la tarea abajo. Esta conversación y sus archivos permanecen asociados a este espacio de trabajo.",
       "loadOlder": "Cargar mensajes anteriores",
-      "openFile": "Abrir {{name}}"
+      "openFile": "Abrir {{name}}",
+      "delegatedBy": "Delegado por {{agent}}",
+      "reportFrom": "Informe de {{agent}}"
     },
     "status": {
       "preparing": "Preparando el espacio de trabajo aislado…",

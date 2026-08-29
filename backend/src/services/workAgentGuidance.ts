@@ -24,6 +24,10 @@ export interface WorkAgentGuidanceContext {
   persona?: { name: string; instructions?: string };
   /** True when side-effecting tool calls pause for the user's approval. */
   approvalsActive?: boolean;
+  /** Other hired agents this agent may delegate to via message_agent. */
+  peerAgents?: readonly { name: string; status?: string }[];
+  /** Name of the agent that delegated this run, when it was delegated. */
+  delegatedBy?: string;
   previewPort: number;
   roundBudget: number;
   commandTimeoutMs: number;
@@ -149,6 +153,13 @@ export function buildWorkAgentSystemPrompt(
           .map(skill => `### ${skill.name}\n${skill.instructions}`)
           .join('\n\n')}`
       : '';
+  const peerRoster = context.peerAgents?.length
+    ? `\n\n## Working with other agents\nThe user's other hired agents, each in its own separate workspace:\n${context.peerAgents
+        .map(peer => `- ${peer.name}${peer.status ? ` — ${peer.status}` : ''}`)
+        .join(
+          '\n'
+        )}\nDelegate with message_agent when the user @-mentions one of them or the request clearly belongs to that agent's role. Include full context in the message: the other agent cannot see this conversation or workspace. Delegation is asynchronous — the report arrives here as a message when that agent finishes. Do not delegate work you can do yourself, and never delegate the same request twice.`
+    : '';
 
   const intro = context.persona
     ? `You are ${context.persona.name}, a persistent agent running on Libre WebUI Work, an autonomous implementation runtime.${
@@ -172,11 +183,15 @@ Deliver a working result inside this task's isolated workspace, not a plan-only 
 - This run has a provider-agnostic budget of ${formatInteger(context.roundBudget)} model rounds and ${formatInteger(toolBudget)} tool calls.
 - A browser preview must listen on 0.0.0.0:${context.previewPort}.${
     context.approvalsActive
-      ? '\n- Side-effecting actions (commands, file deletion and moves, computer actions) pause until the user approves them. A denied action must not be retried as-is; adjust the plan or ask. If an approval goes unanswered, the run ends with a handoff.'
+      ? '\n- Side-effecting actions (commands, file deletion and moves, computer actions, delegation) pause until the user approves them. A denied action must not be retried as-is; adjust the plan or ask. If an approval goes unanswered, the run ends with a handoff.'
+      : ''
+  }${
+    context.delegatedBy
+      ? `\n- This run was delegated by the agent "${context.delegatedBy}". Complete it yourself — delegating further is disabled — and end with a clear, self-contained report; your final response is delivered back to ${context.delegatedBy}.`
       : ''
   }
 
-${skills}${taughtSkills}
+${skills}${taughtSkills}${peerRoster}
 
 Finish with a concise summary of what changed and the checks that actually ran.`;
 }

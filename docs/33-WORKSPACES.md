@@ -260,21 +260,45 @@ agent's own page:
 - **Taught skills**: procedures demonstrated in teach mode, with an
   enable/disable switch per skill.
 
+### Delegation between agents (@-mentions)
+
+Hired agents can hand work to each other. Type `@` in the Work composer to
+mention one of your other agents; the current agent sees its peer roster
+(names and status lines) in its instructions and delegates matching
+requests with the `message_agent` tool. Delegation is coordination by
+messages, deliberately not by shared computers: every agent keeps its own
+isolated workspace and sandbox, and the target cannot see the delegating
+conversation — the request must carry its own context.
+
+Delegation is asynchronous. The tool returns immediately, the target agent
+runs in its own task (its conversation shows the request labeled
+**Delegated by** the sender), and when it finishes — completed, needs
+input, failed, or cancelled — its final response is delivered back into
+the delegating agent's conversation as a message labeled **Report from**
+that agent. If the delegator is still running, the report reaches its
+model at the next round; if it is idle, the report simply waits in the
+conversation — a report never auto-starts a run, so two agents cannot
+ping-pong each other. Delegated runs cannot delegate further, a busy
+target fails the attempt honestly instead of queueing, and when approvals
+are active `message_agent` pauses for review like any other side-effecting
+action (an Always-allow rule is scoped to that one target agent).
+
 ### Action approvals (Auto Review)
 
 Side-effecting actions can pause for your decision before they run. When
 approvals are active for a task — its Work policy sets **Require approval
 for side-effecting actions**, or the agent's **Auto Review** switch is on —
 the run stops before executing `run_command`, `computer_act`, `delete_file`,
-or `move_file` and shows a decision card in the conversation:
-**Allow once**, **Always allow**, or **Deny**.
+`move_file`, or `message_agent` and shows a decision card in the
+conversation: **Allow once**, **Always allow**, or **Deny**.
 
 - **Allow once** runs exactly this call and asks again next time.
 - **Always allow** runs the call and persists a rule on the task: tool-wide
   for file and computer actions, scoped to the command's program (its first
   token) for `run_command` — approving `npm run build` pre-approves future
-  `npm` commands, not the whole shell. Rules are listed in the Agent tab's
-  Auto Review section and can be removed there.
+  `npm` commands, not the whole shell — and scoped to the one target agent
+  for `message_agent`. Rules are listed in the Agent tab's Auto Review
+  section and can be removed there.
 - **Deny** refuses the call. The model is told the user denied the action
   and must not retry it as-is; the run continues with that answer.
 

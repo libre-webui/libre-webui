@@ -2546,13 +2546,16 @@
       "remoteDismiss": "닫기",
       "remoteDismissLabel": "원격 제공자 안내 닫기",
       "remoteDismissFailed": "원격 제공자 설정을 저장할 수 없습니다.",
-      "noModelSelected": "선택된 작업 호환 모델이 없습니다."
+      "noModelSelected": "선택된 작업 호환 모델이 없습니다.",
+      "mentionAgents": "에이전트 멘션"
     },
     "conversation": {
       "ready": "워크스페이스 준비 완료",
       "empty": "아래에서 태스크를 계속하세요. 이 대화와 파일은 해당 워크스페이스에 계속 연결됩니다.",
       "loadOlder": "이전 메시지 불러오기",
-      "openFile": "{{name}} 열기"
+      "openFile": "{{name}} 열기",
+      "delegatedBy": "{{agent}}이(가) 위임함",
+      "reportFrom": "{{agent}}의 보고"
     },
     "status": {
       "preparing": "격리된 워크스페이스 준비 중…",

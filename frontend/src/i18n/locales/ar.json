@@ -2546,13 +2546,16 @@
       "remoteDismiss": "تجاهل",
       "remoteDismissLabel": "تجاهل إشعار المزوّد البعيد",
       "remoteDismissFailed": "تعذّر حفظ تفضيل المزوّد البعيد.",
-      "noModelSelected": "لم يتم اختيار نموذج متوافق مع وضع العمل."
+      "noModelSelected": "لم يتم اختيار نموذج متوافق مع وضع العمل.",
+      "mentionAgents": "الإشارة إلى وكيل"
     },
     "conversation": {
       "ready": "مساحة العمل جاهزة",
       "empty": "تابع المهمة أدناه. تظل هذه المحادثة وملفاتها مرتبطة بمساحة العمل هذه.",
       "loadOlder": "تحميل الرسائل الأقدم",
-      "openFile": "فتح {{name}}"
+      "openFile": "فتح {{name}}",
+      "delegatedBy": "فُوِّض من {{agent}}",
+      "reportFrom": "تقرير من {{agent}}"
     },
     "status": {
       "preparing": "جارٍ تجهيز مساحة العمل المعزولة…",

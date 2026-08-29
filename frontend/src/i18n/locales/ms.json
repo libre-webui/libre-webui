@@ -2546,13 +2546,16 @@
       "remoteDismiss": "Tutup",
       "remoteDismissLabel": "Tutup notis penyedia jauh",
       "remoteDismissFailed": "Tidak dapat menyimpan pilihan penyedia jauh.",
-      "noModelSelected": "Tiada model serasi Kerja yang dipilih."
+      "noModelSelected": "Tiada model serasi Kerja yang dipilih.",
+      "mentionAgents": "Sebut ejen"
     },
     "conversation": {
       "ready": "Ruang kerja sedia",
       "empty": "Teruskan tugas di bawah. Perbualan dan failnya kekal dilampirkan pada ruang kerja ini.",
       "loadOlder": "Muatkan mesej lama",
-      "openFile": "Buka {{name}}"
+      "openFile": "Buka {{name}}",
+      "delegatedBy": "Diwakilkan oleh {{agent}}",
+      "reportFrom": "Laporan daripada {{agent}}"
     },
     "status": {
       "preparing": "Menyediakan ruang kerja terasing…",

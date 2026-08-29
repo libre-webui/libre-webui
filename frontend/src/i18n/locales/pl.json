@@ -2546,13 +2546,16 @@
       "remoteDismiss": "Ukryj",
       "remoteDismissLabel": "Ukryj informację o zdalnym dostawcy",
       "remoteDismissFailed": "Nie udało się zapisać ustawienia zdalnego dostawcy.",
-      "noModelSelected": "Nie wybrano modelu zgodnego z trybem „Praca”."
+      "noModelSelected": "Nie wybrano modelu zgodnego z trybem „Praca”.",
+      "mentionAgents": "Wspomnij agenta"
     },
     "conversation": {
       "ready": "Obszar roboczy jest gotowy",
       "empty": "Kontynuuj zadanie poniżej. Ta rozmowa i jej pliki pozostają przypisane do tego obszaru roboczego.",
       "loadOlder": "Wczytaj starsze wiadomości",
-      "openFile": "Otwórz {{name}}"
+      "openFile": "Otwórz {{name}}",
+      "delegatedBy": "Delegowane przez {{agent}}",
+      "reportFrom": "Raport od {{agent}}"
     },
     "status": {
       "preparing": "Przygotowywanie izolowanego obszaru roboczego…",

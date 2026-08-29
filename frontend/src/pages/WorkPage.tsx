@@ -1541,6 +1541,12 @@ export default function WorkPage() {
                 <WorkComposer
                   key={selectedTask.id}
                   dictationOwnerKey={selectedTask.id}
+                  mentionAgents={tasks
+                    .filter(
+                      item =>
+                        item.isAgent === true && item.id !== selectedTask.id
+                    )
+                    .map(item => ({ id: item.id, name: item.title }))}
                   models={effectiveModelOptions}
                   selectorModels={models}
                   modelKey={selectedModelKey}

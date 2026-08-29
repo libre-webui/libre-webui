@@ -2546,13 +2546,16 @@
       "remoteDismiss": "Tutup",
       "remoteDismissLabel": "Tutup pemberitahuan penyedia jarak jauh",
       "remoteDismissFailed": "Tidak dapat menyimpan preferensi penyedia jarak jauh.",
-      "noModelSelected": "Tidak ada model kompatibel Kerja yang dipilih."
+      "noModelSelected": "Tidak ada model kompatibel Kerja yang dipilih.",
+      "mentionAgents": "Sebut agen"
     },
     "conversation": {
       "ready": "Ruang kerja siap",
       "empty": "Lanjutkan tugas di bawah ini. Percakapan dan filenya tetap terhubung ke ruang kerja ini.",
       "loadOlder": "Muat pesan lama",
-      "openFile": "Buka {{name}}"
+      "openFile": "Buka {{name}}",
+      "delegatedBy": "Didelegasikan oleh {{agent}}",
+      "reportFrom": "Laporan dari {{agent}}"
     },
     "status": {
       "preparing": "Menyiapkan ruang kerja terisolasi…",

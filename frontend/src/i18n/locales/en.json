@@ -2546,13 +2546,16 @@
       "remoteDismiss": "Dismiss",
       "remoteDismissLabel": "Dismiss remote provider notice",
       "remoteDismissFailed": "Could not save the remote provider preference.",
-      "noModelSelected": "No Work-compatible model is selected."
+      "noModelSelected": "No Work-compatible model is selected.",
+      "mentionAgents": "Mention an agent"
     },
     "conversation": {
       "ready": "Workspace ready",
       "empty": "Continue the task below. This conversation and its files stay attached to this workspace.",
       "loadOlder": "Load older messages",
-      "openFile": "Open {{name}}"
+      "openFile": "Open {{name}}",
+      "delegatedBy": "Delegated by {{agent}}",
+      "reportFrom": "Report from {{agent}}"
     },
     "status": {
       "preparing": "Preparing isolated workspace…",

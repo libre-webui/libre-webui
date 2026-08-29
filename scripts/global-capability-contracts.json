@@ -2135,6 +2135,12 @@
           "behaviorPatterns": ["resolvePendingApproval", "ruleCovers"]
         },
         {
+          "file": "scripts/test-work-delegation.mjs",
+          "runner": "test:package",
+          "name": "an agent delegates to a peer and the report returns to its conversation",
+          "behaviorPatterns": ["message_agent", "delegationReport"]
+        },
+        {
           "file": "scripts/test-websocket-tickets.mjs",
           "runner": "test:package",
           "name": "production Work upgrade applies task-bound ticket authentication",

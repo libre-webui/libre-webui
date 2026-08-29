@@ -2546,13 +2546,16 @@
       "remoteDismiss": "Nascondi",
       "remoteDismissLabel": "Nascondi avviso sul fornitore remoto",
       "remoteDismissFailed": "Impossibile salvare la preferenza del fornitore remoto.",
-      "noModelSelected": "Non è selezionato alcun modello compatibile con la modalità Lavoro."
+      "noModelSelected": "Non è selezionato alcun modello compatibile con la modalità Lavoro.",
+      "mentionAgents": "Menziona un agente"
     },
     "conversation": {
       "ready": "Spazio di lavoro pronto",
       "empty": "Continua l'attività qui sotto. Questa conversazione e i relativi file restano associati allo spazio di lavoro.",
       "loadOlder": "Carica messaggi precedenti",
-      "openFile": "Apri {{name}}"
+      "openFile": "Apri {{name}}",
+      "delegatedBy": "Delegato da {{agent}}",
+      "reportFrom": "Rapporto da {{agent}}"
     },
     "status": {
       "preparing": "Preparazione dello spazio di lavoro isolato…",

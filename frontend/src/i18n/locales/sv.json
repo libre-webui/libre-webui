@@ -2546,13 +2546,16 @@
       "remoteDismiss": "Dölj",
       "remoteDismissLabel": "Dölj meddelandet om fjärrleverantören",
       "remoteDismissFailed": "Det gick inte att spara inställningen för fjärrleverantören.",
-      "noModelSelected": "Ingen modell som är kompatibel med Arbete har valts."
+      "noModelSelected": "Ingen modell som är kompatibel med Arbete har valts.",
+      "mentionAgents": "Nämn en agent"
     },
     "conversation": {
       "ready": "Arbetsytan är klar",
       "empty": "Fortsätt med uppgiften nedan. Konversationen och dess filer förblir kopplade till den här arbetsytan.",
       "loadOlder": "Läs in äldre meddelanden",
-      "openFile": "Öppna {{name}}"
+      "openFile": "Öppna {{name}}",
+      "delegatedBy": "Delegerat av {{agent}}",
+      "reportFrom": "Rapport från {{agent}}"
     },
     "status": {
       "preparing": "Förbereder den isolerade arbetsytan…",

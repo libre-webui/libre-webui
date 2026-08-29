@@ -48,6 +48,7 @@ export const GATED_WORK_TOOLS: ReadonlySet<string> = new Set([
   'computer_act',
   'delete_file',
   'move_file',
+  'message_agent',
 ]);
 
 const decisionEmitter = new EventEmitter();
@@ -61,16 +62,26 @@ const firstCommandToken = (command: unknown): string | null => {
   return token ? token.slice(0, PATTERN_MAX_LENGTH) : null;
 };
 
+const targetAgentPattern = (agent: unknown): string | null =>
+  typeof agent === 'string' && agent.trim()
+    ? agent.trim().toLowerCase().slice(0, PATTERN_MAX_LENGTH)
+    : null;
+
 /**
  * The rule scope an Always-allow decision creates. `run_command` scopes to
  * the command's program (first token) so one decision does not open the
- * whole shell; every other gated tool scopes to the tool itself.
+ * whole shell; `message_agent` scopes to the target agent's name so one
+ * decision does not open delegation to every agent; every other gated tool
+ * scopes to the tool itself.
  */
 export const deriveRulePattern = (
   toolName: string,
   summary: Record<string, unknown> | undefined
-): string | null =>
-  toolName === 'run_command' ? firstCommandToken(summary?.command) : null;
+): string | null => {
+  if (toolName === 'run_command') return firstCommandToken(summary?.command);
+  if (toolName === 'message_agent') return targetAgentPattern(summary?.agent);
+  return null;
+};
 
 /** Whether a persisted rule covers this call. */
 export const ruleCovers = (
@@ -80,10 +91,13 @@ export const ruleCovers = (
 ): boolean => {
   if (rule.tool_name !== toolName) return false;
   if (rule.pattern === null) return true;
-  return (
-    toolName === 'run_command' &&
-    firstCommandToken(summary?.command) === rule.pattern
-  );
+  if (toolName === 'run_command') {
+    return firstCommandToken(summary?.command) === rule.pattern;
+  }
+  if (toolName === 'message_agent') {
+    return targetAgentPattern(summary?.agent) === rule.pattern;
+  }
+  return false;
 };
 
 export interface WorkApprovalView extends WorkLiveApproval {
