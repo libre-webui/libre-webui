@@ -59,6 +59,16 @@ const RECORDING_DURATION_HEADROOM_SECONDS = 0.25;
 
 export type DictationPhase = 'idle' | 'starting' | 'recording' | 'transcribing';
 
+export const sttModelKey = (model: STTModel): string =>
+  `${encodeURIComponent(model.plugin)}:${encodeURIComponent(model.model)}`;
+
+/** A selectable transcription source: the browser or one provider model. */
+export interface DictationSource {
+  key: string;
+  kind: 'browser' | 'provider';
+  model?: STTModel;
+}
+
 function preferredRecordingMimeType(model: STTModel): string | undefined {
   if (typeof MediaRecorder === 'undefined') return undefined;
   const accepted = new Set(
@@ -149,14 +159,35 @@ export function useDictation({
     window.isSecureContext &&
     typeof navigator !== 'undefined' &&
     Boolean(navigator.mediaDevices?.getUserMedia);
-  const providerSttModel = useMemo(
-    () =>
-      providerMicrophoneSupported
-        ? sttModels.find(model => Boolean(preferredRecordingMimeType(model)))
-        : undefined,
-    [providerMicrophoneSupported, sttModels]
+  // Every source the consumer may offer: the browser (free, streaming)
+  // plus each provider model the recorder can actually feed.
+  const sources = useMemo<DictationSource[]>(
+    () => [
+      ...(browserSpeechSupported
+        ? [{ key: 'browser', kind: 'browser' as const }]
+        : []),
+      ...(providerMicrophoneSupported
+        ? sttModels
+            .filter(model => Boolean(preferredRecordingMimeType(model)))
+            .map(model => ({
+              key: sttModelKey(model),
+              kind: 'provider' as const,
+              model,
+            }))
+        : []),
+    ],
+    [browserSpeechSupported, providerMicrophoneSupported, sttModels]
   );
-  const supported = browserSpeechSupported || Boolean(providerSttModel);
+  // Requested source; falls back to the first available (browser preferred
+  // by construction) when unset or no longer offered.
+  const [sourceKey, setSourceKey] = useState('');
+  const activeSource = useMemo(
+    () => sources.find(source => source.key === sourceKey) ?? sources[0],
+    [sourceKey, sources]
+  );
+  const providerSttModel =
+    activeSource?.kind === 'provider' ? activeSource.model : undefined;
+  const supported = sources.length > 0;
 
   const clearRecordingTimeout = useCallback(() => {
     if (recordingTimeoutRef.current !== null) {
@@ -218,9 +249,10 @@ export function useDictation({
       return;
     }
 
-    // Browser speech is free and streams interim text; provider STT is
-    // the fallback when the browser lacks the Web Speech API.
-    if (!browserSpeechSupported && providerSttModel) {
+    // The active source decides the path: browser speech is free and
+    // streams interim text; a provider model records and transcribes on
+    // stop. providerSttModel is set only when a provider source is active.
+    if (providerSttModel) {
       const runId = runRef.current + 1;
       runRef.current = runId;
       const owner = ownerRef.current;
@@ -385,7 +417,6 @@ export function useDictation({
       setPhase('idle');
     }
   }, [
-    browserSpeechSupported,
     cancel,
     clearRecordingTimeout,
     i18n.language,
@@ -394,5 +425,15 @@ export function useDictation({
     t,
   ]);
 
-  return { supported, phase, toggle, cancel };
+  return {
+    supported,
+    phase,
+    toggle,
+    cancel,
+    sources,
+    activeSourceKey: activeSource?.key ?? '',
+    setSourceKey,
+    /** The provider model the active source transcribes with, if any. */
+    providerModel: providerSttModel,
+  };
 }

@@ -67,9 +67,8 @@ import {
   documentsApi,
   ollamaApi,
   searchApi,
-  sttApi,
 } from '@/utils/api';
-import type { STTModel } from '@/utils/api';
+import { useDictation } from '@/hooks/useDictation';
 import {
   ComposerSuggestions,
   type ComposerSuggestionsHandle,
@@ -101,61 +100,9 @@ import {
 
 const logger = createLogger('components:chat-input');
 
-// Minimal typings for the vendor-prefixed Web Speech API.
-interface SpeechRecognitionLike {
-  lang: string;
-  continuous: boolean;
-  interimResults: boolean;
-  onresult:
-    | ((event: {
-        results: ArrayLike<ArrayLike<{ transcript: string }>>;
-      }) => void)
-    | null;
-  onend: (() => void) | null;
-  onerror: (() => void) | null;
-  start: () => void;
-  stop: () => void;
-}
-
-type SpeechRecognitionConstructor = new () => SpeechRecognitionLike;
-
-const getSpeechRecognition = (): SpeechRecognitionConstructor | undefined => {
-  if (typeof window === 'undefined') return undefined;
-  const w = window as unknown as {
-    SpeechRecognition?: SpeechRecognitionConstructor;
-    webkitSpeechRecognition?: SpeechRecognitionConstructor;
-  };
-  return w.SpeechRecognition || w.webkitSpeechRecognition;
-};
-
-const RECORDING_MIME_TYPES = [
-  { mimeType: 'audio/webm;codecs=opus', format: 'webm' },
-] as const;
-
 // Below this measured composer width, secondary controls fold into the
 // attach menu so the icon row never clips.
 const COMPACT_COMPOSER_WIDTH = 560;
-
-const DEFAULT_MAX_RECORDING_SECONDS = 5 * 60;
-const RECORDING_DURATION_HEADROOM_SECONDS = 0.25;
-
-type SpeechInputPhase = 'idle' | 'starting' | 'recording' | 'transcribing';
-
-const sttModelKey = (model: STTModel): string =>
-  `${encodeURIComponent(model.plugin)}:${encodeURIComponent(model.model)}`;
-
-function preferredRecordingMimeType(model: STTModel): string | undefined {
-  if (typeof MediaRecorder === 'undefined') return undefined;
-  const accepted = new Set(
-    (model.config?.formats || []).map(format => format.toLowerCase())
-  );
-  return RECORDING_MIME_TYPES.find(
-    candidate =>
-      (accepted.size === 0 || accepted.has(candidate.format)) &&
-      (typeof MediaRecorder.isTypeSupported !== 'function' ||
-        MediaRecorder.isTypeSupported(candidate.mimeType))
-  )?.mimeType;
-}
 
 interface ChatInputProps {
   onSendMessage: (
@@ -180,78 +127,9 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   onOpenVoiceMode,
   disabled = false,
 }) => {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const [message, setMessage] = useState('');
-  const [speechStarting, setSpeechStarting] = useState(false);
-  const [listening, setListening] = useState(false);
-  const [transcribing, setTranscribing] = useState(false);
-  const [sttModels, setSttModels] = useState<STTModel[]>([]);
-  const [speechInputSource, setSpeechInputSource] = useState(() =>
-    typeof window !== 'undefined' &&
-    window.isSecureContext &&
-    typeof navigator !== 'undefined' &&
-    navigator.mediaDevices &&
-    getSpeechRecognition()
-      ? 'browser'
-      : ''
-  );
-  const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const mediaStreamRef = useRef<MediaStream | null>(null);
-  const transcriptionAbortRef = useRef<AbortController | null>(null);
-  const recordingTimeoutRef = useRef<number | null>(null);
-  const speechRunRef = useRef(0);
-  const speechPhaseRef = useRef<SpeechInputPhase>('idle');
-  const sessionIdRef = useRef<string | undefined>(undefined);
   const dictationBaseRef = useRef('');
-  const browserSpeechSupported = useMemo(
-    () =>
-      typeof window !== 'undefined' &&
-      window.isSecureContext &&
-      typeof navigator !== 'undefined' &&
-      Boolean(navigator.mediaDevices) &&
-      Boolean(getSpeechRecognition()),
-    []
-  );
-  const compatibleSttModels = useMemo(
-    () => sttModels.filter(model => Boolean(preferredRecordingMimeType(model))),
-    [sttModels]
-  );
-  const providerMicrophoneSupported =
-    typeof window !== 'undefined' &&
-    window.isSecureContext &&
-    typeof navigator !== 'undefined' &&
-    Boolean(navigator.mediaDevices?.getUserMedia);
-  const selectableSttModels = useMemo(
-    () => (providerMicrophoneSupported ? compatibleSttModels : []),
-    [compatibleSttModels, providerMicrophoneSupported]
-  );
-  const activeSpeechInputSource = useMemo(() => {
-    if (speechInputSource === 'browser' && browserSpeechSupported) {
-      return speechInputSource;
-    }
-    if (
-      selectableSttModels.some(
-        model => sttModelKey(model) === speechInputSource
-      )
-    ) {
-      return speechInputSource;
-    }
-    return browserSpeechSupported
-      ? 'browser'
-      : selectableSttModels[0]
-        ? sttModelKey(selectableSttModels[0])
-        : '';
-  }, [browserSpeechSupported, selectableSttModels, speechInputSource]);
-  const providerSttModel = useMemo(
-    () =>
-      selectableSttModels.find(
-        model => sttModelKey(model) === activeSpeechInputSource
-      ),
-    [activeSpeechInputSource, selectableSttModels]
-  );
-  const providerSpeechSupported = Boolean(providerSttModel);
-  const speechSupported = browserSpeechSupported || providerSpeechSupported;
 
   const [images, setImages] = useState<string[]>([]);
   const [format, setFormat] = useState<string | Record<string, unknown> | null>(
@@ -284,23 +162,6 @@ export const ChatInput: React.FC<ChatInputProps> = ({
         }
       })
       .catch(() => {});
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  useEffect(() => {
-    let cancelled = false;
-    sttApi
-      .getModels()
-      .then(response => {
-        if (!cancelled && response.success && response.data) {
-          setSttModels(response.data);
-        }
-      })
-      .catch(() => {
-        if (!cancelled) setSttModels([]);
-      });
     return () => {
       cancelled = true;
     };
@@ -624,247 +485,24 @@ export const ChatInput: React.FC<ChatInputProps> = ({
     }
   };
 
-  const clearRecordingTimeout = useCallback(() => {
-    if (recordingTimeoutRef.current !== null) {
-      window.clearTimeout(recordingTimeoutRef.current);
-      recordingTimeoutRef.current = null;
-    }
-  }, []);
-
-  const setSpeechPhase = useCallback((phase: SpeechInputPhase) => {
-    speechPhaseRef.current = phase;
-    setSpeechStarting(phase === 'starting');
-    setListening(phase === 'recording');
-    setTranscribing(phase === 'transcribing');
-  }, []);
-
-  const cancelSpeechInput = useCallback(() => {
-    speechRunRef.current += 1;
-    clearRecordingTimeout();
-
-    recognitionRef.current?.stop();
-    recognitionRef.current = null;
-    transcriptionAbortRef.current?.abort();
-    transcriptionAbortRef.current = null;
-
-    const recorder = mediaRecorderRef.current;
-    mediaRecorderRef.current = null;
-    if (recorder) {
-      recorder.ondataavailable = null;
-      recorder.onerror = null;
-      recorder.onstop = null;
-      if (recorder.state === 'recording') recorder.stop();
-    }
-    mediaStreamRef.current?.getTracks().forEach(track => track.stop());
-    mediaStreamRef.current = null;
-
-    setSpeechPhase('idle');
-  }, [clearRecordingTimeout, setSpeechPhase]);
-
-  // A recording belongs to exactly one chat. Cancel pending microphone
-  // permission, recording, and provider work before the component unmounts or
-  // the active session changes.
-  useEffect(() => {
-    sessionIdRef.current = currentSessionId;
-    return cancelSpeechInput;
-  }, [cancelSpeechInput, currentSessionId]);
-
-  const toggleDictation = async () => {
-    const phase = speechPhaseRef.current;
-    if (phase === 'starting' || phase === 'transcribing') {
-      cancelSpeechInput();
-      return;
-    }
-    if (phase === 'recording') {
-      if (mediaRecorderRef.current?.state === 'recording') {
-        // Make a second click a real cancellation even before MediaRecorder's
-        // asynchronous stop callback creates the provider request.
-        setSpeechPhase('transcribing');
-        mediaRecorderRef.current.stop();
-      } else {
-        cancelSpeechInput();
-      }
-      return;
-    }
-
-    const providerModel = providerSttModel;
-    if (providerModel && providerSpeechSupported) {
-      const runId = speechRunRef.current + 1;
-      speechRunRef.current = runId;
-      const sessionId = currentSession?.id;
+  const dictation = useDictation({
+    onStart: () => {
       dictationBaseRef.current = message;
-      setSpeechPhase('starting');
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({
-          audio: true,
-        });
-        if (
-          speechRunRef.current !== runId ||
-          sessionIdRef.current !== sessionId
-        ) {
-          stream.getTracks().forEach(track => track.stop());
-          return;
-        }
-        mediaStreamRef.current = stream;
-        const mimeType = preferredRecordingMimeType(providerModel);
-        const recorder = mimeType
-          ? new MediaRecorder(stream, { mimeType })
-          : new MediaRecorder(stream);
-        const chunks: Blob[] = [];
-        recorder.ondataavailable = event => {
-          if (event.data.size > 0) chunks.push(event.data);
-        };
-        recorder.onerror = () => {
-          stream.getTracks().forEach(track => track.stop());
-          clearRecordingTimeout();
-          if (speechRunRef.current !== runId) return;
-          mediaRecorderRef.current = null;
-          mediaStreamRef.current = null;
-          setSpeechPhase('idle');
-          toast.error(t('chat.input.menu.attachFailed'));
-        };
-        recorder.onstop = () => {
-          stream.getTracks().forEach(track => track.stop());
-          clearRecordingTimeout();
-          if (
-            speechRunRef.current !== runId ||
-            sessionIdRef.current !== sessionId
-          ) {
-            return;
-          }
-          mediaRecorderRef.current = null;
-          mediaStreamRef.current = null;
-          if (chunks.length === 0) {
-            setSpeechPhase('idle');
-            return;
-          }
-          const recording = new Blob(chunks, {
-            type: recorder.mimeType || chunks[0].type || 'audio/webm',
-          });
-          const controller = new AbortController();
-          transcriptionAbortRef.current = controller;
-          setSpeechPhase('transcribing');
-          void sttApi
-            .transcribe(recording, providerModel, {
-              language: i18n.language,
-              signal: controller.signal,
-              fallbackMessage: t('voiceMode.transcriptionFailed'),
-            })
-            .then(result => {
-              if (
-                speechRunRef.current !== runId ||
-                sessionIdRef.current !== sessionId ||
-                controller.signal.aborted
-              ) {
-                return;
-              }
-              const base = dictationBaseRef.current;
-              setMessage(
-                base ? `${base} ${result.text.trim()}` : result.text.trim()
-              );
-            })
-            .catch(error => {
-              if (!controller.signal.aborted) {
-                logger.error('Provider transcription failed:', error);
-                toast.error(
-                  error instanceof Error
-                    ? error.message
-                    : t('voiceMode.transcriptionFailed')
-                );
-              }
-            })
-            .finally(() => {
-              if (
-                transcriptionAbortRef.current === controller &&
-                speechRunRef.current === runId
-              ) {
-                transcriptionAbortRef.current = null;
-                setSpeechPhase('idle');
-              }
-            });
-        };
-        mediaRecorderRef.current = recorder;
-        recorder.start(250);
-        const configuredDuration = providerModel.config?.max_duration_seconds;
-        const maxDurationSeconds =
-          typeof configuredDuration === 'number' && configuredDuration > 0
-            ? Math.min(configuredDuration, DEFAULT_MAX_RECORDING_SECONDS)
-            : DEFAULT_MAX_RECORDING_SECONDS;
-        recordingTimeoutRef.current = window.setTimeout(
-          () => {
-            if (
-              speechRunRef.current === runId &&
-              recorder.state === 'recording'
-            ) {
-              recorder.stop();
-            }
-          },
-          Math.max(
-            0.1,
-            maxDurationSeconds - RECORDING_DURATION_HEADROOM_SECONDS
-          ) * 1000
-        );
-        setSpeechPhase('recording');
-        return;
-      } catch (error) {
-        if (speechRunRef.current !== runId) return;
-        logger.error('Failed to start provider dictation:', error);
-        clearRecordingTimeout();
-        mediaStreamRef.current?.getTracks().forEach(track => track.stop());
-        mediaStreamRef.current = null;
-        mediaRecorderRef.current = null;
-        setSpeechPhase('idle');
-        toast.error(t('chat.input.menu.attachFailed'));
-        return;
-      }
-    }
-
-    const SpeechRecognitionCtor = getSpeechRecognition();
-    if (!SpeechRecognitionCtor) return;
-
-    const runId = speechRunRef.current + 1;
-    speechRunRef.current = runId;
-    const sessionId = currentSession?.id;
-    const recognition = new SpeechRecognitionCtor();
-    recognition.lang = i18n.language;
-    recognition.continuous = true;
-    recognition.interimResults = true;
-    dictationBaseRef.current = message;
-    recognition.onresult = event => {
-      if (
-        speechRunRef.current !== runId ||
-        sessionIdRef.current !== sessionId ||
-        recognitionRef.current !== recognition
-      ) {
-        return;
-      }
-      let transcript = '';
-      for (let i = 0; i < event.results.length; i++) {
-        transcript += event.results[i][0]?.transcript ?? '';
-      }
+    },
+    onText: text => {
       const base = dictationBaseRef.current;
-      setMessage(base ? `${base} ${transcript.trim()}` : transcript.trim());
-    };
-    recognition.onend = () => {
-      if (speechRunRef.current !== runId) return;
-      recognitionRef.current = null;
-      setSpeechPhase('idle');
-    };
-    recognition.onerror = () => {
-      if (speechRunRef.current !== runId) return;
-      recognitionRef.current = null;
-      setSpeechPhase('idle');
-    };
-    recognitionRef.current = recognition;
-    setSpeechPhase('recording');
-    try {
-      recognition.start();
-    } catch (error) {
-      logger.error('Failed to start dictation:', error);
-      recognitionRef.current = null;
-      setSpeechPhase('idle');
-    }
-  };
+      setMessage(base ? `${base} ${text}` : text);
+    },
+    ownerKey: currentSessionId,
+  });
+  const speechStarting = dictation.phase === 'starting';
+  const listening = dictation.phase === 'recording';
+  const transcribing = dictation.phase === 'transcribing';
+  const speechSupported = dictation.supported;
+  const providerSttModel = dictation.providerModel;
+  const providerSpeechSources = dictation.sources.filter(
+    source => source.kind === 'provider'
+  );
 
   const handleDocumentSelected = async (
     event: React.ChangeEvent<HTMLInputElement>
@@ -1536,11 +1174,11 @@ export const ChatInput: React.FC<ChatInputProps> = ({
 
                   {/* Voice input. Selecting a provider makes the audio transfer
                     explicit before the user starts recording. */}
-                  {selectableSttModels.length > 0 && !compact && (
+                  {providerSpeechSources.length > 0 && !compact && (
                     <select
-                      value={activeSpeechInputSource}
+                      value={dictation.activeSourceKey}
                       onChange={event =>
-                        setSpeechInputSource(event.target.value)
+                        dictation.setSourceKey(event.target.value)
                       }
                       disabled={speechStarting || listening || transcribing}
                       aria-label={t('chat.input.transcriptionSource')}
@@ -1553,19 +1191,17 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                       }
                       className='h-8 max-w-32 rounded-lg border border-black/[0.08] bg-transparent px-1.5 text-[11px] text-gray-500 outline-none focus:border-primary-500/40 dark:border-white/[0.09] dark:text-dark-600'
                     >
-                      {browserSpeechSupported && (
-                        <option value='browser'>
-                          {t('chat.input.browserSpeech')}
-                        </option>
+                      {dictation.sources.map(source =>
+                        source.kind === 'browser' ? (
+                          <option key={source.key} value={source.key}>
+                            {t('chat.input.browserSpeech')}
+                          </option>
+                        ) : (
+                          <option key={source.key} value={source.key}>
+                            {source.model?.plugin} · {source.model?.model}
+                          </option>
+                        )
                       )}
-                      {selectableSttModels.map(model => (
-                        <option
-                          key={sttModelKey(model)}
-                          value={sttModelKey(model)}
-                        >
-                          {model.plugin} · {model.model}
-                        </option>
-                      ))}
                     </select>
                   )}
                   {speechSupported && (
@@ -1573,7 +1209,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                       type='button'
                       variant='ghost'
                       size='sm'
-                      onClick={() => void toggleDictation()}
+                      onClick={() => void dictation.toggle()}
                       className={cn(
                         'h-9 w-9 sm:h-10 sm:w-10 p-0 rounded-full flex-shrink-0 flex items-center justify-center',
                         'text-gray-500 dark:text-dark-600 hover:bg-gray-100 dark:hover:bg-dark-300',
@@ -1703,7 +1339,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
             </div>
           </form>
 
-          {providerSttModel && providerSpeechSupported && (
+          {providerSttModel && (
             <p
               role='note'
               className='mt-1.5 text-center text-[10px] leading-relaxed text-amber-700 dark:text-amber-300'
