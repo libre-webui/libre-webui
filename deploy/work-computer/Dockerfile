@@ -14,6 +14,7 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-ins
       openbox \
       tint2 \
       lxterminal \
+      thunar \
       adwaita-icon-theme \
       x11vnc \
       websockify \
