@@ -36,6 +36,15 @@ import workPolicyService from './workPolicyService.js';
 import workApprovalService, {
   GATED_WORK_TOOLS,
 } from './workApprovalService.js';
+import {
+  actorCanUseTools,
+  buildToolCatalog,
+  executeToolCall,
+  type ToolCatalogSelection,
+} from './toolGatewayService.js';
+import { getToolServer, hasToolServerCredential } from './toolServerService.js';
+import type { AuthzActor } from './authorizationService.js';
+import type { EffectiveTool } from '../types/tools.js';
 import workRuntimeService, {
   WORK_COMPUTER_ACTION_LIMIT,
   WorkCommandResult,
@@ -194,6 +203,29 @@ export const WORK_WEB_SEARCH_TOOL_SCHEMA: Record<string, unknown> =
     },
     ['query']
   );
+
+/**
+ * Tools from the user's configured MCP/OpenAPI servers, resolved once per
+ * run. Calls egress from the backend through the hardened tool gateway,
+ * never from the sandbox.
+ */
+export interface WorkExternalToolContext {
+  actor: AuthzActor;
+  byName: Map<string, EffectiveTool>;
+  schemas: Record<string, unknown>[];
+  selection: ToolCatalogSelection;
+}
+
+const externalToolSchema = (tool: EffectiveTool): Record<string, unknown> => ({
+  type: 'function',
+  function: {
+    name: tool.name,
+    description:
+      tool.description ??
+      `Tool ${tool.toolName} on the connected server ${tool.serverName ?? tool.serverId ?? ''}`.trim(),
+    parameters: tool.paramsSchema ?? { type: 'object', properties: {} },
+  },
+});
 
 /** How the delegating run finds out where a report must go. */
 export interface WorkDelegationSource {
@@ -984,6 +1016,9 @@ export class WorkAgentService {
                 ...(record.statusBlurb ? { status: record.statusBlurb } : {}),
               }))
           : [];
+      // Connected tool servers (MCP/OpenAPI): resolved once per run so the
+      // offered set is stable across rounds.
+      const externalTools = await this.externalToolsForRun(task);
       const messages = await this.contextMessages(
         task,
         roundLimit,
@@ -994,7 +1029,8 @@ export class WorkAgentService {
         persona,
         approvalsActive,
         peerAgents,
-        runDelegation
+        runDelegation,
+        externalTools ? [...externalTools.byName.keys()] : []
       );
       let totalToolCalls = 0;
       let accumulatedInputTokens = 0;
@@ -1102,9 +1138,12 @@ export class WorkAgentService {
             {
               model: run.model,
               messages,
-              tools: await workToolSchemasForTask(task, {
-                messageAgent: peerAgents.length > 0,
-              }),
+              tools: [
+                ...(await workToolSchemasForTask(task, {
+                  messageAgent: peerAgents.length > 0,
+                })),
+                ...(externalTools?.schemas ?? []),
+              ],
               stream: true,
             },
             providerSelection,
@@ -1353,6 +1392,9 @@ export class WorkAgentService {
         }
         const toolValidationErrors = new Map<WorkToolCall, string>();
         for (const call of toolCalls) {
+          // Connected tools validate their own arguments in the gateway;
+          // static validation only covers the built-in registry.
+          if (externalTools?.byName.has(call.function.name)) continue;
           const validationError = validateToolCallArguments(call);
           if (validationError) toolValidationErrors.set(call, validationError);
         }
@@ -1392,8 +1434,20 @@ export class WorkAgentService {
         }
         for (const call of toolCalls) {
           await this.throwIfCancelled(runId, controller);
+          const externalEntry = externalTools?.byName.get(call.function.name);
           const toolCallMetadata = {
             ...summarizeToolCall(call),
+            ...(externalEntry
+              ? {
+                  external: true,
+                  ...(externalEntry.serverName
+                    ? { server: externalEntry.serverName }
+                    : {}),
+                  argumentsPreview: JSON.stringify(
+                    call.function.arguments ?? {}
+                  ).slice(0, 500),
+                }
+              : {}),
             round: round + 1,
           };
           const toolCallMessage = await workTaskService.addMessage(
@@ -1456,7 +1510,10 @@ export class WorkAgentService {
               );
             }
             const approvalVerdict =
-              approvalsActive && GATED_WORK_TOOLS.has(call.function.name)
+              approvalsActive &&
+              (GATED_WORK_TOOLS.has(call.function.name) ||
+                externalTools?.byName.get(call.function.name)?.sideEffect ===
+                  true)
                 ? await this.awaitToolApproval(
                     task,
                     call,
@@ -1481,6 +1538,7 @@ export class WorkAgentService {
                 computer: computerContext,
                 runId,
                 delegated: runDelegation !== undefined,
+                external: externalTools,
               });
               toolOutput = result.content;
               toolImages = result.images;
@@ -2003,7 +2061,8 @@ export class WorkAgentService {
     persona?: { name: string; instructions?: string },
     approvalsActive?: boolean,
     peerAgents: readonly { name: string; status?: string }[] = [],
-    delegatedBy?: WorkDelegationSource
+    delegatedBy?: WorkDelegationSource,
+    connectedTools: readonly string[] = []
   ): Promise<OllamaChatMessage[]> {
     const persisted = restorePersistedWorkContext(
       await workTaskService.getRecentModelContextMessages(task.id, 30),
@@ -2021,6 +2080,7 @@ export class WorkAgentService {
           ...(approvalsActive ? { approvalsActive } : {}),
           ...(peerAgents.length > 0 ? { peerAgents } : {}),
           ...(delegatedBy ? { delegatedBy: delegatedBy.fromAgent } : {}),
+          ...(connectedTools.length > 0 ? { connectedTools } : {}),
           previewPort: workRuntimeService.previewPort,
           roundBudget: roundLimit,
           commandTimeoutMs: workRuntimeService.limits.commandTimeoutMs,
@@ -2043,6 +2103,8 @@ export class WorkAgentService {
       runId?: string;
       // True when this run was itself delegated; delegation stays depth 1.
       delegated?: boolean;
+      // Connected tool servers resolved for this run, when any are offered.
+      external?: WorkExternalToolContext;
     } = {}
   ): Promise<{
     content: string;
@@ -2052,6 +2114,36 @@ export class WorkAgentService {
     images?: string[];
   }> {
     const args = call.function.arguments;
+    // Connected tool servers: dynamic names resolved through the run's
+    // catalog before the built-in switch. Every guard the chat surface has
+    // is re-applied inside executeToolCall (visibility, enablement,
+    // credentials, SSRF-hardened egress).
+    const external = context.external?.byName.get(call.function.name);
+    if (external && context.external) {
+      if (!task.networkEnabled) {
+        throw new WorkAgentHttpError(
+          'Connected tools are not available for this task.',
+          403,
+          'WORK_TOOLS_UNAVAILABLE'
+        );
+      }
+      const result = await executeToolCall({
+        actor: context.external.actor,
+        tool: external,
+        argumentsJson: JSON.stringify(args ?? {}),
+        selection: context.external.selection,
+        ...(context.signal ? { signal: context.signal } : {}),
+      });
+      return {
+        content: result.text.slice(0, workRuntimeService.limits.maxOutputChars),
+        metadata: {
+          external: true,
+          ...(external.serverName ? { server: external.serverName } : {}),
+          ...(result.isError ? { error: true } : {}),
+          ...(result.truncated ? { outputTruncated: true } : {}),
+        },
+      };
+    }
     switch (call.function.name) {
       case 'list_files': {
         const result = await workRuntimeService.listFiles(
@@ -2404,6 +2496,87 @@ export class WorkAgentService {
    * never fails the run. The source key is run-scoped because dedupe is
    * permanent per user until the inbox cap prunes it.
    */
+  /**
+   * The user's configured tool servers, resolved once per run. Backend
+   * egress, so an offline task offers none — the web_search rationale.
+   * Servers whose per-user credential is missing are filtered at offer
+   * time, because an autonomous run cannot prompt for one; persona
+   * bindings narrow the servers exactly as they do in chat.
+   */
+  private async externalToolsForRun(
+    task: WorkTaskRecord
+  ): Promise<WorkExternalToolContext | undefined> {
+    if (!task.networkEnabled) return undefined;
+    try {
+      const user = await userModel.getUserById(task.userId);
+      const actor: AuthzActor = {
+        userId: task.userId,
+        ...(user?.role ? { role: user.role } : {}),
+      };
+      if (!(await actorCanUseTools(actor))) return undefined;
+      let serverIds: readonly string[] | undefined;
+      if (task.personaId) {
+        try {
+          const { personaService } = await import('./personaService.js');
+          const bindings = (
+            await personaService.getPersonaById(task.personaId, task.userId)
+          )?.bindings;
+          if (bindings?.tool_server_ids) serverIds = bindings.tool_server_ids;
+        } catch {
+          // A vanished persona leaves the selection unrestricted, matching
+          // how the run already degrades to no persona identity.
+        }
+      }
+      const catalog = await buildToolCatalog(
+        actor,
+        {},
+        {
+          builtinTools: [],
+          ...(serverIds ? { serverIds } : {}),
+        }
+      );
+      const builtinNames = new Set(
+        [
+          ...WORK_TOOL_SCHEMAS,
+          WORK_WEB_SEARCH_TOOL_SCHEMA,
+          WORK_MESSAGE_AGENT_TOOL_SCHEMA,
+          ...WORK_COMPUTER_TOOL_SCHEMAS,
+        ].map(
+          schema =>
+            (schema.function as { name?: string } | undefined)?.name ?? ''
+        )
+      );
+      const credentialed = new Map<string, boolean>();
+      const byName = new Map<string, EffectiveTool>();
+      const schemas: Record<string, unknown>[] = [];
+      for (const tool of catalog.tools) {
+        if (tool.source === 'builtin' || !tool.serverId) continue;
+        if (builtinNames.has(tool.name)) continue;
+        let usable = credentialed.get(tool.serverId);
+        if (usable === undefined) {
+          const server = await getToolServer(tool.serverId);
+          usable =
+            server !== undefined &&
+            server !== null &&
+            (server.authMode === 'none' ||
+              (await hasToolServerCredential(task.userId, tool.serverId)));
+          credentialed.set(tool.serverId, usable);
+        }
+        if (!usable) continue;
+        byName.set(tool.name, tool);
+        schemas.push(externalToolSchema(tool));
+      }
+      if (byName.size === 0) return undefined;
+      return { actor, byName, schemas, selection: catalog.selection };
+    } catch (error) {
+      logger.warn(
+        `Connected tools are unavailable for task ${task.id}:`,
+        error
+      );
+      return undefined;
+    }
+  }
+
   /**
    * Deliver a delegated run's outcome back into the delegating agent's
    * conversation. Mid-run when the delegator is still working (picked up at
@@ -3355,7 +3528,9 @@ function summarizeApprovalBody(
           : 'Computer actions on the screen';
     }
     default:
-      return toolName;
+      return summary.external === true && typeof summary.server === 'string'
+        ? `Call ${toolName} on ${summary.server}`
+        : toolName;
   }
 }
 

@@ -2159,6 +2159,15 @@
           "behaviorPatterns": ["message_agent", "delegationReport"]
         },
         {
+          "file": "scripts/test-work-mcp.mjs",
+          "runner": "test:package",
+          "name": "connected tools reach network-enabled runs and stay off offline ones",
+          "behaviorPatterns": [
+            "offline runs must not offer connected tools",
+            "notes_mcp__echo_note"
+          ]
+        },
+        {
           "file": "scripts/test-websocket-tickets.mjs",
           "runner": "test:package",
           "name": "production Work upgrade applies task-bound ticket authentication",

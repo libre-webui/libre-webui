@@ -273,15 +273,15 @@
         ]
       },
       "ui": {
-        "file": "frontend/src/components/ChatInput.tsx",
-        "action": "toggleDictation",
+        "file": "frontend/src/hooks/useDictation.ts",
+        "action": "toggle",
         "operationPatterns": [
           "navigator\\.mediaDevices\\.getUserMedia\\(",
-          "sttApi\\s*\\.transcribe\\(recording, providerModel"
+          "sttApi\\s*\\.transcribe\\(recording, providerSttModel"
         ],
         "trigger": {
           "file": "frontend/src/components/ChatInput.tsx",
-          "patterns": ["onClick=\\{\\(\\) => void toggleDictation\\(\\)\\}"]
+          "patterns": ["onClick=\\{\\(\\) => void dictation\\.toggle\\(\\)\\}"]
         }
       },
       "documentation": [

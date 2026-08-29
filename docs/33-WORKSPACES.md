@@ -260,6 +260,30 @@ agent's own page:
 - **Taught skills**: procedures demonstrated in teach mode, with an
   enable/disable switch per skill.
 
+### Connected tools (MCP and OpenAPI servers)
+
+Work agents can call the same [tool servers](./49-CHAT_TOOLS.md) configured
+for chat — MCP or OpenAPI, admin-registered under Settings → Tools. The
+tools appear to the agent under their namespaced names (`server__tool`) and
+the calls run from Libre WebUI's backend through the hardened tool gateway
+(SSRF-guarded egress, per-user credentials, size and time caps) — never
+from inside the sandbox.
+
+The offer is honest about what an autonomous run can actually use:
+
+- An **offline task offers none**: backend egress or not, a task without
+  network access stays offline — the same rationale as `web_search`.
+- A server that requires a personal credential the user has not stored is
+  **filtered out at offer time**, because an autonomous run cannot pause to
+  ask for one. Add the credential under Settings → Tools and the next run
+  offers the server.
+- The **tools access mode** (admins-only or all users) and per-server
+  visibility apply exactly as in chat, and a persona's tool-server bindings
+  narrow which servers its hired agent sees.
+- When [approvals](#action-approvals-auto-review) are active, connected
+  tools the server classifies as **side-effecting** pause for your decision
+  like any gated action; read-only tools run without asking.
+
 ### Delegation between agents (@-mentions)
 
 Hired agents can hand work to each other. Type `@` in the Work composer to

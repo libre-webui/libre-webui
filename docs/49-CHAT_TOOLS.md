@@ -211,6 +211,10 @@ follows them. Typing `$` in the composer autocompletes your skill slugs.
 - Tool calls run on the WebSocket path (private-session transport is
   excluded by design) and the durable generation path used for persisted
   chats. The legacy REST streaming endpoint does not run the tool loop.
+- [Work agents](./33-WORKSPACES.md#connected-tools-mcp-and-openapi-servers)
+  call the same servers through the same gateway: network-enabled runs
+  only, credential-less servers filtered at offer time, side-effecting
+  tools gated by Work approvals.
 - Gemini and agent CLI models do not receive tools; Ollama,
   OpenAI-compatible, Responses-API, and Anthropic providers do.
 - MCP servers authenticate with static per-user credentials; an MCP server
