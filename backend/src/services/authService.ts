@@ -23,6 +23,7 @@ import { dirname, join } from 'path';
 import { randomBytes } from 'crypto';
 import { turnstileService, TurnstilePublicConfig } from './turnstileService.js';
 import { getAgentsEnabled } from './agentAccessService.js';
+import { getOllamaRuntimeSettings } from './ollamaSettingsService.js';
 import {
   canCreateLocalAccount,
   isPublicRegistrationEnabled,
@@ -154,6 +155,8 @@ export interface SystemInfo {
   agentsEnabled: boolean;
   /** True when at least one passkey is registered system-wide. */
   passkeysInUse: boolean;
+  /** False when the admin disabled the Ollama provider entirely. */
+  ollamaEnabled: boolean;
   version?: string;
   turnstile: TurnstilePublicConfig;
 }
@@ -267,6 +270,7 @@ export class AuthService {
       signupEnabled: canCreateLocalAccount(userCount),
       agentsEnabled: await getAgentsEnabled(),
       passkeysInUse: await anyPasskeysRegistered(),
+      ollamaEnabled: (await getOllamaRuntimeSettings()).enabled,
       version: packageVersion,
       turnstile: turnstileService.getPublicConfig(),
     };

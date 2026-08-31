@@ -35,6 +35,7 @@ import {
 } from 'lucide-react';
 import { Logo } from '@/components/Logo';
 import { LogoMark } from '@/components/LogoMark';
+import { ConnectModels } from '@/components/ConnectModels';
 import { TurnstileWidget } from '@/components/TurnstileWidget';
 import { createLogger } from '@/utils/logger';
 import { getPasswordPolicyError } from '@/utils/passwordPolicy';
@@ -51,7 +52,7 @@ export const FirstTimeSetup: React.FC<FirstTimeSetupProps> = ({
 }) => {
   const { t } = useTranslation();
   const [step, setStep] = useState<
-    'welcome' | 'create-admin' | 'encryption-key'
+    'welcome' | 'create-admin' | 'encryption-key' | 'connect-models'
   >('welcome');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -169,7 +170,9 @@ export const FirstTimeSetup: React.FC<FirstTimeSetupProps> = ({
       toast.error(t('setup.encryptionKey.confirmRequired'));
       return;
     }
-    onComplete?.();
+    // Before landing in an empty chat, offer to connect a model source —
+    // Ollama is one option among several, not an assumption.
+    setStep('connect-models');
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -258,6 +261,28 @@ export const FirstTimeSetup: React.FC<FirstTimeSetupProps> = ({
               </div>
             </button>
           </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (step === 'connect-models') {
+    return (
+      <div className='min-h-screen bg-gray-50 px-4 py-16 dark:bg-dark-50 sm:px-6 lg:flex lg:flex-col lg:justify-center lg:py-20'>
+        <div className='sm:mx-auto sm:w-full sm:max-w-md'>
+          <div className='flex items-center justify-center gap-2.5 text-gray-900 dark:text-gray-100'>
+            <LogoMark size='md' label={null} />
+            <Logo />
+          </div>
+          <h2 className='mt-8 text-center text-3xl font-light tracking-[-0.035em] text-gray-950 dark:text-dark-950'>
+            {t('setup.connectModels.title')}
+          </h2>
+          <p className='mt-3 text-center text-sm text-gray-600 dark:text-dark-500'>
+            {t('setup.connectModels.subtitle')}
+          </p>
+        </div>
+        <div className='mt-10 flex justify-center sm:mx-auto sm:w-full sm:max-w-lg'>
+          <ConnectModels variant='setup' onDone={() => onComplete?.()} />
         </div>
       </div>
     );

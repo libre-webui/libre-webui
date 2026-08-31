@@ -240,6 +240,10 @@
       "acknowledgment": "암호화 키를 안전한 장소에 저장했으며, 분실 시 데이터 손실이 발생할 수 있음을 이해합니다.",
       "confirmRequired": "암호화 키를 저장했음을 확인하세요",
       "continue": "Libre WebUI로 계속"
+    },
+    "connectModels": {
+      "title": "모델 연결하기",
+      "subtitle": "로컬 또는 클라우드 — 이미 사용 중인 것을 선택하세요. 나중에 언제든지 변경할 수 있습니다."
     }
   },
   "chat": {
@@ -383,7 +387,8 @@
       "noModelsTooltip": "사용 가능한 모델이 없습니다. Ollama가 실행 중이고 모델이 설치되어 있는지 확인하세요.",
       "selectBeforePrivateChat": "비공개 채팅을 시작하기 전에 사용 가능한 모델을 선택하세요",
       "selectBeforeSending": "전송하기 전에 사용 가능한 모델을 선택하세요",
-      "selectBeforeRegenerating": "재생성하기 전에 사용 가능한 모델을 선택하세요"
+      "selectBeforeRegenerating": "재생성하기 전에 사용 가능한 모델을 선택하세요",
+      "connectDescription": "아직 연결된 모델이 없습니다. 아래에서 소스를 선택하세요 — 로컬 런타임, 자체 서버, 또는 클라우드 API — 그러면 1분 안에 채팅을 시작할 수 있습니다."
     },
     "footer": {
       "disclaimer": "LLM은 실수를 할 수 있습니다 - 중요한 정보는 확인하세요",
@@ -1835,7 +1840,14 @@
     "mfaResetConfirm": "{{name}}의 두 번째 요소를 제거할까요? 비밀번호로 로그인하고 다시 설정할 수 있습니다.",
     "mfaResetSuccess": "{{name}}의 2단계가 제거되었습니다.",
     "mfaResetNothing": "{{name}}은(는) 2단계를 설정하지 않았습니다.",
-    "mfaResetFailed": "재설정에 실패했습니다."
+    "mfaResetFailed": "재설정에 실패했습니다.",
+    "ollamaProvider": {
+      "title": "Ollama 제공자",
+      "description": "꺼져 있으면 앱이 Ollama 확인을 완전히 중단합니다 — 상태 점검도, 경고도 없습니다. 엔드포인트는 Ollama 호환 게이트웨이라면 어디든 가리킬 수 있습니다.",
+      "saved": "Ollama 제공자 설정이 저장되었습니다",
+      "saveFailed": "Ollama 제공자 설정을 저장할 수 없습니다",
+      "baseUrlLabel": "Ollama 엔드포인트 URL"
+    }
   },
   "usageAnalytics": {
     "eyebrow": "관리",
@@ -3604,6 +3616,49 @@
       "hasCase": "대문자와 소문자",
       "hasNumber": "숫자 1개 이상",
       "tooLong": "72바이트 이하"
+    }
+  },
+  "connectModels": {
+    "adminOnly": "모델 제공자를 연결하려면 관리자에게 문의하세요.",
+    "skip": "지금은 건너뛰기 — 모델은 나중에 연결할게요",
+    "ollama": {
+      "status": {
+        "checking": "사용 가능 여부 확인 중…",
+        "healthy": "실행 중이며 로컬 모델을 사용할 준비가 되었습니다",
+        "offline": "이 기기에서 감지되지 않았습니다",
+        "disabled": "사용 안 함 — 검사가 실행되지 않습니다"
+      },
+      "recheck": "다시 확인",
+      "enable": "사용",
+      "disable": "Ollama 확인 중지",
+      "enabledToast": "Ollama 제공자가 활성화되었습니다",
+      "disabledToast": "Ollama 확인이 비활성화되었습니다 — 설정에서 다시 활성화할 수 있습니다",
+      "settingsFailed": "Ollama 설정을 업데이트할 수 없습니다",
+      "offlineHint": "ollama.com에서 Ollama를 설치하면 자동으로 감지됩니다 — 또는 아래 옵션 중 하나를 대신 사용하세요. Ollama를 사용할 계획이 없다면 확인을 꺼둘 수 있습니다.",
+      "healthyHint": "Ollama가 연결되었습니다. 모델에서 모델을 풀하면 채팅할 준비가 끝납니다."
+    },
+    "local": {
+      "title": "로컬 서버",
+      "subtitle": "llama.cpp, vLLM, llama-swap, LM Studio, mlx-lm",
+      "keyPlaceholder": "API 키 (선택 사항)",
+      "test": "연결 테스트",
+      "testing": "테스트 중…",
+      "reachable": "연결됨 — {{count}}개 모델을 찾았습니다",
+      "unreachable": "해당 주소에서 모델 API가 응답하지 않았습니다",
+      "noModels": "엔드포인트는 응답했지만 모델이 없습니다. 서버에 모델을 로드한 후 다시 테스트하세요.",
+      "enable": "제공자 사용",
+      "enabling": "사용 설정 중…",
+      "enabled": "{{name}}이(가) 연결되었습니다 — 이제 모델을 사용할 수 있습니다",
+      "enableFailed": "제공자를 사용 설정할 수 없습니다"
+    },
+    "cloud": {
+      "title": "클라우드 API",
+      "subtitle": "OpenAI, Anthropic, Groq, OpenRouter 등",
+      "keyPlaceholder": "{{name}} API 키를 붙여넣으세요",
+      "connect": "연결",
+      "connecting": "연결 중…",
+      "connected": "{{name}}이(가) 연결되었습니다 — 이제 모델을 사용할 수 있습니다",
+      "saveFailed": "API 키를 저장할 수 없습니다"
     }
   }
 }

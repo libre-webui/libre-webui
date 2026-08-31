@@ -36,6 +36,11 @@ import {
   userCanDownloadModels,
 } from '../services/modelAccessService.js';
 import {
+  getOllamaRuntimeSettings,
+  setOllamaRuntimeSettings,
+  type OllamaRuntimeSettings,
+} from '../services/ollamaSettingsService.js';
+import {
   getHiddenModels,
   getModelMetadata,
   getModelOrder,
@@ -83,6 +88,70 @@ const requireModelDownloadAccess = async (
   next();
 };
 
+// Runtime settings: whether the Ollama provider is active and where it lives.
+// Read is available to any authenticated user (the UI needs it to hide
+// Ollama surfaces); changes are admin-only.
+router.get(
+  '/settings',
+  authenticate,
+  async (
+    _req: AuthenticatedRequest,
+    res: Response<ApiResponse<OllamaRuntimeSettings>>
+  ): Promise<void> => {
+    try {
+      res.json({ success: true, data: await getOllamaRuntimeSettings() });
+    } catch (error: unknown) {
+      res.status(500).json({
+        success: false,
+        error: getErrorMessage(error, 'Failed to load Ollama settings'),
+      });
+    }
+  }
+);
+
+router.put(
+  '/settings',
+  authenticate,
+  requireAdmin,
+  async (
+    req: AuthenticatedRequest,
+    res: Response<ApiResponse<OllamaRuntimeSettings>>
+  ): Promise<void> => {
+    try {
+      const { enabled, baseUrl } = (req.body ?? {}) as {
+        enabled?: unknown;
+        baseUrl?: unknown;
+      };
+      const update: { enabled?: boolean; baseUrl?: string } = {};
+      if (enabled !== undefined) {
+        if (typeof enabled !== 'boolean') {
+          res
+            .status(400)
+            .json({ success: false, error: 'enabled must be a boolean' });
+          return;
+        }
+        update.enabled = enabled;
+      }
+      if (baseUrl !== undefined) {
+        if (typeof baseUrl !== 'string') {
+          res
+            .status(400)
+            .json({ success: false, error: 'baseUrl must be a string' });
+          return;
+        }
+        update.baseUrl = baseUrl;
+      }
+      const settings = await setOllamaRuntimeSettings(update);
+      res.json({ success: true, data: settings });
+    } catch (error: unknown) {
+      res.status(400).json({
+        success: false,
+        error: getErrorMessage(error, 'Failed to update Ollama settings'),
+      });
+    }
+  }
+);
+
 // Health check
 router.get(
   '/health',
@@ -91,6 +160,17 @@ router.get(
     res: Response<ApiResponse<{ status: string }>>
   ): Promise<void> => {
     try {
+      const settings = await getOllamaRuntimeSettings();
+      if (!settings.enabled) {
+        // Disabled is a deliberate state, not a failure: answer 200 so
+        // clients stop probing and never surface "unavailable" noise.
+        res.json({
+          success: true,
+          data: { status: 'disabled' },
+          message: 'Ollama provider is disabled by admin settings',
+        });
+        return;
+      }
       const isHealthy = await ollamaService.isHealthy();
 
       if (isHealthy) {
@@ -122,6 +202,12 @@ router.get(
     res: Response<ApiResponse<OllamaModel[]>>
   ): Promise<void> => {
     try {
+      if (!(await getOllamaRuntimeSettings()).enabled) {
+        // Disabled provider lists no models — instantly, with no network
+        // attempt, so pollers and pickers stay quiet on plugin-only setups.
+        res.json({ success: true, data: [] });
+        return;
+      }
       const models = await ollamaService.getModels();
       // Administrators always see the full list; for other users the models
       // an administrator hid stay out of the listing. This trims what the

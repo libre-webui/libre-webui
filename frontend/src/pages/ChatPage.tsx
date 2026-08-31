@@ -38,6 +38,7 @@ import { ChatMessages } from '@/components/ChatMessages';
 import { ChatInput } from '@/components/ChatInput';
 import { VoiceModeOverlay } from '@/components/VoiceModeOverlay';
 import { ChatControlsPanel } from '@/components/ChatControlsPanel';
+import { ConnectModels } from '@/components/ConnectModels';
 import { ChatSourcesPanel } from '@/components/ChatSourcesPanel';
 import { CodeAwareTextarea } from '@/components/CodeAwareTextarea';
 import {
@@ -1102,15 +1103,11 @@ export const ChatPage: React.FC = () => {
                 </p>
               </div>
             ) : (
-              <div className='w-full max-w-lg'>
-                <div className='rounded-2xl border border-black/[0.07] bg-surface/70 p-6 backdrop-blur-xl dark:border-white/[0.08] dark:bg-dark-200/70'>
-                  <p className='mb-4 text-sm leading-relaxed text-gray-600 dark:text-dark-700'>
-                    {t('chat.model.noModelsDescription')}
-                  </p>
-                  <code className='block rounded-xl bg-gray-100 p-3 font-mono text-xs text-gray-800 dark:bg-dark-300 dark:text-dark-700'>
-                    {t('chat.model.pullCommand')}
-                  </code>
-                </div>
+              <div className='flex w-full max-w-lg flex-col items-center gap-4'>
+                <p className='text-center text-sm leading-relaxed text-gray-600 dark:text-dark-700'>
+                  {t('chat.model.connectDescription')}
+                </p>
+                <ConnectModels variant='inline' />
               </div>
             )}
           </div>

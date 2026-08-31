@@ -240,6 +240,10 @@
       "acknowledgment": "Ég hef vistað dulritunarlyklinn minn á öruggum stað og skil að ef ég týni honum gætu gögn glatast.",
       "confirmRequired": "Staðfestu að þú hafir vistað dulritunarlyklinn",
       "continue": "Halda áfram í Libre WebUI"
+    },
+    "connectModels": {
+      "title": "Tengdu líkönin þín",
+      "subtitle": "Staðbundið eða ský — veldu það sem þú notar nú þegar. Þú getur alltaf breytt þessu síðar."
     }
   },
   "chat": {
@@ -383,7 +387,8 @@
       "noModelsTooltip": "Engin líkön tiltæk. Gakktu úr skugga um að Ollama sé í gangi og líkön séu uppsett.",
       "selectBeforePrivateChat": "Veldu tiltækt líkan áður en þú byrjar einkaspjall",
       "selectBeforeSending": "Veldu tiltækt líkan áður en þú sendir",
-      "selectBeforeRegenerating": "Veldu tiltækt líkan áður en svarið er endurgert"
+      "selectBeforeRegenerating": "Veldu tiltækt líkan áður en svarið er endurgert",
+      "connectDescription": "Engin líkön eru tengd ennþá. Veldu uppsprettu hér fyrir neðan — staðbundið keyrsluumhverfi, þinn eigin netþjón eða ský-API — og þú getur byrjað að spjalla innan við mínútu."
     },
     "footer": {
       "disclaimer": "Gervigreind getur gert mistök - staðfestu mikilvægar upplýsingar",
@@ -1835,7 +1840,14 @@
     "mfaResetConfirm": "Fjarlægja annan þátt fyrir {{name}}? Innskráning með lykilorði og ný uppsetning verða áfram möguleg.",
     "mfaResetSuccess": "Annar þáttur fjarlægður fyrir {{name}}.",
     "mfaResetNothing": "{{name}} var ekki með annan þátt.",
-    "mfaResetFailed": "Endurstillingin mistókst."
+    "mfaResetFailed": "Endurstillingin mistókst.",
+    "ollamaProvider": {
+      "title": "Ollama-veitandi",
+      "description": "Þegar slökkt er á þessu hættir forritið alveg að athuga með Ollama — engar heilsuathuganir, engar viðvaranir. Endapunkturinn getur bent á hvaða Ollama-samhæfa gátt sem er.",
+      "saved": "Stillingar Ollama-veitanda vistaðar",
+      "saveFailed": "Ekki tókst að vista stillingar Ollama-veitanda",
+      "baseUrlLabel": "Endapunktur-URL fyrir Ollama"
+    }
   },
   "usageAnalytics": {
     "eyebrow": "Stjórnun",
@@ -3604,6 +3616,49 @@
       "hasCase": "Há- og lágstafir",
       "hasNumber": "Að minnsta kosti ein tala",
       "tooLong": "Mest 72 bæti"
+    }
+  },
+  "connectModels": {
+    "adminOnly": "Biddu kerfisstjórann þinn um að tengja líkanaveitanda.",
+    "skip": "Sleppa í bili — ég tengi líkön síðar",
+    "ollama": {
+      "status": {
+        "checking": "Athugar tiltækileika…",
+        "healthy": "Keyrir og tilbúið fyrir staðbundin líkön",
+        "offline": "Fannst ekki á þessari tölvu",
+        "disabled": "Óvirkt — engar athuganir keyra"
+      },
+      "recheck": "Athuga aftur",
+      "enable": "Virkja",
+      "disable": "Hætta að athuga Ollama",
+      "enabledToast": "Ollama-veitandi virkjaður",
+      "disabledToast": "Athuganir á Ollama óvirkjaðar — þú getur virkjað þær aftur í Stillingum",
+      "settingsFailed": "Ekki tókst að uppfæra Ollama-stillingarnar",
+      "offlineHint": "Settu upp Ollama af ollama.com og það greinist sjálfkrafa — eða notaðu einn af valkostunum hér fyrir neðan í staðinn. Ef þú ætlar ekki að nota Ollama geturðu slökkt á athugunum þess.",
+      "healthyHint": "Ollama er tengt. Sæktu líkan af Líkön-síðunni og þú getur byrjað að spjalla."
+    },
+    "local": {
+      "title": "Staðbundinn netþjónn",
+      "subtitle": "llama.cpp, vLLM, llama-swap, LM Studio, mlx-lm",
+      "keyPlaceholder": "API lykill (valfrjálst)",
+      "test": "Prófa tengingu",
+      "testing": "Prófar…",
+      "reachable": "Tengt — {{count}} líkön fundust",
+      "unreachable": "Ekkert líkana-API svaraði á því vistfangi",
+      "noModels": "Endapunkturinn svaraði en taldi engin líkön upp. Hlaðið líkani inn á netþjóninn og prófið aftur.",
+      "enable": "Virkja veitanda",
+      "enabling": "Virkjar…",
+      "enabled": "{{name}} tengt — líkön þess eru nú tiltæk",
+      "enableFailed": "Ekki tókst að virkja veitandann"
+    },
+    "cloud": {
+      "title": "Ský-API",
+      "subtitle": "OpenAI, Anthropic, Groq, OpenRouter og fleiri",
+      "keyPlaceholder": "Límdu inn {{name}} API lykilinn þinn",
+      "connect": "Tengja",
+      "connecting": "Tengist…",
+      "connected": "{{name}} tengt — líkön þess eru nú tiltæk",
+      "saveFailed": "Ekki tókst að vista API lykilinn"
     }
   }
 }

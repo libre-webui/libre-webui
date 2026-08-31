@@ -240,6 +240,10 @@
       "acknowledgment": "暗号化キーを安全な場所に保存しました。紛失するとデータ損失の可能性があることを理解しています。",
       "confirmRequired": "暗号化キーを保存したことを確認してください",
       "continue": "Libre WebUIを開始"
+    },
+    "connectModels": {
+      "title": "モデルを接続",
+      "subtitle": "ローカルでもクラウドでも — すでに使っているものを選んでください。後からいつでも変更できます。"
     }
   },
   "chat": {
@@ -383,7 +387,8 @@
       "noModelsTooltip": "利用可能なモデルがありません。Ollamaが実行中でモデルがインストールされていることを確認してください。",
       "selectBeforePrivateChat": "プライベートチャットを開始する前に利用可能なモデルを選択してください",
       "selectBeforeSending": "送信する前に利用可能なモデルを選択してください",
-      "selectBeforeRegenerating": "再生成する前に利用可能なモデルを選択してください"
+      "selectBeforeRegenerating": "再生成する前に利用可能なモデルを選択してください",
+      "connectDescription": "まだモデルが接続されていません。下記からソースを選んでください — ローカルランタイム、自分のサーバー、またはクラウドAPI — 1分もかからずにチャットを始められます。"
     },
     "footer": {
       "disclaimer": "LLMは間違えることがあります - 重要な情報は確認してください",
@@ -1835,7 +1840,14 @@
     "mfaResetConfirm": "{{name}} の2つ目の要素を削除しますか？パスワードでサインインして再設定できます。",
     "mfaResetSuccess": "{{name}} の2要素を削除しました。",
     "mfaResetNothing": "{{name}} は2要素を設定していませんでした。",
-    "mfaResetFailed": "リセットに失敗しました。"
+    "mfaResetFailed": "リセットに失敗しました。",
+    "ollamaProvider": {
+      "title": "Ollamaプロバイダー",
+      "description": "オフにすると、アプリはOllamaのチェックを完全に停止します — ヘルスチェックも警告もありません。エンドポイントはOllama互換の任意のゲートウェイを指定できます。",
+      "saved": "Ollamaプロバイダーの設定を保存しました",
+      "saveFailed": "Ollamaプロバイダーの設定を保存できませんでした",
+      "baseUrlLabel": "OllamaエンドポイントURL"
+    }
   },
   "usageAnalytics": {
     "eyebrow": "管理",
@@ -3604,6 +3616,49 @@
       "hasCase": "大文字と小文字",
       "hasNumber": "数字を1つ以上",
       "tooLong": "72バイト以内"
+    }
+  },
+  "connectModels": {
+    "adminOnly": "モデルプロバイダーの接続は管理者にお問い合わせください。",
+    "skip": "今はスキップ — モデルは後で接続します",
+    "ollama": {
+      "status": {
+        "checking": "利用可能か確認中…",
+        "healthy": "実行中で、ローカルモデルの準備ができています",
+        "offline": "このマシンでは検出されませんでした",
+        "disabled": "無効 — チェックは実行されません"
+      },
+      "recheck": "再確認",
+      "enable": "有効にする",
+      "disable": "Ollamaのチェックを停止",
+      "enabledToast": "Ollamaプロバイダーを有効にしました",
+      "disabledToast": "Ollamaのチェックを無効にしました — 設定でいつでも再度有効にできます",
+      "settingsFailed": "Ollamaの設定を更新できませんでした",
+      "offlineHint": "ollama.comからOllamaをインストールすると自動的に検出されます。または、下記のいずれかのオプションをご利用ください。Ollamaを使う予定がない場合は、チェックをオフにできます。",
+      "healthyHint": "Ollamaは接続済みです。モデルページでモデルをプルすれば、すぐにチャットを始められます。"
+    },
+    "local": {
+      "title": "ローカルサーバー",
+      "subtitle": "llama.cpp、vLLM、llama-swap、LM Studio、mlx-lm",
+      "keyPlaceholder": "APIキー（任意）",
+      "test": "接続をテスト",
+      "testing": "テスト中…",
+      "reachable": "接続済み — {{count}}個のモデルが見つかりました",
+      "unreachable": "そのアドレスではモデルAPIからの応答がありませんでした",
+      "noModels": "エンドポイントは応答しましたが、モデルは一覧にありませんでした。サーバーにモデルを読み込んでから、もう一度お試しください。",
+      "enable": "プロバイダーを有効にする",
+      "enabling": "有効にしています…",
+      "enabled": "{{name}}が接続されました — そのモデルが利用可能になりました",
+      "enableFailed": "プロバイダーを有効にできませんでした"
+    },
+    "cloud": {
+      "title": "クラウドAPI",
+      "subtitle": "OpenAI、Anthropic、Groq、OpenRouterなど",
+      "keyPlaceholder": "{{name}}のAPIキーを貼り付け",
+      "connect": "接続",
+      "connecting": "接続中…",
+      "connected": "{{name}}が接続されました — そのモデルが利用可能になりました",
+      "saveFailed": "APIキーを保存できませんでした"
     }
   }
 }

@@ -155,6 +155,7 @@ export class OllamaService {
   private client: AxiosInstance;
   private longOperationClient: AxiosInstance;
   private baseUrl: string;
+  private enabled = true;
 
   constructor() {
     this.baseUrl = process.env.OLLAMA_BASE_URL || 'http://localhost:11434';
@@ -177,7 +178,41 @@ export class OllamaService {
     });
   }
 
+  /**
+   * Apply admin-configured runtime settings. The base URL can point at any
+   * Ollama-compatible gateway; disabling stops health probes cold so a
+   * non-Ollama install never waits on connection timeouts or logs warnings.
+   */
+  configure({
+    baseUrl,
+    enabled,
+  }: {
+    baseUrl?: string;
+    enabled?: boolean;
+  }): void {
+    if (typeof enabled === 'boolean') {
+      this.enabled = enabled;
+    }
+    if (baseUrl && baseUrl !== this.baseUrl) {
+      this.baseUrl = baseUrl;
+      this.client.defaults.baseURL = baseUrl;
+      this.longOperationClient.defaults.baseURL = baseUrl;
+      this.modelDefaultsCache.clear();
+    }
+  }
+
+  isEnabled(): boolean {
+    return this.enabled;
+  }
+
+  getBaseUrl(): string {
+    return this.baseUrl;
+  }
+
   async isHealthy(): Promise<boolean> {
+    if (!this.enabled) {
+      return false;
+    }
     try {
       const response = await this.client.get('/');
       return response.status === 200;

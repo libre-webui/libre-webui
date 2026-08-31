@@ -240,6 +240,10 @@
       "acknowledgment": "Jeg har gemt min krypteringsnøgle på et sikkert sted og forstår, at tab af den kan medføre datatab.",
       "confirmRequired": "Bekræft venligst, at du har gemt krypteringsnøglen",
       "continue": "Fortsæt til Libre WebUI"
+    },
+    "connectModels": {
+      "title": "Forbind dine modeller",
+      "subtitle": "Lokal eller cloud — vælg det, du allerede bruger. Du kan altid ændre det senere."
     }
   },
   "chat": {
@@ -383,7 +387,8 @@
       "noModelsTooltip": "Ingen modeller tilgængelige. Sørg venligst for, at Ollama kører, og at modeller er installeret.",
       "selectBeforePrivateChat": "Vælg en tilgængelig model, før du starter en privat chat",
       "selectBeforeSending": "Vælg en tilgængelig model, før du sender",
-      "selectBeforeRegenerating": "Vælg en tilgængelig model, før svaret genereres igen"
+      "selectBeforeRegenerating": "Vælg en tilgængelig model, før svaret genereres igen",
+      "connectDescription": "Der er endnu ikke forbundet nogen modeller. Vælg en kilde nedenfor — en lokal runtime, din egen server eller et cloud-API — og du chatter på under et minut."
     },
     "footer": {
       "disclaimer": "LLM kan begå fejl - verificer vigtige oplysninger",
@@ -1835,7 +1840,14 @@
     "mfaResetConfirm": "Fjern den anden faktor for {{name}}? Login med adgangskode og ny opsætning er stadig muligt.",
     "mfaResetSuccess": "Totrinsbekræftelse fjernet for {{name}}.",
     "mfaResetNothing": "{{name}} havde ingen totrinsbekræftelse.",
-    "mfaResetFailed": "Nulstillingen mislykkedes."
+    "mfaResetFailed": "Nulstillingen mislykkedes.",
+    "ollamaProvider": {
+      "title": "Ollama-udbyder",
+      "description": "Når det er slået fra, stopper appen helt med at tjekke for Ollama — ingen sundhedstjek, ingen advarsler. Endepunktet kan pege på enhver Ollama-kompatibel gateway.",
+      "saved": "Indstillinger for Ollama-udbyder gemt",
+      "saveFailed": "Kunne ikke gemme indstillingerne for Ollama-udbyderen",
+      "baseUrlLabel": "Ollama-endepunkts-URL"
+    }
   },
   "usageAnalytics": {
     "eyebrow": "Administration",
@@ -3604,6 +3616,49 @@
       "hasCase": "Store og små bogstaver",
       "hasNumber": "Mindst ét tal",
       "tooLong": "Højst 72 bytes"
+    }
+  },
+  "connectModels": {
+    "adminOnly": "Bed din administrator om at forbinde en modeludbyder.",
+    "skip": "Spring over for nu — jeg forbinder modeller senere",
+    "ollama": {
+      "status": {
+        "checking": "Tjekker tilgængelighed…",
+        "healthy": "Kører og klar til lokale modeller",
+        "offline": "Ikke registreret på denne maskine",
+        "disabled": "Deaktiveret — der udføres ingen tjek"
+      },
+      "recheck": "Tjek igen",
+      "enable": "Aktivér",
+      "disable": "Stop med at tjekke for Ollama",
+      "enabledToast": "Ollama-udbyder aktiveret",
+      "disabledToast": "Ollama-tjek deaktiveret — du kan genaktivere dem i Indstillinger",
+      "settingsFailed": "Kunne ikke opdatere Ollama-indstillingerne",
+      "offlineHint": "Installer Ollama fra ollama.com, så bliver den registreret automatisk — eller brug en af mulighederne nedenfor i stedet. Hvis du ikke planlægger at bruge Ollama, kan du slå dens tjek fra.",
+      "healthyHint": "Ollama er forbundet. Hent en model fra Modeller, så er du klar til at chatte."
+    },
+    "local": {
+      "title": "Lokal server",
+      "subtitle": "llama.cpp, vLLM, llama-swap, LM Studio, mlx-lm",
+      "keyPlaceholder": "API-nøgle (valgfri)",
+      "test": "Test forbindelse",
+      "testing": "Tester…",
+      "reachable": "Forbundet — fandt {{count}} modeller",
+      "unreachable": "Ingen model-API svarede på den adresse",
+      "noModels": "Endepunktet svarede, men viste ingen modeller. Indlæs en model på din server, og test igen.",
+      "enable": "Aktivér udbyder",
+      "enabling": "Aktiverer…",
+      "enabled": "{{name}} forbundet — dens modeller er nu tilgængelige",
+      "enableFailed": "Kunne ikke aktivere udbyderen"
+    },
+    "cloud": {
+      "title": "Cloud-API",
+      "subtitle": "OpenAI, Anthropic, Groq, OpenRouter og flere",
+      "keyPlaceholder": "Indsæt din {{name}} API-nøgle",
+      "connect": "Forbind",
+      "connecting": "Forbinder…",
+      "connected": "{{name}} forbundet — dens modeller er nu tilgængelige",
+      "saveFailed": "Kunne ikke gemme API-nøglen"
     }
   }
 }

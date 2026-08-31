@@ -240,6 +240,10 @@
       "acknowledgment": "I have saved my encryption key in a secure location and understand that losing it may result in data loss.",
       "confirmRequired": "Please confirm that you have saved the encryption key",
       "continue": "Continue to Libre WebUI"
+    },
+    "connectModels": {
+      "title": "Connect your models",
+      "subtitle": "Local or cloud — pick whatever you already use. You can always change this later."
     }
   },
   "chat": {
@@ -383,7 +387,8 @@
       "noModelsTooltip": "No models available. Please ensure Ollama is running and models are installed.",
       "selectBeforePrivateChat": "Select an available model before starting private chat",
       "selectBeforeSending": "Select an available model before sending",
-      "selectBeforeRegenerating": "Select an available model before regenerating"
+      "selectBeforeRegenerating": "Select an available model before regenerating",
+      "connectDescription": "No models are connected yet. Pick a source below — a local runtime, your own server, or a cloud API — and you'll be chatting in under a minute."
     },
     "footer": {
       "disclaimer": "LLM can make mistakes - verify important information",
@@ -1835,7 +1840,14 @@
     "mfaResetConfirm": "Remove the second factor for {{name}}? They can sign in with their password and set it up again.",
     "mfaResetSuccess": "Two-factor removed for {{name}}.",
     "mfaResetNothing": "{{name}} had no two-factor enrollment.",
-    "mfaResetFailed": "The two-factor reset failed."
+    "mfaResetFailed": "The two-factor reset failed.",
+    "ollamaProvider": {
+      "title": "Ollama provider",
+      "description": "When off, the app stops checking for Ollama entirely — no health probes, no warnings. The endpoint can point at any Ollama-compatible gateway.",
+      "saved": "Ollama provider settings saved",
+      "saveFailed": "Could not save the Ollama provider settings",
+      "baseUrlLabel": "Ollama endpoint URL"
+    }
   },
   "usageAnalytics": {
     "eyebrow": "Administration",
@@ -3604,6 +3616,49 @@
       "hasCase": "Uppercase and lowercase letters",
       "hasNumber": "At least one number",
       "tooLong": "No more than 72 bytes"
+    }
+  },
+  "connectModels": {
+    "adminOnly": "Ask your administrator to connect a model provider.",
+    "skip": "Skip for now — I'll connect models later",
+    "ollama": {
+      "status": {
+        "checking": "Checking availability…",
+        "healthy": "Running and ready for local models",
+        "offline": "Not detected on this machine",
+        "disabled": "Disabled — no checks will run"
+      },
+      "recheck": "Check again",
+      "enable": "Enable",
+      "disable": "Stop checking for Ollama",
+      "enabledToast": "Ollama provider enabled",
+      "disabledToast": "Ollama checks disabled — you can re-enable them in Settings",
+      "settingsFailed": "Could not update the Ollama settings",
+      "offlineHint": "Install Ollama from ollama.com and it will be detected automatically — or use one of the options below instead. If you don't plan to use Ollama, you can turn its checks off.",
+      "healthyHint": "Ollama is connected. Pull a model from the Model Manager and you're ready to chat."
+    },
+    "local": {
+      "title": "Local server",
+      "subtitle": "llama.cpp, vLLM, llama-swap, LM Studio, mlx-lm",
+      "keyPlaceholder": "API key (optional)",
+      "test": "Test connection",
+      "testing": "Testing…",
+      "reachable": "Connected — found {{count}} models",
+      "unreachable": "No model API answered at that address",
+      "noModels": "The endpoint answered but listed no models. Load a model in your server and test again.",
+      "enable": "Enable provider",
+      "enabling": "Enabling…",
+      "enabled": "{{name}} connected — its models are now available",
+      "enableFailed": "Could not enable the provider"
+    },
+    "cloud": {
+      "title": "Cloud API",
+      "subtitle": "OpenAI, Anthropic, Groq, OpenRouter, and more",
+      "keyPlaceholder": "Paste your {{name}} API key",
+      "connect": "Connect",
+      "connecting": "Connecting…",
+      "connected": "{{name}} connected — its models are now available",
+      "saveFailed": "Could not save the API key"
     }
   }
 }

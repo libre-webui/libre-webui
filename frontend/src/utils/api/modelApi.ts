@@ -123,6 +123,11 @@ export interface ModelCatalogConfig {
   metadata: Record<string, ModelPresentation>;
 }
 
+export interface OllamaRuntimeSettings {
+  enabled: boolean;
+  baseUrl: string;
+}
+
 export const ollamaApi = {
   // Health check
   checkHealth: (): Promise<ApiResponse<{ status: string }>> => {
@@ -130,6 +135,29 @@ export const ollamaApi = {
       return createDemoResponse({ status: 'offline' }, false);
     }
     return api.get('/ollama/health').then(res => res.data);
+  },
+
+  // Runtime settings: provider on/off and the gateway base URL.
+  getSettings: (): Promise<ApiResponse<OllamaRuntimeSettings>> => {
+    if (isDemoMode()) {
+      return createDemoResponse({
+        enabled: true,
+        baseUrl: 'http://localhost:11434',
+      });
+    }
+    return api.get('/ollama/settings').then(res => res.data);
+  },
+
+  updateSettings: (
+    update: Partial<OllamaRuntimeSettings>
+  ): Promise<ApiResponse<OllamaRuntimeSettings>> => {
+    if (isDemoMode()) {
+      return createDemoResponse({
+        enabled: true,
+        baseUrl: 'http://localhost:11434',
+      });
+    }
+    return api.put('/ollama/settings', update).then(res => res.data);
   },
 
   // Models

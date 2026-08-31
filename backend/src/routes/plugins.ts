@@ -1188,4 +1188,108 @@ router.delete(
   }
 );
 
+/**
+ * Probe a model endpoint server-side (avoids browser CORS) so onboarding can
+ * verify a connection before enabling a plugin. Admin-only by design: the
+ * server fetches an arbitrary admin-supplied URL, which is exactly the
+ * authority an admin already has via plugin base_url variables.
+ */
+router.post(
+  '/probe-endpoint',
+  requireAdmin,
+  async (
+    req: Request,
+    res: Response<
+      ApiResponse<{ reachable: boolean; models: string[]; kind: string }>
+    >
+  ): Promise<void> => {
+    const { baseUrl, kind } = (req.body ?? {}) as {
+      baseUrl?: unknown;
+      kind?: unknown;
+    };
+    const probeKind = kind === 'ollama' ? 'ollama' : 'openai';
+    let root: URL;
+    try {
+      root = new URL(String(baseUrl ?? ''));
+    } catch {
+      res.status(400).json({ success: false, error: 'Invalid base URL' });
+      return;
+    }
+    if (root.protocol !== 'http:' && root.protocol !== 'https:') {
+      res
+        .status(400)
+        .json({ success: false, error: 'Base URL must be http(s)' });
+      return;
+    }
+
+    const trimmed = root.toString().replace(/\/+$/, '');
+    const probeUrl =
+      probeKind === 'ollama'
+        ? `${trimmed}/api/tags`
+        : trimmed.endsWith('/v1')
+          ? `${trimmed}/models`
+          : `${trimmed}/v1/models`;
+
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 5000);
+    try {
+      const response = await fetch(probeUrl, {
+        signal: controller.signal,
+        headers: { Accept: 'application/json' },
+      });
+      if (!response.ok) {
+        res.json({
+          success: true,
+          data: { reachable: false, models: [], kind: probeKind },
+          message: `Endpoint answered HTTP ${response.status}`,
+        });
+        return;
+      }
+      // Bound the body: a healthy model list is tiny, and the peer is not
+      // trusted just because an admin typed its URL.
+      const raw = (await response.text()).slice(0, 262144);
+      let models: string[] = [];
+      try {
+        const parsed = JSON.parse(raw) as {
+          data?: Array<{ id?: unknown }>;
+          models?: Array<{ name?: unknown; model?: unknown }>;
+        };
+        if (probeKind === 'ollama') {
+          models = (parsed.models ?? [])
+            .map(entry => String(entry.name ?? entry.model ?? ''))
+            .filter(Boolean);
+        } else {
+          models = (parsed.data ?? [])
+            .map(entry => String(entry.id ?? ''))
+            .filter(Boolean);
+        }
+      } catch {
+        // Reachable but not a model API — report that honestly.
+        res.json({
+          success: true,
+          data: { reachable: false, models: [], kind: probeKind },
+          message: 'Endpoint reachable but did not return a model list',
+        });
+        return;
+      }
+      res.json({
+        success: true,
+        data: {
+          reachable: true,
+          models: models.slice(0, 100),
+          kind: probeKind,
+        },
+      });
+    } catch (error: unknown) {
+      res.json({
+        success: true,
+        data: { reachable: false, models: [], kind: probeKind },
+        message: getErrorMessage(error, 'Endpoint is not reachable'),
+      });
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+);
+
 export default router;

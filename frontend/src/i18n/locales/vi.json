@@ -240,6 +240,10 @@
       "acknowledgment": "Tôi đã lưu khóa mã hóa của tôi ở nơi an toàn và hiểu rằng việc mất nó có thể dẫn đến mất dữ liệu.",
       "confirmRequired": "Vui lòng xác nhận rằng bạn đã lưu khóa mã hóa",
       "continue": "Tiếp tục đến Libre WebUI"
+    },
+    "connectModels": {
+      "title": "Kết nối mô hình của bạn",
+      "subtitle": "Cục bộ hoặc đám mây — chọn bất cứ thứ gì bạn đang dùng. Bạn luôn có thể thay đổi điều này sau."
     }
   },
   "chat": {
@@ -383,7 +387,8 @@
       "noModelsTooltip": "Không có mô hình nào. Vui lòng đảm bảo Ollama đang chạy và các mô hình đã được cài đặt.",
       "selectBeforePrivateChat": "Chọn một mô hình khả dụng trước khi bắt đầu trò chuyện riêng tư",
       "selectBeforeSending": "Chọn một mô hình khả dụng trước khi gửi",
-      "selectBeforeRegenerating": "Chọn một mô hình khả dụng trước khi tạo lại"
+      "selectBeforeRegenerating": "Chọn một mô hình khả dụng trước khi tạo lại",
+      "connectDescription": "Chưa có mô hình nào được kết nối. Hãy chọn một nguồn bên dưới — một môi trường chạy cục bộ, máy chủ riêng của bạn, hoặc một API đám mây — và bạn sẽ trò chuyện được trong chưa đầy một phút."
     },
     "footer": {
       "disclaimer": "LLM có thể mắc lỗi - hãy xác minh thông tin quan trọng",
@@ -1835,7 +1840,14 @@
     "mfaResetConfirm": "Xóa yếu tố thứ hai của {{name}}? Họ vẫn có thể đăng nhập bằng mật khẩu và thiết lập lại.",
     "mfaResetSuccess": "Đã xóa hai bước của {{name}}.",
     "mfaResetNothing": "{{name}} chưa thiết lập hai bước.",
-    "mfaResetFailed": "Đặt lại thất bại."
+    "mfaResetFailed": "Đặt lại thất bại.",
+    "ollamaProvider": {
+      "title": "Nhà cung cấp Ollama",
+      "description": "Khi tắt, ứng dụng sẽ ngừng hoàn toàn việc kiểm tra Ollama — không dò trạng thái, không cảnh báo. Điểm cuối có thể trỏ đến bất kỳ cổng nào tương thích với Ollama.",
+      "saved": "Đã lưu cài đặt nhà cung cấp Ollama",
+      "saveFailed": "Không thể lưu cài đặt nhà cung cấp Ollama",
+      "baseUrlLabel": "URL điểm cuối Ollama"
+    }
   },
   "usageAnalytics": {
     "eyebrow": "Quản trị",
@@ -3604,6 +3616,49 @@
       "hasCase": "Chữ hoa và chữ thường",
       "hasNumber": "Ít nhất một chữ số",
       "tooLong": "Tối đa 72 byte"
+    }
+  },
+  "connectModels": {
+    "adminOnly": "Hãy nhờ quản trị viên kết nối một nhà cung cấp mô hình.",
+    "skip": "Bỏ qua lúc này — tôi sẽ kết nối mô hình sau",
+    "ollama": {
+      "status": {
+        "checking": "Đang kiểm tra khả dụng…",
+        "healthy": "Đang chạy và sẵn sàng cho các mô hình cục bộ",
+        "offline": "Không phát hiện trên máy này",
+        "disabled": "Đã tắt — sẽ không có kiểm tra nào chạy"
+      },
+      "recheck": "Kiểm tra lại",
+      "enable": "Bật",
+      "disable": "Ngừng kiểm tra Ollama",
+      "enabledToast": "Đã bật nhà cung cấp Ollama",
+      "disabledToast": "Đã tắt kiểm tra Ollama — bạn có thể bật lại trong Cài đặt",
+      "settingsFailed": "Không thể cập nhật cài đặt Ollama",
+      "offlineHint": "Cài đặt Ollama từ ollama.com và nó sẽ được tự động phát hiện — hoặc dùng một trong các tùy chọn bên dưới. Nếu bạn không định dùng Ollama, bạn có thể tắt các kiểm tra của nó.",
+      "healthyHint": "Ollama đã kết nối. Hãy tải một mô hình từ trang Mô hình và bạn đã sẵn sàng trò chuyện."
+    },
+    "local": {
+      "title": "Máy chủ cục bộ",
+      "subtitle": "llama.cpp, vLLM, llama-swap, LM Studio, mlx-lm",
+      "keyPlaceholder": "Khóa API (tùy chọn)",
+      "test": "Kiểm tra kết nối",
+      "testing": "Đang kiểm tra…",
+      "reachable": "Đã kết nối — tìm thấy {{count}} mô hình",
+      "unreachable": "Không có API mô hình nào phản hồi tại địa chỉ đó",
+      "noModels": "Điểm cuối đã phản hồi nhưng không liệt kê mô hình nào. Hãy tải một mô hình trên máy chủ của bạn rồi thử lại.",
+      "enable": "Bật nhà cung cấp",
+      "enabling": "Đang bật…",
+      "enabled": "{{name}} đã kết nối — các mô hình của nó hiện đã khả dụng",
+      "enableFailed": "Không thể bật nhà cung cấp"
+    },
+    "cloud": {
+      "title": "API đám mây",
+      "subtitle": "OpenAI, Anthropic, Groq, OpenRouter và nhiều hơn nữa",
+      "keyPlaceholder": "Dán khóa API {{name}} của bạn",
+      "connect": "Kết nối",
+      "connecting": "Đang kết nối…",
+      "connected": "{{name}} đã kết nối — các mô hình của nó hiện đã khả dụng",
+      "saveFailed": "Không thể lưu khóa API"
     }
   }
 }

@@ -240,6 +240,10 @@
       "acknowledgment": "Salvei minha chave de criptografia em um local seguro e entendo que perdê-la pode resultar em perda de dados.",
       "confirmRequired": "Por favor, confirme que você salvou a chave de criptografia",
       "continue": "Continuar para o Libre WebUI"
+    },
+    "connectModels": {
+      "title": "Conecte seus modelos",
+      "subtitle": "Local ou na nuvem — escolha o que você já usa. Você pode mudar isso depois."
     }
   },
   "chat": {
@@ -383,7 +387,8 @@
       "noModelsTooltip": "Nenhum modelo disponível. Verifique se o Ollama está em execução e se os modelos estão instalados.",
       "selectBeforePrivateChat": "Selecione um modelo disponível antes de iniciar o chat privado",
       "selectBeforeSending": "Selecione um modelo disponível antes de enviar",
-      "selectBeforeRegenerating": "Selecione um modelo disponível antes de regenerar"
+      "selectBeforeRegenerating": "Selecione um modelo disponível antes de regenerar",
+      "connectDescription": "Nenhum modelo está conectado ainda. Escolha uma fonte abaixo — um runtime local, seu próprio servidor ou uma API na nuvem — e você estará conversando em menos de um minuto."
     },
     "footer": {
       "disclaimer": "IAs podem cometer erros - verifique informações importantes",
@@ -1835,7 +1840,14 @@
     "mfaResetConfirm": "Remover o segundo fator de {{name}}? A pessoa poderá entrar com a senha e configurá-lo novamente.",
     "mfaResetSuccess": "Dois fatores removidos para {{name}}.",
     "mfaResetNothing": "{{name}} não tinha autenticação em dois fatores.",
-    "mfaResetFailed": "A redefinição falhou."
+    "mfaResetFailed": "A redefinição falhou.",
+    "ollamaProvider": {
+      "title": "Provedor Ollama",
+      "description": "Quando desativado, o app para de verificar o Ollama completamente — sem checagens de integridade, sem avisos. O endpoint pode apontar para qualquer gateway compatível com o Ollama.",
+      "saved": "Configurações do provedor Ollama salvas",
+      "saveFailed": "Não foi possível salvar as configurações do provedor Ollama",
+      "baseUrlLabel": "URL do endpoint do Ollama"
+    }
   },
   "usageAnalytics": {
     "eyebrow": "Administração",
@@ -3604,6 +3616,49 @@
       "hasCase": "Letras maiúsculas e minúsculas",
       "hasNumber": "Pelo menos um número",
       "tooLong": "No máximo 72 bytes"
+    }
+  },
+  "connectModels": {
+    "adminOnly": "Peça a um administrador para conectar um provedor de modelos.",
+    "skip": "Pular por enquanto — vou conectar modelos depois",
+    "ollama": {
+      "status": {
+        "checking": "Verificando disponibilidade…",
+        "healthy": "Em execução e pronto para modelos locais",
+        "offline": "Não detectado nesta máquina",
+        "disabled": "Desativado — nenhuma verificação será executada"
+      },
+      "recheck": "Verificar novamente",
+      "enable": "Ativar",
+      "disable": "Parar de verificar o Ollama",
+      "enabledToast": "Provedor Ollama ativado",
+      "disabledToast": "Verificações do Ollama desativadas — você pode reativá-las em Configurações",
+      "settingsFailed": "Não foi possível atualizar as configurações do Ollama",
+      "offlineHint": "Instale o Ollama em ollama.com e ele será detectado automaticamente — ou use uma das opções abaixo. Se você não pretende usar o Ollama, pode desativar essas verificações.",
+      "healthyHint": "O Ollama está conectado. Baixe um modelo em Modelos e você está pronto para conversar."
+    },
+    "local": {
+      "title": "Servidor local",
+      "subtitle": "llama.cpp, vLLM, llama-swap, LM Studio, mlx-lm",
+      "keyPlaceholder": "Chave de API (opcional)",
+      "test": "Testar conexão",
+      "testing": "Testando…",
+      "reachable": "Conectado — {{count}} modelos encontrados",
+      "unreachable": "Nenhuma API de modelo respondeu nesse endereço",
+      "noModels": "O endpoint respondeu, mas não listou nenhum modelo. Carregue um modelo no seu servidor e teste novamente.",
+      "enable": "Ativar provedor",
+      "enabling": "Ativando…",
+      "enabled": "{{name}} conectado — seus modelos já estão disponíveis",
+      "enableFailed": "Não foi possível ativar o provedor"
+    },
+    "cloud": {
+      "title": "API na nuvem",
+      "subtitle": "OpenAI, Anthropic, Groq, OpenRouter e mais",
+      "keyPlaceholder": "Cole sua chave de API do {{name}}",
+      "connect": "Conectar",
+      "connecting": "Conectando…",
+      "connected": "{{name}} conectado — seus modelos já estão disponíveis",
+      "saveFailed": "Não foi possível salvar a chave de API"
     }
   }
 }

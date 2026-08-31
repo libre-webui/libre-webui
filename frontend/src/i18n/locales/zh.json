@@ -240,6 +240,10 @@
       "acknowledgment": "我已将加密密钥保存在安全的位置，并了解丢失它可能导致数据丢失。",
       "confirmRequired": "请确认您已保存加密密钥",
       "continue": "继续使用 Libre WebUI"
+    },
+    "connectModels": {
+      "title": "连接您的模型",
+      "subtitle": "本地或云端 — 选择您已经在使用的方式。您以后随时可以更改。"
     }
   },
   "chat": {
@@ -383,7 +387,8 @@
       "noModelsTooltip": "没有可用的模型。请确保 Ollama 正在运行并已安装模型。",
       "selectBeforePrivateChat": "开始私密聊天前请选择一个可用的模型",
       "selectBeforeSending": "发送前请选择一个可用的模型",
-      "selectBeforeRegenerating": "重新生成前请选择一个可用的模型"
+      "selectBeforeRegenerating": "重新生成前请选择一个可用的模型",
+      "connectDescription": "还没有连接任何模型。从下面选择一个来源——本地运行时、您自己的服务器，或云端 API——不到一分钟即可开始对话。"
     },
     "footer": {
       "disclaimer": "大语言模型可能会犯错——请核实重要信息",
@@ -1835,7 +1840,14 @@
     "mfaResetConfirm": "移除 {{name}} 的第二步验证？该用户仍可使用密码登录并重新设置。",
     "mfaResetSuccess": "已移除 {{name}} 的两步验证。",
     "mfaResetNothing": "{{name}} 未设置两步验证。",
-    "mfaResetFailed": "重置失败。"
+    "mfaResetFailed": "重置失败。",
+    "ollamaProvider": {
+      "title": "Ollama 提供商",
+      "description": "关闭后，应用将完全停止检查 Ollama — 不进行健康探测，不显示警告。该端点可以指向任何兼容 Ollama 的网关。",
+      "saved": "Ollama 提供商设置已保存",
+      "saveFailed": "无法保存 Ollama 提供商设置",
+      "baseUrlLabel": "Ollama 端点 URL"
+    }
   },
   "usageAnalytics": {
     "eyebrow": "管理",
@@ -3604,6 +3616,49 @@
       "hasCase": "大写和小写字母",
       "hasNumber": "至少一个数字",
       "tooLong": "不超过 72 字节"
+    }
+  },
+  "connectModels": {
+    "adminOnly": "请管理员为您连接模型提供商。",
+    "skip": "暂时跳过 — 我稍后再连接模型",
+    "ollama": {
+      "status": {
+        "checking": "正在检查可用性…",
+        "healthy": "正在运行，可用于本地模型",
+        "offline": "未在此设备上检测到",
+        "disabled": "已停用 — 不会运行任何检查"
+      },
+      "recheck": "重新检查",
+      "enable": "启用",
+      "disable": "停止检查 Ollama",
+      "enabledToast": "已启用 Ollama 提供商",
+      "disabledToast": "已停用 Ollama 检查 — 您可以在设置中重新启用",
+      "settingsFailed": "无法更新 Ollama 设置",
+      "offlineHint": "从 ollama.com 安装 Ollama，系统会自动检测到它 — 或者改用下面的选项之一。如果您不打算使用 Ollama，可以关闭其检查。",
+      "healthyHint": "Ollama 已连接。从模型页面拉取一个模型，即可开始对话。"
+    },
+    "local": {
+      "title": "本地服务器",
+      "subtitle": "llama.cpp、vLLM、llama-swap、LM Studio、mlx-lm",
+      "keyPlaceholder": "API 密钥（可选）",
+      "test": "测试连接",
+      "testing": "测试中…",
+      "reachable": "已连接 — 找到 {{count}} 个模型",
+      "unreachable": "该地址没有模型 API 响应",
+      "noModels": "端点已响应，但未列出任何模型。请在您的服务器中加载一个模型后重试。",
+      "enable": "启用提供商",
+      "enabling": "正在启用…",
+      "enabled": "{{name}} 已连接 — 其模型现已可用",
+      "enableFailed": "无法启用该提供商"
+    },
+    "cloud": {
+      "title": "云端 API",
+      "subtitle": "OpenAI、Anthropic、Groq、OpenRouter 等",
+      "keyPlaceholder": "粘贴您的 {{name}} API 密钥",
+      "connect": "连接",
+      "connecting": "连接中…",
+      "connected": "{{name}} 已连接 — 其模型现已可用",
+      "saveFailed": "无法保存 API 密钥"
     }
   }
 }

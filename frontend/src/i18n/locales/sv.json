@@ -240,6 +240,10 @@
       "acknowledgment": "Jag har sparat min krypteringsnyckel på ett säkert ställe och förstår att förlust av den kan resultera i dataförlust.",
       "confirmRequired": "Bekräfta att du har sparat krypteringsnyckeln",
       "continue": "Fortsätt till Libre WebUI"
+    },
+    "connectModels": {
+      "title": "Anslut dina modeller",
+      "subtitle": "Lokalt eller i molnet — välj det du redan använder. Du kan alltid ändra det här senare."
     }
   },
   "chat": {
@@ -383,7 +387,8 @@
       "noModelsTooltip": "Inga modeller tillgängliga. Se till att Ollama körs och modeller är installerade.",
       "selectBeforePrivateChat": "Välj en tillgänglig modell innan du startar en privat chatt",
       "selectBeforeSending": "Välj en tillgänglig modell innan du skickar",
-      "selectBeforeRegenerating": "Välj en tillgänglig modell innan du genererar om"
+      "selectBeforeRegenerating": "Välj en tillgänglig modell innan du genererar om",
+      "connectDescription": "Inga modeller är anslutna än. Välj en källa nedan — en lokal körmiljö, din egen server eller ett moln-API — så chattar du på under en minut."
     },
     "footer": {
       "disclaimer": "AI kan göra misstag - verifiera viktig information",
@@ -1835,7 +1840,14 @@
     "mfaResetConfirm": "Ta bort den andra faktorn för {{name}}? Inloggning med lösenord och ny konfiguration är fortfarande möjlig.",
     "mfaResetSuccess": "Tvåfaktor borttagen för {{name}}.",
     "mfaResetNothing": "{{name}} hade ingen tvåfaktor.",
-    "mfaResetFailed": "Återställningen misslyckades."
+    "mfaResetFailed": "Återställningen misslyckades.",
+    "ollamaProvider": {
+      "title": "Ollama-leverantör",
+      "description": "När det är avstängt slutar appen helt att leta efter Ollama — inga hälsokontroller, inga varningar. Endpointen kan peka på vilken Ollama-kompatibel gateway som helst.",
+      "saved": "Inställningarna för Ollama-leverantören har sparats",
+      "saveFailed": "Det gick inte att spara inställningarna för Ollama-leverantören",
+      "baseUrlLabel": "Endpoint-URL för Ollama"
+    }
   },
   "usageAnalytics": {
     "eyebrow": "Administration",
@@ -3604,6 +3616,49 @@
       "hasCase": "Stora och små bokstäver",
       "hasNumber": "Minst en siffra",
       "tooLong": "Högst 72 byte"
+    }
+  },
+  "connectModels": {
+    "adminOnly": "Be din administratör att ansluta en modellleverantör.",
+    "skip": "Hoppa över för nu — jag ansluter modeller senare",
+    "ollama": {
+      "status": {
+        "checking": "Kontrollerar tillgänglighet…",
+        "healthy": "Igång och redo för lokala modeller",
+        "offline": "Hittades inte på den här datorn",
+        "disabled": "Inaktiverad — inga kontroller körs"
+      },
+      "recheck": "Kontrollera igen",
+      "enable": "Aktivera",
+      "disable": "Sluta leta efter Ollama",
+      "enabledToast": "Ollama-leverantören aktiverad",
+      "disabledToast": "Ollama-kontroller inaktiverade — du kan aktivera dem igen i Inställningar",
+      "settingsFailed": "Det gick inte att uppdatera Ollama-inställningarna",
+      "offlineHint": "Installera Ollama från ollama.com så upptäcks den automatiskt — eller använd ett av alternativen nedan istället. Om du inte tänker använda Ollama kan du stänga av dessa kontroller.",
+      "healthyHint": "Ollama är ansluten. Hämta en modell i Modeller så är du redo att chatta."
+    },
+    "local": {
+      "title": "Lokal server",
+      "subtitle": "llama.cpp, vLLM, llama-swap, LM Studio, mlx-lm",
+      "keyPlaceholder": "API-nyckel (valfritt)",
+      "test": "Testa anslutning",
+      "testing": "Testar…",
+      "reachable": "Ansluten — hittade {{count}} modeller",
+      "unreachable": "Inget modell-API svarade på den adressen",
+      "noModels": "Endpointen svarade men listade inga modeller. Läs in en modell på din server och testa igen.",
+      "enable": "Aktivera leverantör",
+      "enabling": "Aktiverar…",
+      "enabled": "{{name}} ansluten — dess modeller är nu tillgängliga",
+      "enableFailed": "Det gick inte att aktivera leverantören"
+    },
+    "cloud": {
+      "title": "Moln-API",
+      "subtitle": "OpenAI, Anthropic, Groq, OpenRouter med flera",
+      "keyPlaceholder": "Klistra in din {{name}}-API-nyckel",
+      "connect": "Anslut",
+      "connecting": "Ansluter…",
+      "connected": "{{name}} ansluten — dess modeller är nu tillgängliga",
+      "saveFailed": "Det gick inte att spara API-nyckeln"
     }
   }
 }

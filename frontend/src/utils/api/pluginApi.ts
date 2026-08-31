@@ -159,6 +159,24 @@ export const pluginApi = {
     return api.post('/plugins/upload', formData).then(res => res.data);
   },
 
+  probeEndpoint: (
+    baseUrl: string,
+    kind: 'openai' | 'ollama'
+  ): Promise<
+    ApiResponse<{ reachable: boolean; models: string[]; kind: string }>
+  > => {
+    if (isDemoMode()) {
+      return createDemoResponse({
+        reachable: false,
+        models: [],
+        kind,
+      });
+    }
+    return api
+      .post('/plugins/probe-endpoint', { baseUrl, kind })
+      .then(res => res.data);
+  },
+
   installPlugin: (
     pluginData: Omit<Plugin, 'id' | 'created_at' | 'updated_at'>
   ): Promise<ApiResponse<Plugin>> => {

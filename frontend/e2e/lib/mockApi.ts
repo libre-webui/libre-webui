@@ -2106,6 +2106,14 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
         return;
       }
 
+      if (path === '/ollama/settings' && method === 'GET') {
+        await fulfillJson(route, {
+          enabled: true,
+          baseUrl: 'http://localhost:11434',
+        });
+        return;
+      }
+
       if (path === '/ollama/models' && method === 'GET') {
         if (!ollamaHealthy) {
           await fulfillApiError(route, 503, 'Ollama is offline');

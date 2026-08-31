@@ -240,6 +240,10 @@
       "acknowledgment": "Ich habe meinen Verschlüsselungsschlüssel an einem sicheren Ort gespeichert und verstehe, dass sein Verlust zu Datenverlust führen kann.",
       "confirmRequired": "Bitte bestätigen Sie, dass Sie den Verschlüsselungsschlüssel gespeichert haben",
       "continue": "Weiter zu Libre WebUI"
+    },
+    "connectModels": {
+      "title": "Verbinden Sie Ihre Modelle",
+      "subtitle": "Lokal oder Cloud — wählen Sie, was Sie bereits nutzen. Sie können dies jederzeit später ändern."
     }
   },
   "chat": {
@@ -383,7 +387,8 @@
       "noModelsTooltip": "Keine Modelle verfügbar. Bitte stellen Sie sicher, dass Ollama läuft und Modelle installiert sind.",
       "selectBeforePrivateChat": "Wählen Sie ein verfügbares Modell aus, bevor Sie einen privaten Chat starten",
       "selectBeforeSending": "Wählen Sie ein verfügbares Modell aus, bevor Sie senden",
-      "selectBeforeRegenerating": "Wählen Sie vor dem erneuten Generieren ein verfügbares Modell aus"
+      "selectBeforeRegenerating": "Wählen Sie vor dem erneuten Generieren ein verfügbares Modell aus",
+      "connectDescription": "Es sind noch keine Modelle verbunden. Wählen Sie unten eine Quelle — eine lokale Laufzeitumgebung, Ihren eigenen Server oder eine Cloud-API — und Sie chatten in weniger als einer Minute."
     },
     "footer": {
       "disclaimer": "KI kann Fehler machen – überprüfen Sie wichtige Informationen",
@@ -1835,7 +1840,14 @@
     "mfaResetConfirm": "Zweiten Faktor für {{name}} entfernen? Die Anmeldung mit Passwort und eine neue Einrichtung bleiben möglich.",
     "mfaResetSuccess": "Zwei-Faktor für {{name}} entfernt.",
     "mfaResetNothing": "{{name}} hatte keine Zwei-Faktor-Einrichtung.",
-    "mfaResetFailed": "Das Zurücksetzen ist fehlgeschlagen."
+    "mfaResetFailed": "Das Zurücksetzen ist fehlgeschlagen.",
+    "ollamaProvider": {
+      "title": "Ollama-Anbieter",
+      "description": "Wenn deaktiviert, prüft die App überhaupt nicht mehr auf Ollama — keine Gesundheitschecks, keine Warnungen. Der Endpunkt kann auf jedes Ollama-kompatible Gateway verweisen.",
+      "saved": "Ollama-Anbieter-Einstellungen gespeichert",
+      "saveFailed": "Die Ollama-Anbieter-Einstellungen konnten nicht gespeichert werden",
+      "baseUrlLabel": "Ollama-Endpunkt-URL"
+    }
   },
   "usageAnalytics": {
     "eyebrow": "Verwaltung",
@@ -3604,6 +3616,49 @@
       "hasCase": "Groß- und Kleinbuchstaben",
       "hasNumber": "Mindestens eine Zahl",
       "tooLong": "Höchstens 72 Bytes"
+    }
+  },
+  "connectModels": {
+    "adminOnly": "Bitten Sie Ihren Administrator, einen Modellanbieter zu verbinden.",
+    "skip": "Vorerst überspringen — ich verbinde Modelle später",
+    "ollama": {
+      "status": {
+        "checking": "Verfügbarkeit wird geprüft…",
+        "healthy": "Läuft und ist bereit für lokale Modelle",
+        "offline": "Auf diesem Rechner nicht erkannt",
+        "disabled": "Deaktiviert — es werden keine Prüfungen ausgeführt"
+      },
+      "recheck": "Erneut prüfen",
+      "enable": "Aktivieren",
+      "disable": "Prüfung auf Ollama stoppen",
+      "enabledToast": "Ollama-Anbieter aktiviert",
+      "disabledToast": "Ollama-Prüfungen deaktiviert — Sie können sie in den Einstellungen wieder aktivieren",
+      "settingsFailed": "Die Ollama-Einstellungen konnten nicht aktualisiert werden",
+      "offlineHint": "Installieren Sie Ollama von ollama.com, damit es automatisch erkannt wird — oder verwenden Sie stattdessen eine der Optionen unten. Wenn Sie Ollama nicht nutzen möchten, können Sie die Prüfungen dafür ausschalten.",
+      "healthyHint": "Ollama ist verbunden. Laden Sie ein Modell über „Modelle“ herunter, und Sie sind bereit zum Chatten."
+    },
+    "local": {
+      "title": "Lokaler Server",
+      "subtitle": "llama.cpp, vLLM, llama-swap, LM Studio, mlx-lm",
+      "keyPlaceholder": "API-Schlüssel (optional)",
+      "test": "Verbindung testen",
+      "testing": "Wird getestet…",
+      "reachable": "Verbunden — {{count}} Modelle gefunden",
+      "unreachable": "Unter dieser Adresse hat keine Modell-API geantwortet",
+      "noModels": "Der Endpunkt hat geantwortet, aber keine Modelle aufgelistet. Laden Sie ein Modell auf Ihrem Server und testen Sie erneut.",
+      "enable": "Anbieter aktivieren",
+      "enabling": "Wird aktiviert…",
+      "enabled": "{{name}} verbunden — dessen Modelle sind jetzt verfügbar",
+      "enableFailed": "Der Anbieter konnte nicht aktiviert werden"
+    },
+    "cloud": {
+      "title": "Cloud-API",
+      "subtitle": "OpenAI, Anthropic, Groq, OpenRouter und mehr",
+      "keyPlaceholder": "Fügen Sie Ihren {{name}}-API-Schlüssel ein",
+      "connect": "Verbinden",
+      "connecting": "Wird verbunden…",
+      "connected": "{{name}} verbunden — dessen Modelle sind jetzt verfügbar",
+      "saveFailed": "Der API-Schlüssel konnte nicht gespeichert werden"
     }
   }
 }

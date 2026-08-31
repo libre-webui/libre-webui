@@ -240,6 +240,10 @@
       "acknowledgment": "Ik heb mijn encryptiesleutel op een veilige locatie opgeslagen en begrijp dat verlies ervan kan leiden tot gegevensverlies.",
       "confirmRequired": "Bevestig dat u de encryptiesleutel heeft opgeslagen",
       "continue": "Doorgaan naar Libre WebUI"
+    },
+    "connectModels": {
+      "title": "Verbind uw modellen",
+      "subtitle": "Lokaal of cloud — kies wat u al gebruikt. U kunt dit later altijd wijzigen."
     }
   },
   "chat": {
@@ -383,7 +387,8 @@
       "noModelsTooltip": "Geen modellen beschikbaar. Zorg ervoor dat Ollama draait en modellen zijn geïnstalleerd.",
       "selectBeforePrivateChat": "Selecteer een beschikbaar model voordat je een privéchat start",
       "selectBeforeSending": "Selecteer een beschikbaar model voordat je verzendt",
-      "selectBeforeRegenerating": "Selecteer een beschikbaar model voordat je opnieuw genereert"
+      "selectBeforeRegenerating": "Selecteer een beschikbaar model voordat je opnieuw genereert",
+      "connectDescription": "Er zijn nog geen modellen verbonden. Kies hieronder een bron — een lokale runtime, uw eigen server of een cloud-API — en binnen een minuut kunt u chatten."
     },
     "footer": {
       "disclaimer": "LLM kan fouten maken - verifieer belangrijke informatie",
@@ -1835,7 +1840,14 @@
     "mfaResetConfirm": "De tweede factor van {{name}} verwijderen? Inloggen met wachtwoord en opnieuw instellen blijft mogelijk.",
     "mfaResetSuccess": "Tweestapsverificatie verwijderd voor {{name}}.",
     "mfaResetNothing": "{{name}} had geen tweestapsverificatie.",
-    "mfaResetFailed": "Het resetten is mislukt."
+    "mfaResetFailed": "Het resetten is mislukt.",
+    "ollamaProvider": {
+      "title": "Ollama-provider",
+      "description": "Indien uitgeschakeld, stopt de app volledig met controleren op Ollama — geen statuscontroles, geen waarschuwingen. Het eindpunt kan naar elke Ollama-compatibele gateway wijzen.",
+      "saved": "Instellingen voor Ollama-provider opgeslagen",
+      "saveFailed": "Kon de instellingen voor de Ollama-provider niet opslaan",
+      "baseUrlLabel": "Ollama-eindpunt-URL"
+    }
   },
   "usageAnalytics": {
     "eyebrow": "Beheer",
@@ -3604,6 +3616,49 @@
       "hasCase": "Hoofd- en kleine letters",
       "hasNumber": "Minstens één cijfer",
       "tooLong": "Maximaal 72 bytes"
+    }
+  },
+  "connectModels": {
+    "adminOnly": "Vraag uw beheerder om een modelprovider te verbinden.",
+    "skip": "Voorlopig overslaan — ik verbind later modellen",
+    "ollama": {
+      "status": {
+        "checking": "Beschikbaarheid controleren…",
+        "healthy": "Actief en klaar voor lokale modellen",
+        "offline": "Niet gedetecteerd op deze machine",
+        "disabled": "Uitgeschakeld — er worden geen controles uitgevoerd"
+      },
+      "recheck": "Opnieuw controleren",
+      "enable": "Inschakelen",
+      "disable": "Stoppen met controleren op Ollama",
+      "enabledToast": "Ollama-provider ingeschakeld",
+      "disabledToast": "Ollama-controles uitgeschakeld — u kunt ze weer inschakelen in Instellingen",
+      "settingsFailed": "Kon de Ollama-instellingen niet bijwerken",
+      "offlineHint": "Installeer Ollama vanaf ollama.com en het wordt automatisch gedetecteerd — of gebruik in plaats daarvan een van de onderstaande opties. Als u niet van plan bent Ollama te gebruiken, kunt u de controles uitschakelen.",
+      "healthyHint": "Ollama is verbonden. Haal een model op via Modellen en u kunt chatten."
+    },
+    "local": {
+      "title": "Lokale server",
+      "subtitle": "llama.cpp, vLLM, llama-swap, LM Studio, mlx-lm",
+      "keyPlaceholder": "API-sleutel (optioneel)",
+      "test": "Verbinding testen",
+      "testing": "Testen…",
+      "reachable": "Verbonden — {{count}} modellen gevonden",
+      "unreachable": "Geen model-API heeft op dat adres gereageerd",
+      "noModels": "Het eindpunt reageerde, maar vermeldde geen modellen. Laad een model in uw server en test opnieuw.",
+      "enable": "Provider inschakelen",
+      "enabling": "Inschakelen…",
+      "enabled": "{{name}} verbonden — de modellen zijn nu beschikbaar",
+      "enableFailed": "Kon de provider niet inschakelen"
+    },
+    "cloud": {
+      "title": "Cloud-API",
+      "subtitle": "OpenAI, Anthropic, Groq, OpenRouter en meer",
+      "keyPlaceholder": "Plak uw {{name}} API-sleutel",
+      "connect": "Verbinden",
+      "connecting": "Verbinden…",
+      "connected": "{{name}} verbonden — de modellen zijn nu beschikbaar",
+      "saveFailed": "Kon de API-sleutel niet opslaan"
     }
   }
 }

@@ -240,6 +240,10 @@
       "acknowledgment": "Zapisałem klucz szyfrowania w bezpiecznym miejscu i rozumiem, że jego utrata może spowodować utratę danych.",
       "confirmRequired": "Potwierdź, że zapisałeś klucz szyfrowania",
       "continue": "Kontynuuj do Libre WebUI"
+    },
+    "connectModels": {
+      "title": "Podłącz swoje modele",
+      "subtitle": "Lokalnie lub w chmurze — wybierz to, czego już używasz. Zawsze możesz to później zmienić."
     }
   },
   "chat": {
@@ -383,7 +387,8 @@
       "noModelsTooltip": "Brak dostępnych modeli. Upewnij się, że Ollama działa i modele są zainstalowane.",
       "selectBeforePrivateChat": "Wybierz dostępny model przed rozpoczęciem prywatnego czatu",
       "selectBeforeSending": "Wybierz dostępny model przed wysłaniem",
-      "selectBeforeRegenerating": "Wybierz dostępny model przed ponownym wygenerowaniem"
+      "selectBeforeRegenerating": "Wybierz dostępny model przed ponownym wygenerowaniem",
+      "connectDescription": "Żaden model nie jest jeszcze podłączony. Wybierz źródło poniżej — lokalne środowisko uruchomieniowe, własny serwer lub API w chmurze — i zaczniesz rozmawiać w mniej niż minutę."
     },
     "footer": {
       "disclaimer": "LLM może popełniać błędy - weryfikuj ważne informacje",
@@ -1835,7 +1840,14 @@
     "mfaResetConfirm": "Usunąć drugi składnik użytkownika {{name}}? Będzie można zalogować się hasłem i skonfigurować go ponownie.",
     "mfaResetSuccess": "Usunięto drugi składnik użytkownika {{name}}.",
     "mfaResetNothing": "{{name}} nie miał(a) drugiego składnika.",
-    "mfaResetFailed": "Resetowanie nie powiodło się."
+    "mfaResetFailed": "Resetowanie nie powiodło się.",
+    "ollamaProvider": {
+      "title": "Dostawca Ollama",
+      "description": "Gdy wyłączone, aplikacja całkowicie przestaje sprawdzać Ollama — bez sprawdzania stanu, bez ostrzeżeń. Endpoint może wskazywać na dowolną bramę kompatybilną z Ollama.",
+      "saved": "Zapisano ustawienia dostawcy Ollama",
+      "saveFailed": "Nie udało się zapisać ustawień dostawcy Ollama",
+      "baseUrlLabel": "URL endpointu Ollama"
+    }
   },
   "usageAnalytics": {
     "eyebrow": "Administracja",
@@ -3604,6 +3616,49 @@
       "hasCase": "Wielkie i małe litery",
       "hasNumber": "Co najmniej jedna cyfra",
       "tooLong": "Najwyżej 72 bajty"
+    }
+  },
+  "connectModels": {
+    "adminOnly": "Poproś administratora o podłączenie dostawcy modeli.",
+    "skip": "Pomiń na razie — modele podłączę później",
+    "ollama": {
+      "status": {
+        "checking": "Sprawdzanie dostępności…",
+        "healthy": "Działa i jest gotowy do obsługi modeli lokalnych",
+        "offline": "Nie wykryto na tym komputerze",
+        "disabled": "Wyłączone — żadne sprawdzenia nie będą wykonywane"
+      },
+      "recheck": "Sprawdź ponownie",
+      "enable": "Włącz",
+      "disable": "Przestań sprawdzać Ollama",
+      "enabledToast": "Dostawca Ollama włączony",
+      "disabledToast": "Sprawdzanie Ollama wyłączone — możesz je ponownie włączyć w Ustawieniach",
+      "settingsFailed": "Nie udało się zaktualizować ustawień Ollama",
+      "offlineHint": "Zainstaluj Ollama ze strony ollama.com, a zostanie wykryta automatycznie — albo skorzystaj z jednej z poniższych opcji. Jeśli nie planujesz używać Ollama, możesz wyłączyć jej sprawdzanie.",
+      "healthyHint": "Ollama jest podłączona. Pobierz model w sekcji Modele, a będziesz gotowy do rozmowy."
+    },
+    "local": {
+      "title": "Serwer lokalny",
+      "subtitle": "llama.cpp, vLLM, llama-swap, LM Studio, mlx-lm",
+      "keyPlaceholder": "Klucz API (opcjonalnie)",
+      "test": "Testuj połączenie",
+      "testing": "Testowanie…",
+      "reachable": "Połączono — znaleziono {{count}} modeli",
+      "unreachable": "Żadne API modelu nie odpowiedziało pod tym adresem",
+      "noModels": "Endpoint odpowiedział, ale nie wymienił żadnych modeli. Załaduj model na swoim serwerze i przetestuj ponownie.",
+      "enable": "Włącz dostawcę",
+      "enabling": "Włączanie…",
+      "enabled": "{{name}} połączony — jego modele są teraz dostępne",
+      "enableFailed": "Nie udało się włączyć dostawcy"
+    },
+    "cloud": {
+      "title": "API w chmurze",
+      "subtitle": "OpenAI, Anthropic, Groq, OpenRouter i inne",
+      "keyPlaceholder": "Wklej swój klucz API {{name}}",
+      "connect": "Połącz",
+      "connecting": "Łączenie…",
+      "connected": "{{name}} połączony — jego modele są teraz dostępne",
+      "saveFailed": "Nie udało się zapisać klucza API"
     }
   }
 }

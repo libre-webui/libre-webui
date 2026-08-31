@@ -240,6 +240,10 @@
       "acknowledgment": "Uložil jsem šifrovací klíč na bezpečné místo a chápu, že jeho ztráta může vést ke ztrátě dat.",
       "confirmRequired": "Potvrďte, že jste uložili šifrovací klíč",
       "continue": "Pokračovat do Libre WebUI"
+    },
+    "connectModels": {
+      "title": "Připojte své modely",
+      "subtitle": "Lokálně nebo v cloudu — vyberte to, co už používáte. Kdykoli to můžete později změnit."
     }
   },
   "chat": {
@@ -383,7 +387,8 @@
       "noModelsTooltip": "Žádné dostupné modely. Ujistěte se, že Ollama běží a modely jsou nainstalované.",
       "selectBeforePrivateChat": "Před zahájením soukromého chatu vyberte dostupný model",
       "selectBeforeSending": "Před odesláním vyberte dostupný model",
-      "selectBeforeRegenerating": "Před opětovným vygenerováním vyberte dostupný model"
+      "selectBeforeRegenerating": "Před opětovným vygenerováním vyberte dostupný model",
+      "connectDescription": "Zatím nejsou připojeny žádné modely. Vyberte zdroj níže — lokální runtime, vlastní server nebo cloudové API — a za méně než minutu budete moci chatovat."
     },
     "footer": {
       "disclaimer": "LLM může dělat chyby - ověřujte důležité informace",
@@ -1835,7 +1840,14 @@
     "mfaResetConfirm": "Odebrat druhý faktor uživatele {{name}}? Přihlášení heslem a nové nastavení zůstanou možné.",
     "mfaResetSuccess": "Druhý faktor uživatele {{name}} odebrán.",
     "mfaResetNothing": "{{name}} neměl druhý faktor.",
-    "mfaResetFailed": "Reset se nezdařil."
+    "mfaResetFailed": "Reset se nezdařil.",
+    "ollamaProvider": {
+      "title": "Poskytovatel Ollama",
+      "description": "Když je vypnuto, aplikace zcela přestane Ollamu vyhledávat — žádné kontroly stavu, žádná upozornění. Endpoint může směřovat na jakoukoli bránu kompatibilní s Ollamou.",
+      "saved": "Nastavení poskytovatele Ollama uloženo",
+      "saveFailed": "Nepodařilo se uložit nastavení poskytovatele Ollama",
+      "baseUrlLabel": "URL endpointu Ollama"
+    }
   },
   "usageAnalytics": {
     "eyebrow": "Správa",
@@ -3604,6 +3616,49 @@
       "hasCase": "Velká a malá písmena",
       "hasNumber": "Alespoň jedna číslice",
       "tooLong": "Nejvýše 72 bajtů"
+    }
+  },
+  "connectModels": {
+    "adminOnly": "Požádejte svého správce, aby připojil poskytovatele modelů.",
+    "skip": "Zatím přeskočit — modely připojím později",
+    "ollama": {
+      "status": {
+        "checking": "Kontroluji dostupnost…",
+        "healthy": "Běží a je připravena pro lokální modely",
+        "offline": "Na tomto zařízení nebyla zjištěna",
+        "disabled": "Vypnuto — nebudou probíhat žádné kontroly"
+      },
+      "recheck": "Zkontrolovat znovu",
+      "enable": "Povolit",
+      "disable": "Přestat kontrolovat Ollamu",
+      "enabledToast": "Poskytovatel Ollama povolen",
+      "disabledToast": "Kontroly Ollamy vypnuty — můžete je znovu povolit v Nastavení",
+      "settingsFailed": "Nepodařilo se aktualizovat nastavení Ollamy",
+      "offlineHint": "Nainstalujte Ollamu z ollama.com a bude automaticky rozpoznána — nebo místo toho použijte některou z možností níže. Pokud Ollamu používat neplánujete, můžete její kontroly vypnout.",
+      "healthyHint": "Ollama je připojena. Stáhněte model ze sekce Modely a budete připraveni chatovat."
+    },
+    "local": {
+      "title": "Lokální server",
+      "subtitle": "llama.cpp, vLLM, llama-swap, LM Studio, mlx-lm",
+      "keyPlaceholder": "API klíč (volitelné)",
+      "test": "Otestovat připojení",
+      "testing": "Testování…",
+      "reachable": "Připojeno — nalezeno {{count}} modelů",
+      "unreachable": "Na dané adrese neodpověděl žádný model API",
+      "noModels": "Endpoint odpověděl, ale neuvedl žádné modely. Načtěte model do svého serveru a zkuste to znovu.",
+      "enable": "Povolit poskytovatele",
+      "enabling": "Povolování…",
+      "enabled": "{{name}} připojen — jeho modely jsou nyní dostupné",
+      "enableFailed": "Nepodařilo se povolit poskytovatele"
+    },
+    "cloud": {
+      "title": "Cloudové API",
+      "subtitle": "OpenAI, Anthropic, Groq, OpenRouter a další",
+      "keyPlaceholder": "Vložte svůj API klíč pro {{name}}",
+      "connect": "Připojit",
+      "connecting": "Připojování…",
+      "connected": "{{name}} připojen — jeho modely jsou nyní dostupné",
+      "saveFailed": "Nepodařilo se uložit API klíč"
     }
   }
 }

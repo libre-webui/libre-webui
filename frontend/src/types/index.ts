@@ -841,6 +841,7 @@ export interface SystemInfo {
   signupEnabled: boolean;
   agentsEnabled?: boolean; // Admin opt-in for the Agents section (Libre Claw)
   passkeysInUse?: boolean; // At least one passkey registered system-wide
+  ollamaEnabled?: boolean; // False when the admin disabled the Ollama provider
   version?: string;
   turnstile?: {
     enabled: boolean;

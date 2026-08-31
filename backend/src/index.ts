@@ -100,6 +100,7 @@ import groupsRoutes from './routes/groups.js';
 import accessRoutes from './routes/access.js';
 import auditRoutes from './routes/audit.js';
 import ollamaService from './services/ollamaService.js';
+import { initializeOllamaRuntime } from './services/ollamaSettingsService.js';
 import workRuntimeService from './services/workRuntimeService.js';
 import workTaskService from './services/workTaskService.js';
 import workAgentService from './services/workAgentService.js';
@@ -842,6 +843,13 @@ healthService.registerDependencyCheck({
   required: false,
   depths: ['deep'],
   check: async () => {
+    if (!ollamaService.isEnabled()) {
+      return {
+        status: 'pass' as const,
+        message: 'The Ollama provider is disabled by admin settings.',
+        details: { provider: 'ollama', disabled: true },
+      };
+    }
     const healthy = await ollamaService.isHealthy();
     return {
       status: healthy ? 'pass' : 'warn',
@@ -929,16 +937,25 @@ server.listen({ port, host }, () => {
     logger.info('No SSO providers configured (optional)');
   }
 
-  // Check Ollama connection on startup
-  ollamaService.isHealthy().then(isHealthy => {
-    if (isHealthy) {
-      logger.info('Ollama service is connected and ready');
-    } else {
-      logger.warn(
-        "Ollama service is not available - make sure it's running on http://localhost:11434"
-      );
-    }
-  });
+  // Apply persisted Ollama runtime settings, then check the connection once.
+  // A deliberately disabled Ollama is silent: no probe, no warning.
+  initializeOllamaRuntime()
+    .catch(() => undefined)
+    .then(() => {
+      if (!ollamaService.isEnabled()) {
+        logger.info('Ollama provider is disabled by admin settings');
+        return;
+      }
+      return ollamaService.isHealthy().then(isHealthy => {
+        if (isHealthy) {
+          logger.info('Ollama service is connected and ready');
+        } else {
+          logger.warn(
+            `Ollama service is not available - make sure it's running on ${ollamaService.getBaseUrl()}`
+          );
+        }
+      });
+    });
 });
 
 // Graceful shutdown

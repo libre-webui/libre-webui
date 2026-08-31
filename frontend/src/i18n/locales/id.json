@@ -240,6 +240,10 @@
       "acknowledgment": "Saya telah menyimpan kunci enkripsi di lokasi yang aman dan memahami bahwa kehilangannya dapat mengakibatkan kehilangan data.",
       "confirmRequired": "Silakan konfirmasi bahwa Anda telah menyimpan kunci enkripsi",
       "continue": "Lanjutkan ke Libre WebUI"
+    },
+    "connectModels": {
+      "title": "Hubungkan model Anda",
+      "subtitle": "Lokal atau cloud — pilih apa pun yang sudah Anda gunakan. Anda selalu bisa mengubahnya nanti."
     }
   },
   "chat": {
@@ -383,7 +387,8 @@
       "noModelsTooltip": "Tidak ada model tersedia. Pastikan Ollama berjalan dan model sudah diinstal.",
       "selectBeforePrivateChat": "Pilih model yang tersedia sebelum memulai obrolan privat",
       "selectBeforeSending": "Pilih model yang tersedia sebelum mengirim",
-      "selectBeforeRegenerating": "Pilih model yang tersedia sebelum meregenerasi"
+      "selectBeforeRegenerating": "Pilih model yang tersedia sebelum meregenerasi",
+      "connectDescription": "Belum ada model yang terhubung. Pilih sumber di bawah ini — runtime lokal, server Anda sendiri, atau API cloud — dan Anda akan mulai mengobrol dalam waktu kurang dari satu menit."
     },
     "footer": {
       "disclaimer": "LLM dapat membuat kesalahan - verifikasi informasi penting",
@@ -1835,7 +1840,14 @@
     "mfaResetConfirm": "Hapus faktor kedua untuk {{name}}? Mereka tetap bisa masuk dengan kata sandi dan menyiapkannya lagi.",
     "mfaResetSuccess": "Dua langkah dihapus untuk {{name}}.",
     "mfaResetNothing": "{{name}} tidak memiliki dua langkah.",
-    "mfaResetFailed": "Penyetelan ulang gagal."
+    "mfaResetFailed": "Penyetelan ulang gagal.",
+    "ollamaProvider": {
+      "title": "Penyedia Ollama",
+      "description": "Saat dimatikan, aplikasi berhenti sepenuhnya memeriksa Ollama — tidak ada pemeriksaan kesehatan, tidak ada peringatan. Endpoint dapat mengarah ke gateway apa pun yang kompatibel dengan Ollama.",
+      "saved": "Pengaturan penyedia Ollama disimpan",
+      "saveFailed": "Tidak dapat menyimpan pengaturan penyedia Ollama",
+      "baseUrlLabel": "URL endpoint Ollama"
+    }
   },
   "usageAnalytics": {
     "eyebrow": "Administrasi",
@@ -3604,6 +3616,49 @@
       "hasCase": "Huruf besar dan kecil",
       "hasNumber": "Minimal satu angka",
       "tooLong": "Maksimal 72 byte"
+    }
+  },
+  "connectModels": {
+    "adminOnly": "Minta administrator Anda untuk menghubungkan penyedia model.",
+    "skip": "Lewati dulu — saya akan menghubungkan model nanti",
+    "ollama": {
+      "status": {
+        "checking": "Memeriksa ketersediaan…",
+        "healthy": "Berjalan dan siap untuk model lokal",
+        "offline": "Tidak terdeteksi di komputer ini",
+        "disabled": "Dinonaktifkan — tidak ada pemeriksaan yang akan dijalankan"
+      },
+      "recheck": "Periksa lagi",
+      "enable": "Aktifkan",
+      "disable": "Berhenti memeriksa Ollama",
+      "enabledToast": "Penyedia Ollama diaktifkan",
+      "disabledToast": "Pemeriksaan Ollama dinonaktifkan — Anda dapat mengaktifkannya kembali di Pengaturan",
+      "settingsFailed": "Tidak dapat memperbarui pengaturan Ollama",
+      "offlineHint": "Instal Ollama dari ollama.com dan itu akan terdeteksi secara otomatis — atau gunakan salah satu opsi di bawah ini. Jika Anda tidak berencana menggunakan Ollama, Anda dapat mematikan pemeriksaannya.",
+      "healthyHint": "Ollama terhubung. Unduh model dari halaman Model dan Anda siap mengobrol."
+    },
+    "local": {
+      "title": "Server lokal",
+      "subtitle": "llama.cpp, vLLM, llama-swap, LM Studio, mlx-lm",
+      "keyPlaceholder": "API key (opsional)",
+      "test": "Uji koneksi",
+      "testing": "Menguji…",
+      "reachable": "Terhubung — ditemukan {{count}} model",
+      "unreachable": "Tidak ada API model yang merespons di alamat tersebut",
+      "noModels": "Endpoint merespons tetapi tidak mencantumkan model apa pun. Muat model di server Anda lalu uji lagi.",
+      "enable": "Aktifkan penyedia",
+      "enabling": "Mengaktifkan…",
+      "enabled": "{{name}} terhubung — modelnya kini tersedia",
+      "enableFailed": "Tidak dapat mengaktifkan penyedia"
+    },
+    "cloud": {
+      "title": "API Cloud",
+      "subtitle": "OpenAI, Anthropic, Groq, OpenRouter, dan lainnya",
+      "keyPlaceholder": "Tempel API key {{name}} Anda",
+      "connect": "Hubungkan",
+      "connecting": "Menghubungkan…",
+      "connected": "{{name}} terhubung — modelnya kini tersedia",
+      "saveFailed": "Tidak dapat menyimpan API key"
     }
   }
 }

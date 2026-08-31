@@ -374,6 +374,18 @@
           "file": "backend/src/routes/ollama.ts",
           "mount": "/api/ollama",
           "method": "GET",
+          "path": "/settings"
+        },
+        {
+          "file": "backend/src/routes/ollama.ts",
+          "mount": "/api/ollama",
+          "method": "PUT",
+          "path": "/settings"
+        },
+        {
+          "file": "backend/src/routes/ollama.ts",
+          "mount": "/api/ollama",
+          "method": "GET",
           "path": "/health"
         },
         {
@@ -645,6 +657,12 @@
           "mount": "/api/plugins",
           "method": "DELETE",
           "path": "/:id/variables"
+        },
+        {
+          "file": "backend/src/routes/plugins.ts",
+          "mount": "/api/plugins",
+          "method": "POST",
+          "path": "/probe-endpoint"
         },
         {
           "file": "backend/src/routes/ollama.ts",

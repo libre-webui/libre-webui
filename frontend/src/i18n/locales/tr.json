@@ -240,6 +240,10 @@
       "acknowledgment": "Şifreleme anahtarımı güvenli bir yerde sakladım ve kaybetmenin veri kaybına yol açabileceğini anlıyorum.",
       "confirmRequired": "Lütfen şifreleme anahtarını kaydettiğinizi onaylayın",
       "continue": "Libre WebUI'ye Devam Et"
+    },
+    "connectModels": {
+      "title": "Modellerinizi bağlayın",
+      "subtitle": "Yerel ya da bulut — zaten kullandığınızı seçin. Bunu daha sonra her zaman değiştirebilirsiniz."
     }
   },
   "chat": {
@@ -383,7 +387,8 @@
       "noModelsTooltip": "Kullanılabilir model yok. Lütfen Ollama'nın çalıştığından ve modellerin yüklü olduğundan emin olun.",
       "selectBeforePrivateChat": "Gizli sohbeti başlatmadan önce kullanılabilir bir model seçin",
       "selectBeforeSending": "Göndermeden önce kullanılabilir bir model seçin",
-      "selectBeforeRegenerating": "Yeniden oluşturmadan önce kullanılabilir bir model seçin"
+      "selectBeforeRegenerating": "Yeniden oluşturmadan önce kullanılabilir bir model seçin",
+      "connectDescription": "Henüz bağlı bir model yok. Aşağıdan bir kaynak seçin — yerel bir çalışma zamanı, kendi sunucunuz ya da bir bulut API'si — ve bir dakikadan kısa sürede sohbete başlayın."
     },
     "footer": {
       "disclaimer": "Yapay zeka hata yapabilir - önemli bilgileri doğrulayın",
@@ -1835,7 +1840,14 @@
     "mfaResetConfirm": "{{name}} için ikinci adımı kaldırmak istiyor musun? Parolayla giriş yapıp yeniden kurabilir.",
     "mfaResetSuccess": "{{name}} için iki adım kaldırıldı.",
     "mfaResetNothing": "{{name}} için iki adım tanımlı değildi.",
-    "mfaResetFailed": "Sıfırlama başarısız oldu."
+    "mfaResetFailed": "Sıfırlama başarısız oldu.",
+    "ollamaProvider": {
+      "title": "Ollama sağlayıcısı",
+      "description": "Kapalıyken uygulama Ollama'yı tamamen denetlemeyi durdurur — sağlık kontrolü, uyarı yok. Uç nokta, Ollama uyumlu herhangi bir ağ geçidini gösterebilir.",
+      "saved": "Ollama sağlayıcı ayarları kaydedildi",
+      "saveFailed": "Ollama sağlayıcı ayarları kaydedilemedi",
+      "baseUrlLabel": "Ollama uç nokta URL'si"
+    }
   },
   "usageAnalytics": {
     "eyebrow": "Yönetim",
@@ -3604,6 +3616,49 @@
       "hasCase": "Büyük ve küçük harf",
       "hasNumber": "En az bir rakam",
       "tooLong": "En fazla 72 bayt"
+    }
+  },
+  "connectModels": {
+    "adminOnly": "Bir model sağlayıcısı bağlamak için yöneticinizden yardım isteyin.",
+    "skip": "Şimdilik atla — modelleri daha sonra bağlarım",
+    "ollama": {
+      "status": {
+        "checking": "Kullanılabilirlik denetleniyor…",
+        "healthy": "Çalışıyor ve yerel modeller için hazır",
+        "offline": "Bu makinede algılanmadı",
+        "disabled": "Devre dışı — hiçbir denetim çalıştırılmayacak"
+      },
+      "recheck": "Tekrar denetle",
+      "enable": "Etkinleştir",
+      "disable": "Ollama denetimini durdur",
+      "enabledToast": "Ollama sağlayıcısı etkinleştirildi",
+      "disabledToast": "Ollama denetimleri devre dışı bırakıldı — Ayarlar'dan yeniden etkinleştirebilirsiniz",
+      "settingsFailed": "Ollama ayarları güncellenemedi",
+      "offlineHint": "ollama.com adresinden Ollama'yı kurun, otomatik olarak algılanacaktır — ya da aşağıdaki seçeneklerden birini kullanın. Ollama kullanmayı düşünmüyorsanız denetimlerini kapatabilirsiniz.",
+      "healthyHint": "Ollama bağlı. Modeller sayfasından bir model çekin, sohbete hazırsınız."
+    },
+    "local": {
+      "title": "Yerel sunucu",
+      "subtitle": "llama.cpp, vLLM, llama-swap, LM Studio, mlx-lm",
+      "keyPlaceholder": "API anahtarı (isteğe bağlı)",
+      "test": "Bağlantıyı test et",
+      "testing": "Test ediliyor…",
+      "reachable": "Bağlandı — {{count}} model bulundu",
+      "unreachable": "Bu adreste yanıt veren bir model API'si yok",
+      "noModels": "Uç nokta yanıt verdi ancak model listelemedi. Sunucunuzda bir model yükleyip yeniden deneyin.",
+      "enable": "Sağlayıcıyı etkinleştir",
+      "enabling": "Etkinleştiriliyor…",
+      "enabled": "{{name}} bağlandı — modelleri artık kullanılabilir",
+      "enableFailed": "Sağlayıcı etkinleştirilemedi"
+    },
+    "cloud": {
+      "title": "Bulut API",
+      "subtitle": "OpenAI, Anthropic, Groq, OpenRouter ve daha fazlası",
+      "keyPlaceholder": "{{name}} API anahtarınızı yapıştırın",
+      "connect": "Bağlan",
+      "connecting": "Bağlanıyor…",
+      "connected": "{{name}} bağlandı — modelleri artık kullanılabilir",
+      "saveFailed": "API anahtarı kaydedilemedi"
     }
   }
 }

@@ -25,6 +25,7 @@ import { MfaPolicySettings } from '@/components/MfaPolicySettings';
 import { GroupManager } from '@/components/GroupManager';
 import { SecurityAuditLog } from '@/components/SecurityAuditLog';
 import { ModelDownloadSettings } from '@/components/ModelDownloadSettings';
+import { OllamaProviderSettings } from '@/components/OllamaProviderSettings';
 import { WebSearchAccessSettings } from '@/components/WebSearchAccessSettings';
 import { WorkAccessSettings } from '@/components/WorkAccessSettings';
 import { WorkPoliciesSettings } from '@/components/WorkPoliciesSettings';
@@ -42,6 +43,7 @@ export const UserManagementPage: React.FC = () => {
       <div className='mb-4 space-y-4'>
         <WorkAccessSettings />
         <WorkPoliciesSettings />
+        <OllamaProviderSettings />
         <ModelDownloadSettings />
         <WebSearchAccessSettings />
         <AgentAccessSettings />
