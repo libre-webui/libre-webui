@@ -2771,6 +2771,57 @@ for (const ledgerCase of ['tampered', 'future', 'incompatible']) {
   });
 }
 
+test('ledgerless databases predating system_settings adopt cleanly', t => {
+  // Regression for a wild failure: a v0.20-era ledgerless database (created
+  // before system_settings shipped) was refused at the bootstrap door with
+  // "ledgerless schema is incompatible; missing system_settings (table)".
+  // Mid-era tables are additive — the inline bootstrap recreates them — so
+  // their absence must read as an upgrade, not damage.
+  const dataDir = fs.mkdtempSync(
+    path.join(os.tmpdir(), 'libre-schema-ledgerless-presystem-')
+  );
+  t.after(() => fs.rmSync(dataDir, { recursive: true, force: true }));
+  const databasePath = initializeApplicationDatabase(dataDir);
+  const database = new Database(databasePath);
+  database.pragma('foreign_keys = OFF');
+  database.exec(`
+    DROP TABLE _libre_schema_migrations;
+    DROP TABLE system_settings;
+  `);
+  const inspection = migrations.inspectSQLiteSchema(database);
+  assert.notEqual(
+    inspection.status,
+    'incompatible',
+    inspection.reason ?? 'pre-system_settings ledgerless DB must be adoptable'
+  );
+  database.close();
+
+  const child = startApplicationDatabase(dataDir);
+  assert.equal(child.status, 0, `${child.stderr}\n${child.stdout}`);
+
+  const after = new Database(databasePath, { readonly: true });
+  try {
+    assert.ok(
+      after
+        .prepare(
+          "SELECT name FROM sqlite_master WHERE type='table' AND name='system_settings'"
+        )
+        .get(),
+      'inline bootstrap must recreate system_settings'
+    );
+    assert.ok(
+      after
+        .prepare(
+          "SELECT name FROM sqlite_master WHERE type='table' AND name='_libre_schema_migrations'"
+        )
+        .get(),
+      'the migration ledger must be adopted after the additive bootstrap'
+    );
+  } finally {
+    after.close();
+  }
+});
+
 test('failed ledgerless adoption rolls back inline schema and Work data migrations', t => {
   const dataDir = fs.mkdtempSync(
     path.join(os.tmpdir(), 'libre-schema-ledgerless-rollback-')

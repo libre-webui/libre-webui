@@ -2061,6 +2061,13 @@ const LEGACY_ADDITIVE_COLUMNS: Readonly<Record<string, readonly string[]>> = {
   ],
 };
 
+// Only tables that existed for the ENTIRE ledgerless era belong here: this
+// list is a damage detector, not a feature inventory. system_settings and
+// personas shipped mid-era, so requiring them rejected every legitimately
+// older database at the bootstrap door (seen in the wild on a v0.20-era DB:
+// "ledgerless schema is incompatible; missing system_settings"). The inline
+// bootstrap creates mid-era tables additively via CREATE TABLE IF NOT
+// EXISTS, so their absence is an upgrade, not damage.
 const LEGACY_BOOTSTRAP_CORE_TABLES = [
   'users',
   'sessions',
@@ -2068,8 +2075,6 @@ const LEGACY_BOOTSTRAP_CORE_TABLES = [
   'documents',
   'document_chunks',
   'user_preferences',
-  'system_settings',
-  'personas',
 ] as const;
 
 export type SchemaCompatibilityStatus =
