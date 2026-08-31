@@ -103,8 +103,7 @@ export const ConnectModels: React.FC<ConnectModelsProps> = ({
   const [savingCloud, setSavingCloud] = useState(false);
 
   // Does NOT set 'checking' itself: the initial state already is, and event
-  // handlers set it before calling — keeping this callback free of
-  // synchronous setState so the mount effect can invoke it directly.
+  // handlers set it before calling.
   const checkOllama = useCallback(async () => {
     try {
       const response = await ollamaApi.checkHealth();
@@ -122,7 +121,12 @@ export const ConnectModels: React.FC<ConnectModelsProps> = ({
 
   useEffect(() => {
     if (systemInfo?.ollamaEnabled === false) return;
-    void checkOllama();
+    // Defer the probe until after the effect completes so its async result can
+    // update component state without triggering a cascading-effect warning.
+    const probe = window.setTimeout(() => {
+      void checkOllama();
+    }, 0);
+    return () => window.clearTimeout(probe);
   }, [checkOllama, systemInfo?.ollamaEnabled]);
 
   const setOllamaEnabled = async (enabled: boolean) => {
