@@ -1042,6 +1042,19 @@ router.post(
         provider,
         userId
       );
+      // A follow-up message should just start the next run — the agent
+      // manages preview servers itself, so a preview it left running must
+      // not force the user through a manual stop first. Stop it gracefully
+      // here, exactly like the preview/stop endpoint; the run's own work
+      // typically rebuilds and relaunches it.
+      if (
+        current.previewStatus === 'running' ||
+        current.previewStatus === 'starting'
+      ) {
+        await workRuntimeService.stopPreview(current, {
+          onStopped: () => workTaskService.updatePreview(taskId, 'stopped'),
+        });
+      }
       const detail = await workTaskService.createRun(
         taskId,
         userId,
