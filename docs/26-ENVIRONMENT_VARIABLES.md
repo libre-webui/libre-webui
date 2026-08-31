@@ -536,7 +536,7 @@ does not follow plugin symlinks.
 
 | Variable             | Default                                 | Purpose                                              |
 | -------------------- | --------------------------------------- | ---------------------------------------------------- |
-| `VITE_API_BASE_URL`  | inferred from host/dev config           | Frontend API base URL                                |
+| `VITE_API_BASE_URL`  | same-origin dev proxy or production API | Frontend API base URL                                |
 | `VITE_WS_BASE_URL`   | inferred from API URL                   | Absolute `ws:`/`wss:` base for Chat and Work sockets |
 | `VITE_APP_VERSION`   | package version injected by Vite config | Displayed app version                                |
 | `VITE_DEMO_MODE`     | `false`                                 | Enables demo-mode mocks when `true`                  |
@@ -550,8 +550,8 @@ does not follow plugin symlinks.
 Work terminal. It may include a reverse-proxy path prefix, but it must be an
 absolute `ws:` or `wss:` URL without credentials, a query, or a fragment. When
 it is unset, Electron `file:` clients use `ws://localhost:3001`; browser
-clients derive their base from `VITE_API_BASE_URL`, then the production browser
-origin or the development backend on port 3001.
+clients derive their base from `VITE_API_BASE_URL`, then the browser origin.
+Vite proxies the development origin to the backend on port 3001.
 
 ## Maintenance Scripts
 

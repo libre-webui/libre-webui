@@ -154,8 +154,11 @@ export const isAllowedWebSocketOrigin = (
 ): boolean => {
   if (!origin) return true;
   let requestOrigin: string;
+  let requestHostname: string;
   try {
-    requestOrigin = new URL(origin).origin;
+    const requestUrl = new URL(origin);
+    requestOrigin = requestUrl.origin;
+    requestHostname = requestUrl.hostname;
   } catch {
     return false;
   }
@@ -171,7 +174,21 @@ export const isAllowedWebSocketOrigin = (
         return [];
       }
     });
-  return allowed.length === 0 || allowed.includes(requestOrigin);
+  const developmentNetworkOrigin =
+    process.env.NODE_ENV !== 'production' &&
+    (requestHostname === 'localhost' ||
+      requestHostname === '127.0.0.1' ||
+      /^10\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(requestHostname) ||
+      /^192\.168\.\d{1,3}\.\d{1,3}$/.test(requestHostname) ||
+      /^172\.(?:1[6-9]|2\d|3[01])\.\d{1,3}\.\d{1,3}$/.test(requestHostname) ||
+      /^100\.(?:6[4-9]|[7-9]\d|1[01]\d|12[0-7])\.\d{1,3}\.\d{1,3}$/.test(
+        requestHostname
+      ));
+  return (
+    allowed.length === 0 ||
+    allowed.includes(requestOrigin) ||
+    developmentNetworkOrigin
+  );
 };
 
 const authorizeChatUpgrade = async (

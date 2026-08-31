@@ -37,7 +37,7 @@ const [
     WebSocketTicketService,
     websocketTicketService,
   },
-  { registerWebSocketServer },
+  { isAllowedWebSocketOrigin, registerWebSocketServer },
   { userModel },
   frontendUrls,
 ] = await Promise.all([
@@ -470,6 +470,30 @@ test('production Work upgrade applies task-bound ticket authentication', async (
   assert.equal(new URL(wrongTaskUrl).searchParams.get('taskId'), 'task-b');
   assert.equal(wrongTaskUrl.includes(durableSessionCanary), false);
   await expectAuthenticatedSocketClose(wrongTaskUrl, 4401);
+});
+
+test('development accepts local network WebSocket origins without widening production', () => {
+  const previousNodeEnv = process.env.NODE_ENV;
+  try {
+    process.env.NODE_ENV = 'development';
+    assert.equal(
+      isAllowedWebSocketOrigin('http://192.168.1.20:8080'),
+      true
+    );
+    assert.equal(
+      isAllowedWebSocketOrigin('http://localhost.evil.example:8080'),
+      false
+    );
+
+    process.env.NODE_ENV = 'production';
+    assert.equal(
+      isAllowedWebSocketOrigin('http://192.168.1.20:8080'),
+      false
+    );
+  } finally {
+    if (previousNodeEnv === undefined) delete process.env.NODE_ENV;
+    else process.env.NODE_ENV = previousNodeEnv;
+  }
 });
 
 test('VITE_WS_BASE_URL is shared, path-aware, and validated', () => {

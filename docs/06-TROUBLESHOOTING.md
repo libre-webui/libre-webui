@@ -123,6 +123,12 @@ For phone, LAN, or Tailscale access, do not point the phone browser at `localhos
 npm run dev:host
 ```
 
+This serves the frontend on port 8080 and proxies API and WebSocket traffic to
+the local backend on port 3001. Only port 8080 needs to be reachable from the
+other device. If `VITE_API_BASE_URL` or `VITE_WS_BASE_URL` is set in
+`frontend/.env`, make sure those URLs are reachable from the other device or
+remove them to use the dev-server proxy.
+
 ## Chat Doesn't Stream Behind a Reverse Proxy
 
 The typical symptom is that messages send but no reply ever renders, while the

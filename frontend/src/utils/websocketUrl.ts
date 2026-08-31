@@ -89,9 +89,9 @@ export function resolveWebSocketBaseUrl(
   if (apiBase) return webSocketBaseFromApi(apiBase);
 
   const scheme = environment.protocol === 'https:' ? 'wss:' : 'ws:';
-  return environment.production
-    ? `${scheme}//${environment.host}`
-    : `${scheme}//${environment.hostname}:3001`;
+  // Browser development uses Vite's same-origin WebSocket proxy, which keeps
+  // npm run dev:host usable from another device without exposing port 3001.
+  return `${scheme}//${environment.host}`;
 }
 
 function buildWebSocketUrl(

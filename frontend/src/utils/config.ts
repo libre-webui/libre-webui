@@ -23,25 +23,33 @@ import { createLogger, isDebugLoggingEnabled } from '@/utils/logger';
 
 const logger = createLogger('config');
 
-export const getApiBaseUrl = (): string => {
-  // Check for explicit env var first
-  if (import.meta.env?.VITE_API_BASE_URL) {
-    return import.meta.env.VITE_API_BASE_URL;
-  }
+export interface ApiUrlEnvironment {
+  protocol: string;
+  origin: string;
+  apiBaseUrl?: string;
+}
 
-  // When running in Electron with file:// protocol, use localhost
-  if (window.location.protocol === 'file:') {
+export function resolveApiBaseUrl(environment: ApiUrlEnvironment): string {
+  // An explicit URL is useful for standalone frontend deployments and keeps
+  // existing VITE_API_BASE_URL configurations authoritative.
+  if (environment.apiBaseUrl?.trim()) return environment.apiBaseUrl.trim();
+
+  // Electron cannot use the Vite dev-server proxy from a file:// page.
+  if (environment.protocol === 'file:') {
     return 'http://localhost:3001/api';
   }
 
-  // In production (npx, docker), API is on same origin
-  // In development, API is on port 3001
-  if (import.meta.env?.PROD) {
-    return `${window.location.origin}/api`;
-  }
+  // Browser development uses Vite's same-origin API proxy. This also makes
+  // npm run dev:host work from another device without exposing port 3001.
+  return `${environment.origin}/api`;
+}
 
-  // Development: use same host with port 3001
-  return `${window.location.protocol}//${window.location.hostname}:3001/api`;
+export const getApiBaseUrl = (): string => {
+  return resolveApiBaseUrl({
+    protocol: window.location.protocol,
+    origin: window.location.origin,
+    apiBaseUrl: import.meta.env?.VITE_API_BASE_URL,
+  });
 };
 
 /**
