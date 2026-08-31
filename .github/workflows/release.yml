@@ -183,6 +183,29 @@ jobs:
             -d "{\"event_type\":\"release\",\"client_payload\":{\"tag\":\"$TAG\"}}"
           echo "Dispatched desktop build for $TAG."
 
+  # Hand Linux packaging (deb + PKGBUILD bump) to linux-packages. Same
+  # contract as the desktop dispatch: no token, no dispatch, manual start.
+  dispatch-linux-packages:
+    needs: create-release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Trigger the Linux package build
+        env:
+          DISPATCH_TOKEN: ${{ secrets.LINUX_PACKAGES_DISPATCH_TOKEN }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          if [ -z "$DISPATCH_TOKEN" ]; then
+            echo "::warning::LINUX_PACKAGES_DISPATCH_TOKEN is not set; start the Linux package build manually for $TAG."
+            exit 0
+          fi
+          curl -sS --fail-with-body -X POST \
+            -H "Authorization: Bearer $DISPATCH_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            https://api.github.com/repos/libre-webui/linux-packages/dispatches \
+            -d "{\"event_type\":\"libre-webui-release\",\"client_payload\":{\"tag\":\"$TAG\"}}"
+          echo "Dispatched Linux package build for $TAG."
+
   # The iOS client is native and does not bundle the frontend, so this
   # dispatch is informational: it lets libre-webui-ios validate against the
   # new release. App Store submissions happen on that repository's own tags.
