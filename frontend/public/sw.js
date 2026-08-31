@@ -10,7 +10,13 @@
  *   stays out of the Cache Storage entirely.
  */
 
-const CACHE_NAME = 'libre-webui-shell-v1';
+// The cache is versioned by the registration URL's ?v= (the app version), so
+// every release installs a fresh cache and activate() below prunes the old
+// ones. An unversioned name once let clients keep serving a stale shell whose
+// lazy chunks no longer existed on the server — the page died mid-render.
+const CACHE_VERSION =
+  new URLSearchParams(self.location.search).get('v') || 'v1';
+const CACHE_NAME = `libre-webui-shell-${CACHE_VERSION}`;
 const SHELL_URLS = ['/', '/manifest.webmanifest', '/icon-192.png'];
 
 self.addEventListener('install', event => {

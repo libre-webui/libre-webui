@@ -49,11 +49,33 @@ void i18nReady
   })
   .then(renderApp);
 
+// A stale client (open tab or cached shell) can ask for a lazy chunk a newer
+// deployment no longer serves; the failed dynamic import would silently kill
+// that subtree ("half the page disappears"). Vite announces the failure —
+// recover by reloading once, which fetches the current shell network-first.
+// The sessionStorage latch prevents a reload loop when the network itself is
+// the problem, and clears after a healthy minute.
+window.addEventListener('vite:preloadError', event => {
+  const LATCH = 'libre:chunk-reload';
+  if (sessionStorage.getItem(LATCH)) return;
+  event.preventDefault();
+  sessionStorage.setItem(LATCH, String(Date.now()));
+  window.location.reload();
+});
+window.setTimeout(() => {
+  sessionStorage.removeItem('libre:chunk-reload');
+}, 60_000);
+
 // Production only: the dev server serves fresh modules directly, and a dev
 // service worker would fight both Vite and the e2e route mocks.
+// The version query keys the service worker's cache to this build, so every
+// release installs fresh and prunes the previous release's assets.
 if (import.meta.env.PROD && 'serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js').catch(() => {
+    const version = encodeURIComponent(
+      String(import.meta.env.VITE_APP_VERSION || 'v1')
+    );
+    navigator.serviceWorker.register(`/sw.js?v=${version}`).catch(() => {
       // Offline shell and push are progressive enhancements.
     });
   });
