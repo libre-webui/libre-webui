@@ -37,7 +37,7 @@ let cache: OllamaRuntimeSettings | null = null;
 
 export const validateOllamaBaseUrl = (raw: string): string | null => {
   const value = String(raw || '').trim();
-  if (!value) return null;
+  if (!value || value.length > 2048) return null;
   let parsed: URL;
   try {
     parsed = new URL(value);
@@ -47,7 +47,11 @@ export const validateOllamaBaseUrl = (raw: string): string | null => {
   if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return null;
   if (parsed.username || parsed.password) return null;
   // Normalize away trailing slashes so axios baseURL joins stay predictable.
-  return value.replace(/\/+$/, '');
+  // Character walk instead of /\/+$/: the anchored-quantifier regex
+  // backtracks quadratically on adversarial slash runs (CodeQL js/polynomial-redos).
+  let end = value.length;
+  while (end > 1 && value.charCodeAt(end - 1) === 47) end--;
+  return value.slice(0, end);
 };
 
 export const getOllamaRuntimeSettings =

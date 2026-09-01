@@ -1208,9 +1208,14 @@ router.post(
       kind?: unknown;
     };
     const probeKind = kind === 'ollama' ? 'ollama' : 'openai';
+    const rawUrl = String(baseUrl ?? '');
+    if (rawUrl.length > 2048) {
+      res.status(400).json({ success: false, error: 'Base URL too long' });
+      return;
+    }
     let root: URL;
     try {
-      root = new URL(String(baseUrl ?? ''));
+      root = new URL(rawUrl);
     } catch {
       res.status(400).json({ success: false, error: 'Invalid base URL' });
       return;
@@ -1222,7 +1227,12 @@ router.post(
       return;
     }
 
-    const trimmed = root.toString().replace(/\/+$/, '');
+    // Character walk instead of /\/+$/ (quadratic backtracking on
+    // adversarial slash runs — CodeQL js/polynomial-redos).
+    const serialized = root.toString();
+    let end = serialized.length;
+    while (end > 1 && serialized.charCodeAt(end - 1) === 47) end--;
+    const trimmed = serialized.slice(0, end);
     const probeUrl =
       probeKind === 'ollama'
         ? `${trimmed}/api/tags`
