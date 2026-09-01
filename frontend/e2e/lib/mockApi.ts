@@ -1361,8 +1361,11 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
     });
   }, chatStream);
 
+  // Dev traffic rides Vite's same-origin proxy, so API calls arrive on the
+  // dev-server port; Electron and explicit configurations still target :3001.
+  // Match the path on any local origin rather than pinning one port.
   await page.route(
-    /^http:\/\/(?:127\.0\.0\.1|localhost|demo\.localhost):3001\/api\/.*$/,
+    /^http:\/\/(?:127\.0\.0\.1|localhost|demo\.localhost)(?::\d+)?\/api\/.*$/,
     async route => {
       const url = new URL(route.request().url());
       const path = url.pathname.replace(/^\/api/, '');

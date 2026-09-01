@@ -2127,9 +2127,13 @@ test('shows tool activity, saves files, and isolates preview content', async ({
   await expect(startPreviewButton).toHaveCSS('color', 'rgb(255, 255, 255)');
   await startPreviewButton.click();
   const frame = page.getByTestId('work-preview-frame');
+  // Same-origin proxying means the origin varies by environment; the
+  // ticketed path shape is the security-relevant part of this pin.
   await expect(frame).toHaveAttribute(
     'src',
-    `http://127.0.0.1:3001/api/work/previews/preview-workspace/49173.${'N'.repeat(22)}.${'S'.repeat(43)}/`
+    new RegExp(
+      `^http://(?:127\\.0\\.0\\.1|localhost)(?::\\d+)?/api/work/previews/preview-workspace/49173\\.${'N'.repeat(22)}\\.${'S'.repeat(43)}/$`
+    )
   );
   await expect(frame).toHaveAttribute(
     'sandbox',
@@ -2148,9 +2152,18 @@ test('shows tool activity, saves files, and isolates preview content', async ({
       .frameLocator('[data-testid="work-preview-frame"]')
       .getByTestId('mock-work-preview')
   ).toHaveAttribute('data-module-loaded', 'true');
-  expect(new URL((await frame.getAttribute('src')) || '').origin).not.toBe(
-    new URL(page.url()).origin
-  );
+  // Preview isolation comes from the sandbox attribute (no
+  // allow-same-origin → opaque origin), asserted above — the same property
+  // production has always depended on, since production serves previews on
+  // the app origin. The old expectation that the URL origin differs encoded
+  // dev's former :3001 topology; with the same-origin dev proxy the URL is
+  // deliberately same-origin everywhere, and the ticketed /api path is the
+  // remaining URL-shaped part worth pinning.
+  expect(
+    new URL((await frame.getAttribute('src')) || '').pathname.startsWith(
+      '/api/work/previews/'
+    )
+  ).toBe(true);
 
   await previewToolbar.getByTestId('work-stop-preview-button').press('Enter');
   await expect(frame).toHaveCount(0);
