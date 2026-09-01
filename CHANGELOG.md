@@ -15,6 +15,84 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 📚 Documentation
 
+## [0.31.0] - 2026-09-01
+
+Getting started stops assuming Ollama, and staying current stops hurting:
+a first-run screen connects whatever you already use — a local runtime, your
+own OpenAI-compatible server, or a cloud key — while stale browser shells
+heal themselves after updates, years-old databases upgrade instead of being
+refused, and Libre WebUI lands on Debian, Ubuntu, Arch, and the Omarchy
+desktop.
+
+### ✨ New Features
+
+- **Connect your models at first run.** Setup ends with a new step (also
+  replacing the dead-end "ollama pull" card on an empty chat): an Ollama
+  card with live detection, a local-server card whose presets — llama.cpp,
+  vLLM, llama-swap, LM Studio, mlx-lm — share one flow with a server-side
+  **Test connection** probe that lists the discovered models before
+  enabling the provider, and a cloud card (OpenAI, Anthropic, Groq,
+  OpenRouter, Gemini, Mistral) that takes an API key and connects.
+  Skipping is a respected answer; non-admins are pointed to their
+  administrator. Translated into all 25 languages.
+- **Ollama is a setting, not an assumption.** Administrators can disable
+  the Ollama provider entirely from the access page — no more health
+  probes, reconnect polling, or "Ollama is not available" toasts on
+  plugin-only installs — and point the endpoint at any Ollama-compatible
+  gateway, local or remote. Disabling from the first-run screen is one
+  click; everything re-enables just as easily.
+- **Native Linux packages.** Every release now builds Debian/Ubuntu
+  packages (amd64 and arm64) with a hardened systemd service and a
+  dedicated system user, plus an Arch Linux PKGBUILD, from the new
+  `linux-packages` repository — each package install-tested against the
+  live health endpoint before publishing.
+- **Omarchy bar plugin.** Libre WebUI ships a verified plugin on the
+  Omarchy marketplace: server status, health, and latency in the bar, with
+  one-click launch as a web-app window. Documented on the docs site.
+
+### 🔧 Improvements
+
+- **Follow-up messages just run.** Sending the next instruction to a Work
+  task no longer demands stopping a preview the agent left running — the
+  preview stops gracefully and the run starts, the same way the agent
+  manages it mid-run.
+- **A file manager in the Work computer.** Thunar sits in the sandbox dock
+  between the browser and the terminal.
+- **Development networking.** API and WebSocket traffic use Vite's
+  same-origin proxy in development, so `npm run dev:host` works from
+  another device without exposing the backend port; production origin
+  policy stays strict.
+
+### 🐛 Bug Fixes
+
+- **Updates can no longer strand a stale browser shell.** The service
+  worker cache is keyed to each release and clients recover automatically
+  when a cached page requests a chunk a newer deployment removed —
+  previously that failed dynamic import silently blanked part of the page.
+- **Old databases upgrade again.** Ledger-less SQLite databases from
+  releases that predate the `system_settings` and `personas` tables were
+  refused at startup as incompatible; the bootstrap now recognizes them as
+  upgradable history, creates the missing tables, and adopts the migration
+  ledger — proven by a regression test that walks a pre-`system_settings`
+  database end to end.
+- **Unanswered takeover requests keep the screen alive.** Asking to take
+  over no longer races the sandbox teardown: the screen session holds
+  through the request plus a fifteen-minute grace window, so a late click
+  lands on the blocked page instead of a fresh start screen.
+
+### 🔒 Security
+
+- The Omarchy plugin's health probe is byte-capped at the producer
+  (`--max-filesize` plus a hard pipeline ceiling) with the URL passed as a
+  positional argument — reviewed and verified by the marketplace's
+  security process.
+
+### 📦 Dependencies
+
+- Routine minor and patch bumps across 15 packages, including axios,
+  TanStack Query, and the AWS SDK; plotly.js moves to 4.0 for artifact
+  charts.
+
 ## [0.30.0] - 2026-08-29
 
 Hired agents become governable and connected: approve their risky actions
