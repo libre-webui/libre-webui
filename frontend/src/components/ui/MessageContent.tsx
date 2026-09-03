@@ -51,7 +51,7 @@ function PlainMessageContent({
   );
 }
 
-export const MessageContent: React.FC<MessageContentProps> = ({
+const MessageContentBase: React.FC<MessageContentProps> = ({
   content,
   className,
   isStreaming = false,
@@ -109,3 +109,8 @@ export const MessageContent: React.FC<MessageContentProps> = ({
     </>
   );
 };
+
+// Props are primitives, so a finished message never re-parses its markdown
+// while a neighbour streams or the composer re-renders.
+export const MessageContent = React.memo(MessageContentBase);
+MessageContent.displayName = 'MessageContent';

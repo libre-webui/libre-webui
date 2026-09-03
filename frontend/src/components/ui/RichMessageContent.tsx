@@ -63,7 +63,7 @@ function CodeFallback({
   );
 }
 
-export const RichMessageContent: React.FC<RichMessageContentProps> = ({
+const RichMessageContentBase: React.FC<RichMessageContentProps> = ({
   content,
   className,
   allowHtml = false,
@@ -341,5 +341,8 @@ export const RichMessageContent: React.FC<RichMessageContentProps> = ({
     </div>
   );
 };
+
+export const RichMessageContent = React.memo(RichMessageContentBase);
+RichMessageContent.displayName = 'RichMessageContent';
 
 export default RichMessageContent;

@@ -201,7 +201,7 @@ function ChatAvatar({ role, user, persona, modelAvatar }: ChatAvatarProps) {
   );
 }
 
-export const ChatMessage: React.FC<ChatMessageProps> = ({
+const ChatMessageBase: React.FC<ChatMessageProps> = ({
   message,
   isStreaming = false,
   className,
@@ -221,22 +221,27 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
   const systemDisplayContent = isCompactionSummary
     ? message.content.slice(COMPACTION_SUMMARY_PREFIX.length)
     : message.content;
-  const { preferences } = useAppStore();
-  const { user } = useAuthStore();
-  const {
-    setSystemMessage,
-    getCurrentPersona,
-    currentSession,
-    rateMessage,
-    modelMetadata,
-  } = useChatStore();
-  const currentPersona = getCurrentPersona();
+  // Narrow selectors: the chat store changes on every streamed batch, and a
+  // whole-store subscription would re-render every message in the session.
+  const preferences = useAppStore(state => state.preferences);
+  const user = useAuthStore(state => state.user);
+  const setSystemMessage = useChatStore(state => state.setSystemMessage);
+  const rateMessage = useChatStore(state => state.rateMessage);
+  const modelMetadata = useChatStore(state => state.modelMetadata);
+  const currentSessionId = useChatStore(state => state.currentSession?.id);
+  const currentSessionModel = useChatStore(
+    state => state.currentSession?.model
+  );
+  const currentSessionIsPrivate = useChatStore(
+    state => state.currentSession?.isPrivate === true
+  );
+  const currentPersona = useChatStore(state => state.getCurrentPersona());
   // What an administrator named this model and gave it for a picture. A
   // plugin model is keyed by `${pluginId}/${model}`, so fall back to matching
   // on the bare model name the message recorded.
   // A message only carries its model once it has been persisted, so a reply
   // still streaming falls back to the model the session is using.
-  const answeringModel = message.model || currentSession?.model || '';
+  const answeringModel = message.model || currentSessionModel || '';
   const modelPresentation = answeringModel
     ? (modelMetadata[answeringModel] ??
       Object.entries(modelMetadata).find(
@@ -531,11 +536,11 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
 
   const [restoringCompaction, setRestoringCompaction] = useState(false);
   const handleRestoreCompacted = async () => {
-    if (!currentSession || restoringCompaction) return;
+    if (!currentSessionId || restoringCompaction) return;
     setRestoringCompaction(true);
     try {
       const response = await chatApi.restoreCompaction(
-        currentSession.id,
+        currentSessionId,
         message.id
       );
       if (!response.success || !response.data) {
@@ -587,11 +592,11 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
   };
 
   const handleRate = (value: number) => {
-    if (!currentSession) return;
+    if (!currentSessionId) return;
     const cleared = message.rating === value;
-    rateMessage(currentSession.id, message.id, cleared ? undefined : value);
+    rateMessage(currentSessionId, message.id, cleared ? undefined : value);
     // Private sessions never persist feedback datasets.
-    if (currentSession.isPrivate) return;
+    if (currentSessionIsPrivate) return;
     if (cleared) {
       setFeedbackDetailsFor(null);
       void evaluationsApi.deleteFeedback(message.id).catch(() => undefined);
@@ -602,7 +607,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
     setFeedbackDetailsFor(value === 1 ? 1 : -1);
     void evaluationsApi
       .upsertFeedback({
-        sessionId: currentSession.id,
+        sessionId: currentSessionId,
         messageId: message.id,
         rating: value === 1 ? 1 : -1,
       })
@@ -610,10 +615,10 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
   };
 
   const submitFeedbackDetails = () => {
-    if (!currentSession || feedbackDetailsFor === null) return;
+    if (!currentSessionId || feedbackDetailsFor === null) return;
     void evaluationsApi
       .upsertFeedback({
-        sessionId: currentSession.id,
+        sessionId: currentSessionId,
         messageId: message.id,
         rating: feedbackDetailsFor,
         tags: feedbackTags,
@@ -1201,3 +1206,8 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
     </div>
   );
 };
+
+// Memoized so a streaming reply (which re-renders the list every frame) and
+// composer keystrokes leave every other message untouched.
+export const ChatMessage = React.memo(ChatMessageBase);
+ChatMessage.displayName = 'ChatMessage';

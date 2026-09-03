@@ -821,27 +821,31 @@ export const ChatPage: React.FC = () => {
     );
   };
 
-  const handleFork = async (messageId: string) => {
-    if (!currentSession) return;
-    try {
-      const response = await chatApi.forkSession(currentSession.id, {
-        messageId,
-      });
-      if (response.success && response.data) {
-        const fork = response.data;
-        useChatStore.setState(state => ({
-          sessions: [fork, ...state.sessions],
-        }));
-        toast.success(t('chat.fork.created'));
-        navigate(`/c/${fork.id}`);
-      } else {
-        toast.error(response.error || t('chat.fork.failed'));
+  const currentSessionIdForFork = currentSession?.id;
+  const handleFork = useCallback(
+    async (messageId: string) => {
+      if (!currentSessionIdForFork) return;
+      try {
+        const response = await chatApi.forkSession(currentSessionIdForFork, {
+          messageId,
+        });
+        if (response.success && response.data) {
+          const fork = response.data;
+          useChatStore.setState(state => ({
+            sessions: [fork, ...state.sessions],
+          }));
+          toast.success(t('chat.fork.created'));
+          navigate(`/c/${fork.id}`);
+        } else {
+          toast.error(response.error || t('chat.fork.failed'));
+        }
+      } catch (error) {
+        logger.error('Failed to fork the chat:', error);
+        toast.error(t('chat.fork.failed'));
       }
-    } catch (error) {
-      logger.error('Failed to fork the chat:', error);
-      toast.error(t('chat.fork.failed'));
-    }
-  };
+    },
+    [currentSessionIdForFork, navigate, t]
+  );
 
   if (!currentSession) {
     const hasAdvancedFeatures = welcomeImages.length > 0;
@@ -1238,7 +1242,7 @@ export const ChatPage: React.FC = () => {
               onRegenerate={regenerateLastMessage}
               onSelectBranch={selectBranch}
               onEditResend={editAndResendMessage}
-              onFork={messageId => void handleFork(messageId)}
+              onFork={handleFork}
               followUpSuggestions={followUpSuggestions}
               onFollowUpSelect={suggestion => handleSendMessage(suggestion)}
               className='flex-1'

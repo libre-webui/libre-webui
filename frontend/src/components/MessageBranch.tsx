@@ -33,7 +33,7 @@ interface MessageBranchProps {
   className?: string;
 }
 
-export const MessageBranch: React.FC<MessageBranchProps> = ({
+const MessageBranchBase: React.FC<MessageBranchProps> = ({
   messages,
   isStreaming = false,
   streamingMessage,
@@ -170,5 +170,8 @@ export const MessageBranch: React.FC<MessageBranchProps> = ({
     </div>
   );
 };
+
+export const MessageBranch = React.memo(MessageBranchBase);
+MessageBranch.displayName = 'MessageBranch';
 
 export default MessageBranch;

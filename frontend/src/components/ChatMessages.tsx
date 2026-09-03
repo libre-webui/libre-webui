@@ -130,7 +130,10 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
   );
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const messagesContentRef = useRef<HTMLDivElement>(null);
-  const historyGroupRefs = useRef(new Map<string, HTMLDivElement>());
+  // Stable map instance (not a ref, so ref callbacks may close over it).
+  const [historyGroupElements] = useState(
+    () => new Map<string, HTMLDivElement>()
+  );
   const historyFrameRef = useRef<number | null>(null);
   const activeHistoryIndexRef = useRef(0);
   const isHistoryNavigatingRef = useRef(false);
@@ -278,6 +281,20 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
     [historyIdsKey]
   );
   const historyIdSet = useMemo(() => new Set(historyIds), [historyIds]);
+  // One stable ref callback per history turn, rebuilt only when the set of
+  // turns changes. An inline arrow would be a new function on every streamed
+  // frame, and React re-runs every changed ref (detach + attach) across the
+  // whole list each time.
+  const historyRefs = useMemo(() => {
+    const refs = new Map<string, (element: HTMLDivElement | null) => void>();
+    for (const id of historyIds) {
+      refs.set(id, element => {
+        if (element) historyGroupElements.set(id, element);
+        else historyGroupElements.delete(id);
+      });
+    }
+    return refs;
+  }, [historyGroupElements, historyIds]);
   const [activeHistoryId, setActiveHistoryId] = useState<string | null>(null);
 
   const updateActiveHistory = useCallback(() => {
@@ -301,7 +318,7 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
         container.scrollTop + getHistoryReadingOffset(container.clientHeight);
 
       while (activeIndex < historyIds.length - 1) {
-        const nextAnchor = historyGroupRefs.current.get(
+        const nextAnchor = historyGroupElements.get(
           historyIds[activeIndex + 1]
         );
         if (!nextAnchor || nextAnchor.offsetTop > readingLine) break;
@@ -309,9 +326,7 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
       }
 
       while (activeIndex > 0) {
-        const activeAnchor = historyGroupRefs.current.get(
-          historyIds[activeIndex]
-        );
+        const activeAnchor = historyGroupElements.get(historyIds[activeIndex]);
         if (!activeAnchor || activeAnchor.offsetTop <= readingLine) break;
         activeIndex--;
       }
@@ -322,7 +337,7 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
     setActiveHistoryId(current =>
       current === nextActiveId ? current : nextActiveId
     );
-  }, [historyIds]);
+  }, [historyGroupElements, historyIds]);
 
   const scheduleHistoryUpdate = useCallback(() => {
     if (historyFrameRef.current !== null) return;
@@ -403,7 +418,7 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
   const scrollToHistoryItem = useCallback(
     (id: string) => {
       const container = scrollContainerRef.current;
-      const anchor = historyGroupRefs.current.get(id);
+      const anchor = historyGroupElements.get(id);
       if (!container || !anchor) return;
 
       const behavior = preferredScrollBehavior();
@@ -426,6 +441,7 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
     },
     [
       finishHistoryNavigation,
+      historyGroupElements,
       queueHistoryNavigationFinish,
       scheduleHistoryUpdate,
     ]
@@ -621,9 +637,17 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
                 <MessageBranch
                   messages={group.messages}
                   isStreaming={isStreamingThisGroup}
-                  streamingMessage={streamingMessage}
-                  streamingThinking={streamingThinking}
-                  streamingMessageId={streamingMessageId || undefined}
+                  streamingMessage={
+                    isStreamingThisGroup ? streamingMessage : undefined
+                  }
+                  streamingThinking={
+                    isStreamingThisGroup ? streamingThinking : undefined
+                  }
+                  streamingMessageId={
+                    isStreamingThisGroup
+                      ? streamingMessageId || undefined
+                      : undefined
+                  }
                   isLastAssistantMessage={isLastAssistantGroup}
                   onRegenerate={isLastAssistantGroup ? onRegenerate : undefined}
                   onSelectBranch={onSelectBranch}
@@ -635,11 +659,10 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
             return (
               <div
                 key={group.id}
-                ref={element => {
-                  if (!isHistoryItem) return;
-                  if (element) historyGroupRefs.current.set(group.id, element);
-                  else historyGroupRefs.current.delete(group.id);
-                }}
+                // Off-screen turns skip layout and paint until scrolled into
+                // view; the intrinsic size keeps the scrollbar honest.
+                className='[content-visibility:auto] [contain-intrinsic-size:auto_160px]'
+                ref={historyRefs.get(group.id)}
                 data-testid={
                   isHistoryItem ? 'conversation-turn-anchor' : undefined
                 }

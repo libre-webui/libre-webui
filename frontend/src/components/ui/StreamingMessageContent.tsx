@@ -169,9 +169,7 @@ function StreamingCodeBlock({
   );
 }
 
-export const StreamingMessageContent: React.FC<
-  StreamingMessageContentProps
-> = ({
+const StreamingMessageContentBase: React.FC<StreamingMessageContentProps> = ({
   content,
   className,
   segments: providedSegments,
@@ -212,5 +210,8 @@ export const StreamingMessageContent: React.FC<
     </div>
   );
 };
+
+export const StreamingMessageContent = React.memo(StreamingMessageContentBase);
+StreamingMessageContent.displayName = 'StreamingMessageContent';
 
 export default StreamingMessageContent;
