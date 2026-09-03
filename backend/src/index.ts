@@ -38,6 +38,10 @@ import './env.js';
 import express from 'express';
 import { ipKeyGenerator } from 'express-rate-limit';
 import rateLimit from './middleware/sharedRateLimit.js';
+import {
+  createStaticAssetHandlers,
+  REVALIDATE_CACHE_CONTROL,
+} from './middleware/staticAssets.js';
 import { isChatCancellationSafetyRequest } from './middleware/chatCancellationAdmission.js';
 import cors from 'cors';
 import helmet from 'helmet';
@@ -714,7 +718,14 @@ if (
       legacyHeaders: false,
     });
 
-    app.use(staticRateLimiter, express.static(frontendPath));
+    // Hashed bundles are served compressed with a one-year lifetime; the
+    // shell (index.html, sw.js, manifest, icons) revalidates every time.
+    const staticAssets = createStaticAssetHandlers(frontendPath);
+    app.use(
+      staticRateLimiter,
+      staticAssets.compressedAssets,
+      staticAssets.files
+    );
 
     // SPA fallback - serve index.html for all non-API routes. Pass the file
     // relative to a root instead of as an absolute path: send() rejects
@@ -723,6 +734,7 @@ if (
     // links without the root option.
     const indexFile = 'index.html';
     const sendIndex = (res: express.Response) => {
+      res.setHeader('Cache-Control', REVALIDATE_CACHE_CONTROL);
       res.sendFile(indexFile, { root: frontendPath });
     };
 

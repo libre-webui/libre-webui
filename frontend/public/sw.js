@@ -4,8 +4,8 @@
  * Caching policy, deliberately conservative:
  * - Navigations are network-first with the cached app shell as the offline
  *   fallback, so a deployed update always wins when the network is up.
- * - Hashed build assets (/assets/*) are cache-first: their names change on
- *   every build, so a cached copy is immutable by construction.
+ * - Hashed build assets (/js/* and /assets/*) are cache-first: their names
+ *   change on every build, so a cached copy is immutable by construction.
  * - API and WebSocket traffic is never intercepted or cached; user content
  *   stays out of the Cache Storage entirely.
  */
@@ -70,7 +70,7 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  if (url.pathname.startsWith('/assets/')) {
+  if (url.pathname.startsWith('/assets/') || url.pathname.startsWith('/js/')) {
     event.respondWith(
       caches.match(request).then(
         cached =>

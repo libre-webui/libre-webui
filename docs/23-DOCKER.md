@@ -185,6 +185,12 @@ Then put Libre WebUI behind HTTPS with a reverse proxy or platform load
 balancer. Set `WEBUI_BIND_ADDRESS` to the exact interface that proxy needs; do
 not publish the port on every interface unless the firewall requires it.
 
+The server already delivers the built frontend efficiently: hashed bundles
+under `/js/` and `/assets/` are sent brotli- or gzip-compressed with a one-year
+`immutable` cache lifetime, while `index.html` and the service worker are
+marked `no-cache` so a new release is picked up on the next load. A proxy does
+not need to recompress or cache those paths; pass `Accept-Encoding` through.
+
 ## Useful Commands
 
 ```bash
