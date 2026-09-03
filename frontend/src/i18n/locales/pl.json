@@ -1748,6 +1748,12 @@
       "saved": "Zaktualizowano dostęp do wyszukiwania w sieci",
       "saveFailed": "Nie udało się zaktualizować dostępu do wyszukiwania w sieci"
     },
+    "defaultTheme": {
+      "title": "Motyw domyślny",
+      "description": "Motyw strony logowania, nowych kont i przeglądarek, które jeszcze żadnego nie wybrały. Każdy może nadal wybrać własny w Ustawieniach.",
+      "saved": "Zaktualizowano motyw domyślny",
+      "saveFailed": "Nie udało się zaktualizować motywu domyślnego"
+    },
     "agentAccess": {
       "title": "Agenci",
       "description": "Udostępnij administratorom sekcję Agenci (Libre Claw). CLI agentów działają na hoście jako użytkownik serwera, poza piaskownicą Work.",

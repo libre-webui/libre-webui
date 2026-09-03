@@ -1748,6 +1748,12 @@
       "saved": "Web search access updated",
       "saveFailed": "Could not update web search access"
     },
+    "defaultTheme": {
+      "title": "Default theme",
+      "description": "Theme for the sign-in page, new accounts, and browsers that have not picked one. Everyone can still choose their own in Settings.",
+      "saved": "Default theme updated",
+      "saveFailed": "Could not update the default theme"
+    },
     "agentAccess": {
       "title": "Agents",
       "description": "Offer the Agents section (Libre Claw) to administrators. Agent CLIs run on the host as the server user, outside the Work sandbox.",

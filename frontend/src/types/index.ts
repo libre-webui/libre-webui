@@ -847,6 +847,7 @@ export interface SystemInfo {
     enabled: boolean;
     siteKey?: string;
   };
+  defaultTheme?: Theme; // Administrator-chosen theme for the sign-in page and new accounts
 }
 
 // Embedding system types

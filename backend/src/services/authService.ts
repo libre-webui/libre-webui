@@ -23,6 +23,10 @@ import { dirname, join } from 'path';
 import { randomBytes } from 'crypto';
 import { turnstileService, TurnstilePublicConfig } from './turnstileService.js';
 import { getAgentsEnabled } from './agentAccessService.js';
+import {
+  getDefaultTheme,
+  type ThemePreference,
+} from './appearanceSettingsService.js';
 import { getOllamaRuntimeSettings } from './ollamaSettingsService.js';
 import {
   canCreateLocalAccount,
@@ -159,6 +163,8 @@ export interface SystemInfo {
   ollamaEnabled: boolean;
   version?: string;
   turnstile: TurnstilePublicConfig;
+  /** Administrator-chosen theme for the sign-in page and new accounts. */
+  defaultTheme: ThemePreference;
 }
 
 export class AuthService {
@@ -273,6 +279,7 @@ export class AuthService {
       ollamaEnabled: (await getOllamaRuntimeSettings()).enabled,
       version: packageVersion,
       turnstile: turnstileService.getPublicConfig(),
+      defaultTheme: await getDefaultTheme(),
     };
   }
 

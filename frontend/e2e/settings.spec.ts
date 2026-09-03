@@ -1016,6 +1016,8 @@ test('theme preference survives refresh and retries a failed save', async ({
       response.status() === 200 &&
       response.request().postData()?.includes('"mode":"light"') === true
   );
+  // Dark -> pure black -> light; the debounced sync sends the final mode.
+  await page.getByRole('button', { name: 'Switch to pure black mode' }).click();
   await page.getByRole('button', { name: 'Switch to light mode' }).click();
   await successfulSave;
   await expect(html).not.toHaveClass(/dark/);
@@ -1868,7 +1870,7 @@ test('pure black theme paints true-black surfaces and persists', async ({
   await page.keyboard.press('Control+,');
   await expect(page.getByRole('heading', { name: 'Settings' })).toBeVisible();
 
-  await page.getByRole('button', { name: 'Pure Black' }).click();
+  await page.getByRole('button', { name: 'Pure Black', exact: true }).click();
   await expect(page.locator('html')).toHaveClass(/amoled/);
   await expect
     .poll(() =>

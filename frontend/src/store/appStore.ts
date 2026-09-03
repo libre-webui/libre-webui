@@ -21,7 +21,10 @@ import { UserPreferences, Theme, Artifact } from '@/types';
 import { isDemoMode, getDemoConfig } from '@/utils/demoMode';
 import {
   applyThemeToDocument,
+  cacheInstanceTheme,
   createDefaultTheme,
+  createInstanceDefaultTheme,
+  getNextThemeMode,
   normalizeTheme,
 } from '@/utils/theme';
 import { createLogger } from '@/utils/logger';
@@ -34,7 +37,13 @@ interface AppState {
   // Theme
   theme: Theme;
   themeSyncPending: boolean;
+  /**
+   * 'default' until this browser (or the signed-in account) picks a theme.
+   * While it is 'default', the administrator's instance-wide theme applies.
+   */
+  themeSource: 'default' | 'user';
   setTheme: (theme: Theme) => void;
+  applyInstanceTheme: (theme: Theme | null | undefined) => void;
   syncThemePreference: (theme: Theme) => Promise<void>;
   scheduleThemePreferenceSync: () => void;
   updateTheme: (theme: Theme) => void;
@@ -96,8 +105,16 @@ export const useAppStore = create<AppState>()(
   persist(
     (set, get) => ({
       // Theme
-      theme: createDefaultTheme(),
+      theme: createInstanceDefaultTheme(),
       themeSyncPending: false,
+      themeSource: 'default',
+      applyInstanceTheme: theme => {
+        if (!theme) return;
+        const instanceTheme = normalizeTheme(theme);
+        cacheInstanceTheme(instanceTheme);
+        if (get().themeSource === 'user') return;
+        get().setTheme(instanceTheme);
+      },
       syncThemePreference: async theme => {
         if (themeSyncTimeout) {
           clearTimeout(themeSyncTimeout);
@@ -161,13 +178,15 @@ export const useAppStore = create<AppState>()(
       updateTheme: theme => {
         const nextTheme = normalizeTheme(theme);
         get().setTheme(nextTheme);
-        set({ themeSyncPending: true });
+        set({ themeSyncPending: true, themeSource: 'user' });
         get().scheduleThemePreferenceSync();
       },
       toggleTheme: () => {
         const currentTheme = get().theme;
-        const nextMode = currentTheme.mode === 'light' ? 'dark' : 'light';
-        get().updateTheme({ ...currentTheme, mode: nextMode });
+        get().updateTheme({
+          ...currentTheme,
+          mode: getNextThemeMode(currentTheme.mode),
+        });
       },
 
       // Sidebar
@@ -237,7 +256,9 @@ export const useAppStore = create<AppState>()(
           : null;
 
         set(state => ({
-          ...(nextTheme && { theme: nextTheme }),
+          // A theme from the account's saved preferences is the user's own
+          // choice, so the instance default stops applying on this browser.
+          ...(nextTheme && { theme: nextTheme, themeSource: 'user' as const }),
           preferences: {
             ...state.preferences,
             ...newPreferences,
@@ -394,7 +415,7 @@ export const useAppStore = create<AppState>()(
 
       // Clear user-specific state (called on logout/login to prevent data leaking between users)
       clearUserState: () => {
-        const defaultTheme = createDefaultTheme();
+        const defaultTheme = createInstanceDefaultTheme();
 
         if (themeSyncTimeout) {
           clearTimeout(themeSyncTimeout);
@@ -404,6 +425,7 @@ export const useAppStore = create<AppState>()(
         set({
           theme: defaultTheme,
           themeSyncPending: false,
+          themeSource: 'default',
           backgroundImage: null,
           preferences: {
             theme: defaultTheme,
@@ -460,6 +482,7 @@ export const useAppStore = create<AppState>()(
         return {
           theme: state.theme,
           themeSyncPending: state.themeSyncPending,
+          themeSource: state.themeSource,
           sidebarOpen: state.sidebarOpen,
           sidebarCompact: state.sidebarCompact,
           artifactPanelWidth: state.artifactPanelWidth,

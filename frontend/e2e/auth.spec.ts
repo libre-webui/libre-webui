@@ -68,9 +68,17 @@ test('login and signup default to dark mode', async ({ page }) => {
     page.getByRole('heading', { name: 'Welcome Back' })
   ).toBeVisible();
   await expect(page.locator('html')).toHaveClass(/\bdark\b/);
+  // The toggle cycles dark -> pure black -> light -> dark.
   await expect(
-    page.getByRole('button', { name: 'Switch to light mode' })
+    page.getByRole('button', { name: 'Switch to pure black mode' })
   ).toBeVisible();
+  await page.getByRole('button', { name: 'Switch to pure black mode' }).click();
+  await expect(page.locator('html')).toHaveClass(/\bamoled\b/);
+  await page.getByRole('button', { name: 'Switch to light mode' }).click();
+  await expect(page.locator('html')).not.toHaveClass(/\bdark\b/);
+  await page.getByRole('button', { name: 'Switch to dark mode' }).click();
+  await expect(page.locator('html')).toHaveClass(/\bdark\b/);
+  await expect(page.locator('html')).not.toHaveClass(/\bamoled\b/);
 
   await page.getByRole('button', { name: 'Sign up here' }).click();
 
@@ -180,6 +188,49 @@ test('login preserves an explicit light theme preference', async ({ page }) => {
   await expect(
     page.getByRole('button', { name: 'Switch to dark mode' })
   ).toBeVisible();
+});
+
+test('login page follows the administrator default theme until the visitor picks one', async ({
+  page,
+}) => {
+  await mockLibreWebUiApi(page, {
+    systemInfo: {
+      requiresAuth: true,
+      hasUsers: true,
+      userCount: 1,
+      signupEnabled: true,
+      version: '0.17.0-e2e',
+      turnstile: { enabled: false },
+      defaultTheme: { mode: 'amoled', accent: 'blue' },
+    },
+  });
+
+  await page.goto('/login');
+
+  await expect(
+    page.getByRole('heading', { name: 'Welcome Back' })
+  ).toBeVisible();
+  await expect(page.locator('html')).toHaveClass(/\bamoled\b/);
+  // The default is cached so the boot script paints it before React runs.
+  await expect
+    .poll(() =>
+      page.evaluate(() => {
+        const value = localStorage.getItem('libre-webui-instance-theme');
+        return value ? JSON.parse(value).mode : undefined;
+      })
+    )
+    .toBe('amoled');
+  await page.reload();
+  await expect(page.locator('html')).toHaveClass(/\bamoled\b/);
+
+  // A visitor's own choice wins over the instance default and survives reloads.
+  await page.getByRole('button', { name: 'Switch to light mode' }).click();
+  await expect(page.locator('html')).not.toHaveClass(/\bdark\b/);
+  await page.reload();
+  await expect(
+    page.getByRole('heading', { name: 'Welcome Back' })
+  ).toBeVisible();
+  await expect(page.locator('html')).not.toHaveClass(/\bdark\b/);
 });
 
 test('demo mode login is click-only with disabled demo credentials', async ({

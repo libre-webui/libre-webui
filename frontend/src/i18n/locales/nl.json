@@ -1748,6 +1748,12 @@
       "saved": "Toegang tot webzoeken bijgewerkt",
       "saveFailed": "Kon toegang tot webzoeken niet bijwerken"
     },
+    "defaultTheme": {
+      "title": "Standaardthema",
+      "description": "Thema voor de aanmeldpagina, nieuwe accounts en browsers die er nog geen hebben gekozen. Iedereen kan nog steeds een eigen thema kiezen in Instellingen.",
+      "saved": "Standaardthema bijgewerkt",
+      "saveFailed": "Kon het standaardthema niet bijwerken"
+    },
     "agentAccess": {
       "title": "Agents",
       "description": "Bied de sectie Agents (Libre Claw) aan beheerders aan. Agent-CLI's draaien op de host als de servergebruiker, buiten de Work-sandbox.",

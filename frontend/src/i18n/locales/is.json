@@ -1748,6 +1748,12 @@
       "saved": "Aðgangur að vefleit uppfærður",
       "saveFailed": "Ekki tókst að uppfæra aðgang að vefleit"
     },
+    "defaultTheme": {
+      "title": "Sjálfgefið þema",
+      "description": "Þema fyrir innskráningarsíðuna, nýja reikninga og vafra sem hafa ekki valið sér þema. Allir geta samt valið sitt eigið í Stillingum.",
+      "saved": "Sjálfgefið þema uppfært",
+      "saveFailed": "Ekki tókst að uppfæra sjálfgefið þema"
+    },
     "agentAccess": {
       "title": "Fulltrúar",
       "description": "Bjóða stjórnendum upp á Fulltrúa-hlutann (Libre Claw). Fulltrúa-skipanalínur keyra á hýslinum sem netþjónsnotandinn, utan Work-sandkassans.",

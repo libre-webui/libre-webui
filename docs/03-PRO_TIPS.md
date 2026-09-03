@@ -74,9 +74,13 @@ chats and tasks. Navigate with `↑`/`↓`, open with `Enter`, close with `Esc`
 ## Theme Default
 
 New installs use the dark theme, applied before first paint so there is no
-light flash. A saved light preference is always respected. Libre WebUI does
-not follow the operating system's theme setting; switch explicitly with
-`Cmd/Ctrl + D` or from Settings.
+light flash. An administrator can change the instance-wide default from
+**Users > Default theme** (Light, Dark, or Pure Black). That default paints the
+sign-in page, seeds every new account, and applies in any browser that has not
+picked a theme of its own; a saved personal preference is always respected.
+Libre WebUI does not follow the operating system's theme setting; switch
+explicitly with `Cmd/Ctrl + D`, the sun/moon button, or from Settings. The
+toggle cycles Light, Dark, and Pure Black.
 
 ## Keep Work Tasks Focused
 

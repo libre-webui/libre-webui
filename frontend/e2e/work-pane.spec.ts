@@ -2503,6 +2503,8 @@ test('formats and highlights workspace code in dark and light mode', async ({
     .getByTestId('code-block')
     .evaluate(element => getComputedStyle(element).backgroundColor);
 
+  // Dark -> pure black -> light.
+  await page.getByRole('button', { name: 'Switch to pure black mode' }).click();
   await page.getByRole('button', { name: 'Switch to light mode' }).click();
   await expect(
     page.getByRole('button', { name: 'Switch to dark mode' })

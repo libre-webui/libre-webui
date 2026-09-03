@@ -1748,6 +1748,12 @@
       "saved": "Đã cập nhật quyền tìm kiếm web",
       "saveFailed": "Không thể cập nhật quyền tìm kiếm web"
     },
+    "defaultTheme": {
+      "title": "Chủ đề mặc định",
+      "description": "Chủ đề cho trang đăng nhập, tài khoản mới và các trình duyệt chưa chọn chủ đề. Mọi người vẫn có thể chọn chủ đề riêng trong Cài đặt.",
+      "saved": "Đã cập nhật chủ đề mặc định",
+      "saveFailed": "Không thể cập nhật chủ đề mặc định"
+    },
     "agentAccess": {
       "title": "Tác nhân",
       "description": "Cung cấp mục Tác nhân (Libre Claw) cho quản trị viên. CLI tác nhân chạy trên máy chủ với tư cách người dùng máy chủ, bên ngoài sandbox Work.",

@@ -1748,6 +1748,12 @@
       "saved": "Přístup k vyhledávání na webu byl aktualizován",
       "saveFailed": "Přístup k vyhledávání na webu se nepodařilo aktualizovat"
     },
+    "defaultTheme": {
+      "title": "Výchozí motiv",
+      "description": "Motiv pro přihlašovací stránku, nové účty a prohlížeče, které si žádný nevybraly. Každý si může v Nastavení zvolit vlastní.",
+      "saved": "Výchozí motiv aktualizován",
+      "saveFailed": "Výchozí motiv se nepodařilo aktualizovat"
+    },
     "agentAccess": {
       "title": "Agenti",
       "description": "Zpřístupnit administrátorům sekci Agenti (Libre Claw). Agentní CLI běží na hostiteli pod uživatelem serveru, mimo sandbox Work.",

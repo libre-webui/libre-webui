@@ -24,6 +24,7 @@ import {
 } from '../types/index.js';
 import { createLogger } from '../utils/logger.js';
 import { normalizeChatProviderSelection } from '../utils/chatProviderSelection.js';
+import { getDefaultTheme } from './appearanceSettingsService.js';
 
 const logger = createLogger('services:preferences-service');
 
@@ -139,9 +140,9 @@ class PreferencesService {
 
       // A first read and a concurrent patch must not race to replace one
       // another. Initialize only if the serialized re-read is still empty.
+      const instanceDefaults = await this.instanceDefaults();
       const initialized = await storageService.mutatePreferences(
-        current =>
-          current ? undefined : this.mergeWithDefaults(this.defaultPreferences),
+        current => (current ? undefined : instanceDefaults),
         userId
       );
       if (initialized) {
@@ -155,6 +156,17 @@ class PreferencesService {
     }
 
     return this.mergeWithDefaults(this.defaultPreferences);
+  }
+
+  /**
+   * The built-in defaults with the administrator's instance-wide theme in
+   * place of the static one. New accounts and resets start from here.
+   */
+  private async instanceDefaults(): Promise<UserPreferences> {
+    return this.mergeWithDefaults({
+      ...this.defaultPreferences,
+      theme: await getDefaultTheme(),
+    });
   }
 
   private mergeWithDefaults(preferences: UserPreferences): UserPreferences {
@@ -454,10 +466,8 @@ class PreferencesService {
 
   async resetToDefaults(userId?: string): Promise<UserPreferences> {
     try {
-      return await this.mutatePreferences(
-        () => this.mergeWithDefaults(this.defaultPreferences),
-        userId
-      );
+      const instanceDefaults = await this.instanceDefaults();
+      return await this.mutatePreferences(() => instanceDefaults, userId);
     } catch (error) {
       logger.error('Failed to reset preferences to defaults:', error);
       throw error;

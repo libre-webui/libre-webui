@@ -47,6 +47,7 @@ type MockSystemInfo = {
   passkeysInUse?: boolean;
   version: string;
   turnstile?: { enabled: boolean; siteKey?: string };
+  defaultTheme?: { mode: 'light' | 'dark' | 'amoled'; accent?: string };
 };
 
 type MockModel = {
@@ -668,6 +669,13 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
   }
 
   const systemInfo = options.systemInfo ?? defaultSystemInfo;
+  let instanceDefaultTheme: Record<string, unknown> = {
+    mode: 'dark',
+    adaptToAccent: false,
+    accent: 'blue',
+    customAccent: '#4176e6',
+    ...(systemInfo.defaultTheme ?? {}),
+  };
   const authRole = options.authRole ?? 'admin';
   const authUsers = options.authUsers ?? [];
   const sessions = structuredClone(options.sessions ?? []);
@@ -2171,6 +2179,23 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
           },
           body: 'data: {"type":"complete"}\n\n',
         });
+        return;
+      }
+
+      if (path === '/preferences/default-theme' && method === 'GET') {
+        await fulfillJson(route, { theme: instanceDefaultTheme });
+        return;
+      }
+
+      if (path === '/preferences/default-theme' && method === 'PUT') {
+        const body = route.request().postDataJSON() as {
+          theme?: Record<string, unknown>;
+        };
+        instanceDefaultTheme = {
+          ...instanceDefaultTheme,
+          ...(body.theme ?? {}),
+        };
+        await fulfillJson(route, { theme: instanceDefaultTheme });
         return;
       }
 

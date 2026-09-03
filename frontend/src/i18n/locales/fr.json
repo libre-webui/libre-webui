@@ -1748,6 +1748,12 @@
       "saved": "Accès à la recherche web mis à jour",
       "saveFailed": "Impossible de mettre à jour l'accès à la recherche web"
     },
+    "defaultTheme": {
+      "title": "Thème par défaut",
+      "description": "Thème de la page de connexion, des nouveaux comptes et des navigateurs qui n'en ont pas choisi. Chacun peut toujours choisir le sien dans les Paramètres.",
+      "saved": "Thème par défaut mis à jour",
+      "saveFailed": "Impossible de mettre à jour le thème par défaut"
+    },
     "agentAccess": {
       "title": "Agents",
       "description": "Proposer la section Agents (Libre Claw) aux administrateurs. Les CLI d'agents s'exécutent sur l'hôte avec l'utilisateur du serveur, hors du bac à sable Work.",

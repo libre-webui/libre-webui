@@ -1748,6 +1748,12 @@
       "saved": "Akses pencarian web diperbarui",
       "saveFailed": "Tidak dapat memperbarui akses pencarian web"
     },
+    "defaultTheme": {
+      "title": "Tema bawaan",
+      "description": "Tema untuk halaman masuk, akun baru, dan browser yang belum memilih tema. Semua orang tetap dapat memilih tema sendiri di Pengaturan.",
+      "saved": "Tema bawaan diperbarui",
+      "saveFailed": "Tidak dapat memperbarui tema bawaan"
+    },
     "agentAccess": {
       "title": "Agen",
       "description": "Tawarkan bagian Agen (Libre Claw) kepada administrator. CLI agen berjalan di host sebagai pengguna server, di luar sandbox Work.",

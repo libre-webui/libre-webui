@@ -1748,6 +1748,12 @@
       "saved": "Accesso alla ricerca web aggiornato",
       "saveFailed": "Impossibile aggiornare l'accesso alla ricerca web"
     },
+    "defaultTheme": {
+      "title": "Tema predefinito",
+      "description": "Tema per la pagina di accesso, i nuovi account e i browser che non ne hanno scelto uno. Ognuno può comunque scegliere il proprio nelle Impostazioni.",
+      "saved": "Tema predefinito aggiornato",
+      "saveFailed": "Impossibile aggiornare il tema predefinito"
+    },
     "agentAccess": {
       "title": "Agenti",
       "description": "Offrire la sezione Agenti (Libre Claw) agli amministratori. Le CLI degli agenti vengono eseguite sull'host come utente del server, fuori dalla sandbox di Work.",

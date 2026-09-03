@@ -1748,6 +1748,12 @@
       "saved": "Åtkomst till webbsökning uppdaterad",
       "saveFailed": "Kunde inte uppdatera åtkomst till webbsökning"
     },
+    "defaultTheme": {
+      "title": "Standardtema",
+      "description": "Tema för inloggningssidan, nya konton och webbläsare som inte har valt något. Alla kan fortfarande välja sitt eget under Inställningar.",
+      "saved": "Standardtema uppdaterat",
+      "saveFailed": "Det gick inte att uppdatera standardtemat"
+    },
     "agentAccess": {
       "title": "Agenter",
       "description": "Erbjud sektionen Agenter (Libre Claw) för administratörer. Agent-CLI:er körs på värden som serveranvändaren, utanför Work-sandlådan.",

@@ -1748,6 +1748,12 @@
       "saved": "Acesso à pesquisa na web atualizado",
       "saveFailed": "Não foi possível atualizar o acesso à pesquisa na web"
     },
+    "defaultTheme": {
+      "title": "Tema padrão",
+      "description": "Tema da página de login, de novas contas e de navegadores que ainda não escolheram um. Todos ainda podem escolher o seu nas Configurações.",
+      "saved": "Tema padrão atualizado",
+      "saveFailed": "Não foi possível atualizar o tema padrão"
+    },
     "agentAccess": {
       "title": "Agentes",
       "description": "Oferecer a seção Agentes (Libre Claw) aos administradores. As CLIs de agentes são executadas no host como o usuário do servidor, fora do sandbox do Work.",

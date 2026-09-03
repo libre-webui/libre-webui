@@ -4159,6 +4159,18 @@
         {
           "file": "backend/src/routes/preferences.ts",
           "mount": "/api/preferences",
+          "method": "GET",
+          "path": "/default-theme"
+        },
+        {
+          "file": "backend/src/routes/preferences.ts",
+          "mount": "/api/preferences",
+          "method": "PUT",
+          "path": "/default-theme"
+        },
+        {
+          "file": "backend/src/routes/preferences.ts",
+          "mount": "/api/preferences",
           "method": "PUT",
           "path": "/"
         },

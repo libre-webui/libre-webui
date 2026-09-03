@@ -19,6 +19,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { UserManager } from '@/components/UserManager';
 import { AgentAccessSettings } from '@/components/AgentAccessSettings';
+import { DefaultThemeSettings } from '@/components/DefaultThemeSettings';
 import { ToolAccessSettings } from '@/components/ToolAccessSettings';
 import { VoiceAccessSettings } from '@/components/VoiceAccessSettings';
 import { MfaPolicySettings } from '@/components/MfaPolicySettings';
@@ -41,6 +42,7 @@ export const UserManagementPage: React.FC = () => {
         description={t('userManager.pageDescription')}
       />
       <div className='mb-4 space-y-4'>
+        <DefaultThemeSettings />
         <WorkAccessSettings />
         <WorkPoliciesSettings />
         <OllamaProviderSettings />

@@ -1748,6 +1748,12 @@
       "saved": "Web araması erişimi güncellendi",
       "saveFailed": "Web araması erişimi güncellenemedi"
     },
+    "defaultTheme": {
+      "title": "Varsayılan tema",
+      "description": "Oturum açma sayfası, yeni hesaplar ve henüz tema seçmemiş tarayıcılar için tema. Herkes Ayarlar'dan kendi temasını seçmeye devam edebilir.",
+      "saved": "Varsayılan tema güncellendi",
+      "saveFailed": "Varsayılan tema güncellenemedi"
+    },
     "agentAccess": {
       "title": "Ajanlar",
       "description": "Ajanlar bölümünü (Libre Claw) yöneticilere sunun. Ajan CLI'ları ana makinede sunucu kullanıcısı olarak, Work korumalı alanının dışında çalışır.",

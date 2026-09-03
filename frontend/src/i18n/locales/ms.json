@@ -1748,6 +1748,12 @@
       "saved": "Akses carian web dikemas kini",
       "saveFailed": "Tidak dapat mengemas kini akses carian web"
     },
+    "defaultTheme": {
+      "title": "Tema lalai",
+      "description": "Tema untuk halaman log masuk, akaun baharu dan pelayar yang belum memilih tema. Semua orang masih boleh memilih tema sendiri dalam Tetapan.",
+      "saved": "Tema lalai dikemas kini",
+      "saveFailed": "Tidak dapat mengemas kini tema lalai"
+    },
     "agentAccess": {
       "title": "Ejen",
       "description": "Tawarkan bahagian Ejen (Libre Claw) kepada pentadbir. CLI ejen berjalan pada hos sebagai pengguna pelayan, di luar kotak pasir Work.",

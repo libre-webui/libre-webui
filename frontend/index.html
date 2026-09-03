@@ -7,14 +7,25 @@
         let mode = 'dark';
 
         try {
+          const known = ['light', 'dark', 'amoled'];
           const savedState = JSON.parse(
             localStorage.getItem('libre-webui-app-state') || 'null'
           );
+          // The administrator's instance default (cached from
+          // /auth/system-info) applies until this browser or the signed-in
+          // account picks a theme of its own.
+          const instanceTheme = JSON.parse(
+            localStorage.getItem('libre-webui-instance-theme') || 'null'
+          );
+          const savedMode = savedState?.state?.theme?.mode;
+          const savedByUser = savedState?.state?.themeSource === 'user';
 
-          if (savedState?.state?.theme?.mode === 'light') {
-            mode = 'light';
-          } else if (savedState?.state?.theme?.mode === 'amoled') {
-            mode = 'amoled';
+          if (savedByUser && known.includes(savedMode)) {
+            mode = savedMode;
+          } else if (known.includes(instanceTheme?.mode)) {
+            mode = instanceTheme.mode;
+          } else if (known.includes(savedMode)) {
+            mode = savedMode;
           }
         } catch {
           // Keep the dark default when persisted state is unavailable or invalid.

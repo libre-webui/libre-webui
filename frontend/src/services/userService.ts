@@ -16,6 +16,7 @@
  */
 
 import { useAuthStore } from '@/store/authStore';
+import { useAppStore } from '@/store/appStore';
 import { authApi } from '@/utils/api';
 import { createLogger } from '@/utils/logger';
 
@@ -40,6 +41,11 @@ export class UserService {
       if (systemInfoResponse.success && systemInfoResponse.data) {
         logger.debug('Setting system info:', systemInfoResponse.data);
         setSystemInfo(systemInfoResponse.data);
+        // Paint the administrator's default theme wherever this browser has
+        // not chosen one (the sign-in page most of all).
+        useAppStore
+          .getState()
+          .applyInstanceTheme(systemInfoResponse.data.defaultTheme);
       } else {
         logger.error('System info response failed:', systemInfoResponse);
       }

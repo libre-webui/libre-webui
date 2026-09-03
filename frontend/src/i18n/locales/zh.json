@@ -1748,6 +1748,12 @@
       "saved": "网页搜索权限已更新",
       "saveFailed": "无法更新网页搜索权限"
     },
+    "defaultTheme": {
+      "title": "默认主题",
+      "description": "用于登录页面、新账户以及尚未选择主题的浏览器。每个人仍可在设置中选择自己的主题。",
+      "saved": "默认主题已更新",
+      "saveFailed": "无法更新默认主题"
+    },
     "agentAccess": {
       "title": "智能体",
       "description": "向管理员提供智能体板块（Libre Claw）。智能体 CLI 在 Work 沙箱之外，以服务器用户身份在主机上运行。",

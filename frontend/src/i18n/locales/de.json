@@ -1748,6 +1748,12 @@
       "saved": "Websuche-Zugriff aktualisiert",
       "saveFailed": "Websuche-Zugriff konnte nicht aktualisiert werden"
     },
+    "defaultTheme": {
+      "title": "Standarddesign",
+      "description": "Design für die Anmeldeseite, neue Konten und Browser, die noch keines gewählt haben. Alle können in den Einstellungen weiterhin ein eigenes wählen.",
+      "saved": "Standarddesign aktualisiert",
+      "saveFailed": "Standarddesign konnte nicht aktualisiert werden"
+    },
     "agentAccess": {
       "title": "Agenten",
       "description": "Den Bereich Agenten (Libre Claw) für Administratoren anbieten. Agenten-CLIs laufen auf dem Host als Server-Benutzer, außerhalb der Work-Sandbox.",

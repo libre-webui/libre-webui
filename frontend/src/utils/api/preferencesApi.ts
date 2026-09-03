@@ -24,6 +24,7 @@ import type {
   KnowledgeCollection,
   Note,
   SessionFolder,
+  Theme,
   UserPreferences,
 } from '@/types';
 import { isDemoMode } from '@/utils/demoMode';
@@ -167,6 +168,27 @@ function archiveImportPayload(
 }
 
 export const preferencesApi = {
+  /** Instance-wide default theme (administrators). */
+  getDefaultTheme: (): Promise<ApiResponse<{ theme: Theme }>> => {
+    if (isDemoMode()) {
+      return createDemoResponse({ theme: DEFAULT_DEMO_PREFERENCES.theme });
+    }
+    return api
+      .get<ApiResponse<{ theme: Theme }>>('/preferences/default-theme')
+      .then(res => res.data);
+  },
+
+  setDefaultTheme: (theme: Theme): Promise<ApiResponse<{ theme: Theme }>> => {
+    if (isDemoMode()) {
+      return createDemoResponse({ theme });
+    }
+    return api
+      .put<ApiResponse<{ theme: Theme }>>('/preferences/default-theme', {
+        theme,
+      })
+      .then(res => res.data);
+  },
+
   getPreferences: (): Promise<ApiResponse<UserPreferences>> => {
     if (isDemoMode()) {
       return createDemoResponse(getDemoPreferences());

@@ -17,7 +17,7 @@
 
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { createDefaultTheme, normalizeTheme } from './theme';
+import { createDefaultTheme, getNextThemeMode, normalizeTheme } from './theme';
 
 test('uses dark mode when no theme preference exists', () => {
   assert.equal(createDefaultTheme().mode, 'dark');
@@ -34,4 +34,10 @@ test('preserves the amoled mode and collapses unknown modes to dark', () => {
     normalizeTheme({ mode: 'ophelia' as unknown as 'dark' }).mode,
     'dark'
   );
+});
+
+test('the toggle cycles light, dark, pure black, then light again', () => {
+  assert.equal(getNextThemeMode('light'), 'dark');
+  assert.equal(getNextThemeMode('dark'), 'amoled');
+  assert.equal(getNextThemeMode('amoled'), 'light');
 });

@@ -532,6 +532,53 @@ export const normalizeTheme = (theme?: Partial<Theme> | null): Theme => {
 export const createDefaultTheme = (): Theme =>
   normalizeTheme({ mode: DEFAULT_THEME_MODE });
 
+/** The toggle walks light -> dark -> pure black -> light. */
+export const THEME_MODE_CYCLE: readonly Theme['mode'][] = [
+  'light',
+  'dark',
+  'amoled',
+];
+
+export const getNextThemeMode = (mode: Theme['mode']): Theme['mode'] => {
+  const index = THEME_MODE_CYCLE.indexOf(mode);
+  return THEME_MODE_CYCLE[(index + 1) % THEME_MODE_CYCLE.length];
+};
+
+/**
+ * The administrator's instance-wide default theme is cached locally so the
+ * boot script in index.html can paint it before the first render, instead
+ * of flashing the built-in dark theme until /auth/system-info answers.
+ */
+export const INSTANCE_THEME_STORAGE_KEY = 'libre-webui-instance-theme';
+
+export const readCachedInstanceTheme = (): Theme | null => {
+  if (typeof localStorage === 'undefined') return null;
+  try {
+    const raw = localStorage.getItem(INSTANCE_THEME_STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as Partial<Theme> | null;
+    return parsed && typeof parsed === 'object' ? normalizeTheme(parsed) : null;
+  } catch {
+    return null;
+  }
+};
+
+export const cacheInstanceTheme = (theme: Theme): void => {
+  if (typeof localStorage === 'undefined') return;
+  try {
+    localStorage.setItem(
+      INSTANCE_THEME_STORAGE_KEY,
+      JSON.stringify(normalizeTheme(theme))
+    );
+  } catch {
+    // Storage may be full or disabled; the theme still applies this session.
+  }
+};
+
+/** The instance default when known, else the built-in default. */
+export const createInstanceDefaultTheme = (): Theme =>
+  readCachedInstanceTheme() ?? createDefaultTheme();
+
 export const getAccentPalette = (theme?: Partial<Theme> | null) => {
   const normalizedTheme = normalizeTheme(theme);
 

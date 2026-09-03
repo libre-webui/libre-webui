@@ -1748,6 +1748,12 @@
       "saved": "Adgang til websøgning opdateret",
       "saveFailed": "Kunne ikke opdatere adgang til websøgning"
     },
+    "defaultTheme": {
+      "title": "Standardtema",
+      "description": "Tema til loginsiden, nye konti og browsere, der ikke har valgt et. Alle kan stadig vælge deres eget under Indstillinger.",
+      "saved": "Standardtema opdateret",
+      "saveFailed": "Standardtemaet kunne ikke opdateres"
+    },
     "agentAccess": {
       "title": "Agenter",
       "description": "Tilbyd sektionen Agenter (Libre Claw) til administratorer. Agent-CLI'er kører på værten som serverbrugeren, uden for Work-sandkassen.",

@@ -24,8 +24,18 @@ import {
   UserPreferences,
   getErrorMessage,
 } from '../types/index.js';
-import { authenticate, AuthenticatedRequest } from '../middleware/auth.js';
+import {
+  authenticate,
+  AuthenticatedRequest,
+  requireAdmin,
+} from '../middleware/auth.js';
 import { ChatProviderSelectionError } from '../utils/chatProviderSelection.js';
+import {
+  getDefaultTheme,
+  normalizeThemeInput,
+  setDefaultTheme,
+  type ThemePreference,
+} from '../services/appearanceSettingsService.js';
 import dataArchiveService, {
   DATA_ARCHIVE_MAX_BYTES,
   DataArchiveValidationError,
@@ -319,6 +329,59 @@ router.put(
       res.status(error instanceof ChatProviderSelectionError ? 400 : 500).json({
         success: false,
         error: getErrorMessage(error, 'Failed to update preferences'),
+      });
+    }
+  }
+);
+
+/**
+ * Instance-wide default theme (administrators). Paints the sign-in page,
+ * seeds new accounts, and is the fallback for browsers with no explicit
+ * choice. It is also published unauthenticated through /auth/system-info.
+ */
+router.get(
+  '/default-theme',
+  requireAdmin,
+  async (
+    _req: AuthenticatedRequest,
+    res: Response<ApiResponse<{ theme: ThemePreference }>>
+  ): Promise<void> => {
+    try {
+      res.json({ success: true, data: { theme: await getDefaultTheme() } });
+    } catch (error: unknown) {
+      res.status(500).json({
+        success: false,
+        error: getErrorMessage(error, 'Failed to get the default theme'),
+      });
+    }
+  }
+);
+
+router.put(
+  '/default-theme',
+  requireAdmin,
+  async (
+    req: AuthenticatedRequest,
+    res: Response<ApiResponse<{ theme: ThemePreference }>>
+  ): Promise<void> => {
+    const theme = normalizeThemeInput(req.body?.theme);
+    if (!theme) {
+      res.status(400).json({
+        success: false,
+        error:
+          'theme must be an object with a mode of light, dark, or amoled and an optional accent.',
+      });
+      return;
+    }
+    try {
+      res.json({
+        success: true,
+        data: { theme: await setDefaultTheme(theme) },
+      });
+    } catch (error: unknown) {
+      res.status(500).json({
+        success: false,
+        error: getErrorMessage(error, 'Failed to update the default theme'),
       });
     }
   }
