@@ -39,14 +39,18 @@ const ARTIFACT_FRAME_ALLOW =
 const applicationOrigins = (): string[] => {
   const origins = new Set(["'self'"]);
   if (process.env.NODE_ENV !== 'production') {
+    // CSP host-source grammar has no IPv6 literal form, so `[::1]` cannot be
+    // expressed here; browsers reject it and log an error for every render.
     origins.add('http://localhost:*');
     origins.add('http://127.0.0.1:*');
-    origins.add('http://[::1]:*');
   }
   for (const candidate of (process.env.CORS_ORIGIN || '').split(',')) {
     try {
       const origin = new URL(candidate.trim());
-      if (origin.protocol === 'http:' || origin.protocol === 'https:') {
+      if (
+        (origin.protocol === 'http:' || origin.protocol === 'https:') &&
+        !origin.hostname.startsWith('[')
+      ) {
         origins.add(origin.origin);
       }
     } catch {

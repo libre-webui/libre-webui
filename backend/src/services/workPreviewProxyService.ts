@@ -94,14 +94,18 @@ const SAFE_WEBSOCKET_RESPONSE_HEADERS = new Set([
 const previewFrameAncestors = (): string => {
   const ancestors = new Set(["'self'"]);
   if (process.env.NODE_ENV !== 'production') {
+    // CSP host-source grammar has no IPv6 literal form, so `[::1]` cannot be
+    // expressed here; browsers reject it and log an error for every render.
     ancestors.add('http://localhost:*');
     ancestors.add('http://127.0.0.1:*');
-    ancestors.add('http://[::1]:*');
   }
   for (const candidate of (process.env.CORS_ORIGIN || '').split(',')) {
     try {
       const origin = new URL(candidate.trim());
-      if (origin.protocol === 'http:' || origin.protocol === 'https:') {
+      if (
+        (origin.protocol === 'http:' || origin.protocol === 'https:') &&
+        !origin.hostname.startsWith('[')
+      ) {
         ancestors.add(origin.origin);
       }
     } catch {
