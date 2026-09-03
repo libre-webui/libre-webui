@@ -22,7 +22,7 @@
  * what the account (and the active profile) already allows.
  */
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Wrench } from 'lucide-react';
 import { cn } from '@/utils';
@@ -87,6 +87,22 @@ export const ComposerToolsMenu: React.FC<ComposerToolsMenuProps> = ({
     };
     document.addEventListener('pointerdown', onPointerDown);
     return () => document.removeEventListener('pointerdown', onPointerDown);
+  }, [open]);
+
+  // The menu opens upward, so it may only be as tall as the space between
+  // the trigger and the top of the viewport (like the tab bar's menus). The
+  // option list scrolls inside that box; the toggle and hint stay pinned.
+  const [maxHeight, setMaxHeight] = useState<number | undefined>(undefined);
+  useLayoutEffect(() => {
+    if (!open) return;
+    const measure = () => {
+      const top = containerRef.current?.getBoundingClientRect().top ?? 0;
+      // 8px gap above the trigger (mb-2) plus 16px breathing room at the top.
+      setMaxHeight(Math.max(160, Math.floor(top - 24)));
+    };
+    measure();
+    window.addEventListener('resize', measure);
+    return () => window.removeEventListener('resize', measure);
   }, [open]);
 
   if (!available || !catalog) return null;
@@ -181,10 +197,11 @@ export const ComposerToolsMenu: React.FC<ComposerToolsMenuProps> = ({
 
       {open && (
         <div
-          className='absolute bottom-full start-0 z-30 mb-2 w-72 rounded-xl border border-gray-200 bg-white p-2 shadow-lg dark:border-dark-200 dark:bg-dark-50'
+          className='absolute bottom-full start-0 z-30 mb-2 flex w-72 flex-col rounded-xl border border-gray-200 bg-white p-2 shadow-lg dark:border-dark-200 dark:bg-dark-50'
+          style={{ maxHeight }}
           data-testid='composer-tools-menu'
         >
-          <label className='flex cursor-pointer items-center justify-between gap-2 rounded-lg px-2 py-1.5 text-sm font-medium text-gray-800 dark:text-gray-200'>
+          <label className='flex flex-shrink-0 cursor-pointer items-center justify-between gap-2 rounded-lg px-2 py-1.5 text-sm font-medium text-gray-800 dark:text-gray-200'>
             {t('composer.toolsMenu.enable')}
             <input
               type='checkbox'
@@ -195,50 +212,55 @@ export const ComposerToolsMenu: React.FC<ComposerToolsMenuProps> = ({
             />
           </label>
 
-          {builtins.length > 0 && (
-            <>
-              <p className='mt-1 px-2 text-[11px] font-medium uppercase tracking-wide text-gray-400 dark:text-dark-500 rtl:tracking-normal'>
-                {t('composer.toolsMenu.builtin')}
-              </p>
-              {builtins.map(entry =>
-                checkboxRow(
-                  entry.name,
-                  entry.name,
-                  undefined,
-                  checkedBuiltin.has(entry.name),
-                  () =>
+          <div
+            className='min-h-0 flex-1 overflow-y-auto overscroll-contain'
+            data-testid='composer-tools-options'
+          >
+            {builtins.length > 0 && (
+              <>
+                <p className='mt-1 px-2 text-[11px] font-medium uppercase tracking-wide text-gray-400 dark:text-dark-500 rtl:tracking-normal'>
+                  {t('composer.toolsMenu.builtin')}
+                </p>
+                {builtins.map(entry =>
+                  checkboxRow(
+                    entry.name,
+                    entry.name,
+                    undefined,
+                    checkedBuiltin.has(entry.name),
+                    () =>
+                      onChange({
+                        ...value,
+                        enabled: true,
+                        builtinTools: toggleId(
+                          value.builtinTools,
+                          builtinIds,
+                          entry.name
+                        ),
+                      })
+                  )
+                )}
+              </>
+            )}
+
+            {servers.length > 0 && (
+              <>
+                <p className='mt-1 px-2 text-[11px] font-medium uppercase tracking-wide text-gray-400 dark:text-dark-500 rtl:tracking-normal'>
+                  {t('composer.toolsMenu.servers')}
+                </p>
+                {servers.map(([id, name]) =>
+                  checkboxRow(id, name, undefined, checkedServers.has(id), () =>
                     onChange({
                       ...value,
                       enabled: true,
-                      builtinTools: toggleId(
-                        value.builtinTools,
-                        builtinIds,
-                        entry.name
-                      ),
+                      serverIds: toggleId(value.serverIds, serverIds, id),
                     })
-                )
-              )}
-            </>
-          )}
+                  )
+                )}
+              </>
+            )}
+          </div>
 
-          {servers.length > 0 && (
-            <>
-              <p className='mt-1 px-2 text-[11px] font-medium uppercase tracking-wide text-gray-400 dark:text-dark-500 rtl:tracking-normal'>
-                {t('composer.toolsMenu.servers')}
-              </p>
-              {servers.map(([id, name]) =>
-                checkboxRow(id, name, undefined, checkedServers.has(id), () =>
-                  onChange({
-                    ...value,
-                    enabled: true,
-                    serverIds: toggleId(value.serverIds, serverIds, id),
-                  })
-                )
-              )}
-            </>
-          )}
-
-          <p className='mt-1 border-t border-gray-100 px-2 pb-0.5 pt-1.5 text-[11px] leading-4 text-gray-400 dark:border-dark-200 dark:text-dark-500'>
+          <p className='mt-1 flex-shrink-0 border-t border-gray-100 px-2 pb-0.5 pt-1.5 text-[11px] leading-4 text-gray-400 dark:border-dark-200 dark:text-dark-500'>
             {t('composer.toolsMenu.hint')}
           </p>
         </div>

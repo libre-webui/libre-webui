@@ -192,6 +192,69 @@ test('the tool picker narrows a turn before it is sent', async ({ page }) => {
     .toMatchObject({ tools: true, toolSelection: { serverIds: [] } });
 });
 
+test('the tool picker fits a short viewport and scrolls its options', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1280, height: 520 });
+  await mockLibreWebUiApi(page, {
+    sessions: [
+      {
+        id: 'short-session',
+        title: 'Short',
+        model: 'llama3.2:3b',
+        createdAt: 1_770_000_000_000,
+        updatedAt: 1_770_000_000_000,
+        messages: [],
+      },
+    ],
+  });
+  await page.addInitScript(() => {
+    localStorage.setItem('i18nextLng', 'en');
+    localStorage.setItem('auth-token', 'e2e-token');
+  });
+  const tallCatalog = {
+    ...toolCatalog,
+    tools: [
+      ...Array.from({ length: 30 }, (_, index) => ({
+        name: `builtin_tool_${index}`,
+        sideEffect: false,
+        source: 'builtin',
+      })),
+      ...toolCatalog.tools,
+    ],
+  };
+  await page.route(/\/api\/tools\/catalog$/, async route => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ success: true, data: tallCatalog }),
+    });
+  });
+
+  await page.goto('/c/short-session');
+  const button = page.getByTestId('composer-tools-button');
+  await expect(button).toBeVisible();
+  await button.click();
+  const menu = page.getByTestId('composer-tools-menu');
+  await expect(menu).toBeVisible();
+
+  // The whole menu stays on screen, above the trigger.
+  const box = await menu.boundingBox();
+  const trigger = await button.boundingBox();
+  expect(box).not.toBeNull();
+  expect(box!.y).toBeGreaterThanOrEqual(0);
+  expect(box!.y + box!.height).toBeLessThanOrEqual(trigger!.y);
+
+  // The option list scrolls inside while the toggle and hint stay visible.
+  const options = page.getByTestId('composer-tools-options');
+  const scrolls = await options.evaluate(
+    element => element.scrollHeight > element.clientHeight + 1
+  );
+  expect(scrolls).toBe(true);
+  await expect(page.getByTestId('composer-tools-enable')).toBeVisible();
+  await expect(menu).toContainText('Side-effecting calls');
+});
+
 test('the welcome composer offers the tool picker too', async ({ page }) => {
   await mockLibreWebUiApi(page, { sessions: [] });
   await page.addInitScript(() => {
