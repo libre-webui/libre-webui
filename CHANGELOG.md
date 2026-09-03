@@ -15,6 +15,81 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 📚 Documentation
 
+## [0.32.0] - 2026-09-03
+
+A quieter, faster release: administrators pick the theme the whole instance
+starts from, the theme toggle reaches Pure Black, long conversations stop
+stuttering while a reply streams, and the app arrives lighter and faster
+from a plain Docker install.
+
+### ✨ New Features
+
+- **Instance default theme.** A new **Default theme** card on the Users page
+  lets administrators choose Light, Dark, or Pure Black for the whole
+  install. It paints the sign-in page before anyone signs in, seeds every new
+  account, and applies in any browser that has not picked a theme of its own;
+  a personal choice made in Settings always wins. The default is cached
+  locally, so a returning visitor gets it before the first paint instead of a
+  dark flash. Translated into all 25 languages.
+- **Three-way theme toggle.** The sun/moon button on the sign-in page and in
+  the sidebar, `Cmd/Ctrl + D`, and the command palette now cycle Light, Dark,
+  and Pure Black, and the icon shows where the next press goes.
+
+### 🔧 Improvements
+
+- **Long chats stay smooth while a reply streams.** Streamed text used to
+  re-render every message in the conversation on every animation frame, and
+  none of the message components were memoized, so each finished message
+  re-parsed its markdown sixty times a second. Messages, branches, and the
+  content renderers are memoized, each message reads only the store slices
+  it needs, streaming state reaches only the streaming turn, and off-screen
+  turns skip layout and paint. Main-thread script time during one streamed
+  reply in a 250-message chat drops from 3.1 s to 0.9 s.
+- **A lighter first paint.** Vite 8's Rolldown had folded React itself into
+  the markdown chunk, so every page, including sign-in, preloaded a third of
+  a megabyte of markdown machinery. Explicit chunk groups put React back in
+  its own vendor chunk and the release-notes modal loads on demand; the
+  initial payload drops from 367 KB to 269 KB gzipped.
+- **Math and raw HTML load on demand.** The KaTeX pipeline and rehype-raw's
+  HTML parser are now lazy modules that a message loads only when it
+  contains a `$` delimiter or raw HTML is allowed (notes). The shared
+  markdown chunk shrinks from 88 KB to 47 KB gzipped.
+- **Compressed, cacheable assets from the built-in server.** Hashed bundles
+  under `/js/` and `/assets/` are brotli- or gzip-compressed once per process
+  and served with a one-year `immutable` cache lifetime, while `index.html`
+  and the service worker are `no-cache` so a new release is picked up on the
+  next load. Self-hosters without a compressing reverse proxy no longer
+  download raw bytes on every visit, and the service worker now caches the
+  `/js/` chunks it had been skipping.
+- **Cleaner production build.** The frontend targets ES2022, so noVNC's
+  top-level `await` is emitted as-is without a build warning.
+
+### 🐛 Bug Fixes
+
+- The tool picker in the composer stays inside the chat pane: it is capped to
+  the space above its button, its option list scrolls, and the enable toggle
+  and approval hint stay pinned. It previously ran off the top of the screen
+  under the tab bar with a long tool list.
+- Artifact and Work preview sandboxes no longer emit a Content Security
+  Policy source browsers reject (`http://[::1]:*` has no valid CSP form),
+  which had logged an error on every render in development.
+- The three-replica team platform drill no longer fails when the gateway's
+  round-robin cursor resets between issuing and consuming a WebSocket ticket.
+
+### 🔒 Security
+
+- Dependency audit: `qs` 6.16.0 (array-limit bypass via bracket-key comma
+  parsing) and `@humanfs/node` 0.16.8 (recursive copy following symlinks),
+  plus the earlier `postcss-selector-parser` bump.
+- Ollama endpoint normalization uses a linear trailing-slash walk with URL
+  length caps instead of a regular expression CodeQL flagged as polynomial.
+
+### 📚 Documentation
+
+- Pro tips describe the instance default theme and the three-way toggle;
+  the Docker guide notes that the server already compresses and caches the
+  built frontend so a reverse proxy need not.
+
 ## [0.31.0] - 2026-09-01
 
 Getting started stops assuming Ollama, and staying current stops hurting:
