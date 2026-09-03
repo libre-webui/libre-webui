@@ -151,7 +151,9 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     sourcemap: false, // Disable sourcemaps for production
-    target: 'es2020',
+    // es2022 so noVNC's top-level await is emitted as-is without a warning;
+    // every browser that runs the app (ES modules + dynamic import) has it.
+    target: 'es2022',
     rollupOptions: {
       output: {
         manualChunks(id) {
