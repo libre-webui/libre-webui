@@ -96,9 +96,24 @@ export const ComposerToolsMenu: React.FC<ComposerToolsMenuProps> = ({
   useLayoutEffect(() => {
     if (!open) return;
     const measure = () => {
-      const top = containerRef.current?.getBoundingClientRect().top ?? 0;
+      const container = containerRef.current;
+      if (!container) return;
+      const triggerTop = container.getBoundingClientRect().top;
+      // The chat pane clips its overflow, so the usable space ends at the
+      // nearest clipping ancestor's top edge, not at the viewport's.
+      let clipTop = 0;
+      for (
+        let ancestor = container.parentElement;
+        ancestor && ancestor !== document.body;
+        ancestor = ancestor.parentElement
+      ) {
+        const { overflowY, overflowX } = getComputedStyle(ancestor);
+        if (overflowY !== 'visible' || overflowX !== 'visible') {
+          clipTop = Math.max(clipTop, ancestor.getBoundingClientRect().top);
+        }
+      }
       // 8px gap above the trigger (mb-2) plus 16px breathing room at the top.
-      setMaxHeight(Math.max(160, Math.floor(top - 24)));
+      setMaxHeight(Math.max(160, Math.floor(triggerTop - clipTop - 24)));
     };
     measure();
     window.addEventListener('resize', measure);

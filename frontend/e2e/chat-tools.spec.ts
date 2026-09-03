@@ -238,12 +238,17 @@ test('the tool picker fits a short viewport and scrolls its options', async ({
   const menu = page.getByTestId('composer-tools-menu');
   await expect(menu).toBeVisible();
 
-  // The whole menu stays on screen, above the trigger.
+  // The whole menu stays on screen, above the trigger, and its top row is
+  // really reachable (not clipped by the chat pane under the tab bar).
   const box = await menu.boundingBox();
   const trigger = await button.boundingBox();
   expect(box).not.toBeNull();
   expect(box!.y).toBeGreaterThanOrEqual(0);
   expect(box!.y + box!.height).toBeLessThanOrEqual(trigger!.y);
+  // The chat pane (main) clips its overflow under the tab bar, so the menu
+  // must start below the pane's top edge, not merely below the viewport's.
+  const pane = await page.locator('main').first().boundingBox();
+  expect(box!.y).toBeGreaterThanOrEqual(pane!.y);
 
   // The option list scrolls inside while the toggle and hint stay visible.
   const options = page.getByTestId('composer-tools-options');
