@@ -106,7 +106,10 @@ const artifactRuntimeHeaders = () => ({
 const artifactRuntimeFingerprint = (): string => {
   try {
     return readFileSync(
-      path.resolve(import.meta.dirname, 'public/artifact-runtime/.build-fingerprint'),
+      path.resolve(
+        import.meta.dirname,
+        'public/artifact-runtime/.build-fingerprint'
+      ),
       'utf-8'
     )
       .trim()
@@ -115,6 +118,10 @@ const artifactRuntimeFingerprint = (): string => {
     return 'dev';
   }
 };
+
+/** Matches a package directory under node_modules (patterns may be regex). */
+const vendor = (...packages: string[]) =>
+  new RegExp(`node_modules[\\\\/](?:${packages.join('|')})[\\\\/]`);
 
 export default defineConfig({
   plugins: [react(), artifactRuntimeHeaders()],
@@ -154,55 +161,72 @@ export default defineConfig({
     // es2022 so noVNC's top-level await is emitted as-is without a warning;
     // every browser that runs the app (ES modules + dynamic import) has it.
     target: 'es2022',
-    rollupOptions: {
+    rolldownOptions: {
       output: {
-        manualChunks(id) {
-          if (id.includes('node_modules/react-dom')) return 'react-vendor';
-          if (id.includes('node_modules/react/')) return 'react-vendor';
-          if (id.includes('node_modules/react-router')) return 'router-vendor';
-          if (
-            id.includes('node_modules/lucide-react') ||
-            id.includes('node_modules/react-hot-toast')
-          )
-            return 'ui-vendor';
-          if (
-            id.includes('node_modules/react-syntax-highlighter') ||
-            id.includes('node_modules/refractor') ||
-            id.includes('node_modules/prismjs')
-          )
-            return 'syntax-highlight';
-          if (
-            id.includes('node_modules/remark-math') ||
-            id.includes('node_modules/rehype-katex') ||
-            id.includes('node_modules/katex') ||
-            id.includes('node_modules/micromark-extension-math') ||
-            id.includes('node_modules/mdast-util-math')
-          )
-            return 'markdown-math';
-          if (
-            id.includes('node_modules/react-markdown') ||
-            id.includes('node_modules/remark-') ||
-            id.includes('node_modules/rehype-') ||
-            id.includes('node_modules/unified') ||
-            id.includes('node_modules/micromark') ||
-            id.includes('node_modules/mdast-util-') ||
-            id.includes('node_modules/hast-util-') ||
-            id.includes('node_modules/unist-util-') ||
-            id.includes('node_modules/vfile') ||
-            id.includes('node_modules/property-information') ||
-            id.includes('node_modules/space-separated-tokens') ||
-            id.includes('node_modules/comma-separated-tokens') ||
-            id.includes('node_modules/html-url-attributes') ||
-            id.includes('node_modules/devlop')
-          )
-            return 'markdown-core';
-          if (
-            id.includes('node_modules/axios') ||
-            id.includes('node_modules/zustand') ||
-            id.includes('node_modules/clsx') ||
-            id.includes('node_modules/tailwind-merge')
-          )
-            return 'utils-vendor';
+        // Rolldown chunk groups. The legacy manualChunks function is folded
+        // into a single group whose captures include a matched module's
+        // dependencies, so react-markdown's group swallowed React itself and
+        // dragged the whole markdown stack onto the sign-in page. Explicit
+        // groups with priorities keep each vendor where it belongs.
+        codeSplitting: {
+          groups: [
+            {
+              name: 'react-vendor',
+              test: vendor('react', 'react-dom', 'scheduler'),
+              priority: 100,
+            },
+            {
+              name: 'router-vendor',
+              test: vendor('react-router', 'react-router-dom'),
+              priority: 90,
+            },
+            {
+              name: 'ui-vendor',
+              test: vendor('lucide-react', 'react-hot-toast'),
+              priority: 80,
+            },
+            {
+              name: 'syntax-highlight',
+              test: vendor('react-syntax-highlighter', 'refractor', 'prismjs'),
+              priority: 70,
+            },
+            {
+              name: 'markdown-math',
+              test: vendor(
+                'remark-math',
+                'rehype-katex',
+                'katex',
+                'micromark-extension-math',
+                'mdast-util-math'
+              ),
+              priority: 60,
+            },
+            {
+              name: 'markdown-core',
+              test: vendor(
+                'react-markdown',
+                'remark-[^/\\\\]+',
+                'rehype-[^/\\\\]+',
+                'unified',
+                'micromark[^/\\\\]*',
+                'mdast-util-[^/\\\\]+',
+                'hast-util-[^/\\\\]+',
+                'unist-util-[^/\\\\]+',
+                'vfile[^/\\\\]*',
+                'property-information',
+                'space-separated-tokens',
+                'comma-separated-tokens',
+                'html-url-attributes',
+                'devlop'
+              ),
+              priority: 50,
+            },
+            {
+              name: 'utils-vendor',
+              test: vendor('axios', 'zustand', 'clsx', 'tailwind-merge'),
+              priority: 40,
+            },
+          ],
         },
         chunkFileNames: 'js/[name]-[hash].js',
         assetFileNames: 'assets/[name]-[hash][extname]',

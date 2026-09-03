@@ -47,7 +47,6 @@ import { Sidebar } from '@/components/Sidebar';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { ErrorBoundary, RouteErrorScreen } from '@/components/ErrorBoundary';
 import { API_BASE_URL } from '@/utils/config';
-import { WhatsNewModal } from '@/components/WhatsNewModal';
 import { useWhatsNew } from '@/hooks/useWhatsNew';
 import { DemoModeBanner } from '@/components/DemoModeBanner';
 import { BackgroundRenderer } from '@/components/BackgroundRenderer';
@@ -74,6 +73,14 @@ const logger = createLogger('app');
 // Lazy load pages for code splitting
 const HomePage = React.lazy(() => import('@/pages/HomePage'));
 const ChatPage = React.lazy(() => import('@/pages/ChatPage'));
+// The release-notes modal is the only thing on the first paint that renders
+// markdown; loading it on demand keeps the markdown stack off the sign-in
+// page and out of every session that has already dismissed the notes.
+const WhatsNewModal = React.lazy(() =>
+  import('@/components/WhatsNewModal').then(module => ({
+    default: module.WhatsNewModal,
+  }))
+);
 const PersonasPage = React.lazy(() => import('@/pages/PersonasPage'));
 const GalleryPage = React.lazy(() => import('@/pages/GalleryPage'));
 const NotesPage = React.lazy(() => import('@/pages/NotesPage'));
@@ -693,7 +700,9 @@ const AppContent: React.FC = () => {
       )}
 
       {hasWorkspaceAccess && whatsNew.open && whatsNew.notes && (
-        <WhatsNewModal notes={whatsNew.notes} onDismiss={whatsNew.dismiss} />
+        <React.Suspense fallback={null}>
+          <WhatsNewModal notes={whatsNew.notes} onDismiss={whatsNew.dismiss} />
+        </React.Suspense>
       )}
 
       {/* Artifact slide-out panel */}
