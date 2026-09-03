@@ -349,22 +349,32 @@ test(
     const adminToken = signup.data.token;
     assert.equal(signup.data.user.role, 'admin');
 
-    const ticketResponse = await request('/api/auth/websocket-ticket', {
-      token: adminToken,
-      method: 'POST',
-      body: { audience: 'chat' },
-      raw: true,
-    });
-    const ticketIssueUpstream = ticketResponse.headers.get('x-libre-upstream');
-    const ticketPayload = await ticketResponse.json();
-    const ticketConsumeUpstream = await consumeChatTicket(
-      ticketPayload.data.ticket
-    );
-    assert.ok(ticketIssueUpstream, 'ticket issue replica must be observable');
-    assert.ok(
-      ticketConsumeUpstream,
-      'ticket consume replica must be observable on the WebSocket upgrade'
-    );
+    // The gateway re-resolves the replica set every few seconds and restarts
+    // its round-robin cursor when it does, so two back-to-back requests can
+    // land on the same replica by chance. Issue fresh tickets until the
+    // consume hop observably crosses replicas; every attempt still proves the
+    // ticket is honoured by whichever replica answers the upgrade.
+    let ticketIssueUpstream;
+    let ticketConsumeUpstream;
+    for (let attempt = 0; attempt < 6; attempt += 1) {
+      const ticketResponse = await request('/api/auth/websocket-ticket', {
+        token: adminToken,
+        method: 'POST',
+        body: { audience: 'chat' },
+        raw: true,
+      });
+      ticketIssueUpstream = ticketResponse.headers.get('x-libre-upstream');
+      const ticketPayload = await ticketResponse.json();
+      ticketConsumeUpstream = await consumeChatTicket(
+        ticketPayload.data.ticket
+      );
+      assert.ok(ticketIssueUpstream, 'ticket issue replica must be observable');
+      assert.ok(
+        ticketConsumeUpstream,
+        'ticket consume replica must be observable on the WebSocket upgrade'
+      );
+      if (ticketConsumeUpstream !== ticketIssueUpstream) break;
+    }
     assert.notEqual(
       ticketConsumeUpstream,
       ticketIssueUpstream,
