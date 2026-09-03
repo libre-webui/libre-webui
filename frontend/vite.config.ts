@@ -169,6 +169,12 @@ export default defineConfig({
         // dragged the whole markdown stack onto the sign-in page. Explicit
         // groups with priorities keep each vendor where it belongs.
         codeSplitting: {
+          // Match the old manualChunks semantics: a group holds only the
+          // modules its pattern names. Rolldown's default also captures a
+          // matched module's dependencies, which lets a higher-priority
+          // lazy group (math, html) steal utilities the core needs and turns
+          // every optional pipeline back into an eager import.
+          includeDependenciesRecursively: false,
           groups: [
             {
               name: 'react-vendor',
@@ -202,6 +208,22 @@ export default defineConfig({
               priority: 60,
             },
             {
+              name: 'markdown-html',
+              test: vendor(
+                'rehype-raw',
+                'rehype-sanitize',
+                'hast-util-raw',
+                'hast-util-sanitize',
+                'hast-util-from-parse5',
+                'hast-util-to-parse5',
+                'parse5',
+                'entities',
+                'html-void-elements',
+                'vfile-location'
+              ),
+              priority: 55,
+            },
+            {
               name: 'markdown-core',
               test: vendor(
                 'react-markdown',
@@ -217,7 +239,26 @@ export default defineConfig({
                 'space-separated-tokens',
                 'comma-separated-tokens',
                 'html-url-attributes',
-                'devlop'
+                'devlop',
+                '@ungap/structured-clone',
+                'longest-streak',
+                'trough',
+                'bail',
+                'is-plain-obj',
+                'extend',
+                'ccount',
+                'markdown-table',
+                'escape-string-regexp',
+                'trim-lines',
+                'hastscript',
+                'style-to-js',
+                'style-to-object',
+                'inline-style-parser',
+                'estree-util-is-identifier-name',
+                'character-entities[^/\\\\]*',
+                'decode-named-character-reference',
+                'zwitch',
+                'web-namespaces'
               ),
               priority: 50,
             },

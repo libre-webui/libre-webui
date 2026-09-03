@@ -21,13 +21,8 @@ import ReactMarkdown, {
   type ExtraProps,
 } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import remarkMath from 'remark-math';
-import rehypeKatex from 'rehype-katex';
-import rehypeRaw from 'rehype-raw';
-import rehypeSanitize from 'rehype-sanitize';
 import type { PluggableList } from 'unified';
-import 'katex/dist/katex.min.css';
-import { richContentSanitizeSchema } from './richContentSanitizeSchema';
+import { hasMathDelimiters, useMarkdownExtras } from './useMarkdownExtras';
 import { useAppStore } from '@/store/appStore';
 import { cn } from '@/utils';
 import { preprocessLaTeX } from './messageContentUtils';
@@ -78,14 +73,28 @@ export const RichMessageContent: React.FC<RichMessageContentProps> = ({
     () => preprocessLaTeX(content),
     [content]
   );
-  const rehypePlugins = React.useMemo<PluggableList>(
-    () =>
-      allowHtml
-        ? // Sanitize before KaTeX so its generated markup is left intact.
-          [rehypeRaw, [rehypeSanitize, richContentSanitizeSchema], rehypeKatex]
-        : [rehypeKatex],
-    [allowHtml]
+  // Math and raw HTML are loaded on demand; until their chunks arrive the
+  // message renders without them and re-renders once they are available.
+  const { math, html } = useMarkdownExtras({
+    needsMath: hasMathDelimiters(processedContent),
+    needsHtml: allowHtml,
+  });
+  const remarkPlugins = React.useMemo<PluggableList>(
+    () => (math ? [remarkGfm, math.remarkMath] : [remarkGfm]),
+    [math]
   );
+  const rehypePlugins = React.useMemo<PluggableList>(() => {
+    const plugins: PluggableList = [];
+    if (html) {
+      // Sanitize before KaTeX so its generated markup is left intact.
+      plugins.push(html.rehypeRaw, [
+        html.rehypeSanitize,
+        html.richContentSanitizeSchema,
+      ]);
+    }
+    if (math) plugins.push(math.rehypeKatex);
+    return plugins;
+  }, [html, math]);
 
   const markdownComponents: Components = {
     code({ className, children, node: _node, ...props }: MarkdownCodeProps) {
@@ -323,7 +332,7 @@ export const RichMessageContent: React.FC<RichMessageContentProps> = ({
       )}
     >
       <ReactMarkdown
-        remarkPlugins={[remarkGfm, remarkMath]}
+        remarkPlugins={remarkPlugins}
         rehypePlugins={rehypePlugins}
         components={markdownComponents}
       >
