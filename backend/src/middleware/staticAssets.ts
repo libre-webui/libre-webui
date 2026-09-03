@@ -39,7 +39,8 @@ const brotliAsync = promisify(brotliCompress);
 const gzipAsync = promisify(gzip);
 
 /** A hashed Vite output: /js/name-XXXXXXXX.js or /assets/name-XXXXXXXX.css */
-const HASHED_ASSET = /^\/(?:js|assets)\/[^/]+-[A-Za-z0-9_-]{8}\.(js|css|svg)$/;
+const HASHED_ASSET =
+  /^\/(?:js|assets)\/[A-Za-z0-9._@~+-]+-[A-Za-z0-9_-]{8}\.(js|css|svg)$/;
 
 export const IMMUTABLE_CACHE_CONTROL = 'public, max-age=31536000, immutable';
 export const REVALIDATE_CACHE_CONTROL = 'no-cache';
@@ -88,15 +89,24 @@ export function createStaticAssetHandlers(frontendPath: string) {
   const root = path.resolve(frontendPath);
   const compressed = new Map<string, Promise<Buffer | null>>();
 
-  const load = (
-    relative: string,
-    encoding: Encoding
-  ): Promise<Buffer | null> => {
-    const key = `${encoding}:${relative}`;
+  /**
+   * Resolve a request path to a file inside the dist root, or null. The
+   * route pattern already forbids separators and dot segments; this keeps
+   * the guarantee explicit at the point the path touches the filesystem.
+   */
+  const resolveInsideRoot = (relative: string): string | null => {
+    const file = path.resolve(root, relative);
+    if (file !== path.normalize(file)) return null;
+    if (!file.startsWith(root + path.sep)) return null;
+    return file;
+  };
+
+  const load = (file: string, encoding: Encoding): Promise<Buffer | null> => {
+    const key = `${encoding}:${file}`;
     let pending = compressed.get(key);
     if (!pending) {
       pending = fs
-        .readFile(path.join(root, relative))
+        .readFile(file)
         .then(raw =>
           encoding === 'br'
             ? brotliAsync(raw, {
@@ -128,7 +138,9 @@ export function createStaticAssetHandlers(frontendPath: string) {
     const encoding = pickEncoding(req.headers['accept-encoding'] as string);
     if (!encoding) return next();
 
-    const body = await load(req.path.slice(1), encoding);
+    const file = resolveInsideRoot(req.path.slice(1));
+    if (!file) return next();
+    const body = await load(file, encoding);
     if (!body) return next();
 
     res.setHeader('Content-Type', CONTENT_TYPES[match[1]]);

@@ -83,6 +83,20 @@ test('hashed bundles are served compressed and immutable, the shell revalidates'
     });
     assert.equal(missing.status, 404);
 
+    // Traversal attempts never leave the dist root, encoded or not.
+    fs.writeFileSync(path.join(dist, '..', 'outside-Ab12Cd34.js'), 'secret');
+    for (const route of [
+      '/js/..%2F..%2Foutside-Ab12Cd34.js',
+      '/js/..%5C..%5Coutside-Ab12Cd34.js',
+      '/js/../outside-Ab12Cd34.js',
+      '/assets/%2e%2e/outside-Ab12Cd34.js',
+    ]) {
+      const attempt = await get(route, { 'accept-encoding': 'br' });
+      assert.notEqual(attempt.status, 200, route);
+      assert.doesNotMatch(await attempt.text(), /secret/, route);
+    }
+    fs.rmSync(path.join(dist, '..', 'outside-Ab12Cd34.js'), { force: true });
+
     const head = await fetch(`${base}/js/app-Ab12Cd34.js`, {
       method: 'HEAD',
       headers: { 'accept-encoding': 'br' },
