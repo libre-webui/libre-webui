@@ -15,7 +15,10 @@
  * limitations under the License.
  */
 
-import axios, { AxiosError, AxiosInstance } from 'axios';
+import {
+  isProviderHttpError,
+  providerRequest,
+} from '../utils/providerFetch.js';
 import { createLogger } from '../utils/logger.js';
 
 const logger = createLogger('services:libre-claw');
@@ -100,16 +103,12 @@ export class LibreClawServiceError extends Error {
 }
 
 export class LibreClawService {
-  private client: AxiosInstance;
+  private readonly timeoutMs: number;
   readonly baseUrl: string;
 
   constructor(baseUrl = process.env.LIBRE_CLAW_BASE_URL || DEFAULT_BASE_URL) {
     this.baseUrl = baseUrl.replace(/\/+$/, '');
-    this.client = axios.create({
-      baseURL: this.baseUrl,
-      timeout: Number(process.env.LIBRE_CLAW_TIMEOUT_MS || 30000),
-      headers: { Accept: 'application/json' },
-    });
+    this.timeoutMs = Number(process.env.LIBRE_CLAW_TIMEOUT_MS || 30000);
   }
 
   dashboardUrl(): string {
@@ -295,10 +294,13 @@ export class LibreClawService {
     data?: unknown
   ): Promise<T> {
     try {
-      const response = await this.client.request<T>({
+      const response = await providerRequest<T>({
+        url: `${this.baseUrl}${path}`,
         method,
-        url: path,
-        data,
+        headers: { Accept: 'application/json' },
+        json: data,
+        timeoutMs: this.timeoutMs,
+        redirect: 'error',
       });
       return response.data;
     } catch (error) {
@@ -308,22 +310,17 @@ export class LibreClawService {
 }
 
 const normalizeLibreClawError = (error: unknown): LibreClawServiceError => {
-  if (axios.isAxiosError(error)) {
-    const axiosError = error as AxiosError<{
-      error?: string;
-      message?: string;
-    }>;
-    const status = axiosError.response?.status || 502;
+  if (isProviderHttpError(error)) {
+    const status = error.response.status || 502;
+    const data = error.response.data as
+      { error?: string; message?: string } | undefined;
+    const body = data && typeof data === 'object' ? data : undefined;
     const message =
-      axiosError.response?.data?.error ||
-      axiosError.response?.data?.message ||
-      axiosError.message ||
+      body?.error ||
+      body?.message ||
+      error.message ||
       'Libre Claw daemon request failed';
-    return new LibreClawServiceError(
-      message,
-      status,
-      axiosError.response?.data
-    );
+    return new LibreClawServiceError(message, status, error.response.data);
   }
 
   if (error instanceof LibreClawServiceError) {

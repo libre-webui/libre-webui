@@ -17,11 +17,35 @@
 
 import express, { Request, Response } from 'express';
 import rateLimit from '../middleware/sharedRateLimit.js';
-import axios from 'axios';
 import { ApiResponse, getErrorMessage } from '../types/index.js';
+import {
+  ProviderNetworkError,
+  ProviderTimeoutError,
+  isProviderHttpError,
+  providerRequest,
+} from '../utils/providerFetch.js';
 import { authenticate, requireAdmin } from '../middleware/auth.js';
 
 const router = express.Router();
+
+/**
+ * A failed call to the Hub, with the upstream status when there was one.
+ * Transport failures keep the 500 this route reported before.
+ */
+function huggingFaceRequestFailure(
+  error: unknown
+): { status: number; message: string } | null {
+  if (isProviderHttpError(error)) {
+    return { status: error.response.status || 500, message: error.message };
+  }
+  if (
+    error instanceof ProviderNetworkError ||
+    error instanceof ProviderTimeoutError
+  ) {
+    return { status: 500, message: error.message };
+  }
+  return null;
+}
 
 // Cache for model lists (24h TTL)
 interface CacheEntry<T> {
@@ -179,11 +203,13 @@ router.get(
 
       const url = `https://huggingface.co/api/models?${params.toString()}`;
 
-      const response = await axios.get<HuggingFaceModel[]>(url, {
-        timeout: 10000,
+      const response = await providerRequest<HuggingFaceModel[]>({
+        url,
+        timeoutMs: 10000,
         headers: {
           Accept: 'application/json',
         },
+        redirect: 'follow',
       });
 
       // Cache the response
@@ -197,11 +223,11 @@ router.get(
         data: response.data.map(formatModelResponse),
       });
     } catch (error: unknown) {
-      if (axios.isAxiosError(error)) {
-        const status = error.response?.status || 500;
-        res.status(status).json({
+      const failure = huggingFaceRequestFailure(error);
+      if (failure) {
+        res.status(failure.status).json({
           success: false,
-          error: `HuggingFace API error: ${error.message}`,
+          error: `HuggingFace API error: ${failure.message}`,
         });
       } else {
         res.status(500).json({
@@ -230,11 +256,13 @@ router.get(
       const modelId = `${author}/${modelName}`;
       const url = `https://huggingface.co/api/models/${modelId}`;
 
-      const response = await axios.get<HuggingFaceModel>(url, {
-        timeout: 10000,
+      const response = await providerRequest<HuggingFaceModel>({
+        url,
+        timeoutMs: 10000,
         headers: {
           Accept: 'application/json',
         },
+        redirect: 'follow',
       });
 
       res.json({
@@ -242,14 +270,15 @@ router.get(
         data: response.data,
       });
     } catch (error: unknown) {
-      if (axios.isAxiosError(error)) {
-        const status = error.response?.status || 500;
+      const failure = huggingFaceRequestFailure(error);
+      if (failure) {
+        const status = failure.status;
         res.status(status).json({
           success: false,
           error:
             status === 404
               ? 'Model not found'
-              : `HuggingFace API error: ${error.message}`,
+              : `HuggingFace API error: ${failure.message}`,
         });
       } else {
         res.status(500).json({
@@ -336,11 +365,13 @@ router.get(
 
       const url = `https://huggingface.co/api/models?${params.toString()}`;
 
-      const response = await axios.get<HuggingFaceModel[]>(url, {
-        timeout: 10000,
+      const response = await providerRequest<HuggingFaceModel[]>({
+        url,
+        timeoutMs: 10000,
         headers: {
           Accept: 'application/json',
         },
+        redirect: 'follow',
       });
 
       // Cache the response
@@ -382,11 +413,13 @@ router.get(
       // Get the file tree from HuggingFace
       const url = `https://huggingface.co/api/models/${modelId}/tree/main`;
 
-      const response = await axios.get<HfFileInfo[]>(url, {
-        timeout: 15000,
+      const response = await providerRequest<HfFileInfo[]>({
+        url,
+        timeoutMs: 15000,
         headers: {
           Accept: 'application/json',
         },
+        redirect: 'follow',
       });
 
       // Filter for GGUF files
@@ -448,14 +481,15 @@ router.get(
         data: ggufFiles,
       });
     } catch (error: unknown) {
-      if (axios.isAxiosError(error)) {
-        const status = error.response?.status || 500;
+      const failure = huggingFaceRequestFailure(error);
+      if (failure) {
+        const status = failure.status;
         res.status(status).json({
           success: false,
           error:
             status === 404
               ? 'Model not found or no files available'
-              : `HuggingFace API error: ${error.message}`,
+              : `HuggingFace API error: ${failure.message}`,
         });
       } else {
         res.status(500).json({
@@ -499,11 +533,13 @@ router.get(
       // Get the file tree from HuggingFace
       const url = `https://huggingface.co/api/models/${modelId}/tree/main`;
 
-      const response = await axios.get<HfFileInfo[]>(url, {
-        timeout: 10000,
+      const response = await providerRequest<HfFileInfo[]>({
+        url,
+        timeoutMs: 10000,
         headers: {
           Accept: 'application/json',
         },
+        redirect: 'follow',
       });
 
       // Count GGUF files

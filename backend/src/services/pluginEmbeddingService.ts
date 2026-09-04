@@ -15,7 +15,10 @@
  * limitations under the License.
  */
 
-import axios from 'axios';
+import {
+  isProviderRequestCancelled,
+  providerRequest,
+} from '../utils/providerFetch.js';
 import {
   EmbeddingConfig,
   EmbeddingModel,
@@ -32,7 +35,18 @@ import {
 import type { PluginUsageEventInput } from './pluginUsageService.js';
 
 type PluginVariables = Record<string, string | number | boolean>;
+
 type MaybePromise<T> = T | Promise<T>;
+
+/** The object shapes embedding providers return; arrays are read directly. */
+interface EmbeddingProviderPayload {
+  embeddings?: unknown;
+  data?: unknown;
+  usage?: {
+    prompt_tokens?: number;
+    total_tokens?: number;
+  };
+}
 
 export interface PluginEmbeddingServiceDependencies {
   getAllPlugins(userId?: string): MaybePromise<Plugin[]>;
@@ -199,37 +213,40 @@ export class PluginEmbeddingService {
 
     const startedAt = Date.now();
     try {
-      const response = await axios.post(
-        processedEndpoint,
-        plugin.id === 'huggingface' ? { inputs: input } : { model, input },
-        {
-          headers,
-          timeout: 60000,
-          maxRedirects: 0,
-          signal,
-        }
-      );
+      const response = await providerRequest({
+        url: processedEndpoint,
+        method: 'POST',
+        json:
+          plugin.id === 'huggingface' ? { inputs: input } : { model, input },
+        headers,
+        timeoutMs: 60000,
+        signal,
+      });
+      const body = response.data;
+      const payload = (
+        body && typeof body === 'object' ? body : {}
+      ) as EmbeddingProviderPayload;
 
       let result: OllamaEmbeddingsResponse;
       if (
-        Array.isArray(response.data) &&
-        response.data.every(value => typeof value === 'number')
+        Array.isArray(body) &&
+        body.every(value => typeof value === 'number')
       ) {
-        result = { embeddings: [response.data as number[]] };
+        result = { embeddings: [body as number[]] };
       } else if (
-        Array.isArray(response.data) &&
-        response.data.every(
+        Array.isArray(body) &&
+        body.every(
           value =>
             Array.isArray(value) &&
             value.every(component => typeof component === 'number')
         )
       ) {
-        result = { embeddings: response.data as number[][] };
-      } else if (Array.isArray(response.data?.embeddings)) {
-        result = { embeddings: response.data.embeddings };
-      } else if (Array.isArray(response.data?.data)) {
+        result = { embeddings: body as number[][] };
+      } else if (Array.isArray(payload.embeddings)) {
+        result = { embeddings: payload.embeddings as number[][] };
+      } else if (Array.isArray(payload.data)) {
         result = {
-          embeddings: response.data.data
+          embeddings: payload.data
             .map((entry: { embedding?: number[] }) => entry.embedding)
             .filter((embedding: unknown): embedding is number[] =>
               Array.isArray(embedding)
@@ -239,12 +256,7 @@ export class PluginEmbeddingService {
         throw new Error('Embedding provider returned an unexpected response');
       }
 
-      const usage = response.data?.usage as
-        | {
-            prompt_tokens?: number;
-            total_tokens?: number;
-          }
-        | undefined;
+      const usage = payload.usage;
       this.deps.recordUsage?.({
         userId,
         pluginId: plugin.id,
@@ -267,7 +279,8 @@ export class PluginEmbeddingService {
       });
       return result;
     } catch (error) {
-      const cancelled = signal?.aborted === true || axios.isCancel(error);
+      const cancelled =
+        signal?.aborted === true || isProviderRequestCancelled(error);
       this.deps.recordUsage?.({
         userId,
         pluginId: plugin.id,

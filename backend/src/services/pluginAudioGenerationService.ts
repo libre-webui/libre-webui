@@ -5,7 +5,7 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  */
 
-import axios from 'axios';
+import type { Readable } from 'node:stream';
 import type { AudioGenConfig, Plugin } from '../types/index.js';
 import {
   acquireSharedCapacity,
@@ -19,6 +19,15 @@ import {
   resolvePluginOperationEndpoint,
   validatePluginModel,
 } from '../utils/pluginValidation.js';
+import {
+  isProviderHttpError,
+  isProviderRequestCancelled,
+  ProviderHttpError,
+  ProviderNetworkError,
+  ProviderResponseTooLargeError,
+  ProviderTimeoutError,
+  providerRequest,
+} from '../utils/providerFetch.js';
 import {
   normalizeProviderTokenUsage,
   type PluginUsageEventInput,
@@ -163,11 +172,13 @@ export class PluginAudioGenerationService {
     );
     const startedAt = Date.now();
     try {
-      const response = await axios.post(endpoint, payload, {
+      const response = await providerRequest<Readable>({
+        url: endpoint,
+        method: 'POST',
+        json: payload,
         headers,
-        timeout: 300000,
+        timeoutMs: 300000,
         responseType: 'stream',
-        maxRedirects: 0,
         signal: providerSignal,
       });
       const result = await collectAudioStream(response.data, providerSignal);
@@ -189,7 +200,8 @@ export class PluginAudioGenerationService {
         ...(result.transcript ? { transcript: result.transcript } : {}),
       };
     } catch (error) {
-      const cancelled = axios.isCancel(error) || providerSignal.aborted;
+      const cancelled =
+        isProviderRequestCancelled(error) || providerSignal.aborted;
       this.deps.recordUsage?.({
         userId: options.userId,
         pluginId: plugin.id,
@@ -248,7 +260,7 @@ export class PluginAudioGenerationService {
 }
 
 async function collectAudioStream(
-  stream: AsyncIterable<Buffer | string>,
+  stream: AsyncIterable<Buffer | Uint8Array | string>,
   signal?: AbortSignal
 ): Promise<{
   audio: Buffer;
@@ -295,7 +307,11 @@ async function collectAudioStream(
         ? signal.reason
         : new Error('Audio provider request was cancelled');
     }
-    const text = Buffer.isBuffer(part) ? part.toString('utf8') : String(part);
+    const text = Buffer.isBuffer(part)
+      ? part.toString('utf8')
+      : part instanceof Uint8Array
+        ? Buffer.from(part).toString('utf8')
+        : String(part);
     receivedBytes += Buffer.byteLength(text);
     if (receivedBytes > MAX_AUDIO_STREAM_BYTES) {
       throw new Error('Audio provider response exceeded the size limit');
@@ -349,12 +365,25 @@ function audioMimeType(format: string): string {
 }
 
 function audioGenerationError(error: unknown): Error {
-  if (axios.isAxiosError(error)) {
-    const message =
-      error.response?.data?.error?.message ||
-      error.response?.data?.error ||
-      error.response?.data?.message ||
-      error.message;
+  if (
+    error instanceof ProviderHttpError ||
+    error instanceof ProviderTimeoutError ||
+    error instanceof ProviderNetworkError ||
+    error instanceof ProviderResponseTooLargeError
+  ) {
+    const data = isProviderHttpError(error) ? error.response.data : undefined;
+    const record =
+      data && typeof data === 'object'
+        ? (data as {
+            error?: { message?: unknown } | string;
+            message?: unknown;
+          })
+        : undefined;
+    const nested =
+      record?.error && typeof record.error === 'object'
+        ? record.error.message
+        : undefined;
+    const message = nested || record?.error || record?.message || error.message;
     return new Error(`Audio provider request failed: ${String(message)}`);
   }
   return error instanceof Error ? error : new Error('Audio generation failed');

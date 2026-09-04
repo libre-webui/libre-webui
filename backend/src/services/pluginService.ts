@@ -19,7 +19,6 @@ import fs from 'fs';
 import path from 'path';
 import { createHash } from 'crypto';
 import sanitize from 'sanitize-filename';
-import axios from 'axios';
 import {
   AudioGenConfig,
   EmbeddingModel,
@@ -94,6 +93,12 @@ import {
   resolvePluginModelsEndpoint,
   validatePluginModel,
 } from '../utils/pluginValidation.js';
+import {
+  ProviderNetworkError,
+  isProviderHttpError,
+  isProviderTimeout,
+  providerRequest,
+} from '../utils/providerFetch.js';
 import { createLogger } from '../utils/logger.js';
 import {
   isChatGenerationCancelled,
@@ -270,13 +275,13 @@ export interface PluginModelDiscoveryResult {
 }
 
 function describeModelDiscoveryFailure(error: unknown): string {
-  if (axios.isAxiosError(error)) {
-    if (error.response) {
-      return `The provider responded with HTTP ${error.response.status}`;
-    }
-    if (error.code === 'ECONNABORTED') {
-      return 'The provider did not respond in time';
-    }
+  if (isProviderHttpError(error)) {
+    return `The provider responded with HTTP ${error.response.status}`;
+  }
+  if (isProviderTimeout(error)) {
+    return 'The provider did not respond in time';
+  }
+  if (error instanceof ProviderNetworkError) {
     return error.code
       ? `Could not reach the provider (${error.code})`
       : 'Could not reach the provider';
@@ -1743,14 +1748,14 @@ export class PluginService {
     }
 
     try {
-      const response = await axios.get(modelsEndpoint, {
+      const response = await providerRequest<{ data?: unknown } | null>({
+        url: modelsEndpoint,
         headers: buildPluginModelDiscoveryHeaders(
           plugin,
           apiKey,
           modelsEndpoint
         ),
-        timeout: MODEL_DISCOVERY_REQUEST_TIMEOUT_MS,
-        maxRedirects: 0,
+        timeoutMs: MODEL_DISCOVERY_REQUEST_TIMEOUT_MS,
       });
       const data = response.data?.data;
       const models = Array.isArray(data)
@@ -1875,20 +1880,21 @@ export class PluginService {
     );
 
     try {
-      const response = await axios.get(modelsEndpoint, {
+      const response = await providerRequest<{ data?: unknown } | null>({
+        url: modelsEndpoint,
         headers,
-        timeout: MODEL_DISCOVERY_REQUEST_TIMEOUT_MS,
-        maxRedirects: 0,
+        timeoutMs: MODEL_DISCOVERY_REQUEST_TIMEOUT_MS,
       });
 
-      if (response.data?.data && Array.isArray(response.data.data)) {
-        const models = response.data.data
+      const entries = response.data?.data;
+      if (entries && Array.isArray(entries)) {
+        const models = entries
           .map((m: { id?: string }) => m.id)
           .filter((id: unknown): id is string => typeof id === 'string');
         // Providers that publish a context window are worth remembering: it is
         // the only way the application can say how full a conversation is.
-        const modelContext = readModelContextMap(response.data.data);
-        const modelReasoning = readModelReasoningMap(response.data.data);
+        const modelContext = readModelContextMap(entries);
+        const modelReasoning = readModelReasoningMap(entries);
 
         if (models.length > 0) {
           logger.debug(
@@ -2555,10 +2561,12 @@ export class PluginService {
 
     const startedAt = Date.now();
     try {
-      const response = await axios.post(processedEndpoint, payload, {
+      const response = await providerRequest<Record<string, unknown>>({
+        url: processedEndpoint,
+        method: 'POST',
+        json: payload,
         headers,
-        timeout: 60000, // 60 second timeout
-        maxRedirects: 0,
+        timeoutMs: 60000, // 60 second timeout
         signal,
       });
 
@@ -2606,7 +2614,7 @@ export class PluginService {
       }
 
       if (error && typeof error === 'object' && 'response' in error) {
-        const axiosError = error as {
+        const httpError = error as {
           response: {
             status: number;
             data?: { error?: { message?: string } };
@@ -2614,7 +2622,7 @@ export class PluginService {
           };
         };
         throw new Error(
-          `Plugin API error: ${axiosError.response.status} - ${axiosError.response.data?.error?.message || axiosError.response.statusText}`
+          `Plugin API error: ${httpError.response.status} - ${httpError.response.data?.error?.message || httpError.response.statusText}`
         );
       } else if (error && typeof error === 'object' && 'request' in error) {
         throw new Error(

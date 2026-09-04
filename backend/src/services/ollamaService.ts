@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import axios, { AxiosInstance } from 'axios';
+import type { Readable } from 'node:stream';
 import { getOllamaRuntimeConfig } from '../platform/ollamaRuntimeConfig.js';
 import {
   OllamaModel,
@@ -34,6 +34,12 @@ import {
   parseOllamaModelDefaults,
   type OllamaModelDefaults,
 } from '../utils/ollamaModelDefaults.js';
+import {
+  isProviderRequestCancelled,
+  providerRequest,
+  type ProviderResponse,
+  type ProviderResponseType,
+} from '../utils/providerFetch.js';
 import {
   isThinkingLevel,
   ollamaSupportsThinkingLevels,
@@ -122,27 +128,48 @@ export function normalizeChatMessagesForOllama(
   });
 }
 
-// With responseType 'stream', an HTTP error resolves with the body still a
-// stream, so getErrorMessage cannot see Ollama's {"error": ...} text and the
-// surfaced message degrades to axios' generic status line. Reading a bounded
-// slice of the body restores the real reason.
-const STREAMED_ERROR_BODY_MAX_BYTES = 8_192;
-async function parseStreamedErrorBody(error: unknown): Promise<void> {
-  const response = (error as { response?: { data?: unknown } })?.response;
-  const body = response?.data as AsyncIterable<Buffer> & { on?: unknown };
-  if (!response || !body || typeof body.on !== 'function') return;
-  try {
-    const chunks: Buffer[] = [];
-    let total = 0;
-    for await (const chunk of body) {
-      chunks.push(chunk);
-      total += chunk.length;
-      if (total > STREAMED_ERROR_BODY_MAX_BYTES) break;
-    }
-    response.data = JSON.parse(Buffer.concat(chunks).toString('utf8'));
-  } catch {
-    // Keep the original error when the body is unreadable or not JSON.
+/**
+ * True when nothing is listening on the Ollama port. The transport reports a
+ * refused connection as a network error that carries the underlying
+ * `ECONNREFUSED` in its cause chain rather than on the error itself, so the
+ * chain is walked instead of reading a single `code`.
+ */
+function isConnectionRefused(error: unknown, depth = 0): boolean {
+  if (!error || typeof error !== 'object' || depth > 4) return false;
+  const candidate = error as {
+    code?: unknown;
+    message?: unknown;
+    errors?: unknown;
+    cause?: unknown;
+  };
+  if (candidate.code === 'ECONNREFUSED') return true;
+  if (
+    typeof candidate.message === 'string' &&
+    candidate.message.includes('ECONNREFUSED')
+  ) {
+    return true;
   }
+  if (
+    Array.isArray(candidate.errors) &&
+    candidate.errors.some(inner => isConnectionRefused(inner, depth + 1))
+  ) {
+    return true;
+  }
+  return isConnectionRefused(candidate.cause, depth + 1);
+}
+
+/** How a call reaches Ollama, beyond the path it is addressed to. */
+interface OllamaRequestOptions {
+  method?: string;
+  /** Serialized as an application/json body. */
+  json?: unknown;
+  /** Sent as-is, for the raw blob uploads. */
+  body?: Buffer | string;
+  headers?: Record<string, string>;
+  signal?: AbortSignal;
+  responseType?: ProviderResponseType;
+  /** Use the long-operation timeout, for calls that may load a model first. */
+  long?: boolean;
 }
 
 const MODEL_DEFAULTS_TTL_MS = 10 * 60 * 1000;
@@ -152,29 +179,36 @@ export class OllamaService {
     string,
     { defaults: OllamaModelDefaults; at: number }
   >();
-  private client: AxiosInstance;
-  private longOperationClient: AxiosInstance;
   private baseUrl: string;
   private enabled = true;
 
   constructor() {
     this.baseUrl = process.env.OLLAMA_BASE_URL || 'http://localhost:11434';
+    // Validate the timeouts at construction so a bad configuration is a
+    // startup failure rather than a surprise on the first request.
+    getOllamaRuntimeConfig();
+  }
+
+  /**
+   * One outbound call to the configured Ollama. The base URL and the timeouts
+   * are read per request so an admin change to either takes effect without a
+   * restart, and paths are appended rather than resolved so a gateway base
+   * URL that carries a path prefix keeps it.
+   */
+  private request<T = unknown>(
+    path: string,
+    options: OllamaRequestOptions = {}
+  ): Promise<ProviderResponse<T>> {
     const { timeoutMs, longOperationTimeoutMs } = getOllamaRuntimeConfig();
-
-    this.client = axios.create({
-      baseURL: this.baseUrl,
-      timeout: timeoutMs,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-
-    this.longOperationClient = axios.create({
-      baseURL: this.baseUrl,
-      timeout: longOperationTimeoutMs,
-      headers: {
-        'Content-Type': 'application/json',
-      },
+    return providerRequest<T>({
+      url: `${this.baseUrl.replace(/\/+$/, '')}${path}`,
+      method: options.method,
+      headers: options.headers,
+      json: options.json,
+      body: options.body,
+      signal: options.signal,
+      responseType: options.responseType,
+      timeoutMs: options.long ? longOperationTimeoutMs : timeoutMs,
     });
   }
 
@@ -195,8 +229,6 @@ export class OllamaService {
     }
     if (baseUrl && baseUrl !== this.baseUrl) {
       this.baseUrl = baseUrl;
-      this.client.defaults.baseURL = baseUrl;
-      this.longOperationClient.defaults.baseURL = baseUrl;
       this.modelDefaultsCache.clear();
     }
   }
@@ -214,15 +246,10 @@ export class OllamaService {
       return false;
     }
     try {
-      const response = await this.client.get('/');
+      const response = await this.request('/');
       return response.status === 200;
     } catch (error: unknown) {
-      if (
-        error &&
-        typeof error === 'object' &&
-        'code' in error &&
-        (error as { code: string }).code === 'ECONNREFUSED'
-      ) {
+      if (isConnectionRefused(error)) {
         logger.warn(
           'Ollama service is not running. Please start it with: ollama serve'
         );
@@ -239,18 +266,15 @@ export class OllamaService {
   async getModels(): Promise<OllamaModel[]> {
     try {
       logger.debug('Fetching models from Ollama...');
-      const response = await this.client.get('/api/tags');
+      const response = await this.request<{ models?: OllamaModel[] }>(
+        '/api/tags'
+      );
       logger.debug('Ollama response:', JSON.stringify(response.data, null, 2));
-      const models = response.data.models || [];
+      const models = response.data?.models || [];
       logger.debug(`Found ${models.length} models`);
       return models;
     } catch (error: unknown) {
-      if (
-        error &&
-        typeof error === 'object' &&
-        'code' in error &&
-        (error as { code: string }).code === 'ECONNREFUSED'
-      ) {
+      if (isConnectionRefused(error)) {
         logger.error(
           'Cannot connect to Ollama. Please ensure Ollama is running with: ollama serve'
         );
@@ -271,15 +295,21 @@ export class OllamaService {
     request: OllamaGenerateRequest
   ): Promise<OllamaGenerateResponse> {
     try {
-      // Use long operation client for generation as it may need to load model on first use
-      const response = await this.longOperationClient.post('/api/generate', {
-        ...request,
-        options: sanitizeOptionsForModel(
-          request.model,
-          request.options as Record<string, unknown> | undefined
-        ),
-        stream: false, // For non-streaming responses
-      });
+      // Use the long operation timeout for generation as it may need to load model on first use
+      const response = await this.request<OllamaGenerateResponse>(
+        '/api/generate',
+        {
+          long: true,
+          json: {
+            ...request,
+            options: sanitizeOptionsForModel(
+              request.model,
+              request.options as Record<string, unknown> | undefined
+            ),
+            stream: false, // For non-streaming responses
+          },
+        }
+      );
       return response.data;
     } catch (error: unknown) {
       logger.error('Failed to generate response:', error);
@@ -294,10 +324,11 @@ export class OllamaService {
     onComplete: () => void
   ): Promise<void> {
     try {
-      // Use long operation client for streaming generation as it may need to load model on first use
-      const response = await this.longOperationClient.post(
-        '/api/generate',
-        {
+      // Use the long operation timeout for streaming generation as it may need to load model on first use
+      const response = await this.request<Readable>('/api/generate', {
+        long: true,
+        responseType: 'stream',
+        json: {
           ...request,
           options: sanitizeOptionsForModel(
             request.model,
@@ -305,10 +336,7 @@ export class OllamaService {
           ),
           stream: true,
         },
-        {
-          responseType: 'stream',
-        }
-      );
+      });
 
       let buffer = '';
 
@@ -352,11 +380,15 @@ export class OllamaService {
     try {
       logger.debug(`Pulling model: ${modelName}`);
       // Without stream:false Ollama streams NDJSON and reports failures as
-      // {"error": ...} lines inside a 200 response, which axios cannot see
-      // as an error. Non-streaming pulls fail with a real HTTP status.
-      await this.longOperationClient.post('/api/pull', {
-        name: modelName,
-        stream: false,
+      // {"error": ...} lines inside a 200 response, which the HTTP layer
+      // cannot see as an error. Non-streaming pulls fail with a real HTTP
+      // status.
+      await this.request('/api/pull', {
+        long: true,
+        json: {
+          name: modelName,
+          stream: false,
+        },
       });
       logger.debug(`Successfully pulled model: ${modelName}`);
     } catch (error: unknown) {
@@ -383,16 +415,14 @@ export class OllamaService {
   ): Promise<void> {
     try {
       logger.debug(`Pulling model with streaming: ${modelName}`);
-      const response = await this.longOperationClient.post(
-        '/api/pull',
-        {
+      const response = await this.request<Readable>('/api/pull', {
+        long: true,
+        responseType: 'stream',
+        json: {
           name: modelName,
           stream: true,
         },
-        {
-          responseType: 'stream',
-        }
-      );
+      });
 
       let buffer = '';
       // A pull that fails mid-stream still ends with HTTP 200: Ollama
@@ -471,7 +501,6 @@ export class OllamaService {
       });
     } catch (error: unknown) {
       logger.error('Failed to pull model with streaming:', error);
-      await parseStreamedErrorBody(error);
       onError(
         new Error(getErrorMessage(error, 'Failed to pull model with streaming'))
       );
@@ -480,8 +509,9 @@ export class OllamaService {
 
   async deleteModel(modelName: string): Promise<void> {
     try {
-      await this.client.delete('/api/delete', {
-        data: { name: modelName },
+      await this.request('/api/delete', {
+        method: 'DELETE',
+        json: { name: modelName },
       });
     } catch (error: unknown) {
       logger.error('Failed to delete model:', error);
@@ -510,7 +540,7 @@ export class OllamaService {
       this.modelDefaultsCache.set(modelName, { defaults, at: Date.now() });
       return defaults;
     } catch (error) {
-      if (signal?.aborted) throw error;
+      if (signal?.aborted || isProviderRequestCancelled(error)) throw error;
       // A model that cannot be inspected simply contributes no defaults; the
       // application's own settings still apply.
       logger.debug(
@@ -526,17 +556,19 @@ export class OllamaService {
     signal?: AbortSignal
   ): Promise<Record<string, unknown>> {
     try {
-      const response = await this.client.post(
+      const response = await this.request<Record<string, unknown>>(
         '/api/show',
         {
-          model: modelName,
-          verbose,
-        },
-        { signal }
+          json: {
+            model: modelName,
+            verbose,
+          },
+          signal,
+        }
       );
       return response.data;
     } catch (error: unknown) {
-      if (signal?.aborted) throw error;
+      if (signal?.aborted || isProviderRequestCancelled(error)) throw error;
       // Callers routinely probe models Ollama does not serve (plugin
       // models, personas); a one-line message keeps the log readable.
       logger.error(
@@ -548,7 +580,7 @@ export class OllamaService {
 
   async createModel(payload: OllamaCreateRequest): Promise<void> {
     try {
-      await this.client.post('/api/create', payload);
+      await this.request('/api/create', { json: payload });
     } catch (error: unknown) {
       logger.error('Failed to create model:', error);
       throw new Error(getErrorMessage(error, 'Failed to create model'));
@@ -557,7 +589,7 @@ export class OllamaService {
 
   async copyModel(source: string, destination: string): Promise<void> {
     try {
-      await this.client.post('/api/copy', { source, destination });
+      await this.request('/api/copy', { json: { source, destination } });
     } catch (error: unknown) {
       logger.error('Failed to copy model:', error);
       throw new Error(getErrorMessage(error, 'Failed to copy model'));
@@ -566,7 +598,7 @@ export class OllamaService {
 
   async pushModel(modelName: string): Promise<void> {
     try {
-      await this.client.post('/api/push', { model: modelName });
+      await this.request('/api/push', { json: { model: modelName } });
     } catch (error: unknown) {
       logger.error('Failed to push model:', error);
       throw new Error(getErrorMessage(error, 'Failed to push model'));
@@ -578,12 +610,16 @@ export class OllamaService {
     signal?: AbortSignal
   ): Promise<OllamaEmbeddingsResponse> {
     try {
-      const response = await this.client.post('/api/embed', payload, {
-        signal,
-      });
+      const response = await this.request<OllamaEmbeddingsResponse>(
+        '/api/embed',
+        {
+          json: payload,
+          signal,
+        }
+      );
       return response.data;
     } catch (error: unknown) {
-      if (signal?.aborted) throw error;
+      if (signal?.aborted || isProviderRequestCancelled(error)) throw error;
       logger.error('Failed to generate embeddings:', error);
       throw new Error(getErrorMessage(error, 'Failed to generate embeddings'));
     }
@@ -591,7 +627,9 @@ export class OllamaService {
 
   async listRunningModels(): Promise<{ models: Record<string, unknown>[] }> {
     try {
-      const response = await this.client.get('/api/ps');
+      const response = await this.request<{
+        models: Record<string, unknown>[];
+      }>('/api/ps');
       return response.data;
     } catch (error: unknown) {
       logger.error('Failed to list running models:', error);
@@ -603,9 +641,11 @@ export class OllamaService {
     try {
       logger.debug(`Unloading model: ${modelName}`);
       // Sending keep_alive: 0 tells Ollama to immediately unload the model from memory
-      await this.client.post('/api/generate', {
-        model: modelName,
-        keep_alive: 0,
+      await this.request('/api/generate', {
+        json: {
+          model: modelName,
+          keep_alive: 0,
+        },
       });
       logger.debug(`Successfully unloaded model: ${modelName}`);
     } catch (error: unknown) {
@@ -632,7 +672,7 @@ export class OllamaService {
 
   async getVersion(): Promise<{ version: string }> {
     try {
-      const response = await this.client.get('/api/version');
+      const response = await this.request<{ version: string }>('/api/version');
       return response.data;
     } catch (error: unknown) {
       logger.error('Failed to get version:', error);
@@ -740,12 +780,12 @@ export class OllamaService {
   ): Promise<OllamaChatResponse> {
     const startedAt = Date.now();
     try {
-      // Use long operation client for chat generation as it may need to load model on first use
-      const response = await this.longOperationClient.post(
-        '/api/chat',
-        await this.buildChatRequestBody(request, false, signal),
-        { signal }
-      );
+      // Use the long operation timeout for chat generation as it may need to load model on first use
+      const response = await this.request<OllamaChatResponse>('/api/chat', {
+        long: true,
+        json: await this.buildChatRequestBody(request, false, signal),
+        signal,
+      });
       this.recordChatUsage(
         request.model,
         'success',
@@ -793,15 +833,13 @@ export class OllamaService {
       );
     };
     try {
-      // Use long operation client for chat streaming as it may need to load model on first use
-      const response = await this.longOperationClient.post(
-        '/api/chat',
-        await this.buildChatRequestBody(request, true, signal),
-        {
-          responseType: 'stream',
-          signal,
-        }
-      );
+      // Use the long operation timeout for chat streaming as it may need to load model on first use
+      const response = await this.request<Readable>('/api/chat', {
+        long: true,
+        responseType: 'stream',
+        json: await this.buildChatRequestBody(request, true, signal),
+        signal,
+      });
 
       let buffer = '';
       await new Promise<void>(resolve => {
@@ -870,7 +908,6 @@ export class OllamaService {
       });
     } catch (error: unknown) {
       recordOnce(signal?.aborted ? 'cancelled' : 'error');
-      await parseStreamedErrorBody(error);
       logger.error('Failed to generate chat stream response:', error);
       onError(
         new Error(
@@ -883,7 +920,9 @@ export class OllamaService {
   // Blob management methods
   async checkBlobExists(digest: string): Promise<boolean> {
     try {
-      const response = await this.client.head(`/api/blobs/${digest}`);
+      const response = await this.request(`/api/blobs/${digest}`, {
+        method: 'HEAD',
+      });
       return response.status === 200;
     } catch (error: unknown) {
       if (error && typeof error === 'object' && 'response' in error) {
@@ -903,7 +942,9 @@ export class OllamaService {
       throw new Error('Invalid digest format');
     }
     try {
-      await this.client.post(`/api/blobs/${digest}`, data, {
+      await this.request(`/api/blobs/${digest}`, {
+        method: 'POST',
+        body: data,
         headers: {
           'Content-Type': 'application/octet-stream',
         },
@@ -919,7 +960,10 @@ export class OllamaService {
     payload: Record<string, unknown>
   ): Promise<{ embedding: number[] }> {
     try {
-      const response = await this.client.post('/api/embeddings', payload);
+      const response = await this.request<{ embedding: number[] }>(
+        '/api/embeddings',
+        { json: payload }
+      );
       return response.data;
     } catch (error: unknown) {
       logger.error('Failed to generate legacy embeddings:', error);

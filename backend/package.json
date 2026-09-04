@@ -27,7 +27,6 @@
     "@types/jsonwebtoken": "^9.0.10",
     "@types/multer": "^2.2.0",
     "@types/pdf-parse": "^1.1.5",
-    "axios": "^1.13.2",
     "bcrypt": "^6.0.0",
     "better-sqlite3": "^13.0.2",
     "cors": "^2.8.5",

@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import axios from 'axios';
+import { providerRequest } from '../utils/providerFetch.js';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
@@ -200,19 +200,19 @@ export class CodexOAuthService {
       );
     }
 
-    const response = await axios.post(
-      oauthTokenUrl(),
-      new URLSearchParams({
+    const response = await providerRequest({
+      url: oauthTokenUrl(),
+      method: 'POST',
+      body: new URLSearchParams({
         grant_type: 'refresh_token',
         refresh_token: refreshToken,
         client_id: OAUTH_CLIENT_ID,
       }).toString(),
-      {
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        timeout: 30_000,
-        signal,
-      }
-    );
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      timeoutMs: 30_000,
+      signal,
+      redirect: 'follow',
+    });
     const tokens = response.data as {
       id_token?: string;
       access_token?: string;

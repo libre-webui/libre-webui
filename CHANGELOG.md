@@ -23,6 +23,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (`params`, blob responses, per-request timeouts, cancellation, and errors
   that carry the response status and body), the auth header and the
   session-expiry redirect live in two hooks, and the vendor bundle shrinks.
+- **The server's outbound HTTP runs on Node's `fetch`.** axios is gone from
+  the backend as well. One helper carries what the provider integrations
+  relied on: a non-2xx status throws with the response attached, timeouts are
+  idle timeouts as before so a long model pull or a slow download is not cut
+  off, response size caps are enforced by Content-Length and then by a
+  counted read, redirects are refused so credentials never follow a 3xx, and
+  cancellation, timeout, and unreachable-host errors stay distinguishable.
 
 ## [0.33.0] - 2026-09-04
 

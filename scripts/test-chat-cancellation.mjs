@@ -17,7 +17,6 @@
 
 import assert from 'node:assert/strict';
 import { EventEmitter } from 'node:events';
-import { Readable } from 'node:stream';
 import test from 'node:test';
 
 import {
@@ -330,20 +329,17 @@ test('the user registry bounds provider work across separate sockets', () => {
 });
 
 test('Ollama model-default preparation forwards Stop cancellation', async () => {
-  const originalClient = ollamaService.client;
+  const originalFetch = globalThis.fetch;
   const controller = new AbortController();
   let forwardedSignal;
-  ollamaService.client = {
-    post(_url, _body, config) {
-      forwardedSignal = config.signal;
-      return new Promise((_resolve, reject) => {
-        config.signal.addEventListener(
-          'abort',
-          () => reject(config.signal.reason),
-          { once: true }
-        );
+  globalThis.fetch = (_url, init = {}) => {
+    forwardedSignal = init.signal;
+    // A peer that never answers: only the caller's Stop can settle this.
+    return new Promise((_resolve, reject) => {
+      init.signal.addEventListener('abort', () => reject(init.signal.reason), {
+        once: true,
       });
-    },
+    });
   };
 
   try {
@@ -356,31 +352,40 @@ test('Ollama model-default preparation forwards Stop cancellation', async () => 
     await assert.rejects(defaults, error =>
       isChatGenerationCancelled(error, controller.signal)
     );
-    assert.equal(forwardedSignal, controller.signal);
+    // The request carries a signal derived from the caller's, so Stop reaches
+    // the transport with the caller's own reason.
+    assert.ok(forwardedSignal instanceof AbortSignal);
+    assert.equal(forwardedSignal.aborted, true);
+    assert.equal(forwardedSignal.reason, controller.signal.reason);
   } finally {
-    ollamaService.client = originalClient;
+    globalThis.fetch = originalFetch;
   }
 });
 
 test('Ollama service settles once and rejects a stream without a done record', async () => {
-  const originalClient = ollamaService.longOperationClient;
+  const originalFetch = globalThis.fetch;
   const request = { model: 'test', messages: [], stream: true };
+  const ndjsonResponse = (...records) =>
+    new Response(
+      new ReadableStream({
+        start(controller) {
+          for (const record of records) {
+            controller.enqueue(
+              new TextEncoder().encode(`${JSON.stringify(record)}\n`)
+            );
+          }
+          controller.close();
+        },
+      }),
+      { headers: { 'content-type': 'application/x-ndjson' } }
+    );
   try {
-    ollamaService.longOperationClient = {
-      async post() {
-        return {
-          data: Readable.from([
-            Buffer.from(
-              `${JSON.stringify({
-                model: 'test',
-                message: { role: 'assistant', content: 'done' },
-                done: true,
-              })}\n`
-            ),
-          ]),
-        };
-      },
-    };
+    globalThis.fetch = async () =>
+      ndjsonResponse({
+        model: 'test',
+        message: { role: 'assistant', content: 'done' },
+        done: true,
+      });
     let completed = 0;
     let failed = 0;
     await ollamaService.generateChatStreamResponse(
@@ -392,21 +397,12 @@ test('Ollama service settles once and rejects a stream without a done record', a
     assert.equal(completed, 1);
     assert.equal(failed, 0);
 
-    ollamaService.longOperationClient = {
-      async post() {
-        return {
-          data: Readable.from([
-            Buffer.from(
-              `${JSON.stringify({
-                model: 'test',
-                message: { role: 'assistant', content: 'partial' },
-                done: false,
-              })}\n`
-            ),
-          ]),
-        };
-      },
-    };
+    globalThis.fetch = async () =>
+      ndjsonResponse({
+        model: 'test',
+        message: { role: 'assistant', content: 'partial' },
+        done: false,
+      });
     let incompleteError;
     await ollamaService.generateChatStreamResponse(
       request,
@@ -418,6 +414,6 @@ test('Ollama service settles once and rejects a stream without a done record', a
     );
     assert.match(incompleteError.message, /ended before completion/);
   } finally {
-    ollamaService.longOperationClient = originalClient;
+    globalThis.fetch = originalFetch;
   }
 });

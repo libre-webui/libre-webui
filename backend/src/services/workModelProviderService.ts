@@ -15,7 +15,6 @@
  * limitations under the License.
  */
 
-import axios from 'axios';
 import { createHash } from 'crypto';
 import type {
   GenerationOptions,
@@ -55,6 +54,10 @@ import {
   resolvePluginApiConfig,
   validatePluginModel,
 } from '../utils/pluginValidation.js';
+import {
+  isProviderHttpError,
+  providerRequest,
+} from '../utils/providerFetch.js';
 import { AGENT_CLI_DEFINITIONS } from './agentCliService.js';
 import codexOAuthService, {
   CODEX_OAUTH_PLUGIN_ID,
@@ -70,6 +73,35 @@ import pluginUsageService, {
 import type { WorkProviderSelection } from '../types/work.js';
 
 type JsonObject = Record<string, unknown>;
+
+/**
+ * The injectable POST seam. Tests replace it, so it keeps the small
+ * request/response shape the service actually uses.
+ */
+export interface ProviderPostConfig {
+  headers?: Record<string, string>;
+  timeout?: number;
+  signal?: AbortSignal;
+}
+
+export type ProviderPost = (
+  url: string,
+  data: unknown,
+  config: ProviderPostConfig
+) => Promise<{ data: unknown }>;
+
+const defaultProviderPost: ProviderPost = async (url, data, config) => {
+  const response = await providerRequest({
+    url,
+    method: 'POST',
+    json: data,
+    headers: config.headers,
+    timeoutMs: config.timeout,
+    signal: config.signal,
+    redirect: 'error',
+  });
+  return { data: response.data };
+};
 
 export const WORK_TOOL_ARGUMENTS_ERROR_METADATA_KEY = 'libreToolArgumentsError';
 export const WORK_TOOL_ARGUMENTS_ERROR_MESSAGE =
@@ -90,7 +122,7 @@ interface WorkModelProviderDependencies {
     typeof pluginService,
     'getActivePlugins' | 'getPlugin' | 'getApiKey' | 'getPluginVariables'
   >;
-  post: typeof axios.post;
+  post: ProviderPost;
   recordPluginUsage?: (usage: PluginUsageEventInput) => void;
 }
 
@@ -117,7 +149,7 @@ export class WorkModelProviderService {
     private readonly dependencies: WorkModelProviderDependencies = {
       ollama: ollamaService,
       plugins: pluginService,
-      post: axios.post.bind(axios),
+      post: defaultProviderPost,
       recordPluginUsage: usage => pluginUsageService.record(usage),
     }
   ) {}
@@ -428,19 +460,14 @@ export class WorkModelProviderService {
 
     const startedAt = Date.now();
     try {
-      const response = await this.dependencies.post<JsonObject>(
-        endpoint,
-        payload,
-        {
-          headers,
-          signal,
-          timeout: 300_000,
-          maxRedirects: 0,
-        }
-      );
+      const response = await this.dependencies.post(endpoint, payload, {
+        headers,
+        signal,
+        timeout: 300_000,
+      });
       const normalized = normalizePluginWorkResponse(
         plugin,
-        response.data,
+        (response.data ?? {}) as JsonObject,
         request.model,
         apiConfig.apiMode,
         providerStateScope
@@ -464,12 +491,11 @@ export class WorkModelProviderService {
         startedAt
       );
       if (signal?.aborted) throw error;
-      const message =
-        axios.isAxiosError(error) && error.response
-          ? `Plugin API error: ${error.response.status} - ${providerErrorMessage(error.response.data)}`
-          : error instanceof Error
-            ? error.message
-            : 'Plugin request failed.';
+      const message = isProviderHttpError(error)
+        ? `Plugin API error: ${error.response.status} - ${providerErrorMessage(error.response.data)}`
+        : error instanceof Error
+          ? error.message
+          : 'Plugin request failed.';
       throw new WorkModelProviderError(
         message,
         502,

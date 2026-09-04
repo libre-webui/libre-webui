@@ -15,7 +15,6 @@
  * limitations under the License.
  */
 
-import axios from 'axios';
 import { Plugin, TTSConfig } from '../types/index.js';
 import {
   acquireSharedCapacity,
@@ -24,6 +23,11 @@ import {
   type SharedCapacityReservation,
 } from '../platform/coordination/sharedAdmission.js';
 import { createLogger } from '../utils/logger.js';
+import {
+  isProviderHttpError,
+  isProviderRequestCancelled,
+  providerRequest,
+} from '../utils/providerFetch.js';
 import {
   assertSafePluginEndpoint,
   applyModelEndpointTemplate,
@@ -133,16 +137,20 @@ function describeTTSRequestFailure(error: unknown):
       code?: string;
       status?: number;
     } {
-  if (!axios.isAxiosError(error)) {
-    return error instanceof Error ? error.message : 'Unknown TTS error';
+  if (!(error instanceof Error)) {
+    return 'Unknown TTS error';
+  }
+
+  const code = (error as { code?: unknown }).code;
+  const status = isProviderHttpError(error) ? error.response.status : undefined;
+  if (typeof code !== 'string' && typeof status !== 'number') {
+    return error.message;
   }
 
   return {
     message: error.message,
-    ...(typeof error.code === 'string' ? { code: error.code } : {}),
-    ...(typeof error.response?.status === 'number'
-      ? { status: error.response.status }
-      : {}),
+    ...(typeof code === 'string' ? { code } : {}),
+    ...(typeof status === 'number' ? { status } : {}),
   };
 }
 
@@ -435,12 +443,14 @@ export class PluginTTSService {
     );
     const startedAt = Date.now();
     try {
-      const response = await axios.post(processedEndpoint, payload, {
+      const response = await providerRequest<Buffer>({
+        url: processedEndpoint,
+        method: 'POST',
+        json: payload,
         headers,
-        timeout: 120000,
-        responseType: 'arraybuffer',
-        maxRedirects: 0,
-        maxContentLength: TTS_MAX_PROVIDER_RESPONSE_BYTES,
+        timeoutMs: 120000,
+        responseType: 'bytes',
+        maxResponseBytes: TTS_MAX_PROVIDER_RESPONSE_BYTES,
         signal: providerSignal,
       });
 
@@ -458,7 +468,8 @@ export class PluginTTSService {
       });
       return audio;
     } catch (error: unknown) {
-      const cancelled = axios.isCancel(error) || providerSignal.aborted;
+      const cancelled =
+        isProviderRequestCancelled(error) || providerSignal.aborted;
       this.deps.recordUsage?.({
         userId: options.userId,
         pluginId: plugin.id,
@@ -485,18 +496,18 @@ export class PluginTTSService {
       }
 
       if (error && typeof error === 'object' && 'response' in error) {
-        const axiosError = error as {
+        const providerError = error as {
           response: {
             status: number;
-            data?: ArrayBuffer;
+            data?: Buffer;
             statusText: string;
           };
         };
 
-        let errorMessage = axiosError.response.statusText;
-        if (axiosError.response.data) {
+        let errorMessage = providerError.response.statusText;
+        if (providerError.response.data) {
           try {
-            const errorText = Buffer.from(axiosError.response.data).toString(
+            const errorText = Buffer.from(providerError.response.data).toString(
               'utf8'
             );
             const errorJson = JSON.parse(errorText);
@@ -506,7 +517,7 @@ export class PluginTTSService {
               errorJson.message ||
               errorMessage;
           } catch {
-            const rawText = Buffer.from(axiosError.response.data).toString(
+            const rawText = Buffer.from(providerError.response.data).toString(
               'utf8'
             );
             if (rawText) {
@@ -516,8 +527,8 @@ export class PluginTTSService {
         }
 
         throw new TTSProviderResponseError(
-          axiosError.response.status,
-          `TTS API error: ${axiosError.response.status} - ${errorMessage}`
+          providerError.response.status,
+          `TTS API error: ${providerError.response.status} - ${errorMessage}`
         );
       } else if (error && typeof error === 'object' && 'request' in error) {
         throw new Error(
@@ -654,12 +665,14 @@ export class PluginTTSService {
     );
     const startedAt = Date.now();
     try {
-      const response = await axios.post(processedEndpoint, form, {
+      const response = await providerRequest<Buffer>({
+        url: processedEndpoint,
+        method: 'POST',
+        body: form,
         headers,
-        timeout: 120000,
-        responseType: 'arraybuffer',
-        maxRedirects: 0,
-        maxContentLength: TTS_MAX_PROVIDER_RESPONSE_BYTES,
+        timeoutMs: 120000,
+        responseType: 'bytes',
+        maxResponseBytes: TTS_MAX_PROVIDER_RESPONSE_BYTES,
         signal: providerSignal,
       });
       const audio = Buffer.from(response.data);
@@ -676,7 +689,8 @@ export class PluginTTSService {
       });
       return audio;
     } catch (error: unknown) {
-      const cancelled = axios.isCancel(error) || providerSignal.aborted;
+      const cancelled =
+        isProviderRequestCancelled(error) || providerSignal.aborted;
       this.deps.recordUsage?.({
         userId: options.userId,
         pluginId: plugin.id,
@@ -702,7 +716,7 @@ export class PluginTTSService {
         );
       }
 
-      if (axios.isAxiosError(error) && error.response) {
+      if (isProviderHttpError<Buffer>(error)) {
         let errorMessage = error.response.statusText;
         if (error.response.data) {
           try {
@@ -723,7 +737,7 @@ export class PluginTTSService {
           `TTS voice clone API error: ${error.response.status} - ${errorMessage}`
         );
       }
-      if (axios.isAxiosError(error) && error.request) {
+      if (error && typeof error === 'object' && 'request' in error) {
         throw new Error(
           `TTS voice clone connection error: Unable to reach ${processedEndpoint}`
         );

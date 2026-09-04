@@ -5,7 +5,6 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  */
 
-import axios from 'axios';
 import type { Plugin, STTConfig } from '../types/index.js';
 import {
   applyModelEndpointTemplate,
@@ -14,6 +13,11 @@ import {
   resolvePluginOperationEndpoint,
   validatePluginModel,
 } from '../utils/pluginValidation.js';
+import {
+  isProviderHttpError,
+  isProviderRequestCancelled,
+  providerRequest,
+} from '../utils/providerFetch.js';
 import type { PluginUsageEventInput } from './pluginUsageService.js';
 
 type PluginVariables = Record<string, string | number | boolean>;
@@ -106,11 +110,13 @@ export class PluginSTTService {
     try {
       const response =
         config?.request_mode === 'raw'
-          ? await axios.post(endpoint, audio.buffer, {
+          ? await providerRequest({
+              url: endpoint,
+              method: 'POST',
+              body: audio.buffer,
               headers: { ...headers, 'Content-Type': audio.mimetype },
-              timeout: 120_000,
-              maxRedirects: 0,
-              maxContentLength: MAX_STT_PROVIDER_RESPONSE_BYTES,
+              timeoutMs: 120_000,
+              maxResponseBytes: MAX_STT_PROVIDER_RESPONSE_BYTES,
               signal: options.signal,
             })
           : await this.transcribeMultipart(
@@ -134,7 +140,8 @@ export class PluginSTTService {
       });
       return result;
     } catch (error) {
-      const cancelled = axios.isCancel(error) || options.signal?.aborted;
+      const cancelled =
+        isProviderRequestCancelled(error) || options.signal?.aborted;
       this.deps.recordUsage?.({
         userId: options.userId,
         pluginId: plugin.id,
@@ -147,7 +154,7 @@ export class PluginSTTService {
         unitKind: 'bytes',
       });
       if (cancelled) throw new Error('Speech transcription was cancelled');
-      if (axios.isAxiosError(error) && error.response) {
+      if (isProviderHttpError(error)) {
         throw new STTProviderResponseError(
           error.response.status,
           providerErrorMessage(error.response.data) ||
@@ -221,11 +228,13 @@ export class PluginSTTService {
     form.append('response_format', 'json');
     if (options.language) form.append('language', options.language);
     if (options.prompt) form.append('prompt', options.prompt);
-    return axios.post(endpoint, form, {
+    return providerRequest({
+      url: endpoint,
+      method: 'POST',
+      body: form,
       headers,
-      timeout: 120_000,
-      maxRedirects: 0,
-      maxContentLength: MAX_STT_PROVIDER_RESPONSE_BYTES,
+      timeoutMs: 120_000,
+      maxResponseBytes: MAX_STT_PROVIDER_RESPONSE_BYTES,
       signal: options.signal,
     });
   }

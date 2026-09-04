@@ -120,9 +120,24 @@ test('the validated provider contract controls context adoption and request clie
         path.join(repoRoot, 'backend', 'dist', 'services', 'ollamaService.js')
       ).href
     );
+    const { getOllamaRuntimeConfig } = await import(
+      pathToFileURL(
+        path.join(
+          repoRoot,
+          'backend',
+          'dist',
+          'platform',
+          'ollamaRuntimeConfig.js'
+        )
+      ).href
+    );
+    // Constructing the service validates the contract; the timeouts it will
+    // spend per request come from the same reader it reads on every call.
     const service = new OllamaService();
-    assert.equal(service.client.defaults.timeout, 210000);
-    assert.equal(service.longOperationClient.defaults.timeout, 610000);
+    assert.ok(service);
+    const runtime = getOllamaRuntimeConfig();
+    assert.equal(runtime.timeoutMs, 210000);
+    assert.equal(runtime.longOperationTimeoutMs, 610000);
   } finally {
     if (previous.timeout === undefined) delete process.env.OLLAMA_TIMEOUT;
     else process.env.OLLAMA_TIMEOUT = previous.timeout;

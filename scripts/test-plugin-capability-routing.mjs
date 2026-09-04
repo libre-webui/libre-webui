@@ -74,7 +74,12 @@ function readBundledPlugin(name) {
   );
 }
 
-function assertAxiosCallsDisableRedirects(source, filename) {
+/**
+ * Outbound provider calls go through providerRequest, which refuses a 3xx by
+ * default. A call may say so explicitly, but it must never opt into following
+ * one: a redirect would carry the provider credential to another host.
+ */
+function assertProviderRequestsRefuseRedirects(source, filename) {
   const sourceFile = ts.createSourceFile(
     filename,
     source,
@@ -86,40 +91,29 @@ function assertAxiosCallsDisableRedirects(source, filename) {
   const visit = node => {
     if (
       ts.isCallExpression(node) &&
-      ts.isPropertyAccessExpression(node.expression) &&
-      ts.isIdentifier(node.expression.expression) &&
-      node.expression.expression.text === 'axios' &&
-      ['get', 'post', 'request'].includes(node.expression.name.text)
+      ts.isIdentifier(node.expression) &&
+      node.expression.text === 'providerRequest' &&
+      node.arguments.length > 0 &&
+      ts.isObjectLiteralExpression(node.arguments[0])
     ) {
-      calls.push(node);
+      calls.push(node.arguments[0]);
     }
     ts.forEachChild(node, visit);
   };
   visit(sourceFile);
   assert.ok(calls.length > 0, `${filename} must make provider requests`);
 
-  for (const call of calls) {
-    const method = call.expression.name.text;
-    const config =
-      method === 'request'
-        ? call.arguments[0]
-        : method === 'get'
-          ? call.arguments[1]
-          : call.arguments[2];
-    assert.ok(
-      config && ts.isObjectLiteralExpression(config),
-      `${filename} ${method} request needs an inline security configuration`
-    );
-    const maxRedirects = config.properties.find(
+  for (const options of calls) {
+    const redirect = options.properties.find(
       property =>
         ts.isPropertyAssignment(property) &&
-        property.name.getText(sourceFile) === 'maxRedirects'
+        property.name.getText(sourceFile) === 'redirect'
     );
-    assert.ok(
-      maxRedirects &&
-        ts.isPropertyAssignment(maxRedirects) &&
-        maxRedirects.initializer.getText(sourceFile) === '0',
-      `${filename} ${method} request must set maxRedirects: 0`
+    if (!redirect) continue;
+    assert.equal(
+      redirect.initializer.getText(sourceFile),
+      "'error'",
+      `${filename} provider request must not follow redirects`
     );
   }
 }
@@ -469,22 +463,33 @@ test('chat, Work, discovery, and generated media clients disable redirects', () 
     'utf8'
   );
 
-  assert.equal((pluginServiceSource.match(/maxRedirects: 0/g) || []).length, 3);
+  assertProviderRequestsRefuseRedirects(
+    pluginServiceSource,
+    'pluginService.ts'
+  );
   assert.match(
     pluginServiceSource,
     /fetch\(processedEndpoint,[\s\S]*?redirect: 'error'/
   );
-  assert.match(workServiceSource, /timeout: 300_000,[\s\S]*?maxRedirects: 0/);
+  assert.match(
+    workServiceSource,
+    /const defaultProviderPost[\s\S]*?providerRequest\(\{[\s\S]*?redirect: 'error',/,
+    'the Work provider post seam must refuse redirects'
+  );
   assert.match(workServiceSource, /fetch\(endpoint,[\s\S]*?redirect: 'error'/);
-  assertAxiosCallsDisableRedirects(
+  assertProviderRequestsRefuseRedirects(
+    workServiceSource,
+    'workModelProviderService.ts'
+  );
+  assertProviderRequestsRefuseRedirects(
     imageServiceSource,
     'pluginImageGenerationService.ts'
   );
-  assertAxiosCallsDisableRedirects(
+  assertProviderRequestsRefuseRedirects(
     audioServiceSource,
     'pluginAudioGenerationService.ts'
   );
-  assertAxiosCallsDisableRedirects(
+  assertProviderRequestsRefuseRedirects(
     videoServiceSource,
     'pluginVideoGenerationService.ts'
   );

@@ -5,7 +5,6 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  */
 
-import axios from 'axios';
 import type { Plugin, VideoGenConfig } from '../types/index.js';
 import {
   assertSafePluginEndpoint,
@@ -13,6 +12,15 @@ import {
   resolvePluginOperationEndpoint,
   validatePluginModel,
 } from '../utils/pluginValidation.js';
+import {
+  isProviderHttpError,
+  isProviderRequestCancelled,
+  ProviderHttpError,
+  ProviderNetworkError,
+  ProviderResponseTooLargeError,
+  ProviderTimeoutError,
+  providerRequest,
+} from '../utils/providerFetch.js';
 import type { PluginUsageEventInput } from './pluginUsageService.js';
 
 type PluginVariables = Record<string, string | number | boolean>;
@@ -126,12 +134,17 @@ export class PluginVideoGenerationService {
 
     const startedAt = Date.now();
     try {
-      const response = await axios.post(endpoint, payload, {
+      const response = await providerRequest<{
+        id?: unknown;
+        status?: VideoGenerationJobStatus['status'];
+      }>({
+        url: endpoint,
+        method: 'POST',
+        json: payload,
         headers: options.idempotencyKey
           ? { ...headers, 'Idempotency-Key': options.idempotencyKey }
           : headers,
-        timeout: 30000,
-        maxRedirects: 0,
+        timeoutMs: 30000,
         signal: options.signal,
       });
       const providerJobId = response.data?.id;
@@ -151,7 +164,8 @@ export class PluginVideoGenerationService {
       });
       return { providerJobId, status: response.data?.status || 'pending' };
     } catch (error) {
-      const cancelled = axios.isCancel(error) || options.signal?.aborted;
+      const cancelled =
+        isProviderRequestCancelled(error) || options.signal?.aborted;
       this.recordError(
         plugin,
         model,
@@ -178,14 +192,21 @@ export class PluginVideoGenerationService {
     )}`;
     assertSafePluginEndpoint(statusEndpoint, 'video status endpoint');
     try {
-      const response = await axios.get(statusEndpoint, {
+      const response = await providerRequest<{
+        status?: VideoGenerationJobStatus['status'];
+        error?: unknown;
+        usage?: unknown;
+      }>({
+        url: statusEndpoint,
         headers,
-        timeout: 15000,
-        maxRedirects: 0,
+        timeoutMs: 15000,
         signal,
       });
       const status = response.data?.status;
-      if (!['pending', 'in_progress', 'completed', 'failed'].includes(status)) {
+      if (
+        !status ||
+        !['pending', 'in_progress', 'completed', 'failed'].includes(status)
+      ) {
         throw new Error('Video provider returned an invalid job status');
       }
       return {
@@ -194,11 +215,11 @@ export class PluginVideoGenerationService {
           ? { error: response.data.error }
           : {}),
         ...(response.data?.usage && typeof response.data.usage === 'object'
-          ? { usage: response.data.usage }
+          ? { usage: response.data.usage as Record<string, unknown> }
           : {}),
       };
     } catch (error) {
-      if (axios.isCancel(error) || signal?.aborted) {
+      if (isProviderRequestCancelled(error) || signal?.aborted) {
         throw cancellationReason(signal, 'Video status request');
       }
       throw toVideoError(error);
@@ -219,12 +240,12 @@ export class PluginVideoGenerationService {
     )}/${encodeURIComponent(providerJobId)}/content?index=0`;
     assertSafePluginEndpoint(contentEndpoint, 'video content endpoint');
     try {
-      const response = await axios.get(contentEndpoint, {
+      const response = await providerRequest<Buffer>({
+        url: contentEndpoint,
         headers,
-        timeout: 120000,
-        responseType: 'arraybuffer',
-        maxRedirects: 0,
-        maxContentLength: 200 * 1024 * 1024,
+        timeoutMs: 120000,
+        responseType: 'bytes',
+        maxResponseBytes: 200 * 1024 * 1024,
         signal,
       });
       const mimeType = String(response.headers['content-type'] || 'video/mp4')
@@ -235,7 +256,7 @@ export class PluginVideoGenerationService {
       }
       return { video: Buffer.from(response.data), mimeType };
     } catch (error) {
-      if (axios.isCancel(error) || signal?.aborted) {
+      if (isProviderRequestCancelled(error) || signal?.aborted) {
         throw cancellationReason(signal, 'Video download');
       }
       throw toVideoError(error);
@@ -302,16 +323,15 @@ export class PluginVideoGenerationService {
       throw new Error('Video cancel method must be POST or DELETE');
     }
     try {
-      await axios.request({
+      await providerRequest({
         url: cancelEndpoint,
         method,
         headers,
-        timeout: 15000,
-        maxRedirects: 0,
+        timeoutMs: 15000,
         signal,
       });
     } catch (error) {
-      if (axios.isCancel(error) || signal?.aborted) {
+      if (isProviderRequestCancelled(error) || signal?.aborted) {
         throw cancellationReason(signal, 'Video cancellation request');
       }
       throw toVideoError(error);
@@ -410,9 +430,14 @@ function cancellationReason(
 }
 
 function toVideoError(error: unknown): Error {
-  if (axios.isAxiosError(error)) {
-    const data = error.response?.data;
-    let message = error.message;
+  if (
+    error instanceof ProviderHttpError ||
+    error instanceof ProviderTimeoutError ||
+    error instanceof ProviderNetworkError ||
+    error instanceof ProviderResponseTooLargeError
+  ) {
+    const data = isProviderHttpError(error) ? error.response.data : undefined;
+    let message: unknown = error.message;
     if (Buffer.isBuffer(data) || data instanceof ArrayBuffer) {
       const bytes = Buffer.isBuffer(data)
         ? data
@@ -425,9 +450,17 @@ function toVideoError(error: unknown): Error {
         message = bytes.toString('utf8').slice(0, 200) || message;
       }
     } else if (data && typeof data === 'object') {
-      message = data.error?.message || data.error || data.message || message;
+      const record = data as {
+        error?: { message?: unknown } | string;
+        message?: unknown;
+      };
+      const nested =
+        record.error && typeof record.error === 'object'
+          ? record.error.message
+          : undefined;
+      message = nested || record.error || record.message || message;
     }
-    return new Error(`Video generation failed: ${message}`);
+    return new Error(`Video generation failed: ${String(message)}`);
   }
   return error instanceof Error ? error : new Error('Video generation failed');
 }

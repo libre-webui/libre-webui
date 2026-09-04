@@ -44,7 +44,6 @@ fs.writeFileSync(
 );
 process.chdir(testDataDir);
 
-const axios = (await import('axios')).default;
 const pluginValidation = await import(
   pathToFileURL(path.join(distRoot, 'utils', 'pluginValidation.js')).href
 );
@@ -212,6 +211,35 @@ function createLegacyQuarantinedDefinition({
       },
     },
   };
+}
+
+const originalFetch = globalThis.fetch;
+
+/** Reach the loopback test servers while globalThis.fetch is stubbed. */
+const realFetch = (...args) => originalFetch(...args);
+
+/** A provider response the outbound helper decodes as JSON. */
+function jsonResponse(data, init = {}) {
+  return new Response(JSON.stringify(data), {
+    status: init.status ?? 200,
+    statusText: init.statusText,
+    headers: { 'content-type': 'application/json', ...(init.headers ?? {}) },
+  });
+}
+
+/** The request body a stub was handed, decoded when it is JSON. */
+function requestPayload(init) {
+  if (typeof init?.body !== 'string') return undefined;
+  try {
+    return JSON.parse(init.body);
+  } catch {
+    return init.body;
+  }
+}
+
+/** Replace the outbound transport for the duration of `run`. */
+async function withStubbedFetch(fetchStub, run) {
+  return withPatchedProperties(globalThis, { fetch: fetchStub }, run);
 }
 
 async function withPatchedProperties(target, replacements, run) {
@@ -503,17 +531,15 @@ test('pre-upgrade writable definitions stay quarantined across every execution p
   };
 
   try {
-    await withPatchedProperties(
-      axios,
-      {
-        get: async (...args) => {
-          networkRequests.push({ operation: 'discover', args });
-          throw new Error('quarantined discovery reached the network');
-        },
-        post: async (...args) => {
-          networkRequests.push({ operation: 'capability', args });
-          throw new Error('quarantined capability reached the network');
-        },
+    await withStubbedFetch(
+      async (url, init = {}) => {
+        networkRequests.push({
+          operation:
+            (init.method ?? 'GET') === 'GET' ? 'discover' : 'capability',
+          endpoint: url,
+          config: init,
+        });
+        throw new Error('quarantined request reached the network');
       },
       async () => {
         for (const definition of definitions) {
@@ -613,12 +639,12 @@ test('pre-upgrade writable definitions stay quarantined across every execution p
             false
           );
 
-          const credentialCheck = await fetch(
+          const credentialCheck = await realFetch(
             `${server.baseUrl}/api/plugins/${definition.id}/credentials/check`,
             { headers: userHeaders }
           );
           assert.equal(credentialCheck.status, 404);
-          const credentialSave = await fetch(
+          const credentialSave = await realFetch(
             `${server.baseUrl}/api/plugins/${definition.id}/credentials`,
             {
               method: 'POST',
@@ -1045,13 +1071,10 @@ test('plugin routes require authentication and preserve non-admin generation set
       true
     );
     let changedRouteNetworkRequests = 0;
-    await withPatchedProperties(
-      axios,
-      {
-        post: async () => {
-          changedRouteNetworkRequests += 1;
-          throw new Error('stale route-bound key reached the network');
-        },
+    await withStubbedFetch(
+      async () => {
+        changedRouteNetworkRequests += 1;
+        throw new Error('stale route-bound key reached the network');
       },
       async () => {
         await assert.rejects(
@@ -1336,24 +1359,24 @@ test('Chat and Work requests use a valid custom endpoint instead of the bundled 
       getApiKey: () => null,
     },
     async () =>
-      withPatchedProperties(
-        axios,
-        {
-          post: async (endpoint, payload, config) => {
-            requests.push({ source: 'chat', endpoint, payload, config });
-            return {
-              data: {
-                choices: [
-                  {
-                    message: {
-                      role: 'assistant',
-                      content: 'Custom endpoint response',
-                    },
-                  },
-                ],
+      withStubbedFetch(
+        async (endpoint, init = {}) => {
+          requests.push({
+            source: 'chat',
+            endpoint,
+            payload: requestPayload(init),
+            config: init,
+          });
+          return jsonResponse({
+            choices: [
+              {
+                message: {
+                  role: 'assistant',
+                  content: 'Custom endpoint response',
+                },
               },
-            };
-          },
+            ],
+          });
         },
         async () => {
           const response = await pluginService.executePluginRequest(
@@ -1429,8 +1452,10 @@ test('Chat and Work requests use a valid custom endpoint instead of the bundled 
     ]
   );
   assert.ok(
-    requests.every(request => request.config.maxRedirects === 0),
-    'Chat and Work must not follow redirects to unvalidated destinations'
+    requests
+      .filter(request => request.source === 'chat')
+      .every(request => request.config.redirect === 'error'),
+    'Chat must not follow redirects to unvalidated destinations'
   );
 });
 
@@ -1628,31 +1653,31 @@ test('environment credentials never reach imported or user-stored routes', async
     );
     assert.equal(await service.getApiKey(adminPlugin, adminUser.id), null);
 
-    await withPatchedProperties(
-      axios,
-      {
-        get: async (endpoint, config) => {
-          requests.push({ operation: 'discover', endpoint, config });
-          return { data: { data: [{ id: 'chat-model' }] } };
-        },
-        post: async (endpoint, payload, config) => {
-          requests.push({ operation: 'chat', endpoint, payload, config });
-          return {
-            data: {
-              id: 'credential-boundary-response',
-              object: 'chat.completion',
-              created: 0,
-              model: 'chat-model',
-              choices: [
-                {
-                  index: 0,
-                  message: { role: 'assistant', content: 'ok' },
-                  finish_reason: 'stop',
-                },
-              ],
+    await withStubbedFetch(
+      async (endpoint, init = {}) => {
+        if ((init.method ?? 'GET') === 'GET') {
+          requests.push({ operation: 'discover', endpoint, config: init });
+          return jsonResponse({ data: [{ id: 'chat-model' }] });
+        }
+        requests.push({
+          operation: 'chat',
+          endpoint,
+          payload: requestPayload(init),
+          config: init,
+        });
+        return jsonResponse({
+          id: 'credential-boundary-response',
+          object: 'chat.completion',
+          created: 0,
+          model: 'chat-model',
+          choices: [
+            {
+              index: 0,
+              message: { role: 'assistant', content: 'ok' },
+              finish_reason: 'stop',
             },
-          };
-        },
+          ],
+        });
       },
       async () => {
         assert.deepEqual(await service.discoverModels(pluginId, adminUser.id), [
@@ -1842,17 +1867,18 @@ test('administrator definition retargeting revokes activation and cannot carry a
 
   const networkRequests = [];
   try {
-    await withPatchedProperties(
-      axios,
-      {
-        get: async (...args) => {
-          networkRequests.push({ operation: 'discover-a', args });
-          return { data: { data: [{ id: 'chat-model' }] } };
-        },
-        post: async (...args) => {
-          networkRequests.push({ operation: 'chat-b', args });
-          throw new Error('retargeted definition reached the network');
-        },
+    await withStubbedFetch(
+      async (endpoint, init = {}) => {
+        if ((init.method ?? 'GET') === 'GET') {
+          networkRequests.push({
+            operation: 'discover-a',
+            endpoint,
+            config: init,
+          });
+          return jsonResponse({ data: [{ id: 'chat-model' }] });
+        }
+        networkRequests.push({ operation: 'chat-b', endpoint, config: init });
+        throw new Error('retargeted definition reached the network');
       },
       async () => {
         assert.equal(await service.activatePlugin(pluginId, user.id), true);
@@ -1995,31 +2021,31 @@ test('trusted bundled routing may use an environment credential', async () => {
       'first trusted use must bind a legacy credential before returning it'
     );
 
-    await withPatchedProperties(
-      axios,
-      {
-        get: async (endpoint, config) => {
-          requests.push({ operation: 'discover', endpoint, config });
-          return { data: { data: [{ id: model }] } };
-        },
-        post: async (endpoint, payload, config) => {
-          requests.push({ operation: 'chat', endpoint, payload, config });
-          return {
-            data: {
-              id: 'trusted-bundled-response',
-              object: 'chat.completion',
-              created: 0,
-              model,
-              choices: [
-                {
-                  index: 0,
-                  message: { role: 'assistant', content: 'ok' },
-                  finish_reason: 'stop',
-                },
-              ],
+    await withStubbedFetch(
+      async (endpoint, init = {}) => {
+        if ((init.method ?? 'GET') === 'GET') {
+          requests.push({ operation: 'discover', endpoint, config: init });
+          return jsonResponse({ data: [{ id: model }] });
+        }
+        requests.push({
+          operation: 'chat',
+          endpoint,
+          payload: requestPayload(init),
+          config: init,
+        });
+        return jsonResponse({
+          id: 'trusted-bundled-response',
+          object: 'chat.completion',
+          created: 0,
+          model,
+          choices: [
+            {
+              index: 0,
+              message: { role: 'assistant', content: 'ok' },
+              finish_reason: 'stop',
             },
-          };
-        },
+          ],
+        });
       },
       async () => {
         assert.equal(
@@ -2297,17 +2323,15 @@ test('a pre-upgrade same-ID shadow cannot consume a legacy unbound credential', 
   const networkRequests = [];
 
   try {
-    await withPatchedProperties(
-      axios,
-      {
-        get: async (...args) => {
-          networkRequests.push({ operation: 'discover', args });
-          throw new Error('legacy shadow discovery reached the network');
-        },
-        post: async (...args) => {
-          networkRequests.push({ operation: 'chat', args });
-          throw new Error('legacy shadow request reached the network');
-        },
+    await withStubbedFetch(
+      async (endpoint, init = {}) => {
+        const method = init.method ?? 'GET';
+        networkRequests.push({
+          operation: method === 'GET' ? 'discover' : 'chat',
+          endpoint,
+          config: init,
+        });
+        throw new Error('legacy shadow request reached the network');
       },
       async () => {
         assert.equal(await service.getPlugin('openai', user.id), null);
@@ -2390,17 +2414,18 @@ test('bundled-ID shadows cannot consume environment credentials', async () => {
   };
 
   try {
-    await withPatchedProperties(
-      axios,
-      {
-        get: async (...args) => {
-          networkRequests.push({ operation: 'discover', args });
-          return { data: { data: [] } };
-        },
-        post: async (...args) => {
-          networkRequests.push({ operation: 'chat', args });
-          throw new Error('shadow request must not reach the network');
-        },
+    await withStubbedFetch(
+      async (endpoint, init = {}) => {
+        if ((init.method ?? 'GET') === 'GET') {
+          networkRequests.push({
+            operation: 'discover',
+            endpoint,
+            config: init,
+          });
+          return jsonResponse({ data: [] });
+        }
+        networkRequests.push({ operation: 'chat', endpoint, config: init });
+        throw new Error('shadow request must not reach the network');
       },
       async () => {
         await service.installPlugin(
@@ -2508,17 +2533,18 @@ test('environment fallback fails closed when bundled and writable directories al
   );
 
   try {
-    await withPatchedProperties(
-      axios,
-      {
-        get: async (...args) => {
-          networkRequests.push({ operation: 'discover', args });
-          return { data: { data: [] } };
-        },
-        post: async (...args) => {
-          networkRequests.push({ operation: 'chat', args });
-          throw new Error('same-directory request must not reach the network');
-        },
+    await withStubbedFetch(
+      async (endpoint, init = {}) => {
+        if ((init.method ?? 'GET') === 'GET') {
+          networkRequests.push({
+            operation: 'discover',
+            endpoint,
+            config: init,
+          });
+          return jsonResponse({ data: [] });
+        }
+        networkRequests.push({ operation: 'chat', endpoint, config: init });
+        throw new Error('same-directory request must not reach the network');
       },
       async () => {
         const plugin = await service.getPlugin(pluginId, adminUser.id);
@@ -2646,13 +2672,10 @@ test('model discovery uses the user endpoint and credentials without default fal
       },
     },
     async () =>
-      withPatchedProperties(
-        axios,
-        {
-          get: async (endpoint, config) => {
-            requests.push({ endpoint, config });
-            return { data: { data: [] } };
-          },
+      withStubbedFetch(
+        async (endpoint, init = {}) => {
+          requests.push({ endpoint, config: init });
+          return jsonResponse({ data: [] });
         },
         async () => {
           assert.deepEqual(
@@ -2666,8 +2689,8 @@ test('model discovery uses the user endpoint and credentials without default fal
             'Bearer user-42-key'
           );
           assert.equal(
-            requests[0].config.maxRedirects,
-            0,
+            requests[0].config.redirect,
+            'error',
             'discovery must not forward provider credentials across redirects'
           );
           assert.equal(credentialLookups, 1);
@@ -2980,13 +3003,10 @@ test('discovered models persist per user without mutating the shared plugin mani
   });
   service.getApiKey = (_plugin, userId) => `key-${userId}`;
 
-  await withPatchedProperties(
-    axios,
-    {
-      get: async endpoint => {
-        const user = new URL(endpoint).hostname.split('.')[0];
-        return { data: { data: [{ id: `model-${user}` }] } };
-      },
+  await withStubbedFetch(
+    async endpoint => {
+      const user = new URL(endpoint).hostname.split('.')[0];
+      return jsonResponse({ data: [{ id: `model-${user}` }] });
     },
     async () => {
       assert.deepEqual(
@@ -3115,21 +3135,24 @@ test('embedding and TTS HTTP requests reject redirects before a credential-beari
               getAllPlugins: () => [plugin],
             },
             async () =>
-              withPatchedProperties(
-                axios,
-                {
-                  post: async (endpoint, payload, config) => {
-                    requests.push({ endpoint, payload, config });
-                    if (endpoint.endsWith('/embeddings')) {
-                      return { data: { data: [{ embedding: [0.1, 0.2] }] } };
-                    }
-                    if (endpoint.endsWith('/audio/speech')) {
-                      return { data: Buffer.from('RIFFtest-audio') };
-                    }
-                    throw new Error(
-                      `Unexpected capability endpoint: ${endpoint}`
-                    );
-                  },
+              withStubbedFetch(
+                async (endpoint, init = {}) => {
+                  requests.push({
+                    endpoint,
+                    payload: requestPayload(init),
+                    config: init,
+                  });
+                  if (endpoint.endsWith('/embeddings')) {
+                    return jsonResponse({ data: [{ embedding: [0.1, 0.2] }] });
+                  }
+                  if (endpoint.endsWith('/audio/speech')) {
+                    return new Response(Buffer.from('RIFFtest-audio'), {
+                      headers: { 'content-type': 'audio/mpeg' },
+                    });
+                  }
+                  throw new Error(
+                    `Unexpected capability endpoint: ${endpoint}`
+                  );
                 },
                 async () => {
                   assert.deepEqual(
@@ -3158,14 +3181,43 @@ test('embedding and TTS HTTP requests reject redirects before a credential-beari
 
   assert.equal(requests.length, 2);
   assert.ok(
-    requests.every(request => request.config.maxRedirects === 0),
+    requests.every(request => request.config.redirect === 'error'),
     'embedding and TTS credentials must never be forwarded through redirects'
   );
-  assert.equal(
-    requests.find(request => request.endpoint.endsWith('/audio/speech')).config
-      .maxContentLength,
-    50 * 1024 * 1024,
-    'TTS provider responses must be bounded before buffering'
+
+  // The TTS response is bounded before it is buffered: a provider that
+  // declares a body past the cap is refused rather than read.
+  await withPatchedProperties(
+    pluginService,
+    {
+      getPluginVariables: () => ({}),
+      getApiKey: () => null,
+    },
+    async () =>
+      withPatchedProperties(
+        pluginService.ttsService.deps,
+        { getAllPlugins: () => [plugin] },
+        async () =>
+          withStubbedFetch(
+            async () =>
+              new Response(Buffer.from('RIFF'), {
+                headers: {
+                  'content-type': 'audio/mpeg',
+                  'content-length': String(50 * 1024 * 1024 + 1),
+                },
+              }),
+            async () => {
+              await assert.rejects(
+                pluginService.executeTTSRequest('tts-model', 'Hello', {
+                  pluginId: plugin.id,
+                  userId: 'user-42',
+                }),
+                /maxContentLength size of 52428800 exceeded/,
+                'TTS provider responses must be bounded before buffering'
+              );
+            }
+          )
+      )
   );
 });
 
@@ -3206,13 +3258,13 @@ test('TTS routes preserve configured output formats and provider clone errors', 
             getPlugin: id => (id === plugin.id ? plugin : null),
           },
           async () => {
-            const generated = await withPatchedProperties(
-              axios,
-              {
-                post: async () => ({ data: Buffer.from('RIFFxxxxWAVEroute') }),
-              },
+            const generated = await withStubbedFetch(
+              async () =>
+                new Response(Buffer.from('RIFFxxxxWAVEroute'), {
+                  headers: { 'content-type': 'audio/wav' },
+                }),
               () =>
-                fetch(`${server.baseUrl}/api/tts/generate`, {
+                realFetch(`${server.baseUrl}/api/tts/generate`, {
                   method: 'POST',
                   headers: { ...headers, 'Content-Type': 'application/json' },
                   body: JSON.stringify({
@@ -3241,26 +3293,20 @@ test('TTS routes preserve configured output formats and provider clone errors', 
               }),
               'reference.wav'
             );
-            const cloned = await withPatchedProperties(
-              axios,
-              {
-                post: async (_endpoint, _body, config) => {
-                  assert.ok(config.signal instanceof AbortSignal);
-                  assert.equal(config.maxContentLength, 50 * 1024 * 1024);
-                  const error = new Error('provider rejected the reference');
-                  error.isAxiosError = true;
-                  error.response = {
+            const cloned = await withStubbedFetch(
+              async (_endpoint, init = {}) => {
+                assert.ok(init.signal instanceof AbortSignal);
+                return new Response(
+                  JSON.stringify({ detail: 'reference is too long' }),
+                  {
                     status: 413,
                     statusText: 'Payload Too Large',
-                    data: Buffer.from(
-                      JSON.stringify({ detail: 'reference is too long' })
-                    ),
-                  };
-                  throw error;
-                },
+                    headers: { 'content-type': 'application/json' },
+                  }
+                );
               },
               () =>
-                fetch(`${server.baseUrl}/api/tts/voice-clone`, {
+                realFetch(`${server.baseUrl}/api/tts/voice-clone`, {
                   method: 'POST',
                   headers,
                   body: form,
@@ -3270,6 +3316,37 @@ test('TTS routes preserve configured output formats and provider clone errors', 
             assert.match(
               (await cloned.json()).message,
               /reference is too long/
+            );
+
+            // The cloned audio is bounded before buffering too.
+            await withStubbedFetch(
+              async () =>
+                new Response(Buffer.from('RIFF'), {
+                  headers: {
+                    'content-type': 'audio/wav',
+                    'content-length': String(50 * 1024 * 1024 + 1),
+                  },
+                }),
+              async () => {
+                await assert.rejects(
+                  pluginService.executeVoiceCloneRequest(
+                    'tts-model',
+                    'clone this',
+                    {
+                      buffer: Buffer.from('RIFFxxxxWAVEreference'),
+                      originalname: 'reference.wav',
+                      mimetype: 'audio/wav',
+                      size: 21,
+                    },
+                    {
+                      referenceText: 'reference words',
+                      pluginId: plugin.id,
+                      userId: user.id,
+                    }
+                  ),
+                  /maxContentLength size of 52428800 exceeded/
+                );
+              }
             );
           }
         )
@@ -3876,13 +3953,10 @@ test('capability model discovery honors its declared endpoint override', async (
       getApiKey: () => null,
     },
     () =>
-      withPatchedProperties(
-        axios,
-        {
-          get: async (endpoint, config) => {
-            requests.push({ endpoint, config });
-            return { data: { data: [{ id: 'resident-model' }] } };
-          },
+      withStubbedFetch(
+        async (endpoint, init = {}) => {
+          requests.push({ endpoint, config: init });
+          return jsonResponse({ data: [{ id: 'resident-model' }] });
         },
         async () => {
           const result = await pluginService.discoverCapabilityModels(
@@ -3897,7 +3971,7 @@ test('capability model discovery honors its declared endpoint override', async (
 
   assert.equal(requests.length, 1);
   assert.equal(requests[0].endpoint, override);
-  assert.equal(requests[0].config.maxRedirects, 0);
+  assert.equal(requests[0].config.redirect, 'error');
 });
 
 test('Chat, Work, embedding, TTS, and image overrides fail before network access', async () => {
@@ -3938,13 +4012,10 @@ test('Chat, Work, embedding, TTS, and image overrides fail before network access
                   getPlugin: id => (id === plugin.id ? plugin : null),
                 },
                 async () =>
-                  withPatchedProperties(
-                    axios,
-                    {
-                      post: async () => {
-                        networkRequests += 1;
-                        throw new Error('Unexpected network request');
-                      },
+                  withStubbedFetch(
+                    async () => {
+                      networkRequests += 1;
+                      throw new Error('Unexpected network request');
                     },
                     async () => {
                       await assert.rejects(
@@ -4083,13 +4154,10 @@ test('image discovery and requests use the current user endpoint and credentials
 
   const imageData = Buffer.from('image-data').toString('base64');
   let request;
-  await withPatchedProperties(
-    axios,
-    {
-      post: async (endpoint, payload, config) => {
-        request = { endpoint, payload, config };
-        return { data: { data: [{ b64_json: imageData }] } };
-      },
+  await withStubbedFetch(
+    async (endpoint, init = {}) => {
+      request = { endpoint, payload: requestPayload(init), config: init };
+      return jsonResponse({ data: [{ b64_json: imageData }] });
     },
     async () => {
       assert.deepEqual(
@@ -4116,7 +4184,7 @@ test('image discovery and requests use the current user endpoint and credentials
     'http://image-gateway:8080/v1/images/generations?custom=true'
   );
   assert.equal(request.config.headers.Authorization, 'Bearer key-image-user');
-  assert.equal(request.config.maxRedirects, 0);
+  assert.equal(request.config.redirect, 'error');
   assert.ok(
     userContexts.length >= 4 &&
       userContexts.every(({ userId }) => userId === 'image-user')

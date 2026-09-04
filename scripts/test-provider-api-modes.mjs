@@ -79,7 +79,6 @@ const pluginRoutesModule = await import(
   pathToFileURL(path.join(repoRoot, 'backend', 'dist', 'routes', 'plugins.js'))
     .href
 );
-const { default: axios } = await import('axios');
 
 after(() => {
   databaseModule.closeDatabase();
@@ -921,7 +920,7 @@ test('model discovery rejects an unsupported derived URL before reading credenti
   const originalGetPlugin = service.getPlugin;
   const originalGetPluginVariables = service.getPluginVariables;
   const originalGetApiKey = service.getApiKey;
-  const originalAxiosGet = axios.get;
+  const originalFetch = globalThis.fetch;
   let credentialsRead = false;
   let requestMade = false;
 
@@ -943,9 +942,11 @@ test('model discovery rejects an unsupported derived URL before reading credenti
       credentialsRead = true;
       return 'must-not-be-read';
     };
-    axios.get = async () => {
+    globalThis.fetch = async () => {
       requestMade = true;
-      return { data: { data: [] } };
+      return new Response(JSON.stringify({ data: [] }), {
+        headers: { 'content-type': 'application/json' },
+      });
     };
 
     await assert.rejects(
@@ -958,7 +959,7 @@ test('model discovery rejects an unsupported derived URL before reading credenti
     service.getPlugin = originalGetPlugin;
     service.getPluginVariables = originalGetPluginVariables;
     service.getApiKey = originalGetApiKey;
-    axios.get = originalAxiosGet;
+    globalThis.fetch = originalFetch;
   }
 });
 
@@ -2636,7 +2637,7 @@ test('discovered model maps persist per user without mutating the plugin manifes
   const pluginsDirectory = path.join(tempDirectory, 'plugins');
   const previousDataDirectory = process.env.DATA_DIR;
   const previousPluginsDirectory = process.env.PLUGINS_DIR;
-  const originalAxiosGet = axios.get;
+  const originalFetch = globalThis.fetch;
 
   process.env.DATA_DIR = tempDirectory;
   process.env.PLUGINS_DIR = pluginsDirectory;
@@ -2687,13 +2688,12 @@ test('discovered model maps persist per user without mutating the plugin manifes
       base_url: `https://${userId}.example/v1`,
     });
     service.getApiKey = (_plugin, userId) => `key-${userId}`;
-    axios.get = async url => {
+    globalThis.fetch = async url => {
       const host = new URL(url).hostname;
-      return {
-        data: {
-          data: [{ id: `model-${host.split('.')[0]}` }],
-        },
-      };
+      return new Response(
+        JSON.stringify({ data: [{ id: `model-${host.split('.')[0]}` }] }),
+        { headers: { 'content-type': 'application/json' } }
+      );
     };
 
     assert.deepEqual(
@@ -2769,7 +2769,7 @@ test('discovered model maps persist per user without mutating the plugin manifes
       ['model-model-user-two']
     );
   } finally {
-    axios.get = originalAxiosGet;
+    globalThis.fetch = originalFetch;
     databaseModule.closeDatabase();
     if (previousDataDirectory === undefined) {
       delete process.env.DATA_DIR;

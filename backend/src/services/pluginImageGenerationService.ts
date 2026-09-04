@@ -16,7 +16,6 @@
  */
 
 import { randomUUID } from 'crypto';
-import axios from 'axios';
 import { ImageGenConfig, ImageGenResponse, Plugin } from '../types/index.js';
 import {
   normalizeImageGenerationCount,
@@ -30,7 +29,39 @@ import {
   validatePluginModel,
 } from '../utils/pluginValidation.js';
 import { createLogger } from '../utils/logger.js';
+import {
+  isProviderHttpError,
+  isProviderRequestCancelled,
+  ProviderHttpError,
+  ProviderNetworkError,
+  ProviderResponseTooLargeError,
+  ProviderTimeoutError,
+  providerRequest,
+} from '../utils/providerFetch.js';
 import type { PluginUsageEventInput } from './pluginUsageService.js';
+
+/** A transport-layer failure of an outbound provider request. */
+function isProviderTransportError(error: unknown): error is Error {
+  return (
+    error instanceof ProviderHttpError ||
+    error instanceof ProviderTimeoutError ||
+    error instanceof ProviderNetworkError ||
+    error instanceof ProviderResponseTooLargeError
+  );
+}
+
+type ProviderErrorBody = {
+  error?: { message?: unknown } | string;
+  message?: unknown;
+};
+
+function providerErrorBody(error: unknown): ProviderErrorBody | undefined {
+  if (!isProviderHttpError(error)) return undefined;
+  const data = error.response.data;
+  return data && typeof data === 'object'
+    ? (data as ProviderErrorBody)
+    : undefined;
+}
 
 type PluginVariables = Record<string, string | number | boolean>;
 type MaybePromise<T> = T | Promise<T>;
@@ -267,23 +298,21 @@ export class PluginImageGenerationService {
         const [width, height] = String(payload.size)
           .split('x')
           .map(value => Number.parseInt(value, 10));
-        const response = await axios.post(
-          endpoint,
-          {
+        const response = await providerRequest<Buffer>({
+          url: endpoint,
+          method: 'POST',
+          json: {
             inputs: prompt,
             ...(Number.isInteger(width) && Number.isInteger(height)
               ? { parameters: { width, height } }
               : {}),
           },
-          {
-            headers,
-            timeout: 120000,
-            responseType: 'arraybuffer',
-            maxRedirects: 0,
-            maxContentLength: 50 * 1024 * 1024,
-            signal: options.signal,
-          }
-        );
+          headers,
+          timeoutMs: 120000,
+          responseType: 'bytes',
+          maxResponseBytes: 50 * 1024 * 1024,
+          signal: options.signal,
+        });
         const mimeType = normalizeImageMediaType(
           response.headers['content-type']
         );
@@ -298,11 +327,13 @@ export class PluginImageGenerationService {
           pluginId: plugin.id,
         };
       } else {
-        const response = await axios.post(endpoint, payload, {
+        const response = await providerRequest({
+          url: endpoint,
+          method: 'POST',
+          json: payload,
           headers,
-          timeout: 300000,
-          maxRedirects: 0,
-          maxContentLength: 80 * 1024 * 1024,
+          timeoutMs: 300000,
+          maxResponseBytes: 80 * 1024 * 1024,
           signal: options.signal,
         });
         result = {
@@ -325,7 +356,8 @@ export class PluginImageGenerationService {
       });
       return result;
     } catch (error) {
-      const cancelled = axios.isCancel(error) || options.signal?.aborted;
+      const cancelled =
+        isProviderRequestCancelled(error) || options.signal?.aborted;
       this.deps.recordUsage?.({
         userId: options.userId,
         pluginId: plugin.id,
@@ -342,12 +374,14 @@ export class PluginImageGenerationService {
           ? options.signal.reason
           : new Error('Image provider request was cancelled');
       }
-      if (axios.isAxiosError(error)) {
-        const message =
-          error.response?.data?.error?.message ||
-          error.response?.data?.message ||
-          error.message;
-        throw new Error(`Image generation failed: ${message}`);
+      if (isProviderTransportError(error)) {
+        const body = providerErrorBody(error);
+        const nested =
+          body && typeof body.error === 'object'
+            ? body.error?.message
+            : undefined;
+        const message = nested || body?.message || error.message;
+        throw new Error(`Image generation failed: ${String(message)}`);
       }
       throw error;
     }
@@ -438,7 +472,7 @@ export class PluginImageGenerationService {
         `API key not found for plugin ${plugin.id} (save a provider credential in Settings)`
       );
     }
-    // Strip the JSON content type so axios emits the multipart boundary.
+    // Strip the JSON content type so the multipart boundary is generated.
     const { 'Content-Type': _jsonContentType, ...headers } =
       buildPluginAuthHeaders(plugin, apiKey, endpoint);
 
@@ -470,11 +504,13 @@ export class PluginImageGenerationService {
 
     const startedAt = Date.now();
     try {
-      const response = await axios.post(endpoint, form, {
+      const response = await providerRequest({
+        url: endpoint,
+        method: 'POST',
+        body: form,
         headers,
-        timeout: 300000,
-        maxRedirects: 0,
-        maxContentLength: 80 * 1024 * 1024,
+        timeoutMs: 300000,
+        maxResponseBytes: 80 * 1024 * 1024,
         signal: options.signal,
       });
       const result: ImageGenResponse = {
@@ -495,7 +531,8 @@ export class PluginImageGenerationService {
       });
       return result;
     } catch (error) {
-      const cancelled = axios.isCancel(error) || options.signal?.aborted;
+      const cancelled =
+        isProviderRequestCancelled(error) || options.signal?.aborted;
       this.deps.recordUsage?.({
         userId: options.userId,
         pluginId: plugin.id,
@@ -512,12 +549,14 @@ export class PluginImageGenerationService {
           ? options.signal.reason
           : new Error('Image provider request was cancelled');
       }
-      if (axios.isAxiosError(error)) {
-        const message =
-          error.response?.data?.error?.message ||
-          error.response?.data?.message ||
-          error.message;
-        throw new Error(`Image edit failed: ${message}`);
+      if (isProviderTransportError(error)) {
+        const body = providerErrorBody(error);
+        const nested =
+          body && typeof body.error === 'object'
+            ? body.error?.message
+            : undefined;
+        const message = nested || body?.message || error.message;
+        throw new Error(`Image edit failed: ${String(message)}`);
       }
       throw error;
     }
@@ -739,6 +778,16 @@ const fluxModelConfigs: Record<string, FluxModelConfig> = {
   },
 };
 
+interface ComfyUIHistoryImage {
+  filename: string;
+  subfolder?: string;
+  type?: string;
+}
+
+interface ComfyUIHistoryEntry {
+  outputs?: Record<string, { images?: ComfyUIHistoryImage[] }>;
+}
+
 async function executeComfyUIRequest(
   baseUrl: URL,
   prompt: string,
@@ -918,25 +967,23 @@ async function executeComfyUIRequest(
     const clientId = `libre-webui-${Date.now()}`;
     const requestedPromptId = randomUUID();
     // Keep the client-selected ID before dispatch so a disconnect after the
-    // provider accepts, but before Axios receives the response, still has an
+    // provider accepts, but before the response is received, still has an
     // exact and safe cancellation target.
     promptId = requestedPromptId;
-    const promptResponse = await axios.post(
-      promptEndpoint.toString(),
-      {
+    const promptResponse = await providerRequest<{ prompt_id?: string }>({
+      url: promptEndpoint.toString(),
+      method: 'POST',
+      json: {
         prompt: workflow,
         client_id: clientId,
         prompt_id: requestedPromptId,
       },
-      {
-        headers: requestHeaders,
-        timeout: 10000,
-        maxRedirects: 0,
-        signal: options.signal,
-      }
-    );
+      headers: requestHeaders,
+      timeoutMs: 10000,
+      signal: options.signal,
+    });
 
-    const acceptedPromptId = promptResponse.data.prompt_id;
+    const acceptedPromptId = promptResponse.data?.prompt_id;
     if (!acceptedPromptId) {
       throw new Error('Failed to get prompt ID from ComfyUI');
     }
@@ -957,20 +1004,20 @@ async function executeComfyUIRequest(
       await abortableDelay(1000, options.signal);
       attempts++;
 
-      const historyResponse = await axios.get(
-        createOperationUrl(
+      const historyResponse = await providerRequest<
+        Record<string, ComfyUIHistoryEntry>
+      >({
+        url: createOperationUrl(
           `history/${encodeURIComponent(String(promptId))}`
         ).toString(),
-        {
-          headers: requestHeaders,
-          timeout: 5000,
-          maxRedirects: 0,
-          signal: options.signal,
-        }
-      );
+        headers: requestHeaders,
+        timeoutMs: 5000,
+        signal: options.signal,
+      });
 
-      if (historyResponse.data[promptId]) {
-        const outputs = historyResponse.data[promptId].outputs;
+      const historyEntry = historyResponse.data?.[requestedPromptId];
+      if (historyEntry) {
+        const outputs = historyEntry.outputs;
         if (outputs && Object.keys(outputs).length > 0) {
           completed = true;
 
@@ -983,12 +1030,12 @@ async function executeComfyUIRequest(
               imageUrl.searchParams.set('subfolder', imageInfo.subfolder || '');
               imageUrl.searchParams.set('type', imageInfo.type || 'output');
 
-              const imageResponse = await axios.get(imageUrl.toString(), {
+              const imageResponse = await providerRequest<Buffer>({
+                url: imageUrl.toString(),
                 headers: requestHeaders,
-                responseType: 'arraybuffer',
-                timeout: 30000,
-                maxRedirects: 0,
-                maxContentLength: 50 * 1024 * 1024,
+                responseType: 'bytes',
+                timeoutMs: 30000,
+                maxResponseBytes: 50 * 1024 * 1024,
                 signal: options.signal,
               });
 
@@ -1026,12 +1073,10 @@ async function executeComfyUIRequest(
       cancelAcceptedPrompt();
       await cancellation;
     }
-    if (axios.isAxiosError(error)) {
-      const message =
-        error.response?.data?.error ||
-        error.response?.data?.message ||
-        error.message;
-      throw new Error(`ComfyUI generation failed: ${message}`);
+    if (isProviderTransportError(error)) {
+      const body = providerErrorBody(error);
+      const message = body?.error || body?.message || error.message;
+      throw new Error(`ComfyUI generation failed: ${String(message)}`);
     }
     throw error;
   } finally {
@@ -1052,26 +1097,24 @@ async function cancelComfyUIPrompt(
   const encodedPromptId = encodeURIComponent(promptId);
   try {
     const [jobCancellation, queueDeletion] = await Promise.allSettled([
-      axios.post(
-        createOperationUrl(`api/jobs/${encodedPromptId}/cancel`).toString(),
-        {},
-        {
-          headers,
-          timeout: 2500,
-          maxRedirects: 0,
-          signal: teardown.signal,
-        }
-      ),
-      axios.post(
-        createOperationUrl('queue').toString(),
-        { delete: [promptId] },
-        {
-          headers,
-          timeout: 2500,
-          maxRedirects: 0,
-          signal: teardown.signal,
-        }
-      ),
+      providerRequest<{ cancelled?: boolean }>({
+        url: createOperationUrl(
+          `api/jobs/${encodedPromptId}/cancel`
+        ).toString(),
+        method: 'POST',
+        json: {},
+        headers,
+        timeoutMs: 2500,
+        signal: teardown.signal,
+      }),
+      providerRequest({
+        url: createOperationUrl('queue').toString(),
+        method: 'POST',
+        json: { delete: [promptId] },
+        headers,
+        timeoutMs: 2500,
+        signal: teardown.signal,
+      }),
     ]);
     if (
       jobCancellation.status === 'rejected' ||
