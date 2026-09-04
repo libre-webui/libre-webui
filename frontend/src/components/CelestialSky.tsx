@@ -345,9 +345,9 @@ export const CelestialSky: React.FC = () => {
             className='celestial-sky__sun'
             data-testid='celestial-sun'
             style={{
-              left: `${scene.sun.x}%`,
-              top: `${scene.sun.y}%`,
               opacity: scene.sun.visible ? scene.sun.dim : 0,
+              ['--body-x' as string]: scene.sun.x,
+              ['--body-y' as string]: scene.sun.y,
               ['--sun-warmth' as string]: scene.sun.warmth,
             }}
           />
@@ -355,9 +355,9 @@ export const CelestialSky: React.FC = () => {
             className='celestial-sky__moon'
             data-testid='celestial-moon'
             style={{
-              left: `${scene.moon.x}%`,
-              top: `${scene.moon.y}%`,
               opacity: scene.moon.visible ? scene.moon.dim : 0,
+              ['--body-x' as string]: scene.moon.x,
+              ['--body-y' as string]: scene.moon.y,
             }}
           >
             <span
@@ -385,7 +385,7 @@ export const CelestialSky: React.FC = () => {
           <div
             className='celestial-sky__horizon-glow'
             style={{
-              left: `${scene.sun.x}%`,
+              ['--body-x' as string]: scene.sun.x,
               opacity: lowSun,
               background: `radial-gradient(60vw 34vh at 50% 100%, ${palette.sky.horizon} 0%, transparent 70%)`,
             }}

@@ -669,13 +669,28 @@ select,
   inherits: true;
   initial-value: #7fa7ff;
 }
+/* Sun and moon positions as numbers (percent of the sky box) so their glide
+   runs through transform: no layout, no paint of the whole sky per frame. */
+@property --body-x {
+  syntax: '<number>';
+  inherits: false;
+  initial-value: 50;
+}
+@property --body-y {
+  syntax: '<number>';
+  inherits: false;
+  initial-value: 100;
+}
 
 html.celestial {
   --celestial-night: 0;
   --lamp-x: 50%;
   --lamp-y: 50%;
   --lamp-pulse: 0;
-  --celestial-ease: 8000ms;
+  /* Colours ease briefly after each 15 s tick (the per-tick change is a
+     hair; a long fade only kept blurred layers repainting), while the sun
+     and moon glide over the whole tick on the compositor. */
+  --celestial-ease: 1600ms;
   --celestial-move: 15000ms;
   transition:
     --celestial-sky-top var(--celestial-ease) linear,
@@ -774,6 +789,9 @@ html.celestial[data-composing='true'] [data-app-tabbar]:not(:hover) {
 .celestial-sky__layers > * {
   will-change: transform, opacity;
 }
+.celestial-sky__cloud {
+  will-change: translate, transform, opacity;
+}
 .celestial-sky__gradient {
   position: absolute;
   inset: -8%;
@@ -815,6 +833,9 @@ html.celestial[data-composing='true'] [data-app-tabbar]:not(:hover) {
   box-shadow:
     0 0 6px 1px rgba(255, 255, 255, 0.9),
     0 0 14px 2px rgba(200, 215, 255, 0.35);
+  /* Opacity-only twinkle on its own layer: the compositor animates it and
+     the main thread never touches the star field. */
+  will-change: opacity;
   animation: celestial-twinkle 4s ease-in-out infinite;
 }
 .celestial-sky__star--bright {
@@ -829,11 +850,9 @@ html.celestial[data-composing='true'] [data-app-tabbar]:not(:hover) {
   0%,
   100% {
     opacity: 0.3;
-    transform: scale(0.9);
   }
   50% {
     opacity: 1;
-    transform: scale(1.15);
   }
 }
 .celestial-sky__meteor {
@@ -900,16 +919,17 @@ html.celestial[data-composing='true'] [data-app-tabbar]:not(:hover) {
 .celestial-sky__sun,
 .celestial-sky__moon {
   position: absolute;
+  left: 0;
+  top: 0;
   width: clamp(72px, 9vw, 128px);
   aspect-ratio: 1;
   margin: calc(clamp(72px, 9vw, 128px) / -2) 0 0
     calc(clamp(72px, 9vw, 128px) / -2);
   border-radius: 9999px;
   transition:
-    left var(--celestial-move) linear,
-    top var(--celestial-move) linear,
-    opacity var(--celestial-ease) linear,
-    transform 800ms ease-out;
+    --body-x var(--celestial-move) linear,
+    --body-y var(--celestial-move) linear,
+    opacity var(--celestial-ease) linear;
 }
 .celestial-sky__sun {
   --sun-warmth: 0;
@@ -925,19 +945,37 @@ html.celestial[data-composing='true'] [data-app-tabbar]:not(:hover) {
     0 0 60px 24px rgba(255, 236, 190, calc(0.35 + var(--sun-warmth) * 0.35)),
     0 0 180px 90px rgba(255, 200, 140, calc(0.12 + var(--sun-warmth) * 0.3));
   transform: translate3d(
-    calc(var(--sky-px) * 14px),
-    calc(var(--sky-py) * 10px + var(--sky-scroll) * 14px),
+    calc(var(--body-x) * 1% * 14 + var(--sky-px) * 14px),
+    calc(
+      var(--body-y) * 1% * 9 + var(--sky-py) * 10px + var(--sky-scroll) * 14px
+    ),
     0
   );
+}
+/* The sun breathes through a separate glow layer's opacity, which stays on
+   the compositor; brightening the shadowed disc itself repainted a large
+   blurred area every frame. */
+.celestial-sky__sun::after {
+  content: '';
+  position: absolute;
+  inset: -40%;
+  border-radius: 9999px;
+  background: radial-gradient(
+    circle,
+    rgba(255, 244, 214, 0.55) 0%,
+    rgba(255, 220, 160, 0.25) 45%,
+    transparent 70%
+  );
+  will-change: opacity;
   animation: celestial-breathe 9s ease-in-out infinite;
 }
 @keyframes celestial-breathe {
   0%,
   100% {
-    filter: brightness(1);
+    opacity: 0.45;
   }
   50% {
-    filter: brightness(1.08);
+    opacity: 1;
   }
 }
 .celestial-sky__moon {
@@ -953,8 +991,10 @@ html.celestial[data-composing='true'] [data-app-tabbar]:not(:hover) {
     0 0 42px 14px rgba(214, 224, 255, 0.34),
     0 0 140px 70px rgba(180, 200, 255, 0.16);
   transform: translate3d(
-    calc(var(--sky-px) * 12px),
-    calc(var(--sky-py) * 9px + var(--sky-scroll) * 12px),
+    calc(var(--body-x) * 1% * 14 + var(--sky-px) * 12px),
+    calc(
+      var(--body-y) * 1% * 9 + var(--sky-py) * 9px + var(--sky-scroll) * 12px
+    ),
     0
   );
 }
@@ -984,24 +1024,27 @@ html.celestial[data-composing='true'] [data-app-tabbar]:not(:hover) {
 .celestial-sky[data-generating='true'] .celestial-sky__cloud {
   animation-duration: 40s;
 }
+/* Drift through the standalone translate property: it composes with the
+   parallax transform and stays on the compositor, where animating margins
+   forced a layout of the whole sky every frame. */
 @keyframes celestial-drift {
   from {
-    margin-left: 0;
-    margin-top: 0;
+    translate: 0 0;
   }
   to {
-    margin-left: 12vw;
-    margin-top: 2vh;
+    translate: 12vw 2vh;
   }
 }
 .celestial-sky__horizon-glow {
   position: absolute;
+  left: 0;
   bottom: 0;
   width: 80vw;
   height: 40vh;
   margin-left: -40vw;
+  transform: translate3d(calc(var(--body-x) * 1vw), 0, 0);
   transition:
-    left var(--celestial-move) linear,
+    --body-x var(--celestial-move) linear,
     opacity var(--celestial-ease) linear;
 }
 .celestial-sky__haze {
@@ -1132,7 +1175,7 @@ html.dark .celestial-sky__fog {
 @media (prefers-reduced-motion: reduce) {
   .celestial-sky__star,
   .celestial-sky__cloud,
-  .celestial-sky__sun,
+  .celestial-sky__sun::after,
   .celestial-sky__aurora,
   .celestial-sky__meteor,
   .celestial-sky__rain,

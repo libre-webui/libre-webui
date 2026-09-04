@@ -67,6 +67,8 @@ const writeLocal = (value: Persisted) => {
 };
 
 interface CelestialState {
+  /** True only while the celestial theme is the applied theme. */
+  active: boolean;
   /** Latest palette while the celestial theme is active, else null. */
   palette: CelestialPalette | null;
   scene: CelestialScene | null;
@@ -76,6 +78,8 @@ interface CelestialState {
   weatherEnabled: boolean;
   weather: CelestialWeather | null;
   weatherStatus: 'idle' | 'loading' | 'ready' | 'error';
+  /** Mark the theme active; refresh() is a no-op while inactive. */
+  activate: () => void;
   refresh: () => void;
   setPreviewMinutes: (minutes: number | null) => void;
   setLocation: (location: CelestialLocation | null) => void;
@@ -92,6 +96,7 @@ let weatherRequest: Promise<void> | null = null;
 export const useCelestialStore = create<CelestialState>((set, get) => {
   const persisted = readLocal();
   return {
+    active: false,
     palette: null,
     scene: null,
     previewMinutes: null,
@@ -99,7 +104,11 @@ export const useCelestialStore = create<CelestialState>((set, get) => {
     weatherEnabled: persisted.weatherEnabled ?? false,
     weather: null,
     weatherStatus: 'idle',
+    activate: () => set({ active: true }),
     refresh: () => {
+      // Never build a sky for a theme that is not celestial: a preview reset
+      // from Settings used to conjure one behind the dark UI.
+      if (!get().active) return;
       const { previewMinutes, location, weatherEnabled, weather } = get();
       const palette = getCelestialPalette(
         new Date(),
@@ -175,6 +184,7 @@ export const useCelestialStore = create<CelestialState>((set, get) => {
         });
       return weatherRequest;
     },
-    clear: () => set({ palette: null, scene: null, previewMinutes: null }),
+    clear: () =>
+      set({ active: false, palette: null, scene: null, previewMinutes: null }),
   };
 });

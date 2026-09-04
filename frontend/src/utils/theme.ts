@@ -808,6 +808,7 @@ export const paintCelestial = () => {
 
 const startCelestialClock = () => {
   if (typeof document === 'undefined') return;
+  useCelestialStore.getState().activate();
   paintCelestial();
   if (!celestialTimer) {
     celestialTimer = setInterval(paintCelestial, CELESTIAL_TICK_MS);
