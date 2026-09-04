@@ -23,7 +23,7 @@ bounded result previews, on the assistant message.
 
 ## Enabling tools
 
-Tools are off by default. An administrator opens them in User Management
+Tools are off by default. An administrator opens them under Settings → User Management
 (admins-only or all users); each turn then opts in through the wrench in the
 composer, which opens a picker: a master switch plus one checkbox per
 built-in tool and per registered server, so a turn runs with exactly the

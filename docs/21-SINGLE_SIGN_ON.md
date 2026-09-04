@@ -114,7 +114,7 @@ usernames when registration allows it. An email already owned by an unlinked
 local account is rejected instead of silently merged. With
 `OIDC_SYNC_GROUPS=true`, membership of every Libre group whose name matches a
 claim value is claim-driven for OIDC users — create matching groups from the
-User Management page first.
+User Management tab in Settings first.
 
 ## Shared Settings
 

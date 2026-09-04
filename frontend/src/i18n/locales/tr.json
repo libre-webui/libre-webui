@@ -1078,7 +1078,8 @@
       "general": "Genel",
       "chat": "Sohbet",
       "media": "Ses ve görseller",
-      "connections": "Bağlantılar"
+      "connections": "Bağlantılar",
+      "admin": "Yönetim"
     },
     "search": {
       "title": "Web araması",

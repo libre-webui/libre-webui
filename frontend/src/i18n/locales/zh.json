@@ -1078,7 +1078,8 @@
       "general": "通用",
       "chat": "聊天",
       "media": "语音与图像",
-      "connections": "连接"
+      "connections": "连接",
+      "admin": "管理"
     },
     "search": {
       "title": "网页搜索",

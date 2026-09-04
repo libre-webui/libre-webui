@@ -1078,7 +1078,8 @@
       "general": "Obecné",
       "chat": "Chat",
       "media": "Řeč a obrázky",
-      "connections": "Připojení"
+      "connections": "Připojení",
+      "admin": "Správa"
     },
     "search": {
       "title": "Vyhledávání na webu",

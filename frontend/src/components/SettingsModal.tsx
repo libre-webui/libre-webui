@@ -16,6 +16,7 @@
  */
 
 import React, {
+  Suspense,
   useState,
   useMemo,
   useRef,
@@ -32,6 +33,7 @@ import {
   Info,
   Globe,
   Puzzle,
+  Users,
   Sliders,
   Volume2,
   ImageIcon,
@@ -44,6 +46,10 @@ import {
   GraduationCap,
   Wrench,
 } from 'lucide-react';
+// Administration lives in its own chunk; most sessions never open it.
+const UserManagementPanel = React.lazy(
+  () => import('@/components/UserManagementPanel')
+);
 import { Button } from '@/components/ui';
 import { cn } from '@/utils';
 import { SettingsAboutTab } from '@/components/settings/SettingsAboutTab';
@@ -1792,6 +1798,21 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           : []),
       ],
     },
+    ...(isSettingsAdmin
+      ? [
+          {
+            id: 'admin',
+            label: t('settings.groups.admin', 'Administration'),
+            tabs: [
+              {
+                id: 'users',
+                label: t('userManager.title'),
+                icon: Users,
+              },
+            ],
+          },
+        ]
+      : []),
   ];
 
   const renderTabContent = () => {
@@ -1895,6 +1916,19 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
       case 'search':
         return <SettingsSearchTab />;
+
+      case 'users':
+        return (
+          <div className='pb-2'>
+            <SettingsTabHeader
+              title={t('userManager.title')}
+              description={t('userManager.pageDescription')}
+            />
+            <Suspense fallback={null}>
+              <UserManagementPanel />
+            </Suspense>
+          </div>
+        );
 
       case 'model-manager':
         return (

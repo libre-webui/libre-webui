@@ -1078,7 +1078,8 @@
       "general": "সাধারণ",
       "chat": "চ্যাট",
       "media": "কণ্ঠ ও ছবি",
-      "connections": "সংযোগ"
+      "connections": "সংযোগ",
+      "admin": "প্রশাসন"
     },
     "search": {
       "title": "ওয়েব অনুসন্ধান",

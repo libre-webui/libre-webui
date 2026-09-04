@@ -1078,7 +1078,8 @@
       "general": "Algemeen",
       "chat": "Chat",
       "media": "Spraak en beelden",
-      "connections": "Verbindingen"
+      "connections": "Verbindingen",
+      "admin": "Beheer"
     },
     "search": {
       "title": "Webzoeken",

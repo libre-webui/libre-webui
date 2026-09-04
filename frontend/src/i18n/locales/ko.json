@@ -1078,7 +1078,8 @@
       "general": "일반",
       "chat": "채팅",
       "media": "음성 및 이미지",
-      "connections": "연결"
+      "connections": "연결",
+      "admin": "관리"
     },
     "search": {
       "title": "웹 검색",

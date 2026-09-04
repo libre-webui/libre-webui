@@ -1078,7 +1078,8 @@
       "general": "Generelt",
       "chat": "Chat",
       "media": "Tale og billeder",
-      "connections": "Forbindelser"
+      "connections": "Forbindelser",
+      "admin": "Administration"
     },
     "search": {
       "title": "Websøgning",

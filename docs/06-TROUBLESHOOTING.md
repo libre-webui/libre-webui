@@ -426,7 +426,7 @@ the raw model ID, so similarly named entries are independent choices.
 
 Work requires a currently authenticated account with Work access — an
 administrator, or any active user once an administrator has opened Work to
-all users from the User Management page. Its container runtime
+all users from the User Management tab in Settings. Its container runtime
 must be available to the Libre WebUI backend:
 
 ```bash

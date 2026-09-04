@@ -1078,7 +1078,8 @@
       "general": "Almennt",
       "chat": "Spjall",
       "media": "Tal og myndir",
-      "connections": "Tengingar"
+      "connections": "Tengingar",
+      "admin": "Stjórnun"
     },
     "search": {
       "title": "Vefleit",

@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import React, { useState, Suspense } from 'react';
+import React, { useState, useCallback, Suspense } from 'react';
 import {
   createBrowserRouter,
   createHashRouter,
@@ -229,6 +229,11 @@ const AppContent: React.FC = () => {
   const [settingsOpen, setSettingsOpen] = useState(false);
   // Which settings tab to open on; the shortcuts key jumps straight to its own.
   const [settingsTab, setSettingsTab] = useState<string | undefined>(undefined);
+  // User Management is a Settings tab; /users and the sidebar shortcut open it.
+  const openUserManagement = useCallback(() => {
+    setSettingsTab('users');
+    setSettingsOpen(true);
+  }, []);
   const [retryCount, setRetryCount] = useState(0);
   const [setupComplete, setSetupComplete] = useState(false);
   const {
@@ -676,7 +681,7 @@ const AppContent: React.FC = () => {
                       path='/users'
                       element={
                         <ProtectedRoute requireAdmin={true}>
-                          <UserManagementPage />
+                          <UserManagementPage onOpen={openUserManagement} />
                         </ProtectedRoute>
                       }
                     />

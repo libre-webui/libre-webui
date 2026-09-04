@@ -75,7 +75,7 @@ chats and tasks. Navigate with `↑`/`↓`, open with `Enter`, close with `Esc`
 
 New installs use the dark theme, applied before first paint so there is no
 light flash. An administrator can change the instance-wide default from
-**Users > Default theme** (Light, Dark, or Pure Black). That default paints the
+**Settings > User Management > Default theme** (Light, Dark, or Pure Black). That default paints the
 sign-in page, seeds every new account, and applies in any browser that has not
 picked a theme of its own; a saved personal preference is always respected.
 Libre WebUI does not follow the operating system's theme setting; switch

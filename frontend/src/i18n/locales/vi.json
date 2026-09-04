@@ -1078,7 +1078,8 @@
       "general": "Chung",
       "chat": "Trò chuyện",
       "media": "Giọng nói & hình ảnh",
-      "connections": "Kết nối"
+      "connections": "Kết nối",
+      "admin": "Quản trị"
     },
     "search": {
       "title": "Tìm kiếm web",

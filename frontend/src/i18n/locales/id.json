@@ -1078,7 +1078,8 @@
       "general": "Umum",
       "chat": "Chat",
       "media": "Suara & gambar",
-      "connections": "Koneksi"
+      "connections": "Koneksi",
+      "admin": "Administrasi"
     },
     "search": {
       "title": "Pencarian web",

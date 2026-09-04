@@ -1078,7 +1078,8 @@
       "general": "General",
       "chat": "Chat",
       "media": "Speech & images",
-      "connections": "Connections"
+      "connections": "Connections",
+      "admin": "Administration"
     },
     "search": {
       "title": "Web search",

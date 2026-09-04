@@ -33,7 +33,7 @@ another agent daemon.
 
 Every Work API requires an authenticated account with Work access. By
 default that means administrators only; an administrator can open Work to
-all active users from the User Management page (host-folder workspaces stay
+all active users from the User Management tab in Settings (host-folder workspaces stay
 admin-only regardless, because they bind-mount server paths). Work
 deliberately lets a model execute arbitrary shell commands inside a
 sandbox. Tasks use network egress unless their selected named runtime policy

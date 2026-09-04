@@ -35,7 +35,6 @@ const PAGE_TAB_PATHS = [
   '/personas',
   '/gallery',
   '/agents',
-  '/users',
   '/usage',
   '/system',
   '/artifacts',

@@ -110,7 +110,7 @@ administrators because these operations change host resources.
 
 Work is restricted to administrators by default because it lets a selected
 model execute arbitrary commands inside a managed container. An administrator
-can open Work to all active users from the User Management page; the setting
+can open Work to all active users from the User Management tab in Settings; the setting
 persists across restarts and takes effect immediately, including for open
 terminal sessions. Host-folder workspaces remain admin-only in every mode
 because they bind-mount server paths. Treat everyone granted Work access as
@@ -141,7 +141,7 @@ share dialog (see [Sharing](./56-SHARING.md)) — and administrators can
 scope registered tool servers to users or groups the same way. Resources stay private by default — the global `admin` role does not
 grant access to other users' content. Membership is evaluated at request
 time, so removing a member revokes group-granted access immediately. The
-"effective access" view on the User Management page answers "why can this
+"effective access" view on the User Management tab in Settings answers "why can this
 user access this?" by listing their role, groups, feature access, and every
 grant that reaches them.
 
@@ -154,7 +154,7 @@ redacted before they are stored: secret-like keys are dropped and payload
 sizes are capped, so passwords, tokens, and prompt content never enter the
 log. Group and grant mutations write their audit event inside the same
 database transaction, so a change cannot exist without its trail.
-Administrators can query the log from the User Management page; retention
+Administrators can query the log from the User Management tab in Settings; retention
 defaults to 180 days (`AUDIT_RETENTION_DAYS`).
 
 ## Sessions

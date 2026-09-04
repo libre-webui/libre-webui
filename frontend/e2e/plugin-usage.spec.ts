@@ -123,17 +123,17 @@ test('administrators open provider usage from the user menu', async ({
   const newTabMenu = page.getByTestId('app-tab-new-menu');
   const newTabLabels = await newTabMenu.getByRole('menuitem').allTextContents();
   const agentsIndex = newTabLabels.findIndex(label => label.includes('Agents'));
-  const usersIndex = newTabLabels.findIndex(label =>
-    label.includes('User Management')
-  );
   const systemIndex = newTabLabels.findIndex(label => label.includes('System'));
   const usageIndex = newTabLabels.findIndex(label =>
     label.includes('Provider Usage')
   );
   expect(agentsIndex).toBeGreaterThan(-1);
-  expect(usersIndex).toBeGreaterThan(agentsIndex);
-  expect(systemIndex).toBeGreaterThan(usersIndex);
+  expect(systemIndex).toBeGreaterThan(agentsIndex);
   expect(usageIndex).toBeGreaterThan(systemIndex);
+  // User Management moved into Settings; it is no longer a page tab.
+  expect(newTabLabels.some(label => label.includes('User Management'))).toBe(
+    false
+  );
   await page.getByTestId('app-tab-new').click();
 
   await page.getByRole('button', { name: /admin/i }).last().click();

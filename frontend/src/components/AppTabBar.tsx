@@ -36,7 +36,6 @@ import {
   Sparkles,
   SquareX,
   User as UserIcon,
-  Users,
   X,
   Zap,
   MessagesSquare,
@@ -65,7 +64,6 @@ const PAGE_META: Record<string, { icon: IconComponent; labelKey: string }> = {
   '/personas': { icon: UserIcon, labelKey: 'sidebar.navigation.personas' },
   '/gallery': { icon: Sparkles, labelKey: 'sidebar.navigation.imagine' },
   '/agents': { icon: Bot, labelKey: 'sidebar.navigation.agents' },
-  '/users': { icon: Users, labelKey: 'sidebar.navigation.userManagement' },
   '/usage': { icon: ChartNoAxesCombined, labelKey: 'usageAnalytics.title' },
   '/system': { icon: Server, labelKey: 'systemPage.title' },
   '/artifacts': { icon: Package, labelKey: 'tabs.artifacts' },
@@ -80,12 +78,7 @@ const tabIcon = (tab: AppTab): IconComponent => {
 
 const modKey = () => (isMac() ? '⌘' : 'Ctrl');
 
-const ADMIN_ONLY_TAB_PATHS = new Set([
-  '/agents',
-  '/users',
-  '/usage',
-  '/system',
-]);
+const ADMIN_ONLY_TAB_PATHS = new Set(['/agents', '/usage', '/system']);
 
 // Work tabs follow Work access (admins, or everyone once an administrator
 // opens Work up); the listed paths stay admin-only regardless.
@@ -397,7 +390,7 @@ export const AppTabBar: React.FC = () => {
         ]
       : []),
     ...(admin
-      ? ['/users', '/system', '/usage'].map(path => ({
+      ? ['/system', '/usage'].map(path => ({
           key: path,
           label: t(PAGE_META[path].labelKey, path.slice(1)),
           icon: PAGE_META[path].icon,

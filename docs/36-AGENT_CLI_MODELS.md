@@ -78,7 +78,7 @@ and run commands on the server if it decides to.
 
 Treat enabling this as equivalent to granting the agent shell access to the
 machine. Because of that, the feature ships **disabled**: an administrator must
-turn it on under **User Management → Agents**. The setting is persisted and
+turn it on under **Settings → User Management → Agents**. The setting is persisted and
 takes effect immediately, without a restart.
 
 To pin the decision at the deployment level regardless of the runtime toggle,
@@ -103,7 +103,7 @@ container with an isolated workspace.
 ## Troubleshooting
 
 **No Agents group appears.** Confirm the feature is enabled under
-**User Management → Agents** (it is off by default) and that you are signed in
+**Settings → User Management → Agents** (it is off by default) and that you are signed in
 as an administrator, then
 check that the command is on the `PATH` of the process running the backend — not
 just your interactive shell. A service manager, Docker container, or desktop

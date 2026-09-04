@@ -1078,7 +1078,8 @@
       "general": "Umum",
       "chat": "Sembang",
       "media": "Suara & imej",
-      "connections": "Sambungan"
+      "connections": "Sambungan",
+      "admin": "Pentadbiran"
     },
     "search": {
       "title": "Carian web",

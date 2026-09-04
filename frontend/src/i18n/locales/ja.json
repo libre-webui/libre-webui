@@ -1078,7 +1078,8 @@
       "general": "一般",
       "chat": "チャット",
       "media": "音声と画像",
-      "connections": "接続"
+      "connections": "接続",
+      "admin": "管理"
     },
     "search": {
       "title": "ウェブ検索",

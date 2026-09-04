@@ -15,49 +15,32 @@
  * limitations under the License.
  */
 
-import React from 'react';
-import { useTranslation } from 'react-i18next';
-import { UserManager } from '@/components/UserManager';
-import { AgentAccessSettings } from '@/components/AgentAccessSettings';
-import { DefaultThemeSettings } from '@/components/DefaultThemeSettings';
-import { ToolAccessSettings } from '@/components/ToolAccessSettings';
-import { VoiceAccessSettings } from '@/components/VoiceAccessSettings';
-import { MfaPolicySettings } from '@/components/MfaPolicySettings';
-import { GroupManager } from '@/components/GroupManager';
-import { SecurityAuditLog } from '@/components/SecurityAuditLog';
-import { ModelDownloadSettings } from '@/components/ModelDownloadSettings';
-import { OllamaProviderSettings } from '@/components/OllamaProviderSettings';
-import { WebSearchAccessSettings } from '@/components/WebSearchAccessSettings';
-import { WorkAccessSettings } from '@/components/WorkAccessSettings';
-import { WorkPoliciesSettings } from '@/components/WorkPoliciesSettings';
-import { PageHeader, PageShell } from '@/components/ui';
+import React, { useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router';
 
-export const UserManagementPage: React.FC = () => {
-  const { t } = useTranslation();
+interface UserManagementPageProps {
+  /** Opens Settings on the User Management tab. */
+  onOpen: () => void;
+}
 
-  return (
-    <PageShell>
-      <PageHeader
-        title={t('userManager.title')}
-        description={t('userManager.pageDescription')}
-      />
-      <div className='mb-4 space-y-4'>
-        <DefaultThemeSettings />
-        <WorkAccessSettings />
-        <WorkPoliciesSettings />
-        <OllamaProviderSettings />
-        <ModelDownloadSettings />
-        <WebSearchAccessSettings />
-        <AgentAccessSettings />
-        <ToolAccessSettings />
-        <VoiceAccessSettings />
-        <MfaPolicySettings />
-        <GroupManager />
-        <SecurityAuditLog />
-      </div>
-      <UserManager />
-    </PageShell>
-  );
+/**
+ * User Management lives in Settings now. This route keeps every existing
+ * link (sidebar shortcut, pending-approval badge, bookmarks) working by
+ * opening that tab and stepping back to the home tab underneath it.
+ */
+export const UserManagementPage: React.FC<UserManagementPageProps> = ({
+  onOpen,
+}) => {
+  const navigate = useNavigate();
+  const openRef = useRef(onOpen);
+  useEffect(() => {
+    openRef.current = onOpen;
+  }, [onOpen]);
+  useEffect(() => {
+    openRef.current();
+    navigate('/', { replace: true });
+  }, [navigate]);
+  return null;
 };
 
 export default UserManagementPage;
