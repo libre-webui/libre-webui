@@ -133,7 +133,7 @@ and retry.
 ### Groups and Resource Grants
 
 Administrators can create groups and manage memberships from the User
-Management page. Groups are principals for resource grants: the owner of a
+Management tab in Settings. Groups are principals for resource grants: the owner of a
 chat, note, document, knowledge collection, folder, persona, prompt,
 skill, or calendar can grant `read`, `write`, or `admin` access to a user
 or a group through the access API — every shareable surface uses the same

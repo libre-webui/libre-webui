@@ -873,7 +873,7 @@ workspace is mounted again when the same task sandbox is restarted or
 recreated.
 
 Administrators can define **named runtime policies** from the User
-Management page: presets combining a runtime image, memory/CPU/PID limits,
+Management tab in Settings: presets combining a runtime image, memory/CPU/PID limits,
 a workspace size (Kubernetes), an idle timeout, a network default, and two
 capability switches — **Work Computer (GUI + browser)**, which gives the
 policy's tasks a virtual desktop and the Screen tab, and **Allow screen
