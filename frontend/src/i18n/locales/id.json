@@ -612,6 +612,7 @@
         "light": "Terang",
         "dark": "Gelap",
         "amoled": "Hitam Murni",
+        "celestial": "Langit",
         "system": "Sistem"
       },
       "accent": {
@@ -645,6 +646,13 @@
         "upload": "Unggah gambar latar",
         "dragDrop": "Seret dan lepas gambar atau klik untuk menelusuri",
         "chooseImage": "Pilih Gambar"
+      },
+      "celestial": {
+        "title": "Waktu hari",
+        "description": "Langit mengikuti matahari di tempat Anda. Geser untuk melihat pratinjau menit mana pun, atau biarkan mengikuti jam.",
+        "followClock": "Ikuti jam",
+        "sunrise": "Matahari terbit",
+        "sunset": "Matahari terbenam"
       }
     },
     "saveSettings": "Simpan Pengaturan",

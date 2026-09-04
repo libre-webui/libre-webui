@@ -612,6 +612,7 @@
         "light": "Lys",
         "dark": "Mørk",
         "amoled": "Dyb Sort",
+        "celestial": "Himmelsk",
         "system": "System"
       },
       "accent": {
@@ -645,6 +646,13 @@
         "upload": "Upload baggrundsbillede",
         "dragDrop": "Træk og slip et billede eller klik for at gennemse",
         "chooseImage": "Vælg billede"
+      },
+      "celestial": {
+        "title": "Tidspunkt på dagen",
+        "description": "Himmelsk følger solen der, hvor du er. Træk for at forhåndsvise et vilkårligt minut, eller lad det følge uret.",
+        "followClock": "Følg uret",
+        "sunrise": "Solopgang",
+        "sunset": "Solnedgang"
       }
     },
     "saveSettings": "Gem indstillinger",

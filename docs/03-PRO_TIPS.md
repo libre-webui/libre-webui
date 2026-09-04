@@ -80,7 +80,13 @@ sign-in page, seeds every new account, and applies in any browser that has not
 picked a theme of its own; a saved personal preference is always respected.
 Libre WebUI does not follow the operating system's theme setting; switch
 explicitly with `Cmd/Ctrl + D`, the sun/moon button, or from Settings. The
-toggle cycles Light, Dark, and Pure Black.
+toggle cycles Light, Dark, Pure Black, and Celestial.
+
+**Celestial** follows the sun: the palette and a live sky (sun or moon on its
+arc, clouds, stars after dusk, a lamp that follows the pointer at night) shift
+minute by minute, with sunrise and sunset moving through the year. Pick it in
+Settings > Appearance; a scrubber there previews any minute of the day, and
+**Follow the clock** returns to real time.
 
 ## Keep Work Tasks Focused
 

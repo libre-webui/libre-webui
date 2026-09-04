@@ -641,3 +641,271 @@ select,
     pointer-events: none;
   }
 }
+
+/* ---------------------------------------------------------------------------
+   Celestial theme: the palette follows the sun; these rules make it glide.
+   The sky colours are registered custom properties so they can transition,
+   and the large surfaces ease their background when the palette ticks.
+   --------------------------------------------------------------------------- */
+@property --celestial-sky-top {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #0b1020;
+}
+@property --celestial-sky-mid {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #131a33;
+}
+@property --celestial-sky-horizon {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #1a2340;
+}
+@property --celestial-glow {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #7fa7ff;
+}
+
+html.celestial {
+  --celestial-night: 0;
+  --lamp-x: 50%;
+  --lamp-y: 50%;
+  --lamp-pulse: 0;
+  transition:
+    --celestial-sky-top 1400ms linear,
+    --celestial-sky-mid 1400ms linear,
+    --celestial-sky-horizon 1400ms linear,
+    --celestial-glow 1400ms linear;
+}
+html.celestial :where(body, main, aside, header, footer, nav, section) {
+  transition:
+    background-color 1400ms linear,
+    border-color 1400ms linear,
+    color 1400ms linear;
+}
+html.celestial [data-celestial-canvas] {
+  background-color: rgb(var(--color-canvas) / 0.55);
+}
+/* The app frame lets the sky through: a faint wash on the outer shell and a
+   translucent, blurred chat pane instead of the opaque canvas. */
+html.celestial [data-app-shell] {
+  background-color: rgb(var(--color-sidebar) / 0.22);
+}
+html.celestial [data-app-main] {
+  background-color: rgb(var(--color-canvas) / 0.5);
+  backdrop-filter: blur(10px);
+}
+html.celestial [data-celestial-surface] {
+  background-color: rgb(var(--color-surface) / 0.55);
+  backdrop-filter: blur(10px);
+}
+
+.celestial-sky {
+  --sky-px: 0;
+  --sky-py: 0;
+  background: var(--celestial-sky-mid);
+}
+.celestial-sky__gradient {
+  position: absolute;
+  inset: -8%;
+  background: linear-gradient(
+    180deg,
+    var(--celestial-sky-top) 0%,
+    var(--celestial-sky-mid) 52%,
+    var(--celestial-sky-horizon) 100%
+  );
+  transform: translate3d(
+    calc(var(--sky-px) * -6px),
+    calc(var(--sky-py) * -4px),
+    0
+  );
+  transition: transform 600ms ease-out;
+}
+.celestial-sky__stars {
+  position: absolute;
+  inset: -4%;
+  transform: translate3d(
+    calc(var(--sky-px) * -10px),
+    calc(var(--sky-py) * -7px),
+    0
+  );
+  transition:
+    opacity 1400ms linear,
+    transform 800ms ease-out;
+}
+.celestial-sky__star {
+  position: absolute;
+  border-radius: 9999px;
+  background: #fff;
+  box-shadow:
+    0 0 6px 1px rgba(255, 255, 255, 0.9),
+    0 0 14px 2px rgba(200, 215, 255, 0.35);
+  animation: celestial-twinkle 4s ease-in-out infinite;
+}
+@keyframes celestial-twinkle {
+  0%,
+  100% {
+    opacity: 0.3;
+    transform: scale(0.9);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.15);
+  }
+}
+.celestial-sky__sun,
+.celestial-sky__moon {
+  position: absolute;
+  width: clamp(72px, 9vw, 128px);
+  aspect-ratio: 1;
+  margin: calc(clamp(72px, 9vw, 128px) / -2) 0 0
+    calc(clamp(72px, 9vw, 128px) / -2);
+  border-radius: 9999px;
+  transition:
+    left 1400ms linear,
+    top 1400ms linear,
+    opacity 1400ms linear,
+    transform 800ms ease-out;
+}
+.celestial-sky__sun {
+  --sun-warmth: 0;
+  background: radial-gradient(
+    circle,
+    #fffbe6 0%,
+    #fff2c2 34%,
+    rgba(255, 214, 150, 0.85) 42%,
+    rgba(255, 190, 120, calc(0.35 + var(--sun-warmth) * 0.4)) 56%,
+    transparent 72%
+  );
+  box-shadow:
+    0 0 60px 24px rgba(255, 236, 190, calc(0.35 + var(--sun-warmth) * 0.35)),
+    0 0 180px 90px rgba(255, 200, 140, calc(0.12 + var(--sun-warmth) * 0.3));
+  transform: translate3d(
+    calc(var(--sky-px) * 14px),
+    calc(var(--sky-py) * 10px),
+    0
+  );
+}
+.celestial-sky__moon {
+  overflow: hidden;
+  background: radial-gradient(
+    circle at 38% 36%,
+    #f6f4ea 0%,
+    #d9d7cc 55%,
+    #b9b7ad 100%
+  );
+  box-shadow:
+    inset -6px -8px 18px rgba(0, 0, 0, 0.18),
+    0 0 42px 14px rgba(214, 224, 255, 0.28),
+    0 0 120px 60px rgba(180, 200, 255, 0.12);
+  transform: translate3d(
+    calc(var(--sky-px) * 12px),
+    calc(var(--sky-py) * 9px),
+    0
+  );
+}
+.celestial-sky__moon-shadow {
+  position: absolute;
+  inset: -6%;
+  border-radius: 9999px;
+  background: rgb(14 18 38 / 0.9);
+  transition: transform 1400ms linear;
+}
+.celestial-sky__cloud {
+  position: absolute;
+  height: 20vh;
+  width: 46vw;
+  border-radius: 9999px;
+  filter: blur(34px);
+  transform: translate3d(
+    calc(var(--sky-px) * 22px),
+    calc(var(--sky-py) * 12px),
+    0
+  );
+  transition:
+    background 1400ms linear,
+    opacity 1400ms linear,
+    transform 900ms ease-out;
+  animation: celestial-drift 110s ease-in-out infinite alternate;
+}
+.celestial-sky__cloud--a {
+  top: 18%;
+  left: -12%;
+}
+.celestial-sky__cloud--b {
+  top: 34%;
+  left: 42%;
+  width: 38vw;
+  animation-duration: 140s;
+  animation-delay: -40s;
+}
+.celestial-sky__cloud--c {
+  top: 8%;
+  left: 68%;
+  width: 30vw;
+  height: 14vh;
+  animation-duration: 95s;
+  animation-delay: -70s;
+}
+@keyframes celestial-drift {
+  from {
+    margin-left: 0;
+  }
+  to {
+    margin-left: 12vw;
+  }
+}
+.celestial-sky__haze {
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 55%;
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    var(--celestial-sky-horizon) 100%
+  );
+  transition: opacity 1400ms linear;
+}
+.celestial-sky__lamp {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  pointer-events: none;
+  mix-blend-mode: screen;
+  background: radial-gradient(
+    420px circle at var(--lamp-x) var(--lamp-y),
+    color-mix(in srgb, var(--celestial-glow) 34%, transparent),
+    transparent 70%
+  );
+  opacity: calc(var(--celestial-night) * (0.45 + 0.55 * var(--lamp-pulse)));
+  transition: opacity 320ms ease-out;
+}
+.celestial-sky__gradient,
+.celestial-sky__stars,
+.celestial-sky__sun,
+.celestial-sky__moon,
+.celestial-sky__cloud,
+.celestial-sky__haze,
+.celestial-sky__clock {
+  pointer-events: none;
+}
+.celestial-sky__clock {
+  position: absolute;
+  right: 28px;
+  bottom: 14px;
+  font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: rgb(var(--color-ink));
+  opacity: 0.32;
+  transition: color 1400ms linear;
+}
+@media (prefers-reduced-motion: reduce) {
+  .celestial-sky__star,
+  .celestial-sky__cloud {
+    animation: none;
+  }
+}

@@ -29,7 +29,7 @@ export type ThemePreference = UserPreferences['theme'];
 
 export const DEFAULT_THEME_KEY = 'default_theme';
 
-export const THEME_MODES = ['light', 'dark', 'amoled'] as const;
+export const THEME_MODES = ['light', 'dark', 'amoled', 'celestial'] as const;
 export const THEME_ACCENTS = [
   'violet',
   'blue',

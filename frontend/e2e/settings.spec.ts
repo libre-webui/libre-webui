@@ -1016,8 +1016,9 @@ test('theme preference survives refresh and retries a failed save', async ({
       response.status() === 200 &&
       response.request().postData()?.includes('"mode":"light"') === true
   );
-  // Dark -> pure black -> light; the debounced sync sends the final mode.
+  // Dark -> pure black -> celestial -> light; the debounced sync sends the final mode.
   await page.getByRole('button', { name: 'Switch to pure black mode' }).click();
+  await page.getByRole('button', { name: 'Switch to celestial mode' }).click();
   await page.getByRole('button', { name: 'Switch to light mode' }).click();
   await successfulSave;
   await expect(html).not.toHaveClass(/dark/);
@@ -1885,4 +1886,51 @@ test('pure black theme paints true-black surfaces and persists', async ({
   // Survives a reload via the persisted store + boot script.
   await page.reload();
   await expect(page.locator('html')).toHaveClass(/amoled/);
+});
+
+test('celestial theme paints a live sky and previews any minute of the day', async ({
+  page,
+}) => {
+  await mockLibreWebUiApi(page);
+  await page.goto('/chat');
+  await expect(page.getByRole('textbox', { name: 'Message...' })).toBeVisible();
+  await page.keyboard.press('Control+,');
+  await expect(page.getByRole('heading', { name: 'Settings' })).toBeVisible();
+
+  await page.getByRole('button', { name: 'Celestial', exact: true }).click();
+  const html = page.locator('html');
+  await expect(html).toHaveClass(/celestial/);
+  const sky = page.getByTestId('celestial-sky');
+  await expect(sky).toBeVisible();
+  await expect(page.getByTestId('celestial-sun')).toHaveCount(1);
+
+  // Scrub to one in the morning: night sky, stars out, dark interface.
+  const scrubber = page.getByTestId('celestial-scrubber');
+  await scrubber.fill('60');
+  await expect(page.getByTestId('celestial-preview-clock')).toHaveText(
+    '1:00am'
+  );
+  await expect(html).toHaveClass(/\bdark\b/);
+  await expect(sky).toHaveAttribute('data-night', 'true');
+  await expect(page.getByTestId('celestial-moon')).toHaveCSS('opacity', '1');
+
+  // Scrub to one in the afternoon: daylight, sun up, light interface.
+  await scrubber.fill('780');
+  await expect(page.getByTestId('celestial-preview-clock')).toHaveText(
+    '1:00pm'
+  );
+  await expect(html).not.toHaveClass(/\bdark\b/);
+  await expect(sky).toHaveAttribute('data-night', 'false');
+  await expect(page.getByTestId('celestial-sun')).toHaveCSS('opacity', '1');
+  const canvas = await page.evaluate(() =>
+    getComputedStyle(document.documentElement)
+      .getPropertyValue('--color-canvas')
+      .trim()
+  );
+  const [r, g, b] = canvas.split(' ').map(Number);
+  expect((r + g + b) / 3).toBeGreaterThan(200);
+
+  // Back to the clock: the preview flag clears.
+  await page.getByTestId('celestial-follow-clock').click();
+  await expect(sky).toHaveAttribute('data-preview', 'false');
 });

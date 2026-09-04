@@ -7,7 +7,7 @@
         let mode = 'dark';
 
         try {
-          const known = ['light', 'dark', 'amoled'];
+          const known = ['light', 'dark', 'amoled', 'celestial'];
           const savedState = JSON.parse(
             localStorage.getItem('libre-webui-app-state') || 'null'
           );
@@ -31,10 +31,18 @@
           // Keep the dark default when persisted state is unavailable or invalid.
         }
 
-        document.documentElement.classList.toggle('dark', mode !== 'light');
+        // Celestial follows the sun; before the app computes the real
+        // palette, a coarse hour check picks the nearest of light or dark.
+        const hour = new Date().getHours();
+        const dark =
+          mode === 'celestial' ? hour < 6 || hour >= 19 : mode !== 'light';
+        document.documentElement.classList.toggle('dark', dark);
         document.documentElement.classList.toggle('amoled', mode === 'amoled');
-        document.documentElement.style.colorScheme =
-          mode === 'light' ? 'light' : 'dark';
+        document.documentElement.classList.toggle(
+          'celestial',
+          mode === 'celestial'
+        );
+        document.documentElement.style.colorScheme = dark ? 'dark' : 'light';
       })();
     </script>
     <!-- The SVG mark carries its own prefers-color-scheme rule, so the favicon

@@ -612,6 +612,7 @@
         "light": "라이트",
         "dark": "다크",
         "amoled": "퓨어 블랙",
+        "celestial": "천체",
         "system": "시스템"
       },
       "accent": {
@@ -645,6 +646,13 @@
         "upload": "배경 이미지 업로드",
         "dragDrop": "이미지를 끌어다 놓거나 클릭하여 찾아보기",
         "chooseImage": "이미지 선택"
+      },
+      "celestial": {
+        "title": "하루 중 시간",
+        "description": "천체 테마는 현재 위치의 태양을 따라갑니다. 드래그해서 원하는 시각을 미리 보거나, 시계를 따라가게 두세요.",
+        "followClock": "시계 따라가기",
+        "sunrise": "일출",
+        "sunset": "일몰"
       }
     },
     "saveSettings": "설정 저장",

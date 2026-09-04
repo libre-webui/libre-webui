@@ -612,6 +612,7 @@
         "light": "Claro",
         "dark": "Oscuro",
         "amoled": "Negro Puro",
+        "celestial": "Celestial",
         "system": "Sistema"
       },
       "accent": {
@@ -645,6 +646,13 @@
         "upload": "Subir imagen de fondo",
         "dragDrop": "Arrastra una imagen o haz clic para explorar",
         "chooseImage": "Elegir imagen"
+      },
+      "celestial": {
+        "title": "Hora del día",
+        "description": "Celestial sigue al sol donde estés. Desliza para previsualizar cualquier minuto o deja que siga el reloj.",
+        "followClock": "Seguir el reloj",
+        "sunrise": "Amanecer",
+        "sunset": "Atardecer"
       }
     },
     "saveSettings": "Guardar configuración",

@@ -68,12 +68,15 @@ test('login and signup default to dark mode', async ({ page }) => {
     page.getByRole('heading', { name: 'Welcome Back' })
   ).toBeVisible();
   await expect(page.locator('html')).toHaveClass(/\bdark\b/);
-  // The toggle cycles dark -> pure black -> light -> dark.
+  // The toggle cycles dark -> pure black -> celestial -> light -> dark.
   await expect(
     page.getByRole('button', { name: 'Switch to pure black mode' })
   ).toBeVisible();
   await page.getByRole('button', { name: 'Switch to pure black mode' }).click();
   await expect(page.locator('html')).toHaveClass(/\bamoled\b/);
+  await page.getByRole('button', { name: 'Switch to celestial mode' }).click();
+  await expect(page.locator('html')).toHaveClass(/\bcelestial\b/);
+  await expect(page.getByTestId('celestial-sky')).toBeVisible();
   await page.getByRole('button', { name: 'Switch to light mode' }).click();
   await expect(page.locator('html')).not.toHaveClass(/\bdark\b/);
   await page.getByRole('button', { name: 'Switch to dark mode' }).click();
@@ -224,13 +227,15 @@ test('login page follows the administrator default theme until the visitor picks
   await expect(page.locator('html')).toHaveClass(/\bamoled\b/);
 
   // A visitor's own choice wins over the instance default and survives reloads.
-  await page.getByRole('button', { name: 'Switch to light mode' }).click();
-  await expect(page.locator('html')).not.toHaveClass(/\bdark\b/);
+  await page.getByRole('button', { name: 'Switch to celestial mode' }).click();
+  await expect(page.locator('html')).toHaveClass(/\bcelestial\b/);
+  await expect(page.locator('html')).not.toHaveClass(/\bamoled\b/);
   await page.reload();
   await expect(
     page.getByRole('heading', { name: 'Welcome Back' })
   ).toBeVisible();
-  await expect(page.locator('html')).not.toHaveClass(/\bdark\b/);
+  await expect(page.locator('html')).toHaveClass(/\bcelestial\b/);
+  await expect(page.getByTestId('celestial-sky')).toBeVisible();
 });
 
 test('demo mode login is click-only with disabled demo credentials', async ({

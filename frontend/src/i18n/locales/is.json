@@ -612,6 +612,7 @@
         "light": "Ljóst",
         "dark": "Dökkt",
         "amoled": "Hreinn Svartur",
+        "celestial": "Himneskt",
         "system": "Kerfis"
       },
       "accent": {
@@ -645,6 +646,13 @@
         "upload": "Hlaða upp bakgrunnsmynd",
         "dragDrop": "Dragðu og slepptu mynd eða smelltu til að fletta",
         "chooseImage": "Velja mynd"
+      },
+      "celestial": {
+        "title": "Tími dags",
+        "description": "Himneskt fylgir sólinni þar sem þú ert. Dragðu til að forskoða hvaða mínútu sem er, eða láttu það fylgja klukkunni.",
+        "followClock": "Fylgja klukkunni",
+        "sunrise": "Sólarupprás",
+        "sunset": "Sólsetur"
       }
     },
     "saveSettings": "Vista stillingar",

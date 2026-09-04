@@ -612,6 +612,7 @@
         "light": "Clair",
         "dark": "Sombre",
         "amoled": "Noir Pur",
+        "celestial": "Céleste",
         "system": "Système"
       },
       "accent": {
@@ -645,6 +646,13 @@
         "upload": "Envoyer une image d'arrière-plan",
         "dragDrop": "Glissez-déposez une image ou cliquez pour parcourir",
         "chooseImage": "Choisir une image"
+      },
+      "celestial": {
+        "title": "Heure de la journée",
+        "description": "Céleste suit le soleil là où vous êtes. Faites glisser pour prévisualiser n'importe quelle minute, ou laissez-le suivre l'horloge.",
+        "followClock": "Suivre l'horloge",
+        "sunrise": "Lever du soleil",
+        "sunset": "Coucher du soleil"
       }
     },
     "saveSettings": "Enregistrer les paramètres",

@@ -612,6 +612,7 @@
         "light": "浅色",
         "dark": "深色",
         "amoled": "纯黑",
+        "celestial": "天穹",
         "system": "跟随系统"
       },
       "accent": {
@@ -645,6 +646,13 @@
         "upload": "上传背景图片",
         "dragDrop": "拖放图片或点击浏览",
         "chooseImage": "选择图片"
+      },
+      "celestial": {
+        "title": "一天中的时间",
+        "description": "天穹主题跟随你所在位置的太阳变化。拖动可预览任意时刻，或让它跟随时钟。",
+        "followClock": "跟随时钟",
+        "sunrise": "日出",
+        "sunset": "日落"
       }
     },
     "saveSettings": "保存设置",

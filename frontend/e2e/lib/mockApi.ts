@@ -47,7 +47,10 @@ type MockSystemInfo = {
   passkeysInUse?: boolean;
   version: string;
   turnstile?: { enabled: boolean; siteKey?: string };
-  defaultTheme?: { mode: 'light' | 'dark' | 'amoled'; accent?: string };
+  defaultTheme?: {
+    mode: 'light' | 'dark' | 'amoled' | 'celestial';
+    accent?: string;
+  };
 };
 
 type MockModel = {

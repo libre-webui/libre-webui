@@ -50,6 +50,7 @@ import { API_BASE_URL } from '@/utils/config';
 import { useWhatsNew } from '@/hooks/useWhatsNew';
 import { DemoModeBanner } from '@/components/DemoModeBanner';
 import { BackgroundRenderer } from '@/components/BackgroundRenderer';
+import { CelestialSky } from '@/components/CelestialSky';
 import { AppTabBar } from '@/components/AppTabBar';
 import { startNewChat, startNewWork } from '@/utils/appNavigation';
 import { CommandPalette } from '@/components/CommandPalette';
@@ -186,9 +187,11 @@ const ShellLayout: React.FC<ShellLayoutProps> = ({
       'flex h-dvh min-h-0 text-ink relative overflow-hidden',
       hasBackground ? 'bg-sidebar/60' : 'bg-sidebar'
     )}
+    data-app-shell=''
   >
     <ElectronTitleBar />
     <BackgroundRenderer />
+    <CelestialSky />
     <Sidebar isOpen={sidebarOpen} onClose={onCloseSidebar} />
     <SidebarLayoutSpacer isOpen={sidebarOpen} compact={sidebarCompact} />
     <div
@@ -206,6 +209,7 @@ const ShellLayout: React.FC<ShellLayoutProps> = ({
       {showDemoBanner && <DemoModeBanner message={demoMessage} />}
       <AppTabBar />
       <main
+        data-app-main=''
         className={cn(
           'min-h-0 flex-1 overflow-hidden lg:rounded-[1.5rem] lg:border lg:border-black/[0.06] dark:lg:border-white/[0.07] lg:shadow-[0_1px_2px_rgba(0,0,0,0.03),0_18px_60px_rgba(15,23,42,0.04)]',
           hasBackground
@@ -244,6 +248,7 @@ const AppContent: React.FC = () => {
     toggleSidebar,
     toggleSidebarCompact,
     toggleTheme,
+    theme,
     backgroundImage,
     preferences,
     artifactPanelOpen,
@@ -337,6 +342,10 @@ const AppContent: React.FC = () => {
 
   // Check if any background is active (persona background or general background settings)
   const hasActiveBackground = () => {
+    // The celestial sky is a live background of its own.
+    if (theme.mode === 'celestial') {
+      return true;
+    }
     // Persona background takes priority
     if (backgroundImage) {
       return true;

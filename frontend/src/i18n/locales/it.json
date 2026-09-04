@@ -612,6 +612,7 @@
         "light": "Chiaro",
         "dark": "Scuro",
         "amoled": "Nero Puro",
+        "celestial": "Celeste",
         "system": "Sistema"
       },
       "accent": {
@@ -645,6 +646,13 @@
         "upload": "Carica immagine di sfondo",
         "dragDrop": "Trascina un'immagine o clicca per sfogliare",
         "chooseImage": "Scegli immagine"
+      },
+      "celestial": {
+        "title": "Ora del giorno",
+        "description": "Celeste segue il sole dove ti trovi. Trascina per vedere l'anteprima di qualsiasi minuto, oppure lascia che segua l'orologio.",
+        "followClock": "Segui l'orologio",
+        "sunrise": "Alba",
+        "sunset": "Tramonto"
       }
     },
     "saveSettings": "Salva impostazioni",

@@ -612,6 +612,7 @@
         "light": "Sáng",
         "dark": "Tối",
         "amoled": "Đen Thuần",
+        "celestial": "Thiên thể",
         "system": "Hệ thống"
       },
       "accent": {
@@ -645,6 +646,13 @@
         "upload": "Tải lên hình nền",
         "dragDrop": "Kéo và thả hình ảnh hoặc nhấp để duyệt",
         "chooseImage": "Chọn hình ảnh"
+      },
+      "celestial": {
+        "title": "Thời điểm trong ngày",
+        "description": "Thiên thể đi theo mặt trời nơi bạn ở. Kéo để xem trước bất kỳ phút nào, hoặc để nó đi theo đồng hồ.",
+        "followClock": "Theo đồng hồ",
+        "sunrise": "Bình minh",
+        "sunset": "Hoàng hôn"
       }
     },
     "saveSettings": "Lưu cài đặt",

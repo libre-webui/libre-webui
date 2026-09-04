@@ -36,8 +36,13 @@ test('preserves the amoled mode and collapses unknown modes to dark', () => {
   );
 });
 
-test('the toggle cycles light, dark, pure black, then light again', () => {
+test('the toggle cycles light, dark, pure black, celestial, then light', () => {
   assert.equal(getNextThemeMode('light'), 'dark');
   assert.equal(getNextThemeMode('dark'), 'amoled');
-  assert.equal(getNextThemeMode('amoled'), 'light');
+  assert.equal(getNextThemeMode('amoled'), 'celestial');
+  assert.equal(getNextThemeMode('celestial'), 'light');
+});
+
+test('preserves the celestial mode', () => {
+  assert.equal(normalizeTheme({ mode: 'celestial' }).mode, 'celestial');
 });

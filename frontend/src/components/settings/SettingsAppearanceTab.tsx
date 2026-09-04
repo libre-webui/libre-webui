@@ -15,8 +15,10 @@
  * limitations under the License.
  */
 
-import type { ReactNode } from 'react';
-import { Check, Moon, MoonStar, Palette, Sun } from 'lucide-react';
+import { useEffect, type ReactNode } from 'react';
+import { Check, Moon, MoonStar, Palette, Sun, Sunrise } from 'lucide-react';
+import { useCelestialStore } from '@/store/celestialStore';
+import { formatClock, minutesOfDay } from '@/utils/celestial';
 import { useTranslation } from 'react-i18next';
 import { BackgroundUpload } from '@/components/BackgroundUpload';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
@@ -27,6 +29,7 @@ import {
   DEFAULT_ACCENT,
   DEFAULT_CUSTOM_ACCENT,
   getThemeAccentColor,
+  previewCelestialMinutes,
 } from '@/utils/theme';
 
 interface SettingsAppearanceTabProps {
@@ -108,6 +111,15 @@ export function SettingsAppearanceTab({
   const activeAccent = theme.accent || DEFAULT_ACCENT;
   const customAccentValue = theme.customAccent || DEFAULT_CUSTOM_ACCENT;
   const accentPreviewColor = getThemeAccentColor(theme);
+  const celestialPalette = useCelestialStore(state => state.palette);
+  const previewMinutes = useCelestialStore(state => state.previewMinutes);
+  const isCelestial = theme.mode === 'celestial';
+  // A preview is for looking, not living: leaving the tab follows the clock.
+  useEffect(() => () => previewCelestialMinutes(null), []);
+  const clockMinutes =
+    previewMinutes ??
+    celestialPalette?.solar.minutes ??
+    minutesOfDay(new Date());
 
   const themeCube = (mode: Theme['mode'], Icon: typeof Sun, label: string) => {
     const selected = theme.mode === mode;
@@ -142,8 +154,75 @@ export function SettingsAppearanceTab({
           {themeCube('light', Sun, t('settings.appearance.theme.light'))}
           {themeCube('dark', Moon, t('settings.appearance.theme.dark'))}
           {themeCube('amoled', MoonStar, t('settings.appearance.theme.amoled'))}
+          {themeCube(
+            'celestial',
+            Sunrise,
+            t('settings.appearance.theme.celestial')
+          )}
         </div>
       </div>
+
+      {/* Celestial: scrub through the day, or follow the clock. */}
+      {isCelestial && (
+        <div
+          className='flex flex-col gap-3 py-4'
+          data-testid='celestial-preview'
+        >
+          <div className='flex items-center justify-between gap-4'>
+            <div className='min-w-0'>
+              <h4 className='text-sm leading-[22px] text-ink'>
+                {t('settings.appearance.celestial.title')}
+              </h4>
+              <p className='text-xs leading-5 text-ink-muted'>
+                {t('settings.appearance.celestial.description')}
+              </p>
+            </div>
+            <span
+              className='shrink-0 font-mono text-sm text-ink'
+              data-testid='celestial-preview-clock'
+            >
+              {formatClock(clockMinutes)}
+            </span>
+          </div>
+          <input
+            type='range'
+            min={0}
+            max={1439}
+            step={1}
+            value={Math.round(clockMinutes)}
+            onChange={event =>
+              previewCelestialMinutes(Number(event.target.value))
+            }
+            aria-label={t('settings.appearance.celestial.title')}
+            data-testid='celestial-scrubber'
+            className='w-full accent-primary-500'
+          />
+          <div className='flex items-center justify-between text-[11px] text-ink-subtle'>
+            <span>
+              {t('settings.appearance.celestial.sunrise')}{' '}
+              {celestialPalette
+                ? formatClock(celestialPalette.solar.sunrise)
+                : ''}
+            </span>
+            {previewMinutes !== null && (
+              <button
+                type='button'
+                onClick={() => previewCelestialMinutes(null)}
+                className='rounded-md border border-line px-2 py-0.5 text-xs text-ink transition-colors hover:bg-interactive-hover'
+                data-testid='celestial-follow-clock'
+              >
+                {t('settings.appearance.celestial.followClock')}
+              </button>
+            )}
+            <span>
+              {t('settings.appearance.celestial.sunset')}{' '}
+              {celestialPalette
+                ? formatClock(celestialPalette.solar.sunset)
+                : ''}
+            </span>
+          </div>
+        </div>
+      )}
 
       {/* Accent color. */}
       <div className='flex flex-col gap-3 py-4'>

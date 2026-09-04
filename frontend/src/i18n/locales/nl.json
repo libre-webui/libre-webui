@@ -612,6 +612,7 @@
         "light": "Licht",
         "dark": "Donker",
         "amoled": "Puur Zwart",
+        "celestial": "Hemels",
         "system": "Systeem"
       },
       "accent": {
@@ -645,6 +646,13 @@
         "upload": "Achtergrondafbeelding uploaden",
         "dragDrop": "Sleep een afbeelding of klik om te bladeren",
         "chooseImage": "Afbeelding kiezen"
+      },
+      "celestial": {
+        "title": "Tijd van de dag",
+        "description": "Hemels volgt de zon waar je bent. Sleep om elke minuut te bekijken, of laat het de klok volgen.",
+        "followClock": "Klok volgen",
+        "sunrise": "Zonsopgang",
+        "sunset": "Zonsondergang"
       }
     },
     "saveSettings": "Instellingen opslaan",

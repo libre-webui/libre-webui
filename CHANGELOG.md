@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### ✨ New Features
 
+- **Celestial theme.** A fourth theme that follows the sun where you are: the
+  palette and a live sky (sun or moon on its arc, drifting clouds, stars after
+  dusk, a pointer-following lamp at night that brightens as you type) shift
+  minute by minute, with sunrise and sunset moving through the year. The
+  theme toggle cycles through it, administrators can make it the instance
+  default, and Settings > Appearance has a scrubber to preview any minute.
+
 ### 🔧 Improvements
 
 ### 🐛 Bug Fixes

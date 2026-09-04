@@ -612,6 +612,7 @@
         "light": "Cerah",
         "dark": "Gelap",
         "amoled": "Hitam Tulen",
+        "celestial": "Celestial",
         "system": "Sistem"
       },
       "accent": {
@@ -645,6 +646,13 @@
         "upload": "Muat naik imej latar belakang",
         "dragDrop": "Seret dan lepas imej atau klik untuk melayari",
         "chooseImage": "Pilih Imej"
+      },
+      "celestial": {
+        "title": "Waktu hari",
+        "description": "Celestial mengikut matahari di tempat anda. Seret untuk pratonton mana-mana minit, atau biarkan ia mengikut jam.",
+        "followClock": "Ikut jam",
+        "sunrise": "Matahari terbit",
+        "sunset": "Matahari terbenam"
       }
     },
     "saveSettings": "Simpan Tetapan",

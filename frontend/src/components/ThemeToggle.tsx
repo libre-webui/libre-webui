@@ -16,7 +16,7 @@
  */
 
 import React from 'react';
-import { Sun, Moon, MoonStar } from 'lucide-react';
+import { Sun, Moon, MoonStar, Sunrise } from 'lucide-react';
 import { useAppStore } from '@/store/appStore';
 import { Button } from '@/components/ui';
 import { getNextThemeMode } from '@/utils/theme';
@@ -24,17 +24,19 @@ import { getNextThemeMode } from '@/utils/theme';
 const ICON_CLASS =
   'h-4 w-4 text-ink-muted transition-colors duration-150 group-hover:text-ink motion-reduce:transition-none';
 
-/** The icon shows where the next click goes: light -> dark -> pure black. */
+/** The icon shows where the next click goes: light -> dark -> pure black -> celestial. */
 const NEXT_MODE_ICON = {
   light: Sun,
   dark: Moon,
   amoled: MoonStar,
+  celestial: Sunrise,
 } as const;
 
 const NEXT_MODE_LABEL = {
   light: 'light',
   dark: 'dark',
   amoled: 'pure black',
+  celestial: 'celestial',
 } as const;
 
 export const ThemeToggle: React.FC = () => {

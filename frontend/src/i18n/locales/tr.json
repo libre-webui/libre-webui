@@ -612,6 +612,7 @@
         "light": "Açık",
         "dark": "Koyu",
         "amoled": "Saf Siyah",
+        "celestial": "Göksel",
         "system": "Sistem"
       },
       "accent": {
@@ -645,6 +646,13 @@
         "upload": "Arka plan görseli yükle",
         "dragDrop": "Bir görsel sürükleyip bırakın veya göz atmak için tıklayın",
         "chooseImage": "Görsel Seç"
+      },
+      "celestial": {
+        "title": "Günün saati",
+        "description": "Göksel, bulunduğun yerdeki güneşi izler. Herhangi bir dakikayı önizlemek için kaydır ya da saati izlemesine izin ver.",
+        "followClock": "Saati izle",
+        "sunrise": "Gün doğumu",
+        "sunset": "Gün batımı"
       }
     },
     "saveSettings": "Ayarları Kaydet",

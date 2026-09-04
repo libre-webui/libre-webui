@@ -612,6 +612,7 @@
         "light": "Jasny",
         "dark": "Ciemny",
         "amoled": "Czysta Czerń",
+        "celestial": "Niebiański",
         "system": "Systemowy"
       },
       "accent": {
@@ -645,6 +646,13 @@
         "upload": "Wyślij obraz tła",
         "dragDrop": "Przeciągnij i upuść obraz lub kliknij, aby przeglądać",
         "chooseImage": "Wybierz obraz"
+      },
+      "celestial": {
+        "title": "Pora dnia",
+        "description": "Niebiański podąża za słońcem tam, gdzie jesteś. Przesuń, aby podejrzeć dowolną minutę, albo pozwól mu podążać za zegarem.",
+        "followClock": "Podążaj za zegarem",
+        "sunrise": "Wschód słońca",
+        "sunset": "Zachód słońca"
       }
     },
     "saveSettings": "Zapisz ustawienia",

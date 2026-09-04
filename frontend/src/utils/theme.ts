@@ -16,6 +16,12 @@
  */
 
 import { Theme } from '@/types';
+import {
+  CELESTIAL_ROLE_KEYS,
+  CELESTIAL_SHADE_KEYS,
+  CELESTIAL_TICK_MS,
+} from '@/utils/celestial';
+import { useCelestialStore } from '@/store/celestialStore';
 
 export const DEFAULT_THEME_MODE: Theme['mode'] = 'dark';
 export const DEFAULT_ACCENT = 'blue';
@@ -513,7 +519,9 @@ export const normalizeTheme = (theme?: Partial<Theme> | null): Theme => {
       ? 'light'
       : theme?.mode === 'amoled'
         ? 'amoled'
-        : DEFAULT_THEME_MODE;
+        : theme?.mode === 'celestial'
+          ? 'celestial'
+          : DEFAULT_THEME_MODE;
   const accent = theme?.accent === 'custom' ? 'custom' : theme?.accent;
   const presetAccent = ACCENT_OPTIONS.some(option => option.id === accent)
     ? accent
@@ -537,6 +545,7 @@ export const THEME_MODE_CYCLE: readonly Theme['mode'][] = [
   'light',
   'dark',
   'amoled',
+  'celestial',
 ];
 
 export const getNextThemeMode = (mode: Theme['mode']): Theme['mode'] => {
@@ -713,6 +722,66 @@ const applyAdaptiveInterfaceVariables = (root: HTMLElement, theme: Theme) => {
   }
 };
 
+let celestialTimer: ReturnType<typeof setInterval> | null = null;
+
+const stopCelestialClock = () => {
+  if (celestialTimer) {
+    clearInterval(celestialTimer);
+    celestialTimer = null;
+  }
+  if (typeof document !== 'undefined') {
+    document.removeEventListener('visibilitychange', onCelestialVisibility);
+  }
+  useCelestialStore.getState().clear();
+};
+
+function onCelestialVisibility() {
+  if (document.visibilityState === 'visible') paintCelestial();
+}
+
+/**
+ * Paint the celestial palette for this moment (or the previewed minute).
+ * The palette flips the `dark` class as the sun sets, so every dark:
+ * utility follows; the CSS transitions on large surfaces make it glide.
+ */
+export const paintCelestial = () => {
+  if (typeof document === 'undefined') return;
+  const store = useCelestialStore.getState();
+  store.refresh();
+  const palette = useCelestialStore.getState().palette;
+  if (!palette) return;
+  const root = document.documentElement;
+  root.classList.toggle('dark', palette.isDark);
+  root.style.colorScheme = palette.isDark ? 'dark' : 'light';
+  for (const role of CELESTIAL_ROLE_KEYS) {
+    setRgbVariable(root, `--color-${role}`, palette.roles[role]);
+  }
+  for (const shade of CELESTIAL_SHADE_KEYS) {
+    setRgbVariable(root, `--color-gray-${shade}`, palette.gray[shade]);
+    setRgbVariable(root, `--color-dark-${shade}`, palette.dark[shade]);
+  }
+  root.style.setProperty('--celestial-sky-top', palette.sky.top);
+  root.style.setProperty('--celestial-sky-mid', palette.sky.mid);
+  root.style.setProperty('--celestial-sky-horizon', palette.sky.horizon);
+  root.style.setProperty('--celestial-glow', palette.glow);
+  root.style.setProperty('--celestial-night', String(palette.night));
+};
+
+const startCelestialClock = () => {
+  if (typeof document === 'undefined') return;
+  paintCelestial();
+  if (!celestialTimer) {
+    celestialTimer = setInterval(paintCelestial, CELESTIAL_TICK_MS);
+    document.addEventListener('visibilitychange', onCelestialVisibility);
+  }
+};
+
+/** Preview a minute of the day (null = follow the clock again). */
+export const previewCelestialMinutes = (minutes: number | null) => {
+  useCelestialStore.getState().setPreviewMinutes(minutes);
+  if (celestialTimer) paintCelestial();
+};
+
 export const applyThemeToDocument = (theme?: Partial<Theme> | null) => {
   if (typeof document === 'undefined') return;
 
@@ -720,12 +789,18 @@ export const applyThemeToDocument = (theme?: Partial<Theme> | null) => {
   const root = document.documentElement;
   const palette = getAccentPalette(normalizedTheme);
 
-  root.classList.remove('dark', 'amoled', 'ophelia');
-  if (normalizedTheme.mode !== 'light') {
+  root.classList.remove('dark', 'amoled', 'ophelia', 'celestial');
+  if (
+    normalizedTheme.mode !== 'light' &&
+    normalizedTheme.mode !== 'celestial'
+  ) {
     root.classList.add('dark');
   }
   if (normalizedTheme.mode === 'amoled') {
     root.classList.add('amoled');
+  }
+  if (normalizedTheme.mode === 'celestial') {
+    root.classList.add('celestial');
   }
 
   root.style.colorScheme = normalizedTheme.mode === 'light' ? 'light' : 'dark';
@@ -739,6 +814,22 @@ export const applyThemeToDocument = (theme?: Partial<Theme> | null) => {
     const rgb = `${r} ${g} ${b}`;
     root.style.setProperty(`--color-primary-${shade}`, rgb);
     root.style.setProperty(`--color-accent-${shade}`, rgb);
+  }
+
+  if (normalizedTheme.mode === 'celestial') {
+    // The sky owns the neutrals; the accent still owns primary/accent.
+    startCelestialClock();
+    return;
+  }
+  stopCelestialClock();
+  for (const name of [
+    '--celestial-sky-top',
+    '--celestial-sky-mid',
+    '--celestial-sky-horizon',
+    '--celestial-glow',
+    '--celestial-night',
+  ]) {
+    root.style.removeProperty(name);
   }
 
   if (normalizedTheme.adaptToAccent) {

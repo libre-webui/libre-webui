@@ -18,7 +18,7 @@
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'react-hot-toast';
-import { Moon, MoonStar, Sun } from 'lucide-react';
+import { Moon, MoonStar, Sun, Sunrise } from 'lucide-react';
 import { Button } from '@/components/ui';
 import { useAuthStore } from '@/store/authStore';
 import { useAppStore } from '@/store/appStore';
@@ -31,6 +31,11 @@ const MODES: Array<{ mode: Theme['mode']; icon: typeof Sun; key: string }> = [
   { mode: 'light', icon: Sun, key: 'settings.appearance.theme.light' },
   { mode: 'dark', icon: Moon, key: 'settings.appearance.theme.dark' },
   { mode: 'amoled', icon: MoonStar, key: 'settings.appearance.theme.amoled' },
+  {
+    mode: 'celestial',
+    icon: Sunrise,
+    key: 'settings.appearance.theme.celestial',
+  },
 ];
 
 /**

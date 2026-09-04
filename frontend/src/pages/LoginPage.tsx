@@ -25,6 +25,7 @@ import { SignupForm } from '@/components/SignupForm';
 import { Logo } from '@/components/Logo';
 import { LogoMark } from '@/components/LogoMark';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { CelestialSky } from '@/components/CelestialSky';
 import { resolveAppVersion } from '@/utils/appVersion';
 
 export const LoginPage: React.FC = () => {
@@ -79,8 +80,12 @@ export const LoginPage: React.FC = () => {
   const version = resolveAppVersion(systemInfo?.version);
 
   return (
-    <div className='relative min-h-screen overflow-y-auto bg-canvas text-ink'>
-      <header className='absolute inset-x-0 top-0 z-10 flex h-14 items-center justify-between px-5 sm:px-8'>
+    <div
+      className='relative min-h-screen overflow-y-auto bg-canvas text-ink'
+      data-celestial-canvas=''
+    >
+      <CelestialSky />
+      <header className='absolute inset-x-0 top-0 z-20 flex h-14 items-center justify-between px-5 sm:px-8'>
         <div className='flex items-center gap-2 text-ink lg:invisible'>
           <LogoMark size='sm' label={null} />
           <Logo size='sm' />
@@ -88,8 +93,11 @@ export const LoginPage: React.FC = () => {
         <ThemeToggle />
       </header>
 
-      <main className='grid min-h-screen lg:grid-cols-2'>
-        <section className='relative hidden flex-col justify-between border-e border-line bg-surface px-10 py-12 lg:flex xl:px-16'>
+      <main className='relative z-10 grid min-h-screen lg:grid-cols-2'>
+        <section
+          className='relative hidden flex-col justify-between border-e border-line bg-surface px-10 py-12 lg:flex xl:px-16'
+          data-celestial-surface=''
+        >
           <div className='relative z-10 flex items-center gap-3.5 text-ink'>
             <LogoMark size='lg' label={null} />
             <Logo size='lg' />

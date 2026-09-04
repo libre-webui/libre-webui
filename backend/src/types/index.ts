@@ -438,7 +438,7 @@ export interface UserPreferences {
   visionProviderType?: ChatProviderType | null;
   visionProviderId?: string | null;
   theme: {
-    mode: 'light' | 'dark' | 'amoled' | 'ophelia';
+    mode: 'light' | 'dark' | 'amoled' | 'celestial' | 'ophelia';
     adaptToAccent?: boolean;
     accent?:
       | 'violet'

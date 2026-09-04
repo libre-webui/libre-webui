@@ -89,6 +89,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const { user, isAdmin, systemInfo, setUser, canUseWork, canUseAgents } =
     useAuthStore();
   const {
+    theme,
     backgroundImage,
     sidebarCompact,
     toggleSidebarCompact,
@@ -397,7 +398,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
             ? 'translate-x-0'
             : 'ltr:-translate-x-full rtl:translate-x-full',
           'lg:shadow-none',
-          backgroundImage ? 'bg-sidebar/75 backdrop-blur-xl' : 'bg-sidebar',
+          theme.mode === 'celestial'
+            ? 'bg-sidebar/45 backdrop-blur-xl'
+            : backgroundImage
+              ? 'bg-sidebar/75 backdrop-blur-xl'
+              : 'bg-sidebar',
           'overscroll-behavior-contain',
           className
         )}

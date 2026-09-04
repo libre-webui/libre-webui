@@ -612,6 +612,7 @@
         "light": "Hell",
         "dark": "Dunkel",
         "amoled": "Reines Schwarz",
+        "celestial": "Himmlisch",
         "system": "System"
       },
       "accent": {
@@ -645,6 +646,13 @@
         "upload": "Hintergrundbild hochladen",
         "dragDrop": "Bild hierher ziehen oder klicken zum Durchsuchen",
         "chooseImage": "Bild auswählen"
+      },
+      "celestial": {
+        "title": "Tageszeit",
+        "description": "Himmlisch folgt der Sonne an deinem Ort. Ziehe, um eine beliebige Minute zu sehen, oder lass es der Uhr folgen.",
+        "followClock": "Der Uhr folgen",
+        "sunrise": "Sonnenaufgang",
+        "sunset": "Sonnenuntergang"
       }
     },
     "saveSettings": "Einstellungen speichern",
