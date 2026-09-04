@@ -75,7 +75,19 @@ test('scanner reports are retained and tolerated scans are re-enforced', () => {
     assert.match(job, /exit 1/, `${name} must end with a failing gate`);
   }
 
-  assert.match(dependency, /if: steps\.dependency-audit\.outcome == 'failure'/);
+  // The audit gate retries the advisory service, records a verdict, and
+  // falls back to Dependabot alerts when npm never answered.
+  assert.match(dependency, /for attempt in 1 2 3; do/);
+  assert.match(dependency, /findings=\$\{findings\}/);
+  assert.match(
+    dependency,
+    /FINDINGS: \$\{\{ steps\.dependency-audit\.outputs\.findings \}\}/
+  );
+  assert.match(
+    dependency,
+    /dependabot\/alerts\?state=open&severity=medium,high,critical/
+  );
+  assert.match(dependency, /security-events: read/);
   assert.match(sast, /if: steps\.semgrep\.outcome == 'failure'/);
   assert.match(secrets, /if: steps\.trivy-secrets\.outcome == 'failure'/);
   assert.match(container, /if: steps\.trivy-container\.outcome == 'failure'/);

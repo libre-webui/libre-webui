@@ -12,6 +12,9 @@ jobs:
   dependency-and-sbom:
     name: Dependency audit and source SBOM
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: read
 
     steps:
       - name: Checkout repository
@@ -26,12 +29,28 @@ jobs:
       - name: Install locked dependencies
         run: npm ci
 
+      # npm audit exits non-zero both for findings and when the advisory
+      # service is unreachable; only a report with metadata is a verdict.
+      # Retry the registry a few times, and record what we learned.
       - name: Run dependency audit
         id: dependency-audit
-        continue-on-error: true
         run: |
           mkdir -p security-artifacts
-          npm audit --audit-level=moderate --json > security-artifacts/npm-audit.json
+          for attempt in 1 2 3; do
+            npm audit --audit-level=moderate --json > security-artifacts/npm-audit.json || true
+            if node -e "const r=require('./security-artifacts/npm-audit.json');process.exit(r.metadata?0:1)"; then
+              break
+            fi
+            echo "npm audit could not reach the advisory service (attempt $attempt)" >&2
+            [ "$attempt" -lt 3 ] && sleep 45
+          done
+          node -e '
+            const r = require("./security-artifacts/npm-audit.json");
+            const v = r.metadata && r.metadata.vulnerabilities;
+            const findings = v ? (v.moderate + v.high + v.critical) : -1;
+            require("fs").appendFileSync(process.env.GITHUB_OUTPUT, `findings=${findings}\n`);
+            console.log(v ? `npm audit findings (moderate+): ${findings}` : "npm audit produced no verdict");
+          '
 
       - name: Generate CycloneDX source SBOM
         uses: anchore/sbom-action@v0
@@ -52,11 +71,30 @@ jobs:
           if-no-files-found: error
           retention-days: 30
 
+      # A real finding fails the gate. When npm never answered, fall back to
+      # GitHub's Dependabot alerts for this repository, which carry the same
+      # advisory data, so an npm outage cannot pose as a vulnerability or
+      # silently wave one through.
       - name: Enforce dependency audit
-        if: steps.dependency-audit.outcome == 'failure'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          FINDINGS: ${{ steps.dependency-audit.outputs.findings }}
         run: |
-          echo 'npm audit reported a moderate-or-higher vulnerability.' >&2
-          exit 1
+          if [ "$FINDINGS" -gt 0 ] 2>/dev/null; then
+            echo "npm audit reported $FINDINGS moderate-or-higher vulnerabilities." >&2
+            exit 1
+          fi
+          if [ "$FINDINGS" = "0" ]; then
+            echo 'npm audit: no moderate-or-higher vulnerabilities.'
+            exit 0
+          fi
+          echo 'npm advisory service unreachable; checking open Dependabot alerts instead.'
+          open=$(gh api "repos/${GITHUB_REPOSITORY}/dependabot/alerts?state=open&severity=medium,high,critical&per_page=100" --jq 'length')
+          if [ "$open" -gt 0 ]; then
+            echo "Dependabot reports $open open moderate-or-higher alerts." >&2
+            exit 1
+          fi
+          echo 'Dependabot: no open moderate-or-higher alerts.'
 
   sast:
     name: Semgrep OWASP SAST
