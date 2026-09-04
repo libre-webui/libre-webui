@@ -54,12 +54,7 @@ export class UserService {
       const token = localStorage.getItem('auth-token');
       if (token) {
         try {
-          // Set up axios header for the verification request
-          const axios = (await import('axios')).default;
-          const originalHeaders = axios.defaults.headers.common;
-          axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-
-          // Verify the token
+          // The API client reads the stored token for every request.
           const userResponse = await authApi.verifyToken();
           if (userResponse.success && userResponse.data) {
             const systemInfo = useAuthStore.getState().systemInfo;
@@ -67,9 +62,6 @@ export class UserService {
               login(userResponse.data, token, systemInfo);
             }
           }
-
-          // Restore original headers
-          axios.defaults.headers.common = originalHeaders;
         } catch (error) {
           logger.error('Token verification failed:', error);
           // Clear invalid token
@@ -83,39 +75,3 @@ export class UserService {
     }
   }
 }
-
-// Set up axios interceptor to include auth token
-import axios from 'axios';
-
-const setupAxiosInterceptors = () => {
-  axios.interceptors.request.use(
-    config => {
-      const token = localStorage.getItem('auth-token');
-      if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
-      }
-      return config;
-    },
-    error => {
-      return Promise.reject(error);
-    }
-  );
-
-  axios.interceptors.response.use(
-    response => response,
-    error => {
-      if (error.response?.status === 401) {
-        // Token expired or invalid
-        localStorage.removeItem('auth-token');
-        const { logout } = useAuthStore.getState();
-        logout();
-        // Use hash-based navigation for Electron (file:// protocol)
-        const isElectron = window.location.protocol === 'file:';
-        window.location.href = isElectron ? '#/login' : '/login';
-      }
-      return Promise.reject(error);
-    }
-  );
-};
-
-setupAxiosInterceptors();

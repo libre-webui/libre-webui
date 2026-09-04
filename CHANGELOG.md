@@ -16,6 +16,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   model slot of any account that has not picked one; a saved choice always
   wins.
 
+### 🔧 Improvements
+
+- **The web app talks to the server with `fetch`.** The axios dependency is
+  gone from the frontend. A small client keeps the same request surface
+  (`params`, blob responses, per-request timeouts, cancellation, and errors
+  that carry the response status and body), the auth header and the
+  session-expiry redirect live in two hooks, and the vendor bundle shrinks.
+
 ## [0.33.0] - 2026-09-04
 
 The sky comes indoors: a fourth theme follows the sun where you are, with a
