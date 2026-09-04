@@ -38,6 +38,13 @@ interface ExportData {
   exportedAt: string;
 }
 
+/**
+ * The model a fresh account starts on when the operator sets `DEFAULT_MODEL`
+ * (the `--model` flag of the CLI). Read per call so tests can vary it.
+ */
+export const instanceDefaultModel = (): string =>
+  (process.env.DEFAULT_MODEL || '').trim();
+
 class PreferencesService {
   private defaultPreferences: UserPreferences = {
     defaultModel: '',
@@ -173,6 +180,9 @@ class PreferencesService {
     return {
       ...this.defaultPreferences,
       ...preferences,
+      // An operator-provided model (for example from `ollama launch`) fills
+      // the slot until the user picks one; a saved choice always wins.
+      defaultModel: preferences.defaultModel || instanceDefaultModel(),
       theme: {
         ...this.defaultPreferences.theme,
         ...preferences.theme,

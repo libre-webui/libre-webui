@@ -9,11 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### ✨ New Features
 
-### 🔧 Improvements
-
-### 🐛 Bug Fixes
-
-### 📚 Documentation
+- **`ollama launch libre-webui`.** The packaged CLI takes `--model`,
+  `--ollama-url`, and `--no-open`, mapped onto the `DEFAULT_MODEL`,
+  `OLLAMA_BASE_URL`, and `OPEN_BROWSER` variables the server reads, so a
+  launcher can hand over the model it just pulled. `DEFAULT_MODEL` fills the
+  model slot of any account that has not picked one; a saved choice always
+  wins.
 
 ## [0.33.0] - 2026-09-04
 

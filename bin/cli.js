@@ -21,6 +21,7 @@ const { spawn } = require('child_process');
 const path = require('path');
 const fs = require('fs');
 const { resolveCliRuntimePaths } = require('./runtime-paths');
+const { parseLaunchArgs } = require('./cli-args');
 
 const helpFlags = ['-h', '--help'];
 const versionFlags = ['-v', '--version'];
@@ -44,6 +45,9 @@ Options:
   -h, --help      Show this help message
   -v, --version   Show version number
   -p, --port      Set the port (default: 8080)
+  -m, --model     Model new accounts start on (for example llama3.2)
+  --ollama-url    Ollama API URL (default: http://localhost:11434)
+  --no-open       Do not open the browser after startup
 
 Maintenance Commands:
   recovery-check    Collect a read-only recovery-readiness inventory
@@ -57,12 +61,16 @@ Environment Variables:
   PLATFORM_PREFLIGHT_TMP_DIR
                           Writable database-inspection scratch directory
   OLLAMA_BASE_URL         Ollama API URL (default: http://localhost:11434)
+  DEFAULT_MODEL           Model new accounts start on (optional)
+  OPEN_BROWSER            Set to false to skip opening the browser
   OPENAI_API_KEY          OpenAI API key (optional)
   ANTHROPIC_API_KEY       Anthropic API key (optional)
 
 Examples:
   npx libre-webui
   npx libre-webui --port 3000
+  npx libre-webui --model llama3.2 --ollama-url http://localhost:11434
+  ollama launch libre-webui
   npx libre-webui recovery-check --json
   npx libre-webui backup --help
   npx libre-webui migrate-postgres --help
@@ -149,10 +157,13 @@ const main = () => {
     return;
   }
 
-  const portArgIndex = args.findIndex(arg => arg === '-p' || arg === '--port');
-  if (portArgIndex !== -1 && args[portArgIndex + 1]) {
-    process.env.PORT = args[portArgIndex + 1];
+  const launchArgs = parseLaunchArgs(args);
+  if (launchArgs.errors.length > 0) {
+    for (const error of launchArgs.errors) console.error(`Error: ${error}`);
+    console.error('Run `npx libre-webui --help` for usage.');
+    process.exit(1);
   }
+  Object.assign(process.env, launchArgs.env);
 
   const backendPath = requireArtifact('main.js');
   const frontendPaths = [

@@ -42,6 +42,12 @@ The packaged launcher keeps persistent state in `~/.libre-webui`. Set an
 absolute `DATA_DIR` to choose another location; relative values are resolved
 from the directory where you run `npx`.
 
+If you already run Ollama, `ollama launch libre-webui` installs the package,
+lets you pick a model, and starts Libre WebUI pointed at it. The same knobs
+are plain flags: `--model llama3.2` chooses the model new accounts start on,
+`--ollama-url http://host:11434` points at another Ollama, and `--no-open`
+skips opening the browser.
+
 ## Install Ollama
 
 Install [Ollama](https://ollama.com), then pull a small general model:
