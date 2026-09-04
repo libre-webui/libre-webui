@@ -733,6 +733,22 @@ html.celestial [data-app-sidebar],
 html.celestial [data-app-tabbar] {
   transition: opacity 900ms ease;
 }
+/* Text over the sky needs a backing: the tab strip becomes a glass band and
+   its inactive labels use the full ink colour at reduced opacity instead of
+   a mid grey. */
+html.celestial [data-app-tabbar] {
+  background-color: rgb(var(--color-sidebar) / 0.42);
+  backdrop-filter: blur(14px) saturate(1.1);
+  border-radius: 0.9rem;
+  margin-top: 0.25rem;
+  padding-inline: 0.25rem;
+}
+html.celestial [data-app-tabbar] [role='tab'][aria-selected='false'] {
+  color: rgb(var(--color-ink) / 0.74);
+}
+html.celestial [data-app-tabbar] [role='tab'][aria-selected='false']:hover {
+  color: rgb(var(--color-ink));
+}
 html.celestial[data-composing='true'] [data-app-sidebar]:not(:hover),
 html.celestial[data-composing='true'] [data-app-tabbar]:not(:hover) {
   opacity: 0.45;
