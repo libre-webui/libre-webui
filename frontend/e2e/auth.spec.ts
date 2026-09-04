@@ -238,6 +238,14 @@ test('login page follows the administrator default theme until the visitor picks
   await expect(page.getByTestId('celestial-sky')).toBeVisible();
 });
 
+test('demo mode lands in the celestial theme', async ({ page }, testInfo) => {
+  const port = new URL(testInfo.project.use.baseURL ?? 'http://127.0.0.1:4173')
+    .port;
+  await page.goto(`http://demo.localhost:${port}/login`);
+  await expect(page.locator('html')).toHaveClass(/\bcelestial\b/);
+  await expect(page.getByTestId('celestial-sky')).toBeVisible();
+});
+
 test('demo mode login is click-only with disabled demo credentials', async ({
   page,
 }) => {

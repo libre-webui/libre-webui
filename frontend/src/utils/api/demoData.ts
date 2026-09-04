@@ -78,8 +78,9 @@ export const getDemoSessions = (): ChatSession[] => {
 export const DEMO_SESSIONS: ChatSession[] = getDemoSessions();
 
 export const DEFAULT_DEMO_PREFERENCES: UserPreferences = {
+  // The demo shows the sky: celestial is the theme visitors land in.
   theme: {
-    mode: 'dark',
+    mode: 'celestial',
     adaptToAccent: false,
     accent: 'blue',
     customAccent: '#2563eb',

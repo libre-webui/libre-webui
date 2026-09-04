@@ -19,11 +19,15 @@
           );
           const savedMode = savedState?.state?.theme?.mode;
           const savedByUser = savedState?.state?.themeSource === 'user';
+          // The public demo lands in the celestial sky.
+          const demoHost = /^(demo|preview)\./.test(location.hostname);
 
           if (savedByUser && known.includes(savedMode)) {
             mode = savedMode;
           } else if (known.includes(instanceTheme?.mode)) {
             mode = instanceTheme.mode;
+          } else if (demoHost) {
+            mode = 'celestial';
           } else if (known.includes(savedMode)) {
             mode = savedMode;
           }
