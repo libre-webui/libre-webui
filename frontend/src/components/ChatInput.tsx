@@ -827,6 +827,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
           <form onSubmit={handleSubmit}>
             {/* Unified Input Container: text row above, controls row below. */}
             <div
+              data-composer-box=''
               className={cn(
                 'relative rounded-[24px] border p-2.5 transition-[border-color,box-shadow,background-color] duration-200',
                 'bg-surface dark:bg-surface-subtle',

@@ -644,8 +644,10 @@ select,
 
 /* ---------------------------------------------------------------------------
    Celestial theme: the palette follows the sun; these rules make it glide.
-   The sky colours are registered custom properties so they can transition,
-   and the large surfaces ease their background when the palette ticks.
+   The sky colours are registered custom properties so they can transition;
+   sun and moon ease over one whole tick so their motion is continuous, and
+   a preview or the arrival sweep shortens everything so scrubbing feels
+   immediate. Large surfaces ease their background when the palette ticks.
    --------------------------------------------------------------------------- */
 @property --celestial-sky-top {
   syntax: '<color>';
@@ -673,39 +675,78 @@ html.celestial {
   --lamp-x: 50%;
   --lamp-y: 50%;
   --lamp-pulse: 0;
+  --celestial-ease: 8000ms;
+  --celestial-move: 15000ms;
   transition:
-    --celestial-sky-top 1400ms linear,
-    --celestial-sky-mid 1400ms linear,
-    --celestial-sky-horizon 1400ms linear,
-    --celestial-glow 1400ms linear;
+    --celestial-sky-top var(--celestial-ease) linear,
+    --celestial-sky-mid var(--celestial-ease) linear,
+    --celestial-sky-horizon var(--celestial-ease) linear,
+    --celestial-glow var(--celestial-ease) linear;
+}
+html.celestial:has(.celestial-sky[data-preview='true']) {
+  --celestial-ease: 520ms;
+  --celestial-move: 520ms;
+}
+html.celestial[data-sweep='true'] {
+  --celestial-ease: 90ms;
+  --celestial-move: 90ms;
 }
 html.celestial :where(body, main, aside, header, footer, nav, section) {
   transition:
-    background-color 1400ms linear,
-    border-color 1400ms linear,
-    color 1400ms linear;
+    background-color var(--celestial-ease) linear,
+    border-color var(--celestial-ease) linear,
+    color var(--celestial-ease) linear;
 }
 html.celestial [data-celestial-canvas] {
   background-color: rgb(var(--color-canvas) / 0.55);
-}
-/* The app frame lets the sky through: a faint wash on the outer shell and a
-   translucent, blurred chat pane instead of the opaque canvas. */
-html.celestial [data-app-shell] {
-  background-color: rgb(var(--color-sidebar) / 0.22);
-}
-html.celestial [data-app-main] {
-  background-color: rgb(var(--color-canvas) / 0.5);
-  backdrop-filter: blur(10px);
 }
 html.celestial [data-celestial-surface] {
   background-color: rgb(var(--color-surface) / 0.55);
   backdrop-filter: blur(10px);
 }
+/* The app frame lets the sky through: a faint wash on the outer shell, a
+   translucent chat pane, glass for the composer and the user's bubbles. */
+html.celestial [data-app-shell] {
+  background-color: rgb(var(--color-sidebar) / 0.22);
+}
+html.celestial [data-app-main] {
+  background-color: rgb(var(--color-canvas) / 0.42);
+  backdrop-filter: blur(12px) saturate(1.15);
+  border-color: rgb(255 255 255 / 0.12);
+  box-shadow: none;
+}
+html.celestial [data-composer-box] {
+  background-color: rgb(var(--color-surface) / 0.62);
+  backdrop-filter: blur(16px) saturate(1.2);
+  border-color: rgb(255 255 255 / 0.16);
+}
+html.celestial.dark [data-composer-box] {
+  border-color: rgb(255 255 255 / 0.1);
+}
+html.celestial [data-user-bubble] {
+  background-color: rgb(var(--color-surface-inverse) / 0.78);
+  backdrop-filter: blur(10px);
+}
+/* While the user is typing, the chrome steps back so the words sit in the
+   landscape; hovering or leaving the composer brings it back. */
+html.celestial [data-app-sidebar],
+html.celestial [data-app-tabbar] {
+  transition: opacity 900ms ease;
+}
+html.celestial[data-composing='true'] [data-app-sidebar]:not(:hover),
+html.celestial[data-composing='true'] [data-app-tabbar]:not(:hover) {
+  opacity: 0.45;
+}
 
 .celestial-sky {
   --sky-px: 0;
   --sky-py: 0;
+  --sky-scroll: 0;
   background: var(--celestial-sky-mid);
+  contain: strict;
+}
+.celestial-sky__layers > * {
+  will-change: transform, opacity;
 }
 .celestial-sky__gradient {
   position: absolute;
@@ -718,22 +759,28 @@ html.celestial [data-celestial-surface] {
   );
   transform: translate3d(
     calc(var(--sky-px) * -6px),
-    calc(var(--sky-py) * -4px),
+    calc(var(--sky-py) * -4px + var(--sky-scroll) * 10px),
     0
   );
-  transition: transform 600ms ease-out;
+  transition: transform 700ms ease-out;
 }
 .celestial-sky__stars {
   position: absolute;
-  inset: -4%;
+  inset: -12%;
   transform: translate3d(
     calc(var(--sky-px) * -10px),
-    calc(var(--sky-py) * -7px),
+    calc(var(--sky-py) * -7px + var(--sky-scroll) * 18px),
     0
   );
   transition:
-    opacity 1400ms linear,
-    transform 800ms ease-out;
+    opacity var(--celestial-ease) linear,
+    transform 900ms ease-out;
+}
+.celestial-sky__stars::before {
+  /* The slow turn of the night sky. */
+  content: '';
+  position: absolute;
+  inset: 0;
 }
 .celestial-sky__star {
   position: absolute;
@@ -743,6 +790,14 @@ html.celestial [data-celestial-surface] {
     0 0 6px 1px rgba(255, 255, 255, 0.9),
     0 0 14px 2px rgba(200, 215, 255, 0.35);
   animation: celestial-twinkle 4s ease-in-out infinite;
+}
+.celestial-sky__star--bright {
+  box-shadow:
+    0 0 8px 2px rgba(255, 255, 255, 1),
+    0 0 22px 4px rgba(210, 225, 255, 0.5);
+}
+.celestial-sky[data-generating='true'] .celestial-sky__star {
+  animation-duration: 1.6s;
 }
 @keyframes celestial-twinkle {
   0%,
@@ -755,6 +810,67 @@ html.celestial [data-celestial-surface] {
     transform: scale(1.15);
   }
 }
+.celestial-sky__meteor {
+  position: absolute;
+  height: 2px;
+  border-radius: 9999px;
+  transform-origin: left center;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.95) 70%,
+    #fff 100%
+  );
+  filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.8));
+  animation: celestial-meteor 1.5s ease-out forwards;
+}
+@keyframes celestial-meteor {
+  0% {
+    opacity: 0;
+    translate: 0 0;
+  }
+  12% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    translate: 26vw 16vh;
+  }
+}
+/* Aurora: a slow ribbon that only shows at night while a reply streams. */
+.celestial-sky__aurora {
+  position: absolute;
+  inset: -20% -30% auto;
+  height: 70%;
+  opacity: 0;
+  background:
+    radial-gradient(
+      50% 40% at 30% 40%,
+      color-mix(in srgb, #5ef3c8 55%, transparent) 0%,
+      transparent 70%
+    ),
+    radial-gradient(
+      45% 35% at 70% 55%,
+      color-mix(in srgb, #8a7dff 50%, transparent) 0%,
+      transparent 70%
+    );
+  filter: blur(40px);
+  mix-blend-mode: screen;
+  transition: opacity 2400ms ease;
+  animation: celestial-aurora 14s ease-in-out infinite alternate;
+}
+.celestial-sky[data-night='true'][data-generating='true']
+  .celestial-sky__aurora {
+  opacity: 0.55;
+}
+@keyframes celestial-aurora {
+  from {
+    transform: translate3d(-4%, 0, 0) skewX(-6deg);
+  }
+  to {
+    transform: translate3d(6%, 2%, 0) skewX(6deg);
+  }
+}
 .celestial-sky__sun,
 .celestial-sky__moon {
   position: absolute;
@@ -764,9 +880,9 @@ html.celestial [data-celestial-surface] {
     calc(clamp(72px, 9vw, 128px) / -2);
   border-radius: 9999px;
   transition:
-    left 1400ms linear,
-    top 1400ms linear,
-    opacity 1400ms linear,
+    left var(--celestial-move) linear,
+    top var(--celestial-move) linear,
+    opacity var(--celestial-ease) linear,
     transform 800ms ease-out;
 }
 .celestial-sky__sun {
@@ -784,9 +900,19 @@ html.celestial [data-celestial-surface] {
     0 0 180px 90px rgba(255, 200, 140, calc(0.12 + var(--sun-warmth) * 0.3));
   transform: translate3d(
     calc(var(--sky-px) * 14px),
-    calc(var(--sky-py) * 10px),
+    calc(var(--sky-py) * 10px + var(--sky-scroll) * 14px),
     0
   );
+  animation: celestial-breathe 9s ease-in-out infinite;
+}
+@keyframes celestial-breathe {
+  0%,
+  100% {
+    filter: brightness(1);
+  }
+  50% {
+    filter: brightness(1.08);
+  }
 }
 .celestial-sky__moon {
   overflow: hidden;
@@ -798,11 +924,11 @@ html.celestial [data-celestial-surface] {
   );
   box-shadow:
     inset -6px -8px 18px rgba(0, 0, 0, 0.18),
-    0 0 42px 14px rgba(214, 224, 255, 0.28),
-    0 0 120px 60px rgba(180, 200, 255, 0.12);
+    0 0 42px 14px rgba(214, 224, 255, 0.34),
+    0 0 140px 70px rgba(180, 200, 255, 0.16);
   transform: translate3d(
     calc(var(--sky-px) * 12px),
-    calc(var(--sky-py) * 9px),
+    calc(var(--sky-py) * 9px + var(--sky-scroll) * 12px),
     0
   );
 }
@@ -811,51 +937,46 @@ html.celestial [data-celestial-surface] {
   inset: -6%;
   border-radius: 9999px;
   background: rgb(14 18 38 / 0.9);
-  transition: transform 1400ms linear;
+  transition: transform var(--celestial-move) linear;
 }
 .celestial-sky__cloud {
+  --cloud-depth: 20px;
   position: absolute;
-  height: 20vh;
-  width: 46vw;
   border-radius: 9999px;
   filter: blur(34px);
   transform: translate3d(
-    calc(var(--sky-px) * 22px),
-    calc(var(--sky-py) * 12px),
+    calc(var(--sky-px) * var(--cloud-depth)),
+    calc(var(--sky-py) * 12px + var(--sky-scroll) * 22px),
     0
   );
   transition:
-    background 1400ms linear,
-    opacity 1400ms linear,
+    background var(--celestial-ease) linear,
+    opacity var(--celestial-ease) linear,
     transform 900ms ease-out;
-  animation: celestial-drift 110s ease-in-out infinite alternate;
+  animation: celestial-drift 120s ease-in-out infinite alternate;
 }
-.celestial-sky__cloud--a {
-  top: 18%;
-  left: -12%;
-}
-.celestial-sky__cloud--b {
-  top: 34%;
-  left: 42%;
-  width: 38vw;
-  animation-duration: 140s;
-  animation-delay: -40s;
-}
-.celestial-sky__cloud--c {
-  top: 8%;
-  left: 68%;
-  width: 30vw;
-  height: 14vh;
-  animation-duration: 95s;
-  animation-delay: -70s;
+.celestial-sky[data-generating='true'] .celestial-sky__cloud {
+  animation-duration: 40s;
 }
 @keyframes celestial-drift {
   from {
     margin-left: 0;
+    margin-top: 0;
   }
   to {
     margin-left: 12vw;
+    margin-top: 2vh;
   }
+}
+.celestial-sky__horizon-glow {
+  position: absolute;
+  bottom: 0;
+  width: 80vw;
+  height: 40vh;
+  margin-left: -40vw;
+  transition:
+    left var(--celestial-move) linear,
+    opacity var(--celestial-ease) linear;
 }
 .celestial-sky__haze {
   position: absolute;
@@ -866,7 +987,17 @@ html.celestial [data-celestial-surface] {
     transparent 0%,
     var(--celestial-sky-horizon) 100%
   );
-  transition: opacity 1400ms linear;
+  transition: opacity var(--celestial-ease) linear;
+}
+/* Fine grain keeps the gradients from banding and gives the sky a
+   painted, paper-like touch. */
+.celestial-sky__grain {
+  position: absolute;
+  inset: 0;
+  opacity: 0.07;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.6 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  background-size: 160px 160px;
 }
 .celestial-sky__lamp {
   position: fixed;
@@ -875,21 +1006,12 @@ html.celestial [data-celestial-surface] {
   pointer-events: none;
   mix-blend-mode: screen;
   background: radial-gradient(
-    420px circle at var(--lamp-x) var(--lamp-y),
-    color-mix(in srgb, var(--celestial-glow) 34%, transparent),
+    440px circle at var(--lamp-x) var(--lamp-y),
+    color-mix(in srgb, var(--celestial-glow) 38%, transparent),
     transparent 70%
   );
-  opacity: calc(var(--celestial-night) * (0.45 + 0.55 * var(--lamp-pulse)));
+  opacity: calc(var(--celestial-night) * (0.5 + 0.6 * var(--lamp-pulse)));
   transition: opacity 320ms ease-out;
-}
-.celestial-sky__gradient,
-.celestial-sky__stars,
-.celestial-sky__sun,
-.celestial-sky__moon,
-.celestial-sky__cloud,
-.celestial-sky__haze,
-.celestial-sky__clock {
-  pointer-events: none;
 }
 .celestial-sky__clock {
   position: absolute;
@@ -901,11 +1023,18 @@ html.celestial [data-celestial-surface] {
   letter-spacing: 0.02em;
   color: rgb(var(--color-ink));
   opacity: 0.32;
-  transition: color 1400ms linear;
+  transition: color var(--celestial-ease) linear;
 }
 @media (prefers-reduced-motion: reduce) {
   .celestial-sky__star,
-  .celestial-sky__cloud {
+  .celestial-sky__cloud,
+  .celestial-sky__sun,
+  .celestial-sky__aurora,
+  .celestial-sky__meteor {
     animation: none;
+  }
+  html.celestial[data-composing='true'] [data-app-sidebar],
+  html.celestial[data-composing='true'] [data-app-tabbar] {
+    opacity: 1;
   }
 }

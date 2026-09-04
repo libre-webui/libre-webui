@@ -752,7 +752,10 @@ const ChatMessageBase: React.FC<ChatMessageProps> = ({
                   </div>
                 </div>
               ) : (
-                <div className='rounded-2xl rounded-ee-md border border-black/[0.06] bg-gray-900 px-3.5 py-2 text-white shadow-sm dark:border-white/[0.07] dark:bg-dark-300'>
+                <div
+                  data-user-bubble=''
+                  className='rounded-2xl rounded-ee-md border border-black/[0.06] bg-gray-900 px-3.5 py-2 text-white shadow-sm dark:border-white/[0.07] dark:bg-dark-300'
+                >
                   <p
                     dir='auto'
                     className='whitespace-pre-wrap text-[0.9375rem] leading-relaxed'

@@ -424,6 +424,7 @@ export const AppTabBar: React.FC = () => {
   return (
     <div
       data-testid='app-tab-bar'
+      data-app-tabbar=''
       className='relative z-20 flex h-9 flex-none items-center gap-1 px-1 pb-1 lg:px-0'
     >
       <div

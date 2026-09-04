@@ -723,6 +723,44 @@ const applyAdaptiveInterfaceVariables = (root: HTMLElement, theme: Theme) => {
 };
 
 let celestialTimer: ReturnType<typeof setInterval> | null = null;
+let lastAppliedMode: Theme['mode'] | null = null;
+let sweepFrame: number | null = null;
+
+/**
+ * Choosing Celestial plays the last six hours into the present in a few
+ * seconds, so the sky arrives with a sense of where the day has been.
+ */
+const sweepCelestialIntoNow = () => {
+  if (typeof window === 'undefined') return;
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const root = document.documentElement;
+  const now = new Date();
+  const target = now.getHours() * 60 + now.getMinutes() + now.getSeconds() / 60;
+  const span = 6 * 60;
+  const duration = 3200;
+  const started = performance.now();
+  if (sweepFrame) cancelAnimationFrame(sweepFrame);
+  root.setAttribute('data-sweep', 'true');
+  const step = (time: number) => {
+    const t = Math.min(1, (time - started) / duration);
+    const eased = 1 - Math.pow(1 - t, 3);
+    useCelestialStore
+      .getState()
+      .setPreviewMinutes(
+        (((target - span * (1 - eased)) % 1440) + 1440) % 1440
+      );
+    paintCelestial();
+    if (t < 1) {
+      sweepFrame = requestAnimationFrame(step);
+    } else {
+      sweepFrame = null;
+      useCelestialStore.getState().setPreviewMinutes(null);
+      paintCelestial();
+      root.removeAttribute('data-sweep');
+    }
+  };
+  sweepFrame = requestAnimationFrame(step);
+};
 
 const stopCelestialClock = () => {
   if (celestialTimer) {
@@ -778,6 +816,12 @@ const startCelestialClock = () => {
 
 /** Preview a minute of the day (null = follow the clock again). */
 export const previewCelestialMinutes = (minutes: number | null) => {
+  // A hand on the scrubber outranks the arrival sweep.
+  if (sweepFrame && typeof document !== 'undefined') {
+    cancelAnimationFrame(sweepFrame);
+    sweepFrame = null;
+    document.documentElement.removeAttribute('data-sweep');
+  }
   useCelestialStore.getState().setPreviewMinutes(minutes);
   if (celestialTimer) paintCelestial();
 };
@@ -816,10 +860,21 @@ export const applyThemeToDocument = (theme?: Partial<Theme> | null) => {
     root.style.setProperty(`--color-accent-${shade}`, rgb);
   }
 
+  const enteringCelestial =
+    normalizedTheme.mode === 'celestial' &&
+    lastAppliedMode !== null &&
+    lastAppliedMode !== 'celestial';
+  lastAppliedMode = normalizedTheme.mode;
   if (normalizedTheme.mode === 'celestial') {
     // The sky owns the neutrals; the accent still owns primary/accent.
     startCelestialClock();
+    if (enteringCelestial) sweepCelestialIntoNow();
     return;
+  }
+  if (sweepFrame) {
+    cancelAnimationFrame(sweepFrame);
+    sweepFrame = null;
+    root.removeAttribute('data-sweep');
   }
   stopCelestialClock();
   for (const name of [

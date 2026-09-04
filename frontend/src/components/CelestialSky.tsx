@@ -15,11 +15,13 @@
  * limitations under the License.
  */
 
-import React, { useEffect, useMemo, useRef } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useCelestialStore } from '@/store/celestialStore';
+import { useAppStore } from '@/store/appStore';
 import { formatClock } from '@/utils/celestial';
 
-const STAR_COUNT = 96;
+const STAR_COUNT = 110;
+const COMPOSING_IDLE_MS = 5_000;
 
 /** Deterministic star field so the sky is the same on every visit. */
 const seededStars = () => {
@@ -31,93 +33,232 @@ const seededStars = () => {
   return Array.from({ length: STAR_COUNT }, (_, index) => ({
     id: index,
     x: rand() * 100,
-    y: rand() * 72,
-    size: 1.4 + rand() * 2.1,
+    y: rand() * 78,
+    size: 1.2 + rand() * 2.2,
     delay: rand() * 7,
-    period: 2.5 + rand() * 4,
+    period: 2.5 + rand() * 4.5,
+    bright: rand() > 0.82,
   }));
+};
+
+const CLOUDS = [
+  {
+    id: 'a',
+    top: 16,
+    left: -14,
+    width: 46,
+    height: 20,
+    depth: 22,
+    drift: 120,
+    delay: 0,
+  },
+  {
+    id: 'b',
+    top: 30,
+    left: 38,
+    width: 40,
+    height: 16,
+    depth: 16,
+    drift: 150,
+    delay: -50,
+  },
+  {
+    id: 'c',
+    top: 9,
+    left: 66,
+    width: 32,
+    height: 14,
+    depth: 28,
+    drift: 95,
+    delay: -70,
+  },
+  {
+    id: 'd',
+    top: 46,
+    left: 8,
+    width: 30,
+    height: 12,
+    depth: 12,
+    drift: 170,
+    delay: -20,
+  },
+  {
+    id: 'e',
+    top: 22,
+    left: 84,
+    width: 26,
+    height: 12,
+    depth: 34,
+    drift: 80,
+    delay: -110,
+  },
+] as const;
+
+type Meteor = {
+  id: number;
+  x: number;
+  y: number;
+  angle: number;
+  length: number;
 };
 
 /**
  * The celestial backdrop: a sky gradient, a sun or moon on its arc, drifting
- * clouds, stars after dusk, and a lamp that follows the pointer at night and
- * brightens with each keystroke. Pure CSS and a few custom properties: the
- * scene re-renders only when the palette ticks, pointer motion is throttled
- * to one frame, and reduced-motion users get a still sky.
+ * clouds, stars after dusk (with the odd meteor), an aurora while a reply is
+ * streaming at night, and a lamp that follows the pointer at night and
+ * brightens with each keystroke. The whole scene parallaxes with the pointer
+ * and with chat scrolling, and while the user is typing the surrounding
+ * chrome fades so the words sit in the landscape. Pure CSS plus a handful of
+ * custom properties; pointer work is throttled to one frame, and users who
+ * prefer reduced motion get a still sky.
  */
 export const CelestialSky: React.FC = () => {
   const palette = useCelestialStore(state => state.palette);
   const scene = useCelestialStore(state => state.scene);
   const previewMinutes = useCelestialStore(state => state.previewMinutes);
+  const isGenerating = useAppStore(state => state.isGenerating);
   const skyRef = useRef<HTMLDivElement>(null);
   const stars = useMemo(() => seededStars(), []);
+  const [meteors, setMeteors] = useState<Meteor[]>([]);
   const active = palette !== null && scene !== null;
+  const night = palette?.night ?? 0;
 
-  // Attach the pointer and keyboard listeners once the sky exists (the
-  // component renders nothing until the celestial palette is live).
+  // Pointer parallax, lamp, chat-scroll parallax, and the composing state.
   useEffect(() => {
-    if (!active) return;
+    if (!active || typeof window === 'undefined') return;
     const sky = skyRef.current;
-    if (!sky || typeof window === 'undefined') return;
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    if (!sky) return;
+    const root = document.documentElement;
+    const reduceMotion = window.matchMedia(
+      '(prefers-reduced-motion: reduce)'
+    ).matches;
 
     let frame = 0;
     let px = 0;
     let py = 0;
+    let scrollShift = 0;
     let lampX = 50;
     let lampY = 50;
     let pulseTimer: ReturnType<typeof setTimeout> | undefined;
+    let composingTimer: ReturnType<typeof setTimeout> | undefined;
 
-    const root = document.documentElement;
     const paint = () => {
       frame = 0;
       sky.style.setProperty('--sky-px', px.toFixed(3));
       sky.style.setProperty('--sky-py', py.toFixed(3));
+      sky.style.setProperty('--sky-scroll', scrollShift.toFixed(2));
       root.style.setProperty('--lamp-x', `${lampX.toFixed(2)}%`);
       root.style.setProperty('--lamp-y', `${lampY.toFixed(2)}%`);
     };
-    const onPointerMove = (event: PointerEvent) => {
-      const { innerWidth, innerHeight } = window;
-      px = (event.clientX / innerWidth - 0.5) * 2;
-      py = (event.clientY / innerHeight - 0.5) * 2;
-      lampX = (event.clientX / innerWidth) * 100;
-      lampY = (event.clientY / innerHeight) * 100;
+    const schedule = () => {
       if (!frame) frame = window.requestAnimationFrame(paint);
     };
-    const onKeyDown = () => {
+    const onPointerMove = (event: PointerEvent) => {
+      const { innerWidth, innerHeight } = window;
+      if (!reduceMotion) {
+        px = (event.clientX / innerWidth - 0.5) * 2;
+        py = (event.clientY / innerHeight - 0.5) * 2;
+      }
+      lampX = (event.clientX / innerWidth) * 100;
+      lampY = (event.clientY / innerHeight) * 100;
+      schedule();
+    };
+    // Scrolling the conversation tilts the sky a little, as if looking up.
+    const onScroll = (event: Event) => {
+      if (reduceMotion) return;
+      const target = event.target as HTMLElement | null;
+      if (!target || typeof target.scrollTop !== 'number') return;
+      scrollShift = Math.max(-1, Math.min(1, (target.scrollTop % 2400) / 2400));
+      schedule();
+    };
+    const stopComposing = () => {
+      root.removeAttribute('data-composing');
+    };
+    const onKeyDown = (event: KeyboardEvent) => {
       root.style.setProperty('--lamp-pulse', '1');
       if (pulseTimer) clearTimeout(pulseTimer);
       pulseTimer = setTimeout(
         () => root.style.setProperty('--lamp-pulse', '0'),
         320
       );
+      const target = event.target as HTMLElement | null;
+      if (target && target.tagName === 'TEXTAREA') {
+        root.setAttribute('data-composing', 'true');
+        if (composingTimer) clearTimeout(composingTimer);
+        composingTimer = setTimeout(stopComposing, COMPOSING_IDLE_MS);
+      }
     };
+    const onFocusOut = (event: FocusEvent) => {
+      const target = event.target as HTMLElement | null;
+      if (target && target.tagName === 'TEXTAREA') stopComposing();
+    };
+
     window.addEventListener('pointermove', onPointerMove, { passive: true });
     window.addEventListener('keydown', onKeyDown, { passive: true });
+    window.addEventListener('scroll', onScroll, {
+      passive: true,
+      capture: true,
+    });
+    document.addEventListener('focusout', onFocusOut);
     return () => {
       window.removeEventListener('pointermove', onPointerMove);
       window.removeEventListener('keydown', onKeyDown);
+      window.removeEventListener('scroll', onScroll, { capture: true });
+      document.removeEventListener('focusout', onFocusOut);
       if (frame) window.cancelAnimationFrame(frame);
       if (pulseTimer) clearTimeout(pulseTimer);
+      if (composingTimer) clearTimeout(composingTimer);
+      stopComposing();
       for (const name of ['--lamp-x', '--lamp-y', '--lamp-pulse']) {
         root.style.removeProperty(name);
       }
     };
   }, [active]);
 
+  // The odd meteor after dark: one every 20 to 50 seconds, more while a reply
+  // streams. Each one lives for a second and a half.
+  useEffect(() => {
+    if (!active || night < 0.4 || typeof window === 'undefined') return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    let counter = 0;
+    const spawn = () => {
+      const meteor: Meteor = {
+        id: (counter += 1),
+        x: 10 + Math.random() * 70,
+        y: 4 + Math.random() * 36,
+        angle: 20 + Math.random() * 30,
+        length: 120 + Math.random() * 140,
+      };
+      setMeteors(current => [...current.slice(-2), meteor]);
+      setTimeout(
+        () => setMeteors(current => current.filter(m => m.id !== meteor.id)),
+        1600
+      );
+      const base = isGenerating ? 6_000 : 20_000;
+      timer = setTimeout(spawn, base + Math.random() * 30_000);
+    };
+    timer = setTimeout(spawn, 4_000 + Math.random() * 8_000);
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
+  }, [active, night, isGenerating]);
+
   if (!palette || !scene) return null;
 
   // Moon phase as a shadow disc sliding across the moon.
   const phase = scene.moon.phase;
   const shadowOffset = (phase < 0.5 ? 1 - phase * 2 : -(phase * 2 - 1)) * 92;
+  const lowSun = scene.sun.visible ? scene.sun.warmth : 0;
 
   return (
     <>
       <div
         ref={skyRef}
         data-testid='celestial-sky'
-        data-night={palette.night > 0.5 ? 'true' : 'false'}
+        data-night={night > 0.5 ? 'true' : 'false'}
         data-preview={previewMinutes !== null ? 'true' : 'false'}
+        data-generating={isGenerating ? 'true' : 'false'}
         aria-hidden='true'
         className='celestial-sky pointer-events-none fixed inset-0 z-0'
       >
@@ -131,7 +272,11 @@ export const CelestialSky: React.FC = () => {
             {stars.map(star => (
               <span
                 key={star.id}
-                className='celestial-sky__star'
+                className={
+                  star.bright
+                    ? 'celestial-sky__star celestial-sky__star--bright'
+                    : 'celestial-sky__star'
+                }
                 style={{
                   left: `${star.x}%`,
                   top: `${star.y}%`,
@@ -143,6 +288,19 @@ export const CelestialSky: React.FC = () => {
               />
             ))}
           </div>
+          {meteors.map(meteor => (
+            <span
+              key={meteor.id}
+              className='celestial-sky__meteor'
+              style={{
+                left: `${meteor.x}%`,
+                top: `${meteor.y}%`,
+                width: meteor.length,
+                transform: `rotate(${meteor.angle}deg)`,
+              }}
+            />
+          ))}
+          <div className='celestial-sky__aurora' />
           <div
             className='celestial-sky__sun'
             data-testid='celestial-sun'
@@ -167,20 +325,36 @@ export const CelestialSky: React.FC = () => {
               style={{ transform: `translateX(${shadowOffset}%)` }}
             />
           </div>
-          {['a', 'b', 'c'].map(cloud => (
+          {CLOUDS.map(cloud => (
             <div
-              key={cloud}
-              className={`celestial-sky__cloud celestial-sky__cloud--${cloud}`}
+              key={cloud.id}
+              className='celestial-sky__cloud'
               style={{
+                top: `${cloud.top}%`,
+                left: `${cloud.left}%`,
+                width: `${cloud.width}vw`,
+                height: `${cloud.height}vh`,
                 background: scene.cloudTint,
                 opacity: scene.cloudOpacity,
+                animationDuration: `${cloud.drift}s`,
+                animationDelay: `${cloud.delay}s`,
+                ['--cloud-depth' as string]: `${cloud.depth}px`,
               }}
             />
           ))}
           <div
-            className='celestial-sky__haze'
-            style={{ opacity: 0.35 + scene.haze * 0.45 }}
+            className='celestial-sky__horizon-glow'
+            style={{
+              left: `${scene.sun.x}%`,
+              opacity: lowSun,
+              background: `radial-gradient(60vw 34vh at 50% 100%, ${palette.sky.horizon} 0%, transparent 70%)`,
+            }}
           />
+          <div
+            className='celestial-sky__haze'
+            style={{ opacity: 0.3 + scene.haze * 0.45 }}
+          />
+          <div className='celestial-sky__grain' />
           <div className='celestial-sky__clock' data-testid='celestial-clock'>
             {formatClock(palette.solar.minutes)}
           </div>

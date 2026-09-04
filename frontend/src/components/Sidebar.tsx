@@ -387,6 +387,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       <div
         ref={sidebarRef}
         data-testid='sidebar'
+        data-app-sidebar=''
         className={cn(
           // The end border only exists while the sidebar overlays content on
           // small screens; on desktop it shares one surface with the top bar.
