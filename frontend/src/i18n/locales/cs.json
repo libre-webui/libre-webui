@@ -652,7 +652,31 @@
         "description": "Nebeský motiv sleduje slunce tam, kde jste. Posunem si zobrazíte libovolnou minutu, nebo ho nechte sledovat hodiny.",
         "followClock": "Sledovat hodiny",
         "sunrise": "Východ slunce",
-        "sunset": "Západ slunce"
+        "sunset": "Západ slunce",
+        "location": "Poloha",
+        "locationHint": "Volitelné. Uchovává se jen v tomto prohlížeči a nikdy se neposílá na server; souřadnice se zaokrouhlují zhruba na kilometr.",
+        "useMyLocation": "Použít moji polohu",
+        "locationDenied": "Prohlížeč polohu nesdílel. Souřadnice můžete zadat ručně.",
+        "latitude": "Zeměpisná šířka",
+        "longitude": "Zeměpisná délka",
+        "apply": "Použít",
+        "clear": "Vymazat",
+        "approximateDay": "Přibližná délka dne",
+        "weather": "Podle počasí",
+        "weatherHint": "Načítá aktuální podmínky z Open-Meteo pro vaši polohu: mraky, déšť, sníh, mlha a vítr utvářejí oblohu. Vyžaduje polohu.",
+        "weatherLoading": "Načítání počasí…",
+        "weatherUnavailable": "Počasí teď není k dispozici.",
+        "wind": "vítr {{speed}} km/h",
+        "kinds": {
+          "clear": "Jasno",
+          "partly": "Polojasno",
+          "overcast": "Zataženo",
+          "fog": "Mlha",
+          "drizzle": "Mrholení",
+          "rain": "Déšť",
+          "snow": "Sníh",
+          "thunder": "Bouřka"
+        }
       }
     },
     "saveSettings": "Uložit nastavení",

@@ -22,6 +22,49 @@ import {
   type CelestialPalette,
   type CelestialScene,
 } from '@/utils/celestial';
+import {
+  fetchWeather,
+  isValidLocation,
+  roundCoordinate,
+  WEATHER_REFRESH_MS,
+  type CelestialLocation,
+  type CelestialWeather,
+} from '@/utils/celestialWeather';
+
+/**
+ * Location and the weather switch live only in this browser. They are never
+ * part of the synced theme preference, so the server never learns where a
+ * user is; the only network call is the opt-in weather fetch to Open-Meteo.
+ */
+const LOCAL_KEY = 'libre-webui-celestial';
+
+type Persisted = {
+  location?: CelestialLocation | null;
+  weatherEnabled?: boolean;
+};
+
+const readLocal = (): Persisted => {
+  if (typeof localStorage === 'undefined') return {};
+  try {
+    const raw = localStorage.getItem(LOCAL_KEY);
+    const parsed = raw ? (JSON.parse(raw) as Persisted) : {};
+    return {
+      location: isValidLocation(parsed.location) ? parsed.location : null,
+      weatherEnabled: parsed.weatherEnabled === true,
+    };
+  } catch {
+    return {};
+  }
+};
+
+const writeLocal = (value: Persisted) => {
+  if (typeof localStorage === 'undefined') return;
+  try {
+    localStorage.setItem(LOCAL_KEY, JSON.stringify(value));
+  } catch {
+    // Storage full or blocked: the setting simply does not survive a reload.
+  }
+};
 
 interface CelestialState {
   /** Latest palette while the celestial theme is active, else null. */
@@ -29,25 +72,109 @@ interface CelestialState {
   scene: CelestialScene | null;
   /** A minute of the day being previewed from Settings, else null. */
   previewMinutes: number | null;
+  location: CelestialLocation | null;
+  weatherEnabled: boolean;
+  weather: CelestialWeather | null;
+  weatherStatus: 'idle' | 'loading' | 'ready' | 'error';
   refresh: () => void;
   setPreviewMinutes: (minutes: number | null) => void;
+  setLocation: (location: CelestialLocation | null) => void;
+  /** Ask the browser once; resolves false when denied or unavailable. */
+  requestBrowserLocation: () => Promise<boolean>;
+  setWeatherEnabled: (enabled: boolean) => void;
+  /** Fetch when enabled and the last reading is stale; safe to call often. */
+  maybeRefreshWeather: (force?: boolean) => Promise<void>;
   clear: () => void;
 }
 
-export const useCelestialStore = create<CelestialState>((set, get) => ({
-  palette: null,
-  scene: null,
-  previewMinutes: null,
-  refresh: () => {
-    const palette = getCelestialPalette(
-      new Date(),
-      get().previewMinutes ?? undefined
-    );
-    set({ palette, scene: getCelestialScene(palette) });
-  },
-  setPreviewMinutes: minutes => {
-    set({ previewMinutes: minutes });
-    get().refresh();
-  },
-  clear: () => set({ palette: null, scene: null, previewMinutes: null }),
-}));
+let weatherRequest: Promise<void> | null = null;
+
+export const useCelestialStore = create<CelestialState>((set, get) => {
+  const persisted = readLocal();
+  return {
+    palette: null,
+    scene: null,
+    previewMinutes: null,
+    location: persisted.location ?? null,
+    weatherEnabled: persisted.weatherEnabled ?? false,
+    weather: null,
+    weatherStatus: 'idle',
+    refresh: () => {
+      const { previewMinutes, location, weatherEnabled, weather } = get();
+      const palette = getCelestialPalette(
+        new Date(),
+        previewMinutes ?? undefined,
+        {
+          location,
+          weather: weatherEnabled && location ? weather : null,
+        }
+      );
+      set({ palette, scene: getCelestialScene(palette) });
+    },
+    setPreviewMinutes: minutes => {
+      set({ previewMinutes: minutes });
+      get().refresh();
+    },
+    setLocation: location => {
+      const next = isValidLocation(location)
+        ? {
+            latitude: roundCoordinate(location.latitude),
+            longitude: roundCoordinate(location.longitude),
+          }
+        : null;
+      set({ location: next, weather: null, weatherStatus: 'idle' });
+      writeLocal({ location: next, weatherEnabled: get().weatherEnabled });
+      get().refresh();
+      if (next && get().weatherEnabled) void get().maybeRefreshWeather(true);
+    },
+    requestBrowserLocation: () =>
+      new Promise<boolean>(resolve => {
+        if (typeof navigator === 'undefined' || !navigator.geolocation) {
+          resolve(false);
+          return;
+        }
+        navigator.geolocation.getCurrentPosition(
+          position => {
+            get().setLocation({
+              latitude: position.coords.latitude,
+              longitude: position.coords.longitude,
+            });
+            resolve(true);
+          },
+          () => resolve(false),
+          { enableHighAccuracy: false, maximumAge: 3_600_000, timeout: 12_000 }
+        );
+      }),
+    setWeatherEnabled: enabled => {
+      set({
+        weatherEnabled: enabled,
+        weatherStatus: enabled ? get().weatherStatus : 'idle',
+      });
+      writeLocal({ location: get().location, weatherEnabled: enabled });
+      get().refresh();
+      if (enabled) void get().maybeRefreshWeather(true);
+    },
+    maybeRefreshWeather: async (force = false) => {
+      const { weatherEnabled, location, weather } = get();
+      if (!weatherEnabled || !location) return;
+      const fresh =
+        weather && Date.now() - weather.fetchedAt < WEATHER_REFRESH_MS;
+      if (fresh && !force) return;
+      if (weatherRequest) return weatherRequest;
+      set({ weatherStatus: 'loading' });
+      weatherRequest = fetchWeather(location)
+        .then(next => {
+          set({ weather: next, weatherStatus: 'ready' });
+          get().refresh();
+        })
+        .catch(() => {
+          set({ weatherStatus: 'error' });
+        })
+        .finally(() => {
+          weatherRequest = null;
+        });
+      return weatherRequest;
+    },
+    clear: () => set({ palette: null, scene: null, previewMinutes: null }),
+  };
+});

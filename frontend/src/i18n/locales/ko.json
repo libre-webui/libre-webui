@@ -652,7 +652,31 @@
         "description": "천체 테마는 현재 위치의 태양을 따라갑니다. 드래그해서 원하는 시각을 미리 보거나, 시계를 따라가게 두세요.",
         "followClock": "시계 따라가기",
         "sunrise": "일출",
-        "sunset": "일몰"
+        "sunset": "일몰",
+        "location": "위치",
+        "locationHint": "선택 사항. 이 브라우저에만 저장되며 서버로 전송되지 않습니다. 좌표는 약 1km 단위로 반올림됩니다.",
+        "useMyLocation": "내 위치 사용",
+        "locationDenied": "브라우저가 위치를 공유하지 않았습니다. 좌표를 직접 입력할 수 있습니다.",
+        "latitude": "위도",
+        "longitude": "경도",
+        "apply": "적용",
+        "clear": "지우기",
+        "approximateDay": "대략적인 낮 길이",
+        "weather": "날씨 반영",
+        "weatherHint": "내 위치의 현재 날씨를 Open-Meteo에서 가져옵니다. 구름, 비, 눈, 안개, 바람이 하늘을 만듭니다. 위치가 필요합니다.",
+        "weatherLoading": "날씨 가져오는 중…",
+        "weatherUnavailable": "지금은 날씨를 가져올 수 없습니다.",
+        "wind": "풍속 {{speed}} km/h",
+        "kinds": {
+          "clear": "맑음",
+          "partly": "구름 조금",
+          "overcast": "흐림",
+          "fog": "안개",
+          "drizzle": "이슬비",
+          "rain": "비",
+          "snow": "눈",
+          "thunder": "뇌우"
+        }
       }
     },
     "saveSettings": "설정 저장",

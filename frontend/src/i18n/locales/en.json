@@ -652,7 +652,31 @@
         "description": "Celestial follows the sun where you are. Scrub to preview any minute, or let it follow the clock.",
         "followClock": "Follow the clock",
         "sunrise": "Sunrise",
-        "sunset": "Sunset"
+        "sunset": "Sunset",
+        "location": "Location",
+        "locationHint": "Optional. Kept only in this browser and never sent to the server; coordinates are rounded to about a kilometre.",
+        "useMyLocation": "Use my location",
+        "locationDenied": "The browser did not share a location. You can type coordinates instead.",
+        "latitude": "Latitude",
+        "longitude": "Longitude",
+        "apply": "Apply",
+        "clear": "Clear",
+        "approximateDay": "Approximate day length",
+        "weather": "Match the weather",
+        "weatherHint": "Fetches current conditions from Open-Meteo for your location: clouds, rain, snow, fog, and wind shape the sky. Needs a location.",
+        "weatherLoading": "Fetching the weather…",
+        "weatherUnavailable": "Weather is unavailable right now.",
+        "wind": "{{speed}} km/h wind",
+        "kinds": {
+          "clear": "Clear",
+          "partly": "Partly cloudy",
+          "overcast": "Overcast",
+          "fog": "Fog",
+          "drizzle": "Drizzle",
+          "rain": "Rain",
+          "snow": "Snow",
+          "thunder": "Thunderstorm"
+        }
       }
     },
     "saveSettings": "Save Settings",

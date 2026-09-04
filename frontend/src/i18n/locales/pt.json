@@ -652,7 +652,31 @@
         "description": "Celestial acompanha o sol onde você está. Arraste para pré-visualizar qualquer minuto ou deixe-o seguir o relógio.",
         "followClock": "Seguir o relógio",
         "sunrise": "Nascer do sol",
-        "sunset": "Pôr do sol"
+        "sunset": "Pôr do sol",
+        "location": "Localização",
+        "locationHint": "Opcional. Fica apenas neste navegador e nunca é enviada ao servidor; as coordenadas são arredondadas para cerca de um quilômetro.",
+        "useMyLocation": "Usar minha localização",
+        "locationDenied": "O navegador não compartilhou a localização. Você pode digitar as coordenadas.",
+        "latitude": "Latitude",
+        "longitude": "Longitude",
+        "apply": "Aplicar",
+        "clear": "Limpar",
+        "approximateDay": "Duração do dia aproximada",
+        "weather": "Acompanhar o clima",
+        "weatherHint": "Busca as condições atuais no Open-Meteo para a sua localização: nuvens, chuva, neve, neblina e vento moldam o céu. Requer uma localização.",
+        "weatherLoading": "Buscando o clima…",
+        "weatherUnavailable": "Clima indisponível no momento.",
+        "wind": "vento de {{speed}} km/h",
+        "kinds": {
+          "clear": "Limpo",
+          "partly": "Parcialmente nublado",
+          "overcast": "Encoberto",
+          "fog": "Neblina",
+          "drizzle": "Garoa",
+          "rain": "Chuva",
+          "snow": "Neve",
+          "thunder": "Tempestade"
+        }
       }
     },
     "saveSettings": "Salvar Configurações",

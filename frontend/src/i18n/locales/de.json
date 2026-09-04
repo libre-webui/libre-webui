@@ -652,7 +652,31 @@
         "description": "Himmlisch folgt der Sonne an deinem Ort. Ziehe, um eine beliebige Minute zu sehen, oder lass es der Uhr folgen.",
         "followClock": "Der Uhr folgen",
         "sunrise": "Sonnenaufgang",
-        "sunset": "Sonnenuntergang"
+        "sunset": "Sonnenuntergang",
+        "location": "Standort",
+        "locationHint": "Optional. Bleibt nur in diesem Browser und wird nie an den Server gesendet; Koordinaten werden auf etwa einen Kilometer gerundet.",
+        "useMyLocation": "Meinen Standort verwenden",
+        "locationDenied": "Der Browser hat keinen Standort geteilt. Du kannst Koordinaten eingeben.",
+        "latitude": "Breitengrad",
+        "longitude": "Längengrad",
+        "apply": "Übernehmen",
+        "clear": "Löschen",
+        "approximateDay": "Ungefähre Tageslänge",
+        "weather": "Wetter abbilden",
+        "weatherHint": "Holt aktuelle Bedingungen von Open-Meteo für deinen Standort: Wolken, Regen, Schnee, Nebel und Wind formen den Himmel. Benötigt einen Standort.",
+        "weatherLoading": "Wetter wird geladen…",
+        "weatherUnavailable": "Wetter ist derzeit nicht verfügbar.",
+        "wind": "{{speed}} km/h Wind",
+        "kinds": {
+          "clear": "Klar",
+          "partly": "Teilweise bewölkt",
+          "overcast": "Bedeckt",
+          "fog": "Nebel",
+          "drizzle": "Nieselregen",
+          "rain": "Regen",
+          "snow": "Schnee",
+          "thunder": "Gewitter"
+        }
       }
     },
     "saveSettings": "Einstellungen speichern",

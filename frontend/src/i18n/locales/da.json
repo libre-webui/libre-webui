@@ -652,7 +652,31 @@
         "description": "Himmelsk følger solen der, hvor du er. Træk for at forhåndsvise et vilkårligt minut, eller lad det følge uret.",
         "followClock": "Følg uret",
         "sunrise": "Solopgang",
-        "sunset": "Solnedgang"
+        "sunset": "Solnedgang",
+        "location": "Placering",
+        "locationHint": "Valgfrit. Gemmes kun i denne browser og sendes aldrig til serveren; koordinater afrundes til omkring en kilometer.",
+        "useMyLocation": "Brug min placering",
+        "locationDenied": "Browseren delte ikke en placering. Du kan indtaste koordinater.",
+        "latitude": "Breddegrad",
+        "longitude": "Længdegrad",
+        "apply": "Anvend",
+        "clear": "Ryd",
+        "approximateDay": "Omtrentlig daglængde",
+        "weather": "Følg vejret",
+        "weatherHint": "Henter aktuelle forhold fra Open-Meteo for din placering: skyer, regn, sne, tåge og vind former himlen. Kræver en placering.",
+        "weatherLoading": "Henter vejret…",
+        "weatherUnavailable": "Vejret er ikke tilgængeligt lige nu.",
+        "wind": "{{speed}} km/t vind",
+        "kinds": {
+          "clear": "Klart",
+          "partly": "Delvist skyet",
+          "overcast": "Overskyet",
+          "fog": "Tåge",
+          "drizzle": "Støvregn",
+          "rain": "Regn",
+          "snow": "Sne",
+          "thunder": "Tordenvejr"
+        }
       }
     },
     "saveSettings": "Gem indstillinger",

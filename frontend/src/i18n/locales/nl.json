@@ -652,7 +652,31 @@
         "description": "Hemels volgt de zon waar je bent. Sleep om elke minuut te bekijken, of laat het de klok volgen.",
         "followClock": "Klok volgen",
         "sunrise": "Zonsopgang",
-        "sunset": "Zonsondergang"
+        "sunset": "Zonsondergang",
+        "location": "Locatie",
+        "locationHint": "Optioneel. Alleen in deze browser bewaard en nooit naar de server gestuurd; coördinaten worden afgerond op ongeveer een kilometer.",
+        "useMyLocation": "Mijn locatie gebruiken",
+        "locationDenied": "De browser deelde geen locatie. Je kunt coördinaten invoeren.",
+        "latitude": "Breedtegraad",
+        "longitude": "Lengtegraad",
+        "apply": "Toepassen",
+        "clear": "Wissen",
+        "approximateDay": "Geschatte daglengte",
+        "weather": "Weer volgen",
+        "weatherHint": "Haalt de actuele omstandigheden op bij Open-Meteo voor je locatie: wolken, regen, sneeuw, mist en wind vormen de hemel. Vereist een locatie.",
+        "weatherLoading": "Weer ophalen…",
+        "weatherUnavailable": "Weer is nu niet beschikbaar.",
+        "wind": "{{speed}} km/u wind",
+        "kinds": {
+          "clear": "Helder",
+          "partly": "Half bewolkt",
+          "overcast": "Bewolkt",
+          "fog": "Mist",
+          "drizzle": "Motregen",
+          "rain": "Regen",
+          "snow": "Sneeuw",
+          "thunder": "Onweer"
+        }
       }
     },
     "saveSettings": "Instellingen opslaan",

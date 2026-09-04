@@ -652,7 +652,31 @@
         "description": "Niebiański podąża za słońcem tam, gdzie jesteś. Przesuń, aby podejrzeć dowolną minutę, albo pozwól mu podążać za zegarem.",
         "followClock": "Podążaj za zegarem",
         "sunrise": "Wschód słońca",
-        "sunset": "Zachód słońca"
+        "sunset": "Zachód słońca",
+        "location": "Lokalizacja",
+        "locationHint": "Opcjonalnie. Przechowywana tylko w tej przeglądarce i nigdy nie wysyłana na serwer; współrzędne są zaokrąglane do około kilometra.",
+        "useMyLocation": "Użyj mojej lokalizacji",
+        "locationDenied": "Przeglądarka nie udostępniła lokalizacji. Możesz wpisać współrzędne.",
+        "latitude": "Szerokość",
+        "longitude": "Długość",
+        "apply": "Zastosuj",
+        "clear": "Wyczyść",
+        "approximateDay": "Przybliżona długość dnia",
+        "weather": "Dopasuj do pogody",
+        "weatherHint": "Pobiera bieżące warunki z Open-Meteo dla Twojej lokalizacji: chmury, deszcz, śnieg, mgła i wiatr kształtują niebo. Wymaga lokalizacji.",
+        "weatherLoading": "Pobieranie pogody…",
+        "weatherUnavailable": "Pogoda jest teraz niedostępna.",
+        "wind": "wiatr {{speed}} km/h",
+        "kinds": {
+          "clear": "Bezchmurnie",
+          "partly": "Częściowe zachmurzenie",
+          "overcast": "Pochmurno",
+          "fog": "Mgła",
+          "drizzle": "Mżawka",
+          "rain": "Deszcz",
+          "snow": "Śnieg",
+          "thunder": "Burza"
+        }
       }
     },
     "saveSettings": "Zapisz ustawienia",

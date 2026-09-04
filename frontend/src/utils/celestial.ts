@@ -27,6 +27,11 @@
  * theme swap on the hour.
  */
 
+import type {
+  CelestialLocation,
+  CelestialWeather,
+} from '@/utils/celestialWeather';
+
 export const CELESTIAL_LATITUDE = 45;
 export const CELESTIAL_TICK_MS = 15_000;
 export const MINUTES_PER_DAY = 1440;
@@ -126,21 +131,48 @@ const isDaylightSaving = (date: Date): boolean => {
   return date.getTimezoneOffset() < Math.max(jan, jul);
 };
 
+/**
+ * Sunrise, sunset, and where the sun is now. Without a location this uses
+ * a mid-latitude day length and a DST-aware solar noon, which is close
+ * enough to feel right anywhere temperate. With a location (opt-in, kept in
+ * the browser) it solves the real sunrise equation for that spot: latitude
+ * for day length, longitude and the equation of time for solar noon, with
+ * the usual refraction allowance at the horizon.
+ */
 export function getSolarState(
   date: Date,
-  latitude: number = CELESTIAL_LATITUDE,
-  minutesOverride?: number
+  minutesOverride?: number,
+  location?: CelestialLocation | null
 ): SolarState {
   const rad = Math.PI / 180;
-  const declination =
-    23.44 * Math.sin(rad * ((360 / 365) * (284 + dayOfYear(date))));
-  const cosHourAngle = clamp(
-    -Math.tan(rad * latitude) * Math.tan(rad * declination),
-    -1,
-    1
-  );
+  const day = dayOfYear(date);
+  const declination = 23.44 * Math.sin(rad * ((360 / 365) * (284 + day)));
+  const latitude = location ? location.latitude : CELESTIAL_LATITUDE;
+  const cosHourAngle = location
+    ? clamp(
+        (Math.sin(rad * -0.833) -
+          Math.sin(rad * latitude) * Math.sin(rad * declination)) /
+          (Math.cos(rad * latitude) * Math.cos(rad * declination)),
+        -1,
+        1
+      )
+    : clamp(-Math.tan(rad * latitude) * Math.tan(rad * declination), -1, 1);
   const dayLength = ((2 * Math.acos(cosHourAngle)) / rad / 15) * 60; // minutes
-  const solarNoon = (isDaylightSaving(date) ? 13 : 12) * 60;
+  let solarNoon: number;
+  if (location) {
+    // Equation of time (minutes) and the longitude offset from the zone's
+    // clock: solar noon = 12:00 - 4 min per degree east of the zone meridian.
+    const b = (2 * Math.PI * (day - 81)) / 364;
+    const equationOfTime =
+      9.87 * Math.sin(2 * b) - 7.53 * Math.cos(b) - 1.5 * Math.sin(b);
+    const zoneOffsetMinutes = -date.getTimezoneOffset();
+    solarNoon =
+      720 - 4 * location.longitude - equationOfTime + zoneOffsetMinutes;
+    solarNoon =
+      ((solarNoon % MINUTES_PER_DAY) + MINUTES_PER_DAY) % MINUTES_PER_DAY;
+  } else {
+    solarNoon = (isDaylightSaving(date) ? 13 : 12) * 60;
+  }
   const sunrise = solarNoon - dayLength / 2;
   const sunset = solarNoon + dayLength / 2;
   const minutes =
@@ -382,6 +414,10 @@ const DARK_SHADES: Record<Shade, number> = {
 
 export interface CelestialPalette {
   solar: SolarState;
+  /** Live weather when the user opted in, else null. */
+  weather: CelestialWeather | null;
+  /** 0..1 cloud cover in effect (0 without weather). */
+  cover: number;
   /** Below the horizon (with a little grace): the interface goes dark. */
   isDark: boolean;
   sky: { top: string; mid: string; horizon: string };
@@ -396,21 +432,52 @@ export interface CelestialPalette {
   golden: number;
 }
 
+export interface CelestialOptions {
+  location?: CelestialLocation | null;
+  weather?: CelestialWeather | null;
+}
+
 export function getCelestialPalette(
   date: Date,
-  minutesOverride?: number
+  minutesOverride?: number,
+  options: CelestialOptions = {}
 ): CelestialPalette {
-  const solar = getSolarState(date, CELESTIAL_LATITUDE, minutesOverride);
+  const solar = getSolarState(date, minutesOverride, options.location);
   const stops = solar.morning ? MORNING_SKY : EVENING_SKY;
   const sky = sampleSky(stops, solar.altitude);
   const isDark = solar.altitude < -0.05;
   const night = clamp(-solar.altitude / 0.35, 0, 1);
-  const golden = clamp(1 - Math.abs(solar.altitude - 0.08) / 0.3, 0, 1);
+  const goldenClear = clamp(1 - Math.abs(solar.altitude - 0.08) / 0.3, 0, 1);
+  // Cloud cover greys the sky and mutes the golden hour; heavy weather goes
+  // a step darker still.
+  const weather = options.weather ?? null;
+  const cover = weather ? weather.cloudCover : 0;
+  const heavy =
+    weather &&
+    (weather.kind === 'rain' ||
+      weather.kind === 'thunder' ||
+      weather.kind === 'snow')
+      ? 1
+      : 0;
+  const grey = (color: Hsl): Hsl => ({
+    h: color.h,
+    s: color.s * (1 - 0.6 * cover),
+    l: isDark
+      ? color.l - 2 * cover
+      : color.l - 9 * cover - 4 * heavy + (weather?.kind === 'snow' ? 6 : 0),
+  });
+  if (weather) {
+    sky.top = grey(sky.top);
+    sky.mid = grey(sky.mid);
+    sky.horizon = grey(sky.horizon);
+  }
+  const golden = goldenClear * (1 - 0.8 * cover);
 
   // Interface tint follows the sky, quietly: the hue of the mid sky, with a
   // saturation that grows toward dusk and dawn and fades at noon/deep night.
   const tintHue = sky.mid.h;
-  const tintSat = isDark ? 10 + 8 * (1 - night) : 8 + 10 * golden;
+  const tintSat =
+    (isDark ? 10 + 8 * (1 - night) : 8 + 10 * golden) * (1 - 0.5 * cover);
   const roleTable = isDark ? DARK_ROLES : LIGHT_ROLES;
   // Daylight surfaces dim a touch toward the horizon; night deepens later.
   const lightnessShift = isDark
@@ -440,6 +507,8 @@ export function getCelestialPalette(
   return {
     solar,
     isDark,
+    weather,
+    cover,
     sky: {
       top: hslToHex(sky.top),
       mid: hslToHex(sky.mid),
@@ -458,12 +527,20 @@ export function getCelestialPalette(
 
 export interface CelestialScene {
   /** Sun position in percent of the sky box; hidden when below the horizon. */
-  sun: { x: number; y: number; visible: boolean; warmth: number };
-  moon: { x: number; y: number; visible: boolean; phase: number };
+  sun: { x: number; y: number; visible: boolean; warmth: number; dim: number };
+  moon: { x: number; y: number; visible: boolean; phase: number; dim: number };
   stars: number;
   cloudTint: string;
   cloudOpacity: number;
   haze: number;
+  /** Weather layers, each 0..1. */
+  rain: number;
+  snow: number;
+  fog: number;
+  thunder: boolean;
+  /** Cloud drift speed multiplier (1 = calm). */
+  wind: number;
+  weatherKind: CelestialWeather['kind'] | 'none';
 }
 
 export function getCelestialScene(palette: CelestialPalette): CelestialScene {
@@ -472,22 +549,57 @@ export function getCelestialScene(palette: CelestialPalette): CelestialScene {
     x: 8 + 84 * clamp(progress, 0, 1),
     y: 74 - 62 * clamp(Math.abs(altitude), 0, 1),
   });
+  const { weather, cover } = palette;
+  const dim = 1 - 0.75 * cover;
   const sun = solar.isDay
-    ? { ...arc(solar.progress, solar.altitude), visible: true, warmth: golden }
-    : { x: 50, y: 100, visible: false, warmth: 0 };
+    ? {
+        ...arc(solar.progress, solar.altitude),
+        visible: true,
+        warmth: golden,
+        dim,
+      }
+    : { x: 50, y: 100, visible: false, warmth: 0, dim };
   const moon = solar.isDay
-    ? { x: 50, y: 100, visible: false, phase: solar.moonPhase }
+    ? { x: 50, y: 100, visible: false, phase: solar.moonPhase, dim }
     : {
         ...arc(solar.progress, solar.altitude),
         visible: true,
         phase: solar.moonPhase,
+        dim,
       };
+  const kind = weather?.kind ?? 'none';
+  const wet =
+    kind === 'drizzle'
+      ? 0.35
+      : kind === 'rain'
+        ? 0.75
+        : kind === 'thunder'
+          ? 1
+          : 0;
+  const rain = weather
+    ? clamp(wet + Math.min(weather.precipitation, 4) / 8, 0, 1) *
+      (wet > 0 ? 1 : 0)
+    : 0;
+  const snow =
+    kind === 'snow'
+      ? clamp(0.5 + Math.min(weather?.precipitation ?? 0, 4) / 6, 0, 1)
+      : 0;
+  const fog = kind === 'fog' ? 1 : 0;
+  const baseCloud = solar.isDay ? 0.55 + 0.25 * golden : 0.18;
   return {
     sun,
     moon,
-    stars: night,
+    stars: night * (1 - 0.92 * cover),
     cloudTint: palette.sky.horizon,
-    cloudOpacity: solar.isDay ? 0.55 + 0.25 * golden : 0.18,
-    haze: clamp(1 - Math.abs(solar.altitude), 0, 1),
+    cloudOpacity: weather
+      ? clamp(baseCloud * (0.3 + 1.2 * cover), 0.05, 0.95)
+      : baseCloud,
+    haze: clamp(1 - Math.abs(solar.altitude), 0, 1) + fog * 0.6,
+    rain,
+    snow,
+    fog,
+    thunder: kind === 'thunder',
+    wind: weather ? clamp(0.6 + weather.windSpeed / 25, 0.6, 3) : 1,
+    weatherKind: kind,
   };
 }

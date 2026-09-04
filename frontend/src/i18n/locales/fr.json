@@ -652,7 +652,31 @@
         "description": "Céleste suit le soleil là où vous êtes. Faites glisser pour prévisualiser n'importe quelle minute, ou laissez-le suivre l'horloge.",
         "followClock": "Suivre l'horloge",
         "sunrise": "Lever du soleil",
-        "sunset": "Coucher du soleil"
+        "sunset": "Coucher du soleil",
+        "location": "Position",
+        "locationHint": "Facultatif. Conservée uniquement dans ce navigateur, jamais envoyée au serveur ; les coordonnées sont arrondies au kilomètre.",
+        "useMyLocation": "Utiliser ma position",
+        "locationDenied": "Le navigateur n'a pas partagé de position. Vous pouvez saisir des coordonnées.",
+        "latitude": "Latitude",
+        "longitude": "Longitude",
+        "apply": "Appliquer",
+        "clear": "Effacer",
+        "approximateDay": "Durée du jour approximative",
+        "weather": "Suivre la météo",
+        "weatherHint": "Récupère les conditions actuelles auprès d'Open-Meteo pour votre position : nuages, pluie, neige, brouillard et vent façonnent le ciel. Nécessite une position.",
+        "weatherLoading": "Récupération de la météo…",
+        "weatherUnavailable": "Météo indisponible pour le moment.",
+        "wind": "vent {{speed}} km/h",
+        "kinds": {
+          "clear": "Dégagé",
+          "partly": "Partiellement nuageux",
+          "overcast": "Couvert",
+          "fog": "Brouillard",
+          "drizzle": "Bruine",
+          "rain": "Pluie",
+          "snow": "Neige",
+          "thunder": "Orage"
+        }
       }
     },
     "saveSettings": "Enregistrer les paramètres",

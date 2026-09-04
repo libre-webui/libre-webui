@@ -652,7 +652,31 @@
         "description": "Thiên thể đi theo mặt trời nơi bạn ở. Kéo để xem trước bất kỳ phút nào, hoặc để nó đi theo đồng hồ.",
         "followClock": "Theo đồng hồ",
         "sunrise": "Bình minh",
-        "sunset": "Hoàng hôn"
+        "sunset": "Hoàng hôn",
+        "location": "Vị trí",
+        "locationHint": "Tùy chọn. Chỉ lưu trong trình duyệt này và không bao giờ gửi lên máy chủ; tọa độ được làm tròn khoảng một ki-lô-mét.",
+        "useMyLocation": "Dùng vị trí của tôi",
+        "locationDenied": "Trình duyệt không chia sẻ vị trí. Bạn có thể nhập tọa độ.",
+        "latitude": "Vĩ độ",
+        "longitude": "Kinh độ",
+        "apply": "Áp dụng",
+        "clear": "Xóa",
+        "approximateDay": "Độ dài ngày ước tính",
+        "weather": "Theo thời tiết",
+        "weatherHint": "Lấy điều kiện hiện tại từ Open-Meteo cho vị trí của bạn: mây, mưa, tuyết, sương mù và gió tạo nên bầu trời. Cần có vị trí.",
+        "weatherLoading": "Đang lấy thời tiết…",
+        "weatherUnavailable": "Hiện không có dữ liệu thời tiết.",
+        "wind": "gió {{speed}} km/h",
+        "kinds": {
+          "clear": "Quang đãng",
+          "partly": "Có mây",
+          "overcast": "Nhiều mây",
+          "fog": "Sương mù",
+          "drizzle": "Mưa phùn",
+          "rain": "Mưa",
+          "snow": "Tuyết",
+          "thunder": "Dông"
+        }
       }
     },
     "saveSettings": "Lưu cài đặt",

@@ -652,7 +652,31 @@
         "description": "Göksel, bulunduğun yerdeki güneşi izler. Herhangi bir dakikayı önizlemek için kaydır ya da saati izlemesine izin ver.",
         "followClock": "Saati izle",
         "sunrise": "Gün doğumu",
-        "sunset": "Gün batımı"
+        "sunset": "Gün batımı",
+        "location": "Konum",
+        "locationHint": "İsteğe bağlı. Yalnızca bu tarayıcıda saklanır ve sunucuya asla gönderilmez; koordinatlar yaklaşık bir kilometreye yuvarlanır.",
+        "useMyLocation": "Konumumu kullan",
+        "locationDenied": "Tarayıcı konum paylaşmadı. Koordinatları elle girebilirsin.",
+        "latitude": "Enlem",
+        "longitude": "Boylam",
+        "apply": "Uygula",
+        "clear": "Temizle",
+        "approximateDay": "Yaklaşık gün uzunluğu",
+        "weather": "Hava durumunu izle",
+        "weatherHint": "Konumun için Open-Meteo'dan güncel koşulları alır: bulutlar, yağmur, kar, sis ve rüzgâr gökyüzünü şekillendirir. Konum gerektirir.",
+        "weatherLoading": "Hava durumu alınıyor…",
+        "weatherUnavailable": "Hava durumu şu anda kullanılamıyor.",
+        "wind": "{{speed}} km/sa rüzgâr",
+        "kinds": {
+          "clear": "Açık",
+          "partly": "Parçalı bulutlu",
+          "overcast": "Kapalı",
+          "fog": "Sis",
+          "drizzle": "Çisenti",
+          "rain": "Yağmur",
+          "snow": "Kar",
+          "thunder": "Fırtına"
+        }
       }
     },
     "saveSettings": "Ayarları Kaydet",

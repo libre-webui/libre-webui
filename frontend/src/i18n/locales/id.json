@@ -652,7 +652,31 @@
         "description": "Langit mengikuti matahari di tempat Anda. Geser untuk melihat pratinjau menit mana pun, atau biarkan mengikuti jam.",
         "followClock": "Ikuti jam",
         "sunrise": "Matahari terbit",
-        "sunset": "Matahari terbenam"
+        "sunset": "Matahari terbenam",
+        "location": "Lokasi",
+        "locationHint": "Opsional. Hanya disimpan di browser ini dan tidak pernah dikirim ke server; koordinat dibulatkan sekitar satu kilometer.",
+        "useMyLocation": "Gunakan lokasi saya",
+        "locationDenied": "Browser tidak membagikan lokasi. Anda bisa mengetik koordinat.",
+        "latitude": "Lintang",
+        "longitude": "Bujur",
+        "apply": "Terapkan",
+        "clear": "Hapus",
+        "approximateDay": "Panjang hari perkiraan",
+        "weather": "Ikuti cuaca",
+        "weatherHint": "Mengambil kondisi terkini dari Open-Meteo untuk lokasi Anda: awan, hujan, salju, kabut, dan angin membentuk langit. Memerlukan lokasi.",
+        "weatherLoading": "Mengambil cuaca…",
+        "weatherUnavailable": "Cuaca tidak tersedia saat ini.",
+        "wind": "angin {{speed}} km/j",
+        "kinds": {
+          "clear": "Cerah",
+          "partly": "Berawan sebagian",
+          "overcast": "Mendung",
+          "fog": "Kabut",
+          "drizzle": "Gerimis",
+          "rain": "Hujan",
+          "snow": "Salju",
+          "thunder": "Badai petir"
+        }
       }
     },
     "saveSettings": "Simpan Pengaturan",

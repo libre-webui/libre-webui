@@ -652,7 +652,31 @@
         "description": "Himneskt fylgir sólinni þar sem þú ert. Dragðu til að forskoða hvaða mínútu sem er, eða láttu það fylgja klukkunni.",
         "followClock": "Fylgja klukkunni",
         "sunrise": "Sólarupprás",
-        "sunset": "Sólsetur"
+        "sunset": "Sólsetur",
+        "location": "Staðsetning",
+        "locationHint": "Valfrjálst. Aðeins geymt í þessum vafra og aldrei sent á netþjóninn; hnit eru námunduð að um einum kílómetra.",
+        "useMyLocation": "Nota staðsetningu mína",
+        "locationDenied": "Vafrinn deildi ekki staðsetningu. Þú getur slegið inn hnit.",
+        "latitude": "Breiddargráða",
+        "longitude": "Lengdargráða",
+        "apply": "Nota",
+        "clear": "Hreinsa",
+        "approximateDay": "Áætluð daglengd",
+        "weather": "Fylgja veðrinu",
+        "weatherHint": "Sækir núverandi aðstæður frá Open-Meteo fyrir staðsetningu þína: ský, rigning, snjór, þoka og vindur móta himininn. Krefst staðsetningar.",
+        "weatherLoading": "Sæki veður…",
+        "weatherUnavailable": "Veður er ekki tiltækt núna.",
+        "wind": "{{speed}} km/klst vindur",
+        "kinds": {
+          "clear": "Heiðskírt",
+          "partly": "Hálfskýjað",
+          "overcast": "Skýjað",
+          "fog": "Þoka",
+          "drizzle": "Úði",
+          "rain": "Rigning",
+          "snow": "Snjór",
+          "thunder": "Þrumuveður"
+        }
       }
     },
     "saveSettings": "Vista stillingar",

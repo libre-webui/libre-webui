@@ -1934,3 +1934,88 @@ test('celestial theme paints a live sky and previews any minute of the day', asy
   await page.getByTestId('celestial-follow-clock').click();
   await expect(sky).toHaveAttribute('data-preview', 'false');
 });
+
+test.describe('celestial location and weather', () => {
+  test.use({
+    geolocation: { latitude: 45.5017, longitude: -73.5673 },
+    permissions: ['geolocation'],
+  });
+
+  test('a shared location refines sunrise and opt-in weather shapes the sky', async ({
+    page,
+  }) => {
+    await mockLibreWebUiApi(page);
+    let weatherRequests = 0;
+    await page.route('https://api.open-meteo.com/**', async route => {
+      weatherRequests += 1;
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          current: {
+            weather_code: 63,
+            cloud_cover: 96,
+            precipitation: 2.4,
+            wind_speed_10m: 28,
+          },
+        }),
+      });
+    });
+    await page.goto('/chat');
+    await expect(
+      page.getByRole('textbox', { name: 'Message...' })
+    ).toBeVisible();
+    await page.keyboard.press('Control+,');
+    await page.getByRole('button', { name: 'Celestial', exact: true }).click();
+    const sky = page.getByTestId('celestial-sky');
+    await expect(sky).toBeVisible();
+
+    // No fetch happens before the user opts in.
+    await page.getByTestId('celestial-use-location').click();
+    await expect(page.getByTestId('celestial-location-value')).toHaveText(
+      '45.50°, -73.57°'
+    );
+    expect(weatherRequests).toBe(0);
+    // The stored location never reaches the synced theme preference.
+    await expect
+      .poll(() =>
+        page.evaluate(() => {
+          const raw = localStorage.getItem('libre-webui-celestial');
+          const state = localStorage.getItem('libre-webui-app-state') ?? '';
+          return {
+            local: raw ? JSON.parse(raw).location?.latitude : null,
+            leaked: state.includes('45.5'),
+          };
+        })
+      )
+      .toEqual({ local: 45.5, leaked: false });
+
+    await page.getByTestId('celestial-weather-toggle').locator('label').click();
+    await expect(page.getByTestId('celestial-weather-status')).toContainText(
+      'Rain'
+    );
+    await expect(page.getByTestId('celestial-weather-status')).toContainText(
+      '28 km/h'
+    );
+    expect(weatherRequests).toBe(1);
+    await expect(sky).toHaveAttribute('data-weather', 'rain');
+    await expect(page.getByTestId('celestial-rain')).toBeVisible();
+
+    // Under heavy cloud the midday sun is dimmed.
+    await page.getByTestId('celestial-scrubber').fill('780');
+    await expect
+      .poll(() =>
+        page
+          .getByTestId('celestial-sun')
+          .evaluate(element => Number(getComputedStyle(element).opacity))
+      )
+      .toBeLessThan(0.5);
+
+    // Turning weather off clears the layers without touching the location.
+    await page.getByTestId('celestial-weather-toggle').locator('label').click();
+    await expect(sky).toHaveAttribute('data-weather', 'none');
+    await expect(page.getByTestId('celestial-location-value')).toHaveText(
+      '45.50°, -73.57°'
+    );
+  });
+});

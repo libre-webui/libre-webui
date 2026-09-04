@@ -652,7 +652,31 @@
         "description": "セレスティアルはあなたの場所の太陽に合わせて変化します。スライドして任意の時刻をプレビューするか、時計に合わせて進ませましょう。",
         "followClock": "時計に合わせる",
         "sunrise": "日の出",
-        "sunset": "日の入り"
+        "sunset": "日の入り",
+        "location": "位置情報",
+        "locationHint": "任意。このブラウザーにのみ保存され、サーバーには送信されません。座標は約1kmに丸められます。",
+        "useMyLocation": "現在地を使う",
+        "locationDenied": "ブラウザーが位置情報を共有しませんでした。座標を入力することもできます。",
+        "latitude": "緯度",
+        "longitude": "経度",
+        "apply": "適用",
+        "clear": "クリア",
+        "approximateDay": "おおよその日照時間",
+        "weather": "天気に合わせる",
+        "weatherHint": "Open-Meteoから現在地の天気を取得します。雲、雨、雪、霧、風が空を形づくります。位置情報が必要です。",
+        "weatherLoading": "天気を取得中…",
+        "weatherUnavailable": "現在、天気を取得できません。",
+        "wind": "風速 {{speed}} km/h",
+        "kinds": {
+          "clear": "快晴",
+          "partly": "晴れ時々曇り",
+          "overcast": "曇り",
+          "fog": "霧",
+          "drizzle": "霧雨",
+          "rain": "雨",
+          "snow": "雪",
+          "thunder": "雷雨"
+        }
       }
     },
     "saveSettings": "設定を保存",

@@ -77,6 +77,44 @@ test('adjacent minutes never jump far in colour', () => {
   }
 });
 
+test('a real location moves solar noon with longitude and refines day length', () => {
+  const montreal = { latitude: 45.5, longitude: -73.6 };
+  const tenDegreesWest = { latitude: 45.5, longitude: -83.6 };
+  const here = getSolarState(june, undefined, montreal);
+  const west = getSolarState(june, undefined, tenDegreesWest);
+  // Ten degrees of longitude is forty minutes of solar time.
+  assert.ok(Math.abs(west.solarNoon - here.solarNoon - 40) < 2);
+  assert.ok(here.sunset - here.sunrise > 15 * 60);
+  const tropics = getSolarState(june, undefined, {
+    latitude: 5,
+    longitude: -73.6,
+  });
+  assert.ok(tropics.sunset - tropics.sunrise < here.sunset - here.sunrise);
+});
+
+test('weather greys the sky, dims the sun, and hides the stars', () => {
+  const overcast = {
+    kind: 'rain' as const,
+    cloudCover: 0.95,
+    precipitation: 2,
+    windSpeed: 30,
+    fetchedAt: 0,
+  };
+  const clear = getCelestialPalette(june, 13 * 60);
+  const rainy = getCelestialPalette(june, 13 * 60, { weather: overcast });
+  const clearScene = getCelestialScene(clear);
+  const rainyScene = getCelestialScene(rainy);
+  assert.ok(rainyScene.cloudOpacity > clearScene.cloudOpacity);
+  assert.ok(rainyScene.sun.dim < 0.5);
+  assert.ok(rainyScene.rain > 0.5);
+  assert.equal(rainyScene.weatherKind, 'rain');
+  assert.ok(rainyScene.wind > 1);
+  const night = getCelestialScene(
+    getCelestialPalette(june, 0, { weather: overcast })
+  );
+  assert.ok(night.stars < 0.2);
+});
+
 test('the clock label reads like a wall clock', () => {
   assert.equal(formatClock(0), '12:00am');
   assert.equal(formatClock(19 * 60 + 9), '7:09pm');

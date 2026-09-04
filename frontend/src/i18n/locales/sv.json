@@ -652,7 +652,31 @@
         "description": "Himmelsk följer solen där du är. Dra för att förhandsgranska valfri minut, eller låt den följa klockan.",
         "followClock": "Följ klockan",
         "sunrise": "Soluppgång",
-        "sunset": "Solnedgång"
+        "sunset": "Solnedgång",
+        "location": "Plats",
+        "locationHint": "Valfritt. Sparas bara i den här webbläsaren och skickas aldrig till servern; koordinater avrundas till ungefär en kilometer.",
+        "useMyLocation": "Använd min plats",
+        "locationDenied": "Webbläsaren delade ingen plats. Du kan skriva in koordinater.",
+        "latitude": "Latitud",
+        "longitude": "Longitud",
+        "apply": "Använd",
+        "clear": "Rensa",
+        "approximateDay": "Ungefärlig dagslängd",
+        "weather": "Följ vädret",
+        "weatherHint": "Hämtar aktuella förhållanden från Open-Meteo för din plats: moln, regn, snö, dimma och vind formar himlen. Kräver en plats.",
+        "weatherLoading": "Hämtar vädret…",
+        "weatherUnavailable": "Vädret är inte tillgängligt just nu.",
+        "wind": "{{speed}} km/h vind",
+        "kinds": {
+          "clear": "Klart",
+          "partly": "Delvis molnigt",
+          "overcast": "Mulet",
+          "fog": "Dimma",
+          "drizzle": "Duggregn",
+          "rain": "Regn",
+          "snow": "Snö",
+          "thunder": "Åska"
+        }
       }
     },
     "saveSettings": "Spara inställningar",

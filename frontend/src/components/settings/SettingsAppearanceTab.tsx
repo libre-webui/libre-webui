@@ -15,7 +15,8 @@
  * limitations under the License.
  */
 
-import { useEffect, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
+import { SettingsToggle } from '@/components/settings/SettingsToggle';
 import { Check, Moon, MoonStar, Palette, Sun, Sunrise } from 'lucide-react';
 import { useCelestialStore } from '@/store/celestialStore';
 import { formatClock, minutesOfDay } from '@/utils/celestial';
@@ -112,6 +113,34 @@ export function SettingsAppearanceTab({
   const customAccentValue = theme.customAccent || DEFAULT_CUSTOM_ACCENT;
   const accentPreviewColor = getThemeAccentColor(theme);
   const celestialPalette = useCelestialStore(state => state.palette);
+  const celestialLocation = useCelestialStore(state => state.location);
+  const weatherEnabled = useCelestialStore(state => state.weatherEnabled);
+  const weather = useCelestialStore(state => state.weather);
+  const weatherStatus = useCelestialStore(state => state.weatherStatus);
+  const setLocation = useCelestialStore(state => state.setLocation);
+  const requestBrowserLocation = useCelestialStore(
+    state => state.requestBrowserLocation
+  );
+  const setWeatherEnabled = useCelestialStore(state => state.setWeatherEnabled);
+  const [locating, setLocating] = useState(false);
+  const [locationDenied, setLocationDenied] = useState(false);
+  const [manualLatitude, setManualLatitude] = useState('');
+  const [manualLongitude, setManualLongitude] = useState('');
+  const handleUseBrowserLocation = async () => {
+    setLocating(true);
+    setLocationDenied(false);
+    const ok = await requestBrowserLocation();
+    setLocating(false);
+    if (!ok) setLocationDenied(true);
+  };
+  const handleApplyManualLocation = () => {
+    const latitude = Number(manualLatitude);
+    const longitude = Number(manualLongitude);
+    if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return;
+    setLocation({ latitude, longitude });
+    setManualLatitude('');
+    setManualLongitude('');
+  };
   const previewMinutes = useCelestialStore(state => state.previewMinutes);
   const isCelestial = theme.mode === 'celestial';
   // A preview is for looking, not living: leaving the tab follows the clock.
@@ -220,6 +249,123 @@ export function SettingsAppearanceTab({
                 ? formatClock(celestialPalette.solar.sunset)
                 : ''}
             </span>
+          </div>
+
+          {/* Location: opt-in, browser-only, so sunrise matches the real sky. */}
+          <div
+            className='mt-2 flex flex-col gap-2 rounded-xl border border-line p-3'
+            data-testid='celestial-location'
+          >
+            <div className='flex items-center justify-between gap-4'>
+              <div className='min-w-0'>
+                <h5 className='text-sm leading-[22px] text-ink'>
+                  {t('settings.appearance.celestial.location')}
+                </h5>
+                <p className='text-xs leading-5 text-ink-muted'>
+                  {t('settings.appearance.celestial.locationHint')}
+                </p>
+              </div>
+              <span
+                className='shrink-0 font-mono text-xs text-ink-muted'
+                data-testid='celestial-location-value'
+              >
+                {celestialLocation
+                  ? `${celestialLocation.latitude.toFixed(2)}°, ${celestialLocation.longitude.toFixed(2)}°`
+                  : t('settings.appearance.celestial.approximateDay')}
+              </span>
+            </div>
+            <div className='flex flex-wrap items-center gap-2'>
+              <button
+                type='button'
+                onClick={() => void handleUseBrowserLocation()}
+                disabled={locating}
+                className='rounded-md border border-line px-2.5 py-1 text-xs text-ink transition-colors hover:bg-interactive-hover disabled:opacity-60'
+                data-testid='celestial-use-location'
+              >
+                {t('settings.appearance.celestial.useMyLocation')}
+              </button>
+              <input
+                type='number'
+                step='0.01'
+                min={-90}
+                max={90}
+                value={manualLatitude}
+                onChange={event => setManualLatitude(event.target.value)}
+                placeholder={t('settings.appearance.celestial.latitude')}
+                aria-label={t('settings.appearance.celestial.latitude')}
+                className='w-24 rounded-md border border-line bg-transparent px-2 py-1 text-xs text-ink'
+                data-testid='celestial-latitude'
+              />
+              <input
+                type='number'
+                step='0.01'
+                min={-180}
+                max={180}
+                value={manualLongitude}
+                onChange={event => setManualLongitude(event.target.value)}
+                placeholder={t('settings.appearance.celestial.longitude')}
+                aria-label={t('settings.appearance.celestial.longitude')}
+                className='w-24 rounded-md border border-line bg-transparent px-2 py-1 text-xs text-ink'
+                data-testid='celestial-longitude'
+              />
+              <button
+                type='button'
+                onClick={handleApplyManualLocation}
+                disabled={manualLatitude === '' || manualLongitude === ''}
+                className='rounded-md border border-line px-2.5 py-1 text-xs text-ink transition-colors hover:bg-interactive-hover disabled:opacity-60'
+                data-testid='celestial-apply-location'
+              >
+                {t('settings.appearance.celestial.apply')}
+              </button>
+              {celestialLocation && (
+                <button
+                  type='button'
+                  onClick={() => setLocation(null)}
+                  className='rounded-md px-2.5 py-1 text-xs text-ink-muted transition-colors hover:bg-interactive-hover'
+                  data-testid='celestial-clear-location'
+                >
+                  {t('settings.appearance.celestial.clear')}
+                </button>
+              )}
+            </div>
+            {locationDenied && (
+              <p className='text-xs text-amber-600 dark:text-amber-400'>
+                {t('settings.appearance.celestial.locationDenied')}
+              </p>
+            )}
+          </div>
+
+          {/* Weather: opt-in fetch from Open-Meteo with the rounded location. */}
+          <div className='flex items-center justify-between gap-4 py-1'>
+            <div className='min-w-0'>
+              <h5 className='text-sm leading-[22px] text-ink'>
+                {t('settings.appearance.celestial.weather')}
+              </h5>
+              <p className='text-xs leading-5 text-ink-muted'>
+                {t('settings.appearance.celestial.weatherHint')}
+              </p>
+              {weatherEnabled && celestialLocation && (
+                <p
+                  className='mt-1 text-xs text-ink-subtle'
+                  data-testid='celestial-weather-status'
+                >
+                  {weatherStatus === 'loading' && !weather
+                    ? t('settings.appearance.celestial.weatherLoading')
+                    : weatherStatus === 'error' && !weather
+                      ? t('settings.appearance.celestial.weatherUnavailable')
+                      : weather
+                        ? `${t(`settings.appearance.celestial.kinds.${weather.kind}`)} · ${t('settings.appearance.celestial.wind', { speed: Math.round(weather.windSpeed) })}`
+                        : ''}
+                </p>
+              )}
+            </div>
+            <div data-testid='celestial-weather-toggle'>
+              <SettingsToggle
+                checked={weatherEnabled}
+                onChange={setWeatherEnabled}
+                disabled={!celestialLocation}
+              />
+            </div>
           </div>
         </div>
       )}

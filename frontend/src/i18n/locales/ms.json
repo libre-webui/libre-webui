@@ -652,7 +652,31 @@
         "description": "Celestial mengikut matahari di tempat anda. Seret untuk pratonton mana-mana minit, atau biarkan ia mengikut jam.",
         "followClock": "Ikut jam",
         "sunrise": "Matahari terbit",
-        "sunset": "Matahari terbenam"
+        "sunset": "Matahari terbenam",
+        "location": "Lokasi",
+        "locationHint": "Pilihan. Disimpan hanya dalam pelayar ini dan tidak pernah dihantar ke pelayan; koordinat dibundarkan kira-kira satu kilometer.",
+        "useMyLocation": "Guna lokasi saya",
+        "locationDenied": "Pelayar tidak berkongsi lokasi. Anda boleh taip koordinat.",
+        "latitude": "Latitud",
+        "longitude": "Longitud",
+        "apply": "Guna",
+        "clear": "Kosongkan",
+        "approximateDay": "Anggaran panjang hari",
+        "weather": "Ikut cuaca",
+        "weatherHint": "Mengambil keadaan semasa daripada Open-Meteo untuk lokasi anda: awan, hujan, salji, kabus dan angin membentuk langit. Memerlukan lokasi.",
+        "weatherLoading": "Mengambil cuaca…",
+        "weatherUnavailable": "Cuaca tidak tersedia sekarang.",
+        "wind": "angin {{speed}} km/j",
+        "kinds": {
+          "clear": "Cerah",
+          "partly": "Sebahagian berawan",
+          "overcast": "Mendung",
+          "fog": "Kabus",
+          "drizzle": "Gerimis",
+          "rain": "Hujan",
+          "snow": "Salji",
+          "thunder": "Ribut petir"
+        }
       }
     },
     "saveSettings": "Simpan Tetapan",

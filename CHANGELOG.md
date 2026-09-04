@@ -15,6 +15,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   minute by minute, with sunrise and sunset moving through the year. The
   theme toggle cycles through it, administrators can make it the instance
   default, and Settings > Appearance has a scrubber to preview any minute.
+  Share a location (or type coordinates) and sunrise and sunset are solved
+  for your actual sky; the location is rounded, kept only in that browser,
+  and never sent to the server. With a location, **Match the weather**
+  pulls current conditions from Open-Meteo straight into the browser so
+  clouds, rain, snow, fog, thunder, and wind shape the sky too.
 
 ### 🔧 Improvements
 

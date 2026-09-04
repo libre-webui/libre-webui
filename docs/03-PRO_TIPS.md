@@ -86,7 +86,13 @@ toggle cycles Light, Dark, Pure Black, and Celestial.
 arc, clouds, stars after dusk, a lamp that follows the pointer at night) shift
 minute by minute, with sunrise and sunset moving through the year. Pick it in
 Settings > Appearance; a scrubber there previews any minute of the day, and
-**Follow the clock** returns to real time.
+**Follow the clock** returns to real time. Without a location it assumes a
+mid-latitude day; share your location (or type coordinates) and sunrise and
+sunset are solved for your actual sky. The location is rounded to about a
+kilometre, kept only in that browser, and never sent to the server. With a
+location you can also turn on **Match the weather**: current conditions come
+straight from Open-Meteo to your browser, and clouds, rain, snow, fog, and
+wind shape the sky.
 
 ## Keep Work Tasks Focused
 

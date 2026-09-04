@@ -21,6 +21,7 @@ import { useAppStore } from '@/store/appStore';
 import { formatClock } from '@/utils/celestial';
 
 const STAR_COUNT = 110;
+const SNOW_COUNT = 48;
 const COMPOSING_IDLE_MS = 5_000;
 
 /** Deterministic star field so the sky is the same on every visit. */
@@ -102,6 +103,22 @@ type Meteor = {
   length: number;
 };
 
+const seededSnow = () => {
+  let seed = 21;
+  const rand = () => {
+    seed = (seed * 9301 + 49297) % 233280;
+    return seed / 233280;
+  };
+  return Array.from({ length: SNOW_COUNT }, (_, index) => ({
+    id: index,
+    x: rand() * 100,
+    size: 2 + rand() * 4,
+    delay: -rand() * 14,
+    period: 9 + rand() * 9,
+    sway: 10 + rand() * 30,
+  }));
+};
+
 /**
  * The celestial backdrop: a sky gradient, a sun or moon on its arc, drifting
  * clouds, stars after dusk (with the odd meteor), an aurora while a reply is
@@ -119,7 +136,9 @@ export const CelestialSky: React.FC = () => {
   const isGenerating = useAppStore(state => state.isGenerating);
   const skyRef = useRef<HTMLDivElement>(null);
   const stars = useMemo(() => seededStars(), []);
+  const snow = useMemo(() => seededSnow(), []);
   const [meteors, setMeteors] = useState<Meteor[]>([]);
+  const [flash, setFlash] = useState(false);
   const active = palette !== null && scene !== null;
   const night = palette?.night ?? 0;
 
@@ -244,6 +263,24 @@ export const CelestialSky: React.FC = () => {
     };
   }, [active, night, isGenerating]);
 
+  // Thunder: an occasional flash while a storm is reported.
+  const thunder = scene?.thunder ?? false;
+  useEffect(() => {
+    if (!active || !thunder || typeof window === 'undefined') return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const strike = () => {
+      setFlash(true);
+      setTimeout(() => setFlash(false), 180 + Math.random() * 160);
+      timer = setTimeout(strike, 9_000 + Math.random() * 25_000);
+    };
+    timer = setTimeout(strike, 3_000 + Math.random() * 6_000);
+    return () => {
+      if (timer) clearTimeout(timer);
+      setFlash(false);
+    };
+  }, [active, thunder]);
+
   if (!palette || !scene) return null;
 
   // Moon phase as a shadow disc sliding across the moon.
@@ -259,8 +296,11 @@ export const CelestialSky: React.FC = () => {
         data-night={night > 0.5 ? 'true' : 'false'}
         data-preview={previewMinutes !== null ? 'true' : 'false'}
         data-generating={isGenerating ? 'true' : 'false'}
+        data-weather={scene.weatherKind}
+        data-flash={flash ? 'true' : 'false'}
         aria-hidden='true'
         className='celestial-sky pointer-events-none fixed inset-0 z-0'
+        style={{ ['--wind' as string]: scene.wind }}
       >
         <div className='celestial-sky__layers absolute inset-0 overflow-hidden'>
           <div className='celestial-sky__gradient' />
@@ -307,7 +347,7 @@ export const CelestialSky: React.FC = () => {
             style={{
               left: `${scene.sun.x}%`,
               top: `${scene.sun.y}%`,
-              opacity: scene.sun.visible ? 1 : 0,
+              opacity: scene.sun.visible ? scene.sun.dim : 0,
               ['--sun-warmth' as string]: scene.sun.warmth,
             }}
           />
@@ -317,7 +357,7 @@ export const CelestialSky: React.FC = () => {
             style={{
               left: `${scene.moon.x}%`,
               top: `${scene.moon.y}%`,
-              opacity: scene.moon.visible ? 1 : 0,
+              opacity: scene.moon.visible ? scene.moon.dim : 0,
             }}
           >
             <span
@@ -336,7 +376,7 @@ export const CelestialSky: React.FC = () => {
                 height: `${cloud.height}vh`,
                 background: scene.cloudTint,
                 opacity: scene.cloudOpacity,
-                animationDuration: `${cloud.drift}s`,
+                animationDuration: `${cloud.drift / scene.wind}s`,
                 animationDelay: `${cloud.delay}s`,
                 ['--cloud-depth' as string]: `${cloud.depth}px`,
               }}
@@ -352,8 +392,44 @@ export const CelestialSky: React.FC = () => {
           />
           <div
             className='celestial-sky__haze'
-            style={{ opacity: 0.3 + scene.haze * 0.45 }}
+            style={{ opacity: Math.min(1, 0.3 + scene.haze * 0.45) }}
           />
+          {scene.fog > 0 && (
+            <div
+              className='celestial-sky__fog'
+              style={{ opacity: scene.fog }}
+            />
+          )}
+          {scene.rain > 0 && (
+            <div
+              className='celestial-sky__rain'
+              data-testid='celestial-rain'
+              style={{ opacity: 0.25 + scene.rain * 0.5 }}
+            />
+          )}
+          {scene.snow > 0 && (
+            <div
+              className='celestial-sky__snow'
+              data-testid='celestial-snow'
+              style={{ opacity: scene.snow }}
+            >
+              {snow.map(flake => (
+                <span
+                  key={flake.id}
+                  className='celestial-sky__flake'
+                  style={{
+                    left: `${flake.x}%`,
+                    width: flake.size,
+                    height: flake.size,
+                    animationDelay: `${flake.delay}s`,
+                    animationDuration: `${flake.period / scene.wind}s`,
+                    ['--sway' as string]: `${flake.sway}px`,
+                  }}
+                />
+              ))}
+            </div>
+          )}
+          <div className='celestial-sky__flash' />
           <div className='celestial-sky__grain' />
           <div className='celestial-sky__clock' data-testid='celestial-clock'>
             {formatClock(palette.solar.minutes)}

@@ -785,6 +785,7 @@ function onCelestialVisibility() {
 export const paintCelestial = () => {
   if (typeof document === 'undefined') return;
   const store = useCelestialStore.getState();
+  void store.maybeRefreshWeather();
   store.refresh();
   const palette = useCelestialStore.getState().palette;
   if (!palette) return;

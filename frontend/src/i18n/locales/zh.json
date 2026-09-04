@@ -652,7 +652,31 @@
         "description": "天穹主题跟随你所在位置的太阳变化。拖动可预览任意时刻，或让它跟随时钟。",
         "followClock": "跟随时钟",
         "sunrise": "日出",
-        "sunset": "日落"
+        "sunset": "日落",
+        "location": "位置",
+        "locationHint": "可选。仅保存在此浏览器中，绝不发送到服务器；坐标会四舍五入到约一公里。",
+        "useMyLocation": "使用我的位置",
+        "locationDenied": "浏览器未共享位置。你可以手动输入坐标。",
+        "latitude": "纬度",
+        "longitude": "经度",
+        "apply": "应用",
+        "clear": "清除",
+        "approximateDay": "大致昼长",
+        "weather": "跟随天气",
+        "weatherHint": "从 Open-Meteo 获取你所在位置的实时天气：云、雨、雪、雾和风会塑造天空。需要位置信息。",
+        "weatherLoading": "正在获取天气…",
+        "weatherUnavailable": "当前无法获取天气。",
+        "wind": "风速 {{speed}} km/h",
+        "kinds": {
+          "clear": "晴",
+          "partly": "局部多云",
+          "overcast": "阴",
+          "fog": "雾",
+          "drizzle": "毛毛雨",
+          "rain": "雨",
+          "snow": "雪",
+          "thunder": "雷暴"
+        }
       }
     },
     "saveSettings": "保存设置",

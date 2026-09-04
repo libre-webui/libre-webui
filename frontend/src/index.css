@@ -1025,13 +1025,96 @@ html.celestial[data-composing='true'] [data-app-tabbar]:not(:hover) {
   opacity: 0.32;
   transition: color var(--celestial-ease) linear;
 }
+/* Weather layers. Rain and snow are pure CSS; fog is a wash; the flash is a
+   short white overlay the component toggles when a storm is reported. */
+.celestial-sky__rain {
+  position: absolute;
+  inset: -20% -10% -10%;
+  background-image: repeating-linear-gradient(
+    100deg,
+    transparent 0 14px,
+    rgba(255, 255, 255, 0.28) 14px 15px,
+    transparent 15px 26px
+  );
+  background-size: 200px 120px;
+  transform: skewX(-8deg);
+  animation: celestial-rain 0.55s linear infinite;
+  transition: opacity var(--celestial-ease) linear;
+}
+@keyframes celestial-rain {
+  from {
+    background-position: 0 0;
+  }
+  to {
+    background-position: -24px 120px;
+  }
+}
+.celestial-sky__snow {
+  position: absolute;
+  inset: -6% 0 0;
+  transition: opacity var(--celestial-ease) linear;
+}
+.celestial-sky__flake {
+  position: absolute;
+  top: -2%;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 0 6px rgba(255, 255, 255, 0.6);
+  animation: celestial-snow 12s linear infinite;
+}
+@keyframes celestial-snow {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(var(--sway), 55vh, 0);
+  }
+  100% {
+    transform: translate3d(calc(var(--sway) * -0.5), 108vh, 0);
+  }
+}
+.celestial-sky__fog {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--celestial-sky-horizon) 55%, white 45%) 0%,
+    color-mix(in srgb, var(--celestial-sky-horizon) 70%, white 30%) 100%
+  );
+  filter: blur(6px);
+  transition: opacity var(--celestial-ease) linear;
+}
+html.dark .celestial-sky__fog {
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--celestial-sky-horizon) 70%, #9aa4b8 30%) 0%,
+    color-mix(in srgb, var(--celestial-sky-horizon) 85%, #9aa4b8 15%) 100%
+  );
+}
+.celestial-sky__flash {
+  position: absolute;
+  inset: 0;
+  background: rgba(240, 244, 255, 0.85);
+  opacity: 0;
+  transition: opacity 120ms ease-out;
+}
+.celestial-sky[data-flash='true'] .celestial-sky__flash {
+  opacity: 0.55;
+  transition-duration: 40ms;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .celestial-sky__star,
   .celestial-sky__cloud,
   .celestial-sky__sun,
   .celestial-sky__aurora,
-  .celestial-sky__meteor {
+  .celestial-sky__meteor,
+  .celestial-sky__rain,
+  .celestial-sky__flake {
     animation: none;
+  }
+  .celestial-sky__flash {
+    display: none;
   }
   html.celestial[data-composing='true'] [data-app-sidebar],
   html.celestial[data-composing='true'] [data-app-tabbar] {

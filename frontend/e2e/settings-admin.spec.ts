@@ -60,7 +60,7 @@ test('administrators reach User Management from Settings and from /users', async
   await expect(page.getByRole('heading', { name: 'Settings' })).toBeVisible();
   await page.getByRole('tab', { name: 'User Management' }).click();
   await expect(
-    modal.getByRole('heading', { name: 'User Management' })
+    modal.getByRole('heading', { name: 'User Management', exact: true })
   ).toBeVisible();
   await expect(
     modal.getByRole('radiogroup', { name: 'Default theme' })
@@ -76,7 +76,7 @@ test('administrators reach User Management from Settings and from /users', async
   await expect(
     page
       .getByTestId('settings-scroll-region')
-      .getByRole('heading', { name: 'User Management' })
+      .getByRole('heading', { name: 'User Management', exact: true })
   ).toBeVisible();
   await expect(page).toHaveURL(/\/$/);
 });
