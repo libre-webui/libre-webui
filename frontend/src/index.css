@@ -706,8 +706,11 @@ html.celestial [data-celestial-surface] {
 }
 /* The app frame lets the sky through: a faint wash on the outer shell, a
    translucent chat pane, glass for the composer and the user's bubbles. */
+/* The frame (sidebar + tab strip) is one continuous glass surface, exactly
+   the shape the flat themes use; only the content card is rounded. */
 html.celestial [data-app-shell] {
-  background-color: rgb(var(--color-sidebar) / 0.22);
+  background-color: rgb(var(--color-sidebar) / 0.5);
+  backdrop-filter: blur(18px) saturate(1.1);
 }
 html.celestial [data-app-main] {
   background-color: rgb(var(--color-canvas) / 0.42);
@@ -733,16 +736,8 @@ html.celestial [data-app-sidebar],
 html.celestial [data-app-tabbar] {
   transition: opacity 900ms ease;
 }
-/* Text over the sky needs a backing: the tab strip becomes a glass band and
-   its inactive labels use the full ink colour at reduced opacity instead of
-   a mid grey. */
-html.celestial [data-app-tabbar] {
-  background-color: rgb(var(--color-sidebar) / 0.42);
-  backdrop-filter: blur(14px) saturate(1.1);
-  border-radius: 0.9rem;
-  margin-top: 0.25rem;
-  padding-inline: 0.25rem;
-}
+/* Inactive tab labels use the full ink colour at reduced opacity instead of
+   a mid grey, so they read on the frame. */
 html.celestial [data-app-tabbar] [role='tab'][aria-selected='false'] {
   color: rgb(var(--color-ink) / 0.74);
 }
