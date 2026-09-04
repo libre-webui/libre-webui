@@ -15,20 +15,29 @@
  * limitations under the License.
  */
 
-import dotenv from 'dotenv';
+import { existsSync } from 'node:fs';
 import path from 'node:path';
+import { loadEnvFile } from 'node:process';
 import { BACKEND_DIRECTORY } from './utils/dataDirectory.js';
 
 // Development configuration lives at backend/.env regardless of launch cwd.
 // A root .env remains a lower-priority compatibility source for root scripts;
-// neither file overrides variables explicitly supplied by the operator.
-dotenv.config({
-  path: [
-    path.join(BACKEND_DIRECTORY, '.env'),
-    path.join(BACKEND_DIRECTORY, '..', '.env'),
-  ],
-  quiet: true,
-});
+// neither file overrides variables explicitly supplied by the operator, and
+// the first file loaded wins over the second, since loadEnvFile never
+// replaces a variable that is already set.
+for (const envFile of [
+  path.join(BACKEND_DIRECTORY, '.env'),
+  path.join(BACKEND_DIRECTORY, '..', '.env'),
+]) {
+  if (!existsSync(envFile)) continue;
+  try {
+    loadEnvFile(envFile);
+  } catch (error) {
+    // A file that vanished between the check and the read is not an error;
+    // anything else (unreadable, malformed) still surfaces at startup.
+    if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
+  }
+}
 
 // Export a flag to confirm env is loaded
 export const ENV_LOADED = true;

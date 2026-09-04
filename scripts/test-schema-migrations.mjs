@@ -509,7 +509,7 @@ test('data and preflight paths are stable across launch working directories', t 
   ).href;
   const resolveFrom = cwd => {
     const childEnv = { ...process.env };
-    // Keep DATA_DIR present but empty so dotenv cannot inject a developer's
+    // Keep DATA_DIR present but empty so a .env file cannot inject a developer's
     // ignored backend/.env value into this default-path fixture.
     childEnv.DATA_DIR = '';
     const result = spawnSync(

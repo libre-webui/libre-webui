@@ -1,11 +1,12 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
-import dotenv from 'dotenv';
 import { readFileSync, existsSync } from 'fs';
+import { loadEnvFile } from 'node:process';
 import { execSync } from 'child_process';
 
-dotenv.config();
+// Operator variables win; a missing .env is simply skipped.
+if (existsSync('.env')) loadEnvFile('.env');
 
 // Read version from package.json
 const packageJson = JSON.parse(

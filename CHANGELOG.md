@@ -34,6 +34,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   types are gone, one fewer binary to build or fetch on unusual platforms.
   Same cost factor, same `$2b$` format; every existing password hash keeps
   verifying.
+- **`.env` files load through Node's own `process.loadEnvFile`.** The dotenv
+  dependency is gone from the server, the CLI, and the Vite config. Same
+  lookup order (`backend/.env`, then the root `.env`), operator variables
+  still win, and a missing file is still skipped.
 
 ## [0.33.0] - 2026-09-04
 
