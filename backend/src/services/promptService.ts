@@ -24,7 +24,6 @@
  * survives encryption.
  */
 
-import { v4 as uuidv4 } from 'uuid';
 import { encryptionService } from './encryptionService.js';
 import { getPersistence } from '../persistence/index.js';
 import { PersistenceResourceLimitError } from '../persistence/resourceTypes.js';
@@ -55,6 +54,7 @@ import {
   MAX_PROMPTS_PER_USER,
   ResourcePolicyError,
 } from '../utils/resourceLimits.js';
+import { randomUUID } from 'node:crypto';
 
 export type PromptVariableType = 'text' | 'number' | 'select' | 'boolean';
 
@@ -385,7 +385,7 @@ const toRow = (
 });
 
 const archiveRowOf = (row: StoredPromptRecord): StoredPromptVersionRecord => ({
-  id: uuidv4(),
+  id: randomUUID(),
   prompt_id: row.id,
   version: row.version,
   content: row.content,
@@ -497,7 +497,7 @@ export const createPrompt = async (
   await assertSlugAvailable(userId, normalized.slug);
   const now = Date.now();
   const prompt: Prompt = {
-    id: uuidv4(),
+    id: randomUUID(),
     ...normalized,
     version: 1,
     createdAt: now,
@@ -674,7 +674,7 @@ export const importPrompt = async (
   }
   const now = Date.now();
   const prompt: Prompt = {
-    id: existing?.id ?? uuidv4(),
+    id: existing?.id ?? randomUUID(),
     ...normalized,
     version: existing ? existing.version + 1 : 1,
     createdAt: existing?.created_at ?? now,

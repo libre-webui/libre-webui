@@ -16,7 +16,6 @@
  */
 
 import bcrypt from 'bcryptjs';
-import { v4 as uuidv4 } from 'uuid';
 import { getPersistence } from '../persistence/index.js';
 import { encryptionService } from '../services/encryptionService.js';
 import { transactionalIdentityDeletionEnqueuer } from '../platform/jobs/identityDeletionEnqueuer.js';
@@ -27,6 +26,7 @@ import type {
   IdentityUserRecord,
   Persistence,
 } from '../persistence/index.js';
+import { randomUUID } from 'node:crypto';
 
 export type AccountStatus = IdentityAccountStatus;
 export type User = IdentityUserRecord;
@@ -183,7 +183,7 @@ export class UserModel {
     passwordHash: string,
     accountStatus: AccountStatus
   ): User {
-    const id = uuidv4();
+    const id = randomUUID();
     const now = Date.now();
     const approvedAt = accountStatus === 'active' ? now : null;
     const user: User = {

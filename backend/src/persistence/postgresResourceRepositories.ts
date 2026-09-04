@@ -5,7 +5,7 @@
  */
 
 import type { PoolClient, QueryResultRow } from 'pg';
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID } from 'node:crypto';
 import type {
   ApplicationResourceRepositories,
   ArenaVoteRepository,
@@ -3606,7 +3606,7 @@ class PostgresPreferenceRepository implements PreferenceRepository {
              (id, user_id, key, value, created_at, updated_at)
            VALUES ($1, $2, $3, $4, $5, $6)`,
             [
-              uuidv4(),
+              randomUUID(),
               ownerId,
               preference.key,
               preference.value,
@@ -3829,7 +3829,7 @@ class PostgresDataArchiveRepository implements DataArchiveRepository {
              (id, user_id, key, value, created_at, updated_at)
            VALUES ($1, $2, $3, $4, $5, $6)`,
             [
-              uuidv4(),
+              randomUUID(),
               plan.userId,
               preference.key,
               preference.value,

@@ -25,8 +25,6 @@
  * capabilities, network isolation) are not policy fields at all.
  */
 
-import { v4 as uuidv4 } from 'uuid';
-
 import {
   getWorkPersistence,
   WorkPersistenceError,
@@ -39,6 +37,7 @@ import {
   defaultRuntimePolicy,
   workRuntimeConfig,
 } from './workRuntimeShared.js';
+import { randomUUID } from 'node:crypto';
 
 const logger = createLogger('services:work-policy');
 
@@ -311,7 +310,7 @@ export class WorkPolicyService {
 
   async create(input: WorkPolicyInput): Promise<WorkPolicyRecord> {
     const fields = validateWorkPolicyInput(input);
-    const id = uuidv4();
+    const id = randomUUID();
     const now = Date.now();
     try {
       await getWorkPersistence().insertPolicy({

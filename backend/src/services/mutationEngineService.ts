@@ -24,7 +24,7 @@ import {
   MemorySearchResult,
   Persona,
 } from '../types/index.js';
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID } from 'node:crypto';
 
 export class MutationEngineService {
   /**
@@ -235,7 +235,7 @@ export class MutationEngineService {
     // Add mutations to log with timestamps and IDs
     const timestampedMutations = mutationResult.mutations.map(mutation => ({
       ...mutation,
-      id: uuidv4(),
+      id: randomUUID(),
       timestamp: Date.now(),
     }));
 

@@ -15,7 +15,6 @@
  * limitations under the License.
  */
 
-import { v4 as uuidv4 } from 'uuid';
 import {
   AutomationTrigger,
   Calendar,
@@ -68,6 +67,7 @@ import type {
   DurableJobLeaseIdentity,
 } from './platform/jobs/durableJobTypes.js';
 import { getDurableJobRuntime } from './platform/jobs/durableJobRuntime.js';
+import { randomUUID } from 'node:crypto';
 
 const logger = createLogger('storage');
 export type { Document } from './storageMappers.js';
@@ -112,7 +112,7 @@ class StorageService {
     messageIndex: number
   ): StoredChatMessageRecord {
     return {
-      id: message.id || uuidv4(),
+      id: message.id || randomUUID(),
       session_id: sessionId,
       role: message.role,
       content: encryptionService.encrypt(message.content),

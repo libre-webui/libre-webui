@@ -24,7 +24,6 @@ import {
   PromptQueueEntry,
   SessionFolder,
 } from '../types/index.js';
-import { v4 as uuidv4 } from 'uuid';
 import storageService from '../storage.js';
 import preferencesService from './preferencesService.js';
 import { personaService } from './personaService.js';
@@ -68,6 +67,7 @@ import type {
   DurableJobEventAppendInput,
   DurableJobLeaseIdentity,
 } from '../platform/jobs/durableJobTypes.js';
+import { randomUUID } from 'node:crypto';
 
 const logger = createLogger('chat-service');
 
@@ -171,7 +171,7 @@ class ChatService {
     personaId?: string,
     providerSelection?: ChatProviderSelection
   ): Promise<ChatSession> {
-    const sessionId = uuidv4();
+    const sessionId = randomUUID();
     const now = Date.now();
     const normalizedProvider =
       normalizeChatProviderSelection(providerSelection);
@@ -222,7 +222,7 @@ class ChatService {
     // Add the system message if we have one
     if (systemMessage) {
       const systemMsg: ChatMessage = {
-        id: uuidv4(),
+        id: randomUUID(),
         role: 'system',
         content: systemMessage,
         timestamp: now,
@@ -351,7 +351,7 @@ class ChatService {
     }
     const prefix = source.messages.slice(0, cutoff + 1);
     const idMap = new Map<string, string>();
-    for (const message of prefix) idMap.set(message.id, uuidv4());
+    for (const message of prefix) idMap.set(message.id, randomUUID());
     const messages = prefix.map(message => {
       const copy: ChatMessage = {
         ...message,
@@ -390,7 +390,7 @@ class ChatService {
     delete settings.promptQueue;
     const fork: ChatSession = {
       ...source,
-      id: uuidv4(),
+      id: randomUUID(),
       title: options.title?.trim() || source.title,
       messages,
       settings,
@@ -456,7 +456,7 @@ class ChatService {
           409
         );
       }
-      const next = [...queue, { id: uuidv4(), content }];
+      const next = [...queue, { id: randomUUID(), content }];
       return { queue: next, result: next };
     });
   }
@@ -625,7 +625,7 @@ class ChatService {
       return undefined;
     }
 
-    const messageId = message.id || uuidv4();
+    const messageId = message.id || randomUUID();
 
     await options.assertPersistenceAllowed?.();
 
@@ -1181,7 +1181,7 @@ class ChatService {
     const normalizedName = this.normalizeSessionFolderName(name);
     const now = Date.now();
     const folder: SessionFolder = {
-      id: uuidv4(),
+      id: randomUUID(),
       name: normalizedName,
       createdAt: now,
       updatedAt: now,
@@ -1463,7 +1463,7 @@ class ChatService {
     } else {
       // Add new system message at the beginning
       const systemMessage: ChatMessage = {
-        id: uuidv4(),
+        id: randomUUID(),
         role: 'system',
         content: newSystemMessage,
         timestamp: Date.now(),
@@ -1638,7 +1638,7 @@ Guidelines:
           };
         } else {
           authoritative.messages.unshift({
-            id: uuidv4(),
+            id: randomUUID(),
             role: 'system',
             content: enhancedSystemPrompt,
             timestamp: Date.now(),
@@ -1746,7 +1746,7 @@ Guidelines:
       sibling.isActive = false;
     }
 
-    const messageId = newMessage.id || uuidv4();
+    const messageId = newMessage.id || randomUUID();
     const newBranchMessage = sanitizeChatMessageProviderState<ChatMessage>({
       ...newMessage,
       id: messageId,

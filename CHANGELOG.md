@@ -44,6 +44,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   behavior: allowed origins are echoed with credentials and `Vary: Origin`,
   preflights get a 204 with the configured methods and headers, and a
   foreign origin is still refused.
+- **Identifiers come from `crypto.randomUUID`.** The `uuid` package is
+  removed from the server; every id it minted is a version 4 UUID, exactly
+  what Node's built-in produces, so stored ids and their validators are
+  unaffected.
 
 ## [0.33.0] - 2026-09-04
 

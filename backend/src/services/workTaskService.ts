@@ -15,7 +15,6 @@
  * limitations under the License.
  */
 
-import { v4 as uuidv4 } from 'uuid';
 import {
   getWorkPersistence,
   replaceWorkTextNul,
@@ -46,6 +45,7 @@ import {
 } from '../types/work.js';
 import { createLogger } from '../utils/logger.js';
 import { getCoordinator } from '../platform/coordination/service.js';
+import { randomUUID } from 'node:crypto';
 
 const logger = createLogger('services:work-task');
 export const WORK_MESSAGE_PAGE_SIZE = 200;
@@ -251,9 +251,9 @@ export class WorkTaskService {
   ): Promise<WorkTaskDetail> {
     await this.assertUserIsActive(userId);
     const selectedProvider = normalizeProvider(provider);
-    const taskId = uuidv4();
-    const runId = uuidv4();
-    const messageId = uuidv4();
+    const taskId = randomUUID();
+    const runId = randomUUID();
+    const messageId = randomUUID();
     const compactId = taskId.replace(/-/g, '');
     const now = Date.now();
     const title = deriveTitle(message);
@@ -372,8 +372,8 @@ export class WorkTaskService {
     if (await this.getActiveRun(taskId)) {
       throw new WorkConflictError('This Work task already has an active run.');
     }
-    const runId = uuidv4();
-    const messageId = uuidv4();
+    const runId = randomUUID();
+    const messageId = randomUUID();
     const selectedModel =
       model === undefined ? task.model : cleanRequired(model);
     const selectedProvider = normalizeProvider(
@@ -776,7 +776,7 @@ export class WorkTaskService {
     content: string,
     metadata?: Record<string, unknown>
   ): Promise<WorkMessage> {
-    const id = uuidv4();
+    const id = randomUUID();
     const createdAt = Date.now();
     const boundedContent = boundUtf8(content, WORK_MESSAGE_MAX_BYTES);
     const serializedMetadata = serializeMetadata(metadata);

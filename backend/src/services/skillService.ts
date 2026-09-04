@@ -25,7 +25,6 @@
  * constraint and are the lookup key.
  */
 
-import { v4 as uuidv4 } from 'uuid';
 import { encryptionService } from './encryptionService.js';
 import { getPersistence } from '../persistence/index.js';
 import { PersistenceResourceLimitError } from '../persistence/resourceTypes.js';
@@ -59,6 +58,7 @@ import {
   MAX_SKILLS_PER_USER,
   ResourcePolicyError,
 } from '../utils/resourceLimits.js';
+import { randomUUID } from 'node:crypto';
 
 export interface Skill {
   id: string;
@@ -222,7 +222,7 @@ const toRow = (
 });
 
 const archiveRowOf = (row: StoredSkillRecord): StoredSkillVersionRecord => ({
-  id: uuidv4(),
+  id: randomUUID(),
   skill_id: row.id,
   version: row.version,
   instructions: row.instructions,
@@ -333,7 +333,7 @@ export const createSkill = async (
   await assertSlugAvailable(userId, normalized.slug);
   const now = Date.now();
   const skill: Skill = {
-    id: uuidv4(),
+    id: randomUUID(),
     ...normalized,
     version: 1,
     createdAt: now,
@@ -606,7 +606,7 @@ export const putSkillFile = async (
   const now = Date.now();
   const current = await skillFiles().find(skillId, path);
   const record: StoredSkillFileRecord = {
-    id: current?.id ?? uuidv4(),
+    id: current?.id ?? randomUUID(),
     skill_id: skillId,
     path,
     content: encryptionService.encrypt(content),
@@ -694,7 +694,7 @@ const normalizeImportedFiles = (
       );
     }
     records.push({
-      id: uuidv4(),
+      id: randomUUID(),
       skill_id: skillId,
       path,
       content: encryptionService.encrypt(content),
@@ -817,7 +817,7 @@ export const importSkill = async (
   }
   const now = Date.now();
   const skill: Skill = {
-    id: existing?.id ?? uuidv4(),
+    id: existing?.id ?? randomUUID(),
     ...normalized,
     version: existing ? existing.version + 1 : 1,
     createdAt: existing?.created_at ?? now,

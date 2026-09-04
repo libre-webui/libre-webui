@@ -25,8 +25,7 @@
  * authenticated data binding them to the exact user and server identity.
  */
 
-import { createHash } from 'node:crypto';
-import { v4 as uuidv4 } from 'uuid';
+import { createHash, randomUUID } from 'node:crypto';
 import { getPersistence } from '../persistence/index.js';
 import type {
   StoredToolServerRecord,
@@ -298,7 +297,7 @@ const toolRows = (
   now: number
 ): StoredToolServerToolRecord[] =>
   tools.map(tool => ({
-    id: uuidv4(),
+    id: randomUUID(),
     server_id: serverId,
     name: tool.name,
     description: tool.description
@@ -325,7 +324,7 @@ export async function registerToolServer(
   const inventory = await pinInventory(input, timeoutMs);
   const now = Date.now();
   const record: StoredToolServerRecord = {
-    id: uuidv4(),
+    id: randomUUID(),
     user_id: adminUserId,
     name: encryptionService.encrypt(input.name.trim()),
     description: input.description
@@ -664,7 +663,7 @@ export async function setToolServerCredential(
   if (!server) throw new ResourcePolicyError('Unknown tool server', 400);
   const now = Date.now();
   await resources().toolServerCredentials.upsert({
-    id: uuidv4(),
+    id: randomUUID(),
     server_id: serverId,
     user_id: userId,
     secret: encryptionService

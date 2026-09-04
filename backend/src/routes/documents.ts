@@ -17,7 +17,6 @@
 
 import express from 'express';
 import multer from 'multer';
-import { v4 as uuidv4 } from 'uuid';
 import documentService, {
   DocumentResourceBusyError,
 } from '../services/documentService.js';
@@ -27,6 +26,7 @@ import { createLogger } from '../utils/logger.js';
 import { authenticate } from '../middleware/auth.js';
 import { fetchWebpageAsText } from '../utils/webpageFetcher.js';
 import { resolveDocumentFileType } from '../utils/documentExtraction.js';
+import { randomUUID } from 'node:crypto';
 
 const logger = createLogger('routes:documents');
 
@@ -181,7 +181,7 @@ router.post('/collections', async (req, res) => {
     }
     const now = Date.now();
     const collection = {
-      id: uuidv4(),
+      id: randomUUID(),
       name: name.trim().slice(0, 100),
       createdAt: now,
       updatedAt: now,

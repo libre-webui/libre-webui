@@ -15,7 +15,6 @@
  * limitations under the License.
  */
 
-import { v4 as uuidv4 } from 'uuid';
 import { getPersistence } from '../persistence/index.js';
 import type { StoredPluginVariable } from '../persistence/extensionTypes.js';
 import { encryptionService } from './encryptionService.js';
@@ -28,6 +27,7 @@ import {
   registerPluginCacheInvalidationListener,
   type PluginCacheInvalidation,
 } from './pluginCacheInvalidation.js';
+import { randomUUID } from 'node:crypto';
 
 const logger = createLogger('services:plugin-variables-service');
 
@@ -314,7 +314,7 @@ export class PluginVariablesService {
           : stringValue;
 
         upserts.push({
-          id: uuidv4(),
+          id: randomUUID(),
           user_id: effectiveUserId,
           plugin_id: pluginId,
           variable_name: name,

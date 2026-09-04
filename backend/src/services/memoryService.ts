@@ -5,7 +5,6 @@
  */
 
 import crypto from 'node:crypto';
-import { v4 as uuidv4 } from 'uuid';
 import { getPlatformStorageRuntime } from '../platform/storage/index.js';
 import { assertPersonaMemoryStillReferenced } from '../platform/storage/personaMemoryIndexing.js';
 import type { PersonaMemoryRecord } from '../platform/storage/platformDomainRepositories.js';
@@ -23,6 +22,7 @@ import {
   createConsolidatedContent,
   type MemoryType,
 } from './memoryUtils.js';
+import { randomUUID } from 'node:crypto';
 
 const logger = createLogger('memory');
 const MEMORY_VECTOR_NAMESPACE = 'persona-memory';
@@ -760,7 +760,7 @@ export class MemoryService {
         userId
       );
       const combinedRecord: PersonaMemoryRecord = {
-        id: uuidv4(),
+        id: randomUUID(),
         userId,
         personaId,
         content,

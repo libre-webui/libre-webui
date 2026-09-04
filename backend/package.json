@@ -41,7 +41,6 @@
     "redis": "^6.2.1",
     "sanitize-filename": "^1.6.3",
     "undici": "^8.10.0",
-    "uuid": "^14.0.0",
     "ws": "^8.14.2"
   },
   "devDependencies": {

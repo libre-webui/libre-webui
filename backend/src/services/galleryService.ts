@@ -5,7 +5,6 @@
  */
 
 import { Readable } from 'node:stream';
-import { v4 as uuidv4 } from 'uuid';
 import { getPlatformStorageRuntime } from '../platform/storage/index.js';
 import { transactionalResourceDeletionEnqueuer } from '../platform/jobs/resourceDeletionEnqueuer.js';
 import { getDurableJobRuntime } from '../platform/jobs/durableJobRuntime.js';
@@ -20,6 +19,7 @@ import type {
   GeneratedMediaKind,
 } from '../types/index.js';
 import { createLogger } from '../utils/logger.js';
+import { randomUUID } from 'node:crypto';
 
 const logger = createLogger('services:gallery-service');
 const RESOURCE_TYPE = 'generated-media';
@@ -281,7 +281,7 @@ class GalleryService {
         createdAt: requestedCreatedAt,
         ...mediaParams
       } = params;
-      const id = requestedId ?? uuidv4();
+      const id = requestedId ?? randomUUID();
       const createdAt = requestedCreatedAt ?? Date.now();
       if (requestedId) {
         const existing = await this.getRecord(requestedId, userId);

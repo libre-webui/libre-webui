@@ -17,7 +17,6 @@
 
 import crypto from 'node:crypto';
 import { Readable } from 'node:stream';
-import { v4 as uuidv4 } from 'uuid';
 import { DocumentChunk, DocumentFileType } from '../types/index.js';
 import { Document } from '../storage.js';
 import storageService from '../storage.js';
@@ -73,6 +72,7 @@ import {
   reciprocalRankFusion,
   scoreCandidatesBm25,
 } from '../utils/hybridRetrieval.js';
+import { randomUUID } from 'node:crypto';
 import {
   DocumentExtractionError,
   detectImageMimeType,
@@ -586,7 +586,7 @@ export class DocumentService {
         };
       }
     }
-    const documentId = uuidv4();
+    const documentId = randomUUID();
     const now = Date.now();
     const document: Document = {
       id: documentId,
@@ -699,7 +699,7 @@ export class DocumentService {
     userId: string,
     sessionId?: string
   ): Promise<Document> {
-    const documentId = uuidv4();
+    const documentId = randomUUID();
     try {
       const { content, fileType, segments } = await extractDocumentContent(
         fileName,

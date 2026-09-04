@@ -26,8 +26,7 @@
  */
 
 import { EventEmitter } from 'node:events';
-import { createHash } from 'node:crypto';
-import { v4 as uuidv4 } from 'uuid';
+import { createHash, randomUUID } from 'node:crypto';
 import { getPersistence } from '../persistence/index.js';
 import type { StoredToolApprovalRecord } from '../persistence/index.js';
 import type {
@@ -97,7 +96,7 @@ export async function createPendingApproval(
 ): Promise<ToolApproval> {
   const now = Date.now();
   const record: StoredToolApprovalRecord = {
-    id: uuidv4(),
+    id: randomUUID(),
     user_id: request.userId,
     session_id: request.sessionId,
     server_id: request.serverId,

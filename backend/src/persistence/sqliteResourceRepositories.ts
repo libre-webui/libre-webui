@@ -16,7 +16,7 @@
  */
 
 import type Database from 'better-sqlite3';
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID } from 'node:crypto';
 import type {
   ApplicationResourceRepositories,
   ArenaVoteRepository,
@@ -3262,7 +3262,7 @@ class SQLitePreferenceRepository implements PreferenceRepository {
       );
       for (const preference of preferences) {
         insert.run(
-          uuidv4(),
+          randomUUID(),
           owner.id,
           preference.key,
           preference.value,
@@ -3480,7 +3480,7 @@ class SQLiteDataArchiveRepository implements DataArchiveRepository {
       );
       for (const preference of preferences) {
         insertPreference.run(
-          uuidv4(),
+          randomUUID(),
           plan.userId,
           preference.key,
           preference.value,

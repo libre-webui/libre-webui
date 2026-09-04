@@ -4,7 +4,6 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  */
 
-import { v4 as uuidv4 } from 'uuid';
 import { getPlatformStorageRuntime } from '../platform/storage/index.js';
 import type { PersonaPatch } from '../platform/storage/platformDomainRepositories.js';
 import type {
@@ -12,6 +11,7 @@ import type {
   Persona,
   UpdatePersonaRequest,
 } from '../types/index.js';
+import { randomUUID } from 'node:crypto';
 
 export class PersonaModel {
   async getPersonas(userId = 'default'): Promise<Persona[]> {
@@ -36,7 +36,7 @@ export class PersonaModel {
   ): Promise<Persona> {
     const now = Date.now();
     const persona: Persona = {
-      id: uuidv4(),
+      id: randomUUID(),
       user_id: userId,
       name: data.name,
       ...(data.description ? { description: data.description } : {}),

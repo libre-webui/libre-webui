@@ -15,10 +15,10 @@
  * limitations under the License.
  */
 
-import { v4 as uuidv4 } from 'uuid';
 import { getPersistence } from '../persistence/index.js';
 import { encryptionService } from './encryptionService.js';
 import { createLogger } from '../utils/logger.js';
+import { randomUUID } from 'node:crypto';
 
 const logger = createLogger('services:plugin-credentials-service');
 
@@ -148,7 +148,7 @@ class PluginCredentialsService {
 
       const existing = await this.repository().find(pluginId, effectiveUserId);
       await this.repository().upsert({
-        id: existing?.id ?? uuidv4(),
+        id: existing?.id ?? randomUUID(),
         user_id: effectiveUserId,
         plugin_id: pluginId,
         api_key: encryptedKey,

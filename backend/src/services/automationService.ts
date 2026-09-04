@@ -15,8 +15,12 @@
  * limitations under the License.
  */
 
-import { createHash, randomBytes, timingSafeEqual } from 'node:crypto';
-import { v4 as uuidv4 } from 'uuid';
+import {
+  createHash,
+  randomBytes,
+  timingSafeEqual,
+  randomUUID,
+} from 'node:crypto';
 import type {
   Automation,
   AutomationNotify,
@@ -244,7 +248,7 @@ class AutomationService {
     const now = Date.now();
     const status = (existing?.status ?? 'active') as AutomationStatus;
     const record: StoredAutomationRecord = {
-      id: existing?.id ?? uuidv4(),
+      id: existing?.id ?? randomUUID(),
       user_id: userId,
       name: encryptionService.encrypt(input.name.trim()),
       instructions: encryptionService.encrypt(input.instructions.trim()),
@@ -363,7 +367,7 @@ class AutomationService {
     scheduledFor: number
   ): Promise<AutomationRun> {
     const record: StoredAutomationRunRecord = {
-      id: uuidv4(),
+      id: randomUUID(),
       automation_id: automationId,
       user_id: userId,
       scheduled_for: scheduledFor,

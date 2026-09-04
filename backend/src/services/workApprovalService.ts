@@ -26,7 +26,6 @@
  */
 
 import { EventEmitter } from 'node:events';
-import { v4 as uuidv4 } from 'uuid';
 import {
   getWorkPersistence,
   type WorkApprovalRow,
@@ -35,6 +34,7 @@ import {
 } from '../platform/workPersistence/index.js';
 import type { WorkLiveApproval } from '../types/work.js';
 import { recordAuditEvent } from './securityAuditService.js';
+import { randomUUID } from 'node:crypto';
 
 /** An unanswered approval stops waiting after this long (same as takeover). */
 export const WORK_APPROVAL_TIMEOUT_MS = 300_000;
@@ -187,7 +187,7 @@ class WorkApprovalService {
     let summary: string | null = JSON.stringify(request.summary);
     if (Buffer.byteLength(summary, 'utf8') > SUMMARY_MAX_BYTES) summary = null;
     const row: WorkApprovalRow = {
-      id: uuidv4(),
+      id: randomUUID(),
       task_id: request.taskId,
       run_id: request.runId,
       user_id: request.userId,
@@ -235,7 +235,7 @@ class WorkApprovalService {
     const approval = mapApproval(row);
     if (decision.approve && scope === 'always') {
       await persistence().insertApprovalRule({
-        id: uuidv4(),
+        id: randomUUID(),
         task_id: taskId,
         user_id: actorUserId,
         tool_name: row.tool_name,

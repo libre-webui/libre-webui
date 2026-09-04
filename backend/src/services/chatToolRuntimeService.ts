@@ -27,7 +27,6 @@
  * in-flight tool call, and any pending approval wait.
  */
 
-import { v4 as uuidv4 } from 'uuid';
 import type {
   ChatMessage,
   OllamaChatMessage,
@@ -58,6 +57,7 @@ import {
 } from './toolApprovalService.js';
 import { executeToolCall, type ToolCatalog } from './toolGatewayService.js';
 import type { OllamaChatStreamGenerator } from '../utils/ollamaStreaming.js';
+import { randomUUID } from 'node:crypto';
 
 export const MAX_TOOL_ROUNDS = 8;
 export const MAX_TOOL_CALLS_PER_ROUND = 8;
@@ -472,7 +472,7 @@ export function ollamaStreamAsPluginChunks(
                 push({
                   type: 'tool_call',
                   toolCall: {
-                    id: `ollama-call-${uuidv4()}`,
+                    id: `ollama-call-${randomUUID()}`,
                     name: fn.name,
                     arguments:
                       typeof fn.arguments === 'string'

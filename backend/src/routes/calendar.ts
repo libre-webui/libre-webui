@@ -16,7 +16,6 @@
  */
 
 import express from 'express';
-import { v4 as uuidv4 } from 'uuid';
 import { calendarService } from '../services/calendarService.js';
 import { ApiResponse, Calendar, CalendarEvent } from '../types/index.js';
 import { authenticate, AuthenticatedRequest } from '../middleware/auth.js';
@@ -30,6 +29,7 @@ import {
   occurrencesBetween,
   validateTriggers,
 } from '../utils/automationSchedule.js';
+import { randomUUID } from 'node:crypto';
 
 const router = express.Router();
 router.use(authenticate);
@@ -349,7 +349,7 @@ router.post('/events', async (req: AuthenticatedRequest, res) => {
   try {
     const now = Date.now();
     const event: CalendarEvent = {
-      id: uuidv4(),
+      id: randomUUID(),
       ...readEventBody((req.body ?? {}) as Record<string, unknown>),
       createdAt: now,
       updatedAt: now,
