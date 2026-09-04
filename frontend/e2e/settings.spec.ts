@@ -1897,9 +1897,12 @@ test('celestial theme paints a live sky and previews any minute of the day', asy
   await page.keyboard.press('Control+,');
   await expect(page.getByRole('heading', { name: 'Settings' })).toBeVisible();
 
+  // The neutral-or-tinted palette choice belongs to the flat themes.
+  await expect(page.getByText('Interface palette')).toBeVisible();
   await page.getByRole('button', { name: 'Celestial', exact: true }).click();
   const html = page.locator('html');
   await expect(html).toHaveClass(/celestial/);
+  await expect(page.getByText('Interface palette')).toHaveCount(0);
   const sky = page.getByTestId('celestial-sky');
   await expect(sky).toBeVisible();
   await expect(page.getByTestId('celestial-sun')).toHaveCount(1);

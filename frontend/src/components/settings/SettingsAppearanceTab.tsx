@@ -447,54 +447,58 @@ export function SettingsAppearanceTab({
           </label>
         </div>
 
-        <div>
-          <h4 className='text-sm leading-[22px] text-ink'>
-            {t('settings.appearance.accent.behaviorTitle')}
-          </h4>
-          <p className='mt-0.5 text-xs text-ink-subtle'>
-            {t('settings.appearance.accent.behaviorDescription')}
-          </p>
+        {/* Celestial paints the whole palette from the sky, so there is no
+            neutral-or-tinted choice to make. */}
+        {!isCelestial && (
+          <div>
+            <h4 className='text-sm leading-[22px] text-ink'>
+              {t('settings.appearance.accent.behaviorTitle')}
+            </h4>
+            <p className='mt-0.5 text-xs text-ink-subtle'>
+              {t('settings.appearance.accent.behaviorDescription')}
+            </p>
 
-          <div className='mt-3 flex flex-wrap items-stretch gap-2'>
-            <button
-              type='button'
-              aria-pressed={!theme.adaptToAccent}
-              onClick={() => onAdaptToAccentChange(false)}
-              className={cn(
-                'flex-1 basis-[180px] rounded-2xl border p-4 text-start transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40',
-                !theme.adaptToAccent
-                  ? 'border-line-strong bg-surface-subtle'
-                  : 'border-line hover:bg-interactive-hover'
-              )}
-            >
-              <span className='block text-sm leading-[22px] text-ink'>
-                {t('settings.appearance.accent.defaultStyle')}
-              </span>
-              <span className='mt-1 block text-xs leading-snug text-ink-subtle'>
-                {t('settings.appearance.accent.defaultStyleDescription')}
-              </span>
-            </button>
+            <div className='mt-3 flex flex-wrap items-stretch gap-2'>
+              <button
+                type='button'
+                aria-pressed={!theme.adaptToAccent}
+                onClick={() => onAdaptToAccentChange(false)}
+                className={cn(
+                  'flex-1 basis-[180px] rounded-2xl border p-4 text-start transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40',
+                  !theme.adaptToAccent
+                    ? 'border-line-strong bg-surface-subtle'
+                    : 'border-line hover:bg-interactive-hover'
+                )}
+              >
+                <span className='block text-sm leading-[22px] text-ink'>
+                  {t('settings.appearance.accent.defaultStyle')}
+                </span>
+                <span className='mt-1 block text-xs leading-snug text-ink-subtle'>
+                  {t('settings.appearance.accent.defaultStyleDescription')}
+                </span>
+              </button>
 
-            <button
-              type='button'
-              aria-pressed={theme.adaptToAccent === true}
-              onClick={() => onAdaptToAccentChange(true)}
-              className={cn(
-                'flex-1 basis-[180px] rounded-2xl border p-4 text-start transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40',
-                theme.adaptToAccent
-                  ? 'border-line-strong bg-surface-subtle'
-                  : 'border-line hover:bg-interactive-hover'
-              )}
-            >
-              <span className='block text-sm leading-[22px] text-ink'>
-                {t('settings.appearance.accent.adaptedStyle')}
-              </span>
-              <span className='mt-1 block text-xs leading-snug text-ink-subtle'>
-                {t('settings.appearance.accent.adaptedStyleDescription')}
-              </span>
-            </button>
+              <button
+                type='button'
+                aria-pressed={theme.adaptToAccent === true}
+                onClick={() => onAdaptToAccentChange(true)}
+                className={cn(
+                  'flex-1 basis-[180px] rounded-2xl border p-4 text-start transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40',
+                  theme.adaptToAccent
+                    ? 'border-line-strong bg-surface-subtle'
+                    : 'border-line hover:bg-interactive-hover'
+                )}
+              >
+                <span className='block text-sm leading-[22px] text-ink'>
+                  {t('settings.appearance.accent.adaptedStyle')}
+                </span>
+                <span className='mt-1 block text-xs leading-snug text-ink-subtle'>
+                  {t('settings.appearance.accent.adaptedStyleDescription')}
+                </span>
+              </button>
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Chat interface toggles. */}

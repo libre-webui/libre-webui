@@ -55,6 +55,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   React is no longer listed at the root, where every `npx libre-webui`
   install downloaded it for a prebuilt frontend that does not need it.
 
+### 🐛 Bug Fixes
+
+- Settings > Appearance no longer offers the neutral-or-tinted **Interface
+  palette** choice while the Celestial theme is active; the sky paints the
+  whole palette, so the choice had nothing to act on.
+
 ## [0.33.0] - 2026-09-04
 
 The sky comes indoors: a fourth theme follows the sun where you are, with a
