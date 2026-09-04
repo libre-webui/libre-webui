@@ -168,10 +168,17 @@ class WebSocketService {
     this.shouldReconnect = false;
     this.connectionEpoch += 1;
     this.connectPromise = null;
-    if (this.ws) {
-      this.ws.close();
-      this.ws = null;
+    const socket = this.ws;
+    if (!socket) return;
+    this.ws = null;
+    if (socket.readyState === WebSocket.CONNECTING) {
+      // Closing mid-handshake makes the browser log the attempt as a failed
+      // connection. The open handler sees the bumped epoch and closes the
+      // socket the moment it is established; a failed handshake settles
+      // through the epoch-guarded error and close handlers.
+      return;
     }
+    socket.close();
   }
 
   /**

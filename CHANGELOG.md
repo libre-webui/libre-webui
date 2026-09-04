@@ -63,6 +63,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The **Models** tab in Settings is grayed out, with a tooltip, while an
   administrator has the Ollama provider disabled, since the model manager
   only speaks to Ollama. The provider picker stays available.
+- The Work Computer screen relay rewrites a reserved WebSocket close code
+  from websockify (sent when its VNC target is gone) into one browsers
+  accept, so a lost screen ends as a clean close instead of "Received a
+  broken close frame containing a reserved status code".
+- The app no longer closes its first chat WebSocket mid-handshake when it
+  re-dials with the fresh token after sign-in, which logged "WebSocket is
+  closed before the connection is established" on every page load.
+- KaTeX no longer warns in the console about en and em dashes inside inline
+  math; it renders them as before.
 
 ## [0.33.0] - 2026-09-04
 

@@ -92,7 +92,17 @@ const RichMessageContentBase: React.FC<RichMessageContentProps> = ({
         html.richContentSanitizeSchema,
       ]);
     }
-    if (math) plugins.push(math.rehypeKatex);
+    if (math) {
+      plugins.push([
+        math.rehypeKatex,
+        {
+          // Replies use en and em dashes inside inline math; KaTeX renders
+          // them fine and only wants to warn. Keep the other warnings.
+          strict: (errorCode: string) =>
+            errorCode === 'unknownSymbol' ? 'ignore' : 'warn',
+        },
+      ]);
+    }
     return plugins;
   }, [html, math]);
 

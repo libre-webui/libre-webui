@@ -44,6 +44,7 @@ import workPolicyService from './services/workPolicyService.js';
 import { WorkRuntimeError } from './services/workRuntimeShared.js';
 import type { WorkTaskRecord } from './types/work.js';
 import { createLogger } from './utils/logger.js';
+import { createCloseCodeSanitizer } from './utils/websocketCloseCodes.js';
 
 const logger = createLogger('work-screen');
 
@@ -324,7 +325,11 @@ async function handleScreenUpgrade(
     socket.write(
       `HTTP/1.1 101 Switching Protocols\r\n${safeLines.join('\r\n')}\r\n\r\n`
     );
-    if (remainder.length > 0) socket.write(remainder);
+    // Everything websockify sends after the handshake crosses the sanitizer,
+    // which rewrites a reserved close code into one a browser accepts.
+    const upstreamFrames = createCloseCodeSanitizer();
+    upstreamFrames.pipe(socket);
+    if (remainder.length > 0) upstreamFrames.write(remainder);
     if (head.length > 0) upstreamSocket.write(head);
 
     const cleanup = (): void => {
@@ -343,7 +348,7 @@ async function handleScreenUpgrade(
       upstreamSocket.destroy();
       cleanup();
     });
-    upstreamSocket.pipe(socket);
+    upstreamSocket.pipe(upstreamFrames);
     socket.pipe(upstreamSocket);
   };
   upstreamSocket.on('data', onHandshakeData);
