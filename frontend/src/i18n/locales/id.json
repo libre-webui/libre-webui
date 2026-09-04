@@ -599,7 +599,8 @@
       "about": "Tentang",
       "sessions": "Sesi",
       "apiKeys": "API key",
-      "notifications": "Notifikasi"
+      "notifications": "Notifikasi",
+      "ollamaDisabled": "Ollama dinonaktifkan oleh administrator"
     },
     "appearance": {
       "title": "Tampilan",

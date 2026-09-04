@@ -60,6 +60,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Settings > Appearance no longer offers the neutral-or-tinted **Interface
   palette** choice while the Celestial theme is active; the sky paints the
   whole palette, so the choice had nothing to act on.
+- The **Models** tab in Settings is grayed out, with a tooltip, while an
+  administrator has the Ollama provider disabled, since the model manager
+  only speaks to Ollama. The provider picker stays available.
 
 ## [0.33.0] - 2026-09-04
 

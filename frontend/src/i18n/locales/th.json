@@ -599,7 +599,8 @@
       "about": "เกี่ยวกับ",
       "sessions": "เซสชัน",
       "apiKeys": "คีย์ API",
-      "notifications": "การแจ้งเตือน"
+      "notifications": "การแจ้งเตือน",
+      "ollamaDisabled": "ผู้ดูแลระบบปิดใช้งาน Ollama แล้ว"
     },
     "appearance": {
       "title": "รูปลักษณ์",

@@ -599,7 +599,8 @@
       "about": "概要",
       "sessions": "セッション",
       "apiKeys": "APIキー",
-      "notifications": "通知"
+      "notifications": "通知",
+      "ollamaDisabled": "Ollama は管理者によって無効化されています"
     },
     "appearance": {
       "title": "外観",

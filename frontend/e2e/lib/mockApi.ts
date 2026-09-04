@@ -512,7 +512,7 @@ type MockOptions = {
   personas?: MockPersona[];
 };
 
-const defaultSystemInfo: MockSystemInfo = {
+export const defaultSystemInfo: MockSystemInfo = {
   requiresAuth: false,
   hasUsers: true,
   userCount: 1,

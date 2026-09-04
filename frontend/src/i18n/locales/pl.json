@@ -599,7 +599,8 @@
       "about": "O programie",
       "sessions": "Sesje",
       "apiKeys": "Klucze API",
-      "notifications": "Powiadomienia"
+      "notifications": "Powiadomienia",
+      "ollamaDisabled": "Ollama został wyłączony przez administratora"
     },
     "appearance": {
       "title": "Wygląd",

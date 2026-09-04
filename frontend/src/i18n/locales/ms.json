@@ -599,7 +599,8 @@
       "about": "Perihal",
       "sessions": "Sesi",
       "apiKeys": "Kunci API",
-      "notifications": "Pemberitahuan"
+      "notifications": "Pemberitahuan",
+      "ollamaDisabled": "Ollama dilumpuhkan oleh pentadbir"
     },
     "appearance": {
       "title": "Penampilan",

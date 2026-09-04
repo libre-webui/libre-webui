@@ -599,7 +599,8 @@
       "about": "Über",
       "sessions": "Sitzungen",
       "apiKeys": "API-Schlüssel",
-      "notifications": "Benachrichtigungen"
+      "notifications": "Benachrichtigungen",
+      "ollamaDisabled": "Ollama wurde von einem Administrator deaktiviert"
     },
     "appearance": {
       "title": "Darstellung",

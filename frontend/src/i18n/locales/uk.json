@@ -599,7 +599,8 @@
       "about": "Про програму",
       "sessions": "Сеанси",
       "apiKeys": "API-ключі",
-      "notifications": "Сповіщення"
+      "notifications": "Сповіщення",
+      "ollamaDisabled": "Ollama вимкнено адміністратором"
     },
     "appearance": {
       "title": "Зовнішній вигляд",

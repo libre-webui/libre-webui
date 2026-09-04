@@ -599,7 +599,8 @@
       "about": "Giới thiệu",
       "sessions": "Phiên đăng nhập",
       "apiKeys": "Khóa API",
-      "notifications": "Thông báo"
+      "notifications": "Thông báo",
+      "ollamaDisabled": "Ollama đã bị quản trị viên vô hiệu hóa"
     },
     "appearance": {
       "title": "Giao diện",

@@ -599,7 +599,8 @@
       "about": "Hakkında",
       "sessions": "Oturumlar",
       "apiKeys": "API Anahtarları",
-      "notifications": "Bildirimler"
+      "notifications": "Bildirimler",
+      "ollamaDisabled": "Ollama bir yönetici tarafından devre dışı bırakıldı"
     },
     "appearance": {
       "title": "Görünüm",

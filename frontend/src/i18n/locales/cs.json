@@ -599,7 +599,8 @@
       "about": "O aplikaci",
       "sessions": "Relace",
       "apiKeys": "API klíče",
-      "notifications": "Oznámení"
+      "notifications": "Oznámení",
+      "ollamaDisabled": "Ollama je zakázána správcem"
     },
     "appearance": {
       "title": "Vzhled",

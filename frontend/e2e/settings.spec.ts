@@ -16,7 +16,7 @@
  */
 
 import { expect, test, type Page } from '@playwright/test';
-import { mockLibreWebUiApi } from './lib/mockApi';
+import { defaultSystemInfo, mockLibreWebUiApi } from './lib/mockApi';
 import {
   openSettingsModal,
   openSettingsTab,
@@ -2021,4 +2021,28 @@ test.describe('celestial location and weather', () => {
       '45.50°, -73.57°'
     );
   });
+});
+
+test('the Models tab is grayed out while an administrator has Ollama disabled', async ({
+  page,
+}) => {
+  await mockLibreWebUiApi(page, {
+    systemInfo: { ...defaultSystemInfo, ollamaEnabled: false },
+  });
+  await page.goto('/chat');
+  await expect(page.getByRole('textbox', { name: 'Message...' })).toBeVisible();
+  await page.keyboard.press('Control+,');
+  await expect(page.getByRole('heading', { name: 'Settings' })).toBeVisible();
+
+  const modelManager = page.getByTestId('settings-tab-model-manager');
+  await expect(modelManager).toBeDisabled();
+  await expect(modelManager).toHaveAttribute(
+    'title',
+    'Ollama is disabled by an administrator'
+  );
+  await modelManager.click({ force: true });
+  await expect(modelManager).toHaveAttribute('aria-selected', 'false');
+
+  // The provider picker itself stays reachable: other providers still work.
+  await expect(page.getByTestId('settings-tab-models')).toBeEnabled();
 });

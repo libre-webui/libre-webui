@@ -599,7 +599,8 @@
       "about": "Over",
       "sessions": "Sessies",
       "apiKeys": "API-sleutels",
-      "notifications": "Meldingen"
+      "notifications": "Meldingen",
+      "ollamaDisabled": "Ollama is uitgeschakeld door een beheerder"
     },
     "appearance": {
       "title": "Weergave",

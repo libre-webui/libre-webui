@@ -599,7 +599,8 @@
       "about": "परिचय",
       "sessions": "सत्र",
       "apiKeys": "API कुंजियाँ",
-      "notifications": "सूचनाएँ"
+      "notifications": "सूचनाएँ",
+      "ollamaDisabled": "Ollama को एक व्यवस्थापक द्वारा अक्षम किया गया है"
     },
     "appearance": {
       "title": "दिखावट",

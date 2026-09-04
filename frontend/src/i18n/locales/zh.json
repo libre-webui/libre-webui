@@ -599,7 +599,8 @@
       "about": "关于",
       "sessions": "登录会话",
       "apiKeys": "API 密钥",
-      "notifications": "通知"
+      "notifications": "通知",
+      "ollamaDisabled": "管理员已禁用 Ollama"
     },
     "appearance": {
       "title": "外观",

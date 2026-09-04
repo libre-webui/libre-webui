@@ -599,7 +599,8 @@
       "about": "حول",
       "sessions": "الجلسات",
       "apiKeys": "مفاتيح API",
-      "notifications": "الإشعارات"
+      "notifications": "الإشعارات",
+      "ollamaDisabled": "تم تعطيل Ollama من قبل مسؤول"
     },
     "appearance": {
       "title": "المظهر",

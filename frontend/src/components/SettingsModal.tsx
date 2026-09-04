@@ -1748,6 +1748,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           id: 'model-manager',
           label: t('models.title'),
           icon: Database,
+          // The model manager only speaks to Ollama; when an administrator
+          // has switched the provider off there is nothing in it to manage.
+          disabled: settingsSystemInfo?.ollamaEnabled === false,
+          disabledHint: t('settings.tabs.ollamaDisabled'),
         },
         {
           id: 'generation',
@@ -2155,20 +2159,26 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                       {group.tabs.map(tab => {
                         const Icon = tab.icon;
                         const isActive = activeTab === tab.id;
+                        const isDisabled = tab.disabled === true;
 
                         return (
                           <button
                             key={tab.id}
                             data-testid={`settings-tab-${tab.id}`}
                             onClick={() => setActiveTab(tab.id)}
+                            disabled={isDisabled}
+                            title={isDisabled ? tab.disabledHint : undefined}
                             className={cn(
                               'flex h-9 shrink-0 items-center gap-2 rounded-xl px-3 text-start transition-colors duration-150 touch-manipulation outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 sm:w-full',
-                              isActive
-                                ? 'bg-nav-active text-ink'
-                                : 'text-ink hover:bg-hover-solid'
+                              isDisabled
+                                ? 'cursor-not-allowed text-ink-subtle opacity-60'
+                                : isActive
+                                  ? 'bg-nav-active text-ink'
+                                  : 'text-ink hover:bg-hover-solid'
                             )}
                             role='tab'
                             aria-selected={isActive}
+                            aria-disabled={isDisabled || undefined}
                             aria-controls='settings-tab-panel'
                           >
                             <Icon

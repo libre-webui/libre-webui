@@ -599,7 +599,8 @@
       "about": "Um",
       "sessions": "Setur",
       "apiKeys": "API lyklar",
-      "notifications": "Tilkynningar"
+      "notifications": "Tilkynningar",
+      "ollamaDisabled": "Stjórnandi hefur slökkt á Ollama"
     },
     "appearance": {
       "title": "Útlit",

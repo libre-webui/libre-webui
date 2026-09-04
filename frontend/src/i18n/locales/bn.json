@@ -599,7 +599,8 @@
       "about": "সম্পর্কে",
       "sessions": "সেশন",
       "apiKeys": "API কী",
-      "notifications": "বিজ্ঞপ্তি"
+      "notifications": "বিজ্ঞপ্তি",
+      "ollamaDisabled": "একজন প্রশাসক Ollama নিষ্ক্রিয় করেছেন"
     },
     "appearance": {
       "title": "চেহারা",

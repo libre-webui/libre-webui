@@ -599,7 +599,8 @@
       "about": "Om",
       "sessions": "Sessioner",
       "apiKeys": "API-nøgler",
-      "notifications": "Notifikationer"
+      "notifications": "Notifikationer",
+      "ollamaDisabled": "Ollama er deaktiveret af en administrator"
     },
     "appearance": {
       "title": "Udseende",

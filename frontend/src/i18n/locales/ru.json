@@ -599,7 +599,8 @@
       "about": "О программе",
       "sessions": "Сеансы",
       "apiKeys": "API-ключи",
-      "notifications": "Уведомления"
+      "notifications": "Уведомления",
+      "ollamaDisabled": "Ollama отключён администратором"
     },
     "appearance": {
       "title": "Внешний вид",

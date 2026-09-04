@@ -599,7 +599,8 @@
       "about": "정보",
       "sessions": "세션",
       "apiKeys": "API 키",
-      "notifications": "알림"
+      "notifications": "알림",
+      "ollamaDisabled": "관리자가 Ollama를 비활성화했습니다"
     },
     "appearance": {
       "title": "외관",

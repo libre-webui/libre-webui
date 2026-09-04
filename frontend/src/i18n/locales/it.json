@@ -599,7 +599,8 @@
       "about": "Informazioni",
       "sessions": "Sessioni",
       "apiKeys": "Chiavi API",
-      "notifications": "Notifiche"
+      "notifications": "Notifiche",
+      "ollamaDisabled": "Ollama è disattivato da un amministratore"
     },
     "appearance": {
       "title": "Aspetto",
