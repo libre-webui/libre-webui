@@ -199,9 +199,10 @@ test('Arabic mirrors the new Home and tab menus', async ({ page }) => {
   await expect(
     newTabMenu.getByRole('menuitem', { name: 'الوكلاء' })
   ).toBeVisible();
+  // User Management moved into Settings; it is no longer a page tab.
   await expect(
     newTabMenu.getByRole('menuitem', { name: 'إدارة المستخدمين' })
-  ).toBeVisible();
+  ).toHaveCount(0);
 
   const incognitoMenuItem = newTabMenu.getByRole('menuitem', {
     name: 'دردشة مخفية',
