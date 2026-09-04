@@ -43,7 +43,6 @@ import {
   REVALIDATE_CACHE_CONTROL,
 } from './middleware/staticAssets.js';
 import { isChatCancellationSafetyRequest } from './middleware/chatCancellationAdmission.js';
-import cors from 'cors';
 import helmet from 'helmet';
 import { createServer } from 'http';
 import { join as pathJoin } from 'path';
@@ -58,6 +57,7 @@ import {
   requestContext,
   requestLogger,
 } from './middleware/index.js';
+import { createCorsMiddleware } from './middleware/cors.js';
 import {
   authenticate,
   optionalAuth,
@@ -432,7 +432,7 @@ app.use(
 
 // CORS configuration
 app.use(
-  cors({
+  createCorsMiddleware({
     ...corsConfig,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization'],
@@ -440,8 +440,8 @@ app.use(
   })
 );
 
-// Correlation ids and logging. The access log deliberately replaces
-// morgan's combined format: it strips query strings (which can carry user
+// Correlation ids and logging. The access log deliberately differs from the
+// usual "combined" format: it strips query strings (which can carry user
 // content or short-lived credentials) and carries the request id.
 app.use(requestContext);
 app.use(otelRequestTelemetry);

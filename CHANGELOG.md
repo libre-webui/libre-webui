@@ -38,6 +38,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   dependency is gone from the server, the CLI, and the Vite config. Same
   lookup order (`backend/.env`, then the root `.env`), operator variables
   still win, and a missing file is still skipped.
+- **Smaller server dependency tree.** `morgan` was no longer used (the
+  access log has its own format that strips query strings) and is removed,
+  and the `cors` package is replaced by a forty-line middleware with the same
+  behavior: allowed origins are echoed with credentials and `Vary: Origin`,
+  preflights get a 204 with the configured methods and headers, and a
+  foreign origin is still refused.
 
 ## [0.33.0] - 2026-09-04
 
