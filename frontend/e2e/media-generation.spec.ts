@@ -268,3 +268,62 @@ test('provider cancellation is offered only for a cancellable saved video job', 
     .poll(() => mockApi.videoCancelRequests)
     .toEqual(['cancellable-job']);
 });
+
+test('Imagine keeps rendering gallery images across filter changes', async ({
+  page,
+}) => {
+  await mockLibreWebUiApi(page);
+  // A 1x1 PNG, served the way the real content route serves bytes.
+  const png = Buffer.from(
+    'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==',
+    'base64'
+  );
+  const items = ['img-1', 'img-2'].map(id => ({
+    id,
+    userId: 'default',
+    kind: 'image',
+    prompt: `Libre WebUI as ${id}`,
+    model: 'meta/muse-image',
+    mediaData: `/api/media/gallery/${id}/content`,
+    mimeType: 'image/png',
+    createdAt: Date.now(),
+  }));
+  await page.route(/\/api\/media\/gallery(\?.*)?$/, async route => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        success: true,
+        data: { media: items, total: items.length },
+      }),
+    });
+  });
+  await page.route(/\/api\/media\/gallery\/img-\d\/content$/, async route => {
+    await route.fulfill({ status: 200, contentType: 'image/png', body: png });
+  });
+  await page.addInitScript(() => {
+    localStorage.setItem('i18nextLng', 'en');
+    localStorage.setItem('auth-token', 'e2e-token');
+  });
+
+  await page.goto('/gallery');
+  const cards = page.locator('img[alt^="Libre WebUI as img-"]');
+  await expect(cards).toHaveCount(2);
+  const rendered = () =>
+    cards.evaluateAll(images =>
+      images.every(
+        image => (image as HTMLImageElement).naturalWidth > 0 && image.complete
+      )
+    );
+  await expect.poll(rendered).toBe(true);
+
+  // Remounting the cards (filter away and back) must not leave them pointing
+  // at revoked blob URLs.
+  await page.getByRole('button', { name: 'Images', exact: true }).click();
+  await expect(cards).toHaveCount(2);
+  await expect.poll(rendered).toBe(true);
+  await page.getByRole('button', { name: 'All', exact: true }).click();
+  await expect(cards).toHaveCount(2);
+  await page.waitForTimeout(300);
+  await expect.poll(rendered).toBe(true);
+});

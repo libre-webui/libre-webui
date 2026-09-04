@@ -5,7 +5,7 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  */
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   useInfiniteQuery,
   useQuery,
@@ -224,13 +224,32 @@ function MediaPreview({
     queryFn: () => mediaApi.getGalleryContent(item.id),
     staleTime: 5 * 60_000,
   });
+  // The object URL is revoked a tick after the card unmounts. React strict
+  // mode (and a remount on a filter change) runs the cleanup and then the
+  // effect again for the same blob; the re-run cancels the pending revoke,
+  // so the <img> never points at a dead blob: URL.
   const source = useMemo(() => (blob ? URL.createObjectURL(blob) : ''), [blob]);
-  useEffect(
-    () => () => {
-      if (source) URL.revokeObjectURL(source);
-    },
-    [source]
+  const pendingRevokes = useRef(
+    new Map<string, ReturnType<typeof setTimeout>>()
   );
+  useEffect(() => {
+    if (!source) return;
+    const pending = pendingRevokes.current;
+    const scheduled = pending.get(source);
+    if (scheduled) {
+      clearTimeout(scheduled);
+      pending.delete(source);
+    }
+    return () => {
+      pending.set(
+        source,
+        setTimeout(() => {
+          pending.delete(source);
+          URL.revokeObjectURL(source);
+        }, 0)
+      );
+    };
+  }, [source]);
 
   if (isLoading || !source) {
     return (
