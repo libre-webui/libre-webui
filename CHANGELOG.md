@@ -48,6 +48,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   removed from the server; every id it minted is a version 4 UUID, exactly
   what Node's built-in produces, so stored ids and their validators are
   unaffected.
+- **Manifest cleanup.** `sonner`, `lowlight`, and `@types/pdf-parse` were
+  declared but never imported; four type packages for artifact-runtime
+  libraries that no type-check ever reads are gone; `tar` and the
+  `jsonwebtoken` and `multer` types move to development dependencies; and
+  React is no longer listed at the root, where every `npx libre-webui`
+  install downloaded it for a prebuilt frontend that does not need it.
 
 ## [0.33.0] - 2026-09-04
 
