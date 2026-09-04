@@ -9,23 +9,83 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### ✨ New Features
 
-- **Celestial theme.** A fourth theme that follows the sun where you are: the
-  palette and a live sky (sun or moon on its arc, drifting clouds, stars after
-  dusk, a pointer-following lamp at night that brightens as you type) shift
-  minute by minute, with sunrise and sunset moving through the year. The
-  theme toggle cycles through it, administrators can make it the instance
-  default, and Settings > Appearance has a scrubber to preview any minute.
-  Share a location (or type coordinates) and sunrise and sunset are solved
-  for your actual sky; the location is rounded, kept only in that browser,
-  and never sent to the server. With a location, **Match the weather**
-  pulls current conditions from Open-Meteo straight into the browser so
-  clouds, rain, snow, fog, thunder, and wind shape the sky too.
-
 ### 🔧 Improvements
 
 ### 🐛 Bug Fixes
 
 ### 📚 Documentation
+
+## [0.33.0] - 2026-09-04
+
+The sky comes indoors: a fourth theme follows the sun where you are, with a
+live sky behind an interface that steps back while you write. Administration
+moves into Settings, and the demo lands in the new theme.
+
+### ✨ New Features
+
+- **Celestial theme.** A fourth theme that follows the sun: the palette and a
+  live sky shift minute by minute, with sunrise and sunset moving through the
+  year. The sun or moon crosses on its arc (the moon shows its real phase),
+  clouds drift at different depths, stars come out after dusk with the odd
+  meteor, a horizon glow spreads under a low sun, and an aurora ribbons across
+  the night while a reply streams. The scene parallaxes with the pointer and
+  tilts as you scroll the conversation; at night a lamp follows the pointer
+  over the words and brightens with each keystroke. While you type, the
+  sidebar and tab strip step back so the words sit in the landscape. The
+  theme toggle cycles through it, administrators can make it the instance
+  default, the sign-in page renders the sky, and choosing Celestial plays the
+  last six hours into the present.
+- **Time of day scrubber.** Settings > Appearance previews any minute of the
+  day with today's sunrise and sunset shown; **Follow the clock** returns to
+  real time.
+- **Your actual sky, and your weather, on your terms.** Share a location
+  (browser prompt or typed coordinates) and sunrise, sunset, and solar noon
+  are solved for that spot. Coordinates are rounded to about a kilometre,
+  kept only in that browser, and never join the synced preference, so the
+  server never learns them. With a location, an opt-in **Match the weather**
+  switch fetches current conditions from Open-Meteo straight into the
+  browser: cloud cover greys the sky and dims the sun and stars, rain and
+  snow fall, fog washes the horizon, storms flash, and wind drives the
+  clouds. Everything above respects reduced-motion settings.
+- **User Management lives in Settings.** Administrators find it under a new
+  **Administration** group in the Settings panel, with every access toggle,
+  policy, group, audit log, and the user list. The old `/users` link, the
+  avatar-menu shortcut, and the pending-approval badge still work: they open
+  that tab. Translated into all 25 languages.
+- **The demo lands in Celestial.** demo.librewebui.org opens in the new
+  theme before the app even paints.
+
+### 🔧 Improvements
+
+- The celestial sky stays off the main thread: clouds drift and the sun and
+  moon glide on the compositor, stars twinkle on their own layers, and colours
+  ease briefly after each tick. Idle cost is about 2% of a core with no
+  layout work, and the heap stays flat across theme switches and long idles.
+- Muted text keeps its contrast over the sky, the frame (sidebar and tab
+  strip) is one continuous surface exactly as in the flat themes, the user's
+  bubbles are dark glass at night, and the composer is glass at all hours.
+- The README hero shows the celestial dusk with a Three.js artifact.
+
+### 🐛 Bug Fixes
+
+- Imagine: gallery images no longer break after a filter change or a
+  strict-mode remount. Each card's blob URL was revoked while the image still
+  pointed at it; the revoke is now deferred and cancelled when the card comes
+  straight back.
+- Visiting Settings in a flat theme no longer mounts an invisible celestial
+  sky behind the interface.
+
+### 🔒 Security
+
+- The compressed static-asset middleware resolves every requested file
+  inside the dist root and rejects anything that normalizes elsewhere,
+  closing a CodeQL path-injection finding; traversal attempts are tested.
+
+### 📚 Documentation
+
+- Pro tips describe the celestial theme, the scrubber, location, and
+  weather; every page that pointed at the User Management page now points at
+  Settings > User Management.
 
 ## [0.32.0] - 2026-09-03
 
