@@ -712,6 +712,11 @@ html.celestial [data-app-shell] {
   background-color: rgb(var(--color-sidebar) / 0.5);
   backdrop-filter: blur(18px) saturate(1.1);
 }
+/* No wash on the content column: the tab strip and the sidebar must be the
+   very same surface, with no seam between them. */
+html.celestial [data-testid='app-shell-content'] {
+  background-color: transparent;
+}
 html.celestial [data-app-main] {
   background-color: rgb(var(--color-canvas) / 0.42);
   backdrop-filter: blur(12px) saturate(1.15);
