@@ -735,6 +735,16 @@ html.celestial [data-user-bubble] {
   background-color: rgb(var(--color-surface-inverse) / 0.78);
   backdrop-filter: blur(10px);
 }
+/* After dark the inverse surface is pale, so the bubble becomes dark glass
+   with ink text and a hairline that catches the lamp. */
+html.celestial.dark [data-user-bubble] {
+  background-color: rgb(var(--color-surface-raised) / 0.72);
+  color: rgb(var(--color-ink));
+  border-color: rgb(255 255 255 / 0.14);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.06),
+    0 8px 30px rgb(0 0 0 / 0.25);
+}
 /* While the user is typing, the chrome steps back so the words sit in the
    landscape; hovering or leaving the composer brings it back. */
 html.celestial [data-app-sidebar],
