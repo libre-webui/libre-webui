@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 import { v4 as uuidv4 } from 'uuid';
 import { getPersistence } from '../persistence/index.js';
 import { encryptionService } from '../services/encryptionService.js';

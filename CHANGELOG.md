@@ -30,6 +30,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   off, response size caps are enforced by Content-Length and then by a
   counted read, redirects are refused so credentials never follow a 3xx, and
   cancellation, timeout, and unreachable-host errors stay distinguishable.
+- **Passwords hash with `bcryptjs`.** The native `bcrypt` module and its
+  types are gone, one fewer binary to build or fetch on unusual platforms.
+  Same cost factor, same `$2b$` format; every existing password hash keeps
+  verifying.
 
 ## [0.33.0] - 2026-09-04
 

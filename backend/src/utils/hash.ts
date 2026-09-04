@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 
 /**
  * Hash a password using bcrypt
