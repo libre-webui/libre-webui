@@ -6,7 +6,7 @@
   "description": "Backend API for Libre WebUI",
   "main": "dist/main.js",
   "scripts": {
-    "dev": "tsx watch src/main.ts",
+    "dev": "node --watch --import tsx src/main.ts",
     "build": "node -e \"require('fs').rmSync('dist', { recursive: true, force: true })\" && tsc",
     "start": "node dist/main.js",
     "type-check": "tsc --noEmit",

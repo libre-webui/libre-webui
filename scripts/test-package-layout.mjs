@@ -15,6 +15,66 @@ const repoRoot = path.resolve(__dirname, '..');
 const npmCommand = process.platform === 'win32' ? 'npm.cmd' : 'npm';
 const requireFromTest = createRequire(import.meta.url);
 
+test('backend development watcher loads environment files and reloads TypeScript', async () => {
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'libre-dev-watch-'));
+  const fixture = path.join(directory, 'main.mts');
+  const envFile = path.join(directory, '.env');
+  fs.writeFileSync(envFile, 'LIBRE_WATCH_TEST=loaded\n');
+  const source = label => `
+    import { loadEnvFile } from 'node:process';
+    loadEnvFile(${JSON.stringify(envFile)});
+    const label: string = ${JSON.stringify(label)};
+    console.log(label + ':' + process.env.LIBRE_WATCH_TEST);
+    setInterval(() => {}, 1000);
+  `;
+  fs.writeFileSync(fixture, source('first'));
+  const backendPackage = JSON.parse(
+    fs.readFileSync(path.join(repoRoot, 'backend/package.json'), 'utf8')
+  );
+  const [runner, ...scriptArgs] = backendPackage.scripts.dev.split(' ');
+  const args = scriptArgs.map(arg => (arg === 'src/main.ts' ? fixture : arg));
+  if (runner === 'tsx') args.unshift(requireFromTest.resolve('tsx/cli'));
+  const child = spawn(process.execPath, args, {
+    cwd: path.join(repoRoot, 'backend'),
+    windowsHide: true,
+    stdio: ['ignore', 'pipe', 'pipe'],
+  });
+  let output = '';
+  child.stdout.on('data', data => {
+    output += data;
+  });
+  child.stderr.on('data', data => {
+    output += data;
+  });
+  const waitFor = label =>
+    new Promise((resolve, reject) => {
+      const timeout = setTimeout(() => {
+        clearInterval(poll);
+        reject(new Error(`Watcher did not print ${label}: ${output}`));
+      }, 10_000);
+      const poll = setInterval(() => {
+        if (!output.includes(label)) return;
+        clearInterval(poll);
+        clearTimeout(timeout);
+        resolve();
+      }, 25);
+    });
+  try {
+    await waitFor('first:loaded');
+    fs.writeFileSync(fixture, source('second'));
+    await waitFor('second:loaded');
+  } finally {
+    if (process.platform === 'win32' && child.exitCode === null) {
+      spawnSync('taskkill.exe', ['/PID', String(child.pid), '/T', '/F'], {
+        windowsHide: true,
+        stdio: 'ignore',
+      });
+    }
+    await stopChild(child);
+    fs.rmSync(directory, { recursive: true, force: true });
+  }
+});
+
 function packProject(outputDir) {
   try {
     return JSON.parse(
