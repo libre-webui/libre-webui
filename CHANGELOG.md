@@ -9,15 +9,45 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### ✨ New Features
 
+### 🔧 Improvements
+
+### 🐛 Bug Fixes
+
+### 📚 Documentation
+
+## [0.34.0] - 2026-09-05
+
+A lighter release: the sky clock opens a day preview from anywhere, Libre
+WebUI joins `ollama launch`, and six dependencies leave the tree, replaced by
+what Node and the browser already ship.
+
+### ✨ New Features
+
+- **Sky clock and day preview.** In the Celestial theme, the clock at the end
+  of the tab bar opens a glass preview: drag across the day to move the sun
+  and moon, or jump straight to **Sunrise** or **Sunset**. The same preview
+  lives in Settings > Appearance. **Follow the clock**, closing the preview,
+  or leaving Appearance returns to real time. Exploring the day runs locally
+  and never saves a new theme setting.
 - **`ollama launch libre-webui`.** The packaged CLI takes `--model`,
   `--ollama-url`, and `--no-open`, mapped onto the `DEFAULT_MODEL`,
   `OLLAMA_BASE_URL`, and `OPEN_BROWSER` variables the server reads, so a
   launcher can hand over the model it just pulled. `DEFAULT_MODEL` fills the
   model slot of any account that has not picked one; a saved choice always
   wins.
+- **GPT-6 Astra and GPT-5.5 through the ChatGPT sign-in.** The Codex
+  provider's model catalog now lists GPT-6 Astra, GPT-5.6 Sol, Terra, Luna,
+  GPT-5.5, and GPT-5.3 Codex Spark, subject to the signed-in account's
+  access, and the agent CLI catalog matches it.
 
 ### 🔧 Improvements
 
+- **Weather that survives an outage.** When a celestial weather request
+  fails, the last successful reading stays for the session and retries run
+  automatically while the theme is active, starting after 15 seconds and
+  backing off to one every five minutes. A request that stalls for ten
+  seconds is cancelled so it cannot block later refreshes; turning weather
+  off or changing location cancels pending requests.
 - **The web app talks to the server with `fetch`.** The axios dependency is
   gone from the frontend. A small client keeps the same request surface
   (`params`, blob responses, per-request timeouts, cancellation, and errors
@@ -40,23 +70,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   still win, and a missing file is still skipped.
 - **Smaller server dependency tree.** `morgan` was no longer used (the
   access log has its own format that strips query strings) and is removed,
-  and the `cors` package is replaced by a forty-line middleware with the same
-  behavior: allowed origins are echoed with credentials and `Vary: Origin`,
-  preflights get a 204 with the configured methods and headers, and a
-  foreign origin is still refused.
-- **Identifiers come from `crypto.randomUUID`.** The `uuid` package is
-  removed from the server; every id it minted is a version 4 UUID, exactly
-  what Node's built-in produces, so stored ids and their validators are
-  unaffected.
+  the `cors` package is replaced by a forty-line middleware with the same
+  behavior (allowed origins echoed with credentials and `Vary: Origin`,
+  preflights answered with a 204, foreign origins still refused), and ids
+  come from `crypto.randomUUID` instead of the `uuid` package, the same
+  version 4 format as before.
 - **Manifest cleanup.** `sonner`, `lowlight`, and `@types/pdf-parse` were
   declared but never imported; four type packages for artifact-runtime
   libraries that no type-check ever reads are gone; `tar` and the
   `jsonwebtoken` and `multer` types move to development dependencies; and
   React is no longer listed at the root, where every `npx libre-webui`
   install downloaded it for a prebuilt frontend that does not need it.
+- The Work Computer screen's starting and idle states use the active theme's
+  ink and canvas colours instead of fixed white-on-dark text.
+- The Home greeting reuses the chat's translated time-of-day greetings
+  instead of English fallbacks.
+- Development: the backend dev server runs under Node's native `--watch`
+  with tsx as a loader, replacing `tsx watch`.
 
 ### 🐛 Bug Fixes
 
+- The **Tool access** switch in Settings saves immediately again, whether
+  clicked or toggled with `Tab` and `Space`, and no longer scrolls the
+  Settings window or loses its position. The native focus target now sits
+  inside the visible switch.
+- Windows: the database preflight cache keeps NTFS file identities intact.
+  Device and inode numbers can exceed JavaScript's safe integer range, so
+  they are read and stored as strings; a moved or replaced database file is
+  detected as before.
 - Settings > Appearance no longer offers the neutral-or-tinted **Interface
   palette** choice while the Celestial theme is active; the sky paints the
   whole palette, so the choice had nothing to act on.
@@ -72,6 +113,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   closed before the connection is established" on every page load.
 - KaTeX no longer warns in the console about en and em dashes inside inline
   math; it renders them as before.
+- Browser tests mock the OAuth status requests, so sign-in flows no longer
+  depend on a live provider.
+
+### 📚 Documentation
+
+- Pro tips describe the sky clock preview and the weather retry behavior;
+  the quick start shows `ollama launch libre-webui` and the new CLI flags;
+  the environment reference gains `DEFAULT_MODEL`; the provider and agent
+  CLI pages list the current Codex model family; the platform foundation
+  page notes the Windows file identity handling; and the chat tools page
+  documents the Tool access switch.
 
 ## [0.33.0] - 2026-09-04
 

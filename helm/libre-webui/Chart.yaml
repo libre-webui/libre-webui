@@ -2,8 +2,8 @@ apiVersion: v2
 name: libre-webui
 description: A local-first workspace for chat, private knowledge, artifacts, and isolated model-driven work
 type: application
-version: 0.33.0
-appVersion: "0.33.0"
+version: 0.34.0
+appVersion: "0.34.0"
 keywords:
   - ai
   - chat
