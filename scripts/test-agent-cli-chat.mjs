@@ -90,6 +90,46 @@ test('every agent CLI passes an explicit model through to its argv', () => {
   ]);
 });
 
+test('Codex lists Astra and GPT-5.5 alongside the bundled ChatGPT model family', async () => {
+  const binDir = fs.mkdtempSync(path.join(os.tmpdir(), 'codex-model-list-'));
+  const binary = path.join(binDir, 'codex');
+  // Listing fixed Codex choices only checks the binary; it must not run it.
+  fs.writeFileSync(binary, '');
+  fs.chmodSync(binary, 0o755);
+  const previousPath = process.env.PATH;
+  process.env.PATH = binDir;
+  try {
+    const models = await agentCliService.listAgentModels();
+    const plugin = JSON.parse(
+      fs.readFileSync(
+        path.join(__dirname, '..', 'plugins', 'codex-oauth.json'),
+        'utf8'
+      )
+    );
+    assert.deepEqual(
+      models.map(model => model.id),
+      ['codex', ...plugin.model_map.map(model => `codex:${model}`)]
+    );
+    assert.equal(
+      models.find(model => model.id === 'codex:gpt-6-astra')?.name,
+      'Codex · GPT-6 Astra'
+    );
+    assert.equal(
+      models.find(model => model.id === 'codex:gpt-5.5')?.name,
+      'Codex · GPT-5.5'
+    );
+    assert.deepEqual(definition('codex').buildArgs('gpt-6-astra').slice(-3), [
+      '-m',
+      'gpt-6-astra',
+      '-',
+    ]);
+  } finally {
+    if (previousPath === undefined) delete process.env.PATH;
+    else process.env.PATH = previousPath;
+    fs.rmSync(binDir, { recursive: true, force: true });
+  }
+});
+
 test('pi runs stateless, tool-less, with a neutral system prompt', () => {
   const args = definition('pi').buildArgs();
   assert.ok(

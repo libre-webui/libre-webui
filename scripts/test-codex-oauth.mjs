@@ -177,6 +177,7 @@ test('the bundled codex plugin omits sampling parameters and adds ChatGPT header
   );
   assert.equal(plugin.id, CODEX_OAUTH_PLUGIN_ID);
   assert.equal(plugin.api_mode, 'responses');
+  assert.ok(plugin.model_map.includes('gpt-6-astra'));
 
   const trust = await import(
     pathToFileURL(
@@ -199,19 +200,22 @@ test('the bundled codex plugin omits sampling parameters and adds ChatGPT header
       path.join(repoRoot, 'backend', 'dist', 'utils', 'pluginChatAdapter.js')
     ).href
   );
-  const { payload } = adapter.buildPluginChatPayload(
-    plugin,
-    'gpt-5.6-luna',
-    [{ role: 'user', content: 'hi' }],
-    { temperature: 0.7, top_p: 0.9, num_predict: 2048 },
-    {},
-    true,
-    'responses'
-  );
-  assert.equal(payload.temperature, undefined);
-  assert.equal(payload.top_p, undefined);
-  assert.equal(payload.max_output_tokens, undefined);
-  assert.equal(payload.store, false);
+  for (const model of ['gpt-6-astra', 'gpt-5.6-luna']) {
+    const { payload } = adapter.buildPluginChatPayload(
+      plugin,
+      model,
+      [{ role: 'user', content: 'hi' }],
+      { temperature: 0.7, top_p: 0.9, num_predict: 2048 },
+      {},
+      true,
+      'responses'
+    );
+    assert.equal(payload.model, model);
+    assert.equal(payload.temperature, undefined);
+    assert.equal(payload.top_p, undefined);
+    assert.equal(payload.max_output_tokens, undefined);
+    assert.equal(payload.store, false);
+  }
 
   // Fresh cache from the refreshed token above feeds the attribution headers.
   const validation = await import(
