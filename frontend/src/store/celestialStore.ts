@@ -91,10 +91,20 @@ interface CelestialState {
   clear: () => void;
 }
 
-let weatherRequest: Promise<void> | null = null;
-
 export const useCelestialStore = create<CelestialState>((set, get) => {
   const persisted = readLocal();
+  let weatherRequest: {
+    controller: AbortController;
+    promise: Promise<void>;
+  } | null = null;
+  let retryAt = 0;
+  let retryDelay = 15_000;
+  const cancelWeatherRequest = () => {
+    weatherRequest?.controller.abort();
+    weatherRequest = null;
+    retryAt = 0;
+    retryDelay = 15_000;
+  };
   return {
     active: false,
     palette: null,
@@ -125,6 +135,7 @@ export const useCelestialStore = create<CelestialState>((set, get) => {
       get().refresh();
     },
     setLocation: location => {
+      cancelWeatherRequest();
       const next = isValidLocation(location)
         ? {
             latitude: roundCoordinate(location.latitude),
@@ -155,6 +166,7 @@ export const useCelestialStore = create<CelestialState>((set, get) => {
         );
       }),
     setWeatherEnabled: enabled => {
+      if (!enabled) cancelWeatherRequest();
       set({
         weatherEnabled: enabled,
         weatherStatus: enabled ? get().weatherStatus : 'idle',
@@ -168,23 +180,44 @@ export const useCelestialStore = create<CelestialState>((set, get) => {
       if (!weatherEnabled || !location) return;
       const fresh =
         weather && Date.now() - weather.fetchedAt < WEATHER_REFRESH_MS;
-      if (fresh && !force) return;
-      if (weatherRequest) return weatherRequest;
+      if (!force && (fresh || Date.now() < retryAt)) return;
+      if (weatherRequest) return weatherRequest.promise;
+      const controller = new AbortController();
+      const request = {
+        controller,
+        promise: fetchWeather(location, controller.signal)
+          .then(next => {
+            if (weatherRequest !== request) return;
+            retryAt = 0;
+            retryDelay = 15_000;
+            set({ weather: next, weatherStatus: 'ready' });
+            get().refresh();
+          })
+          .catch(() => {
+            if (weatherRequest !== request) return;
+            // Paints also run on every preview/arrival animation frame.
+            // Back off after failures instead of issuing a request per frame.
+            retryAt = Date.now() + retryDelay;
+            retryDelay = Math.min(retryDelay * 2, 5 * 60_000);
+            set({ weatherStatus: 'error' });
+          })
+          .finally(() => {
+            if (weatherRequest === request) weatherRequest = null;
+          }),
+      };
+      weatherRequest = request;
       set({ weatherStatus: 'loading' });
-      weatherRequest = fetchWeather(location)
-        .then(next => {
-          set({ weather: next, weatherStatus: 'ready' });
-          get().refresh();
-        })
-        .catch(() => {
-          set({ weatherStatus: 'error' });
-        })
-        .finally(() => {
-          weatherRequest = null;
-        });
-      return weatherRequest;
+      return request.promise;
     },
-    clear: () =>
-      set({ active: false, palette: null, scene: null, previewMinutes: null }),
+    clear: () => {
+      cancelWeatherRequest();
+      set({
+        active: false,
+        palette: null,
+        scene: null,
+        previewMinutes: null,
+        weatherStatus: get().weather ? 'ready' : 'idle',
+      });
+    },
   };
 });

@@ -49,6 +49,7 @@ export interface CelestialLocation {
 }
 
 export const WEATHER_REFRESH_MS = 15 * 60_000;
+export const WEATHER_TIMEOUT_MS = 10_000;
 export const WEATHER_ENDPOINT = 'https://api.open-meteo.com/v1/forecast';
 
 /** WMO weather interpretation codes, as Open-Meteo reports them. */
@@ -91,22 +92,51 @@ export async function fetchWeather(
     'weather_code,cloud_cover,precipitation,wind_speed_10m'
   );
   url.searchParams.set('timezone', 'auto');
-  const response = await fetch(url.toString(), { signal });
-  if (!response.ok) throw new Error(`weather ${response.status}`);
-  const body = (await response.json()) as {
-    current?: {
-      weather_code?: number;
-      cloud_cover?: number;
-      precipitation?: number;
-      wind_speed_10m?: number;
+  const controller = new AbortController();
+  const abort = () => controller.abort(signal?.reason);
+  if (signal?.aborted) abort();
+  else signal?.addEventListener('abort', abort, { once: true });
+  // A stalled connection (including its response body) must not prevent
+  // the next weather refresh from running.
+  const timeout = setTimeout(
+    () =>
+      controller.abort(
+        new DOMException('Weather request timed out', 'TimeoutError')
+      ),
+    WEATHER_TIMEOUT_MS
+  );
+  try {
+    const response = await fetch(url.toString(), { signal: controller.signal });
+    if (!response.ok) throw new Error(`weather ${response.status}`);
+    const body = (await response.json()) as {
+      current?: {
+        weather_code: number;
+        cloud_cover: number;
+        precipitation: number;
+        wind_speed_10m: number;
+      };
+    } | null;
+    const current = body?.current;
+    if (
+      !current ||
+      ![
+        current.weather_code,
+        current.cloud_cover,
+        current.precipitation,
+        current.wind_speed_10m,
+      ].every(Number.isFinite)
+    ) {
+      throw new Error('weather missing current conditions');
+    }
+    return {
+      kind: weatherKindFromCode(current.weather_code),
+      cloudCover: Math.min(1, Math.max(0, current.cloud_cover / 100)),
+      precipitation: Math.max(0, current.precipitation),
+      windSpeed: Math.max(0, current.wind_speed_10m),
+      fetchedAt: Date.now(),
     };
-  };
-  const current = body.current ?? {};
-  return {
-    kind: weatherKindFromCode(current.weather_code ?? 1),
-    cloudCover: Math.min(1, Math.max(0, (current.cloud_cover ?? 30) / 100)),
-    precipitation: Math.max(0, current.precipitation ?? 0),
-    windSpeed: Math.max(0, current.wind_speed_10m ?? 0),
-    fetchedAt: Date.now(),
-  };
+  } finally {
+    clearTimeout(timeout);
+    signal?.removeEventListener('abort', abort);
+  }
 }

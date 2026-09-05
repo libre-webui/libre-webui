@@ -1944,6 +1944,67 @@ test.describe('celestial location and weather', () => {
     permissions: ['geolocation'],
   });
 
+  test('weather recovers from a service error without retrying on every preview', async ({
+    page,
+  }) => {
+    await page.clock.install();
+    await mockLibreWebUiApi(page);
+    let weatherRequests = 0;
+    let weatherAvailable = false;
+    await page.route('https://api.open-meteo.com/**', async route => {
+      weatherRequests += 1;
+      await route.fulfill({
+        status: weatherAvailable ? 200 : 503,
+        contentType: 'application/json',
+        body: JSON.stringify(
+          weatherAvailable
+            ? {
+                current: {
+                  weather_code: 63,
+                  cloud_cover: 96,
+                  precipitation: 2.4,
+                  wind_speed_10m: 28,
+                },
+              }
+            : { error: true, reason: 'Service temporarily unavailable' }
+        ),
+      });
+    });
+    await page.goto('/chat');
+    await expect(
+      page.getByRole('textbox', { name: 'Message...' })
+    ).toBeVisible();
+    await page.keyboard.press('Control+,');
+    await page.getByRole('button', { name: 'Celestial', exact: true }).click();
+    await page.getByTestId('celestial-use-location').click();
+    await expect(page.getByTestId('celestial-location-value')).toHaveText(
+      '45.50°, -73.57°'
+    );
+    expect(weatherRequests).toBe(0);
+
+    await page.getByTestId('celestial-weather-toggle').locator('label').click();
+    const status = page.getByTestId('celestial-weather-status');
+    await expect(status).toHaveText('Weather is unavailable right now.');
+
+    // Repainting the sky must respect the retry delay after a failed request.
+    const scrubber = page.getByTestId('celestial-scrubber');
+    await scrubber.fill('720');
+    await scrubber.fill('780');
+    await expect(status).toHaveText('Weather is unavailable right now.');
+    expect(weatherRequests).toBe(1);
+
+    weatherAvailable = true;
+    await page.clock.fastForward(15_000);
+    await expect(status).toContainText('Rain');
+    await expect(status).toContainText('28 km/h');
+    expect(weatherRequests).toBe(2);
+    await expect(page.getByTestId('celestial-sky')).toHaveAttribute(
+      'data-weather',
+      'rain'
+    );
+    await expect(page.getByTestId('celestial-rain')).toBeVisible();
+  });
+
   test('a shared location refines sunrise and opt-in weather shapes the sky', async ({
     page,
   }) => {

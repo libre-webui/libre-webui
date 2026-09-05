@@ -92,7 +92,11 @@ sunset are solved for your actual sky. The location is rounded to about a
 kilometre, kept only in that browser, and never sent to the server. With a
 location you can also turn on **Match the weather**: current conditions come
 straight from Open-Meteo to your browser, and clouds, rain, snow, fog, and
-wind shape the sky.
+wind shape the sky. If a request fails, Libre keeps the last successful weather
+for this session and retries automatically while the celestial theme is active.
+Retries start after 15 seconds and slow to at most one every five minutes during
+an outage. A request that stalls for ten seconds is cancelled so it cannot block
+later refreshes. Turning weather off or changing location cancels pending requests.
 
 ## Keep Work Tasks Focused
 
