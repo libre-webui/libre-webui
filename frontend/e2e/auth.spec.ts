@@ -239,6 +239,7 @@ test('login page follows the administrator default theme until the visitor picks
 });
 
 test('demo mode lands in the celestial theme', async ({ page }, testInfo) => {
+  await mockLibreWebUiApi(page);
   const port = new URL(testInfo.project.use.baseURL ?? 'http://127.0.0.1:4173')
     .port;
   await page.goto(`http://demo.localhost:${port}/login`);

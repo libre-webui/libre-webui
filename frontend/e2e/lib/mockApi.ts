@@ -1476,6 +1476,18 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
         return;
       }
 
+      if (
+        method === 'GET' &&
+        /^\/auth\/oauth\/(github|huggingface|oidc)\/status$/.test(path)
+      ) {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({ configured: false }),
+        });
+        return;
+      }
+
       if (path === '/auth/websocket-ticket' && method === 'POST') {
         await fulfillJson(route, {
           ticket: 'e2e-websocket-ticket',
