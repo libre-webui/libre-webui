@@ -492,18 +492,16 @@ export function WorkspaceScreen({
       >
         <div ref={mountRef} className='h-full w-full' />
         {state !== 'connected' && (
-          <div className='pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-2 px-4 text-center'>
+          <div className='pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-2 bg-canvas px-4 text-center'>
             {state === 'starting' ? (
               <>
-                <Loader2 size={16} className='animate-spin text-white/60' />
-                <p className='text-xs text-white/70'>
-                  {t('work.screen.starting')}
-                </p>
+                <Loader2 size={16} className='animate-spin text-ink-muted' />
+                <p className='text-xs text-ink'>{t('work.screen.starting')}</p>
               </>
             ) : (
               <>
-                <MonitorPlay size={18} className='text-white/40' />
-                <p className='text-xs text-white/70'>
+                <MonitorPlay size={18} className='text-ink-muted' />
+                <p className='text-xs text-ink'>
                   {error ?? t('work.screen.disconnected')}
                 </p>
               </>
@@ -646,25 +644,23 @@ export function WorkspaceScreen({
         )}
         <div ref={mountRef} className='h-full w-full' />
         {state !== 'connected' && (
-          <div className='absolute inset-0 flex flex-col items-center justify-center gap-3 px-6 text-center'>
+          <div className='absolute inset-0 flex flex-col items-center justify-center gap-3 bg-canvas px-6 text-center'>
             {state === 'starting' ? (
               <>
-                <Loader2 size={20} className='animate-spin text-white/60' />
-                <p className='text-sm text-white/70'>
-                  {t('work.screen.starting')}
-                </p>
+                <Loader2 size={20} className='animate-spin text-ink-muted' />
+                <p className='text-sm text-ink'>{t('work.screen.starting')}</p>
               </>
             ) : (
               <>
-                <MonitorPlay size={22} className='text-white/40' />
-                <p className='text-sm text-white/70'>
+                <MonitorPlay size={22} className='text-ink-muted' />
+                <p className='text-sm text-ink'>
                   {error ?? t('work.screen.disconnected')}
                 </p>
                 <button
                   type='button'
                   data-testid='work-screen-reconnect'
                   onClick={() => setAttempt(value => value + 1)}
-                  className='flex items-center gap-2 rounded-lg border border-white/20 px-3 py-1.5 text-xs text-white/80 transition-colors hover:bg-white/10'
+                  className='flex items-center gap-2 rounded-lg border border-line px-3 py-1.5 text-xs text-ink transition-colors hover:bg-surface-subtle'
                 >
                   <RefreshCw size={12} />
                   {t('work.screen.reconnect')}
