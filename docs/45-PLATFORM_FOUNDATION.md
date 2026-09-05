@@ -177,6 +177,11 @@ dedicated disk-backed temp storage there; startup does not rely on the bounded
 directory blocks startup before a replacement key, database, or plugin state
 can be created.
 
+A successful startup saves a verification marker tied to the database file and
+schema. Later starts reuse it until the file or schema changes. File identifiers
+are stored as exact decimal strings, including large Windows/NTFS identifiers.
+An older numeric marker triggers one full verification before it is replaced.
+
 Schema v4 adds a keyed equality token for encrypted identity emails. Recovery
 requires every token to be present and match its authenticated email. Startup
 permits a missing token with an authenticated email or a non-envelope legacy

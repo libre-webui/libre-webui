@@ -2917,6 +2917,61 @@ test('failed ledgerless adoption rolls back inline schema and Work data migratio
   }
 });
 
+test('preflight verification marker preserves large Windows file IDs exactly', t => {
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'libre-marker-'));
+  t.after(() => fs.rmSync(directory, { recursive: true, force: true }));
+  const databasePath = path.join(directory, 'data.sqlite');
+  new Database(databasePath).close();
+  const lstatSync = fs.lstatSync;
+  let inode = 10_133_099_162_440_500n;
+  t.mock.method(fs, 'lstatSync', (file, options) => {
+    const stat = lstatSync(file, options);
+    if (file === databasePath) {
+      stat.ino = options?.bigint ? inode : Number(inode);
+    }
+    return stat;
+  });
+
+  const identity = databaseHelpers.readSQLitePreflightIdentity(databasePath);
+  assert.equal(identity.ino, inode.toString());
+  databaseHelpers.writePreflightVerificationMarker(directory, identity);
+  const marker = databaseHelpers.readPreflightVerificationMarker(directory);
+  assert.deepEqual(marker, identity);
+  assert.equal(
+    databaseHelpers.preflightIdentityMatchesMarker(identity, marker),
+    true
+  );
+
+  // These two file IDs collapse to the same Number; replacement must still
+  // invalidate verification instead of trusting a different database file.
+  assert.equal(Number(inode), Number(inode + 1n));
+  inode += 1n;
+  assert.equal(
+    databaseHelpers.preflightIdentityMatchesMarker(
+      databaseHelpers.readSQLitePreflightIdentity(databasePath),
+      marker
+    ),
+    false
+  );
+
+  fs.writeFileSync(
+    path.join(directory, '.preflight-verification.json'),
+    JSON.stringify({
+      format: 'libre-preflight-verification',
+      version: 1,
+      database: {
+        dev: Number(identity.dev),
+        ino: Number(inode),
+        schemaCookie: identity.schemaCookie,
+      },
+    })
+  );
+  assert.equal(
+    databaseHelpers.readPreflightVerificationMarker(directory),
+    null
+  );
+});
+
 test('preflight verification marker tracks schema generation and file identity', () => {
   const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'libre-marker-'));
   try {

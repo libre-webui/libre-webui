@@ -49,8 +49,8 @@ const PREFLIGHT_MARKER_FORMAT = 'libre-preflight-verification';
  * sitting in the WAL is observed the same way on both sides of the marker.
  */
 export interface SQLitePreflightIdentity {
-  dev: number;
-  ino: number;
+  dev: string;
+  ino: string;
   schemaCookie: number;
 }
 
@@ -58,7 +58,9 @@ export function readSQLitePreflightIdentity(
   databasePath: string
 ): SQLitePreflightIdentity | null {
   try {
-    const stat = fs.lstatSync(databasePath);
+    // NTFS file IDs can exceed Number.MAX_SAFE_INTEGER. Preserve every bit
+    // both when comparing identities and when persisting them as JSON.
+    const stat = fs.lstatSync(databasePath, { bigint: true });
     if (!stat.isFile() || stat.isSymbolicLink()) return null;
     const probe = new Database(databasePath, {
       readonly: true,
@@ -69,7 +71,11 @@ export function readSQLitePreflightIdentity(
         simple: true,
       }) as number;
       if (!Number.isSafeInteger(schemaCookie)) return null;
-      return { dev: stat.dev, ino: stat.ino, schemaCookie };
+      return {
+        dev: stat.dev.toString(),
+        ino: stat.ino.toString(),
+        schemaCookie,
+      };
     } finally {
       probe.close();
     }
@@ -87,13 +93,15 @@ export function readPreflightVerificationMarker(
     ) as {
       format?: string;
       version?: number;
-      database?: { dev?: number; ino?: number; schemaCookie?: number };
+      database?: { dev?: string; ino?: string; schemaCookie?: number };
     };
     if (
       parsed?.format !== PREFLIGHT_MARKER_FORMAT ||
-      parsed.version !== 1 ||
-      !Number.isSafeInteger(parsed.database?.dev) ||
-      !Number.isSafeInteger(parsed.database?.ino) ||
+      parsed.version !== 2 ||
+      typeof parsed.database?.dev !== 'string' ||
+      !/^(0|[1-9][0-9]*)$/.test(parsed.database.dev) ||
+      typeof parsed.database?.ino !== 'string' ||
+      !/^(0|[1-9][0-9]*)$/.test(parsed.database.ino) ||
       !Number.isSafeInteger(parsed.database?.schemaCookie)
     ) {
       return null;
@@ -121,7 +129,7 @@ export function writePreflightVerificationMarker(
       `${JSON.stringify(
         {
           format: PREFLIGHT_MARKER_FORMAT,
-          version: 1,
+          version: 2,
           database: identity,
           verifiedAt: new Date().toISOString(),
         },
