@@ -400,7 +400,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             : 'ltr:-translate-x-full rtl:translate-x-full',
           'lg:shadow-none',
           theme.mode === 'celestial'
-            ? 'bg-transparent'
+            ? 'bg-sidebar/30 backdrop-blur-xl lg:bg-transparent lg:backdrop-filter-none'
             : backgroundImage
               ? 'bg-sidebar/75 backdrop-blur-xl'
               : 'bg-sidebar',

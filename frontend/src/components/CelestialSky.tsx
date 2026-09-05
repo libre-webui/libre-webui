@@ -18,7 +18,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useCelestialStore } from '@/store/celestialStore';
 import { useAppStore } from '@/store/appStore';
-import { formatClock } from '@/utils/celestial';
 
 const STAR_COUNT = 110;
 const SNOW_COUNT = 48;
@@ -431,9 +430,6 @@ export const CelestialSky: React.FC = () => {
           )}
           <div className='celestial-sky__flash' />
           <div className='celestial-sky__grain' />
-          <div className='celestial-sky__clock' data-testid='celestial-clock'>
-            {formatClock(palette.solar.minutes)}
-          </div>
         </div>
       </div>
       {/* The lamp sits above the interface so it lights the words too. */}

@@ -774,9 +774,15 @@ html.celestial [data-app-tabbar] [role='tab'][aria-selected='false'] {
 html.celestial [data-app-tabbar] [role='tab'][aria-selected='false']:hover {
   color: rgb(var(--color-ink));
 }
-html.celestial[data-composing='true'] [data-app-sidebar]:not(:hover),
-html.celestial[data-composing='true'] [data-app-tabbar]:not(:hover) {
+html.celestial[data-composing='true']
+  [data-app-tabbar]:not(:hover):not(:focus-within) {
   opacity: 0.45;
+}
+/* Mobile navigation overlays the page, so its glass surface must not fade. */
+@media (min-width: 1024px) {
+  html.celestial[data-composing='true'] [data-app-sidebar]:not(:hover) {
+    opacity: 0.45;
+  }
 }
 
 .celestial-sky {
@@ -1082,17 +1088,132 @@ html.celestial[data-composing='true'] [data-app-tabbar]:not(:hover) {
   opacity: calc(var(--celestial-night) * (0.5 + 0.6 * var(--lamp-pulse)));
   transition: opacity 320ms ease-out;
 }
-.celestial-sky__clock {
-  position: absolute;
-  right: 28px;
-  bottom: 14px;
-  font-family: ui-monospace, 'SF Mono', Menlo, monospace;
-  font-size: 15px;
-  font-weight: 600;
-  letter-spacing: 0.02em;
+.celestial-clock-trigger {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 28px;
+  min-height: 28px;
+  min-width: 32px;
+  margin-inline-start: auto;
+  padding-inline: 8px;
+  border: 1px solid transparent;
+  border-radius: 8px;
   color: rgb(var(--color-ink));
-  opacity: 0.32;
-  transition: color var(--celestial-ease) linear;
+  font-size: 12px;
+  transition: background-color 140ms ease;
+}
+.celestial-clock-trigger:hover,
+.celestial-clock-trigger[aria-expanded='true'] {
+  background: rgb(var(--color-surface) / 0.35);
+  border-color: rgb(var(--color-ink) / 0.1);
+}
+.celestial-clock-trigger:focus-visible {
+  outline: 2px solid rgb(var(--color-primary-500));
+  outline-offset: 2px;
+}
+.celestial-day-popover {
+  z-index: 100;
+  padding: 16px;
+  border: 1px solid rgb(var(--color-ink) / 0.12);
+  border-radius: 20px;
+  background: linear-gradient(
+    145deg,
+    rgb(var(--color-surface) / 0.82),
+    rgb(var(--color-surface) / 0.64)
+  );
+  backdrop-filter: blur(24px) saturate(1.1);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.12),
+    0 16px 48px rgb(0 0 0 / 0.2);
+  overscroll-behavior: contain;
+}
+html.celestial.dark .celestial-day-popover {
+  /* Keep page text from showing through when a browser cannot blur it. */
+  background: linear-gradient(
+    145deg,
+    rgb(var(--color-surface) / 0.96),
+    rgb(var(--color-surface) / 0.94)
+  );
+}
+.celestial-day-popover .celestial-day-preview > :first-child {
+  padding-inline-end: 32px;
+}
+.celestial-day-preview__scene {
+  position: relative;
+  height: 112px;
+  overflow: hidden;
+  border-radius: 14px;
+  background: var(--celestial-preview-sky);
+  box-shadow: inset 0 0 0 1px rgb(var(--color-ink) / 0.08);
+}
+.celestial-day-preview__horizon {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  height: 20%;
+  border-top: 1px solid rgb(255 255 255 / 0.3);
+  background: linear-gradient(transparent, rgb(255 255 255 / 0.12));
+}
+.celestial-day-preview__orb {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid rgb(255 255 255 / 0.45);
+  border-radius: 50%;
+  background: rgb(255 255 255 / 0.12);
+  color: #fff;
+  box-shadow: 0 0 32px 8px var(--celestial-preview-glow);
+  transform: translate(-50%, 50%);
+  transition:
+    left 120ms ease-out,
+    bottom 120ms ease-out;
+}
+.celestial-day-preview__orb[data-day='true'] {
+  background: rgb(255 245 211 / 0.9);
+  color: #92621c;
+}
+.celestial-day-preview__range {
+  display: block;
+  height: 36px;
+  margin: 0;
+  appearance: none;
+  background: transparent;
+  cursor: ew-resize;
+}
+.celestial-day-preview__range::-webkit-slider-runnable-track {
+  height: 12px;
+  border-radius: 999px;
+  background: var(--celestial-day-gradient);
+  box-shadow: inset 0 0 0 1px rgb(var(--color-ink) / 0.12);
+}
+.celestial-day-preview__range::-moz-range-track {
+  height: 12px;
+  border-radius: 999px;
+  background: var(--celestial-day-gradient);
+  box-shadow: inset 0 0 0 1px rgb(var(--color-ink) / 0.12);
+}
+.celestial-day-preview__range::-webkit-slider-thumb {
+  width: 22px;
+  height: 22px;
+  margin-top: -5px;
+  appearance: none;
+  border: 3px solid #fff;
+  border-radius: 50%;
+  background: var(--celestial-preview-glow);
+  box-shadow: 0 1px 6px rgb(0 0 0 / 0.35);
+}
+.celestial-day-preview__range::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border: 3px solid #fff;
+  border-radius: 50%;
+  background: var(--celestial-preview-glow);
+  box-shadow: 0 1px 6px rgb(0 0 0 / 0.35);
 }
 /* Weather layers. Rain and snow are pure CSS; fog is a wash; the flash is a
    short white overlay the component toggles when a storm is reported. */

@@ -45,6 +45,7 @@ import { useChatStore } from '@/store/chatStore';
 import { useWorkStore } from '@/store/workStore';
 import { useAuthStore } from '@/store/authStore';
 import { cn, isMac } from '@/utils';
+import { CelestialClock } from '@/components/CelestialClock';
 import {
   startIncognitoChat,
   startNewChat,
@@ -610,6 +611,7 @@ export const AppTabBar: React.FC = () => {
             document.body
           )}
       </div>
+      <CelestialClock />
     </div>
   );
 };

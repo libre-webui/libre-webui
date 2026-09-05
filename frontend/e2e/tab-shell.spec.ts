@@ -69,6 +69,140 @@ test.describe('home greeting', () => {
   }
 });
 
+test.describe('celestial day explorer', () => {
+  test.use({ timezoneId: 'UTC' });
+
+  test.beforeEach(async ({ page }) => {
+    await mockLibreWebUiApi(page, {
+      preferences: {
+        theme: {
+          mode: 'celestial',
+          accent: 'blue',
+          adaptToAccent: false,
+          customAccent: '#2563eb',
+        },
+      },
+    });
+    await page.clock.setFixedTime(new Date('2026-09-05T12:00:00Z'));
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+  });
+
+  test('explores the sky with the keyboard and restores live time on dismissal', async ({
+    page,
+  }) => {
+    const weatherRequests: string[] = [];
+    page.on('request', request => {
+      if (request.url().includes('api.open-meteo.com')) {
+        weatherRequests.push(request.url());
+      }
+    });
+    await page.goto('/');
+    const trigger = page.getByTestId('celestial-clock-trigger');
+    const panel = page.getByTestId('celestial-day-popover');
+    const sky = page.getByTestId('celestial-sky');
+    await expect(trigger).toHaveAccessibleName('Time of day: 12:00pm');
+    await trigger.focus();
+    await page.keyboard.press('Enter');
+    await expect(panel).toHaveAccessibleName('Time of day');
+    const slider = panel.getByTestId('celestial-scrubber');
+    await expect(slider).toBeFocused();
+    await slider.press('Home');
+    await expect(slider).toHaveAttribute('aria-valuetext', '12:00am');
+    await expect(sky).toHaveAttribute('data-night', 'true');
+    await slider.press('ArrowRight');
+    await expect(slider).toHaveValue('1');
+    await slider.fill('780');
+    await expect(sky).toHaveAttribute('data-night', 'false');
+    for (const event of ['sunrise', 'sunset']) {
+      const shortcut = panel.getByTestId(`celestial-preview-${event}`);
+      const eventTime = await shortcut
+        .locator('span.tabular-nums')
+        .textContent();
+      await shortcut.click();
+      await expect(panel.getByTestId('celestial-preview-clock')).toHaveText(
+        eventTime ?? ''
+      );
+    }
+    await panel.getByTestId('celestial-follow-clock').click();
+    await expect(sky).toHaveAttribute('data-preview', 'false');
+    await expect(slider).toHaveValue('720');
+    await slider.fill('60');
+    await page.keyboard.press('Escape');
+    await expect(panel).toHaveCount(0);
+    await expect(trigger).toBeFocused();
+    await expect(sky).toHaveAttribute('data-preview', 'false');
+
+    await trigger.click();
+    await panel.getByTestId('celestial-scrubber').fill('60');
+    await page
+      .getByTestId('home-page')
+      .getByRole('heading', { level: 1 })
+      .click();
+    await expect(panel).toHaveCount(0);
+    await expect(sky).toHaveAttribute('data-preview', 'false');
+    expect(weatherRequests).toEqual([]);
+  });
+
+  test('hands preview control to Appearance and stays hidden in flat themes', async ({
+    page,
+  }) => {
+    await page.goto('/');
+    await page.getByTestId('celestial-clock-trigger').click();
+    await page
+      .getByTestId('celestial-day-popover')
+      .getByTestId('celestial-scrubber')
+      .fill('60');
+    // Global shortcuts ignore inputs, including the focused time slider.
+    await page.keyboard.press('Control+,');
+    await expect(page.getByTestId('celestial-day-popover')).toBeVisible();
+    await expect(page.getByTestId('celestial-preview-clock')).toHaveText(
+      '1:00am'
+    );
+    await page.keyboard.press('Tab');
+    await expect(page.getByTestId('celestial-preview-sunrise')).toBeFocused();
+    await page.keyboard.press('Control+,');
+    await expect(page.getByRole('heading', { name: 'Settings' })).toBeVisible();
+    await expect(page.getByTestId('celestial-day-popover')).toHaveCount(0);
+    await expect(page.getByTestId('celestial-sky')).toHaveAttribute(
+      'data-preview',
+      'false'
+    );
+    await page.getByTestId('celestial-scrubber').fill('60');
+    await expect(page.getByTestId('celestial-preview-clock')).toHaveText(
+      '1:00am'
+    );
+    await page.getByRole('button', { name: 'Light', exact: true }).click();
+    await expect(page.getByTestId('celestial-clock-trigger')).toHaveCount(0);
+    await expect(page.getByTestId('celestial-sky')).toHaveCount(0);
+  });
+
+  test('fits a narrow Arabic viewport and clears preview on resize', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 390, height: 568 });
+    await page.addInitScript(() => localStorage.setItem('i18nextLng', 'ar'));
+    await page.goto('/');
+    await page.getByTestId('celestial-clock-trigger').click();
+    const panel = page.getByTestId('celestial-day-popover');
+    await expect(panel).toBeVisible();
+    await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
+    const bounds = await panel.boundingBox();
+    expect(bounds).not.toBeNull();
+    expect(bounds!.x).toBeGreaterThanOrEqual(0);
+    expect(bounds!.x + bounds!.width).toBeLessThanOrEqual(390);
+    expect(bounds!.y + bounds!.height).toBeLessThanOrEqual(568);
+    const slider = panel.getByTestId('celestial-scrubber');
+    await expect(slider).toHaveAttribute('dir', 'ltr');
+    await slider.fill('60');
+    await page.setViewportSize({ width: 568, height: 390 });
+    await expect(panel).toHaveCount(0);
+    await expect(page.getByTestId('celestial-sky')).toHaveAttribute(
+      'data-preview',
+      'false'
+    );
+  });
+});
+
 test('home is the default tab and opening a chat adds a closable tab', async ({
   page,
 }) => {
