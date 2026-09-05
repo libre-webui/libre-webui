@@ -29,17 +29,18 @@ export function SettingsToggle({
   disabled = false,
 }: SettingsToggleProps) {
   return (
-    <label className='flex items-center cursor-pointer'>
+    // Keep the native focus target inside the visible switch as settings scroll.
+    <label className='relative flex items-center cursor-pointer'>
       <input
         type='checkbox'
         checked={checked}
         onChange={event => onChange(event.target.checked)}
         disabled={disabled}
-        className='sr-only'
+        className='peer sr-only'
       />
       <div
         className={cn(
-          'relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2',
+          'relative inline-flex h-6 w-11 items-center rounded-full transition-colors peer-focus-visible:ring-2 peer-focus-visible:ring-primary-500 peer-focus-visible:ring-offset-2',
           disabled
             ? 'bg-gray-100 dark:bg-dark-200 opacity-50 cursor-not-allowed'
             : checked

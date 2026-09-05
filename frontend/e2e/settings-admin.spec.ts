@@ -96,3 +96,131 @@ test('regular users do not get the Administration group', async ({ page }) => {
   );
   await expect(page.getByText('Administration')).toHaveCount(0);
 });
+
+for (const { language, theme, title } of [
+  { language: 'en', theme: 'light', title: 'Tool access' },
+  { language: 'ar', theme: 'dark', title: 'الوصول إلى الأدوات' },
+] as const) {
+  test(`Tool access keeps Settings inside the viewport in ${language} ${theme} mode`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1920, height: 950 });
+    await page.emulateMedia({
+      reducedMotion: language === 'ar' ? 'reduce' : 'no-preference',
+    });
+    await mockLibreWebUiApi(page, {
+      systemInfo,
+      authUsers: [
+        {
+          ...admin,
+          preferences: {
+            theme: {
+              mode: theme,
+              adaptToAccent: false,
+              accent: 'blue',
+              customAccent: '#2563eb',
+            },
+          },
+        },
+        member,
+      ],
+    });
+    const accessUpdates: string[] = [];
+    await page.route('**/api/tools/access', async route => {
+      if (route.request().method() === 'PUT') {
+        accessUpdates.push(route.request().postDataJSON().mode);
+      }
+      await route.fulfill({
+        json: {
+          success: true,
+          data: { mode: accessUpdates.at(-1) ?? 'admins', lockedByEnv: false },
+        },
+      });
+    });
+    await page.addInitScript(language => {
+      localStorage.setItem('i18nextLng', language);
+      localStorage.setItem('auth-token', 'admin-token');
+    }, language);
+
+    await page.goto('/users');
+    await expect(page.locator('html')).toHaveAttribute(
+      'dir',
+      language === 'ar' ? 'rtl' : 'ltr'
+    );
+    if (theme === 'dark') {
+      await expect(page.locator('html')).toHaveClass(/dark/);
+    } else {
+      await expect(page.locator('html')).not.toHaveClass(/dark/);
+    }
+    const content = page.getByTestId('settings-scroll-region');
+    const toggle = content
+      .getByRole('heading', { name: title, exact: true })
+      .locator('..')
+      .locator('..')
+      .locator('label');
+    const checkbox = toggle.getByRole('checkbox');
+    await expect(checkbox).toBeEnabled();
+    await expect(checkbox).not.toBeChecked();
+    // Reproduce clicking a lower setting after scrolling the modal content.
+    await toggle.evaluate(element => {
+      const region = element.closest('[data-testid="settings-scroll-region"]')!;
+      region.scrollTop +=
+        element.getBoundingClientRect().top -
+        region.getBoundingClientRect().top -
+        160;
+    });
+    await expect
+      .poll(() => content.evaluate(el => el.scrollTop))
+      .toBeGreaterThan(0);
+    const layout = () =>
+      page.evaluate(() => {
+        const panel = document
+          .querySelector('[data-testid="settings-modal-panel"]')!
+          .getBoundingClientRect();
+        const app = document
+          .querySelector('[data-testid="app-shell-content"]')!
+          .getBoundingClientRect();
+        return {
+          documentScroll: document.scrollingElement!.scrollTop,
+          contentScroll: document.querySelector(
+            '[data-testid="settings-scroll-region"]'
+          )!.scrollTop,
+          panelTop: panel.top,
+          panelBottom: panel.bottom,
+          appBottom: app.bottom,
+        };
+      });
+    const before = await layout();
+    expect(before.documentScroll).toBe(0);
+    expect(before.panelTop).toBeGreaterThanOrEqual(0);
+    expect(before.panelBottom).toBeLessThanOrEqual(950);
+
+    // Click the visible control, allowing the browser's native label focus.
+    await toggle.click();
+    await expect.poll(() => accessUpdates).toEqual(['all-users']);
+    await expect(checkbox).toBeChecked();
+    await expect.poll(layout).toEqual(before);
+
+    const controlBounds = await toggle.boundingBox();
+    const focusBounds = await checkbox.boundingBox();
+    expect(controlBounds).not.toBeNull();
+    expect(focusBounds).not.toBeNull();
+    expect(focusBounds!.y).toBeGreaterThanOrEqual(controlBounds!.y);
+    expect(focusBounds!.y + focusBounds!.height).toBeLessThanOrEqual(
+      controlBounds!.y + controlBounds!.height
+    );
+
+    await checkbox.focus();
+    await page.keyboard.press('Shift+Tab');
+    await page.keyboard.press('Tab');
+    await expect(checkbox).toBeFocused();
+    await expect(toggle.locator(':scope > div')).not.toHaveCSS(
+      'box-shadow',
+      'none'
+    );
+    await page.keyboard.press('Space');
+    await expect.poll(() => accessUpdates).toEqual(['all-users', 'admins']);
+    await expect(checkbox).not.toBeChecked();
+    await expect.poll(layout).toEqual(before);
+  });
+}

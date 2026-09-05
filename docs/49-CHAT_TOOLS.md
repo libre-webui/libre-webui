@@ -31,6 +31,10 @@ tools you choose. The picker can narrow what a profile binds, never widen
 it. Private (incognito) chats never offer tools: a tool call is an
 outward-facing action and can leave approvals and audit records.
 
+The **Tool access** switch saves immediately. Click it, or use `Tab` to focus
+it and `Space` to toggle it. Changing access keeps the Settings window and
+its scroll position in place.
+
 An assistant profile (persona) can scope the offered tools: bound tool
 servers, a subset of built-in tools, bound skills, and bound knowledge
 collections restrict what the model sees for sessions using that profile.
