@@ -34,6 +34,41 @@ test.beforeEach(async ({ page }) => {
   });
 });
 
+test.describe('home greeting', () => {
+  test.use({ timezoneId: 'UTC' });
+
+  for (const { hour, language, greeting } of [
+    { hour: 2, language: 'en', greeting: 'Good night' },
+    { hour: 9, language: 'en', greeting: 'Good morning' },
+    { hour: 14, language: 'en', greeting: 'Good afternoon' },
+    { hour: 19, language: 'en', greeting: 'Good evening' },
+    { hour: 9, language: 'fr', greeting: 'Bonjour' },
+  ]) {
+    test(`uses the ${language} translation at ${hour}:00`, async ({ page }) => {
+      const missingGreetings: string[] = [];
+      page.on('console', message => {
+        const text = message.text();
+        if (text.includes('missingKey') && text.includes('greeting')) {
+          missingGreetings.push(text);
+        }
+      });
+
+      await mockLibreWebUiApi(page);
+      await page.addInitScript(locale => {
+        localStorage.setItem('i18nextLng', locale);
+        localStorage.setItem('auth-token', 'e2e-token');
+      }, language);
+      await page.clock.setFixedTime(new Date(Date.UTC(2026, 8, 5, hour)));
+      await page.goto('/');
+
+      await expect(
+        page.getByTestId('home-page').getByRole('heading', { level: 1 })
+      ).toHaveText(`${greeting}, e2e.`);
+      expect(missingGreetings).toEqual([]);
+    });
+  }
+});
+
 test('home is the default tab and opening a chat adds a closable tab', async ({
   page,
 }) => {

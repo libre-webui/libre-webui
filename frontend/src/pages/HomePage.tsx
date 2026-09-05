@@ -42,11 +42,11 @@ import { isWorkTaskActive } from '@/types/work';
 import { cn, formatTimestamp, isMac } from '@/utils';
 import { resolveAppVersion } from '@/utils/appVersion';
 
-const greetingKeyForHour = (hour: number): [string, string] => {
-  if (hour < 5) return ['home.greeting.night', 'Up late'];
-  if (hour < 12) return ['home.greeting.morning', 'Morning'];
-  if (hour < 18) return ['home.greeting.afternoon', 'Afternoon'];
-  return ['home.greeting.evening', 'Evening'];
+const greetingKeyForHour = (hour: number): string => {
+  if (hour < 5) return 'chat.greeting.night';
+  if (hour < 12) return 'chat.greeting.morning';
+  if (hour < 18) return 'chat.greeting.afternoon';
+  return 'chat.greeting.evening';
 };
 
 const sectionLabelClass =
@@ -75,10 +75,7 @@ export const HomePage: React.FC = () => {
     loadCapabilities().catch(() => {});
   }, [showWork, loadWorkTasks, loadCapabilities]);
 
-  const [greetingKey, greetingDefault] = greetingKeyForHour(
-    new Date().getHours()
-  );
-  const greeting = t(greetingKey, greetingDefault);
+  const greeting = t(greetingKeyForHour(new Date().getHours()));
   const name = user?.username;
 
   const recentSessions = [...sessions]
