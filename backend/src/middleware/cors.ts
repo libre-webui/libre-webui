@@ -20,21 +20,25 @@ import type { NextFunction, Request, Response } from 'express';
 /**
  * Cross-origin resource sharing without the `cors` package.
  *
- * The behavior mirrors what the app relied on from that package with a
- * callback-style origin policy:
- * - the policy answers `true` to allow, `false` to pass the request through
- *   with no CORS headers at all, or an error to fail the request;
+ * The behavior mirrors what the app relied on from that package:
+ * - `isOriginAllowed` decides for every request; a request without an
+ *   Origin header is passed to it as `undefined` (same-origin, curl, native
+ *   apps) and is normally allowed;
  * - an allowed request echoes its Origin (a request without one gets no
- *   allow-origin header) and always adds `Vary: Origin`;
+ *   allow-origin header) and always adds `Vary: Origin`; the echo happens
+ *   only inside the allow check, so credentials are never offered to an
+ *   origin the policy did not accept;
+ * - a refused origin fails the request through `rejection`, which the error
+ *   handler turns into a response;
  * - `credentials` adds `Access-Control-Allow-Credentials: true`;
  * - every OPTIONS request is treated as a preflight and answered with 204,
  *   the configured methods and headers, and an empty body.
  */
 
-export type CorsOriginCallback = (error: Error | null, allow?: boolean) => void;
-
 export interface CorsOptions {
-  origin: (origin: string | undefined, callback: CorsOriginCallback) => void;
+  isOriginAllowed: (origin: string | undefined) => boolean;
+  /** Error raised for a refused origin. Default: "Not allowed by CORS". */
+  rejection?: (origin: string | undefined) => Error;
   methods?: string[];
   allowedHeaders?: string[];
   credentials?: boolean;
@@ -61,36 +65,38 @@ export const createCorsMiddleware = (options: CorsOptions) => {
     options.methods || ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE']
   ).join(',');
   const allowedHeaders = options.allowedHeaders?.join(',');
+  const rejection =
+    options.rejection || (() => new Error('Not allowed by CORS'));
 
   return (req: Request, res: Response, next: NextFunction) => {
     const requestOrigin = req.headers.origin;
-    options.origin(requestOrigin, (error, allow) => {
-      if (error) return next(error);
-      if (!allow) return next();
-
-      if (requestOrigin) {
+    if (options.isOriginAllowed(requestOrigin)) {
+      // Echo the origin only once the policy accepted this exact value.
+      if (requestOrigin !== undefined) {
         res.setHeader('Access-Control-Allow-Origin', requestOrigin);
       }
-      appendVary(res, 'Origin');
-      if (options.credentials) {
-        res.setHeader('Access-Control-Allow-Credentials', 'true');
-      }
+    } else {
+      return next(rejection(requestOrigin));
+    }
+    appendVary(res, 'Origin');
+    if (options.credentials) {
+      res.setHeader('Access-Control-Allow-Credentials', 'true');
+    }
 
-      if (req.method !== 'OPTIONS') return next();
+    if (req.method !== 'OPTIONS') return next();
 
-      res.setHeader('Access-Control-Allow-Methods', methods);
-      if (allowedHeaders) {
-        res.setHeader('Access-Control-Allow-Headers', allowedHeaders);
-      } else {
-        const requested = req.headers['access-control-request-headers'];
-        if (requested) {
-          res.setHeader('Access-Control-Allow-Headers', requested);
-          appendVary(res, 'Access-Control-Request-Headers');
-        }
+    res.setHeader('Access-Control-Allow-Methods', methods);
+    if (allowedHeaders) {
+      res.setHeader('Access-Control-Allow-Headers', allowedHeaders);
+    } else {
+      const requested = req.headers['access-control-request-headers'];
+      if (requested) {
+        res.setHeader('Access-Control-Allow-Headers', requested);
+        appendVary(res, 'Access-Control-Request-Headers');
       }
-      res.statusCode = 204;
-      res.setHeader('Content-Length', '0');
-      res.end();
-    });
+    }
+    res.statusCode = 204;
+    res.setHeader('Content-Length', '0');
+    res.end();
   };
 };

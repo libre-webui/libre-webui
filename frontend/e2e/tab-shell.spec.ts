@@ -92,7 +92,7 @@ test.describe('celestial day explorer', () => {
   }) => {
     const weatherRequests: string[] = [];
     page.on('request', request => {
-      if (request.url().includes('api.open-meteo.com')) {
+      if (new URL(request.url()).hostname === 'api.open-meteo.com') {
         weatherRequests.push(request.url());
       }
     });

@@ -14,13 +14,8 @@ const startApp = async () => {
   const app = express();
   app.use(
     createCorsMiddleware({
-      origin: (origin, callback) => {
-        if (!origin) return callback(null, true);
-        if (origin === ALLOWED) return callback(null, true);
-        if (origin === 'http://silent.example.test')
-          return callback(null, false);
-        callback(new Error('Not allowed by CORS'));
-      },
+      isOriginAllowed: origin => !origin || origin === ALLOWED,
+      rejection: () => new Error('Not allowed by CORS'),
       methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
       allowedHeaders: ['Content-Type', 'Authorization'],
       credentials: true,
@@ -94,24 +89,6 @@ test('a request without an Origin gets no allow-origin header but still Vary', a
     assert.equal(response.status, 200);
     assert.equal(response.headers.get('access-control-allow-origin'), null);
     assert.equal(response.headers.get('vary'), 'Origin, Accept-Encoding');
-  } finally {
-    await close();
-  }
-});
-
-test('a policy answer of false passes the request through with no CORS headers', async () => {
-  const { base, close } = await startApp();
-  try {
-    const response = await fetch(`${base}/ping`, {
-      headers: { Origin: 'http://silent.example.test' },
-    });
-    assert.equal(response.status, 200);
-    assert.equal(response.headers.get('access-control-allow-origin'), null);
-    assert.equal(
-      response.headers.get('access-control-allow-credentials'),
-      null
-    );
-    assert.equal(response.headers.get('vary'), 'Accept-Encoding');
   } finally {
     await close();
   }

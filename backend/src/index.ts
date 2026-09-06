@@ -249,42 +249,23 @@ const corsOrigins = process.env.CORS_ORIGIN?.split(',') || [
   `http://127.0.0.1:${port}`,
 ];
 
-// Multi-user safe CORS configuration
-const corsConfig = {
-  origin: (
-    origin: string | undefined,
-    callback: (err: Error | null, allow?: boolean) => void
-  ) => {
-    // Allow requests with no origin (mobile apps, etc.)
-    if (!origin) return callback(null, true);
-
-    // Allow all origins if CORS_ORIGIN is set to '*'
-    if (corsOrigins.includes('*')) {
-      return callback(null, true);
-    }
-
-    // Check if the origin is in our allowed list
-    if (corsOrigins.indexOf(origin) !== -1) {
-      callback(null, true);
-    } else {
-      // Allow network access in development mode or Docker environment
-      // This allows access from network IPs like http://192.168.x.x:8080 or http://10.x.x.x:8080
-      const allowNetworkAccess =
-        process.env.NODE_ENV !== 'production' ||
-        process.env.DOCKER_ENV === 'true';
-      const isNetworkOrigin =
-        origin &&
-        /^https?:\/\/(?:192\.168\.|10\.|172\.(?:1[6-9]|2\d|3[01])\.|100\.(?:6[4-9]|[7-9]\d|1[01]\d|12[0-7])\.|127\.|localhost)/.test(
-          origin
-        );
-
-      if (allowNetworkAccess && isNetworkOrigin) {
-        callback(null, true);
-      } else {
-        callback(new Error('Not allowed by CORS'));
-      }
-    }
-  },
+// Multi-user safe CORS configuration: the browser origin must be listed in
+// CORS_ORIGIN (or CORS_ORIGIN must be "*"), with private-network origins
+// accepted outside production or inside Docker so LAN access keeps working.
+const isOriginAllowed = (origin: string | undefined): boolean => {
+  // Requests with no origin (mobile apps, curl, same-origin) are allowed.
+  if (!origin) return true;
+  if (corsOrigins.includes('*')) return true;
+  if (corsOrigins.indexOf(origin) !== -1) return true;
+  // Allow network access in development mode or Docker environment
+  // This allows access from network IPs like http://192.168.x.x:8080 or http://10.x.x.x:8080
+  const allowNetworkAccess =
+    process.env.NODE_ENV !== 'production' || process.env.DOCKER_ENV === 'true';
+  const isNetworkOrigin =
+    /^https?:\/\/(?:192\.168\.|10\.|172\.(?:1[6-9]|2\d|3[01])\.|100\.(?:6[4-9]|[7-9]\d|1[01]\d|12[0-7])\.|127\.|localhost)/.test(
+      origin
+    );
+  return allowNetworkAccess && isNetworkOrigin;
 };
 
 /**
@@ -433,7 +414,8 @@ app.use(
 // CORS configuration
 app.use(
   createCorsMiddleware({
-    ...corsConfig,
+    isOriginAllowed,
+    rejection: () => new Error('Not allowed by CORS'),
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true,
