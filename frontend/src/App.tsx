@@ -424,11 +424,6 @@ const AppContent: React.FC = () => {
       },
       description: t('keyboard.showShortcuts'),
     },
-    {
-      key: 'Escape',
-      action: () => setSettingsOpen(false),
-      description: t('keyboard.closeModals'),
-    },
   ];
 
   // Enable keyboard shortcuts

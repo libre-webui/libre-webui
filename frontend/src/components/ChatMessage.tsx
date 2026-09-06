@@ -726,6 +726,11 @@ const ChatMessageBase: React.FC<ChatMessageProps> = ({
                     value={editedContent}
                     onChange={e => setEditedContent(e.target.value)}
                     onKeyDown={e => {
+                      if (
+                        e.nativeEvent.isComposing ||
+                        e.nativeEvent.keyCode === 229
+                      )
+                        return;
                       if (e.key === 'Enter' && !e.shiftKey) {
                         e.preventDefault();
                         handleSaveUserEdit();

@@ -14,6 +14,10 @@ Libre WebUI uses local user accounts with JWT sessions. A fresh installation
 always permits one local administrator bootstrap. Public registration for every
 later local or OAuth account is closed by default.
 
+The sign-in page includes a language selector beside the theme control. You
+can choose your preferred language before signing in; the selection is saved
+in the current browser and applies to sign-up as well.
+
 ## First-Time Setup
 
 When the database has no users:

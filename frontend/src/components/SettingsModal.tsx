@@ -71,6 +71,7 @@ import { SettingsPromptsTab } from '@/components/settings/SettingsPromptsTab';
 import { SettingsSkillsTab } from '@/components/settings/SettingsSkillsTab';
 import { SettingsToolsTab } from '@/components/settings/SettingsToolsTab';
 import { SettingsTabHeader } from '@/components/settings/SettingsTabHeader';
+import { useDialogFocus } from '@/hooks/useDialogFocus';
 import { ModelManager } from '@/components/ModelManager';
 import { useSettingsDataImport } from '@/components/settings/useSettingsDataImport';
 import { useTranslation } from 'react-i18next';
@@ -188,6 +189,25 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   } = usePluginStore();
   const { t } = useTranslation();
   const settingsTitleId = React.useId();
+  const settingsDialogRef = useRef<HTMLDivElement>(null);
+  const settingsSearchRef = useRef<HTMLInputElement>(null);
+  useDialogFocus(settingsDialogRef, {
+    onClose,
+    enabled: isOpen,
+    initialFocusRef: settingsSearchRef,
+  });
+  const settingsPanelId = `${settingsTitleId}-panel`;
+  const settingsContentRef = useRef<HTMLDivElement>(null);
+  const [isDesktopNavigation, setIsDesktopNavigation] = useState(
+    () => window.matchMedia('(min-width: 640px)').matches
+  );
+
+  useEffect(() => {
+    const media = window.matchMedia('(min-width: 640px)');
+    const updateNavigation = () => setIsDesktopNavigation(media.matches);
+    media.addEventListener('change', updateNavigation);
+    return () => media.removeEventListener('change', updateNavigation);
+  }, []);
 
   const defaultSelection = {
     model: selectedModel,
@@ -285,6 +305,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     settingsAuthUser?.role === 'admin' ||
     settingsSystemInfo?.requiresAuth === false;
   const [activeTab, setActiveTab] = useState(initialTab ?? 'appearance');
+  useEffect(() => {
+    if (settingsContentRef.current) {
+      settingsContentRef.current.scrollTop = 0;
+    }
+  }, [activeTab, isOpen]);
   // Which settings the Generation tab edits. It used to pin whatever model the
   // chat happened to be on, with no way to reach the global values, so a limit
   // set here came back the moment the model changed.
@@ -769,18 +794,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     if (!isOpen) return;
 
     const previousOverflow = document.body.style.overflow;
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') onClose();
-    };
 
     document.body.style.overflow = 'hidden';
-    document.addEventListener('keydown', handleKeyDown);
 
     return () => {
       document.body.style.overflow = previousOverflow;
-      document.removeEventListener('keydown', handleKeyDown);
     };
-  }, [isOpen, onClose]);
+  }, [isOpen]);
 
   const handleSaveApiKey = async (pluginId: string) => {
     const apiKey = pluginApiKeys[pluginId];
@@ -1819,6 +1839,57 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       : []),
   ];
 
+  const visibleTabGroups = tabGroups
+    .map(group => ({ ...group, tabs: group.tabs.filter(tabMatchesQuery) }))
+    .filter(group => group.tabs.length > 0);
+  const visibleTabs = visibleTabGroups.flatMap(group => group.tabs);
+  const availableTabs = visibleTabs.filter(tab => !tab.disabled);
+  const focusedTabId = availableTabs.some(tab => tab.id === activeTab)
+    ? activeTab
+    : availableTabs[0]?.id;
+  const activeTabLabel = tabGroups
+    .flatMap(group => group.tabs)
+    .find(tab => tab.id === activeTab)?.label;
+
+  const handleTabKeyDown = (
+    event: React.KeyboardEvent<HTMLButtonElement>,
+    tabId: string
+  ) => {
+    const isRtl = getComputedStyle(event.currentTarget).direction === 'rtl';
+    const nextKey = isDesktopNavigation
+      ? 'ArrowDown'
+      : isRtl
+        ? 'ArrowLeft'
+        : 'ArrowRight';
+    const previousKey = isDesktopNavigation
+      ? 'ArrowUp'
+      : isRtl
+        ? 'ArrowRight'
+        : 'ArrowLeft';
+    if (![nextKey, previousKey, 'Home', 'End'].includes(event.key)) return;
+    event.preventDefault();
+
+    const currentIndex = availableTabs.findIndex(tab => tab.id === tabId);
+    const nextIndex =
+      event.key === 'Home'
+        ? 0
+        : event.key === 'End'
+          ? availableTabs.length - 1
+          : (currentIndex +
+              (event.key === nextKey ? 1 : -1) +
+              availableTabs.length) %
+            availableTabs.length;
+    const nextTab = availableTabs[nextIndex];
+    if (!nextTab) return;
+
+    setActiveTab(nextTab.id);
+    const nextButton = document.getElementById(
+      `${settingsTitleId}-tab-${nextTab.id}`
+    );
+    nextButton?.focus({ preventScroll: true });
+    nextButton?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+  };
+
   const renderTabContent = () => {
     switch (activeTab) {
       case 'appearance':
@@ -2064,8 +2135,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
       {/* Modal */}
       <div
+        ref={settingsDialogRef}
         className='fixed inset-0 z-50 flex items-center justify-center p-0 sm:p-6'
         role='dialog'
+        tabIndex={-1}
         aria-modal='true'
         aria-labelledby={settingsTitleId}
         onMouseDown={event => {
@@ -2109,7 +2182,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               <div className='relative mb-2 hidden sm:block'>
                 <Search className='pointer-events-none absolute start-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-ink-subtle' />
                 <input
+                  ref={settingsSearchRef}
                   type='search'
+                  aria-label={t('common.search')}
                   value={settingsQuery}
                   onChange={event => {
                     const query = event.target.value;
@@ -2120,8 +2195,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                       .flatMap(group => group.tabs)
                       .filter(
                         tab =>
-                          tab.label.toLowerCase().includes(text) ||
-                          (tabSearchKeywords[tab.id] || '').includes(text)
+                          !tab.disabled &&
+                          (tab.label.toLowerCase().includes(text) ||
+                            (tabSearchKeywords[tab.id] || '').includes(text))
                       );
                     if (
                       matching.length > 0 &&
@@ -2138,62 +2214,67 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 className='flex gap-1 sm:flex-col sm:gap-0'
                 role='tablist'
                 aria-label={t('settings.title', 'Settings')}
+                aria-orientation={
+                  isDesktopNavigation ? 'vertical' : 'horizontal'
+                }
               >
-                {tabGroups
-                  .map(group => ({
-                    ...group,
-                    tabs: group.tabs.filter(tabMatchesQuery),
-                  }))
-                  .filter(group => group.tabs.length > 0)
-                  .map(group => (
-                    <div
-                      key={group.id}
-                      className='flex shrink-0 gap-1 sm:flex-col sm:gap-0.5 sm:pb-2'
+                {visibleTabGroups.map(group => (
+                  <div
+                    key={group.id}
+                    className='flex shrink-0 gap-1 sm:flex-col sm:gap-0.5 sm:pb-2'
+                  >
+                    <p
+                      aria-hidden='true'
+                      className='hidden px-3 pb-1 pt-2 text-[10px] font-medium uppercase tracking-[0.08em] text-ink-subtle sm:block'
                     >
-                      <p
-                        aria-hidden='true'
-                        className='hidden px-3 pb-1 pt-2 text-[10px] font-medium uppercase tracking-[0.08em] text-ink-subtle sm:block'
-                      >
-                        {group.label}
-                      </p>
-                      {group.tabs.map(tab => {
-                        const Icon = tab.icon;
-                        const isActive = activeTab === tab.id;
-                        const isDisabled = tab.disabled === true;
+                      {group.label}
+                    </p>
+                    {group.tabs.map(tab => {
+                      const Icon = tab.icon;
+                      const isActive = activeTab === tab.id;
+                      const isDisabled = tab.disabled === true;
 
-                        return (
-                          <button
-                            key={tab.id}
-                            data-testid={`settings-tab-${tab.id}`}
-                            onClick={() => setActiveTab(tab.id)}
-                            disabled={isDisabled}
-                            title={isDisabled ? tab.disabledHint : undefined}
-                            className={cn(
-                              'flex h-9 shrink-0 items-center gap-2 rounded-xl px-3 text-start transition-colors duration-150 touch-manipulation outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 sm:w-full',
-                              isDisabled
-                                ? 'cursor-not-allowed text-ink-subtle opacity-60'
-                                : isActive
-                                  ? 'bg-nav-active text-ink'
-                                  : 'text-ink hover:bg-hover-solid'
-                            )}
-                            role='tab'
-                            aria-selected={isActive}
-                            aria-disabled={isDisabled || undefined}
-                            aria-controls='settings-tab-panel'
-                          >
-                            <Icon
-                              className='h-4 w-4 flex-shrink-0 text-ink-muted'
-                              aria-hidden='true'
-                            />
-                            <span className='truncate whitespace-nowrap text-sm'>
-                              {tab.label}
-                            </span>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  ))}
+                      return (
+                        <button
+                          key={tab.id}
+                          id={`${settingsTitleId}-tab-${tab.id}`}
+                          data-testid={`settings-tab-${tab.id}`}
+                          onClick={() => setActiveTab(tab.id)}
+                          onKeyDown={event => handleTabKeyDown(event, tab.id)}
+                          tabIndex={tab.id === focusedTabId ? 0 : -1}
+                          disabled={isDisabled}
+                          title={isDisabled ? tab.disabledHint : undefined}
+                          className={cn(
+                            'flex h-9 shrink-0 items-center gap-2 rounded-xl px-3 text-start transition-colors duration-150 touch-manipulation outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 sm:w-full',
+                            isDisabled
+                              ? 'cursor-not-allowed text-ink-subtle opacity-60'
+                              : isActive
+                                ? 'bg-nav-active text-ink'
+                                : 'text-ink hover:bg-hover-solid'
+                          )}
+                          role='tab'
+                          aria-selected={isActive}
+                          aria-disabled={isDisabled || undefined}
+                          aria-controls={settingsPanelId}
+                        >
+                          <Icon
+                            className='h-4 w-4 flex-shrink-0 text-ink-muted'
+                            aria-hidden='true'
+                          />
+                          <span className='truncate whitespace-nowrap text-sm'>
+                            {tab.label}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                ))}
               </nav>
+              {visibleTabs.length === 0 && (
+                <p role='status' className='px-3 py-4 text-sm text-ink-muted'>
+                  {t('common.noResults')}
+                </p>
+              )}
             </div>
 
             {/* Tab Content */}
@@ -2203,7 +2284,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   variant='ghost'
                   size='sm'
                   onClick={onClose}
-                  autoFocus
                   className='h-7 w-7 touch-manipulation rounded-full p-0 text-ink hover:bg-interactive-hover'
                   title={t('common.close', { defaultValue: 'Close' })}
                 >
@@ -2212,9 +2292,17 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               </div>
               <div
                 data-testid='settings-scroll-region'
+                ref={settingsContentRef}
                 className='scroll-region min-h-0 flex-1 p-4 pt-2 scrollbar-thin sm:px-6 sm:pb-6 sm:pt-0'
-                id='settings-tab-panel'
+                id={settingsPanelId}
                 role='tabpanel'
+                aria-labelledby={
+                  visibleTabs.some(tab => tab.id === activeTab)
+                    ? `${settingsTitleId}-tab-${activeTab}`
+                    : undefined
+                }
+                aria-label={activeTabLabel}
+                tabIndex={0}
               >
                 {renderTabContent()}
               </div>

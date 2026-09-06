@@ -15,11 +15,12 @@
  * limitations under the License.
  */
 
-import React from 'react';
+import React, { useId, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { Copy, FileCode, RefreshCw, TestTube, X } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
+import { useDialogFocus } from '@/hooks/useDialogFocus';
 import { cn } from '@/utils';
 import type { ModelDetails } from './types';
 
@@ -97,6 +98,27 @@ export const ModelManagerModals: React.FC<ModelManagerModalsProps> = ({
   handleGenerateEmbeddings,
 }) => {
   const { t } = useTranslation();
+  const modalId = useId();
+  const detailsRef = useRef<HTMLDivElement>(null);
+  const copyRef = useRef<HTMLDivElement>(null);
+  const createRef = useRef<HTMLDivElement>(null);
+  const embeddingsRef = useRef<HTMLDivElement>(null);
+  useDialogFocus(detailsRef, {
+    enabled: showDetailsModal,
+    onClose: () => setShowDetailsModal(false),
+  });
+  useDialogFocus(copyRef, {
+    enabled: showCopyModal,
+    onClose: () => setShowCopyModal(false),
+  });
+  useDialogFocus(createRef, {
+    enabled: showCreateModal,
+    onClose: () => setShowCreateModal(false),
+  });
+  useDialogFocus(embeddingsRef, {
+    enabled: showEmbeddingsModal,
+    onClose: () => setShowEmbeddingsModal(false),
+  });
 
   return (
     <>
@@ -108,6 +130,11 @@ export const ModelManagerModals: React.FC<ModelManagerModalsProps> = ({
               onClick={() => setShowDetailsModal(false)}
             />
             <div
+              ref={detailsRef}
+              role='dialog'
+              aria-modal='true'
+              aria-labelledby={`${modalId}-details-title`}
+              tabIndex={-1}
               className={cn(
                 'relative w-full max-w-2xl max-h-[85vh] overflow-hidden rounded-xl border shadow-2xl',
                 'bg-white dark:bg-dark-100',
@@ -120,10 +147,15 @@ export const ModelManagerModals: React.FC<ModelManagerModalsProps> = ({
                   'border-gray-200 dark:border-dark-300'
                 )}
               >
-                <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100'>
+                <h3
+                  id={`${modalId}-details-title`}
+                  className='text-lg font-semibold text-gray-900 dark:text-gray-100'
+                >
                   {t('modelManager.modals.details.title')}: {selectedModelName}
                 </h3>
                 <button
+                  type='button'
+                  aria-label={t('common.close')}
                   onClick={() => setShowDetailsModal(false)}
                   className='p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-dark-200'
                 >
@@ -306,6 +338,11 @@ export const ModelManagerModals: React.FC<ModelManagerModalsProps> = ({
               onClick={() => setShowCopyModal(false)}
             />
             <div
+              ref={copyRef}
+              role='dialog'
+              aria-modal='true'
+              aria-labelledby={`${modalId}-copy-title`}
+              tabIndex={-1}
               className={cn(
                 'relative w-full max-w-md rounded-xl border shadow-2xl',
                 'bg-white dark:bg-dark-100',
@@ -318,10 +355,15 @@ export const ModelManagerModals: React.FC<ModelManagerModalsProps> = ({
                   'border-gray-200 dark:border-dark-300'
                 )}
               >
-                <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100'>
+                <h3
+                  id={`${modalId}-copy-title`}
+                  className='text-lg font-semibold text-gray-900 dark:text-gray-100'
+                >
                   {t('modelManager.modals.copy.title')}
                 </h3>
                 <button
+                  type='button'
+                  aria-label={t('common.close')}
                   onClick={() => setShowCopyModal(false)}
                   className='p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-dark-200'
                 >
@@ -331,10 +373,14 @@ export const ModelManagerModals: React.FC<ModelManagerModalsProps> = ({
 
               <div className='p-4 space-y-4'>
                 <div>
-                  <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>
+                  <label
+                    htmlFor={`${modalId}-copy-source`}
+                    className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'
+                  >
                     {t('modelManager.modals.copy.source')}
                   </label>
                   <select
+                    id={`${modalId}-copy-source`}
                     value={copySource}
                     onChange={e => setCopySource(e.target.value)}
                     className={cn(
@@ -356,10 +402,14 @@ export const ModelManagerModals: React.FC<ModelManagerModalsProps> = ({
                 </div>
 
                 <div>
-                  <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>
+                  <label
+                    htmlFor={`${modalId}-copy-newName`}
+                    className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'
+                  >
                     {t('modelManager.modals.copy.newName')}
                   </label>
                   <input
+                    id={`${modalId}-copy-newName`}
                     type='text'
                     value={copyDestination}
                     onChange={e => setCopyDestination(e.target.value)}
@@ -404,6 +454,11 @@ export const ModelManagerModals: React.FC<ModelManagerModalsProps> = ({
               onClick={() => setShowCreateModal(false)}
             />
             <div
+              ref={createRef}
+              role='dialog'
+              aria-modal='true'
+              aria-labelledby={`${modalId}-create-title`}
+              tabIndex={-1}
               className={cn(
                 'relative w-full max-w-lg rounded-xl border shadow-2xl',
                 'bg-white dark:bg-dark-100',
@@ -416,10 +471,15 @@ export const ModelManagerModals: React.FC<ModelManagerModalsProps> = ({
                   'border-gray-200 dark:border-dark-300'
                 )}
               >
-                <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100'>
+                <h3
+                  id={`${modalId}-create-title`}
+                  className='text-lg font-semibold text-gray-900 dark:text-gray-100'
+                >
                   {t('modelManager.modals.create.title')}
                 </h3>
                 <button
+                  type='button'
+                  aria-label={t('common.close')}
                   onClick={() => setShowCreateModal(false)}
                   className='p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-dark-200'
                 >
@@ -429,10 +489,14 @@ export const ModelManagerModals: React.FC<ModelManagerModalsProps> = ({
 
               <div className='p-4 space-y-4'>
                 <div>
-                  <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>
+                  <label
+                    htmlFor={`${modalId}-create-name`}
+                    className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'
+                  >
                     {t('modelManager.modals.create.name')}
                   </label>
                   <input
+                    id={`${modalId}-create-name`}
                     type='text'
                     value={createModelName}
                     onChange={e => setCreateModelName(e.target.value)}
@@ -450,10 +514,14 @@ export const ModelManagerModals: React.FC<ModelManagerModalsProps> = ({
                 </div>
 
                 <div>
-                  <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>
+                  <label
+                    htmlFor={`${modalId}-create-modelfile`}
+                    className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'
+                  >
                     {t('modelManager.modals.create.modelfile')}
                   </label>
                   <textarea
+                    id={`${modalId}-create-modelfile`}
                     value={createModelfile}
                     onChange={e => setCreateModelfile(e.target.value)}
                     placeholder={t(
@@ -515,6 +583,11 @@ export const ModelManagerModals: React.FC<ModelManagerModalsProps> = ({
               onClick={() => setShowEmbeddingsModal(false)}
             />
             <div
+              ref={embeddingsRef}
+              role='dialog'
+              aria-modal='true'
+              aria-labelledby={`${modalId}-embeddings-title`}
+              tabIndex={-1}
               className={cn(
                 'relative w-full max-w-lg rounded-xl border shadow-2xl',
                 'bg-white dark:bg-dark-100',
@@ -527,10 +600,15 @@ export const ModelManagerModals: React.FC<ModelManagerModalsProps> = ({
                   'border-gray-200 dark:border-dark-300'
                 )}
               >
-                <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100'>
+                <h3
+                  id={`${modalId}-embeddings-title`}
+                  className='text-lg font-semibold text-gray-900 dark:text-gray-100'
+                >
                   {t('modelManager.modals.embeddings.title')}
                 </h3>
                 <button
+                  type='button'
+                  aria-label={t('common.close')}
                   onClick={() => setShowEmbeddingsModal(false)}
                   className='p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-dark-200'
                 >
@@ -540,10 +618,14 @@ export const ModelManagerModals: React.FC<ModelManagerModalsProps> = ({
 
               <div className='p-4 space-y-4'>
                 <div>
-                  <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>
+                  <label
+                    htmlFor={`${modalId}-embeddings-model`}
+                    className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'
+                  >
                     {t('modelManager.modals.embeddings.model')}
                   </label>
                   <select
+                    id={`${modalId}-embeddings-model`}
                     value={embeddingsModel}
                     onChange={e => setEmbeddingsModel(e.target.value)}
                     className={cn(
@@ -568,10 +650,14 @@ export const ModelManagerModals: React.FC<ModelManagerModalsProps> = ({
                 </div>
 
                 <div>
-                  <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>
+                  <label
+                    htmlFor={`${modalId}-embeddings-input`}
+                    className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'
+                  >
                     {t('modelManager.modals.embeddings.input')}
                   </label>
                   <textarea
+                    id={`${modalId}-embeddings-input`}
                     value={embeddingsInput}
                     onChange={e => setEmbeddingsInput(e.target.value)}
                     placeholder={t(

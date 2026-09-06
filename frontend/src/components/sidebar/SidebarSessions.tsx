@@ -39,6 +39,7 @@ import {
 } from 'lucide-react';
 import { Button, Input } from '@/components/ui';
 import { SidebarHoverCard } from './SidebarHoverCard';
+import { useSidebarMenu } from './useSidebarMenu';
 import type { ChatSession, Persona, SessionFolder } from '@/types';
 import { cn, formatTimestamp, truncateText } from '@/utils';
 
@@ -271,14 +272,12 @@ export function SidebarSessions({
     ? (sessions.find(session => session.id === sessionMenu.sessionId) ?? null)
     : null;
 
-  useEffect(() => {
-    if (!sessionMenu) return;
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setSessionMenu(null);
-    };
-    document.addEventListener('keydown', onKeyDown);
-    return () => document.removeEventListener('keydown', onKeyDown);
-  }, [sessionMenu]);
+  const {
+    menuRef: sessionMenuRef,
+    setTrigger: setSessionMenuTrigger,
+    onKeyDown: onSessionMenuKeyDown,
+    closeMenu: closeSessionMenu,
+  } = useSidebarMenu(sessionMenu?.sessionId, () => setSessionMenu(null));
 
   const SESSION_MENU_WIDTH = 208;
   const SESSION_MENU_MAX_HEIGHT = 340;
@@ -290,9 +289,10 @@ export function SidebarSessions({
     event.stopPropagation();
     clearHoverPreview();
     if (sessionMenu?.sessionId === session.id) {
-      setSessionMenu(null);
+      closeSessionMenu();
       return;
     }
+    setSessionMenuTrigger(event.currentTarget);
     const rect = event.currentTarget.getBoundingClientRect();
     setSessionMenu({
       sessionId: session.id,
@@ -534,7 +534,7 @@ export function SidebarSessions({
                             {group.sessions.length}
                           </span>
                         </button>
-                        <div className='flex items-center gap-0.5 opacity-0 transition-opacity group-hover/folder:opacity-100'>
+                        <div className='flex items-center gap-0.5 transition-opacity sm:opacity-0 sm:group-hover/folder:opacity-100 sm:group-focus-within/folder:opacity-100 [@media(hover:none)]:opacity-100'>
                           {onRenameFolder && (
                             <button
                               onClick={() => {
@@ -602,7 +602,7 @@ export function SidebarSessions({
                           }
                           onDragStart={event => {
                             clearHoverPreview();
-                            setSessionMenu(null);
+                            closeSessionMenu();
                             setDraggingSessionId(session.id);
                             event.dataTransfer.effectAllowed = 'move';
                             event.dataTransfer.setData(
@@ -657,6 +657,7 @@ export function SidebarSessions({
                             >
                               <Input
                                 value={editingTitle}
+                                aria-label={t('chat.session.renameChat')}
                                 onChange={e =>
                                   onEditingTitleChange(e.target.value)
                                 }
@@ -673,6 +674,7 @@ export function SidebarSessions({
                               <Button
                                 variant='ghost'
                                 size='sm'
+                                aria-label={t('common.save')}
                                 onClick={() => onSaveEdit(session.id)}
                                 className='h-8 w-8 p-0 shrink-0 hover:bg-gray-100 dark:hover:bg-dark-300 active:bg-gray-200 dark:active:bg-dark-400 touch-manipulation'
                               >
@@ -681,6 +683,7 @@ export function SidebarSessions({
                               <Button
                                 variant='ghost'
                                 size='sm'
+                                aria-label={t('common.cancel')}
                                 onClick={onCancelEdit}
                                 className='h-8 w-8 p-0 shrink-0 hover:bg-gray-100 dark:hover:bg-dark-300 active:bg-gray-200 dark:active:bg-dark-400 touch-manipulation'
                               >
@@ -689,9 +692,12 @@ export function SidebarSessions({
                             </div>
                           ) : (
                             <div className='flex h-8 w-full items-center'>
-                              <h3
-                                className='min-w-0 flex-1 truncate text-sm leading-5 text-ink'
+                              <button
+                                type='button'
+                                className='min-w-0 flex-1 truncate rounded-md py-1 text-start text-sm leading-5 text-ink outline-none focus-visible:ring-2 focus-visible:ring-primary-500/30'
                                 title={session.title}
+                                aria-label={session.title}
+                                aria-current={isActive ? 'page' : undefined}
                               >
                                 {generatingTitleForSession === session.id ? (
                                   <span
@@ -706,7 +712,7 @@ export function SidebarSessions({
                                 ) : (
                                   truncateText(session.title, 40)
                                 )}
-                              </h3>
+                              </button>
 
                               {/* Relative time swaps for the row menu on hover. */}
                               <span
@@ -787,9 +793,11 @@ export function SidebarSessions({
               tabIndex={-1}
               aria-label={t('common.close')}
               className='absolute inset-0 cursor-default'
-              onClick={() => setSessionMenu(null)}
+              onClick={() => closeSessionMenu()}
             />
             <div
+              ref={sessionMenuRef}
+              onKeyDown={onSessionMenuKeyDown}
               role='menu'
               aria-label={sessionMenuSession.title}
               data-testid='sidebar-session-menu'
@@ -805,7 +813,7 @@ export function SidebarSessions({
                 type='button'
                 role='menuitem'
                 onClick={() => {
-                  setSessionMenu(null);
+                  closeSessionMenu();
                   openSessionInNewTab(sessionMenuSession);
                 }}
                 className='flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-start text-[13px] text-ink hover:bg-interactive-hover'
@@ -817,7 +825,7 @@ export function SidebarSessions({
                 type='button'
                 role='menuitem'
                 onClick={event => {
-                  setSessionMenu(null);
+                  closeSessionMenu();
                   onStartEditing(sessionMenuSession, event);
                 }}
                 className='flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-start text-[13px] text-ink hover:bg-interactive-hover'
@@ -830,7 +838,7 @@ export function SidebarSessions({
                   type='button'
                   role='menuitem'
                   onClick={() => {
-                    setSessionMenu(null);
+                    closeSessionMenu();
                     onTogglePinSession(
                       sessionMenuSession.id,
                       !sessionMenuSession.pinned
@@ -853,7 +861,7 @@ export function SidebarSessions({
                   type='button'
                   role='menuitem'
                   onClick={() => {
-                    setSessionMenu(null);
+                    closeSessionMenu();
                     setShareSession(sessionMenuSession);
                   }}
                   className='flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-start text-[13px] text-ink hover:bg-interactive-hover'
@@ -868,7 +876,7 @@ export function SidebarSessions({
                   type='button'
                   role='menuitem'
                   onClick={event => {
-                    setSessionMenu(null);
+                    closeSessionMenu();
                     onArchiveSession(sessionMenuSession.id, event);
                   }}
                   className='flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-start text-[13px] text-ink hover:bg-interactive-hover'
@@ -888,7 +896,7 @@ export function SidebarSessions({
                       type='button'
                       role='menuitem'
                       onClick={() => {
-                        setSessionMenu(null);
+                        closeSessionMenu();
                         onMoveSession(sessionMenuSession.id, folder.id);
                       }}
                       className={cn(
@@ -906,7 +914,7 @@ export function SidebarSessions({
                       type='button'
                       role='menuitem'
                       onClick={() => {
-                        setSessionMenu(null);
+                        closeSessionMenu();
                         onMoveSession(sessionMenuSession.id, null);
                       }}
                       className='flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-start text-[13px] text-ink-muted hover:bg-interactive-hover'
@@ -921,7 +929,7 @@ export function SidebarSessions({
                 type='button'
                 role='menuitem'
                 onClick={event => {
-                  setSessionMenu(null);
+                  closeSessionMenu();
                   onDeleteSession(sessionMenuSession.id, event);
                 }}
                 className='mt-1 flex w-full items-center gap-2.5 rounded-lg border-t border-black/[0.06] px-2.5 py-2 text-start text-[13px] text-red-500 hover:bg-red-50 dark:border-white/[0.07] dark:hover:bg-red-900/20'

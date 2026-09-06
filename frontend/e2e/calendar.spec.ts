@@ -136,3 +136,79 @@ test('the calendar shows events in the month grid and creates new ones', async (
       .filter({ hasText: seededEvent.title })
   ).toBeVisible();
 });
+
+for (const locale of ['en', 'ar']) {
+  test(`calendar controls remain reachable on a narrow ${locale} screen`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 320, height: 844 });
+    await mockLibreWebUiApi(page);
+    await mockCalendarApi(page, []);
+    await page.addInitScript(language => {
+      localStorage.setItem('i18nextLng', language);
+    }, locale);
+    await page.goto('/chat');
+    await page.locator('a[href="/calendar"]').click();
+
+    for (const testId of [
+      'calendar-view-month',
+      'calendar-view-week',
+      'calendar-view-day',
+      'calendar-new-event',
+      'calendar-new-calendar',
+      'calendar-import',
+      'calendar-export',
+    ]) {
+      const control = page.getByTestId(testId);
+      await expect(control).toBeInViewport({ ratio: 1 });
+      const bounds = await control.boundingBox();
+      expect(bounds!.x).toBeGreaterThanOrEqual(0);
+      expect(bounds!.x + bounds!.width).toBeLessThanOrEqual(320);
+    }
+
+    await expect(page.getByTestId('calendar-view-month')).toHaveAttribute(
+      'aria-pressed',
+      'true'
+    );
+    await page.getByTestId('calendar-view-day').click();
+    await expect(page.getByTestId('calendar-view-day')).toHaveAttribute(
+      'aria-pressed',
+      'true'
+    );
+    await expect(page.getByTestId('calendar-week-grid')).toBeVisible();
+    await page.getByTestId('calendar-new-event').click();
+    await expect(page.getByTestId('calendar-event-modal')).toBeVisible();
+  });
+}
+
+test('a named calendar can be saved with a visible button or Enter', async ({
+  page,
+}) => {
+  await mockLibreWebUiApi(page);
+  await mockCalendarApi(page, []);
+  const calendars: { id: string; name: string }[] = [];
+  await page.route(/\/api\/calendar\/calendars$/, async route => {
+    if (route.request().method() === 'POST') {
+      const body = route.request().postDataJSON() as { name: string };
+      calendars.push({ id: `calendar-${calendars.length}`, name: body.name });
+    }
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({ success: true, data: calendars }),
+    });
+  });
+  await page.goto('/calendar');
+  const input = page.getByTestId('calendar-new-calendar');
+  const save = page.getByTestId('calendar-create-calendar');
+  await expect(input).toHaveAccessibleName('New calendar…');
+  await expect(save).toBeDisabled();
+  await input.fill('Personal projects');
+  await save.click();
+  await expect(page.getByTestId('calendar-chip')).toContainText(
+    'Personal projects'
+  );
+  await expect(input).toHaveValue('');
+  await input.fill('Reading group');
+  await input.press('Enter');
+  await expect(page.getByTestId('calendar-chip')).toHaveCount(2);
+});

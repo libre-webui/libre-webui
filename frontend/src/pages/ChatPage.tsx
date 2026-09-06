@@ -771,6 +771,7 @@ export const ChatPage: React.FC = () => {
   );
 
   const handleWelcomeKeyDown = (e: React.KeyboardEvent) => {
+    if (e.nativeEvent.isComposing || e.nativeEvent.keyCode === 229) return;
     if (welcomeSuggestionsRef.current?.handleKeyDown(e)) return;
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();

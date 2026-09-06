@@ -103,7 +103,7 @@ test('Android haptic feedback is opt-in and fires for mobile actions', async ({
   // The compact rail no longer lists sessions; expand the sidebar first.
   await page.getByTestId('sidebar-mobile-chats').click();
   await page
-    .getByRole('heading', { name: 'Haptic test conversation', exact: true })
+    .getByRole('button', { name: 'Haptic test conversation', exact: true })
     .click();
 
   await expect

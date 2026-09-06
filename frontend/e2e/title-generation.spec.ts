@@ -47,7 +47,11 @@ test('generated title immediately replaces the sidebar preview without a duplica
   await page.goto('/c/title-session');
   const messageInput = page.getByRole('textbox', { name: 'Send a message' });
   await expect(messageInput).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'New Chat' })).toBeVisible();
+  await expect(
+    page
+      .getByTestId('sidebar-session-scroll-region')
+      .getByRole('button', { name: 'New Chat', exact: true })
+  ).toBeVisible();
 
   await messageInput.fill('Explain why the generated title should update');
   await messageInput.press('Enter');

@@ -18,6 +18,7 @@
 import React, {
   useCallback,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -145,10 +146,34 @@ const ChannelsPage: React.FC = () => {
     if (requestedChannelId) setSearchParams({}, { replace: true });
   }, [requestedChannelId, setSearchParams]);
 
+  const timelineScopeRef = useRef<{
+    channelId: string;
+    requestId: number;
+  } | null>(null);
+  useLayoutEffect(() => {
+    // Invalidate before paint: late responses must never appear under a
+    // different channel header, including after switching away and back.
+    timelineScopeRef.current = selectedId
+      ? { channelId: selectedId, requestId: 0 }
+      : null;
+    return () => {
+      timelineScopeRef.current = null;
+    };
+  }, [selectedId]);
+
   const loadTimeline = useCallback((channelId: string) => {
+    const scope = timelineScopeRef.current;
+    if (!scope || scope.channelId !== channelId) return;
+    const requestId = ++scope.requestId;
     channelsApi
       .listMessages(channelId, { limit: 100 })
       .then(response => {
+        if (
+          timelineScopeRef.current !== scope ||
+          scope.requestId !== requestId
+        ) {
+          return;
+        }
         if (response.success && response.data) setMessages(response.data);
       })
       .catch(error => logger.error('Failed to load messages:', error));

@@ -43,6 +43,10 @@ calendars, each with an optional display color. Events carry an optional
 `calendarId`; events without one live in the default scope, which stays
 private.
 
+Enter a name in **New calendar…** and choose **Save**, or press Enter, to
+create a named calendar. Calendar view and event controls wrap on narrow
+screens so they remain reachable alongside the navigation rail.
+
 Named calendars share through the common grant model: a `read` grant lets
 the recipient see the calendar and its events alongside their own, and a
 `write` grant additionally lets them create and edit events in it. Events

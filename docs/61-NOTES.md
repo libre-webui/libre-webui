@@ -18,6 +18,10 @@ searchable, pinned notes stay prominent, and Cmd/Ctrl-K can search inside your
 own and shared note content without maintaining a plaintext search index on
 disk.
 
+Use Tab to focus a note in the list, then Enter or Space to open it. The
+current note is identified for assistive technology. When a search has no
+matches, **Clear** restores the full list and returns focus to the search field.
+
 ## Markdown preview and export
 
 The preview renders standard Markdown, including tables. It also supports basic

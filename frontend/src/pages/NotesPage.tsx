@@ -60,6 +60,7 @@ export const NotesPage: React.FC = () => {
   );
   const [toolsTab, setToolsTab] = useState<NoteToolsTab | null>(null);
   const saveTimerRef = useRef<number | null>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const [searchParams, setSearchParams] = useSearchParams();
 
   const selectedNote = useMemo(
@@ -272,10 +273,12 @@ export const NotesPage: React.FC = () => {
         <div className='relative mx-3 mb-2'>
           <Search className='pointer-events-none absolute start-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400 dark:text-dark-500' />
           <input
+            ref={searchInputRef}
             type='search'
             value={query}
             onChange={event => setQuery(event.target.value)}
             placeholder={t('common.search')}
+            aria-label={t('common.search')}
             className='w-full rounded-lg border border-transparent bg-black/[0.04] py-1.5 pe-2.5 ps-8 text-base text-gray-900 placeholder:text-gray-400 focus:border-primary-500/40 focus:outline-none dark:bg-white/[0.05] dark:text-dark-900 dark:placeholder:text-dark-500 sm:text-[13px]'
           />
         </div>
@@ -283,9 +286,25 @@ export const NotesPage: React.FC = () => {
           {loading ? null : filteredNotes.length === 0 ? (
             <div className='px-3 py-10 text-center'>
               <NotebookPen className='mx-auto mb-2 h-6 w-6 text-gray-300 dark:text-dark-400' />
-              <p className='text-xs text-gray-400 dark:text-dark-500'>
-                {t('notes.empty')}
+              <p
+                className='text-xs text-gray-500 dark:text-dark-500'
+                role='status'
+              >
+                {query.trim() ? t('common.noResults') : t('notes.empty')}
               </p>
+              {query.trim() && (
+                <Button
+                  size='sm'
+                  variant='ghost'
+                  className='mt-2'
+                  onClick={() => {
+                    setQuery('');
+                    searchInputRef.current?.focus();
+                  }}
+                >
+                  {t('common.clear')}
+                </Button>
+              )}
             </div>
           ) : (
             <div className='space-y-0.5'>
@@ -293,16 +312,21 @@ export const NotesPage: React.FC = () => {
                 <div
                   key={note.id}
                   data-testid='note-list-item'
-                  onClick={() => selectNote(note)}
                   className={cn(
-                    'group cursor-pointer rounded-lg px-2.5 py-2 transition-colors',
+                    'group relative flex items-center rounded-lg transition-colors',
                     selectedId === note.id
                       ? 'bg-white ring-1 ring-black/[0.04] dark:bg-dark-200 dark:ring-white/[0.05]'
                       : 'hover:bg-white/60 dark:hover:bg-dark-200/60'
                   )}
                 >
-                  <div className='flex items-center justify-between gap-2'>
-                    <p className='flex min-w-0 flex-1 items-center gap-1 truncate text-[13px] font-medium text-gray-900 dark:text-dark-900'>
+                  <button
+                    type='button'
+                    onClick={() => selectNote(note)}
+                    aria-label={note.title || t('notes.untitled')}
+                    aria-current={selectedId === note.id ? 'true' : undefined}
+                    className='min-w-0 flex-1 rounded-lg px-2.5 py-2 text-start focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-canvas'
+                  >
+                    <span className='flex min-w-0 items-center gap-1 truncate text-[13px] font-medium text-gray-900 dark:text-dark-900'>
                       {note.pinned && (
                         <Pin
                           className='h-3 w-3 shrink-0 text-primary-500'
@@ -318,29 +342,28 @@ export const NotesPage: React.FC = () => {
                       <span className='truncate'>
                         {note.title || t('notes.untitled')}
                       </span>
-                    </p>
-                    {!note.shared && (
-                      <button
-                        onClick={event => {
-                          event.stopPropagation();
-                          void handleDelete(note.id);
-                        }}
-                        className='shrink-0 rounded-md p-1 text-red-500 opacity-100 transition-opacity hover:bg-red-50 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100 dark:hover:bg-red-900/20'
-                        title={t('common.delete')}
-                      >
-                        <Trash2 className='h-3 w-3' />
-                      </button>
-                    )}
-                  </div>
-                  <p className='mt-0.5 truncate text-[11px] text-gray-400 dark:text-dark-500'>
-                    {formatTimestamp(note.updatedAt, i18n.language)}
-                    {note.content.trim() && (
-                      <>
-                        {' · '}
-                        {note.content.trim().slice(0, 60)}
-                      </>
-                    )}
-                  </p>
+                    </span>
+                    <span className='mt-0.5 block truncate text-[11px] text-gray-500 dark:text-dark-500'>
+                      {formatTimestamp(note.updatedAt, i18n.language)}
+                      {note.content.trim() && (
+                        <>
+                          {' · '}
+                          {note.content.trim().slice(0, 60)}
+                        </>
+                      )}
+                    </span>
+                  </button>
+                  {!note.shared && (
+                    <button
+                      type='button'
+                      onClick={() => void handleDelete(note.id)}
+                      className='me-1.5 shrink-0 rounded-md p-1.5 text-gray-500 opacity-100 transition-opacity hover:bg-red-50 hover:text-red-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100 dark:text-dark-500 dark:hover:bg-red-900/20 dark:hover:text-red-400'
+                      title={t('common.delete')}
+                      aria-label={`${t('common.delete')}: ${note.title || t('notes.untitled')}`}
+                    >
+                      <Trash2 className='h-3 w-3' aria-hidden='true' />
+                    </button>
+                  )}
                 </div>
               ))}
             </div>

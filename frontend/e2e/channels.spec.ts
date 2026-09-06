@@ -182,6 +182,91 @@ test('channels list, timeline, threads, and composer work end to end', async ({
   await expect(page.getByTestId('channel-member')).toHaveCount(2);
 });
 
+for (const returnToFirstChannel of [false, true]) {
+  test(`a delayed timeline cannot replace ${returnToFirstChannel ? 'a newer response for the same channel' : 'another channel'}`, async ({
+    page,
+  }) => {
+    await mockLibreWebUiApi(page);
+    await mockChannelsApi(page);
+    const secondChannel = { ...CHANNEL, id: 'chan-2', name: 'design' };
+    await page.route(/\/api\/channels$/, route =>
+      route.fulfill({
+        contentType: 'application/json',
+        body: JSON.stringify({ success: true, data: [CHANNEL, secondChannel] }),
+      })
+    );
+
+    let releaseFirstRequest: (() => void) | undefined;
+    let firstChannelRequests = 0;
+    await page.route(/\/api\/channels\/chan-[12]\/messages\?/, async route => {
+      const channelId = route.request().url().includes('/chan-1/')
+        ? CHANNEL.id
+        : secondChannel.id;
+      const delayed = channelId === CHANNEL.id && ++firstChannelRequests === 1;
+      if (delayed) {
+        await new Promise<void>(resolve => {
+          releaseFirstRequest = resolve;
+        });
+      }
+      const message: MockMessage = {
+        id: delayed ? 'old-message' : `current-${channelId}`,
+        channelId,
+        authorKind: 'user',
+        author: { userId: 'user-2', username: 'sam' },
+        content: delayed
+          ? 'Outdated engineering response'
+          : `Current ${channelId} message`,
+        createdAt: 1_770_000_050_000,
+        updatedAt: 1_770_000_050_000,
+      };
+      await route.fulfill({
+        contentType: 'application/json',
+        body: JSON.stringify({ success: true, data: [message] }),
+      });
+    });
+
+    await page.goto('/channels');
+    await page
+      .getByTestId('channel-item')
+      .filter({ hasText: 'engineering' })
+      .click();
+    await expect.poll(() => releaseFirstRequest !== undefined).toBe(true);
+    await page
+      .getByTestId('channel-item')
+      .filter({ hasText: 'design' })
+      .click();
+    const timeline = page.getByTestId('channel-timeline');
+    await expect(timeline).toContainText('Current chan-2 message');
+    if (returnToFirstChannel) {
+      await page
+        .getByTestId('channel-item')
+        .filter({ hasText: 'engineering' })
+        .click();
+      await expect(timeline).toContainText('Current chan-1 message');
+    }
+
+    const delayedResponse = page.waitForResponse(response =>
+      response.url().includes('/channels/chan-1/messages?')
+    );
+    releaseFirstRequest!();
+    await delayedResponse;
+    // Let the fulfilled request and React's resulting render reach the screen.
+    await page.evaluate(
+      () =>
+        new Promise<void>(resolve => {
+          requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
+        })
+    );
+    await expect(page.getByTestId('channel-title')).toHaveText(
+      returnToFirstChannel ? 'engineering' : 'design'
+    );
+    await expect(timeline).toContainText(
+      returnToFirstChannel ? 'Current chan-1 message' : 'Current chan-2 message'
+    );
+    await expect(timeline).not.toContainText('Outdated engineering response');
+  });
+}
+
 test('the notification bell surfaces the inbox', async ({ page }) => {
   await mockLibreWebUiApi(page);
   await page.route(/\/api\/notifications\/unread-count$/, route =>

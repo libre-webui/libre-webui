@@ -18,6 +18,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { ChevronDown } from 'lucide-react';
+import { cn } from '@/utils';
 import {
   changeAppLanguage,
   normalizeLanguageCode,
@@ -28,7 +29,9 @@ import {
  * Language setting row: label and description on the left, a pill-shaped
  * select on the right.
  */
-export const LanguageSwitcher: React.FC = () => {
+export const LanguageSwitcher: React.FC<{ compact?: boolean }> = ({
+  compact = false,
+}) => {
   const { t, i18n } = useTranslation();
 
   const handleLanguageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -37,8 +40,8 @@ export const LanguageSwitcher: React.FC = () => {
   };
 
   return (
-    <div className='flex items-center gap-4 py-4'>
-      <div className='min-w-0 flex-1'>
+    <div className={cn('flex items-center gap-4', !compact && 'py-4')}>
+      <div className={cn('min-w-0 flex-1', compact && 'sr-only')}>
         <h4 className='text-sm leading-[22px] text-ink'>
           {t('settings.appearance.language.title')}
         </h4>
@@ -49,13 +52,17 @@ export const LanguageSwitcher: React.FC = () => {
       <div className='relative shrink-0'>
         <select
           data-testid='language-switcher-select'
+          aria-label={t('settings.appearance.language.title')}
           value={normalizeLanguageCode(i18n.language)}
           onChange={handleLanguageChange}
-          className='h-9 max-w-[220px] cursor-pointer appearance-none rounded-full bg-surface-subtle pe-9 ps-3.5 text-sm text-ink transition-colors hover:bg-hover-solid focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40'
+          className={cn(
+            compact ? 'max-w-[140px]' : 'max-w-[220px]',
+            'h-9 cursor-pointer appearance-none rounded-full bg-surface-subtle pe-9 ps-3.5 text-sm text-ink transition-colors hover:bg-hover-solid focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40'
+          )}
         >
           {supportedLanguages.map(lang => (
             <option key={lang.code} value={lang.code}>
-              {lang.nativeName} ({lang.name})
+              {compact ? lang.nativeName : `${lang.nativeName} (${lang.name})`}
             </option>
           ))}
         </select>

@@ -15,7 +15,8 @@
  * limitations under the License.
  */
 
-import React from 'react';
+import React, { useRef } from 'react';
+import { useDialogFocus } from '@/hooks/useDialogFocus';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { X } from 'lucide-react';
@@ -54,13 +55,18 @@ export const ModalShell: React.FC<ModalShellProps> = ({
   footer,
   widthClassName = 'max-w-lg',
   testId,
-}) =>
-  createPortal(
+}) => {
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useDialogFocus(dialogRef, { onClose });
+
+  return createPortal(
     <div
       className='fixed inset-0 z-[2147483647] flex items-center justify-center bg-gray-950/55 p-4 backdrop-blur-md'
       onClick={onClose}
     >
       <div
+        ref={dialogRef}
+        tabIndex={-1}
         role='dialog'
         aria-modal='true'
         aria-labelledby={titleId}
@@ -87,6 +93,7 @@ export const ModalShell: React.FC<ModalShellProps> = ({
     </div>,
     document.body
   );
+};
 
 const ModalHeader: React.FC<
   Pick<ModalShellProps, 'titleId' | 'title' | 'subtitle' | 'onClose'>
@@ -111,7 +118,7 @@ const ModalHeader: React.FC<
         type='button'
         onClick={onClose}
         aria-label={t('common.close')}
-        className='shrink-0 rounded-xl p-2 transition-colors hover:bg-gray-100 dark:hover:bg-dark-200'
+        className='shrink-0 rounded-xl p-2 transition-colors hover:bg-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 dark:hover:bg-dark-200'
       >
         <X size={20} className='text-gray-500' />
       </button>

@@ -28,9 +28,10 @@ import {
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui';
 import { SidebarHoverCard } from './SidebarHoverCard';
+import { useSidebarMenu } from './useSidebarMenu';
 import type { Persona } from '@/types';
 import type { WorkTaskSummary } from '@/types/work';
-import { cn, formatTimestamp, truncateText } from '@/utils';
+import { cn, formatTimestamp } from '@/utils';
 import {
   getPersonaAvatarFallback,
   getPersonaAvatarSrc,
@@ -205,14 +206,12 @@ export function SidebarWorkTasks({
     ? (tasks.find(task => task.id === taskMenu.taskId) ?? null)
     : null;
 
-  useEffect(() => {
-    if (!taskMenu) return;
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setTaskMenu(null);
-    };
-    document.addEventListener('keydown', onKeyDown);
-    return () => document.removeEventListener('keydown', onKeyDown);
-  }, [taskMenu]);
+  const {
+    menuRef: taskMenuRef,
+    setTrigger: setTaskMenuTrigger,
+    onKeyDown: onTaskMenuKeyDown,
+    closeMenu: closeTaskMenu,
+  } = useSidebarMenu(taskMenu?.taskId, () => setTaskMenu(null));
 
   const openTaskMenu = (
     task: WorkTaskSummary,
@@ -221,9 +220,10 @@ export function SidebarWorkTasks({
     event.stopPropagation();
     clearHoverPreview();
     if (taskMenu?.taskId === task.id) {
-      setTaskMenu(null);
+      closeTaskMenu();
       return;
     }
+    setTaskMenuTrigger(event.currentTarget);
     const rect = event.currentTarget.getBoundingClientRect();
     setTaskMenu({
       taskId: task.id,
@@ -376,22 +376,24 @@ export function SidebarWorkTasks({
             </span>
             <div className='min-w-0 flex-1'>
               <div className='flex items-center'>
-                <h3
+                <button
+                  type='button'
                   dir='auto'
                   className={cn(
-                    'min-w-0 flex-1 truncate text-sm leading-5 text-ink',
+                    'min-w-0 flex-1 truncate rounded-md text-start text-sm leading-5 text-ink outline-none focus-visible:ring-2 focus-visible:ring-primary-500/30',
                     unread && 'font-medium'
                   )}
                   title={taskDisplayTitle(task)}
+                  aria-current={selected ? 'page' : undefined}
                 >
-                  {truncateText(taskDisplayTitle(task), 34)}
+                  {taskDisplayTitle(task)}
                   <span className='sr-only'>
                     {t('work.tasks.status', {
                       defaultValue: 'Status: {{status}}',
                       status: statusLabel,
                     })}
                   </span>
-                </h3>
+                </button>
                 {unread && (
                   <span
                     data-testid='sidebar-work-agent-unread'
@@ -430,19 +432,21 @@ export function SidebarWorkTasks({
               )}
               style={{ backgroundColor: status.color }}
             />
-            <h3
+            <button
+              type='button'
               dir='auto'
-              className='min-w-0 flex-1 truncate text-sm leading-5 text-ink'
+              className='min-w-0 flex-1 truncate rounded-md py-1 text-start text-sm leading-5 text-ink outline-none focus-visible:ring-2 focus-visible:ring-primary-500/30'
               title={taskDisplayTitle(task)}
+              aria-current={selected ? 'page' : undefined}
             >
-              {truncateText(taskDisplayTitle(task), 40)}
+              {taskDisplayTitle(task)}
               <span className='sr-only'>
                 {t('work.tasks.status', {
                   defaultValue: 'Status: {{status}}',
                   status: statusLabel,
                 })}
               </span>
-            </h3>
+            </button>
             {rowControls}
           </div>
         )}
@@ -660,9 +664,11 @@ export function SidebarWorkTasks({
               tabIndex={-1}
               aria-label={t('common.close')}
               className='absolute inset-0 cursor-default'
-              onClick={() => setTaskMenu(null)}
+              onClick={() => closeTaskMenu()}
             />
             <div
+              ref={taskMenuRef}
+              onKeyDown={onTaskMenuKeyDown}
               role='menu'
               aria-label={taskDisplayTitle(taskMenuTask)}
               data-testid='sidebar-work-task-menu'
@@ -678,7 +684,7 @@ export function SidebarWorkTasks({
                 type='button'
                 role='menuitem'
                 onClick={() => {
-                  setTaskMenu(null);
+                  closeTaskMenu();
                   openTaskInNewTab(taskMenuTask);
                 }}
                 className='flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-start text-[13px] text-ink hover:bg-interactive-hover'
@@ -692,7 +698,7 @@ export function SidebarWorkTasks({
                 disabled={actionLoading}
                 data-testid='sidebar-work-task-delete'
                 onClick={() => {
-                  setTaskMenu(null);
+                  closeTaskMenu();
                   onDeleteTask(taskMenuTask);
                 }}
                 className='mt-1 flex w-full items-center gap-2.5 rounded-lg border-t border-black/[0.06] px-2.5 py-2 text-start text-[13px] text-red-500 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-white/[0.07] dark:hover:bg-red-900/20'

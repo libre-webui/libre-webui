@@ -36,6 +36,11 @@ export const Select: React.FC<SelectProps> = ({
 }) => {
   const generatedId = useId();
   const selectId = id || `select-${generatedId}`;
+  const feedbackId = `${selectId}-feedback`;
+  const describedBy =
+    [props['aria-describedby'], (error || helper) && feedbackId]
+      .filter(Boolean)
+      .join(' ') || undefined;
 
   return (
     <div className='space-y-1.5'>
@@ -59,6 +64,8 @@ export const Select: React.FC<SelectProps> = ({
           className
         )}
         {...props}
+        aria-invalid={error ? true : props['aria-invalid']}
+        aria-describedby={describedBy}
       >
         {options.map((option, index) => (
           <option
@@ -70,12 +77,18 @@ export const Select: React.FC<SelectProps> = ({
         ))}
       </select>
       {error && (
-        <p className='text-xs leading-relaxed text-error-600 dark:text-error-400'>
+        <p
+          id={feedbackId}
+          role='alert'
+          className='text-xs leading-relaxed text-error-600 dark:text-error-400'
+        >
           {error}
         </p>
       )}
       {helper && !error && (
-        <p className='text-xs leading-relaxed text-ink-muted'>{helper}</p>
+        <p id={feedbackId} className='text-xs leading-relaxed text-ink-muted'>
+          {helper}
+        </p>
       )}
     </div>
   );

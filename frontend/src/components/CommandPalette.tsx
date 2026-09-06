@@ -50,6 +50,7 @@ import { useChatStore } from '@/store/chatStore';
 import { useWorkStore } from '@/store/workStore';
 import { useAuthStore } from '@/store/authStore';
 import { useAppStore } from '@/store/appStore';
+import { useDialogFocus } from '@/hooks/useDialogFocus';
 import {
   startIncognitoChat,
   startNewChat,
@@ -161,7 +162,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const sessions = useChatStore(state => state.sessions);
   const workTasks = useWorkStore(state => state.tasks);
@@ -196,14 +197,8 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
     };
   }, []);
 
-  // Moving focus is a DOM side effect, so it belongs in an effect.
-  useEffect(() => {
-    if (!open) return;
-    const frame = window.requestAnimationFrame(() => inputRef.current?.focus());
-    return () => window.cancelAnimationFrame(frame);
-  }, [open]);
-
   const close = useCallback(() => setOpen(false), []);
+  useDialogFocus(dialogRef, { onClose: close, enabled: open });
 
   // Deep workspace search (messages, notes, documents) kicks in from three
   // characters, debounced so typing does not hammer the backend.
@@ -533,17 +528,27 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
   return createPortal(
     <div
       data-testid='command-palette'
-      className='fixed inset-0 z-[120] flex items-center justify-center bg-black/25 px-4 backdrop-blur-[2px] dark:bg-black/45'
+      className='fixed inset-0 z-[2147483647] flex items-center justify-center bg-black/25 px-4 backdrop-blur-[2px] dark:bg-black/45'
       onMouseDown={event => {
         if (event.target === event.currentTarget) close();
       }}
     >
-      <div className='flex h-[min(34rem,76vh)] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-line bg-surface-overlay/95 shadow-overlay backdrop-blur-xl animate-scale-in motion-reduce:animate-none'>
+      <div
+        ref={dialogRef}
+        role='dialog'
+        aria-modal='true'
+        aria-label={t('palette.search', 'Search')}
+        tabIndex={-1}
+        className='flex h-[min(34rem,76vh)] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-line bg-surface-overlay/95 shadow-overlay backdrop-blur-xl animate-scale-in motion-reduce:animate-none'
+      >
         <div className='flex shrink-0 items-center gap-2.5 border-b border-line px-4'>
           <Search className='h-4 w-4 shrink-0 text-ink-subtle' />
           <input
-            ref={inputRef}
             data-testid='command-palette-input'
+            aria-label={t(
+              'palette.placeholder',
+              'Search chats, Work, actions…'
+            )}
             value={query}
             onChange={event => {
               setQuery(event.target.value);
@@ -551,10 +556,8 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
               setSelectedIndex(0);
             }}
             onKeyDown={event => {
-              if (event.key === 'Escape') {
-                event.preventDefault();
-                close();
-              } else if (event.key === 'ArrowDown') {
+              if (event.nativeEvent.isComposing) return;
+              if (event.key === 'ArrowDown') {
                 event.preventDefault();
                 setSelectedIndex(index =>
                   Math.min(filtered.length - 1, index + 1)

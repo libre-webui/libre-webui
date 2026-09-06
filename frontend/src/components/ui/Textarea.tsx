@@ -28,6 +28,11 @@ export const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
   ({ label, error, helper, className, id, ...props }, ref) => {
     const generatedId = useId();
     const textareaId = id || `textarea-${generatedId}`;
+    const feedbackId = `${textareaId}-feedback`;
+    const describedBy =
+      [props['aria-describedby'], (error || helper) && feedbackId]
+        .filter(Boolean)
+        .join(' ') || undefined;
 
     return (
       <div className='space-y-1.5'>
@@ -52,14 +57,22 @@ export const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
             className
           )}
           {...props}
+          aria-invalid={error ? true : props['aria-invalid']}
+          aria-describedby={describedBy}
         />
         {error && (
-          <p className='text-xs leading-relaxed text-error-600 dark:text-error-400'>
+          <p
+            id={feedbackId}
+            role='alert'
+            className='text-xs leading-relaxed text-error-600 dark:text-error-400'
+          >
             {error}
           </p>
         )}
         {helper && !error && (
-          <p className='text-xs leading-relaxed text-ink-muted'>{helper}</p>
+          <p id={feedbackId} className='text-xs leading-relaxed text-ink-muted'>
+            {helper}
+          </p>
         )}
       </div>
     );

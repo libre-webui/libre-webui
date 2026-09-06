@@ -59,6 +59,7 @@ const CalendarPage: React.FC = () => {
   const [saving, setSaving] = useState(false);
   const [calendars, setCalendars] = useState<Calendar[]>([]);
   const [newCalendarName, setNewCalendarName] = useState('');
+  const [creatingCalendar, setCreatingCalendar] = useState(false);
   const [shareCalendar, setShareCalendar] = useState<Calendar | null>(null);
   const importInputRef = React.useRef<HTMLInputElement>(null);
 
@@ -270,10 +271,12 @@ const CalendarPage: React.FC = () => {
 
   const handleCreateCalendar = async () => {
     const name = newCalendarName.trim();
-    if (!name) return;
+    if (!name || creatingCalendar) return;
+    setCreatingCalendar(true);
     const response = await calendarApi
       .createCalendar({ name })
       .catch(() => undefined);
+    setCreatingCalendar(false);
     if (response?.success) {
       setNewCalendarName('');
       refreshEvents();
@@ -321,7 +324,7 @@ const CalendarPage: React.FC = () => {
       data-testid='calendar-page'
     >
       <div className='flex flex-wrap items-center justify-between gap-2 border-b border-black/[0.06] px-4 py-3 dark:border-white/[0.07]'>
-        <div className='flex items-center gap-2'>
+        <div className='flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1'>
           <h1 className='text-sm font-semibold text-gray-900 dark:text-dark-900'>
             {t('calendar.title')}
           </h1>
@@ -332,15 +335,17 @@ const CalendarPage: React.FC = () => {
             {title}
           </span>
         </div>
-        <div className='flex items-center gap-2'>
+        <div className='flex w-full min-w-0 flex-wrap items-center gap-2 sm:w-auto'>
           <div className='flex items-center rounded-xl bg-black/[0.04] p-0.5 dark:bg-white/[0.06]'>
             {(['month', 'week', 'day'] as const).map(choice => (
               <button
                 key={choice}
+                type='button'
                 onClick={() => setView(choice)}
+                aria-pressed={view === choice}
                 data-testid={`calendar-view-${choice}`}
                 className={cn(
-                  'rounded-[10px] px-2.5 py-1 text-[12px] font-medium transition-colors',
+                  'rounded-[10px] px-2.5 py-1 text-[12px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-canvas',
                   view === choice
                     ? 'bg-white text-gray-900 shadow-sm dark:bg-dark-200 dark:text-dark-900'
                     : 'text-gray-500 hover:text-gray-800 dark:text-dark-500 dark:hover:text-dark-800'
@@ -357,8 +362,9 @@ const CalendarPage: React.FC = () => {
               onClick={() => step(-1)}
               className='h-7 w-7 p-0'
               title={t('calendar.previous')}
+              aria-label={t('calendar.previous')}
             >
-              <ChevronLeft className='h-4 w-4' />
+              <ChevronLeft className='h-4 w-4 rtl:rotate-180' />
             </Button>
             <Button
               size='sm'
@@ -374,8 +380,9 @@ const CalendarPage: React.FC = () => {
               onClick={() => step(1)}
               className='h-7 w-7 p-0'
               title={t('calendar.next')}
+              aria-label={t('calendar.next')}
             >
-              <ChevronRight className='h-4 w-4' />
+              <ChevronRight className='h-4 w-4 rtl:rotate-180' />
             </Button>
           </div>
           <Button
@@ -394,14 +401,16 @@ const CalendarPage: React.FC = () => {
         {calendars.map(calendar => (
           <span
             key={calendar.id}
-            className='inline-flex items-center gap-1.5 rounded-full border border-black/[0.08] px-2.5 py-1 text-xs text-gray-700 dark:border-white/[0.1] dark:text-dark-800'
+            className='inline-flex max-w-full items-center gap-1.5 rounded-full border border-black/[0.08] px-2.5 py-1 text-xs text-gray-700 dark:border-white/[0.1] dark:text-dark-800'
             data-testid='calendar-chip'
           >
             <span
-              className='h-2 w-2 rounded-full'
+              className='h-2 w-2 shrink-0 rounded-full'
               style={{ backgroundColor: calendar.color ?? '#8b8b8b' }}
             />
-            {calendar.name}
+            <span className='truncate' title={calendar.name}>
+              {calendar.name}
+            </span>
             {calendar.shared ? (
               <span className='text-[10px] uppercase text-gray-400 dark:text-dark-500'>
                 {t('calendar.sharedBadge')}
@@ -410,7 +419,7 @@ const CalendarPage: React.FC = () => {
               <>
                 <button
                   onClick={() => setShareCalendar(calendar)}
-                  className='text-gray-400 hover:text-primary-500 dark:text-dark-500'
+                  className='shrink-0 text-gray-400 hover:text-primary-500 dark:text-dark-500'
                   title={t('calendar.shareCalendar')}
                   data-testid='calendar-share'
                 >
@@ -422,7 +431,7 @@ const CalendarPage: React.FC = () => {
                       .deleteCalendar(calendar.id)
                       .then(refreshEvents)
                   }
-                  className='text-gray-400 hover:text-red-500 dark:text-dark-500'
+                  className='shrink-0 text-gray-400 hover:text-red-500 dark:text-dark-500'
                   title={t('common.delete')}
                 >
                   <X className='h-3 w-3' />
@@ -431,17 +440,35 @@ const CalendarPage: React.FC = () => {
             )}
           </span>
         ))}
-        <input
-          type='text'
-          value={newCalendarName}
-          onChange={event => setNewCalendarName(event.target.value)}
-          onKeyDown={event => {
-            if (event.key === 'Enter') void handleCreateCalendar();
+        <form
+          className='flex min-w-0 max-w-full items-center gap-1'
+          onSubmit={event => {
+            event.preventDefault();
+            void handleCreateCalendar();
           }}
-          placeholder={t('calendar.newCalendarPlaceholder')}
-          className='w-36 rounded-full border border-dashed border-black/[0.12] bg-transparent px-2.5 py-1 text-xs text-gray-700 placeholder:text-gray-400 focus:outline-none dark:border-white/[0.16] dark:text-dark-800'
-          data-testid='calendar-new-calendar'
-        />
+        >
+          <input
+            type='text'
+            value={newCalendarName}
+            disabled={creatingCalendar}
+            onChange={event => setNewCalendarName(event.target.value)}
+            placeholder={t('calendar.newCalendarPlaceholder')}
+            aria-label={t('calendar.newCalendarPlaceholder')}
+            className='min-w-0 w-36 rounded-full border border-dashed border-black/[0.12] bg-transparent px-2.5 py-1 text-base text-gray-700 placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-canvas dark:border-white/[0.16] dark:text-dark-800 sm:text-xs'
+            data-testid='calendar-new-calendar'
+          />
+          <Button
+            type='submit'
+            size='sm'
+            variant='ghost'
+            disabled={!newCalendarName.trim()}
+            loading={creatingCalendar}
+            className='h-7 shrink-0 px-2 text-xs'
+            data-testid='calendar-create-calendar'
+          >
+            {t('common.save')}
+          </Button>
+        </form>
         <div className='ms-auto flex items-center gap-1'>
           <input
             ref={importInputRef}

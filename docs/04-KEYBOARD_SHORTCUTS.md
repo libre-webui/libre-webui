@@ -29,6 +29,18 @@ with their own `Esc`. `Cmd/Ctrl + K` is the exception to the focus rule: it
 also works while a message composer has focus, so you can jump somewhere else
 without clearing what you were typing.
 
+### Settings Navigation
+
+Press `Tab` to reach the selected settings section, then use `Up` / `Down`
+to switch sections in the desktop sidebar. On narrow screens, use `Left` /
+`Right` to follow the horizontal tabs; the direction follows the interface
+language. `Home` and `End` move to the first and last available sections.
+Disabled sections are skipped. Each section opens at the top of its content.
+
+The desktop search filters section names and related keywords. It shows an
+empty-results message when nothing matches and keeps unavailable sections
+disabled.
+
 ### Command Palette
 
 The palette fuzzy-searches your chats, Work tasks, and app actions, highlights
@@ -41,22 +53,43 @@ on it also full-text searches your message, note, and document contents.
 | `Enter`       | Open the selected result |
 | `Esc`         | Close the palette        |
 
+## Sidebar History
+
+Use `Tab` to reach a chat or Work task, then press `Enter` or `Space` to open
+it. The next `Tab` reaches that row's **Actions** button; folder controls also
+appear when they receive keyboard focus.
+
+In a history action menu, use `Up` / `Down` to move between actions, or `Home`
+and `End` to reach the first and last action. Press `Enter` to choose an action.
+`Esc` closes the menu and returns focus to its Actions button; `Tab` closes the
+menu and continues through the sidebar.
+
 ## Chat Input
 
-| Shortcut        | Action                                          |
-| --------------- | ----------------------------------------------- |
-| `Enter`         | Send the message                                |
-| `Shift + Enter` | Insert a new line                               |
-| `/` (as the first character) | Open the prompt library menu      |
-| `$` (before the cursor)      | Open the skills menu              |
+| Shortcut                     | Action                       |
+| ---------------------------- | ---------------------------- |
+| `Enter`                      | Send the message             |
+| `Shift + Enter`              | Insert a new line            |
+| `/` (as the first character) | Open the prompt library menu |
+| `$` (before the cursor)      | Open the skills menu         |
 
 While a prompt or skill menu is open:
 
-| Shortcut        | Action                            |
-| --------------- | --------------------------------- |
-| `Up` / `Down`   | Move the selection                |
+| Shortcut        | Action                              |
+| --------------- | ----------------------------------- |
+| `Up` / `Down`   | Move the selection                  |
 | `Enter` / `Tab` | Insert the selected prompt or skill |
-| `Esc`           | Close the menu, keeping the draft |
+| `Esc`           | Close the menu, keeping the draft   |
+
+While an input method is composing text (for example, Japanese or Chinese),
+`Enter` confirms the current character choice without sending the message or
+saving an edit. Press `Enter` again after composition finishes to send.
+
+### Library Dialogs
+
+Prompt, skill, and tool-server forms keep `Tab` and `Shift + Tab` inside the
+open dialog. `Esc` closes the foremost dialog and returns focus to its opener;
+a form opened from Settings leaves Settings open.
 
 ## Editing a Sent Message
 

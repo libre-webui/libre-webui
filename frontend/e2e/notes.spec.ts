@@ -130,6 +130,58 @@ async function mockNotesApi(page: Page, initialNotes: MockNote[]) {
   });
 }
 
+test('notes can be opened with the keyboard and identify the current note', async ({
+  page,
+}) => {
+  await mockLibreWebUiApi(page);
+  await mockNotesApi(page, [tableNote, secondNote]);
+  await page.goto('/notes');
+
+  const list = page.getByTestId('notes-list');
+  await list.getByRole('searchbox', { name: 'Search' }).focus();
+  await page.keyboard.press('Tab');
+  const firstNote = list.getByRole('button', {
+    name: tableNote.title,
+    exact: true,
+  });
+  await expect(firstNote).toBeFocused();
+  await page.keyboard.press('Enter');
+  await expect(page.getByTestId('notes-title-preview')).toHaveText(
+    tableNote.title
+  );
+  await expect(firstNote).toHaveAttribute('aria-current', 'true');
+
+  const nextNote = list.getByRole('button', {
+    name: secondNote.title,
+    exact: true,
+  });
+  await nextNote.focus();
+  await page.keyboard.press('Space');
+  await expect(page.getByTestId('notes-title-preview')).toHaveText(
+    secondNote.title
+  );
+  await expect(nextNote).toHaveAttribute('aria-current', 'true');
+  await expect(firstNote).not.toHaveAttribute('aria-current', 'true');
+});
+
+test('an empty note search shows search feedback and can be cleared', async ({
+  page,
+}) => {
+  await mockLibreWebUiApi(page);
+  await mockNotesApi(page, [tableNote]);
+  await page.goto('/notes');
+
+  const list = page.getByTestId('notes-list');
+  const search = list.getByRole('searchbox', { name: 'Search' });
+  await search.fill('no matching note');
+  await expect(list.getByText('No results found')).toBeVisible();
+  await expect(list.getByText('No notes yet')).toHaveCount(0);
+  await list.getByRole('button', { name: 'Clear', exact: true }).click();
+  await expect(search).toHaveValue('');
+  await expect(search).toBeFocused();
+  await expect(list.getByText(tableNote.title, { exact: true })).toBeVisible();
+});
+
 test('notes open in Markdown preview and make editing explicit', async ({
   page,
 }) => {
