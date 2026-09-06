@@ -1316,19 +1316,9 @@ export default function WorkPage() {
 
         {!taskId ? (
           <div className='relative min-h-0 flex-1 overflow-y-auto'>
-            {/* The same ambient bloom the chat welcome screen sits in. */}
-            <div
-              aria-hidden='true'
-              className='pointer-events-none absolute inset-0'
-            >
-              <div className='absolute left-[12%] top-[18%] h-56 w-56 rounded-full bg-primary-500/[0.035] blur-3xl dark:bg-primary-400/[0.04]' />
-              <div className='absolute bottom-[16%] right-[10%] h-72 w-72 rounded-full bg-gray-900/[0.025] blur-3xl dark:bg-white/[0.025]' />
-              <div className='absolute left-1/2 top-0 h-16 w-px bg-gray-300/60 dark:bg-white/10' />
-            </div>
-
             <section
               data-testid='work-landing'
-              className='relative z-[1] mx-auto flex min-h-full w-full max-w-3xl flex-col items-center justify-center px-4 py-20 sm:px-8 sm:py-24'
+              className='mx-auto flex min-h-full w-full max-w-3xl flex-col items-center justify-center px-4 py-6 sm:px-8 sm:py-12'
             >
               <div className='flex flex-col items-center text-center'>
                 <div className='mb-3 flex items-center justify-center gap-3'>
@@ -1350,143 +1340,155 @@ export default function WorkPage() {
                   })}
                 </p>
               </div>
-              {policies.length > 0 && (
-                <div className='mt-8 w-full max-w-2xl'>
-                  <label
-                    htmlFor='work-policy'
-                    className='mb-1.5 block text-xs font-medium text-ink-muted'
-                  >
-                    {t('work.policy.label', {
-                      defaultValue: 'Runtime policy',
-                    })}
-                  </label>
-                  <select
-                    id='work-policy'
-                    data-testid='work-policy'
-                    value={policyId}
-                    onChange={event => setPolicyId(event.target.value)}
-                    className='w-full rounded-xl border border-line bg-surface px-3 py-2 text-[13px] text-ink outline-none transition-colors focus:border-line-strong focus-visible:ring-2 focus-visible:ring-primary-500/30'
-                  >
-                    <option value=''>
-                      {t('work.policy.default', {
-                        defaultValue: 'Default (global limits)',
-                      })}
-                    </option>
-                    {policies.map(policy => (
-                      <option key={policy.id} value={policy.id}>
-                        {policy.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              )}
-              {personaList.length > 0 && (
-                <div className='mt-8 w-full max-w-2xl'>
-                  <label
-                    htmlFor='work-persona'
-                    className='mb-1.5 block text-xs font-medium text-ink-muted'
-                  >
-                    {t('work.persona.label', {
-                      defaultValue: 'Hire as an agent (optional)',
-                    })}
-                  </label>
-                  <select
-                    id='work-persona'
-                    data-testid='work-persona'
-                    value={personaId}
-                    onChange={event => setPersonaId(event.target.value)}
-                    className='w-full rounded-xl border border-line bg-surface px-3 py-2 text-[13px] text-ink outline-none transition-colors focus:border-line-strong focus-visible:ring-2 focus-visible:ring-primary-500/30'
-                  >
-                    <option value=''>
-                      {t('work.persona.none', {
-                        defaultValue: 'No persona (one-off task)',
-                      })}
-                    </option>
-                    {personaList.map(persona => (
-                      <option key={persona.id} value={persona.id}>
-                        {persona.name}
-                      </option>
-                    ))}
-                  </select>
-                  <p className='mt-1.5 text-[11px] leading-relaxed text-ink-subtle'>
-                    {personaId
-                      ? t('work.persona.hint', {
-                          defaultValue:
-                            'This task becomes a named agent: it keeps the persona, stays pinned in the sidebar, and reports a one-line status after each run.',
-                        })
-                      : t('work.persona.description', {
-                          defaultValue:
-                            'Pick a persona to turn this task into a persistent agent with its own identity.',
-                        })}
-                  </p>
-                </div>
-              )}
-              {!hasComputerPolicy && authenticatedUser?.role === 'admin' && (
+              {(policies.length > 0 ||
+                personaList.length > 0 ||
+                (!hasComputerPolicy && authenticatedUser?.role === 'admin') ||
+                hostWorkspacesEnabled) && (
                 <div
-                  className='mt-8 flex w-full max-w-2xl items-center justify-between gap-4 rounded-xl border border-line bg-surface px-4 py-3'
-                  data-testid='work-policy-setup-hint'
+                  data-testid='work-landing-options'
+                  className='mt-6 grid w-full min-w-0 grid-cols-1 gap-4 sm:grid-cols-2'
                 >
-                  <div className='min-w-0'>
-                    <p className='text-[13px] font-medium text-ink'>
-                      {t('work.computerSetup.title')}
-                    </p>
-                    <p className='mt-0.5 text-xs text-ink-muted'>
-                      {computerSetupError ??
-                        (computerSetupBusy
-                          ? t('work.computerSetup.building')
-                          : t('work.computerSetup.description'))}
-                    </p>
-                  </div>
-                  <button
-                    type='button'
-                    data-testid='work-computer-enable'
-                    onClick={() => void enableComputer()}
-                    disabled={computerSetupBusy}
-                    className='flex shrink-0 items-center gap-2 rounded-lg bg-primary-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-primary-500 disabled:opacity-60'
-                  >
-                    {computerSetupBusy && (
-                      <span className='h-3 w-3 animate-spin rounded-full border border-white/40 border-t-white' />
-                    )}
-                    {computerSetupError
-                      ? t('work.computerSetup.retry')
-                      : t('work.computerSetup.enable')}
-                  </button>
-                </div>
-              )}
-              {hostWorkspacesEnabled && (
-                <div className='mt-8 w-full max-w-2xl'>
-                  <label
-                    htmlFor='work-host-path'
-                    className='mb-1.5 block text-xs font-medium text-ink-muted'
-                  >
-                    {t('work.hostWorkspace.label', {
-                      defaultValue: 'Workspace folder (optional)',
-                    })}
-                  </label>
-                  <input
-                    id='work-host-path'
-                    data-testid='work-host-path'
-                    value={hostPath}
-                    onChange={event => setHostPath(event.target.value)}
-                    spellCheck={false}
-                    placeholder={
-                      hostWorkspaceRoots[0]
-                        ? `${hostWorkspaceRoots[0]}/my-project`
-                        : '/path/to/folder'
-                    }
-                    className='w-full rounded-xl border border-line bg-surface px-3 py-2 font-mono text-[13px] text-ink outline-none transition-colors placeholder:text-ink-subtle focus:border-line-strong focus-visible:ring-2 focus-visible:ring-primary-500/30'
-                  />
-                  <p className='mt-1.5 text-[11px] leading-relaxed text-ink-subtle'>
-                    {hostPath.trim()
-                      ? t('work.hostWorkspace.warning', {
-                          defaultValue:
-                            'The task can read and write this folder directly. Leave blank to use an isolated workspace instead.',
-                        })
-                      : t('work.hostWorkspace.hint', {
-                          defaultValue:
-                            'Leave blank for an isolated workspace, or point the task at a folder on this machine.',
+                  {policies.length > 0 && (
+                    <div className='min-w-0'>
+                      <label
+                        htmlFor='work-policy'
+                        className='mb-1.5 block text-xs font-medium text-ink-muted'
+                      >
+                        {t('work.policy.label', {
+                          defaultValue: 'Runtime policy',
                         })}
-                  </p>
+                      </label>
+                      <select
+                        id='work-policy'
+                        data-testid='work-policy'
+                        value={policyId}
+                        onChange={event => setPolicyId(event.target.value)}
+                        className='w-full min-w-0 rounded-xl border border-line bg-surface px-3 py-2 text-[13px] text-ink outline-none transition-colors focus:border-line-strong focus-visible:ring-2 focus-visible:ring-primary-500/30'
+                      >
+                        <option value=''>
+                          {t('work.policy.default', {
+                            defaultValue: 'Default (global limits)',
+                          })}
+                        </option>
+                        {policies.map(policy => (
+                          <option key={policy.id} value={policy.id}>
+                            {policy.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+                  {personaList.length > 0 && (
+                    <div className='min-w-0'>
+                      <label
+                        htmlFor='work-persona'
+                        className='mb-1.5 block text-xs font-medium text-ink-muted'
+                      >
+                        {t('work.persona.label', {
+                          defaultValue: 'Hire as an agent (optional)',
+                        })}
+                      </label>
+                      <select
+                        id='work-persona'
+                        data-testid='work-persona'
+                        value={personaId}
+                        onChange={event => setPersonaId(event.target.value)}
+                        className='w-full min-w-0 rounded-xl border border-line bg-surface px-3 py-2 text-[13px] text-ink outline-none transition-colors focus:border-line-strong focus-visible:ring-2 focus-visible:ring-primary-500/30'
+                      >
+                        <option value=''>
+                          {t('work.persona.none', {
+                            defaultValue: 'No persona (one-off task)',
+                          })}
+                        </option>
+                        {personaList.map(persona => (
+                          <option key={persona.id} value={persona.id}>
+                            {persona.name}
+                          </option>
+                        ))}
+                      </select>
+                      <p className='mt-1.5 text-xs leading-relaxed text-ink-muted'>
+                        {personaId
+                          ? t('work.persona.hint', {
+                              defaultValue:
+                                'This task becomes a named agent: it keeps the persona, stays pinned in the sidebar, and reports a one-line status after each run.',
+                            })
+                          : t('work.persona.description', {
+                              defaultValue:
+                                'Pick a persona to turn this task into a persistent agent with its own identity.',
+                            })}
+                      </p>
+                    </div>
+                  )}
+                  {!hasComputerPolicy &&
+                    authenticatedUser?.role === 'admin' && (
+                      <div
+                        className='flex min-w-0 flex-wrap items-center justify-between gap-3 rounded-xl border border-line bg-surface px-4 py-3 sm:col-span-2'
+                        data-testid='work-policy-setup-hint'
+                      >
+                        <div className='min-w-0 flex-1 basis-48'>
+                          <p className='text-[13px] font-medium text-ink'>
+                            {t('work.computerSetup.title')}
+                          </p>
+                          <p className='mt-0.5 text-xs text-ink-muted'>
+                            {computerSetupError ??
+                              (computerSetupBusy
+                                ? t('work.computerSetup.building')
+                                : t('work.computerSetup.description'))}
+                          </p>
+                        </div>
+                        <button
+                          type='button'
+                          data-testid='work-computer-enable'
+                          onClick={() => void enableComputer()}
+                          disabled={computerSetupBusy}
+                          className='flex shrink-0 items-center gap-2 rounded-lg border border-line bg-surface-raised px-3 py-1.5 text-xs font-medium text-ink transition-colors hover:bg-surface-subtle disabled:opacity-60'
+                        >
+                          {computerSetupBusy && (
+                            <span className='h-3 w-3 animate-spin rounded-full border border-ink/20 border-t-ink' />
+                          )}
+                          {computerSetupError
+                            ? t('work.computerSetup.retry')
+                            : t('work.computerSetup.enable')}
+                        </button>
+                      </div>
+                    )}
+                  {hostWorkspacesEnabled && (
+                    <div className='min-w-0 sm:col-span-2'>
+                      <label
+                        htmlFor='work-host-path'
+                        className='mb-1.5 block text-xs font-medium text-ink-muted'
+                      >
+                        {t('work.hostWorkspace.label', {
+                          defaultValue: 'Workspace folder (optional)',
+                        })}
+                      </label>
+                      <input
+                        id='work-host-path'
+                        data-testid='work-host-path'
+                        dir='ltr'
+                        value={hostPath}
+                        onChange={event => setHostPath(event.target.value)}
+                        spellCheck={false}
+                        placeholder={
+                          hostWorkspaceRoots[0]
+                            ? `${hostWorkspaceRoots[0]}/my-project`
+                            : '/path/to/folder'
+                        }
+                        className='w-full min-w-0 rounded-xl border border-line bg-surface px-3 py-2 font-mono text-[13px] text-ink outline-none transition-colors placeholder:text-ink-subtle focus:border-line-strong focus-visible:ring-2 focus-visible:ring-primary-500/30'
+                      />
+                      <p className='mt-1.5 text-xs leading-relaxed text-ink-muted'>
+                        {hostPath.trim()
+                          ? t('work.hostWorkspace.warning', {
+                              defaultValue:
+                                'The task can read and write this folder directly. Leave blank to use an isolated workspace instead.',
+                            })
+                          : t('work.hostWorkspace.hint', {
+                              defaultValue:
+                                'Leave blank for an isolated workspace, or point the task at a folder on this machine.',
+                            })}
+                      </p>
+                    </div>
+                  )}
                 </div>
               )}
               <WorkComposer

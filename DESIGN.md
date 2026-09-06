@@ -250,6 +250,17 @@ remain LTR, including inside Arabic RTL layouts.
 
 The message input is the most important interactive element. It uses neutral-tertiary fill with rounded-xl corners, creating a pill-like shape. The send button uses the neutral inverse treatment and sits inside the input container, aligned right. The active accent is reserved for focus and selection states. Placeholder text uses the secondary color.
 
+Chat and Work share the same composer surface and neutral send treatment. A
+quiet accent border and ring identify the active writing surface; shadow stays
+restrained. Composer controls keep a consistent height as options change, with
+44px minimum touch targets on narrow screens. Model names truncate within their
+available space while the full name remains accessible.
+
+The Work starting screen groups policy and agent choices into aligned columns
+when space permits, and stacks them on narrow screens. Optional folder access
+and its warning remain visible above the composer. The landing input gives a
+task brief more room than the compact follow-up input.
+
 ### Code Blocks
 
 Code rendering follows the active light or dark mode. Dark mode uses GitHub's

@@ -110,9 +110,8 @@ export const ContextMeter: React.FC<ContextMeterProps> = ({
             }
           : {})}
         className={cn(
-          'flex h-9 w-9 items-center justify-center rounded-full text-gray-400 outline-none sm:h-10 sm:w-10',
+          'touch-target flex h-9 w-9 items-center justify-center rounded-full text-ink-muted outline-none',
           'transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-primary-500/40',
-          'dark:text-dark-500',
           // Past four fifths the summarizer is close enough to warn about;
           // at the window the conversation is losing history.
           ratio >= 0.8 && ratio < 1 && 'text-amber-600 dark:text-amber-400',

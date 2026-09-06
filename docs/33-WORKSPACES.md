@@ -182,6 +182,12 @@ Select **Work** beside **Chat** in the sidebar. Enter an instruction, choose a
 model, and select **Run**. The first message creates the task, its first run,
 its provider route, and its persistent workspace.
 
+The starting screen groups runtime policy and optional agent choices above the
+composer. These choices sit side by side when space permits and stack on
+smaller screens. If host folders are available, the folder field and access
+warning stay visible. The model selector stays inside the composer at every
+screen size, and long model names fit within narrow conversation panes.
+
 Each task remains in the primary sidebar. Reopening it restores its recent
 conversation, Files view, current provider/model selection, and workspace.
 Older conversation messages can be loaded in pages. You can rename the task

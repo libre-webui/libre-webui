@@ -88,8 +88,8 @@ export const ComposerCompareMenu: React.FC<ComposerCompareMenuProps> = ({
         disabled={disabled}
         onClick={() => setOpen(current => !current)}
         className={cn(
-          'h-9 w-9 sm:h-10 sm:w-10 p-0 rounded-full flex-shrink-0 flex items-center justify-center',
-          'text-gray-500 dark:text-dark-600 hover:bg-gray-100 dark:hover:bg-dark-300',
+          'h-9 w-9 p-0 rounded-full flex-shrink-0 flex items-center justify-center',
+          'text-ink-muted hover:bg-interactive-hover hover:text-ink',
           'transition-colors duration-150 touch-manipulation',
           selectedKeys.length > 0 &&
             'bg-primary-50 text-primary-600 dark:bg-primary-900/25 dark:text-primary-400'

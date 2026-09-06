@@ -625,9 +625,9 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
   const getCurrentModelDisplay = () => {
     if (!currentModel) {
       return compact ? (
-        <div className='flex items-center gap-2 min-w-0'>
-          <Bot className='h-4 w-4' />
-          <span className='text-xs font-medium text-gray-400 dark:text-gray-500 truncate'>
+        <div className='flex min-w-0 flex-1 items-center gap-2'>
+          <Bot className='h-4 w-4 shrink-0' />
+          <span className='truncate text-xs font-medium text-ink-subtle'>
             {t('modelSelector.selectModel')}
           </span>
         </div>
@@ -640,11 +640,11 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
       const modelName = getModelLabel(currentModel);
 
       return (
-        <div className='flex items-center gap-2 min-w-0'>
-          {getModelIcon(currentModel)}
+        <div className='flex min-w-0 flex-1 items-center gap-2'>
+          <span className='shrink-0'>{getModelIcon(currentModel)}</span>
           <span
             dir={currentModel.isPersona ? 'auto' : 'ltr'}
-            className='text-xs font-medium text-gray-700 dark:text-gray-200 truncate'
+            className='truncate text-xs font-medium text-ink'
           >
             {modelName}
           </span>
@@ -692,7 +692,7 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
   };
 
   return (
-    <div className={cn('relative', className)} ref={dropdownRef}>
+    <div className={cn('relative min-w-0', className)} ref={dropdownRef}>
       <button
         ref={internalTriggerRef}
         data-testid={triggerTestId}
@@ -708,10 +708,9 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
         }
         className={cn(
           compact
-            ? 'h-9 sm:h-10 px-2.5 flex items-center justify-between text-start w-full'
+            ? 'flex h-9 w-full min-w-0 items-center justify-between gap-2 px-2.5 text-start'
             : 'w-full flex items-center justify-between gap-2 px-3 py-2.5 text-start',
-          'border border-black/[0.06] bg-gray-100/70 dark:border-white/[0.06] dark:bg-dark-300/70',
-          'rounded-xl text-sm hover:bg-gray-100 dark:hover:bg-dark-300',
+          'rounded-xl border border-line bg-surface-subtle text-sm text-ink hover:bg-hover-solid',
           'transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500/40',
           disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
         )}
@@ -727,7 +726,7 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
         <ChevronDown
           className={cn(
             compact ? 'h-3 w-3' : 'h-4 w-4',
-            'text-gray-400 flex-shrink-0 transition-transform duration-150',
+            'shrink-0 text-ink-subtle transition-transform duration-150 motion-reduce:transition-none',
             isOpen && 'rotate-180'
           )}
         />

@@ -69,6 +69,10 @@ import {
 } from './composer/ComposerSuggestions';
 import { ComposerToolsMenu } from './composer/ComposerToolsMenu';
 import {
+  composerSendButtonClass,
+  composerSurfaceClass,
+} from './composer/composerStyles';
+import {
   DEFAULT_COMPOSER_TOOLS,
   composerToolsRequest,
   type ComposerToolsValue,
@@ -827,15 +831,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
             )}
           <form onSubmit={handleSubmit}>
             {/* Unified Input Container: text row above, controls row below. */}
-            <div
-              data-composer-box=''
-              className={cn(
-                'relative rounded-[24px] border p-2.5 transition-[border-color,box-shadow,background-color] duration-200',
-                'bg-surface dark:bg-surface-subtle',
-                'border-black/[0.08] dark:border-white/[0.09]',
-                'shadow-lv2 focus-within:shadow-lv3'
-              )}
-            >
+            <div data-composer-box='' className={composerSurfaceClass}>
               {/* Text Input Area */}
               <ComposerSuggestions
                 ref={suggestionsRef}
@@ -1126,8 +1122,8 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                       size='sm'
                       onClick={() => setWebSearchActive(active => !active)}
                       className={cn(
-                        'h-9 w-9 sm:h-10 sm:w-10 p-0 rounded-full flex-shrink-0 flex items-center justify-center',
-                        'text-gray-500 dark:text-dark-600 hover:bg-gray-100 dark:hover:bg-dark-300',
+                        'h-9 w-9 p-0 rounded-full flex-shrink-0 flex items-center justify-center',
+                        'text-ink-muted hover:bg-interactive-hover hover:text-ink',
                         'transition-colors duration-150 touch-manipulation',
                         webSearchActive &&
                           'bg-primary-50 text-primary-600 dark:bg-primary-900/25 dark:text-primary-400'
@@ -1207,8 +1203,8 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                       size='sm'
                       onClick={() => void dictation.toggle()}
                       className={cn(
-                        'h-9 w-9 sm:h-10 sm:w-10 p-0 rounded-full flex-shrink-0 flex items-center justify-center',
-                        'text-gray-500 dark:text-dark-600 hover:bg-gray-100 dark:hover:bg-dark-300',
+                        'h-9 w-9 p-0 rounded-full flex-shrink-0 flex items-center justify-center',
+                        'text-ink-muted hover:bg-interactive-hover hover:text-ink',
                         'transition-colors duration-150 touch-manipulation',
                         (speechStarting || listening || transcribing) &&
                           'bg-red-50 text-red-500 animate-pulse dark:bg-red-900/20 dark:text-red-400'
@@ -1252,8 +1248,8 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                         onOpenVoiceMode();
                       }}
                       className={cn(
-                        'h-9 w-9 sm:h-10 sm:w-10 p-0 rounded-full flex-shrink-0 flex items-center justify-center',
-                        'text-gray-500 dark:text-dark-600 hover:bg-gray-100 dark:hover:bg-dark-300',
+                        'h-9 w-9 p-0 rounded-full flex-shrink-0 flex items-center justify-center',
+                        'text-ink-muted hover:bg-interactive-hover hover:text-ink',
                         'transition-colors duration-150 touch-manipulation'
                       )}
                       title={t('voiceMode.open')}
@@ -1301,7 +1297,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                       size='sm'
                       onClick={handleStopGeneration}
                       className={cn(
-                        'h-9 w-9 sm:h-10 sm:w-10 p-0 rounded-full flex-shrink-0 flex items-center justify-center',
+                        'h-9 w-9 p-0 rounded-full flex-shrink-0 flex items-center justify-center',
                         'bg-red-50 dark:bg-red-900/20',
                         'text-red-500 dark:text-red-400',
                         'hover:bg-red-100 dark:hover:bg-red-900/30',
@@ -1314,17 +1310,12 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                   ) : (
                     <Button
                       type='submit'
-                      variant='ghost'
+                      variant='primary'
                       size='sm'
                       disabled={
                         !message.trim() || disabled || !sessionModelAvailable
                       }
-                      className={cn(
-                        'h-9 w-9 p-0 rounded-full flex-shrink-0 flex items-center justify-center',
-                        'bg-primary-500 text-white hover:bg-primary-400',
-                        'disabled:cursor-not-allowed disabled:bg-primary-300/50 disabled:text-white/80 dark:disabled:bg-primary-800/60 dark:disabled:text-white/40 disabled:hover:bg-primary-300/50 dark:disabled:hover:bg-primary-800/60',
-                        'transition-colors duration-150 touch-manipulation'
-                      )}
+                      className={composerSendButtonClass}
                       title={t('chat.input.sendMessage')}
                     >
                       <ArrowUp className='h-4 w-4' />

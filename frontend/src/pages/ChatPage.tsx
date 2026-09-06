@@ -47,6 +47,10 @@ import {
 } from '@/components/composer/ComposerSuggestions';
 import { ComposerToolsMenu } from '@/components/composer/ComposerToolsMenu';
 import {
+  composerSendButtonClass,
+  composerSurfaceClass,
+} from '@/components/composer/composerStyles';
+import {
   DEFAULT_COMPOSER_TOOLS,
   composerToolsRequest,
   type ComposerToolsValue,
@@ -854,15 +858,6 @@ export const ChatPage: React.FC = () => {
     return (
       <div className='flex h-full min-h-0 flex-1'>
         <div className='relative h-full min-w-0 flex-1 overflow-y-auto overflow-x-hidden px-4 py-20 sm:px-8 sm:py-24'>
-          <div
-            aria-hidden='true'
-            className='pointer-events-none absolute inset-0'
-          >
-            <div className='absolute left-[12%] top-[18%] h-56 w-56 rounded-full bg-primary-500/[0.035] blur-3xl dark:bg-primary-400/[0.04]' />
-            <div className='absolute bottom-[16%] right-[10%] h-72 w-72 rounded-full bg-gray-900/[0.025] blur-3xl dark:bg-white/[0.025]' />
-            <div className='absolute left-1/2 top-0 h-16 w-px bg-gray-300/60 dark:bg-white/10' />
-          </div>
-
           {/* Chat controls, on the outer side of the private mode button */}
           <button
             onClick={() => setControlsOpen(open => !open)}
@@ -955,13 +950,7 @@ export const ChatPage: React.FC = () => {
 
                 {/* Floating composer card: text row on top, controls below. */}
                 <form onSubmit={handleWelcomeSubmit}>
-                  <div
-                    className={cn(
-                      'relative rounded-[24px] border p-2.5 transition-[border-color,box-shadow,background-color] duration-200',
-                      'border-black/[0.08] bg-surface dark:border-white/[0.09] dark:bg-surface-subtle',
-                      'shadow-lv2 focus-within:shadow-lv3'
-                    )}
-                  >
+                  <div data-composer-box='' className={composerSurfaceClass}>
                     <ComposerSuggestions
                       ref={welcomeSuggestionsRef}
                       message={welcomeMessage}
@@ -1066,22 +1055,17 @@ export const ChatPage: React.FC = () => {
                         />
                       </div>
 
-                      {/* Send: circular accent button */}
+                      {/* Send uses the shared neutral primary treatment. */}
                       <Button
                         type='submit'
-                        variant='ghost'
+                        variant='primary'
                         size='sm'
                         disabled={
                           !welcomeMessage.trim() ||
                           !selectedModel ||
                           !selectedModelAvailable
                         }
-                        className={cn(
-                          'h-9 w-9 p-0 rounded-full flex-shrink-0 flex items-center justify-center',
-                          'bg-primary-500 text-white hover:bg-primary-400',
-                          'disabled:bg-primary-300/50 disabled:text-white/80 dark:disabled:bg-primary-800/60 dark:disabled:text-white/40 disabled:hover:bg-primary-300/50 dark:disabled:hover:bg-primary-800/60',
-                          'transition-colors duration-150 touch-manipulation'
-                        )}
+                        className={composerSendButtonClass}
                         title={t('chat.input.sendMessage')}
                       >
                         <ArrowUp className='h-4 w-4' />

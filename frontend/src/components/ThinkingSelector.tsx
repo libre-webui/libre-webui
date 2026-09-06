@@ -89,8 +89,8 @@ export const ThinkingSelector: React.FC<ThinkingSelectorProps> = ({
         onClick={() => setOpen(previous => !previous)}
         className={cn(
           'h-9 rounded-full p-0 flex items-center justify-center gap-1 touch-manipulation transition-colors duration-150',
-          active ? 'w-auto px-2.5' : 'w-9 sm:h-10 sm:w-10',
-          'text-gray-500 dark:text-dark-600 hover:bg-gray-100 dark:hover:bg-dark-300',
+          active ? 'w-auto px-2.5' : 'w-9',
+          'text-ink-muted hover:bg-interactive-hover hover:text-ink',
           active &&
             'bg-primary-50 text-primary-600 dark:bg-primary-900/25 dark:text-primary-400'
         )}

@@ -19,6 +19,10 @@ import { ArrowUp, CircleAlert, Loader2, Mic, Square, X } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ModelSelector } from '@/components/ModelSelector';
+import {
+  composerSendButtonClass,
+  composerSurfaceClass,
+} from '@/components/composer/composerStyles';
 import { Button } from '@/components/ui';
 import { useDictation } from '@/hooks/useDictation';
 import type { OllamaModel } from '@/types';
@@ -220,15 +224,15 @@ export function WorkComposer({
       className={cn(
         'relative shrink-0',
         landing
-          ? 'mt-10 w-full'
+          ? 'mt-6 w-full'
           : 'border-t border-line bg-surface/95 px-3 py-3 backdrop-blur md:px-5'
       )}
     >
       {remoteProvider && !remoteDisclosureDismissed && (
         <div
           className={cn(
-            'absolute inset-x-3 z-30 mx-auto max-w-3xl md:inset-x-5',
-            'bottom-full mb-3'
+            'mx-auto mb-3 max-w-3xl',
+            !landing && 'absolute inset-x-3 bottom-full z-30 md:inset-x-5'
           )}
         >
           <aside
@@ -335,11 +339,7 @@ export function WorkComposer({
         )}
         <div
           data-testid='work-composer-surface'
-          className={cn(
-            'rounded-[24px] border p-2.5 transition-[border-color,box-shadow,background-color] duration-200',
-            'border-black/[0.08] bg-surface dark:border-white/[0.09] dark:bg-surface-subtle',
-            'shadow-lv2 focus-within:shadow-lv3'
-          )}
+          className={composerSurfaceClass}
         >
           <textarea
             ref={textareaRef}
@@ -391,14 +391,17 @@ export function WorkComposer({
             }}
             disabled={disabled}
             rows={1}
-            className='m-0 block max-h-[160px] min-h-9 w-full resize-none overflow-y-auto rounded-none border-0 bg-transparent px-2 pt-1.5 pb-2 text-[0.9375rem] leading-relaxed text-ink shadow-none outline-none placeholder:text-ink-subtle focus:border-0 focus:bg-transparent focus:ring-0 disabled:cursor-not-allowed disabled:opacity-60'
+            className={cn(
+              'm-0 block max-h-[160px] w-full resize-none overflow-y-auto rounded-none border-0 bg-transparent px-2 pt-1.5 pb-2 text-[0.9375rem] leading-relaxed text-ink shadow-none outline-none placeholder:text-ink-subtle focus:border-0 focus:bg-transparent focus:ring-0 disabled:cursor-not-allowed disabled:opacity-60',
+              landing ? 'min-h-20' : 'min-h-9'
+            )}
             placeholder={t('work.composer.placeholder', {
               defaultValue: 'Describe what you want to build or change…',
             })}
           />
 
-          <div className='flex items-center justify-end gap-1.5'>
-            <div className='hidden shrink-0 sm:block'>
+          <div className='mt-1 flex min-w-0 items-center gap-2'>
+            <div className='hidden min-w-0 flex-1 sm:block'>
               <ModelSelector
                 models={effectiveSelectorModels}
                 selectedModel={modelKey}
@@ -414,7 +417,28 @@ export function WorkComposer({
                   defaultValue: 'Work model',
                 })}
                 disabled={running || models.length === 0}
-                className='min-w-[150px] max-w-[230px]'
+                className='min-w-0 w-full max-w-[230px]'
+                compact
+              />
+            </div>
+
+            <div className='min-w-0 flex-1 sm:hidden'>
+              <ModelSelector
+                models={effectiveSelectorModels}
+                selectedModel={modelKey}
+                onModelChange={event => changeModel(event.target.value)}
+                onModelsRefresh={() => void onModelsRefresh()}
+                getModelValue={workSelectorModelValue}
+                getModelLabel={workSelectorModelLabel}
+                getModelTitle={model => model.name}
+                triggerRef={mobileModelTriggerRef}
+                triggerTestId='work-model-selector-trigger-mobile'
+                selectTestId='work-model-select-mobile'
+                ariaLabel={t('work.composer.model', {
+                  defaultValue: 'Work model',
+                })}
+                disabled={running || models.length === 0}
+                className='min-w-0 w-full'
                 compact
               />
             </div>
@@ -461,7 +485,7 @@ export function WorkComposer({
                 variant='ghost'
                 size='sm'
                 disabled={loading}
-                className='flex h-9 w-9 shrink-0 touch-manipulation items-center justify-center rounded-full bg-error-500/15 p-0 text-error-600 transition-colors duration-150 hover:bg-error-500/25 dark:text-error-400 sm:h-10 sm:w-10'
+                className='flex h-9 w-9 shrink-0 touch-manipulation items-center justify-center rounded-full bg-error-500/15 p-0 text-error-600 transition-colors duration-150 hover:bg-error-500/25 dark:text-error-400'
                 title={t('work.composer.cancel', { defaultValue: 'Stop' })}
                 aria-label={t('work.composer.cancel', {
                   defaultValue: 'Stop',
@@ -479,7 +503,7 @@ export function WorkComposer({
               <Button
                 data-testid='work-submit-button'
                 type='submit'
-                variant='ghost'
+                variant='primary'
                 size='sm'
                 disabled={
                   loading ||
@@ -487,11 +511,7 @@ export function WorkComposer({
                   !message.trim() ||
                   (!running && !selectedModel)
                 }
-                className={cn(
-                  'flex h-9 w-9 shrink-0 touch-manipulation items-center justify-center rounded-full p-0 transition-colors duration-150',
-                  'bg-primary-500 text-white hover:bg-primary-400',
-                  'disabled:bg-primary-300/50 disabled:text-white/80 dark:disabled:bg-primary-800/60 dark:disabled:text-white/40 disabled:hover:bg-primary-300/50 dark:disabled:hover:bg-primary-800/60'
-                )}
+                className={composerSendButtonClass}
                 title={t('work.composer.send', { defaultValue: 'Run' })}
                 aria-label={t('work.composer.send', {
                   defaultValue: 'Run',
@@ -507,27 +527,6 @@ export function WorkComposer({
           </div>
         </div>
       </form>
-
-      <div className='mx-auto mt-3 w-full max-w-3xl sm:hidden'>
-        <ModelSelector
-          models={effectiveSelectorModels}
-          selectedModel={modelKey}
-          onModelChange={event => changeModel(event.target.value)}
-          onModelsRefresh={() => void onModelsRefresh()}
-          getModelValue={workSelectorModelValue}
-          getModelLabel={workSelectorModelLabel}
-          getModelTitle={model => model.name}
-          triggerRef={mobileModelTriggerRef}
-          triggerTestId='work-model-selector-trigger-mobile'
-          selectTestId='work-model-select-mobile'
-          ariaLabel={t('work.composer.model', {
-            defaultValue: 'Work model',
-          })}
-          disabled={running || models.length === 0}
-          className='w-full'
-          compact
-        />
-      </div>
     </div>
   );
 }
