@@ -732,7 +732,8 @@ let sweepFrame: number | null = null;
  */
 const sweepCelestialIntoNow = () => {
   if (typeof window === 'undefined') return;
-  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+  if (reducedMotion.matches) return;
   const root = document.documentElement;
   const now = new Date();
   const target = now.getHours() * 60 + now.getMinutes() + now.getSeconds() / 60;
@@ -741,7 +742,17 @@ const sweepCelestialIntoNow = () => {
   const started = performance.now();
   if (sweepFrame) cancelAnimationFrame(sweepFrame);
   root.setAttribute('data-sweep', 'true');
+  const finish = () => {
+    sweepFrame = null;
+    useCelestialStore.getState().setPreviewMinutes(null);
+    paintCelestial();
+    root.removeAttribute('data-sweep');
+  };
   const step = (time: number) => {
+    if (reducedMotion.matches) {
+      finish();
+      return;
+    }
     const t = Math.min(1, (time - started) / duration);
     const eased = 1 - Math.pow(1 - t, 3);
     useCelestialStore
@@ -753,10 +764,7 @@ const sweepCelestialIntoNow = () => {
     if (t < 1) {
       sweepFrame = requestAnimationFrame(step);
     } else {
-      sweepFrame = null;
-      useCelestialStore.getState().setPreviewMinutes(null);
-      paintCelestial();
-      root.removeAttribute('data-sweep');
+      finish();
     }
   };
   sweepFrame = requestAnimationFrame(step);

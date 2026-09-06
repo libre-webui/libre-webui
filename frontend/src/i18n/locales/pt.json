@@ -651,6 +651,8 @@
       "celestial": {
         "title": "Hora do dia",
         "description": "Celestial acompanha o sol onde você está. Arraste para pré-visualizar qualquer minuto ou deixe-o seguir o relógio.",
+        "live": "Ao vivo",
+        "preview": "Prévia",
         "followClock": "Seguir o relógio",
         "sunrise": "Nascer do sol",
         "sunset": "Pôr do sol",

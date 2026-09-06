@@ -651,6 +651,8 @@
       "celestial": {
         "title": "Tijd van de dag",
         "description": "Hemels volgt de zon waar je bent. Sleep om elke minuut te bekijken, of laat het de klok volgen.",
+        "live": "Live",
+        "preview": "Voorbeeld",
         "followClock": "Klok volgen",
         "sunrise": "Zonsopgang",
         "sunset": "Zonsondergang",

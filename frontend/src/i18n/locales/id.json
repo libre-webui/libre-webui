@@ -651,6 +651,8 @@
       "celestial": {
         "title": "Waktu hari",
         "description": "Langit mengikuti matahari di tempat Anda. Geser untuk melihat pratinjau menit mana pun, atau biarkan mengikuti jam.",
+        "live": "Langsung",
+        "preview": "Pratinjau",
         "followClock": "Ikuti jam",
         "sunrise": "Matahari terbit",
         "sunset": "Matahari terbenam",

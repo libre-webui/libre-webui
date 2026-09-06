@@ -192,6 +192,24 @@ Appearance also offers an opt-in **Adapt to accent** palette. When enabled, the 
 
 Preset accents are violet, blue, cyan, teal, emerald, Coral (stored under the legacy `amber` preference id), rose, and slate. Custom accents generate a full shade scale from the selected color, and button shades are darkened as needed so white button text remains at least 4.5:1 contrast. Avoid using multiple accent families in the same viewport. Status colors remain semantic and should not inherit the custom accent.
 
+## Celestial Theme
+
+Celestial keeps the sky visible through layered glass while text stays stable.
+Chat and Work share the same denser writing surface and visible focus border.
+The pointer lamp lights the sky beneath the interface, and typing only gently
+softens inactive navigation; keyboard-focused controls retain full opacity.
+
+Sun and moon positions follow the viewport's proportions at every screen size.
+The day preview identifies Live and Preview states, labels its timeline, and
+provides a clear return to the clock. Its mobile clock control has a 44px touch
+target inside a 48px tab bar, with right-to-left placement and left-to-right time
+readouts.
+
+Decorative effects pause in background tabs and immediately honor changes to
+reduced-motion preferences. Daytime stars and inactive auroras do not animate.
+Previewing, sky rendering, and manual location selection remain local; weather
+continues to require explicit opt-in.
+
 ## Typography
 
 Inter is the preferred typeface when available locally, followed by the native system UI stack. Fonts are not fetched from third-party CDNs: this prevents layout shifts, supports offline desktop use, and respects the product's privacy posture. Native CJK and Arabic system faces remain in the fallback chain.

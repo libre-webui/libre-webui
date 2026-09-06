@@ -651,6 +651,8 @@
       "celestial": {
         "title": "Ora del giorno",
         "description": "Celeste segue il sole dove ti trovi. Trascina per vedere l'anteprima di qualsiasi minuto, oppure lascia che segua l'orologio.",
+        "live": "In tempo reale",
+        "preview": "Anteprima",
         "followClock": "Segui l'orologio",
         "sunrise": "Alba",
         "sunset": "Tramonto",

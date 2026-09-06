@@ -651,6 +651,8 @@
       "celestial": {
         "title": "Heure de la journée",
         "description": "Céleste suit le soleil là où vous êtes. Faites glisser pour prévisualiser n'importe quelle minute, ou laissez-le suivre l'horloge.",
+        "live": "En direct",
+        "preview": "Aperçu",
         "followClock": "Suivre l'horloge",
         "sunrise": "Lever du soleil",
         "sunset": "Coucher du soleil",

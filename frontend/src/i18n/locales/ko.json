@@ -651,6 +651,8 @@
       "celestial": {
         "title": "하루 중 시간",
         "description": "천체 테마는 현재 위치의 태양을 따라갑니다. 드래그해서 원하는 시각을 미리 보거나, 시계를 따라가게 두세요.",
+        "live": "실시간",
+        "preview": "미리보기",
         "followClock": "시계 따라가기",
         "sunrise": "일출",
         "sunset": "일몰",

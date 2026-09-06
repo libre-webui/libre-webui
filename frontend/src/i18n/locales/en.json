@@ -651,6 +651,8 @@
       "celestial": {
         "title": "Time of day",
         "description": "Celestial follows the sun where you are. Scrub to preview any minute, or let it follow the clock.",
+        "live": "Live",
+        "preview": "Preview",
         "followClock": "Follow the clock",
         "sunrise": "Sunrise",
         "sunset": "Sunset",

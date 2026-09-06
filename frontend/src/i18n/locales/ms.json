@@ -651,6 +651,8 @@
       "celestial": {
         "title": "Waktu hari",
         "description": "Celestial mengikut matahari di tempat anda. Seret untuk pratonton mana-mana minit, atau biarkan ia mengikut jam.",
+        "live": "Langsung",
+        "preview": "Pratonton",
         "followClock": "Ikut jam",
         "sunrise": "Matahari terbit",
         "sunset": "Matahari terbenam",

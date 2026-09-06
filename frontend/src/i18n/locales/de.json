@@ -651,6 +651,8 @@
       "celestial": {
         "title": "Tageszeit",
         "description": "Himmlisch folgt der Sonne an deinem Ort. Ziehe, um eine beliebige Minute zu sehen, oder lass es der Uhr folgen.",
+        "live": "Live",
+        "preview": "Vorschau",
         "followClock": "Der Uhr folgen",
         "sunrise": "Sonnenaufgang",
         "sunset": "Sonnenuntergang",

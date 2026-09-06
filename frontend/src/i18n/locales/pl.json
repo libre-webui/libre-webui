@@ -651,6 +651,8 @@
       "celestial": {
         "title": "Pora dnia",
         "description": "Niebiański podąża za słońcem tam, gdzie jesteś. Przesuń, aby podejrzeć dowolną minutę, albo pozwól mu podążać za zegarem.",
+        "live": "Na żywo",
+        "preview": "Podgląd",
         "followClock": "Podążaj za zegarem",
         "sunrise": "Wschód słońca",
         "sunset": "Zachód słońca",

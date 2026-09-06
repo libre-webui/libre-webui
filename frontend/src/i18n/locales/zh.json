@@ -651,6 +651,8 @@
       "celestial": {
         "title": "一天中的时间",
         "description": "天穹主题跟随你所在位置的太阳变化。拖动可预览任意时刻，或让它跟随时钟。",
+        "live": "实时",
+        "preview": "预览",
         "followClock": "跟随时钟",
         "sunrise": "日出",
         "sunset": "日落",

@@ -651,6 +651,8 @@
       "celestial": {
         "title": "Tími dags",
         "description": "Himneskt fylgir sólinni þar sem þú ert. Dragðu til að forskoða hvaða mínútu sem er, eða láttu það fylgja klukkunni.",
+        "live": "Í beinni",
+        "preview": "Forskoðun",
         "followClock": "Fylgja klukkunni",
         "sunrise": "Sólarupprás",
         "sunset": "Sólsetur",

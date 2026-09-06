@@ -733,18 +733,23 @@ html.celestial [data-testid='app-shell-content'] {
   background-color: transparent;
 }
 html.celestial [data-app-main] {
-  background-color: rgb(var(--color-canvas) / 0.42);
+  background-color: rgb(var(--color-canvas) / 0.5);
   backdrop-filter: blur(12px) saturate(1.15);
-  border-color: rgb(255 255 255 / 0.12);
+  border-color: rgb(var(--color-ink) / 0.1);
   box-shadow: none;
 }
-html.celestial [data-composer-box] {
-  background-color: rgb(var(--color-surface) / 0.62);
+html.celestial :is([data-composer-box], [data-testid='work-composer-surface']) {
+  background-color: rgb(var(--color-surface) / 0.78);
   backdrop-filter: blur(16px) saturate(1.2);
-  border-color: rgb(255 255 255 / 0.16);
+  border-color: rgb(var(--color-ink) / 0.14);
 }
-html.celestial.dark [data-composer-box] {
-  border-color: rgb(255 255 255 / 0.1);
+html.celestial
+  :is([data-composer-box], [data-testid='work-composer-surface']):focus-within {
+  border-color: rgb(var(--color-primary-500) / 0.65);
+}
+html.celestial.dark
+  :is([data-composer-box], [data-testid='work-composer-surface']):focus-within {
+  border-color: rgb(var(--color-primary-400) / 0.65);
 }
 html.celestial [data-user-bubble] {
   background-color: rgb(var(--color-surface-inverse) / 0.78);
@@ -776,12 +781,13 @@ html.celestial [data-app-tabbar] [role='tab'][aria-selected='false']:hover {
 }
 html.celestial[data-composing='true']
   [data-app-tabbar]:not(:hover):not(:focus-within) {
-  opacity: 0.45;
+  opacity: 0.85;
 }
 /* Mobile navigation overlays the page, so its glass surface must not fade. */
 @media (min-width: 1024px) {
-  html.celestial[data-composing='true'] [data-app-sidebar]:not(:hover) {
-    opacity: 0.45;
+  html.celestial[data-composing='true']
+    [data-app-sidebar]:not(:hover):not(:focus-within) {
+    opacity: 0.85;
   }
 }
 
@@ -792,11 +798,8 @@ html.celestial[data-composing='true']
   background: var(--celestial-sky-mid);
   contain: strict;
 }
-.celestial-sky__layers > * {
-  will-change: transform, opacity;
-}
 .celestial-sky__cloud {
-  will-change: translate, transform, opacity;
+  will-change: translate, transform;
 }
 .celestial-sky__gradient {
   position: absolute;
@@ -851,6 +854,12 @@ html.celestial[data-composing='true']
 }
 .celestial-sky[data-generating='true'] .celestial-sky__star {
   animation-duration: 1.6s;
+}
+.celestial-sky[data-night='false'] .celestial-sky__star {
+  animation-play-state: paused;
+}
+.celestial-sky[data-night='true'] .celestial-sky__sun::after {
+  animation-play-state: paused;
 }
 @keyframes celestial-twinkle {
   0%,
@@ -913,6 +922,11 @@ html.celestial[data-composing='true']
 .celestial-sky[data-night='true'][data-generating='true']
   .celestial-sky__aurora {
   opacity: 0.55;
+  will-change: transform, opacity;
+}
+.celestial-sky:not([data-night='true'][data-generating='true'])
+  .celestial-sky__aurora {
+  animation-play-state: paused;
 }
 @keyframes celestial-aurora {
   from {
@@ -924,13 +938,13 @@ html.celestial[data-composing='true']
 }
 .celestial-sky__sun,
 .celestial-sky__moon {
+  --body-size: clamp(56px, 7vw, 112px);
   position: absolute;
   left: 0;
   top: 0;
-  width: clamp(72px, 9vw, 128px);
+  width: var(--body-size);
   aspect-ratio: 1;
-  margin: calc(clamp(72px, 9vw, 128px) / -2) 0 0
-    calc(clamp(72px, 9vw, 128px) / -2);
+  margin: calc(var(--body-size) / -2) 0 0 calc(var(--body-size) / -2);
   border-radius: 9999px;
   transition:
     --body-x var(--celestial-move) linear,
@@ -951,10 +965,8 @@ html.celestial[data-composing='true']
     0 0 60px 24px rgba(255, 236, 190, calc(0.35 + var(--sun-warmth) * 0.35)),
     0 0 180px 90px rgba(255, 200, 140, calc(0.12 + var(--sun-warmth) * 0.3));
   transform: translate3d(
-    calc(var(--body-x) * 1% * 14 + var(--sky-px) * 14px),
-    calc(
-      var(--body-y) * 1% * 9 + var(--sky-py) * 10px + var(--sky-scroll) * 14px
-    ),
+    calc(var(--body-x) * 1vw + var(--sky-px) * 14px),
+    calc(var(--body-y) * 1vh + var(--sky-py) * 10px + var(--sky-scroll) * 14px),
     0
   );
 }
@@ -985,6 +997,7 @@ html.celestial[data-composing='true']
   }
 }
 .celestial-sky__moon {
+  --body-size: clamp(40px, 4.5vw, 72px);
   overflow: hidden;
   background: radial-gradient(
     circle at 38% 36%,
@@ -997,10 +1010,8 @@ html.celestial[data-composing='true']
     0 0 42px 14px rgba(214, 224, 255, 0.34),
     0 0 140px 70px rgba(180, 200, 255, 0.16);
   transform: translate3d(
-    calc(var(--body-x) * 1% * 14 + var(--sky-px) * 12px),
-    calc(
-      var(--body-y) * 1% * 9 + var(--sky-py) * 9px + var(--sky-scroll) * 12px
-    ),
+    calc(var(--body-x) * 1vw + var(--sky-px) * 12px),
+    calc(var(--body-y) * 1vh + var(--sky-py) * 9px + var(--sky-scroll) * 12px),
     0
   );
 }
@@ -1077,15 +1088,16 @@ html.celestial[data-composing='true']
 .celestial-sky__lamp {
   position: fixed;
   inset: 0;
-  z-index: 30;
+  /* Light the sky beneath the glass, keeping the text's contrast stable. */
+  z-index: 1;
   pointer-events: none;
   mix-blend-mode: screen;
   background: radial-gradient(
     440px circle at var(--lamp-x) var(--lamp-y),
-    color-mix(in srgb, var(--celestial-glow) 38%, transparent),
+    color-mix(in srgb, var(--celestial-glow) 28%, transparent),
     transparent 70%
   );
-  opacity: calc(var(--celestial-night) * (0.5 + 0.6 * var(--lamp-pulse)));
+  opacity: calc(var(--celestial-night) * (0.4 + 0.3 * var(--lamp-pulse)));
   transition: opacity 320ms ease-out;
 }
 .celestial-clock-trigger {
@@ -1138,8 +1150,20 @@ html.celestial.dark .celestial-day-popover {
     rgb(var(--color-surface) / 0.94)
   );
 }
-.celestial-day-popover .celestial-day-preview > :first-child {
+.celestial-day-popover .celestial-day-preview__header {
   padding-inline-end: 32px;
+}
+@media (max-width: 768px) {
+  html.celestial [data-app-tabbar] {
+    height: 48px;
+  }
+  .celestial-clock-trigger {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  .celestial-day-popover .celestial-day-preview__header {
+    padding-inline-end: 44px;
+  }
 }
 .celestial-day-preview__scene {
   position: relative;
@@ -1219,7 +1243,8 @@ html.celestial.dark .celestial-day-popover {
    short white overlay the component toggles when a storm is reported. */
 .celestial-sky__rain {
   position: absolute;
-  inset: -20% -10% -10%;
+  /* Overscan covers a full rain cycle, including the skew in tall windows. */
+  inset: -160px calc(-160px - 10vh);
   background-image: repeating-linear-gradient(
     100deg,
     transparent 0 14px,
@@ -1228,15 +1253,16 @@ html.celestial.dark .celestial-day-popover {
   );
   background-size: 200px 120px;
   transform: skewX(-8deg);
+  will-change: translate;
   animation: celestial-rain 0.55s linear infinite;
   transition: opacity var(--celestial-ease) linear;
 }
 @keyframes celestial-rain {
   from {
-    background-position: 0 0;
+    translate: 0 0;
   }
   to {
-    background-position: -24px 120px;
+    translate: -24px 120px;
   }
 }
 .celestial-sky__snow {
@@ -1291,6 +1317,17 @@ html.dark .celestial-sky__fog {
 .celestial-sky[data-flash='true'] .celestial-sky__flash {
   opacity: 0.55;
   transition-duration: 40ms;
+}
+
+.celestial-sky[data-motion='paused'] *,
+.celestial-sky[data-motion='paused'] *::before,
+.celestial-sky[data-motion='paused'] *::after {
+  animation-play-state: paused !important;
+  transition: none;
+  will-change: auto;
+}
+.celestial-sky__lamp[data-motion='paused'] {
+  opacity: 0;
 }
 
 @media (prefers-reduced-motion: reduce) {

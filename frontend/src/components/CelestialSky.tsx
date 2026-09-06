@@ -138,18 +138,39 @@ export const CelestialSky: React.FC = () => {
   const snow = useMemo(() => seededSnow(), []);
   const [meteors, setMeteors] = useState<Meteor[]>([]);
   const [flash, setFlash] = useState(false);
+  const [reducedMotion, setReducedMotion] = useState(
+    () =>
+      typeof window !== 'undefined' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  );
+  const [pageVisible, setPageVisible] = useState(
+    () =>
+      typeof document === 'undefined' || document.visibilityState === 'visible'
+  );
   const active = palette !== null && scene !== null;
   const night = palette?.night ?? 0;
+  const motionAllowed = active && !reducedMotion && pageVisible;
+  const lampVisible = night > 0;
+
+  useEffect(() => {
+    const media = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const onMotionChange = () => setReducedMotion(media.matches);
+    const onVisibilityChange = () =>
+      setPageVisible(document.visibilityState === 'visible');
+    media.addEventListener('change', onMotionChange);
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    return () => {
+      media.removeEventListener('change', onMotionChange);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+    };
+  }, []);
 
   // Pointer parallax, lamp, chat-scroll parallax, and the composing state.
   useEffect(() => {
-    if (!active || typeof window === 'undefined') return;
+    if (!motionAllowed || typeof window === 'undefined') return;
     const sky = skyRef.current;
     if (!sky) return;
     const root = document.documentElement;
-    const reduceMotion = window.matchMedia(
-      '(prefers-reduced-motion: reduce)'
-    ).matches;
 
     let frame = 0;
     let px = 0;
@@ -165,25 +186,24 @@ export const CelestialSky: React.FC = () => {
       sky.style.setProperty('--sky-px', px.toFixed(3));
       sky.style.setProperty('--sky-py', py.toFixed(3));
       sky.style.setProperty('--sky-scroll', scrollShift.toFixed(2));
-      root.style.setProperty('--lamp-x', `${lampX.toFixed(2)}%`);
-      root.style.setProperty('--lamp-y', `${lampY.toFixed(2)}%`);
+      if (lampVisible) {
+        root.style.setProperty('--lamp-x', `${lampX.toFixed(2)}%`);
+        root.style.setProperty('--lamp-y', `${lampY.toFixed(2)}%`);
+      }
     };
     const schedule = () => {
       if (!frame) frame = window.requestAnimationFrame(paint);
     };
     const onPointerMove = (event: PointerEvent) => {
       const { innerWidth, innerHeight } = window;
-      if (!reduceMotion) {
-        px = (event.clientX / innerWidth - 0.5) * 2;
-        py = (event.clientY / innerHeight - 0.5) * 2;
-      }
+      px = (event.clientX / innerWidth - 0.5) * 2;
+      py = (event.clientY / innerHeight - 0.5) * 2;
       lampX = (event.clientX / innerWidth) * 100;
       lampY = (event.clientY / innerHeight) * 100;
       schedule();
     };
     // Scrolling the conversation tilts the sky a little, as if looking up.
     const onScroll = (event: Event) => {
-      if (reduceMotion) return;
       const target = event.target as HTMLElement | null;
       if (!target || typeof target.scrollTop !== 'number') return;
       scrollShift = Math.max(-1, Math.min(1, (target.scrollTop % 2400) / 2400));
@@ -193,12 +213,14 @@ export const CelestialSky: React.FC = () => {
       root.removeAttribute('data-composing');
     };
     const onKeyDown = (event: KeyboardEvent) => {
-      root.style.setProperty('--lamp-pulse', '1');
-      if (pulseTimer) clearTimeout(pulseTimer);
-      pulseTimer = setTimeout(
-        () => root.style.setProperty('--lamp-pulse', '0'),
-        320
-      );
+      if (lampVisible) {
+        root.style.setProperty('--lamp-pulse', '1');
+        if (pulseTimer) clearTimeout(pulseTimer);
+        pulseTimer = setTimeout(
+          () => root.style.setProperty('--lamp-pulse', '0'),
+          320
+        );
+      }
       const target = event.target as HTMLElement | null;
       if (target && target.tagName === 'TEXTAREA') {
         root.setAttribute('data-composing', 'true');
@@ -227,18 +249,22 @@ export const CelestialSky: React.FC = () => {
       if (pulseTimer) clearTimeout(pulseTimer);
       if (composingTimer) clearTimeout(composingTimer);
       stopComposing();
+      for (const name of ['--sky-px', '--sky-py', '--sky-scroll']) {
+        sky.style.removeProperty(name);
+      }
       for (const name of ['--lamp-x', '--lamp-y', '--lamp-pulse']) {
         root.style.removeProperty(name);
       }
     };
-  }, [active]);
+  }, [motionAllowed, lampVisible]);
 
   // The odd meteor after dark: one every 20 to 50 seconds, more while a reply
   // streams. Each one lives for a second and a half.
+  const meteorsAllowed = motionAllowed && night >= 0.4;
   useEffect(() => {
-    if (!active || night < 0.4 || typeof window === 'undefined') return;
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    if (!meteorsAllowed) return;
     let timer: ReturnType<typeof setTimeout> | undefined;
+    const removalTimers = new Set<ReturnType<typeof setTimeout>>();
     let counter = 0;
     const spawn = () => {
       const meteor: Meteor = {
@@ -249,36 +275,40 @@ export const CelestialSky: React.FC = () => {
         length: 120 + Math.random() * 140,
       };
       setMeteors(current => [...current.slice(-2), meteor]);
-      setTimeout(
-        () => setMeteors(current => current.filter(m => m.id !== meteor.id)),
-        1600
-      );
+      const removalTimer = setTimeout(() => {
+        removalTimers.delete(removalTimer);
+        setMeteors(current => current.filter(m => m.id !== meteor.id));
+      }, 1600);
+      removalTimers.add(removalTimer);
       const base = isGenerating ? 6_000 : 20_000;
       timer = setTimeout(spawn, base + Math.random() * 30_000);
     };
     timer = setTimeout(spawn, 4_000 + Math.random() * 8_000);
     return () => {
       if (timer) clearTimeout(timer);
+      removalTimers.forEach(clearTimeout);
+      setMeteors([]);
     };
-  }, [active, night, isGenerating]);
+  }, [meteorsAllowed, isGenerating]);
 
   // Thunder: an occasional flash while a storm is reported.
   const thunder = scene?.thunder ?? false;
   useEffect(() => {
-    if (!active || !thunder || typeof window === 'undefined') return;
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    if (!motionAllowed || !thunder) return;
     let timer: ReturnType<typeof setTimeout> | undefined;
+    let flashTimer: ReturnType<typeof setTimeout> | undefined;
     const strike = () => {
       setFlash(true);
-      setTimeout(() => setFlash(false), 180 + Math.random() * 160);
+      flashTimer = setTimeout(() => setFlash(false), 180 + Math.random() * 160);
       timer = setTimeout(strike, 9_000 + Math.random() * 25_000);
     };
     timer = setTimeout(strike, 3_000 + Math.random() * 6_000);
     return () => {
       if (timer) clearTimeout(timer);
+      if (flashTimer) clearTimeout(flashTimer);
       setFlash(false);
     };
-  }, [active, thunder]);
+  }, [motionAllowed, thunder]);
 
   if (!palette || !scene) return null;
 
@@ -295,8 +325,9 @@ export const CelestialSky: React.FC = () => {
         data-night={night > 0.5 ? 'true' : 'false'}
         data-preview={previewMinutes !== null ? 'true' : 'false'}
         data-generating={isGenerating ? 'true' : 'false'}
+        data-motion={motionAllowed ? 'active' : 'paused'}
         data-weather={scene.weatherKind}
-        data-flash={flash ? 'true' : 'false'}
+        data-flash={motionAllowed && flash ? 'true' : 'false'}
         aria-hidden='true'
         className='celestial-sky pointer-events-none fixed inset-0 z-0'
         style={{ ['--wind' as string]: scene.wind }}
@@ -327,18 +358,19 @@ export const CelestialSky: React.FC = () => {
               />
             ))}
           </div>
-          {meteors.map(meteor => (
-            <span
-              key={meteor.id}
-              className='celestial-sky__meteor'
-              style={{
-                left: `${meteor.x}%`,
-                top: `${meteor.y}%`,
-                width: meteor.length,
-                transform: `rotate(${meteor.angle}deg)`,
-              }}
-            />
-          ))}
+          {meteorsAllowed &&
+            meteors.map(meteor => (
+              <span
+                key={meteor.id}
+                className='celestial-sky__meteor'
+                style={{
+                  left: `${meteor.x}%`,
+                  top: `${meteor.y}%`,
+                  width: meteor.length,
+                  transform: `rotate(${meteor.angle}deg)`,
+                }}
+              />
+            ))}
           <div className='celestial-sky__aurora' />
           <div
             className='celestial-sky__sun'
@@ -433,7 +465,11 @@ export const CelestialSky: React.FC = () => {
         </div>
       </div>
       {/* The lamp sits above the interface so it lights the words too. */}
-      <div className='celestial-sky__lamp' aria-hidden='true' />
+      <div
+        className='celestial-sky__lamp'
+        data-motion={motionAllowed ? 'active' : 'paused'}
+        aria-hidden='true'
+      />
     </>
   );
 };

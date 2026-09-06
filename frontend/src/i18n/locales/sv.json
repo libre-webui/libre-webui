@@ -651,6 +651,8 @@
       "celestial": {
         "title": "Tid på dagen",
         "description": "Himmelsk följer solen där du är. Dra för att förhandsgranska valfri minut, eller låt den följa klockan.",
+        "live": "Live",
+        "preview": "Förhandsvisning",
         "followClock": "Följ klockan",
         "sunrise": "Soluppgång",
         "sunset": "Solnedgång",

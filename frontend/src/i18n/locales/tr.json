@@ -651,6 +651,8 @@
       "celestial": {
         "title": "Günün saati",
         "description": "Göksel, bulunduğun yerdeki güneşi izler. Herhangi bir dakikayı önizlemek için kaydır ya da saati izlemesine izin ver.",
+        "live": "Canlı",
+        "preview": "Önizleme",
         "followClock": "Saati izle",
         "sunrise": "Gün doğumu",
         "sunset": "Gün batımı",

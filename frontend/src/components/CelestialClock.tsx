@@ -38,10 +38,12 @@ export function CelestialClock() {
   const location = useLocation();
   const isCelestial = useAppStore(state => state.theme.mode === 'celestial');
   const palette = useCelestialStore(state => state.palette);
+  const previewMinutes = useCelestialStore(state => state.previewMinutes);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const openedRef = useRef(false);
   const panelId = useId();
+  const statusId = useId();
   const [placement, setPlacement] = useState<Placement | null>(null);
   const isOpen = placement !== null;
   const available = isCelestial && palette !== null;
@@ -118,6 +120,11 @@ export function CelestialClock() {
 
   const clock = formatClock(palette.solar.minutes);
   const label = t('settings.appearance.celestial.title');
+  const status = t(
+    previewMinutes === null
+      ? 'settings.appearance.celestial.live'
+      : 'settings.appearance.celestial.preview'
+  );
   const Icon = palette.solar.isDay ? Sun : Moon;
   const toggle = () => {
     if (isOpen) {
@@ -151,15 +158,25 @@ export function CelestialClock() {
         className='celestial-clock-trigger'
         data-testid='celestial-clock-trigger'
         aria-label={`${label}: ${clock}`}
-        title={`${label}: ${clock}`}
+        aria-describedby={statusId}
+        title={`${label}: ${clock} · ${status}`}
         aria-haspopup='dialog'
         aria-expanded={isOpen}
         aria-controls={panelId}
         onClick={toggle}
       >
-        <Icon className='h-4 w-4' strokeWidth={1.75} aria-hidden='true' />
-        <span className='hidden tabular-nums sm:inline'>{clock}</span>
+        <span
+          dir='ltr'
+          data-testid='celestial-clock-time'
+          className='inline-flex items-center gap-1.5'
+        >
+          <Icon className='h-4 w-4' strokeWidth={1.75} aria-hidden='true' />
+          <span className='hidden tabular-nums sm:inline'>{clock}</span>
+        </span>
       </button>
+      <span id={statusId} className='sr-only'>
+        {status}
+      </span>
       {placement &&
         createPortal(
           <div

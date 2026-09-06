@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useId, useState, type ReactNode } from 'react';
 import { SettingsToggle } from '@/components/settings/SettingsToggle';
 import { Check, Moon, MoonStar, Palette, Sun, Sunrise } from 'lucide-react';
 import { useCelestialStore } from '@/store/celestialStore';
@@ -25,6 +25,7 @@ import { BackgroundUpload } from '@/components/BackgroundUpload';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 import type { Theme, UserPreferences } from '@/types';
 import { cn } from '@/utils';
+import { isValidLocation } from '@/utils/celestialWeather';
 import {
   ACCENT_OPTIONS,
   DEFAULT_ACCENT,
@@ -125,6 +126,7 @@ export function SettingsAppearanceTab({
   const [locationDenied, setLocationDenied] = useState(false);
   const [manualLatitude, setManualLatitude] = useState('');
   const [manualLongitude, setManualLongitude] = useState('');
+  const coordinateId = useId();
   const handleUseBrowserLocation = async () => {
     setLocating(true);
     setLocationDenied(false);
@@ -133,10 +135,14 @@ export function SettingsAppearanceTab({
     if (!ok) setLocationDenied(true);
   };
   const handleApplyManualLocation = () => {
+    if (!manualLatitude.trim() || !manualLongitude.trim()) return;
     const latitude = Number(manualLatitude);
     const longitude = Number(manualLongitude);
-    if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return;
+    // The store treats invalid locations as a request to clear the saved one.
+    // Keep invalid drafts here so only an explicit Clear removes a location.
+    if (!isValidLocation({ latitude, longitude })) return;
     setLocation({ latitude, longitude });
+    setLocationDenied(false);
     setManualLatitude('');
     setManualLongitude('');
   };
@@ -198,8 +204,8 @@ export function SettingsAppearanceTab({
             className='mt-2 flex flex-col gap-2 rounded-xl border border-line p-3'
             data-testid='celestial-location'
           >
-            <div className='flex items-center justify-between gap-4'>
-              <div className='min-w-0'>
+            <div className='flex min-w-0 flex-wrap items-start justify-between gap-x-4 gap-y-2'>
+              <div className='min-w-0 flex-1 basis-48'>
                 <h5 className='text-sm leading-[22px] text-ink'>
                   {t('settings.appearance.celestial.location')}
                 </h5>
@@ -207,69 +213,97 @@ export function SettingsAppearanceTab({
                   {t('settings.appearance.celestial.locationHint')}
                 </p>
               </div>
-              <span
-                className='shrink-0 font-mono text-xs text-ink-muted'
+              <output
+                dir={celestialLocation ? 'ltr' : 'auto'}
+                aria-live='polite'
+                className='max-w-full break-words rounded-lg bg-surface-subtle px-2 py-1 font-mono text-xs leading-5 text-ink-muted'
                 data-testid='celestial-location-value'
               >
                 {celestialLocation
                   ? `${celestialLocation.latitude.toFixed(2)}°, ${celestialLocation.longitude.toFixed(2)}°`
                   : t('settings.appearance.celestial.approximateDay')}
-              </span>
+              </output>
             </div>
-            <div className='flex flex-wrap items-center gap-2'>
-              <button
-                type='button'
-                onClick={() => void handleUseBrowserLocation()}
-                disabled={locating}
-                className='rounded-md border border-line px-2.5 py-1 text-xs text-ink transition-colors hover:bg-interactive-hover disabled:opacity-60'
-                data-testid='celestial-use-location'
-              >
-                {t('settings.appearance.celestial.useMyLocation')}
-              </button>
-              <input
-                type='number'
-                step='0.01'
-                min={-90}
-                max={90}
-                value={manualLatitude}
-                onChange={event => setManualLatitude(event.target.value)}
-                placeholder={t('settings.appearance.celestial.latitude')}
-                aria-label={t('settings.appearance.celestial.latitude')}
-                className='w-24 rounded-md border border-line bg-transparent px-2 py-1 text-xs text-ink'
-                data-testid='celestial-latitude'
-              />
-              <input
-                type='number'
-                step='0.01'
-                min={-180}
-                max={180}
-                value={manualLongitude}
-                onChange={event => setManualLongitude(event.target.value)}
-                placeholder={t('settings.appearance.celestial.longitude')}
-                aria-label={t('settings.appearance.celestial.longitude')}
-                className='w-24 rounded-md border border-line bg-transparent px-2 py-1 text-xs text-ink'
-                data-testid='celestial-longitude'
-              />
-              <button
-                type='button'
-                onClick={handleApplyManualLocation}
-                disabled={manualLatitude === '' || manualLongitude === ''}
-                className='rounded-md border border-line px-2.5 py-1 text-xs text-ink transition-colors hover:bg-interactive-hover disabled:opacity-60'
-                data-testid='celestial-apply-location'
-              >
-                {t('settings.appearance.celestial.apply')}
-              </button>
-              {celestialLocation && (
+            <form
+              className='mt-1 space-y-3'
+              onSubmit={event => {
+                event.preventDefault();
+                handleApplyManualLocation();
+              }}
+            >
+              <div className='grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2'>
+                <div className='min-w-0 space-y-1.5'>
+                  <label
+                    htmlFor={`${coordinateId}-latitude`}
+                    className='block text-xs font-medium text-ink-muted'
+                  >
+                    {t('settings.appearance.celestial.latitude')}
+                  </label>
+                  <input
+                    id={`${coordinateId}-latitude`}
+                    type='number'
+                    step='any'
+                    required
+                    min={-90}
+                    max={90}
+                    dir='ltr'
+                    value={manualLatitude}
+                    onChange={event => setManualLatitude(event.target.value)}
+                    className='w-full min-w-0 rounded-lg border border-line bg-surface-subtle px-3 py-2 text-[16px] text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 md:text-sm'
+                    data-testid='celestial-latitude'
+                  />
+                </div>
+                <div className='min-w-0 space-y-1.5'>
+                  <label
+                    htmlFor={`${coordinateId}-longitude`}
+                    className='block text-xs font-medium text-ink-muted'
+                  >
+                    {t('settings.appearance.celestial.longitude')}
+                  </label>
+                  <input
+                    id={`${coordinateId}-longitude`}
+                    type='number'
+                    step='any'
+                    required
+                    min={-180}
+                    max={180}
+                    dir='ltr'
+                    value={manualLongitude}
+                    onChange={event => setManualLongitude(event.target.value)}
+                    className='w-full min-w-0 rounded-lg border border-line bg-surface-subtle px-3 py-2 text-[16px] text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 md:text-sm'
+                    data-testid='celestial-longitude'
+                  />
+                </div>
+              </div>
+              <div className='flex flex-wrap items-center gap-2'>
+                <button
+                  type='submit'
+                  className='rounded-lg border border-line bg-surface-raised px-3 py-2 text-xs font-medium text-ink transition-colors hover:bg-interactive-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40'
+                  data-testid='celestial-apply-location'
+                >
+                  {t('settings.appearance.celestial.apply')}
+                </button>
                 <button
                   type='button'
-                  onClick={() => setLocation(null)}
-                  className='rounded-md px-2.5 py-1 text-xs text-ink-muted transition-colors hover:bg-interactive-hover'
-                  data-testid='celestial-clear-location'
+                  onClick={() => void handleUseBrowserLocation()}
+                  disabled={locating}
+                  className='rounded-lg border border-line px-3 py-2 text-xs text-ink transition-colors hover:bg-interactive-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 disabled:opacity-60'
+                  data-testid='celestial-use-location'
                 >
-                  {t('settings.appearance.celestial.clear')}
+                  {t('settings.appearance.celestial.useMyLocation')}
                 </button>
-              )}
-            </div>
+                {celestialLocation && (
+                  <button
+                    type='button'
+                    onClick={() => setLocation(null)}
+                    className='rounded-lg px-3 py-2 text-xs text-ink-muted transition-colors hover:bg-interactive-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40'
+                    data-testid='celestial-clear-location'
+                  >
+                    {t('settings.appearance.celestial.clear')}
+                  </button>
+                )}
+              </div>
+            </form>
             {locationDenied && (
               <p className='text-xs text-amber-600 dark:text-amber-400'>
                 {t('settings.appearance.celestial.locationDenied')}

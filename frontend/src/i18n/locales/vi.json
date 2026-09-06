@@ -651,6 +651,8 @@
       "celestial": {
         "title": "Thời điểm trong ngày",
         "description": "Thiên thể đi theo mặt trời nơi bạn ở. Kéo để xem trước bất kỳ phút nào, hoặc để nó đi theo đồng hồ.",
+        "live": "Trực tiếp",
+        "preview": "Xem trước",
         "followClock": "Theo đồng hồ",
         "sunrise": "Bình minh",
         "sunset": "Hoàng hôn",

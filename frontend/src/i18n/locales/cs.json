@@ -651,6 +651,8 @@
       "celestial": {
         "title": "Denní doba",
         "description": "Nebeský motiv sleduje slunce tam, kde jste. Posunem si zobrazíte libovolnou minutu, nebo ho nechte sledovat hodiny.",
+        "live": "Aktuálně",
+        "preview": "Náhled",
         "followClock": "Sledovat hodiny",
         "sunrise": "Východ slunce",
         "sunset": "Západ slunce",

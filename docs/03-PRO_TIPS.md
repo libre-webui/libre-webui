@@ -88,12 +88,17 @@ minute by minute, with sunrise and sunset moving through the year. Pick it in
 Settings > Appearance. The sky clock at the end of the tab bar opens a glass
 preview: drag across the day to move the sun and moon, or jump straight to
 **Sunrise** or **Sunset**. The same preview is available in Appearance.
-**Follow the clock**, closing the preview, or leaving Appearance returns to
-real time. Exploring the day runs locally and does not save a new theme setting.
+The preview identifies **Live** time and a manually selected **Preview**, with
+time labels along the slider. **Follow the clock**, closing the preview, or
+leaving Appearance returns to real time. Exploring the day runs locally and does not save a new theme setting.
 Without a location it assumes a
 mid-latitude day; share your location (or type coordinates) and sunrise and
 sunset are solved for your actual sky. The location is rounded to about a
-kilometre, kept only in that browser, and never sent to the server. With a
+kilometre, kept only in that browser, and never sent to the server.
+Manual coordinates have visible Latitude and Longitude labels. Latitude must
+be between -90 and 90; longitude between -180 and 180. **Apply** or Enter saves
+valid coordinates. Invalid or incomplete entries preserve the saved location;
+**Clear** explicitly removes it. With a
 location you can also turn on **Match the weather**: current conditions come
 straight from Open-Meteo to your browser, and clouds, rain, snow, fog, and
 wind shape the sky. If a request fails, Libre keeps the last successful weather
@@ -101,6 +106,11 @@ for this session and retries automatically while the celestial theme is active.
 Retries start after 15 seconds and slow to at most one every five minutes during
 an outage. A request that stalls for ten seconds is cancelled so it cannot block
 later refreshes. Turning weather off or changing location cancels pending requests.
+
+Celestial uses the same glass composer in Chat and Work. Sun and moon placement
+scales to the screen, and the pointer light stays beneath the reading surface.
+Decorative motion pauses when the tab is hidden and responds immediately to the
+system's reduced-motion preference, including during the theme's arrival sweep.
 
 ## Keep Work Tasks Focused
 
