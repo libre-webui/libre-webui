@@ -15,6 +15,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 📚 Documentation
 
+## [0.34.1] - 2026-09-07
+
+A one-line Docker fix: the maintenance CLI inside the 0.34.0 container image
+could not start.
+
+### 🐛 Bug Fixes
+
+- **Docker image: the maintenance CLI works again.** The 0.34.0 image copied
+  `bin/cli.js` without the `bin/cli-args.js` module it requires since the
+  launch flags landed, so `libre-webui backup`, `libre-webui recovery-check`,
+  and `libre-webui migrate-postgres` crashed on start inside the container
+  with "Cannot find module './cli-args'". The server itself was unaffected.
+  The image now ships every module the CLI requires, and the Docker layout
+  test derives that list from the CLI's own imports so a new module cannot
+  be left out again. The npm, Homebrew, and desktop packages were never
+  affected.
+- The server CORS middleware and a browser-test hostname check were
+  tightened to satisfy CodeQL; behavior is unchanged.
+
 ## [0.34.0] - 2026-09-05
 
 A lighter release: the sky clock opens a day preview from anywhere, Libre
