@@ -97,10 +97,23 @@ test('Docker runtime includes non-hoisted backend workspace dependencies', () =>
 
 test('Docker runtime exposes the packaged Libre maintenance CLI', () => {
   const runtimeStage = dockerfile.split(/^FROM /m).at(-1);
-  assert.match(
-    runtimeStage,
-    /COPY bin\/cli\.js bin\/runtime-paths\.js \.\/bin\//
+  // Every sibling module the CLI requires must ship in the image; a missing
+  // one crashes `libre-webui backup` inside the container, which is exactly
+  // what the chat.lwui.org updater runs before a cutover.
+  const copyLine = runtimeStage.match(/^COPY (bin\/[^\n]*) \.\/bin\/$/m);
+  assert.ok(copyLine, 'runtime stage must copy the CLI into ./bin/');
+  const copied = new Set(copyLine[1].split(/\s+/));
+  assert.ok(copied.has('bin/cli.js'));
+  const cliSource = fs.readFileSync(
+    path.join(repoRoot, 'bin', 'cli.js'),
+    'utf8'
   );
+  for (const [, sibling] of cliSource.matchAll(/require\('\.\/([a-z-]+)'\)/g)) {
+    assert.ok(
+      copied.has(`bin/${sibling}.js`),
+      `Dockerfile must copy bin/${sibling}.js required by bin/cli.js`
+    );
+  }
   assert.match(runtimeStage, /chmod 0755 \/app\/bin\/cli\.js/);
   assert.match(
     runtimeStage,
@@ -194,10 +207,7 @@ test('Compose files forward every operable platform selector', () => {
   );
   assert.match(privateCompose, /libre-webui-preflight:\/app\/backend\/temp/);
   assert.match(privateCompose, /WORK_PREVIEW_BIND: 172\.30\.0\.1/);
-  assert.match(
-    privateCompose,
-    /WORK_DOCKER_PUBLISHED_HOST: 172\.30\.0\.1/
-  );
+  assert.match(privateCompose, /WORK_DOCKER_PUBLISHED_HOST: 172\.30\.0\.1/);
   assert.doesNotMatch(
     privateCompose,
     /\/app\/backend\/temp:rw,nosuid,nodev,noexec,size=512m/,
@@ -224,9 +234,7 @@ test('Compose routes Docker-published Work ports back to the backend', () => {
       app.environment.WORK_DOCKER_PUBLISHED_HOST,
       'host.docker.internal'
     );
-    assert.deepEqual(app.extra_hosts, [
-      'host.docker.internal=host-gateway',
-    ]);
+    assert.deepEqual(app.extra_hosts, ['host.docker.internal=host-gateway']);
 
     const overridden = JSON.parse(
       execFileSync(

@@ -173,7 +173,7 @@ COPY --from=backend-builder /app/backend/package*.json ./backend/
 COPY --from=prod-deps /app/node_modules ./node_modules
 COPY --from=prod-deps /app/backend/node_modules ./backend/node_modules
 COPY --from=prod-deps /app/package*.json ./
-COPY bin/cli.js bin/runtime-paths.js ./bin/
+COPY bin/cli.js bin/cli-args.js bin/runtime-paths.js ./bin/
 
 # Expose the same maintenance/server command used by npm and Homebrew. Keep
 # the link absolute so its backend/frontend resolution stays rooted at /app.
