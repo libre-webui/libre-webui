@@ -28,12 +28,22 @@ import {
 
 const logger = createLogger('websocket');
 
-class WebSocketService {
+const isAuthenticationFailure = (error: unknown): boolean => {
+  // The shared HTTP client replaces a 401 with this error after signing out.
+  if (error instanceof Error && error.message === 'Session expired')
+    return true;
+  const status = (error as { response?: { status?: number } } | null)?.response
+    ?.status;
+  return status === 401 || status === 403;
+};
+
+export class WebSocketService {
   private ws: WebSocket | null = null;
   private readonly urlEnvironment: WebSocketUrlEnvironment;
   private reconnectAttempts = 0;
-  private maxReconnectAttempts = 5;
   private reconnectDelay = 1000;
+  private maxReconnectDelay = 30_000;
+  private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
   private messageHandlers: Map<string, (data: unknown) => void> = new Map();
   private connectPromise: Promise<void> | null = null;
   private shouldReconnect = false;
@@ -44,9 +54,9 @@ class WebSocketService {
       protocol: window.location.protocol,
       host: window.location.host,
       hostname: window.location.hostname,
-      apiBaseUrl: import.meta.env.VITE_API_BASE_URL,
-      websocketBaseUrl: import.meta.env.VITE_WS_BASE_URL,
-      production: import.meta.env.PROD,
+      apiBaseUrl: import.meta.env?.VITE_API_BASE_URL,
+      websocketBaseUrl: import.meta.env?.VITE_WS_BASE_URL,
+      production: import.meta.env?.PROD === true,
     };
     logger.debug(
       'WebSocket base URL resolved:',
@@ -63,27 +73,31 @@ class WebSocketService {
     if (this.ws?.readyState === WebSocket.OPEN) return Promise.resolve();
     if (this.connectPromise) return this.connectPromise;
 
+    this.clearReconnectTimer();
     this.shouldReconnect = true;
     const epoch = ++this.connectionEpoch;
-    const attempt = this.openWithTicket(epoch).finally(() => {
-      if (this.connectPromise === attempt) this.connectPromise = null;
-    });
+    const attempt = this.openWithTicket(epoch)
+      .catch(error => {
+        if (!this.shouldReconnect || epoch !== this.connectionEpoch) return;
+        if (isAuthenticationFailure(error)) {
+          this.shouldReconnect = false;
+          this.clearReconnectTimer();
+        } else {
+          this.attemptReconnect(epoch);
+        }
+        throw error;
+      })
+      .finally(() => {
+        if (this.connectPromise === attempt) this.connectPromise = null;
+      });
     this.connectPromise = attempt;
     return attempt;
   }
 
   private async openWithTicket(epoch: number): Promise<void> {
-    let response;
-    try {
-      response = await api.post<
-        ApiResponse<{ ticket: string; expiresAt: string }>
-      >('/auth/websocket-ticket', { audience: 'chat' });
-    } catch (error) {
-      if (this.shouldReconnect && epoch === this.connectionEpoch) {
-        this.attemptReconnect();
-      }
-      throw error;
-    }
+    const response = await api.post<
+      ApiResponse<{ ticket: string; expiresAt: string }>
+    >('/auth/websocket-ticket', { audience: 'chat' });
     const ticket = response.data.data?.ticket;
     if (!ticket)
       throw new Error('The server did not issue a WebSocket ticket.');
@@ -101,6 +115,7 @@ class WebSocketService {
         logger.debug('WebSocket: Connecting with a one-use ticket');
 
         const socket = new WebSocket(wsUrlWithAuth);
+        let opened = false;
         this.ws = socket;
 
         socket.onopen = () => {
@@ -110,11 +125,14 @@ class WebSocketService {
             return;
           }
           logger.debug('WebSocket connected successfully');
+          opened = true;
           this.reconnectAttempts = 0;
+          this.clearReconnectTimer();
           resolve();
         };
 
         socket.onmessage = event => {
+          if (!this.shouldReconnect || epoch !== this.connectionEpoch) return;
           try {
             const message: WebSocketMessage = JSON.parse(event.data);
             const handler = this.messageHandlers.get(message.type);
@@ -142,8 +160,13 @@ class WebSocketService {
             resolve();
             return;
           }
-          if (this.shouldReconnect) {
-            this.attemptReconnect();
+          if (!opened) {
+            // Some failed handshakes close without an error event. Settle the
+            // attempt so the retry can acquire a new ticket instead of reusing
+            // a permanently pending connectPromise.
+            reject(new Error('WebSocket closed before opening'));
+          } else if (this.shouldReconnect) {
+            this.attemptReconnect(epoch);
           }
         };
 
@@ -167,6 +190,8 @@ class WebSocketService {
   disconnect() {
     this.shouldReconnect = false;
     this.connectionEpoch += 1;
+    this.clearReconnectTimer();
+    this.reconnectAttempts = 0;
     this.connectPromise = null;
     const socket = this.ws;
     if (!socket) return;
@@ -221,26 +246,33 @@ class WebSocketService {
     this.messageHandlers.get(type)?.(data);
   }
 
-  private attemptReconnect() {
-    if (isDemoMode()) {
-      logger.debug('Demo mode active: skipping WebSocket reconnection.');
+  private clearReconnectTimer() {
+    if (this.reconnectTimer !== null) clearTimeout(this.reconnectTimer);
+    this.reconnectTimer = null;
+  }
+
+  private attemptReconnect(epoch: number) {
+    if (
+      isDemoMode() ||
+      !this.shouldReconnect ||
+      epoch !== this.connectionEpoch ||
+      this.reconnectTimer !== null
+    ) {
       return;
     }
-    if (this.reconnectAttempts < this.maxReconnectAttempts) {
-      this.reconnectAttempts++;
-      logger.debug(
-        `Attempting to reconnect... (${this.reconnectAttempts}/${this.maxReconnectAttempts})`
-      );
-
-      setTimeout(() => {
-        if (!this.shouldReconnect) return;
-        this.connect().catch(() => {
-          // Will try again if this fails
-        });
-      }, this.reconnectDelay * this.reconnectAttempts);
-    } else {
-      logger.error('Max reconnection attempts reached');
-    }
+    const delay = Math.min(
+      this.reconnectDelay * 2 ** this.reconnectAttempts,
+      this.maxReconnectDelay
+    );
+    this.reconnectAttempts = Math.min(this.reconnectAttempts + 1, 5);
+    logger.debug(`Reconnecting WebSocket in ${delay}ms`);
+    this.reconnectTimer = setTimeout(() => {
+      this.reconnectTimer = null;
+      if (!this.shouldReconnect || epoch !== this.connectionEpoch) return;
+      void this.connect().catch(() => {
+        // connect owns the single retry timer for transient failures.
+      });
+    }, delay);
   }
 
   get isConnected(): boolean {

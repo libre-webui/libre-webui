@@ -4,6 +4,7 @@ import path from 'path';
 import { readFileSync, existsSync } from 'fs';
 import { loadEnvFile } from 'node:process';
 import { execSync } from 'child_process';
+import { backendReadyProxy } from './dev/backendReady';
 
 // Operator variables win; a missing .env is simply skipped.
 if (existsSync('.env')) loadEnvFile('.env');
@@ -125,7 +126,7 @@ const vendor = (...packages: string[]) =>
   new RegExp(`node_modules[\\\\/](?:${packages.join('|')})[\\\\/]`);
 
 export default defineConfig({
-  plugins: [react(), artifactRuntimeHeaders()],
+  plugins: [react(), artifactRuntimeHeaders(), backendReadyProxy(API_BASE_URL)],
   base: isElectron ? './' : '/',
   define: {
     // Identifies the artifact runtime build, so a cached bundle from an

@@ -77,6 +77,17 @@ npm install
 npm run dev
 ```
 
+Vite can become ready before the backend finishes its startup checks. For a
+local backend, the development proxy waits up to 10 seconds for its listener
+before forwarding an API request. It forwards each request once, including
+writes; it does not replay failed requests. If the backend remains unavailable,
+the proxy returns HTTP 503 with a retry hint. Static frontend files remain
+available during the wait.
+
+Chat keeps reconnecting after transient backend outages, with delays capped at
+30 seconds. A successful connection resets the delay; signing out cancels
+pending retries. Authentication failures stop automatic reconnection.
+
 ### Testing Work
 
 1. Start Docker and confirm `docker info` succeeds as the same user running the
