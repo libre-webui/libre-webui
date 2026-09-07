@@ -23,6 +23,7 @@ import {
   Routes,
   Route,
   useNavigate,
+  useLocation,
 } from 'react-router';
 
 // Initialize i18n
@@ -50,6 +51,8 @@ import { API_BASE_URL } from '@/utils/config';
 import { useWhatsNew } from '@/hooks/useWhatsNew';
 import { DemoModeBanner } from '@/components/DemoModeBanner';
 import { BackgroundRenderer } from '@/components/BackgroundRenderer';
+import { normalizeBackgroundSettings } from '@/utils/backgroundSettings';
+import { isWallpaperRoute } from '@/utils/wallpaper';
 import { CelestialSky } from '@/components/CelestialSky';
 import { AppTabBar } from '@/components/AppTabBar';
 import { startNewChat, startNewWork } from '@/utils/appNavigation';
@@ -163,7 +166,6 @@ const ArtifactLayoutSpacer: React.FC = () => {
 };
 
 interface ShellLayoutProps {
-  hasBackground: boolean;
   sidebarOpen: boolean;
   sidebarCompact: boolean;
   onCloseSidebar: () => void;
@@ -174,57 +176,65 @@ interface ShellLayoutProps {
 
 // The single app frame: sidebar + tab strip + routed content card.
 const ShellLayout: React.FC<ShellLayoutProps> = ({
-  hasBackground,
   sidebarOpen,
   sidebarCompact,
   onCloseSidebar,
   showDemoBanner,
   demoMessage,
   children,
-}) => (
-  <div
-    className={cn(
-      'flex h-dvh min-h-0 text-ink relative overflow-hidden',
-      hasBackground ? 'bg-sidebar/60' : 'bg-sidebar'
-    )}
-    data-app-shell=''
-  >
-    <ElectronTitleBar />
-    <BackgroundRenderer />
-    <CelestialSky />
-    <Sidebar isOpen={sidebarOpen} onClose={onCloseSidebar} />
-    <SidebarLayoutSpacer isOpen={sidebarOpen} compact={sidebarCompact} />
+}) => {
+  const { pathname } = useLocation();
+  const savedBackground = useAppStore(
+    state => state.preferences.backgroundSettings
+  );
+  const backgroundImage = useAppStore(state => state.backgroundImage);
+  const background = normalizeBackgroundSettings(savedBackground);
+  const hasWallpaper =
+    isWallpaperRoute(pathname) &&
+    background.enabled &&
+    background.opacity > 0 &&
+    Boolean(backgroundImage ?? background.imageUrl);
+
+  return (
     <div
-      data-testid='app-shell-content'
-      className={cn(
-        'flex-1 basis-0 flex min-h-0 flex-col min-w-0 transition-[margin,background-color] duration-200 ease-out relative z-10 lg:pb-2 lg:pe-2',
-        isElectron ? 'pt-8' : 'lg:pt-1.5',
-        // Mobile behavior:
-        // - Compact sidebar: push content away to avoid overlap
-        // - Expanded sidebar: overlay (no transform)
-        sidebarOpen && sidebarCompact ? 'max-lg:ms-16' : 'max-lg:ms-0',
-        hasBackground ? 'bg-white/10 dark:bg-dark-50/10' : 'bg-transparent'
-      )}
+      className='relative flex h-dvh min-h-0 overflow-hidden bg-sidebar text-ink'
+      data-app-shell=''
+      data-sidebar-overlay={sidebarOpen && !sidebarCompact ? 'true' : undefined}
     >
-      {showDemoBanner && <DemoModeBanner message={demoMessage} />}
-      <AppTabBar />
-      <main
-        data-app-main=''
+      <ElectronTitleBar />
+      <CelestialSky />
+      <Sidebar isOpen={sidebarOpen} onClose={onCloseSidebar} />
+      <SidebarLayoutSpacer isOpen={sidebarOpen} compact={sidebarCompact} />
+      <div
+        data-testid='app-shell-content'
         className={cn(
-          'min-h-0 flex-1 overflow-hidden lg:rounded-[1.5rem] lg:border lg:border-black/[0.06] dark:lg:border-white/[0.07] lg:shadow-[0_1px_2px_rgba(0,0,0,0.03),0_18px_60px_rgba(15,23,42,0.04)]',
-          hasBackground
-            ? 'bg-white/30 dark:bg-dark-50/35 backdrop-blur-sm'
-            : 'bg-canvas'
+          'relative z-10 flex min-h-0 min-w-0 flex-1 basis-0 flex-col bg-transparent transition-[margin,background-color] duration-200 ease-out lg:pb-2 lg:pe-2',
+          isElectron ? 'pt-8' : 'lg:pt-1.5',
+          sidebarOpen && sidebarCompact ? 'max-lg:ms-16' : 'max-lg:ms-0'
         )}
       >
-        <ErrorBoundary>
-          <Suspense fallback={<PageLoader />}>{children}</Suspense>
-        </ErrorBoundary>
-      </main>
+        {showDemoBanner && <DemoModeBanner message={demoMessage} />}
+        <AppTabBar />
+        <main
+          data-app-main=''
+          data-wallpaper={hasWallpaper ? 'true' : undefined}
+          className='relative isolate min-h-0 flex-1 overflow-hidden bg-canvas lg:rounded-[1.5rem] lg:border lg:border-black/[0.06] dark:lg:border-white/[0.07] lg:shadow-[0_1px_2px_rgba(0,0,0,0.03),0_18px_60px_rgba(15,23,42,0.04)]'
+        >
+          <BackgroundRenderer active={hasWallpaper} />
+          <div
+            className='relative z-10 h-full min-h-0'
+            data-wallpaper-content=''
+          >
+            <ErrorBoundary>
+              <Suspense fallback={<PageLoader />}>{children}</Suspense>
+            </ErrorBoundary>
+          </div>
+        </main>
+      </div>
+      <ArtifactLayoutSpacer />
     </div>
-    <ArtifactLayoutSpacer />
-  </div>
-);
+  );
+};
 
 const AppContent: React.FC = () => {
   const { t, i18n } = useTranslation();
@@ -248,8 +258,6 @@ const AppContent: React.FC = () => {
     toggleSidebar,
     toggleSidebarCompact,
     toggleTheme,
-    theme,
-    backgroundImage,
     preferences,
     artifactPanelOpen,
     closeArtifactPanel,
@@ -339,22 +347,6 @@ const AppContent: React.FC = () => {
 
   // Initialize the app only after OAuth is processed
   useInitializeApp();
-
-  // Check if any background is active (persona background or general background settings)
-  const hasActiveBackground = () => {
-    // The celestial sky is a live background of its own.
-    if (theme.mode === 'celestial') {
-      return true;
-    }
-    // Persona background takes priority
-    if (backgroundImage) {
-      return true;
-    }
-
-    // Check general background settings
-    const backgroundSettings = preferences.backgroundSettings;
-    return backgroundSettings?.enabled && backgroundSettings?.imageUrl;
-  };
 
   // Define keyboard shortcuts
   const shortcuts: KeyboardShortcut[] = [
@@ -549,7 +541,6 @@ const AppContent: React.FC = () => {
       {systemInfo && !systemInfo.requiresAuth ? (
         // No auth required - show full layout
         <ShellLayout
-          hasBackground={!!hasActiveBackground()}
           sidebarOpen={sidebarOpen}
           sidebarCompact={sidebarCompact}
           onCloseSidebar={() => setSidebarOpen(false)}
@@ -619,7 +610,6 @@ const AppContent: React.FC = () => {
             element={
               <ProtectedRoute>
                 <ShellLayout
-                  hasBackground={!!hasActiveBackground()}
                   sidebarOpen={sidebarOpen}
                   sidebarCompact={sidebarCompact}
                   onCloseSidebar={() => setSidebarOpen(false)}

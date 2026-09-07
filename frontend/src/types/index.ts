@@ -582,6 +582,7 @@ export interface UserPreferences {
     imageUrl: string;
     blurAmount: number;
     opacity: number;
+    effect?: 'dither' | 'original' | 'blur';
   };
 }
 

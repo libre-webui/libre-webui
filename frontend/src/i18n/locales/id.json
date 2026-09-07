@@ -641,12 +641,23 @@
       "background": {
         "title": "Gambar Latar",
         "enable": "Aktifkan gambar latar",
-        "enableDescription": "Tampilkan latar kustom dengan efek blur",
+        "enableDescription": "Tampilkan wallpaper Anda di Obrolan dan Pekerjaan.",
         "blur": "Blur",
         "opacity": "Opasitas",
         "upload": "Unggah gambar latar",
         "dragDrop": "Seret dan lepas gambar atau klik untuk menelusuri",
-        "chooseImage": "Pilih Gambar"
+        "chooseImage": "Pilih Gambar",
+        "effect": "Gaya",
+        "dither": "Dither",
+        "original": "Asli",
+        "blurred": "Buram",
+        "intensity": "Intensitas",
+        "preview": "Pratinjau wallpaper",
+        "change": "Ganti gambar",
+        "saved": "Tersimpan",
+        "saveFailed": "Perubahan tidak dapat disimpan. Coba lagi.",
+        "originalPreserved": "Gambar asli Anda tetap tidak berubah.",
+        "fileTooLarge": "Ukuran gambar latar belakang tidak boleh melebihi 10 MB."
       },
       "celestial": {
         "title": "Waktu hari",

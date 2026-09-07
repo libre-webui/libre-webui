@@ -641,12 +641,23 @@
       "background": {
         "title": "Imej Latar Belakang",
         "enable": "Aktifkan imej latar belakang",
-        "enableDescription": "Tunjukkan latar belakang tersuai dengan kesan kabur",
+        "enableDescription": "Paparkan kertas dinding anda dalam Sembang dan Kerja.",
         "blur": "Kabur",
         "opacity": "Kelegapan",
         "upload": "Muat naik imej latar belakang",
         "dragDrop": "Seret dan lepas imej atau klik untuk melayari",
-        "chooseImage": "Pilih Imej"
+        "chooseImage": "Pilih Imej",
+        "effect": "Gaya",
+        "dither": "Diter",
+        "original": "Asal",
+        "blurred": "Kabur",
+        "intensity": "Keamatan",
+        "preview": "Pratonton kertas dinding",
+        "change": "Tukar imej",
+        "saved": "Disimpan",
+        "saveFailed": "Perubahan tidak dapat disimpan. Cuba lagi.",
+        "originalPreserved": "Imej asal anda kekal tanpa perubahan.",
+        "fileTooLarge": "Saiz imej latar belakang tidak boleh melebihi 10 MB."
       },
       "celestial": {
         "title": "Waktu hari",

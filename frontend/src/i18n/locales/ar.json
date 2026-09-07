@@ -641,12 +641,23 @@
       "background": {
         "title": "صورة الخلفية",
         "enable": "تفعيل صورة الخلفية",
-        "enableDescription": "عرض خلفية مخصصة مع تأثير التمويه",
+        "enableDescription": "اعرض خلفيتك في الدردشة والعمل.",
         "blur": "التمويه",
         "opacity": "الشفافية",
         "upload": "رفع صورة الخلفية",
         "dragDrop": "اسحب وأفلت صورة أو انقر للتصفح",
-        "chooseImage": "اختر صورة"
+        "chooseImage": "اختر صورة",
+        "effect": "النمط",
+        "dither": "منقّط",
+        "original": "الأصلية",
+        "blurred": "ضبابي",
+        "intensity": "الشدة",
+        "preview": "معاينة الخلفية",
+        "change": "تغيير الصورة",
+        "saved": "تم الحفظ",
+        "saveFailed": "تعذّر حفظ التغييرات. حاول مجددًا.",
+        "originalPreserved": "تبقى صورتك الأصلية دون تغيير.",
+        "fileTooLarge": "يجب ألا يتجاوز حجم صورة الخلفية 10 ميجابايت"
       },
       "celestial": {
         "title": "وقت اليوم",

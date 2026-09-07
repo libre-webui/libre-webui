@@ -641,12 +641,23 @@
       "background": {
         "title": "Imagen de fondo",
         "enable": "Habilitar imagen de fondo",
-        "enableDescription": "Mostrar fondo personalizado con efecto de desenfoque",
+        "enableDescription": "Muestra tu fondo en Chat y Trabajo.",
         "blur": "Desenfoque",
         "opacity": "Opacidad",
         "upload": "Subir imagen de fondo",
         "dragDrop": "Arrastra una imagen o haz clic para explorar",
-        "chooseImage": "Elegir imagen"
+        "chooseImage": "Elegir imagen",
+        "effect": "Estilo",
+        "dither": "Tramado",
+        "original": "Original",
+        "blurred": "Desenfocado",
+        "intensity": "Intensidad",
+        "preview": "Vista previa del fondo",
+        "change": "Cambiar imagen",
+        "saved": "Guardado",
+        "saveFailed": "No se pudieron guardar los cambios. Inténtalo de nuevo.",
+        "originalPreserved": "La imagen original se conserva sin cambios.",
+        "fileTooLarge": "La imagen de fondo no debe superar los 10 MB."
       },
       "celestial": {
         "title": "Hora del día",

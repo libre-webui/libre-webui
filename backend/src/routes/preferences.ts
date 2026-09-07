@@ -17,6 +17,7 @@
 
 import express, { type NextFunction, Response } from 'express';
 import rateLimit from '../middleware/sharedRateLimit.js';
+import { preferencesUpdateJson } from '../middleware/preferencesBody.js';
 import multer from 'multer';
 import preferencesService from '../services/preferencesService.js';
 import {
@@ -301,6 +302,7 @@ router.get(
 // Update user preferences
 router.put(
   '/',
+  preferencesUpdateJson,
   async (
     req: AuthenticatedRequest,
     res: Response<ApiResponse<UserPreferences>>

@@ -43,6 +43,7 @@ import {
   REVALIDATE_CACHE_CONTROL,
 } from './middleware/staticAssets.js';
 import { isChatCancellationSafetyRequest } from './middleware/chatCancellationAdmission.js';
+import { deferPreferencesUpdateJson } from './middleware/preferencesBody.js';
 import helmet from 'helmet';
 import { createServer } from 'http';
 import { join as pathJoin } from 'path';
@@ -433,7 +434,7 @@ if (process.env.NODE_ENV !== 'test') {
 app.use(requestLogger);
 
 // Body parsing
-app.use(express.json({ limit: '10mb' }));
+app.use(deferPreferencesUpdateJson(express.json({ limit: '10mb' })));
 app.use(express.urlencoded({ extended: true }));
 
 // Process liveness, dependency readiness, and authenticated deep diagnostics.

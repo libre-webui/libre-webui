@@ -641,12 +641,23 @@
       "background": {
         "title": "Background Image",
         "enable": "Enable background image",
-        "enableDescription": "Show custom background with blur effect",
+        "enableDescription": "Show your wallpaper in Chat and Work.",
         "blur": "Blur",
         "opacity": "Opacity",
         "upload": "Upload background image",
         "dragDrop": "Drag and drop an image or click to browse",
-        "chooseImage": "Choose Image"
+        "chooseImage": "Choose Image",
+        "effect": "Style",
+        "dither": "Dithered",
+        "original": "Original",
+        "blurred": "Blurred",
+        "intensity": "Intensity",
+        "preview": "Wallpaper preview",
+        "change": "Change image",
+        "saved": "Saved",
+        "saveFailed": "Changes could not be saved. Try again.",
+        "originalPreserved": "Your original image is kept unchanged.",
+        "fileTooLarge": "Background image size must not exceed 10 MB."
       },
       "celestial": {
         "title": "Time of day",

@@ -28,9 +28,15 @@ import {
   normalizeTheme,
 } from '@/utils/theme';
 import { createLogger } from '@/utils/logger';
+import {
+  DEFAULT_BACKGROUND_SETTINGS,
+  normalizeBackgroundSettings,
+  type NormalizedBackgroundSettings,
+} from '@/utils/backgroundSettings';
 
 const logger = createLogger('store:app-store');
 const THEME_SYNC_DELAY_MS = 250;
+const BACKGROUND_SYNC_DELAY_MS = 250;
 let themeSyncTimeout: ReturnType<typeof setTimeout> | null = null;
 
 interface AppState {
@@ -71,14 +77,18 @@ interface AppState {
 
   // User preferences
   preferences: UserPreferences;
+  // Wallpaper changes use the dedicated actions and guarded loader below.
   setPreferences: (preferences: Partial<UserPreferences>) => void;
   loadPreferences: () => Promise<void>;
 
   // Background settings
   backgroundImage: string | null;
   setBackgroundImage: (imageUrl: string | null) => Promise<void>;
+  updateBackgroundSettings: (
+    updates: Partial<NonNullable<UserPreferences['backgroundSettings']>>
+  ) => Promise<void>;
   uploadBackgroundImage: (file: File) => Promise<void>;
-  removeBackgroundImage: () => void;
+  removeBackgroundImage: () => Promise<void>;
 
   // Clear user-specific state (called on logout/login)
   clearUserState: () => void;
@@ -100,6 +110,110 @@ interface AppState {
   demoConfig: ReturnType<typeof getDemoConfig>;
   setDemoMode: (isDemo: boolean) => void;
 }
+
+let accountEpoch = 0;
+let preferencesSequence = 0;
+let backgroundRevision = 0;
+let confirmedRevision = 0;
+let confirmedBackground = { ...DEFAULT_BACKGROUND_SETTINGS };
+let uploadSequence = 0;
+let uploadReader: FileReader | null = null;
+let cancelUploadDecode: (() => void) | null = null;
+let backgroundTimer: ReturnType<typeof setTimeout> | null = null;
+type Scope = { epoch: number; token: string | null };
+type Waiter = { resolve: () => void; reject: (error: unknown) => void };
+type BackgroundBatch = {
+  scope: Scope;
+  revision: number;
+  settings: NormalizedBackgroundSettings;
+  waiters: Waiter[];
+};
+let pendingBackground: BackgroundBatch | null = null;
+let savingBackground: BackgroundBatch | null = null;
+const token = () =>
+  typeof localStorage === 'undefined'
+    ? null
+    : localStorage.getItem('auth-token');
+const scope = (): Scope => ({ epoch: accountEpoch, token: token() });
+const isCurrentScope = (owner: Scope) =>
+  owner.epoch === accountEpoch && owner.token === token();
+const cancelled = () =>
+  new DOMException('Wallpaper operation superseded', 'AbortError');
+const invalidateUpload = () => {
+  uploadSequence += 1;
+  uploadReader?.abort();
+  uploadReader = null;
+  cancelUploadDecode?.();
+  cancelUploadDecode = null;
+};
+const applyBackground = (settings: NormalizedBackgroundSettings) =>
+  useAppStore.setState(state => ({
+    backgroundImage: settings.imageUrl || null,
+    preferences: { ...state.preferences, backgroundSettings: settings },
+  }));
+const settleBatch = (batch: BackgroundBatch, error?: unknown) => {
+  const waiters = batch.waiters.splice(0);
+  for (const waiter of waiters) {
+    if (error) waiter.reject(error);
+    else waiter.resolve();
+  }
+};
+const cancelBackgroundWork = () => {
+  if (backgroundTimer) clearTimeout(backgroundTimer);
+  backgroundTimer = null;
+  if (pendingBackground) settleBatch(pendingBackground, cancelled());
+  if (savingBackground) settleBatch(savingBackground, cancelled());
+  pendingBackground = null;
+  savingBackground = null;
+  invalidateUpload();
+};
+const flushBackground = async () => {
+  if (savingBackground || !pendingBackground) return;
+  const batch = pendingBackground;
+  pendingBackground = null;
+  savingBackground = batch;
+  try {
+    const { preferencesApi } = await import('@/utils/api');
+    // The API client chooses credentials at dispatch time. Recheck after
+    // loading it so an old operation cannot be sent as a new account.
+    if (!isCurrentScope(batch.scope)) throw cancelled();
+    const response = await preferencesApi.updatePreferences({
+      backgroundSettings: batch.settings,
+    });
+    if (!isCurrentScope(batch.scope)) throw cancelled();
+    if (!response.success) {
+      throw new Error(response.error || 'Failed to save wallpaper');
+    }
+    if (batch.revision >= confirmedRevision) {
+      confirmedBackground = batch.settings;
+      confirmedRevision = batch.revision;
+    }
+    settleBatch(batch);
+  } catch (error) {
+    if (
+      isCurrentScope(batch.scope) &&
+      batch.revision === backgroundRevision &&
+      !pendingBackground
+    ) {
+      applyBackground(confirmedBackground);
+    }
+    settleBatch(batch, error);
+  } finally {
+    // An old account's request may finish after reset. It must not
+    // release the new account's queue or restore any of its data.
+    if (savingBackground === batch) {
+      savingBackground = null;
+      if (pendingBackground && !backgroundTimer) void flushBackground();
+    }
+  }
+};
+const scheduleBackground = () => {
+  if (backgroundTimer) clearTimeout(backgroundTimer);
+  backgroundTimer = setTimeout(() => {
+    backgroundTimer = null;
+    void flushBackground();
+  }, BACKGROUND_SYNC_DELAY_MS);
+};
 
 export const useAppStore = create<AppState>()(
   persist(
@@ -243,25 +357,25 @@ export const useAppStore = create<AppState>()(
         showUsername: false, // Default to showing "you" instead of username
         hapticFeedbackEnabled: false,
         workRemoteProviderDisclosureDismissed: false,
-        backgroundSettings: {
-          enabled: false,
-          imageUrl: '',
-          blurAmount: 10,
-          opacity: 0.6,
-        },
+        backgroundSettings: { ...DEFAULT_BACKGROUND_SETTINGS },
       },
       setPreferences: newPreferences => {
-        const nextTheme = newPreferences.theme
-          ? normalizeTheme(newPreferences.theme)
-          : null;
+        // Unrelated saves return whole preference snapshots. Their wallpaper
+        // can be stale or belong to an account that has since signed out.
+        // Only loadPreferences and the wallpaper queue may adopt that field.
+        const { backgroundSettings: _background, ...updates } = newPreferences;
+        const nextTheme = updates.theme ? normalizeTheme(updates.theme) : null;
 
         set(state => ({
           // A theme from the account's saved preferences is the user's own
           // choice, so the instance default stops applying on this browser.
-          ...(nextTheme && { theme: nextTheme, themeSource: 'user' as const }),
+          ...(nextTheme && {
+            theme: nextTheme,
+            themeSource: 'user' as const,
+          }),
           preferences: {
             ...state.preferences,
-            ...newPreferences,
+            ...updates,
             ...(nextTheme && { theme: nextTheme }),
           },
         }));
@@ -272,29 +386,47 @@ export const useAppStore = create<AppState>()(
       },
 
       loadPreferences: async () => {
+        const owner = scope();
+        const sequence = ++preferencesSequence;
+        const revision = backgroundRevision;
+        const backgroundWasPending = Boolean(
+          pendingBackground || savingBackground
+        );
         try {
           const { preferencesApi } = await import('@/utils/api');
+          if (!isCurrentScope(owner)) return;
           const response = await preferencesApi.getPreferences();
+          if (!isCurrentScope(owner) || sequence !== preferencesSequence)
+            return;
           if (response.success && response.data) {
-            const data = response.data;
+            const data = { ...response.data };
+            // A slow initialization read cannot undo a wallpaper edit, clear,
+            // or replacement made while the request was in flight.
+            if (
+              !backgroundWasPending &&
+              revision === backgroundRevision &&
+              !pendingBackground &&
+              !savingBackground
+            ) {
+              const backgroundSettings = normalizeBackgroundSettings(
+                data.backgroundSettings
+              );
+              confirmedBackground = backgroundSettings;
+              confirmedRevision = ++backgroundRevision;
+              applyBackground(backgroundSettings);
+            }
             const pendingTheme = get().themeSyncPending
               ? normalizeTheme(get().theme)
               : null;
-
             get().setPreferences(
               pendingTheme ? { ...data, theme: pendingTheme } : data
             );
-            // Restore background image from backend preferences
-            set({
-              backgroundImage: data.backgroundSettings?.imageUrl || null,
-            });
-
-            if (pendingTheme) {
-              void get().syncThemePreference(pendingTheme);
-            }
+            if (pendingTheme) void get().syncThemePreference(pendingTheme);
           }
         } catch (error: unknown) {
-          logger.warn('Failed to load preferences from backend:', error);
+          if (isCurrentScope(owner)) {
+            logger.warn('Failed to load preferences from backend:', error);
+          }
         }
       },
 
@@ -327,94 +459,121 @@ export const useAppStore = create<AppState>()(
 
       // Background settings
       backgroundImage: null,
-      setBackgroundImage: async imageUrl => {
-        set({ backgroundImage: imageUrl });
-
-        // Only update backend when setting a new image (not when clearing)
-        // Clearing is used for temporary persona overlays and shouldn't persist
-        if (imageUrl) {
-          // Update preferences locally
-          const state = get();
-          const updatedPreferences = {
-            ...state.preferences,
-            backgroundSettings: {
-              enabled: true,
-              imageUrl: imageUrl,
-              blurAmount:
-                state.preferences.backgroundSettings?.blurAmount || 10,
-              opacity: state.preferences.backgroundSettings?.opacity || 0.6,
-            },
-          };
-          state.setPreferences(updatedPreferences);
-
-          // Save to backend for persistence
-          try {
-            const { preferencesApi } = await import('@/utils/api');
-            await preferencesApi.updatePreferences({
-              backgroundSettings: updatedPreferences.backgroundSettings,
-            });
-          } catch (error) {
-            logger.warn(
-              'Failed to save background settings to backend:',
-              error
-            );
-          }
+      updateBackgroundSettings: updates => {
+        if ('imageUrl' in updates || updates.enabled === false) {
+          invalidateUpload();
         }
-        // When imageUrl is null, just clear the visual state without persisting
-        // The user's saved background from preferences.backgroundSettings will show through
-      },
-      uploadBackgroundImage: async (file: File) => {
-        try {
-          // Create a file reader to convert to base64
-          const reader = new FileReader();
-          return new Promise((resolve, reject) => {
-            reader.onload = async e => {
-              try {
-                const dataUrl = e.target?.result as string;
-                const state = get();
-                // Await the setBackgroundImage to ensure backend save completes
-                await state.setBackgroundImage(dataUrl);
-                resolve();
-              } catch (error) {
-                reject(error);
-              }
-            };
-            reader.onerror = reject;
-            reader.readAsDataURL(file);
-          });
-        } catch (error) {
-          logger.error('Failed to upload background image:', error);
-          throw error;
-        }
-      },
-      removeBackgroundImage: async () => {
-        set({ backgroundImage: null });
-
-        // Update preferences locally to disable background
-        const state = get();
-        const updatedBackgroundSettings = {
-          enabled: false,
-          imageUrl: '',
-          blurAmount: state.preferences.backgroundSettings?.blurAmount || 10,
-          opacity: state.preferences.backgroundSettings?.opacity || 0.6,
-        };
-        state.setPreferences({
-          backgroundSettings: updatedBackgroundSettings,
+        const settings = normalizeBackgroundSettings({
+          ...get().preferences.backgroundSettings,
+          ...updates,
         });
-
-        // Save to backend to persist the removal
-        try {
-          const { preferencesApi } = await import('@/utils/api');
-          await preferencesApi.updatePreferences({
-            backgroundSettings: updatedBackgroundSettings,
-          });
-        } catch (error) {
-          logger.warn('Failed to save background removal to backend:', error);
-        }
+        const owner = scope();
+        const revision = ++backgroundRevision;
+        applyBackground(settings);
+        return new Promise<void>((resolve, reject) => {
+          const waiters =
+            pendingBackground && isCurrentScope(pendingBackground.scope)
+              ? pendingBackground.waiters
+              : [];
+          if (pendingBackground && waiters !== pendingBackground.waiters) {
+            settleBatch(pendingBackground, cancelled());
+          }
+          pendingBackground = {
+            scope: owner,
+            revision,
+            settings,
+            waiters: [...waiters, { resolve, reject }],
+          };
+          scheduleBackground();
+        });
       },
+      setBackgroundImage: imageUrl =>
+        get().updateBackgroundSettings({
+          imageUrl: imageUrl || '',
+          enabled: Boolean(imageUrl),
+        }),
+      uploadBackgroundImage: file => {
+        invalidateUpload();
+        const owner = scope();
+        const sequence = uploadSequence;
+        const reader = new FileReader();
+        uploadReader = reader;
+        return new Promise<void>((resolve, reject) => {
+          reader.onabort = () => reject(cancelled());
+          reader.onerror = () => {
+            if (uploadReader === reader) uploadReader = null;
+            reject(reader.error || new Error('Failed to read wallpaper'));
+          };
+          reader.onload = async () => {
+            if (uploadReader === reader) uploadReader = null;
+            if (!isCurrentScope(owner) || sequence !== uploadSequence) {
+              reject(cancelled());
+              return;
+            }
+            const imageUrl = reader.result;
+            if (typeof imageUrl !== 'string') {
+              reject(new Error('Failed to read wallpaper'));
+              return;
+            }
+            try {
+              // A MIME label or extension does not prove the file is an image.
+              // Decode before changing the preview or persisted source, while
+              // retaining the same account and upload revision through both
+              // asynchronous stages.
+              await new Promise<void>((decoded, failed) => {
+                const image = new Image();
+                let settled = false;
+                const finish = (error?: Error) => {
+                  if (settled) return;
+                  settled = true;
+                  image.onload = null;
+                  image.onerror = null;
+                  if (cancelUploadDecode === cancel) cancelUploadDecode = null;
+                  image.src = '';
+                  if (error) failed(error);
+                  else decoded();
+                };
+                const cancel = () => finish(cancelled());
+                cancelUploadDecode = cancel;
+                image.onload = () =>
+                  finish(
+                    image.naturalWidth > 0 && image.naturalHeight > 0
+                      ? undefined
+                      : new Error('Wallpaper file is not a valid image')
+                  );
+                image.onerror = () =>
+                  finish(new Error('Wallpaper file is not a valid image'));
+                image.src = imageUrl;
+              });
+              if (!isCurrentScope(owner) || sequence !== uploadSequence) {
+                throw cancelled();
+              }
+              await get().setBackgroundImage(imageUrl);
+              if (
+                !isCurrentScope(owner) ||
+                get().preferences.backgroundSettings?.imageUrl !== imageUrl
+              ) {
+                throw cancelled();
+              }
+              resolve();
+            } catch (error) {
+              reject(error);
+            }
+          };
+          reader.readAsDataURL(file);
+        });
+      },
+      removeBackgroundImage: () =>
+        get().updateBackgroundSettings({ enabled: false, imageUrl: '' }),
 
       // Clear user-specific state (called on logout/login to prevent data leaking between users)
       clearUserState: () => {
+        accountEpoch += 1;
+        preferencesSequence += 1;
+        backgroundRevision += 1;
+        confirmedRevision = backgroundRevision;
+        confirmedBackground = { ...DEFAULT_BACKGROUND_SETTINGS };
+        cancelBackgroundWork();
         const defaultTheme = createInstanceDefaultTheme();
 
         if (themeSyncTimeout) {
@@ -457,12 +616,7 @@ export const useAppStore = create<AppState>()(
             },
             showUsername: false,
             workRemoteProviderDisclosureDismissed: false,
-            backgroundSettings: {
-              enabled: false,
-              imageUrl: '',
-              blurAmount: 10,
-              opacity: 0.6,
-            },
+            backgroundSettings: { ...DEFAULT_BACKGROUND_SETTINGS },
           },
         });
         applyThemeToDocument(defaultTheme);

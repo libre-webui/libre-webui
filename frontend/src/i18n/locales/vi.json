@@ -641,12 +641,23 @@
       "background": {
         "title": "Hình nền",
         "enable": "Bật hình nền",
-        "enableDescription": "Hiển thị hình nền tùy chỉnh với hiệu ứng mờ",
+        "enableDescription": "Hiển thị hình nền trong Trò chuyện và Công việc.",
         "blur": "Độ mờ",
         "opacity": "Độ trong suốt",
         "upload": "Tải lên hình nền",
         "dragDrop": "Kéo và thả hình ảnh hoặc nhấp để duyệt",
-        "chooseImage": "Chọn hình ảnh"
+        "chooseImage": "Chọn hình ảnh",
+        "effect": "Kiểu",
+        "dither": "Dither",
+        "original": "Gốc",
+        "blurred": "Làm mờ",
+        "intensity": "Cường độ",
+        "preview": "Xem trước hình nền",
+        "change": "Đổi hình ảnh",
+        "saved": "Đã lưu",
+        "saveFailed": "Không thể lưu thay đổi. Hãy thử lại.",
+        "originalPreserved": "Hình ảnh gốc của bạn được giữ nguyên.",
+        "fileTooLarge": "Kích thước hình nền không được vượt quá 10 MB."
       },
       "celestial": {
         "title": "Thời điểm trong ngày",

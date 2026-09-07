@@ -25,6 +25,10 @@ import {
 import { createLogger } from '../utils/logger.js';
 import { normalizeChatProviderSelection } from '../utils/chatProviderSelection.js';
 import { getDefaultTheme } from './appearanceSettingsService.js';
+import {
+  DEFAULT_BACKGROUND_SETTINGS,
+  normalizeBackgroundSettings,
+} from '../utils/backgroundSettings.js';
 
 const logger = createLogger('services:preferences-service');
 
@@ -118,6 +122,7 @@ class PreferencesService {
     autoOpenArtifactPanel: true, // Open the artifact panel when a response generates one
     hapticFeedbackEnabled: false,
     workRemoteProviderDisclosureDismissed: false,
+    backgroundSettings: { ...DEFAULT_BACKGROUND_SETTINGS },
   };
 
   constructor() {
@@ -195,10 +200,9 @@ class PreferencesService {
         ...this.defaultPreferences.embeddingSettings,
         ...preferences.embeddingSettings,
       },
-      // Preserve backgroundSettings if they exist
-      ...(preferences.backgroundSettings && {
-        backgroundSettings: preferences.backgroundSettings,
-      }),
+      backgroundSettings: normalizeBackgroundSettings(
+        preferences.backgroundSettings
+      ),
       // Preserve ttsSettings if they exist
       ...(preferences.ttsSettings && {
         ttsSettings: preferences.ttsSettings,
@@ -300,12 +304,10 @@ class PreferencesService {
         ...normalizedUpdates.embeddingSettings,
       },
       // Properly merge backgroundSettings
-      backgroundSettings: normalizedUpdates.backgroundSettings
-        ? {
-            ...currentPreferences.backgroundSettings,
-            ...normalizedUpdates.backgroundSettings,
-          }
-        : currentPreferences.backgroundSettings,
+      backgroundSettings: normalizeBackgroundSettings({
+        ...currentPreferences.backgroundSettings,
+        ...normalizedUpdates.backgroundSettings,
+      }),
       // Properly merge ttsSettings
       ttsSettings: normalizedUpdates.ttsSettings
         ? {

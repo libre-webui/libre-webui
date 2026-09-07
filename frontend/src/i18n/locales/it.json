@@ -641,12 +641,23 @@
       "background": {
         "title": "Immagine di sfondo",
         "enable": "Abilita immagine di sfondo",
-        "enableDescription": "Mostra sfondo personalizzato con effetto sfocatura",
+        "enableDescription": "Mostra lo sfondo in Chat e Lavoro.",
         "blur": "Sfocatura",
         "opacity": "Opacità",
         "upload": "Carica immagine di sfondo",
         "dragDrop": "Trascina un'immagine o clicca per sfogliare",
-        "chooseImage": "Scegli immagine"
+        "chooseImage": "Scegli immagine",
+        "effect": "Stile",
+        "dither": "Retinato",
+        "original": "Originale",
+        "blurred": "Sfocato",
+        "intensity": "Intensità",
+        "preview": "Anteprima dello sfondo",
+        "change": "Cambia immagine",
+        "saved": "Salvato",
+        "saveFailed": "Impossibile salvare le modifiche. Riprova.",
+        "originalPreserved": "L’immagine originale rimane invariata.",
+        "fileTooLarge": "La dimensione dell'immagine di sfondo non deve superare 10 MB."
       },
       "celestial": {
         "title": "Ora del giorno",

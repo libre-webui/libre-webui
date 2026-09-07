@@ -112,6 +112,27 @@ scales to the screen, and the pointer light stays beneath the reading surface.
 Decorative motion pauses when the tab is hidden and responds immediately to the
 system's reduced-motion preference, including during the theme's arrival sweep.
 
+## Account Wallpaper
+
+In **Settings > Appearance > Background Image**, choose an image up to 10 MB.
+Your source image and settings are saved to your account. The wallpaper appears
+only in Chat and Work; it does not paint the sidebar, tab bar, or library pages.
+
+**Dithered** creates distinct square pixels with open gaps in the shadows,
+inspired by the image's colors. Bright areas are softened before the dots are
+created, keeping pale skies and light photos textured instead of a solid wash.
+**Original** uses a smooth image, and **Blurred** adds adjustable softening. All
+three styles fade into the current theme and adapt highlights for readability;
+the uploaded source is never changed. **Intensity** previews immediately and
+saves after you stop adjusting it. Zero intensity hides the wallpaper without
+removing it. You can also disable it temporarily, replace it, or remove it.
+
+The preview works across Light, Dark (grey), Pure Black, and Celestial. On mobile,
+opening navigation hides the wallpaper until the navigation overlay closes.
+Persona backgrounds stay specific to their chats and do not replace the account
+wallpaper. Image processing runs in your browser. If an external image cannot be
+processed because of its origin policy, a local visual fallback is used.
+
 ## Keep Work Tasks Focused
 
 Use a separate Work task for each project or independent goal. Every task has

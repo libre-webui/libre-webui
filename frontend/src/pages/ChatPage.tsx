@@ -1087,7 +1087,7 @@ export const ChatPage: React.FC = () => {
                   />
                 </div>
 
-                <p className='mt-4 text-center text-[10px] leading-relaxed text-gray-400 dark:text-dark-500'>
+                <p className='mt-4 text-center text-[10px] leading-relaxed text-ink-subtle'>
                   {t('chat.footer.disclaimer')}
                 </p>
               </div>
@@ -1139,7 +1139,7 @@ export const ChatPage: React.FC = () => {
               <span className='text-xs font-medium'>
                 {t('chat.session.privateMode')}
               </span>
-              <span className='hidden text-[11px] text-gray-400 dark:text-dark-500 sm:inline'>
+              <span className='hidden text-[11px] text-ink-subtle sm:inline'>
                 — {t('chat.session.privateDescription')}
               </span>
             </div>

@@ -641,12 +641,23 @@
       "background": {
         "title": "Baggrundsbillede",
         "enable": "Aktiver baggrundsbillede",
-        "enableDescription": "Vis tilpasset baggrund med sløringseffekt",
+        "enableDescription": "Vis dit baggrundsbillede i Chat og Arbejde.",
         "blur": "Sløring",
         "opacity": "Gennemsigtighed",
         "upload": "Upload baggrundsbillede",
         "dragDrop": "Træk og slip et billede eller klik for at gennemse",
-        "chooseImage": "Vælg billede"
+        "chooseImage": "Vælg billede",
+        "effect": "Stil",
+        "dither": "Rastreret",
+        "original": "Original",
+        "blurred": "Sløret",
+        "intensity": "Intensitet",
+        "preview": "Forhåndsvisning af baggrund",
+        "change": "Skift billede",
+        "saved": "Gemt",
+        "saveFailed": "Ændringerne kunne ikke gemmes. Prøv igen.",
+        "originalPreserved": "Dit originale billede bevares uændret.",
+        "fileTooLarge": "Baggrundsbilledet må højst fylde 10 MB."
       },
       "celestial": {
         "title": "Tidspunkt på dagen",

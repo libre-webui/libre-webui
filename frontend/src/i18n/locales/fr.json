@@ -641,12 +641,23 @@
       "background": {
         "title": "Image d'arrière-plan",
         "enable": "Activer l'image d'arrière-plan",
-        "enableDescription": "Afficher un arrière-plan personnalisé avec effet de flou",
+        "enableDescription": "Afficher votre fond dans Chat et Travail.",
         "blur": "Flou",
         "opacity": "Opacité",
         "upload": "Envoyer une image d'arrière-plan",
         "dragDrop": "Glissez-déposez une image ou cliquez pour parcourir",
-        "chooseImage": "Choisir une image"
+        "chooseImage": "Choisir une image",
+        "effect": "Style",
+        "dither": "Tramé",
+        "original": "Original",
+        "blurred": "Flouté",
+        "intensity": "Intensité",
+        "preview": "Aperçu du fond",
+        "change": "Changer d’image",
+        "saved": "Enregistré",
+        "saveFailed": "Les modifications n’ont pas pu être enregistrées. Réessayez.",
+        "originalPreserved": "Votre image d’origine reste inchangée.",
+        "fileTooLarge": "La taille de l'image d'arrière-plan ne doit pas dépasser 10 Mo."
       },
       "celestial": {
         "title": "Heure de la journée",

@@ -279,6 +279,32 @@ when space permits, and stacks them on narrow screens. Optional folder access
 and its warning remain visible above the composer. The landing input gives a
 task brief more room than the compact follow-up input.
 
+### Account Wallpaper
+
+Account wallpaper belongs inside the rounded Chat and Work content card. The
+sidebar, tab strip, and library pages retain their own theme surfaces. Mobile
+navigation overlays temporarily hide the wallpaper to keep it from showing
+through translucent chrome.
+
+Dithered is the default treatment: a bounded, locally processed pattern of
+distinct square pixels and open shadows that fades into the current canvas.
+Compress highlights before dithering so bright photos retain tonal detail and
+open space between colored dots. Derive density from perceived brightness and
+leave gaps transparent so each theme supplies its own canvas. Keep the same
+dot placement across themes;
+the final dark-theme luminance bound must not collapse the texture into a flat
+fill. Original removes the texture, and Blur softens the image. Every treatment
+uses the same theme-aware fade and reading scrim; dark themes limit bright
+highlights. Reading text stays high contrast,
+and composers retain a dense surface. Light, grey Dark, Pure Black, and both
+Celestial phases follow the same scope and hierarchy.
+
+Keep the uploaded source intact in account preferences. Processing is temporary
+and cancelled when its source, account, or active surface changes. An external
+image that disallows pixel access uses a local CSS fallback, never a processing
+proxy. Persona artwork remains local to its chat and must not update account
+wallpaper.
+
 ### Code Blocks
 
 Code rendering follows the active light or dark mode. Dark mode uses GitHub's

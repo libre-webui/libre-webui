@@ -184,12 +184,7 @@ const StreamingMessageContentBase: React.FC<StreamingMessageContentProps> = ({
     lastSegment?.type === 'code' && !lastSegment.complete;
 
   return (
-    <div
-      className={cn(
-        'text-sm leading-relaxed text-gray-700 dark:text-dark-700',
-        className
-      )}
-    >
+    <div className={cn('text-sm leading-relaxed text-ink', className)}>
       {segments.map((segment, index) =>
         segment.type === 'code' ? (
           <StreamingCodeBlock key={`${segment.type}-${index}`} {...segment} />

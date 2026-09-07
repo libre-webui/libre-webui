@@ -641,12 +641,23 @@
       "background": {
         "title": "背景图片",
         "enable": "启用背景图片",
-        "enableDescription": "显示带模糊效果的自定义背景",
+        "enableDescription": "在聊天和工作中显示壁纸。",
         "blur": "模糊度",
         "opacity": "不透明度",
         "upload": "上传背景图片",
         "dragDrop": "拖放图片或点击浏览",
-        "chooseImage": "选择图片"
+        "chooseImage": "选择图片",
+        "effect": "样式",
+        "dither": "抖色",
+        "original": "原图",
+        "blurred": "模糊",
+        "intensity": "强度",
+        "preview": "壁纸预览",
+        "change": "更换图片",
+        "saved": "已保存",
+        "saveFailed": "无法保存更改，请重试。",
+        "originalPreserved": "原始图片将保持不变。",
+        "fileTooLarge": "背景图片大小不得超过10MB。"
       },
       "celestial": {
         "title": "一天中的时间",

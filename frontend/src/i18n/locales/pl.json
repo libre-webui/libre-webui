@@ -641,12 +641,23 @@
       "background": {
         "title": "Obraz tła",
         "enable": "Włącz obraz tła",
-        "enableDescription": "Pokaż własne tło z efektem rozmycia",
+        "enableDescription": "Pokaż tapetę w Czacie i Pracy.",
         "blur": "Rozmycie",
         "opacity": "Przezroczystość",
         "upload": "Wyślij obraz tła",
         "dragDrop": "Przeciągnij i upuść obraz lub kliknij, aby przeglądać",
-        "chooseImage": "Wybierz obraz"
+        "chooseImage": "Wybierz obraz",
+        "effect": "Styl",
+        "dither": "Dithering",
+        "original": "Oryginał",
+        "blurred": "Rozmyty",
+        "intensity": "Intensywność",
+        "preview": "Podgląd tapety",
+        "change": "Zmień obraz",
+        "saved": "Zapisano",
+        "saveFailed": "Nie udało się zapisać zmian. Spróbuj ponownie.",
+        "originalPreserved": "Oryginalny obraz pozostaje bez zmian.",
+        "fileTooLarge": "Rozmiar obrazu tła nie może przekraczać 10 MB."
       },
       "celestial": {
         "title": "Pora dnia",

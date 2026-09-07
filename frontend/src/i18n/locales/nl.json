@@ -641,12 +641,23 @@
       "background": {
         "title": "Achtergrondafbeelding",
         "enable": "Achtergrondafbeelding inschakelen",
-        "enableDescription": "Aangepaste achtergrond met vervagingseffect tonen",
+        "enableDescription": "Toon je achtergrond in Chat en Werk.",
         "blur": "Vervaging",
         "opacity": "Dekking",
         "upload": "Achtergrondafbeelding uploaden",
         "dragDrop": "Sleep een afbeelding of klik om te bladeren",
-        "chooseImage": "Afbeelding kiezen"
+        "chooseImage": "Afbeelding kiezen",
+        "effect": "Stijl",
+        "dither": "Geditherd",
+        "original": "Origineel",
+        "blurred": "Vervaagd",
+        "intensity": "Intensiteit",
+        "preview": "Achtergrondvoorbeeld",
+        "change": "Afbeelding wijzigen",
+        "saved": "Opgeslagen",
+        "saveFailed": "Wijzigingen konden niet worden opgeslagen. Probeer opnieuw.",
+        "originalPreserved": "Je oorspronkelijke afbeelding blijft ongewijzigd.",
+        "fileTooLarge": "De achtergrondafbeelding mag niet groter zijn dan 10 MB."
       },
       "celestial": {
         "title": "Tijd van de dag",

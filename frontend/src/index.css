@@ -1348,3 +1348,115 @@ html.dark .celestial-sky__fog {
     opacity: 1;
   }
 }
+
+/* Account wallpapers belong to the creation pane, not the navigation frame. */
+.account-wallpaper {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+  background: rgb(var(--color-canvas));
+  contain: strict;
+}
+.account-wallpaper__art {
+  position: absolute;
+  inset: 0;
+  opacity: var(--wallpaper-intensity, 0.6);
+  mask-image: linear-gradient(
+    to bottom,
+    #000 0%,
+    #000 16%,
+    rgb(0 0 0 / 0.72) 40%,
+    rgb(0 0 0 / 0.28) 65%,
+    transparent 92%
+  );
+}
+.account-wallpaper__canvas,
+.account-wallpaper__photo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+.account-wallpaper[data-effect='dither'] .account-wallpaper__canvas {
+  image-rendering: pixelated;
+}
+.dark .account-wallpaper[data-tone='light'] .account-wallpaper__canvas,
+html:not(.dark)
+  .account-wallpaper[data-tone='dark']
+  .account-wallpaper__canvas {
+  visibility: hidden;
+}
+.account-wallpaper:not([data-state='ready']) .account-wallpaper__canvas {
+  visibility: hidden;
+}
+.account-wallpaper[data-effect='blur']
+  :is(.account-wallpaper__photo, .account-wallpaper__canvas) {
+  inset: calc(var(--wallpaper-blur) * -2);
+  width: calc(100% + var(--wallpaper-blur) * 4);
+  height: calc(100% + var(--wallpaper-blur) * 4);
+  filter: blur(var(--wallpaper-blur));
+}
+.account-wallpaper[data-effect='dither'][data-state='fallback']
+  .account-wallpaper__photo {
+  mask-image: repeating-conic-gradient(#000 0% 25%, transparent 0% 100%);
+  mask-size: 6px 6px;
+}
+.account-wallpaper__veil {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(
+      ellipse at 50% 48%,
+      rgb(var(--color-canvas) / 0.66) 0%,
+      rgb(var(--color-canvas) / 0.38) 42%,
+      transparent 82%
+    ),
+    linear-gradient(
+      to bottom,
+      rgb(var(--color-canvas) / 0.62),
+      rgb(var(--color-canvas) / 0.62)
+    );
+}
+.dark .account-wallpaper__veil {
+  background:
+    radial-gradient(
+      ellipse at 50% 48%,
+      rgb(var(--color-canvas) / 0.58) 0%,
+      rgb(var(--color-canvas) / 0.24) 42%,
+      transparent 82%
+    ),
+    linear-gradient(
+      to bottom,
+      rgb(var(--color-canvas) / 0.28),
+      rgb(var(--color-canvas) / 0.1) 48%,
+      transparent 100%
+    );
+}
+[data-wallpaper='true']
+  [data-wallpaper-content]
+  :is([data-composer-box], [data-testid='work-composer-surface']) {
+  background-color: rgb(var(--color-surface) / 0.92);
+  backdrop-filter: blur(18px) saturate(1.08);
+}
+@media (max-width: 1023px) {
+  /* A translucent mobile navigation overlay must never reveal account art. */
+  [data-sidebar-overlay='true'] [data-testid='app-background'] {
+    visibility: hidden;
+  }
+}
+
+.dark .account-wallpaper__photo {
+  filter: brightness(0.5);
+}
+.dark .account-wallpaper[data-effect='blur'] .account-wallpaper__photo {
+  filter: brightness(0.5) blur(var(--wallpaper-blur));
+}
+[data-wallpaper='true'] [data-wallpaper-content] {
+  /* Artwork replaces a predictable flat fill; keep reading text distinct. */
+  --color-ink-muted: var(--color-ink);
+  --color-ink-subtle: var(--color-ink);
+}

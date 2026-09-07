@@ -199,11 +199,7 @@ const RichMessageContentBase: React.FC<RichMessageContentProps> = ({
     },
     li({ children, ...props }) {
       return (
-        <li
-          dir='auto'
-          className='text-gray-700 dark:text-dark-700 leading-relaxed'
-          {...props}
-        >
+        <li dir='auto' className='text-ink leading-relaxed' {...props}>
           {children}
         </li>
       );
@@ -212,7 +208,7 @@ const RichMessageContentBase: React.FC<RichMessageContentProps> = ({
       return (
         <blockquote
           dir='auto'
-          className='border-s-2 border-primary-400 dark:border-primary-500 bg-primary-25 dark:bg-primary-950/30 ps-3 py-2 my-3 rounded-e-lg italic text-gray-700 dark:text-dark-700'
+          className='border-s-2 border-primary-400 dark:border-primary-500 bg-primary-25 dark:bg-primary-950/30 ps-3 py-2 my-3 rounded-e-lg italic text-ink'
           {...props}
         >
           {children}
@@ -223,7 +219,7 @@ const RichMessageContentBase: React.FC<RichMessageContentProps> = ({
       return (
         <h1
           dir='auto'
-          className='text-xl font-bold mb-3 mt-5 first:mt-0 text-gray-900 dark:text-dark-800 border-b border-gray-200 dark:border-dark-300 pb-1.5'
+          className='text-xl font-bold mb-3 mt-5 first:mt-0 text-ink border-b border-gray-200 dark:border-dark-300 pb-1.5'
           {...props}
         >
           {children}
@@ -234,7 +230,7 @@ const RichMessageContentBase: React.FC<RichMessageContentProps> = ({
       return (
         <h2
           dir='auto'
-          className='text-lg font-semibold mb-2 mt-5 first:mt-0 text-gray-900 dark:text-dark-800'
+          className='text-lg font-semibold mb-2 mt-5 first:mt-0 text-ink'
           {...props}
         >
           {children}
@@ -245,7 +241,7 @@ const RichMessageContentBase: React.FC<RichMessageContentProps> = ({
       return (
         <h3
           dir='auto'
-          className='text-base font-medium mb-2 mt-4 first:mt-0 text-gray-900 dark:text-dark-800'
+          className='text-base font-medium mb-2 mt-4 first:mt-0 text-ink'
           {...props}
         >
           {children}

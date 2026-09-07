@@ -641,12 +641,23 @@
       "background": {
         "title": "Obrázek pozadí",
         "enable": "Povolit obrázek pozadí",
-        "enableDescription": "Zobrazit vlastní pozadí s efektem rozmazání",
+        "enableDescription": "Zobrazit tapetu v Chatu a Práci.",
         "blur": "Rozmazání",
         "opacity": "Průhlednost",
         "upload": "Nahrát obrázek pozadí",
         "dragDrop": "Přetáhněte obrázek nebo klikněte pro procházení",
-        "chooseImage": "Vybrat obrázek"
+        "chooseImage": "Vybrat obrázek",
+        "effect": "Styl",
+        "dither": "Rastrovaný",
+        "original": "Původní",
+        "blurred": "Rozmazaný",
+        "intensity": "Intenzita",
+        "preview": "Náhled tapety",
+        "change": "Změnit obrázek",
+        "saved": "Uloženo",
+        "saveFailed": "Změny se nepodařilo uložit. Zkuste to znovu.",
+        "originalPreserved": "Původní obrázek zůstává beze změny.",
+        "fileTooLarge": "Velikost obrázku pozadí nesmí přesáhnout 10 MB."
       },
       "celestial": {
         "title": "Denní doba",

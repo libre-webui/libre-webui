@@ -105,10 +105,23 @@ test('keeps the configured user wallpaper visible behind Work', async ({
 
   await page.goto('/work/wallpaper-workspace');
 
-  await expect(page.getByTestId('app-background')).toHaveCSS(
-    'background-image',
-    /data:image\/svg\+xml/
-  );
+  const background = page.getByTestId('app-background');
+  await expect(background).toHaveAttribute('data-effect', 'dither');
+  await expect(background).toHaveAttribute('data-state', 'ready');
+  const canvas = background.getByTestId('wallpaper-canvas');
+  await expect(canvas).toBeVisible();
+  expect(
+    await canvas.evaluate(element => {
+      const image = element as HTMLCanvasElement;
+      const data = image
+        .getContext('2d')!
+        .getImageData(0, 0, image.width, image.height).data;
+      return data.some((value, index) => index % 4 === 3 && value > 0);
+    })
+  ).toBe(true);
+  await expect(
+    page.locator('[data-app-main]').getByTestId('app-background')
+  ).toHaveCount(1);
   await expect(page.getByTestId('work-page')).toHaveCSS(
     'background-color',
     'rgba(0, 0, 0, 0)'

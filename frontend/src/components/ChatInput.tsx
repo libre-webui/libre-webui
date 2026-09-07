@@ -190,7 +190,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
     observer.observe(node);
     return () => observer.disconnect();
   }, []);
-  const { isGenerating, setBackgroundImage } = useAppStore();
+  const { isGenerating } = useAppStore();
   const globalGenerationOptions = useAppStore(
     state => state.preferences.generationOptions
   );
@@ -692,14 +692,12 @@ export const ChatInput: React.FC<ChatInputProps> = ({
       if (selection.model.startsWith('persona:')) {
         const personaId = selection.model.slice('persona:'.length);
 
-        // Get persona details to use its model
+        // Verify the persona is still available before changing the session.
         const personaResponse = await personaApi.getPersona(personaId);
         if (!personaResponse.success || !personaResponse.data) {
           toast.error(t('chat.persona.loadFailed'));
           return;
         }
-
-        const persona = personaResponse.data;
 
         // Update session with persona and its model
         const response = await chatApi.updateSession(currentSession.id, {
@@ -719,11 +717,6 @@ export const ChatInput: React.FC<ChatInputProps> = ({
             sessions: updatedSessions,
             currentSession: response.data,
           });
-
-          // Apply persona background if it has one
-          if (persona.background) {
-            setBackgroundImage(persona.background);
-          }
 
           toast.success(t('chat.persona.applied'));
         }
@@ -751,7 +744,6 @@ export const ChatInput: React.FC<ChatInputProps> = ({
             currentSession: response.data,
           });
 
-          setBackgroundImage(null);
           toast.success(t('chat.model.updated'));
         }
       }
@@ -903,7 +895,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                             {t('chat.input.menu.attachKnowledge')}
                           </p>
                           {collections.length === 0 ? (
-                            <p className='px-1.5 pb-1 text-[12px] text-gray-400 dark:text-dark-500'>
+                            <p className='px-1.5 pb-1 text-[12px] text-ink-subtle'>
                               {t('chat.input.menu.noCollections')}
                             </p>
                           ) : (
@@ -1353,7 +1345,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
             </div>
           )}
 
-          <div className='mt-1.5 flex min-h-4 items-center justify-center gap-2 text-[10px] text-gray-400 dark:text-dark-500'>
+          <div className='mt-1.5 flex min-h-4 items-center justify-center gap-2 text-[10px] text-ink-subtle'>
             <DocumentIndicator sessionId={currentSession?.id} />
             <div className='text-center leading-relaxed'>
               <span>{t('chat.footer.disclaimer')}</span>

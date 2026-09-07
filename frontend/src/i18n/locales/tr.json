@@ -641,12 +641,23 @@
       "background": {
         "title": "Arka Plan Görseli",
         "enable": "Arka plan görselini etkinleştir",
-        "enableDescription": "Bulanıklık efektli özel arka plan göster",
+        "enableDescription": "Duvar kâğıdınızı Sohbet ve İş alanında gösterin.",
         "blur": "Bulanıklık",
         "opacity": "Opaklık",
         "upload": "Arka plan görseli yükle",
         "dragDrop": "Bir görsel sürükleyip bırakın veya göz atmak için tıklayın",
-        "chooseImage": "Görsel Seç"
+        "chooseImage": "Görsel Seç",
+        "effect": "Stil",
+        "dither": "Titreşimli desen",
+        "original": "Orijinal",
+        "blurred": "Bulanık",
+        "intensity": "Yoğunluk",
+        "preview": "Duvar kâğıdı önizlemesi",
+        "change": "Görseli değiştir",
+        "saved": "Kaydedildi",
+        "saveFailed": "Değişiklikler kaydedilemedi. Tekrar deneyin.",
+        "originalPreserved": "Orijinal görseliniz değiştirilmeden korunur.",
+        "fileTooLarge": "Arka plan görüntüsünün boyutu 10 MB'ı aşmamalıdır."
       },
       "celestial": {
         "title": "Günün saati",

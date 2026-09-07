@@ -521,7 +521,7 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
           className
         )}
       >
-        <div className='max-w-sm text-center text-gray-500 dark:text-dark-600'>
+        <div className='max-w-sm text-center text-ink-muted'>
           <div className='mx-auto mb-5 flex h-11 w-11 items-center justify-center rounded-2xl border border-black/[0.06] bg-surface/70 text-gray-500 shadow-sm dark:border-white/[0.07] dark:bg-dark-200/70 dark:text-dark-600'>
             <Sparkles className='h-4 w-4' />
           </div>
@@ -690,7 +690,7 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
             followUpSuggestions.length > 0 &&
             onFollowUpSelect && (
               <div className='mt-1 pb-2'>
-                <p className='mb-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-gray-500 dark:text-dark-500'>
+                <p className='mb-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-subtle'>
                   {t('chat.followUp')}
                 </p>
                 <div className='flex flex-col'>
@@ -699,7 +699,7 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
                       key={suggestion}
                       onClick={() => onFollowUpSelect(suggestion)}
                       dir='auto'
-                      className='border-t border-gray-100 py-2 text-start text-[0.9rem] leading-relaxed text-gray-600 transition-colors hover:text-gray-900 dark:border-dark-200 dark:text-dark-600 dark:hover:text-dark-900'
+                      className='border-t border-gray-100 py-2 text-start text-[0.9rem] leading-relaxed text-ink-muted transition-colors hover:text-ink dark:border-dark-200'
                     >
                       {suggestion}
                     </button>

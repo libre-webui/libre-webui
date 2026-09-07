@@ -670,7 +670,7 @@ const ChatMessageBase: React.FC<ChatMessageProps> = ({
             <div className='mb-1 flex items-center gap-2'>
               <span
                 dir='auto'
-                className='text-[11px] font-semibold uppercase tracking-[0.08em] text-gray-700 rtl:tracking-normal dark:text-dark-700'
+                className='text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-muted rtl:tracking-normal'
               >
                 {getDisplayName()}
               </span>
@@ -685,7 +685,7 @@ const ChatMessageBase: React.FC<ChatMessageProps> = ({
               )}
               <span
                 dir='auto'
-                className='text-[10px] tabular-nums text-gray-400 dark:text-dark-500'
+                className='text-[10px] tabular-nums text-ink-subtle'
               >
                 {formatTimestamp(message.timestamp, i18n.language)}
               </span>
@@ -694,9 +694,7 @@ const ChatMessageBase: React.FC<ChatMessageProps> = ({
 
           <div
             className={cn(
-              !isUser &&
-                !isSystem &&
-                'text-[0.9375rem] leading-[1.65] text-gray-800 dark:text-dark-800'
+              !isUser && !isSystem && 'text-[0.9375rem] leading-[1.65] text-ink'
             )}
           >
             {/* Display images if present (for user messages) */}
@@ -871,7 +869,7 @@ const ChatMessageBase: React.FC<ChatMessageProps> = ({
                   <div className='mb-3 border-s border-gray-200 ps-3 dark:border-dark-300'>
                     <button
                       onClick={() => setIsThinkingExpanded(!isThinkingExpanded)}
-                      className='flex items-center gap-1.5 text-xs text-gray-500 transition-colors hover:text-gray-900 dark:text-dark-600 dark:hover:text-dark-900'
+                      className='flex items-center gap-1.5 text-xs text-ink-muted transition-colors hover:text-ink'
                     >
                       <Brain
                         className={cn(
@@ -881,7 +879,7 @@ const ChatMessageBase: React.FC<ChatMessageProps> = ({
                         )}
                       />
                       {thinkingStreaming ? (
-                        <span className='animate-shimmer bg-gradient-to-r from-gray-400 via-gray-900 to-gray-400 bg-[length:200%_100%] bg-clip-text font-medium text-transparent motion-reduce:animate-none motion-reduce:bg-none motion-reduce:text-gray-500 dark:from-dark-500 dark:via-dark-900 dark:to-dark-500 motion-reduce:dark:text-dark-600'>
+                        <span className='animate-shimmer bg-gradient-to-r from-ink-subtle via-ink to-ink-subtle bg-[length:200%_100%] bg-clip-text font-medium text-transparent motion-reduce:animate-none motion-reduce:bg-none motion-reduce:text-ink-muted'>
                           {t('chatMessage.thinking')}…
                         </span>
                       ) : (
@@ -910,7 +908,7 @@ const ChatMessageBase: React.FC<ChatMessageProps> = ({
                         <MessageContent
                           content={thinkingContent}
                           isStreaming={thinkingStreaming}
-                          className='text-[13px] text-gray-600 dark:text-dark-700'
+                          className='text-[13px] text-ink-muted'
                         />
                       </div>
                     )}
@@ -955,7 +953,7 @@ const ChatMessageBase: React.FC<ChatMessageProps> = ({
                 }>
               ).length > 0 && (
                 <div className='mt-2.5 flex flex-wrap items-center gap-1.5'>
-                  <span className='text-[10px] font-semibold uppercase tracking-[0.12em] text-gray-400 dark:text-dark-500 rtl:tracking-normal'>
+                  <span className='text-[10px] font-semibold uppercase tracking-[0.12em] text-ink-subtle rtl:tracking-normal'>
                     {t('chat.message.sources', 'Sources')}
                   </span>
                   {(
@@ -1004,7 +1002,7 @@ const ChatMessageBase: React.FC<ChatMessageProps> = ({
             {!isSystem && !isStreaming && (
               <div
                 className={cn(
-                  'flex items-center gap-0.5 text-gray-400 dark:text-dark-500',
+                  'flex items-center gap-0.5 text-ink-subtle',
                   'sm:transition-opacity sm:duration-150 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100',
                   !isUser &&
                     [

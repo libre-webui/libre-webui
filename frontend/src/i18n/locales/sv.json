@@ -641,12 +641,23 @@
       "background": {
         "title": "Bakgrundsbild",
         "enable": "Aktivera bakgrundsbild",
-        "enableDescription": "Visa anpassad bakgrund med oskärpa",
+        "enableDescription": "Visa din bakgrund i Chatt och Arbete.",
         "blur": "Oskärpa",
         "opacity": "Opacitet",
         "upload": "Ladda upp bakgrundsbild",
         "dragDrop": "Dra och släpp en bild eller klicka för att bläddra",
-        "chooseImage": "Välj bild"
+        "chooseImage": "Välj bild",
+        "effect": "Stil",
+        "dither": "Rastrerad",
+        "original": "Original",
+        "blurred": "Oskarp",
+        "intensity": "Intensitet",
+        "preview": "Förhandsvisning av bakgrund",
+        "change": "Byt bild",
+        "saved": "Sparat",
+        "saveFailed": "Ändringarna kunde inte sparas. Försök igen.",
+        "originalPreserved": "Din ursprungliga bild förblir oförändrad.",
+        "fileTooLarge": "Bakgrundsbilden får inte vara större än 10 MB."
       },
       "celestial": {
         "title": "Tid på dagen",

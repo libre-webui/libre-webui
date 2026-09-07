@@ -641,12 +641,23 @@
       "background": {
         "title": "Hintergrundbild",
         "enable": "Hintergrundbild aktivieren",
-        "enableDescription": "Benutzerdefiniertes Hintergrundbild mit Unschärfe-Effekt anzeigen",
+        "enableDescription": "Zeige dein Hintergrundbild in Chat und Arbeit.",
         "blur": "Unschärfe",
         "opacity": "Deckkraft",
         "upload": "Hintergrundbild hochladen",
         "dragDrop": "Bild hierher ziehen oder klicken zum Durchsuchen",
-        "chooseImage": "Bild auswählen"
+        "chooseImage": "Bild auswählen",
+        "effect": "Stil",
+        "dither": "Gerastert",
+        "original": "Original",
+        "blurred": "Unscharf",
+        "intensity": "Intensität",
+        "preview": "Hintergrundvorschau",
+        "change": "Bild ändern",
+        "saved": "Gespeichert",
+        "saveFailed": "Änderungen konnten nicht gespeichert werden. Erneut versuchen.",
+        "originalPreserved": "Dein Originalbild bleibt unverändert.",
+        "fileTooLarge": "Das Hintergrundbild darf nicht größer als 10 MB sein."
       },
       "celestial": {
         "title": "Tageszeit",

@@ -90,7 +90,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
     useAuthStore();
   const {
     theme,
-    backgroundImage,
     sidebarCompact,
     toggleSidebarCompact,
     isGenerating,
@@ -401,9 +400,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           'lg:shadow-none',
           theme.mode === 'celestial'
             ? 'bg-sidebar/30 backdrop-blur-xl lg:bg-transparent lg:backdrop-filter-none'
-            : backgroundImage
-              ? 'bg-sidebar/75 backdrop-blur-xl'
-              : 'bg-sidebar',
+            : 'bg-sidebar',
           'overscroll-behavior-contain',
           className
         )}

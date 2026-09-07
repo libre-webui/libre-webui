@@ -641,12 +641,23 @@
       "background": {
         "title": "背景画像",
         "enable": "背景画像を有効にする",
-        "enableDescription": "ブラー効果のあるカスタム背景を表示",
+        "enableDescription": "チャットと作業に壁紙を表示します。",
         "blur": "ぼかし",
         "opacity": "不透明度",
         "upload": "背景画像をアップロード",
         "dragDrop": "画像をドラッグ＆ドロップするか、クリックして参照",
-        "chooseImage": "画像を選択"
+        "chooseImage": "画像を選択",
+        "effect": "スタイル",
+        "dither": "ディザリング",
+        "original": "オリジナル",
+        "blurred": "ぼかし",
+        "intensity": "強度",
+        "preview": "壁紙のプレビュー",
+        "change": "画像を変更",
+        "saved": "保存済み",
+        "saveFailed": "変更を保存できませんでした。もう一度お試しください。",
+        "originalPreserved": "元の画像は変更されずに保持されます。",
+        "fileTooLarge": "背景画像のサイズは10MB以下にしてください。"
       },
       "celestial": {
         "title": "時刻",

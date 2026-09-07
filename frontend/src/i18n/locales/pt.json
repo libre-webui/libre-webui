@@ -641,12 +641,23 @@
       "background": {
         "title": "Imagem de Fundo",
         "enable": "Ativar imagem de fundo",
-        "enableDescription": "Mostrar fundo personalizado com efeito de desfoque",
+        "enableDescription": "Mostre o papel de parede no Chat e no Trabalho.",
         "blur": "Desfoque",
         "opacity": "Opacidade",
         "upload": "Enviar imagem de fundo",
         "dragDrop": "Arraste e solte uma imagem ou clique para procurar",
-        "chooseImage": "Escolher Imagem"
+        "chooseImage": "Escolher Imagem",
+        "effect": "Estilo",
+        "dither": "Pontilhado",
+        "original": "Original",
+        "blurred": "Desfocado",
+        "intensity": "Intensidade",
+        "preview": "Prévia do papel de parede",
+        "change": "Alterar imagem",
+        "saved": "Salvo",
+        "saveFailed": "Não foi possível salvar as alterações. Tente novamente.",
+        "originalPreserved": "A imagem original permanece inalterada.",
+        "fileTooLarge": "O tamanho da imagem de fundo não pode exceder 10 MB."
       },
       "celestial": {
         "title": "Hora do dia",
