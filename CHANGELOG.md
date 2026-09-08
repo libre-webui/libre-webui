@@ -17,8 +17,69 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.34.1] - 2026-09-07
 
-A one-line Docker fix: the maintenance CLI inside the 0.34.0 container image
-could not start.
+Account wallpapers arrive, the Celestial theme and both composers get a polish
+pass, keyboard navigation reaches every corner of the interface, and the
+maintenance CLI inside the Docker image works again.
+
+### ✨ New Features
+
+- **Account wallpaper.** In **Settings > Appearance > Background Image**,
+  choose an image up to 10 MB; the source and its settings are saved to your
+  account. **Dithered**, the default, renders distinct square pixels with open
+  gaps in the shadows and compresses highlights first so pale skies stay
+  textured; **Original** keeps the image smooth and **Blurred** softens it. All
+  three fade into the current theme and keep text readable, **Intensity**
+  previews live and saves when you stop adjusting, and zero intensity hides the
+  wallpaper without removing it. The wallpaper paints only the Chat and Work
+  card, never the sidebar, tab bar, or library pages, and hides behind the
+  mobile navigation overlay. Persona backgrounds stay with their chats.
+  Processing runs in the browser; an image whose origin forbids pixel access
+  falls back to a local CSS treatment.
+- **Language before sign-in.** The sign-in page has a language selector beside
+  the theme control. The choice is kept in the browser and applies to sign-up.
+- **Named calendars.** Type a name in **New calendar…** and choose **Save**,
+  or press Enter, to create one.
+
+### 🔧 Improvements
+
+- **Celestial, polished.** The day preview labels **Live** and **Preview**
+  time and marks its timeline; **Follow the clock**, closing the preview, or
+  leaving Appearance returns to real time without saving a theme setting.
+  Manual coordinates have visible Latitude and Longitude labels with range
+  checks; **Apply** or Enter saves a valid pair, an incomplete entry keeps the
+  saved location, and **Clear** removes it. Sun and moon placement scales with
+  the viewport, the pointer light stays beneath the reading surface, Chat and
+  Work share the same glass composer, and decorative motion pauses in hidden
+  tabs and honors reduced-motion changes at once, including during the arrival
+  sweep. The mobile clock control has a proper touch target inside the tab bar.
+- **Composers, aligned.** Chat and Work share one composer surface with a
+  quiet accent border on the active writing area, controls that keep a steady
+  height as options change, 44px touch targets on narrow screens, and model
+  names that truncate while the full name stays accessible. The Work starting
+  screen groups runtime policy and agent choices above the composer, side by
+  side when there is room and stacked when there is not, keeps host-folder
+  access and its warning visible, and keeps the model selector inside the
+  composer at every width.
+- **Keyboard navigation everywhere.** Settings sections are reachable with
+  `Tab` then `Up`/`Down` (or `Left`/`Right` on narrow screens, following the
+  interface direction), with `Home`/`End`, disabled sections skipped, and each
+  section opening at the top; the settings search reports empty results. In
+  the sidebar, `Tab` reaches a chat or Work task, `Enter` or `Space` opens it,
+  the next `Tab` reaches its **Actions** button, and action menus take
+  `Up`/`Down`, `Home`/`End`, `Enter`, and `Esc`. Prompt, skill, and tool-server
+  dialogs trap `Tab` and return focus to their opener on `Esc`. Notes take
+  `Tab`, `Enter`, and `Space`, announce the current note to assistive
+  technology, and **Clear** restores the list after an empty search. Calendar
+  controls wrap on narrow screens.
+- **Input methods.** While Japanese, Chinese, or another composition is in
+  progress, `Enter` confirms the character instead of sending or saving.
+- **Chat reconnects through outages.** The WebSocket keeps retrying after a
+  transient backend outage with delays capped at 30 seconds, resets the delay
+  on success, stops on sign-out, and does not retry authentication failures.
+- **Development: the frontend waits for the backend.** The Vite proxy waits
+  up to 10 seconds for a local backend listener before forwarding an API
+  request, forwards each request exactly once, and answers 503 with a retry
+  hint if the backend stays down; static files keep serving meanwhile.
 
 ### 🐛 Bug Fixes
 
@@ -33,6 +94,13 @@ could not start.
   affected.
 - The server CORS middleware and a browser-test hostname check were
   tightened to satisfy CodeQL; behavior is unchanged.
+
+### 📚 Documentation
+
+- Pro tips cover the account wallpaper and the refined Celestial controls;
+  keyboard shortcuts gain Settings navigation, sidebar history, input-method
+  composition, and library dialog sections; the authentication, calendar,
+  notes, workspaces, and dev-branch pages describe the new behavior above.
 
 ## [0.34.0] - 2026-09-05
 
