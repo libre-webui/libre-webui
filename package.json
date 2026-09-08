@@ -142,5 +142,9 @@
     "sanitize-filename": "^1.6.3",
     "undici": "^8.10.0",
     "ws": "^8.14.2"
+  },
+  "allowScripts": {
+    "better-sqlite3@13.0.3": true,
+    "esbuild@0.28.1": true
   }
 }
