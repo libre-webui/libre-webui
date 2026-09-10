@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useLocation, useNavigate } from 'react-router';
 import { useTranslation } from 'react-i18next';
@@ -108,7 +108,7 @@ interface NewTabMenuPosition {
 }
 
 export const AppTabBar: React.FC = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
   const tabs = useTabStore(state => state.tabs);
@@ -143,6 +143,47 @@ export const AppTabBar: React.FC = () => {
   useEffect(() => {
     syncWithPath(location.pathname);
   }, [location.pathname, syncWithPath]);
+
+  useLayoutEffect(() => {
+    const strip = stripRef.current;
+    if (!strip) return;
+
+    let frame: number | null = null;
+    const updateFade = () => {
+      frame = null;
+      const maxScroll = Math.max(0, strip.scrollWidth - strip.clientWidth);
+      // RTL scrollLeft starts at zero on the right and decreases leftward.
+      const left =
+        getComputedStyle(strip).direction === 'rtl'
+          ? maxScroll + strip.scrollLeft
+          : strip.scrollLeft;
+      const right = maxScroll - left;
+      strip.style.setProperty(
+        '--tab-fade-left',
+        `${left <= 1 ? 0 : Math.min(24, left)}px`
+      );
+      strip.style.setProperty(
+        '--tab-fade-right',
+        `${right <= 1 ? 0 : Math.min(24, right)}px`
+      );
+    };
+    const scheduleUpdate = () => {
+      if (frame === null) frame = requestAnimationFrame(updateFade);
+    };
+
+    updateFade();
+    strip.addEventListener('scroll', scheduleUpdate, { passive: true });
+    const observer = new ResizeObserver(scheduleUpdate);
+    observer.observe(strip);
+    // Titles can grow after loading or renaming without resizing the strip.
+    for (const tab of strip.children) observer.observe(tab);
+
+    return () => {
+      strip.removeEventListener('scroll', scheduleUpdate);
+      observer.disconnect();
+      if (frame !== null) cancelAnimationFrame(frame);
+    };
+  }, [accessibleTabs.length, i18n.resolvedLanguage, tabs]);
 
   // Keep the active tab visible when the strip overflows.
   useEffect(() => {
@@ -432,7 +473,7 @@ export const AppTabBar: React.FC = () => {
         ref={stripRef}
         role='tablist'
         aria-label={t('tabs.label', 'Open tabs')}
-        className='flex min-w-0 items-center gap-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden'
+        className='tab-scroll-fade flex min-w-0 items-center gap-1 overflow-x-auto p-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden'
       >
         {accessibleTabs.map(tab => {
           const Icon =

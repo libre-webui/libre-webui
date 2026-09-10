@@ -2167,19 +2167,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
           <div className='flex min-h-0 flex-1 flex-col overscroll-behavior-contain sm:flex-row'>
             {/* Sidebar Tabs */}
-            <div
-              className='w-full shrink-0 overflow-x-auto border-b border-line p-2 scrollbar-thin sm:w-[210px] sm:overflow-x-hidden sm:overflow-y-auto sm:border-b-0 sm:px-3 sm:pb-3 sm:pt-[22px]'
-              style={{
-                WebkitOverflowScrolling: 'touch',
-              }}
-            >
+            <div className='flex min-h-0 w-full shrink-0 flex-col border-b border-line p-2 sm:w-[210px] sm:border-b-0 sm:px-3 sm:pb-3 sm:pt-[22px]'>
               <h2
                 id={settingsTitleId}
-                className='hidden px-3 pb-4 text-base font-medium leading-6 text-ink sm:block'
+                className='hidden shrink-0 px-3 pb-4 text-base font-medium leading-6 text-ink sm:block'
               >
                 {t('settings.title')}
               </h2>
-              <div className='relative mb-2 hidden sm:block'>
+              <div className='relative mb-2 hidden shrink-0 sm:block'>
                 <Search className='pointer-events-none absolute start-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-ink-subtle' />
                 <input
                   ref={settingsSearchRef}
@@ -2210,71 +2205,77 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   className='h-9 w-full rounded-xl border border-transparent bg-surface-subtle pe-2.5 ps-8 text-[13px] text-ink placeholder:text-ink-subtle focus:border-primary-500/40 focus:outline-none'
                 />
               </div>
-              <nav
-                className='flex gap-1 sm:flex-col sm:gap-0'
-                role='tablist'
-                aria-label={t('settings.title', 'Settings')}
-                aria-orientation={
-                  isDesktopNavigation ? 'vertical' : 'horizontal'
-                }
+              <div
+                data-testid='settings-navigation-scroll-region'
+                className='min-h-0 overflow-x-auto scrollbar-thin sm:overflow-x-hidden sm:overflow-y-auto'
+                style={{ WebkitOverflowScrolling: 'touch' }}
               >
-                {visibleTabGroups.map(group => (
-                  <div
-                    key={group.id}
-                    className='flex shrink-0 gap-1 sm:flex-col sm:gap-0.5 sm:pb-2'
-                  >
-                    <p
-                      aria-hidden='true'
-                      className='hidden px-3 pb-1 pt-2 text-[10px] font-medium uppercase tracking-[0.08em] text-ink-subtle sm:block'
+                <nav
+                  className='flex gap-1 sm:flex-col sm:gap-0'
+                  role='tablist'
+                  aria-label={t('settings.title', 'Settings')}
+                  aria-orientation={
+                    isDesktopNavigation ? 'vertical' : 'horizontal'
+                  }
+                >
+                  {visibleTabGroups.map(group => (
+                    <div
+                      key={group.id}
+                      className='flex shrink-0 gap-1 sm:flex-col sm:gap-0.5 sm:pb-2'
                     >
-                      {group.label}
-                    </p>
-                    {group.tabs.map(tab => {
-                      const Icon = tab.icon;
-                      const isActive = activeTab === tab.id;
-                      const isDisabled = tab.disabled === true;
+                      <p
+                        aria-hidden='true'
+                        className='hidden px-3 pb-1 pt-2 text-[10px] font-medium uppercase tracking-[0.08em] text-ink-subtle sm:block'
+                      >
+                        {group.label}
+                      </p>
+                      {group.tabs.map(tab => {
+                        const Icon = tab.icon;
+                        const isActive = activeTab === tab.id;
+                        const isDisabled = tab.disabled === true;
 
-                      return (
-                        <button
-                          key={tab.id}
-                          id={`${settingsTitleId}-tab-${tab.id}`}
-                          data-testid={`settings-tab-${tab.id}`}
-                          onClick={() => setActiveTab(tab.id)}
-                          onKeyDown={event => handleTabKeyDown(event, tab.id)}
-                          tabIndex={tab.id === focusedTabId ? 0 : -1}
-                          disabled={isDisabled}
-                          title={isDisabled ? tab.disabledHint : undefined}
-                          className={cn(
-                            'flex h-9 shrink-0 items-center gap-2 rounded-xl px-3 text-start transition-colors duration-150 touch-manipulation outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 sm:w-full',
-                            isDisabled
-                              ? 'cursor-not-allowed text-ink-subtle opacity-60'
-                              : isActive
-                                ? 'bg-nav-active text-ink'
-                                : 'text-ink hover:bg-hover-solid'
-                          )}
-                          role='tab'
-                          aria-selected={isActive}
-                          aria-disabled={isDisabled || undefined}
-                          aria-controls={settingsPanelId}
-                        >
-                          <Icon
-                            className='h-4 w-4 flex-shrink-0 text-ink-muted'
-                            aria-hidden='true'
-                          />
-                          <span className='truncate whitespace-nowrap text-sm'>
-                            {tab.label}
-                          </span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                ))}
-              </nav>
-              {visibleTabs.length === 0 && (
-                <p role='status' className='px-3 py-4 text-sm text-ink-muted'>
-                  {t('common.noResults')}
-                </p>
-              )}
+                        return (
+                          <button
+                            key={tab.id}
+                            id={`${settingsTitleId}-tab-${tab.id}`}
+                            data-testid={`settings-tab-${tab.id}`}
+                            onClick={() => setActiveTab(tab.id)}
+                            onKeyDown={event => handleTabKeyDown(event, tab.id)}
+                            tabIndex={tab.id === focusedTabId ? 0 : -1}
+                            disabled={isDisabled}
+                            title={isDisabled ? tab.disabledHint : undefined}
+                            className={cn(
+                              'flex h-9 shrink-0 items-center gap-2 rounded-xl px-3 text-start transition-colors duration-150 touch-manipulation outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 sm:w-full',
+                              isDisabled
+                                ? 'cursor-not-allowed text-ink-subtle opacity-60'
+                                : isActive
+                                  ? 'bg-nav-active text-ink'
+                                  : 'text-ink hover:bg-hover-solid'
+                            )}
+                            role='tab'
+                            aria-selected={isActive}
+                            aria-disabled={isDisabled || undefined}
+                            aria-controls={settingsPanelId}
+                          >
+                            <Icon
+                              className='h-4 w-4 flex-shrink-0 text-ink-muted'
+                              aria-hidden='true'
+                            />
+                            <span className='truncate whitespace-nowrap text-sm'>
+                              {tab.label}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  ))}
+                </nav>
+                {visibleTabs.length === 0 && (
+                  <p role='status' className='px-3 py-4 text-sm text-ink-muted'>
+                    {t('common.noResults')}
+                  </p>
+                )}
+              </div>
             </div>
 
             {/* Tab Content */}

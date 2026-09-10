@@ -28,6 +28,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui';
 import { SidebarHoverCard } from './SidebarHoverCard';
+import { SidebarScrollArea } from './SidebarScrollArea';
 import { useSidebarMenu } from './useSidebarMenu';
 import type { Persona } from '@/types';
 import type { WorkTaskSummary } from '@/types/work';
@@ -455,11 +456,7 @@ export function SidebarWorkTasks({
   };
 
   return (
-    <div
-      data-testid='sidebar-work-task-scroll-region'
-      className='scroll-region min-h-0 flex-1 border-t border-black/[0.05] scrollbar-thin dark:border-white/[0.05]'
-      style={{ willChange: 'scroll-position' }}
-    >
+    <SidebarScrollArea data-testid='sidebar-work-task-scroll-region'>
       <div className={cn('px-3 py-3', sidebarCompact && 'px-2')}>
         {!sidebarCompact && tasks.length > 0 && (
           <div className='mb-2 flex items-center justify-between px-1'>
@@ -769,6 +766,6 @@ export function SidebarWorkTasks({
           </div>,
           document.body
         )}
-    </div>
+    </SidebarScrollArea>
   );
 }

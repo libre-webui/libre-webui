@@ -60,6 +60,110 @@ const task = (
   workspacePath: '/workspace' as const,
 });
 
+for (const width of [1280, 390]) {
+  test(`Work matches Chat scroll fades and keeps new activity readable at ${width}px`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width, height: 800 });
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    const workTask = {
+      ...task(
+        'fade-workspace',
+        'Scroll fade workspace',
+        Array.from(
+          { length: 20 },
+          (_, index) =>
+            `Detail ${index + 1}. ${'Keep the older work conversation readable while new activity arrives. '.repeat(3)}`
+        ).join('\n\n')
+      ),
+      status: 'running' as const,
+      activeRun: {
+        id: 'fade-run',
+        taskId: 'fade-workspace',
+        model: 'llama3.2:3b',
+        providerType: 'ollama' as const,
+        status: 'running' as const,
+        createdAt,
+        startedAt: createdAt,
+      },
+    };
+    await mockLibreWebUiApi(page, { workTasks: [workTask] });
+    let releaseActivity!: () => void;
+    const activityReady = new Promise<void>(resolve => {
+      releaseActivity = resolve;
+    });
+    await page.route(
+      '**/api/work/tasks/fade-workspace/runs/fade-run/events?**',
+      async route => {
+        await activityReady;
+        const after = Number(
+          new URL(route.request().url()).searchParams.get('after')
+        );
+        const event = {
+          id: 1,
+          type: 'assistant_delta',
+          taskId: workTask.id,
+          runId: 'fade-run',
+          timestamp: createdAt + 1000,
+          data: {
+            delta: 'New work activity arrived.',
+            total: 'New work activity arrived.',
+          },
+        };
+        await route.fulfill({
+          headers: {
+            'content-type': 'text/event-stream',
+            'cache-control': 'no-cache',
+          },
+          body:
+            after < 1
+              ? `id: 1\nevent: assistant_delta\ndata: ${JSON.stringify(event)}\n\n`
+              : '',
+        });
+      }
+    );
+    await page.goto('/work/fade-workspace');
+    if (width < 768) await page.getByTestId('sidebar-toggle-size').click();
+    const viewport = page.getByTestId('work-scroll-viewport');
+    const jump = page.getByTestId('work-new-activity-button');
+    await expect(viewport).toHaveCSS('--scroll-fade-top', '40px');
+    await expect(viewport).toHaveCSS('--scroll-fade-bottom', '0px');
+
+    await viewport.hover();
+    await page.mouse.wheel(0, -320);
+    await expect(viewport).toHaveCSS('--scroll-fade-top', '40px');
+    await expect(viewport).toHaveCSS('--scroll-fade-bottom', '72px');
+    await expect(viewport).toHaveCSS('mask-image', /linear-gradient/);
+    releaseActivity();
+    await expect(jump).toBeVisible();
+    await expect(jump).toHaveCSS('mask-image', 'none');
+    expect(
+      await jump.evaluate(
+        element => element.closest('[data-scroll-fade-active]') === null
+      )
+    ).toBe(true);
+    await expect(viewport).toHaveCSS('--scroll-fade-bottom', '72px');
+
+    await jump.click();
+    await expect(jump).toBeHidden();
+    await expect(viewport).toHaveCSS('--scroll-fade-bottom', '0px');
+    await expect
+      .poll(() =>
+        viewport.evaluate(
+          element =>
+            element.scrollHeight - element.clientHeight - element.scrollTop
+        )
+      )
+      .toBeLessThanOrEqual(1);
+
+    await viewport.evaluate(element => {
+      element.scrollTop = 0;
+    });
+    await expect(viewport).toHaveCSS('--scroll-fade-top', '0px');
+    await expect(viewport).toHaveCSS('--scroll-fade-bottom', '72px');
+  });
+}
+
 test('keeps the configured user wallpaper visible behind Work', async ({
   page,
 }) => {

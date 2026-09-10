@@ -342,7 +342,67 @@ test('history navigation stays put while the latest response streams', async ({
       element => element.scrollHeight - element.scrollTop - element.clientHeight
     )
   ).toBeGreaterThan(100);
+  await expect(viewport).toHaveCSS('--scroll-fade-bottom', '72px');
+  await expect(page.getByTestId('chat-new-messages')).toBeVisible();
+  await expect(page.getByTestId('chat-new-messages')).toHaveCSS(
+    'mask-image',
+    'none'
+  );
 });
+
+for (const width of [1280, 390]) {
+  test(`chat fades older content and preserves the new-message control at ${width}px`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width, height: 800 });
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await mockHistorySession(page);
+    await page.goto('/c/history-rail-session');
+    if (width < 768) await page.getByTestId('sidebar-toggle-size').click();
+
+    const viewport = page.getByTestId('chat-scroll-viewport');
+    const jump = page.getByTestId('chat-new-messages');
+    await expect(viewport).toBeVisible();
+    await viewport.evaluate(element => {
+      element.scrollTop = element.scrollHeight;
+    });
+    await expect(viewport).toHaveCSS('--scroll-fade-top', '40px');
+    await expect(viewport).toHaveCSS('--scroll-fade-bottom', '0px');
+    await expect(jump).toBeHidden();
+
+    await viewport.hover();
+    await page.mouse.wheel(0, -320);
+    await expect(viewport).toHaveCSS('--scroll-fade-top', '40px');
+    await expect(viewport).toHaveCSS('--scroll-fade-bottom', '72px');
+    await expect(viewport).toHaveCSS('mask-image', /linear-gradient/);
+    await expect(jump).toBeVisible();
+    await expect(jump).toHaveCSS('mask-image', 'none');
+    expect(
+      await jump.evaluate(
+        element => element.closest('[data-scroll-fade-active]') === null
+      )
+    ).toBe(true);
+
+    await jump.click();
+    await expect(jump).toBeHidden();
+    await expect(viewport).toHaveCSS('--scroll-fade-bottom', '0px');
+    await expect
+      .poll(() =>
+        viewport.evaluate(
+          element =>
+            element.scrollHeight - element.clientHeight - element.scrollTop
+        )
+      )
+      .toBeLessThanOrEqual(1);
+
+    await viewport.evaluate(element => {
+      element.scrollTop = 0;
+    });
+    await expect(viewport).toHaveCSS('--scroll-fade-top', '0px');
+    await expect(viewport).toHaveCSS('--scroll-fade-bottom', '72px');
+    await expect(jump).toBeVisible();
+  });
+}
 
 test('history rail mirrors its position and preview in Arabic', async ({
   page,

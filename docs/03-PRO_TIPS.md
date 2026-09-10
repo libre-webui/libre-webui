@@ -42,6 +42,29 @@ conversation, and document context still applies when it is enabled. For a
 conversation that must not leave your infrastructure, combine incognito with a
 local Ollama model.
 
+## Scroll Through Panels
+
+Chat and Work lists fade softly at edges where more items are available.
+The fade clears at the beginning or end of the list, and lists that fit remain
+fully visible. Keyboard focus keeps the list clear so controls stay readable.
+
+The top tab bar uses the same fade at its horizontal scroll edges. The fade
+clears when all tabs fit or when you reach either end. Selecting a tab brings
+it into view, and the new-tab button stays fully visible beside the strip.
+
+The same effect follows scrolling in Settings, Chat, Work, library pages,
+menus, and dialog content, including horizontal lists and tables. Settings
+keeps its title and search field above the scrolling navigation. Fades update
+when content loads, filters change, or the window resizes, and work in every
+theme and right-to-left layouts. Keyboard navigation clears the fade around
+focused controls; using the mouse or touch restores it. Text inputs and the
+internals of embedded apps and terminal/editor widgets keep their own rendering.
+
+Chat and Work use a wider fade for older content at the top and beneath their
+**New messages** and **New activity** buttons when you scroll up. These buttons
+stay clear above the fading text and return you to the latest content, where
+the bottom fade disappears.
+
 ## Manage Tabs with the Context Menu
 
 Right-click a tab (or press `Shift + F10` on a focused tab) for:

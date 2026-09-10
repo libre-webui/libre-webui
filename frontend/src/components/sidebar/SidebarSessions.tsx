@@ -39,6 +39,7 @@ import {
 } from 'lucide-react';
 import { Button, Input } from '@/components/ui';
 import { SidebarHoverCard } from './SidebarHoverCard';
+import { SidebarScrollArea } from './SidebarScrollArea';
 import { useSidebarMenu } from './useSidebarMenu';
 import type { ChatSession, Persona, SessionFolder } from '@/types';
 import { cn, formatTimestamp, truncateText } from '@/utils';
@@ -387,11 +388,7 @@ export function SidebarSessions({
     })).filter(group => group.sessions.length > 0),
   ];
   return (
-    <div
-      data-testid='sidebar-session-scroll-region'
-      className='scroll-region min-h-0 flex-1 scrollbar-thin border-t border-black/[0.05] dark:border-white/[0.05]'
-      style={{ willChange: 'scroll-position' }}
-    >
+    <SidebarScrollArea data-testid='sidebar-session-scroll-region'>
       <div className={cn('px-3 py-3', sidebarCompact && 'px-2')}>
         {!sidebarCompact && sessions.length > 0 && (
           <div className='mb-1 flex h-7 items-center justify-between px-1.5'>
@@ -1084,6 +1081,6 @@ export function SidebarSessions({
           </div>,
           document.body
         )}
-    </div>
+    </SidebarScrollArea>
   );
 }

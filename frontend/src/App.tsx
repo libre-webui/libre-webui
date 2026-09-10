@@ -61,6 +61,7 @@ import { LogoMark } from '@/components/LogoMark';
 import { useAppStore } from '@/store/appStore';
 import { useAuthStore } from '@/store/authStore';
 import { useInitializeApp } from '@/hooks/useInitializeApp';
+import { useScrollFades } from '@/hooks/useScrollFades';
 import { UserService } from '@/services/userService';
 import {
   useKeyboardShortcuts,
@@ -347,6 +348,7 @@ const AppContent: React.FC = () => {
 
   // Initialize the app only after OAuth is processed
   useInitializeApp();
+  useScrollFades();
 
   // Define keyboard shortcuts
   const shortcuts: KeyboardShortcut[] = [

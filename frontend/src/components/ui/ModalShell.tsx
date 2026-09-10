@@ -72,23 +72,28 @@ export const ModalShell: React.FC<ModalShellProps> = ({
         aria-labelledby={titleId}
         data-testid={testId}
         className={cn(
-          'max-h-[90vh] w-full overflow-y-auto rounded-3xl border border-black/[0.07] bg-white p-6 shadow-[0_24px_80px_rgba(0,0,0,0.24)] animate-scale-in scrollbar-thin dark:border-white/[0.08] dark:bg-dark-25',
+          'flex max-h-[90vh] w-full flex-col overflow-hidden rounded-3xl border border-black/[0.07] bg-white shadow-[0_24px_80px_rgba(0,0,0,0.24)] animate-scale-in dark:border-white/[0.08] dark:bg-dark-25',
           widthClassName
         )}
         onClick={event => event.stopPropagation()}
       >
-        <ModalHeader
-          titleId={titleId}
-          title={title}
-          subtitle={subtitle}
-          onClose={onClose}
-        />
-        {children && <div className='space-y-4'>{children}</div>}
-        {footer && (
-          <div className='mt-5 flex justify-end gap-3 border-t border-gray-200 pt-4 dark:border-dark-300'>
-            {footer}
-          </div>
-        )}
+        <div
+          data-testid='modal-scroll-region'
+          className='min-h-0 overflow-y-auto p-6 scrollbar-thin'
+        >
+          <ModalHeader
+            titleId={titleId}
+            title={title}
+            subtitle={subtitle}
+            onClose={onClose}
+          />
+          {children && <div className='space-y-4'>{children}</div>}
+          {footer && (
+            <div className='mt-5 flex justify-end gap-3 border-t border-gray-200 pt-4 dark:border-dark-300'>
+              {footer}
+            </div>
+          )}
+        </div>
       </div>
     </div>,
     document.body

@@ -227,290 +227,308 @@ function AutomationModalForm({
         aria-modal='true'
         aria-labelledby='automation-modal-title'
         data-testid='automation-modal'
-        className='max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-3xl border border-black/[0.07] bg-white p-6 shadow-[0_24px_80px_rgba(0,0,0,0.24)] animate-scale-in scrollbar-thin dark:border-white/[0.08] dark:bg-dark-25'
+        className='flex max-h-[90vh] w-full max-w-lg flex-col overflow-hidden rounded-3xl border border-black/[0.07] bg-white shadow-[0_24px_80px_rgba(0,0,0,0.24)] animate-scale-in dark:border-white/[0.08] dark:bg-dark-25'
         onClick={e => e.stopPropagation()}
       >
-        <div className='mb-4 flex items-center justify-between'>
-          <h3
-            id='automation-modal-title'
-            className='text-lg font-medium tracking-[-0.02em] text-gray-950 dark:text-dark-950'
-          >
-            {automation
-              ? t('automations.editAutomation')
-              : t('automations.newAutomation')}
-          </h3>
-          <button
-            onClick={onClose}
-            aria-label={t('common.close')}
-            className='rounded-xl p-2 transition-colors hover:bg-gray-100 dark:hover:bg-dark-200'
-          >
-            <X size={20} className='text-gray-500' />
-          </button>
-        </div>
-
-        <div className='space-y-4'>
-          <div>
-            <label htmlFor='automation-name' className={labelClass}>
-              {t('automations.form.name')}
-            </label>
-            <input
-              id='automation-name'
-              data-testid='automation-name'
-              type='text'
-              value={name}
-              onChange={e => setName(e.target.value)}
-              placeholder={t('automations.form.namePlaceholder')}
-              className={fieldClass}
-              maxLength={200}
-              autoFocus
-            />
-          </div>
-
-          <div>
-            <span className={labelClass}>{t('automations.form.triggers')}</span>
-            <div className='space-y-2'>
-              {triggers.map((trigger, index) => (
-                <TriggerEditor
-                  key={index}
-                  trigger={trigger}
-                  onChange={next =>
-                    setTriggers(current =>
-                      current.map((item, position) =>
-                        position === index ? next : item
-                      )
-                    )
-                  }
-                  onRemove={
-                    triggers.length > 1
-                      ? () =>
-                          setTriggers(current =>
-                            current.filter((_, position) => position !== index)
-                          )
-                      : undefined
-                  }
-                />
-              ))}
-              {triggers.length < 5 && (
-                <button
-                  type='button'
-                  onClick={() =>
-                    setTriggers(current => [
-                      ...current,
-                      { kind: 'daily', hour: 8, minute: 0 },
-                    ])
-                  }
-                  data-testid='automation-add-trigger'
-                  className='flex items-center gap-1.5 rounded-lg px-2 py-1 text-[12px] font-medium text-primary-600 transition-colors hover:bg-primary-500/10 dark:text-primary-400'
-                >
-                  <Plus className='h-3.5 w-3.5' />
-                  {t('automations.form.addTrigger')}
-                </button>
-              )}
-            </div>
-          </div>
-
-          <div>
-            <label htmlFor='automation-instructions' className={labelClass}>
-              {t('automations.form.instructions')}
-            </label>
-            <textarea
-              id='automation-instructions'
-              data-testid='automation-instructions'
-              value={instructions}
-              onChange={e => setInstructions(e.target.value)}
-              placeholder={t('automations.form.instructionsPlaceholder')}
-              rows={5}
-              className={fieldClass}
-              maxLength={20_000}
-            />
-          </div>
-
-          {taskBound && (
-            <p
-              data-testid='automation-task-bound-note'
-              className='rounded-lg bg-primary-500/10 px-3 py-2 text-[12px] leading-relaxed text-primary-700 dark:text-primary-300'
+        <div
+          data-testid='automation-scroll-region'
+          className='min-h-0 overflow-y-auto p-6 scrollbar-thin'
+        >
+          <div className='mb-4 flex items-center justify-between'>
+            <h3
+              id='automation-modal-title'
+              className='text-lg font-medium tracking-[-0.02em] text-gray-950 dark:text-dark-950'
             >
-              {t('automations.form.taskBoundNote', {
-                defaultValue:
-                  "This routine runs inside the agent's own workspace and conversation, with the agent's model and runtime.",
-              })}
-            </p>
-          )}
+              {automation
+                ? t('automations.editAutomation')
+                : t('automations.newAutomation')}
+            </h3>
+            <button
+              onClick={onClose}
+              aria-label={t('common.close')}
+              className='rounded-xl p-2 transition-colors hover:bg-gray-100 dark:hover:bg-dark-200'
+            >
+              <X size={20} className='text-gray-500' />
+            </button>
+          </div>
 
-          <div className={cn('grid grid-cols-2 gap-3', taskBound && 'hidden')}>
+          <div className='space-y-4'>
             <div>
-              <label htmlFor='automation-target' className={labelClass}>
-                {t('automations.form.target')}
+              <label htmlFor='automation-name' className={labelClass}>
+                {t('automations.form.name')}
               </label>
-              <select
-                id='automation-target'
-                data-testid='automation-target'
-                value={target}
-                onChange={e => setTarget(e.target.value as AutomationTarget)}
+              <input
+                id='automation-name'
+                data-testid='automation-name'
+                type='text'
+                value={name}
+                onChange={e => setName(e.target.value)}
+                placeholder={t('automations.form.namePlaceholder')}
                 className={fieldClass}
-              >
-                <option value='chat'>{t('automations.form.targetChat')}</option>
-                <option value='work'>{t('automations.form.targetWork')}</option>
-              </select>
+                maxLength={200}
+                autoFocus
+              />
             </div>
-            {target === 'work' && policies.length > 0 && (
+
+            <div>
+              <span className={labelClass}>
+                {t('automations.form.triggers')}
+              </span>
+              <div className='space-y-2'>
+                {triggers.map((trigger, index) => (
+                  <TriggerEditor
+                    key={index}
+                    trigger={trigger}
+                    onChange={next =>
+                      setTriggers(current =>
+                        current.map((item, position) =>
+                          position === index ? next : item
+                        )
+                      )
+                    }
+                    onRemove={
+                      triggers.length > 1
+                        ? () =>
+                            setTriggers(current =>
+                              current.filter(
+                                (_, position) => position !== index
+                              )
+                            )
+                        : undefined
+                    }
+                  />
+                ))}
+                {triggers.length < 5 && (
+                  <button
+                    type='button'
+                    onClick={() =>
+                      setTriggers(current => [
+                        ...current,
+                        { kind: 'daily', hour: 8, minute: 0 },
+                      ])
+                    }
+                    data-testid='automation-add-trigger'
+                    className='flex items-center gap-1.5 rounded-lg px-2 py-1 text-[12px] font-medium text-primary-600 transition-colors hover:bg-primary-500/10 dark:text-primary-400'
+                  >
+                    <Plus className='h-3.5 w-3.5' />
+                    {t('automations.form.addTrigger')}
+                  </button>
+                )}
+              </div>
+            </div>
+
+            <div>
+              <label htmlFor='automation-instructions' className={labelClass}>
+                {t('automations.form.instructions')}
+              </label>
+              <textarea
+                id='automation-instructions'
+                data-testid='automation-instructions'
+                value={instructions}
+                onChange={e => setInstructions(e.target.value)}
+                placeholder={t('automations.form.instructionsPlaceholder')}
+                rows={5}
+                className={fieldClass}
+                maxLength={20_000}
+              />
+            </div>
+
+            {taskBound && (
+              <p
+                data-testid='automation-task-bound-note'
+                className='rounded-lg bg-primary-500/10 px-3 py-2 text-[12px] leading-relaxed text-primary-700 dark:text-primary-300'
+              >
+                {t('automations.form.taskBoundNote', {
+                  defaultValue:
+                    "This routine runs inside the agent's own workspace and conversation, with the agent's model and runtime.",
+                })}
+              </p>
+            )}
+
+            <div
+              className={cn('grid grid-cols-2 gap-3', taskBound && 'hidden')}
+            >
               <div>
-                <label htmlFor='automation-work-policy' className={labelClass}>
-                  {t('automations.form.workPolicy')}
+                <label htmlFor='automation-target' className={labelClass}>
+                  {t('automations.form.target')}
                 </label>
                 <select
-                  id='automation-work-policy'
-                  data-testid='automation-work-policy'
-                  value={workPolicyId}
-                  onChange={e => setWorkPolicyId(e.target.value)}
+                  id='automation-target'
+                  data-testid='automation-target'
+                  value={target}
+                  onChange={e => setTarget(e.target.value as AutomationTarget)}
                   className={fieldClass}
                 >
-                  <option value=''>
-                    {t('automations.form.workPolicyDefault')}
+                  <option value='chat'>
+                    {t('automations.form.targetChat')}
                   </option>
-                  {policies.map(policy => (
-                    <option key={policy.id} value={policy.id}>
-                      {policy.name}
+                  <option value='work'>
+                    {t('automations.form.targetWork')}
+                  </option>
+                </select>
+              </div>
+              {target === 'work' && policies.length > 0 && (
+                <div>
+                  <label
+                    htmlFor='automation-work-policy'
+                    className={labelClass}
+                  >
+                    {t('automations.form.workPolicy')}
+                  </label>
+                  <select
+                    id='automation-work-policy'
+                    data-testid='automation-work-policy'
+                    value={workPolicyId}
+                    onChange={e => setWorkPolicyId(e.target.value)}
+                    className={fieldClass}
+                  >
+                    <option value=''>
+                      {t('automations.form.workPolicyDefault')}
+                    </option>
+                    {policies.map(policy => (
+                      <option key={policy.id} value={policy.id}>
+                        {policy.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+            </div>
+
+            <div className='grid grid-cols-2 gap-3'>
+              <div className={cn(taskBound && 'hidden')}>
+                <label htmlFor='automation-model' className={labelClass}>
+                  {t('automations.form.model')}
+                </label>
+                <select
+                  id='automation-model'
+                  value={model}
+                  onChange={e => setModel(e.target.value)}
+                  className={fieldClass}
+                >
+                  <option value=''>{t('automations.form.modelAuto')}</option>
+                  {models.map(item => (
+                    <option key={item.name} value={item.name}>
+                      {item.name}
                     </option>
                   ))}
                 </select>
               </div>
-            )}
-          </div>
-
-          <div className='grid grid-cols-2 gap-3'>
-            <div className={cn(taskBound && 'hidden')}>
-              <label htmlFor='automation-model' className={labelClass}>
-                {t('automations.form.model')}
-              </label>
-              <select
-                id='automation-model'
-                value={model}
-                onChange={e => setModel(e.target.value)}
-                className={fieldClass}
-              >
-                <option value=''>{t('automations.form.modelAuto')}</option>
-                {models.map(item => (
-                  <option key={item.name} value={item.name}>
-                    {item.name}
-                  </option>
-                ))}
-              </select>
+              <div>
+                <label htmlFor='automation-notify' className={labelClass}>
+                  {t('automations.form.notification')}
+                </label>
+                <select
+                  id='automation-notify'
+                  value={notify}
+                  onChange={e => setNotify(e.target.value as 'app' | 'off')}
+                  className={fieldClass}
+                >
+                  <option value='app'>{t('automations.form.notifyApp')}</option>
+                  <option value='off'>{t('automations.form.notifyOff')}</option>
+                </select>
+              </div>
             </div>
-            <div>
-              <label htmlFor='automation-notify' className={labelClass}>
-                {t('automations.form.notification')}
-              </label>
-              <select
-                id='automation-notify'
-                value={notify}
-                onChange={e => setNotify(e.target.value as 'app' | 'off')}
-                className={fieldClass}
-              >
-                <option value='app'>{t('automations.form.notifyApp')}</option>
-                <option value='off'>{t('automations.form.notifyOff')}</option>
-              </select>
-            </div>
-          </div>
 
-          {automation && (
-            <div
-              data-testid='automation-webhook'
-              className='rounded-xl border border-gray-200 p-3 dark:border-dark-300'
-            >
-              <div className='flex items-center justify-between gap-3'>
-                <div className='min-w-0'>
-                  <p className='text-sm font-medium text-gray-900 dark:text-gray-100'>
-                    {t('automations.webhook.title', {
-                      defaultValue: 'Webhook trigger',
-                    })}
-                  </p>
-                  <p className='mt-0.5 text-xs text-gray-500 dark:text-dark-600'>
-                    {webhookEnabled
-                      ? t('automations.webhook.enabledHint', {
-                          defaultValue:
-                            'External systems can fire this automation with the secret. Rotating invalidates the previous secret.',
-                        })
-                      : t('automations.webhook.disabledHint', {
-                          defaultValue:
-                            'Let an external system (CI, cron, home automation) fire this automation with a POST and a secret.',
-                        })}
-                  </p>
-                </div>
-                <div className='flex shrink-0 gap-2'>
-                  <button
-                    type='button'
-                    data-testid='automation-webhook-rotate'
-                    onClick={() => void rotateWebhook()}
-                    disabled={webhookBusy}
-                    className='rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-100 disabled:opacity-50 dark:border-dark-300 dark:text-dark-700 dark:hover:bg-dark-200'
-                  >
-                    {webhookEnabled
-                      ? t('automations.webhook.rotate', {
-                          defaultValue: 'Rotate secret',
-                        })
-                      : t('automations.webhook.enable', {
-                          defaultValue: 'Enable',
-                        })}
-                  </button>
-                  {webhookEnabled && (
+            {automation && (
+              <div
+                data-testid='automation-webhook'
+                className='rounded-xl border border-gray-200 p-3 dark:border-dark-300'
+              >
+                <div className='flex items-center justify-between gap-3'>
+                  <div className='min-w-0'>
+                    <p className='text-sm font-medium text-gray-900 dark:text-gray-100'>
+                      {t('automations.webhook.title', {
+                        defaultValue: 'Webhook trigger',
+                      })}
+                    </p>
+                    <p className='mt-0.5 text-xs text-gray-500 dark:text-dark-600'>
+                      {webhookEnabled
+                        ? t('automations.webhook.enabledHint', {
+                            defaultValue:
+                              'External systems can fire this automation with the secret. Rotating invalidates the previous secret.',
+                          })
+                        : t('automations.webhook.disabledHint', {
+                            defaultValue:
+                              'Let an external system (CI, cron, home automation) fire this automation with a POST and a secret.',
+                          })}
+                    </p>
+                  </div>
+                  <div className='flex shrink-0 gap-2'>
                     <button
                       type='button'
-                      data-testid='automation-webhook-disable'
-                      onClick={() => void disableWebhook()}
+                      data-testid='automation-webhook-rotate'
+                      onClick={() => void rotateWebhook()}
                       disabled={webhookBusy}
                       className='rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-100 disabled:opacity-50 dark:border-dark-300 dark:text-dark-700 dark:hover:bg-dark-200'
                     >
-                      {t('automations.webhook.disable', {
-                        defaultValue: 'Disable',
-                      })}
+                      {webhookEnabled
+                        ? t('automations.webhook.rotate', {
+                            defaultValue: 'Rotate secret',
+                          })
+                        : t('automations.webhook.enable', {
+                            defaultValue: 'Enable',
+                          })}
                     </button>
-                  )}
+                    {webhookEnabled && (
+                      <button
+                        type='button'
+                        data-testid='automation-webhook-disable'
+                        onClick={() => void disableWebhook()}
+                        disabled={webhookBusy}
+                        className='rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-100 disabled:opacity-50 dark:border-dark-300 dark:text-dark-700 dark:hover:bg-dark-200'
+                      >
+                        {t('automations.webhook.disable', {
+                          defaultValue: 'Disable',
+                        })}
+                      </button>
+                    )}
+                  </div>
                 </div>
+                {webhookReveal && (
+                  <div
+                    data-testid='automation-webhook-secret'
+                    className='mt-2 space-y-1 rounded-lg bg-gray-50 p-2 dark:bg-dark-100'
+                  >
+                    <p className='text-[11px] text-gray-500 dark:text-dark-600'>
+                      {t('automations.webhook.revealHint', {
+                        defaultValue:
+                          'Shown once. Send it as a Bearer token or an X-Libre-Webhook-Secret header.',
+                      })}
+                    </p>
+                    <code
+                      dir='ltr'
+                      className='block break-all font-mono text-xs text-gray-800 dark:text-gray-200'
+                    >
+                      POST {webhookReveal.path}
+                    </code>
+                    <code
+                      dir='ltr'
+                      className='block break-all font-mono text-xs text-gray-800 dark:text-gray-200'
+                    >
+                      {webhookReveal.secret}
+                    </code>
+                  </div>
+                )}
               </div>
-              {webhookReveal && (
-                <div
-                  data-testid='automation-webhook-secret'
-                  className='mt-2 space-y-1 rounded-lg bg-gray-50 p-2 dark:bg-dark-100'
-                >
-                  <p className='text-[11px] text-gray-500 dark:text-dark-600'>
-                    {t('automations.webhook.revealHint', {
-                      defaultValue:
-                        'Shown once. Send it as a Bearer token or an X-Libre-Webhook-Secret header.',
-                    })}
-                  </p>
-                  <code
-                    dir='ltr'
-                    className='block break-all font-mono text-xs text-gray-800 dark:text-gray-200'
-                  >
-                    POST {webhookReveal.path}
-                  </code>
-                  <code
-                    dir='ltr'
-                    className='block break-all font-mono text-xs text-gray-800 dark:text-gray-200'
-                  >
-                    {webhookReveal.secret}
-                  </code>
-                </div>
-              )}
-            </div>
-          )}
+            )}
 
-          <div className='flex justify-end gap-3 border-t border-gray-200 pt-4 dark:border-dark-300'>
-            <button
-              onClick={onClose}
-              className='rounded-xl px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 dark:text-dark-700 dark:hover:bg-dark-200'
-            >
-              {t('common.cancel')}
-            </button>
-            <button
-              onClick={handleSave}
-              disabled={saving || !valid}
-              data-testid='automation-save'
-              className='rounded-xl bg-gray-950 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-white dark:text-gray-950 dark:hover:bg-gray-100'
-            >
-              {saving ? t('common.saving') : t('common.save')}
-            </button>
+            <div className='flex justify-end gap-3 border-t border-gray-200 pt-4 dark:border-dark-300'>
+              <button
+                onClick={onClose}
+                className='rounded-xl px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 dark:text-dark-700 dark:hover:bg-dark-200'
+              >
+                {t('common.cancel')}
+              </button>
+              <button
+                onClick={handleSave}
+                disabled={saving || !valid}
+                data-testid='automation-save'
+                className='rounded-xl bg-gray-950 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-white dark:text-gray-950 dark:hover:bg-gray-100'
+              >
+                {saving ? t('common.saving') : t('common.save')}
+              </button>
+            </div>
           </div>
         </div>
       </div>

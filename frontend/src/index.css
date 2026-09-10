@@ -288,8 +288,65 @@ html[data-runtime='electron'] {
   scrollbar-width: none;
 }
 
+.sidebar-scroll-fade {
+  --sidebar-fade-top: 0px;
+  --sidebar-fade-bottom: 0px;
+  scroll-padding-block: 24px;
+  mask-image: linear-gradient(
+    to bottom,
+    transparent,
+    #000 var(--sidebar-fade-top),
+    #000 calc(100% - var(--sidebar-fade-bottom)),
+    transparent
+  );
+}
+
+.tab-scroll-fade {
+  --tab-fade-left: 0px;
+  --tab-fade-right: 0px;
+  scroll-padding-inline: 24px;
+  mask-image: linear-gradient(
+    to right,
+    transparent,
+    #000 var(--tab-fade-left),
+    #000 calc(100% - var(--tab-fade-right)),
+    transparent
+  );
+}
+
+/* Keep keyboard focus rings fully visible, even at the scroll edges. */
+.sidebar-scroll-fade:has(:focus-visible),
+.tab-scroll-fade:has(:focus-visible) {
+  mask-image: none;
+}
+
 .scrollbar-hidden::-webkit-scrollbar {
   display: none;
+}
+
+/* Mask content in both scroll directions without painting over theme surfaces. */
+[data-scroll-fade-active] {
+  scroll-padding: 24px;
+  mask-image:
+    linear-gradient(
+      to bottom,
+      transparent,
+      #000 var(--scroll-fade-top, 0px),
+      #000 calc(100% - var(--scroll-fade-bottom, 0px)),
+      transparent
+    ),
+    linear-gradient(
+      to right,
+      transparent,
+      #000 var(--scroll-fade-left, 0px),
+      #000 calc(100% - var(--scroll-fade-right, 0px)),
+      transparent
+    );
+  mask-composite: intersect;
+}
+
+[data-scroll-fade-keyboard] {
+  mask-image: none;
 }
 
 a,

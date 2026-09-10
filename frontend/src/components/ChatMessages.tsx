@@ -566,6 +566,8 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
       <div
         ref={scrollContainerRef}
         data-testid='chat-scroll-viewport'
+        data-scroll-fade-top='40'
+        data-scroll-fade-bottom='72'
         onScroll={handleScroll}
         className={cn(
           'h-full overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600',
@@ -717,9 +719,11 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
         onSelect={scrollToHistoryItem}
       />
 
-      {/* Scroll to bottom button */}
+      {/* Keep the jump control outside the fading message viewport. */}
       {showScrollButton && (
         <button
+          type='button'
+          data-testid='chat-new-messages'
           onClick={handleScrollToBottom}
           className={cn(
             'absolute bottom-4 left-1/2 -translate-x-1/2 z-10',

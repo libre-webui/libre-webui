@@ -430,6 +430,9 @@ export function WorkConversation({
     <div className='relative flex min-h-0 flex-1'>
       <div
         ref={viewportRef}
+        data-testid='work-scroll-viewport'
+        data-scroll-fade-top='40'
+        data-scroll-fade-bottom='72'
         onScroll={event => {
           const viewport = event.currentTarget;
           followTailRef.current =
@@ -665,6 +668,7 @@ export function WorkConversation({
           )}
         </div>
       </div>
+      {/* Keep the jump control outside the fading conversation viewport. */}
       {showNewActivity && (
         <button
           type='button'

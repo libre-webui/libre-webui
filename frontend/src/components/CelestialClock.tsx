@@ -186,6 +186,7 @@ export function CelestialClock() {
             aria-label={label}
             className='celestial-day-popover'
             data-testid='celestial-day-popover'
+            data-scroll-fade=''
             style={{ position: 'fixed', overflowY: 'auto', ...placement }}
           >
             <button
