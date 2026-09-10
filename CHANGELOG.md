@@ -15,6 +15,51 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 📚 Documentation
 
+## [0.34.2] - 2026-09-10
+
+Scrollable panels now hint at what lies beyond their edges, and the dependency
+tree is refreshed.
+
+### ✨ New Features
+
+- **Scroll fades across panels.** Chat and Work lists fade softly at an edge
+  where more items are available, clear at the beginning or end, and stay
+  fully visible when everything fits. The top tab bar fades at its horizontal
+  edges, selecting a tab scrolls it into view, and the new-tab button stays
+  clear beside the strip. The same treatment follows Settings, Chat, Work,
+  library pages, menus, and dialog content, including horizontal lists and
+  tables; Settings keeps its title and search above the scrolling navigation.
+  Fades update as content loads, filters change, or the window resizes, work
+  in every theme and in right-to-left layouts, and clear around
+  keyboard-focused controls so they stay readable; mouse or touch restores
+  them. Text inputs and the internals of embedded apps, terminals, and
+  editors keep their own rendering. Chat and Work use a wider fade for older
+  content at the top and beneath their **New messages** and **New activity**
+  buttons, which stay clear and return you to the latest content.
+
+### 🔧 Improvements
+
+- **Dependencies refreshed.** Twenty-two packages move to their current
+  minor or patch versions, among them the AWS S3 client, express-rate-limit,
+  multer, pdfjs-dist, undici, i18next, KaTeX, lucide-react, react-router,
+  framer-motion, the TypeScript ESLint tooling, Playwright, PostCSS, and tsx.
+  A transitive `js-yaml` is bumped to clear an npm audit finding.
+- **Quieter installs on new npm.** The root manifest approves the two
+  install scripts the project relies on (better-sqlite3's native build and
+  esbuild's binary download), so npm's install-scripts allowlist no longer
+  warns on a fresh clone. Older npm ignores the field.
+- Dependabot now opens its version-update pull requests against `dev`, the
+  working branch, instead of `main`.
+
+### 📚 Documentation
+
+- The 0.34.1 changelog entry was incomplete at release time and now
+  describes everything that shipped in it: account wallpapers, the Celestial
+  and composer polish, keyboard navigation, input-method handling, chat
+  reconnect backoff, and the dev-proxy wait. The GitHub and Forgejo release
+  pages, the website changelog, and the demo carry the corrected text.
+- Pro tips describe the scroll fades.
+
 ## [0.34.1] - 2026-09-07
 
 Account wallpapers arrive, the Celestial theme and both composers get a polish
