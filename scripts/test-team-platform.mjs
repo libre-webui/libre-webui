@@ -106,7 +106,7 @@ test(
           `${project}_default`,
           '--env',
           'MC_HOST_local=http://libreteam:libre-team-minio-password@minio:9000',
-          'minio/mc:RELEASE.2025-07-21T05-28-08Z',
+          'quay.io/minio/mc:RELEASE.2025-07-21T05-28-08Z',
           'stat',
           `local/libre-blobs/${objectKey}`,
         ],
