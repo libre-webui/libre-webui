@@ -109,7 +109,7 @@ worker:
   replicaCount: 1
 
 secrets:
-  databaseUrl: postgresql://libre:replace-me@postgres.example/libre
+  databaseUrl: postgresql://<db-user>:<db-password>@postgres.example/libre
   redisUrl: rediss://redis.example:6379/0
   jwtSecret: '<one-stable-high-entropy-secret-for-every-replica>'
   encryptionKey: '<legacy-64-character-lowercase-hex-key>'
