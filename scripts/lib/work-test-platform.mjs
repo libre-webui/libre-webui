@@ -24,7 +24,6 @@ export const initializeWorkTestPlatform = async repoRoot => {
   );
   let persistenceInitialized = false;
   let workInitialized = false;
-  let jobsInitialized = false;
   let coordinatorInitialized = false;
   try {
     await persistence.initializePersistence({
@@ -43,9 +42,7 @@ export const initializeWorkTestPlatform = async repoRoot => {
       handlers: new Map(),
       env: process.env,
     });
-    jobsInitialized = true;
   } catch (error) {
-    if (jobsInitialized) await jobs.closeDurableJobRuntime();
     if (coordinatorInitialized) await coordination.closeCoordinator();
     if (workInitialized) work.resetWorkPersistenceForTests();
     if (persistenceInitialized) await persistence.closePersistence();

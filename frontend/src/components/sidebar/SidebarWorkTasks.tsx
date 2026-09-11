@@ -596,37 +596,21 @@ export function SidebarWorkTasks({
             </span>
           </div>
         ) : tasks.length === 0 ? (
-          <div
-            className={cn('py-8 text-center', sidebarCompact ? 'px-1' : 'px-2')}
-          >
-            <div
-              className={cn(
-                'mx-auto mb-3 flex items-center justify-center rounded-xl bg-white/70 ring-1 ring-black/[0.04] dark:bg-dark-200 dark:ring-white/[0.05]',
-                sidebarCompact ? 'h-8 w-8' : 'h-12 w-12'
-              )}
-            >
-              <Briefcase
-                className={cn(
-                  'text-gray-400 dark:text-gray-500',
-                  sidebarCompact ? 'h-4 w-4' : 'h-5 w-5'
-                )}
-              />
+          <div className='py-8 text-center px-2'>
+            <div className='mx-auto mb-3 flex items-center justify-center rounded-xl bg-white/70 ring-1 ring-black/[0.04] dark:bg-dark-200 dark:ring-white/[0.05] h-12 w-12'>
+              <Briefcase className='text-gray-400 dark:text-gray-500 h-5 w-5' />
             </div>
-            {!sidebarCompact && (
-              <>
-                <p className='text-sm font-medium text-gray-600 dark:text-dark-600'>
-                  {t('work.tasks.emptyTitle', {
-                    defaultValue: 'No Work tasks yet',
-                  })}
-                </p>
-                <p className='mt-1 text-xs text-gray-400 dark:text-dark-500'>
-                  {t('work.tasks.empty', {
-                    defaultValue:
-                      'Your Work tasks will appear here after you send the first message.',
-                  })}
-                </p>
-              </>
-            )}
+            <p className='text-sm font-medium text-gray-600 dark:text-dark-600'>
+              {t('work.tasks.emptyTitle', {
+                defaultValue: 'No Work tasks yet',
+              })}
+            </p>
+            <p className='mt-1 text-xs text-gray-400 dark:text-dark-500'>
+              {t('work.tasks.empty', {
+                defaultValue:
+                  'Your Work tasks will appear here after you send the first message.',
+              })}
+            </p>
           </div>
         ) : (
           <div data-testid='sidebar-work-task-list' className='space-y-0.5'>

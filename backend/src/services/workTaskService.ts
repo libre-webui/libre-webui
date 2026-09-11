@@ -192,6 +192,9 @@ export class WorkTaskService {
       markLost();
       throw leaseLostError();
     };
+    const scheduleRenewal = (): void => {
+      if (!closed && !leaseLost) renewalTimer = setTimeout(renew, 20_000);
+    };
     const renew = async (): Promise<void> => {
       if (closed) return;
       try {
@@ -199,7 +202,7 @@ export class WorkTaskService {
       } catch {
         markLost();
       }
-      if (!closed && !leaseLost) renewalTimer = setTimeout(renew, 20_000);
+      scheduleRenewal();
     };
     renewalTimer = setTimeout(renew, 20_000);
     try {

@@ -132,11 +132,12 @@ export const ensurePluginCacheInvalidationSubscription =
       );
       subscription = { coordinator, unsubscribe };
     })();
-    subscriptionInitialization = { coordinator, promise };
+    const initialization = { coordinator, promise };
+    subscriptionInitialization = initialization;
     try {
       await promise;
     } finally {
-      if (subscriptionInitialization?.promise === promise) {
+      if (subscriptionInitialization === initialization) {
         subscriptionInitialization = undefined;
       }
     }

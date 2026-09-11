@@ -25,7 +25,7 @@ import {
 const POSTGRES_IMAGE =
   'pgvector/pgvector@sha256:a36250871de0833b8757561c72f2477ef1ddd1101afa4e617fb552e0de514c6b';
 const MINIO_IMAGE =
-  'minio/minio@sha256:a1ea29fa28355559ef137d71fc570e508a214ec84ff8083e39bc5428980b015e';
+  'quay.io/minio/minio@sha256:a1ea29fa28355559ef137d71fc570e508a214ec84ff8083e39bc5428980b015e';
 const dockerGate = process.env.TEST_TEAM_PLATFORM === '1';
 
 const docker = (args, options = {}) =>

@@ -24,7 +24,9 @@ import asyncio
 import io
 import os
 import re
+import sys
 import tempfile
+from contextlib import suppress
 from typing import Optional
 
 import torch
@@ -38,7 +40,7 @@ try:
     from qwen_tts import Qwen3TTSModel
 except ImportError:
     print("Error: qwen-tts package not installed. Install with: pip install qwen-tts")
-    exit(1)
+    sys.exit(1)
 
 app = FastAPI(
     title="Qwen3-TTS OpenAI-Compatible API",
@@ -596,9 +598,13 @@ async def create_voice_clone_speech(
     except Exception as e:
         if 'tmp_path' in locals():
             try:
-                os.unlink(tmp_path)
-            except:
-                pass
+                with suppress(FileNotFoundError):
+                    os.unlink(tmp_path)
+            except OSError as cleanup_error:
+                print(
+                    "Warning: Could not remove temporary reference audio: "
+                    f"{cleanup_error}"
+                )
         raise HTTPException(status_code=500, detail=str(e))
 
 

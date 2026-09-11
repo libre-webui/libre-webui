@@ -360,7 +360,7 @@ export const AppTabBar: React.FC = () => {
     const currentIndex = items.indexOf(
       document.activeElement as HTMLButtonElement
     );
-    let nextIndex = currentIndex;
+    let nextIndex: number;
     if (event.key === 'ArrowDown') {
       nextIndex = (currentIndex + 1 + items.length) % items.length;
     } else if (event.key === 'ArrowUp') {

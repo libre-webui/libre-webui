@@ -903,7 +903,7 @@ router.get(
         return;
       }
 
-      const hasKey = pluginService.getApiKey(plugin, userId) !== null;
+      const hasKey = (await pluginService.getApiKey(plugin, userId)) !== null;
 
       res.json({
         success: true,

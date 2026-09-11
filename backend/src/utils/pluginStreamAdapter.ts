@@ -414,7 +414,6 @@ export async function* streamOpenAIResponsesResponse(
     }
   >();
   let buffer = '';
-  let completed = false;
   let emittedAssistantText = '';
   let emittedReasoningBytes = 0;
   let outputItemOrder = 0;
@@ -855,7 +854,6 @@ export async function* streamOpenAIResponsesResponse(
                 );
               }
               const suffix = terminalContent.slice(emittedAssistantText.length);
-              emittedAssistantText = terminalContent;
               if (suffix) yield { type: 'content', content: suffix };
             }
           }
@@ -879,19 +877,16 @@ export async function* streamOpenAIResponsesResponse(
           )) {
             yield chunk;
           }
-          completed = true;
           return;
         }
       }
     }
 
-    if (!completed) {
-      for (const chunk of emitTerminalChunks(
-        undefined,
-        'incomplete:stream_ended'
-      )) {
-        yield chunk;
-      }
+    for (const chunk of emitTerminalChunks(
+      undefined,
+      'incomplete:stream_ended'
+    )) {
+      yield chunk;
     }
   } finally {
     reader.releaseLock();

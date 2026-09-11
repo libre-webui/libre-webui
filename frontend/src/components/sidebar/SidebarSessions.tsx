@@ -452,35 +452,19 @@ export function SidebarSessions({
             </button>
           </div>
         ) : sessions.length === 0 ? (
-          <div
-            className={cn('text-center py-8', sidebarCompact ? 'px-1' : 'px-2')}
-          >
-            <div
-              className={cn(
-                'mx-auto mb-3 bg-white/70 dark:bg-dark-200 rounded-xl flex items-center justify-center ring-1 ring-black/[0.04] dark:ring-white/[0.05]',
-                sidebarCompact ? 'w-8 h-8' : 'w-12 h-12'
-              )}
-            >
-              <MessageSquare
-                className={cn(
-                  'text-gray-400 dark:text-gray-500',
-                  sidebarCompact ? 'h-4 w-4' : 'h-5 w-5'
-                )}
-              />
+          <div className='text-center py-8 px-2'>
+            <div className='mx-auto mb-3 bg-white/70 dark:bg-dark-200 rounded-xl flex items-center justify-center ring-1 ring-black/[0.04] dark:ring-white/[0.05] w-12 h-12'>
+              <MessageSquare className='text-gray-400 dark:text-gray-500 h-5 w-5' />
             </div>
-            {!sidebarCompact && (
-              <>
-                <p className='text-sm font-medium text-gray-600 dark:text-dark-600'>
-                  {t('chat.session.noChats')}
-                </p>
-                <p className='text-xs mt-1 text-gray-400 dark:text-dark-500'>
-                  {t('chat.session.createFirst')}
-                </p>
-              </>
-            )}
+            <p className='text-sm font-medium text-gray-600 dark:text-dark-600'>
+              {t('chat.session.noChats')}
+            </p>
+            <p className='text-xs mt-1 text-gray-400 dark:text-dark-500'>
+              {t('chat.session.createFirst')}
+            </p>
           </div>
         ) : (
-          <div className={cn('space-y-2', sidebarCompact && 'space-y-1')}>
+          <div className='space-y-2'>
             {sections.map(group => (
               <div key={group.key}>
                 {!sidebarCompact && group.folder && (

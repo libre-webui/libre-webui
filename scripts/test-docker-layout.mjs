@@ -52,6 +52,10 @@ const teamPlatformTest = fs.readFileSync(
   path.join(repoRoot, 'scripts', 'test-team-platform.mjs'),
   'utf8'
 );
+const teamBackupTest = fs.readFileSync(
+  path.join(repoRoot, 'scripts', 'test-team-backup.mjs'),
+  'utf8'
+);
 const composeFiles = [
   'docker-compose.yml',
   'docker-compose.gpu.yml',
@@ -562,21 +566,22 @@ test('team Work overlay gives only app and worker the filtered Docker endpoint',
   );
 });
 
-test('real-service CI uses the exact shipped team dependency image tags', () => {
+test('real-service CI uses the exact shipped team dependency image references', () => {
   const composePostgres = teamCompose.match(
     /^  postgres:\n    image: (\S+)$/m
   )?.[1];
   const composeRedis = teamCompose.match(/^  redis:\n    image: (\S+)$/m)?.[1];
   const composeMinio = teamCompose.match(/^  minio:\n    image: (\S+)$/m)?.[1];
+  const composeMinioClient = teamCompose.match(
+    /^  minio-init:\n    image: (\S+)$/m
+  )?.[1];
   const ciPostgres = formatWorkflow.match(
     /^      postgres:\n        image: (\S+)$/m
   )?.[1];
   const ciRedis = formatWorkflow.match(
     /^      redis:\n        image: (\S+)$/m
   )?.[1];
-  const ciMinio = formatWorkflow.match(
-    /^\s+minio\/(?:minio):([^\s]+) server \/data$/m
-  )?.[1];
+  const ciMinio = formatWorkflow.match(/^\s+(\S+) server \/data$/m)?.[1];
   const releasePreflight = releaseWorkflow.slice(
     releaseWorkflow.indexOf('  release-preflight:'),
     releaseWorkflow.indexOf('  create-release:')
@@ -587,18 +592,27 @@ test('real-service CI uses the exact shipped team dependency image tags', () => 
   const releaseRedis = releasePreflight.match(
     /^      redis:\n        image: (\S+)$/m
   )?.[1];
-  const releaseMinio = releasePreflight.match(
-    /^\s+minio\/(?:minio):([^\s]+) server \/data$/m
+  const releaseMinio = releasePreflight.match(/^\s+(\S+) server \/data$/m)?.[1];
+  const teamMinioClient = teamPlatformTest.match(
+    /^\s+'(quay\.io\/minio\/mc:[^']+)',$/m
+  )?.[1];
+  const backupMinio = teamBackupTest.match(
+    /const MINIO_IMAGE =\s*'([^']+)';/
   )?.[1];
 
   assert.equal(ciPostgres, composePostgres);
   assert.equal(ciRedis, composeRedis);
-  assert.equal(ciMinio ? `minio/minio:${ciMinio}` : undefined, composeMinio);
+  assert.match(composeMinio, /^quay\.io\/minio\/minio:RELEASE\.[\w-]+$/);
+  assert.equal(ciMinio, composeMinio);
   assert.equal(releasePostgres, composePostgres);
   assert.equal(releaseRedis, composeRedis);
-  assert.equal(
-    releaseMinio ? `minio/minio:${releaseMinio}` : undefined,
-    composeMinio
+  assert.equal(releaseMinio, composeMinio);
+  assert.match(composeMinioClient, /^quay\.io\/minio\/mc:RELEASE\.[\w-]+$/);
+  assert.equal(teamMinioClient, composeMinioClient);
+  assert.match(
+    backupMinio,
+    /^quay\.io\/minio\/minio@sha256:[a-f0-9]{64}$/,
+    'backup fixture must use a digest-pinned MinIO image from Quay'
   );
   const testStorageKey = '91'.repeat(32);
   for (const workflow of [formatWorkflow, releasePreflight]) {

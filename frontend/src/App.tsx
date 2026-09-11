@@ -540,7 +540,7 @@ const AppContent: React.FC = () => {
   return (
     <>
       {/* Show full layout only if system doesn't require auth or user is authenticated */}
-      {systemInfo && !systemInfo.requiresAuth ? (
+      {!systemInfo.requiresAuth ? (
         // No auth required - show full layout
         <ShellLayout
           sidebarOpen={sidebarOpen}

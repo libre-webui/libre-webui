@@ -321,7 +321,7 @@ class CalendarService {
     actor: AuthzActor,
     calendarId: string | undefined
   ): Promise<{ filename: string; content: string }> {
-    let name = 'calendar';
+    let name: string;
     let events: CalendarEvent[];
     const horizonFrom = 0;
     const horizonTo = Number.MAX_SAFE_INTEGER;

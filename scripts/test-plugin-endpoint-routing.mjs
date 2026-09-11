@@ -725,6 +725,61 @@ test('pre-upgrade writable definitions stay quarantined across every execution p
   }
 });
 
+test('plugin credential checks await lookup results and report lookup failures', async () => {
+  const app = express();
+  app.use('/api/plugins', authenticate, pluginRoutes);
+  const server = await listen(app);
+  const user = upsertTestUser('plugin-credential-check-user', 'user');
+  const headers = {
+    Authorization: `Bearer ${authService.generateToken(user)}`,
+  };
+  const url = `${server.baseUrl}/api/plugins/openai/credentials/check`;
+
+  try {
+    for (const key of [null, 'credential-check-secret']) {
+      await withPatchedProperties(
+        pluginService,
+        {
+          getApiKey: async (plugin, userId) => {
+            assert.equal(plugin.id, 'openai');
+            assert.equal(userId, user.id);
+            await new Promise(resolve => setImmediate(resolve));
+            return key;
+          },
+        },
+        async () => {
+          const response = await fetch(url, { headers });
+          assert.equal(response.status, 200);
+          assert.deepEqual(await response.json(), {
+            success: true,
+            data: key !== null,
+          });
+        }
+      );
+    }
+
+    await withPatchedProperties(
+      pluginService,
+      {
+        getApiKey: async () => {
+          await new Promise(resolve => setImmediate(resolve));
+          throw new Error('Credential lookup unavailable');
+        },
+      },
+      async () => {
+        const response = await fetch(url, { headers });
+        assert.equal(response.status, 500);
+        assert.deepEqual(await response.json(), {
+          success: false,
+          error: 'Credential lookup unavailable',
+        });
+      }
+    );
+  } finally {
+    await server.close();
+  }
+});
+
 test('plugin routes require authentication and preserve non-admin generation settings', async () => {
   const app = express();
   app.use(express.json());

@@ -23,7 +23,9 @@ import asyncio
 import io
 import os
 import re
+import sys
 import tempfile
+from contextlib import suppress
 from typing import Optional
 from urllib.parse import urlsplit
 
@@ -38,7 +40,7 @@ try:
     from pocket_tts import TTSModel
 except ImportError:
     print("Error: pocket-tts package not installed. Install with: pip install pocket-tts")
-    exit(1)
+    sys.exit(1)
 
 app = FastAPI(
     title="Kyutai TTS OpenAI-Compatible API",
@@ -442,10 +444,6 @@ async def create_streaming_speech(voice_state, text: str):
     async def audio_stream():
         loop = asyncio.get_event_loop()
 
-        def _stream():
-            for chunk in model.generate_audio_stream(voice_state, text, copy_state=True):
-                yield chunk
-
         # Run streaming in executor
         def _collect_chunks():
             chunks = []
@@ -497,9 +495,13 @@ async def create_voice_clone_speech(
     except Exception as e:
         if 'tmp_path' in locals():
             try:
-                os.unlink(tmp_path)
-            except:
-                pass
+                with suppress(FileNotFoundError):
+                    os.unlink(tmp_path)
+            except OSError as cleanup_error:
+                print(
+                    "Warning: Could not remove temporary reference audio: "
+                    f"{cleanup_error}"
+                )
         raise HTTPException(status_code=500, detail=str(e))
 
 

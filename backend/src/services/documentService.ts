@@ -182,8 +182,8 @@ const acquireDocumentResourceLease = async (
   const coordinator = getCoordinator();
   const ttlMs = resourceLeaseTtlMs();
   const deadline = Date.now() + waitMs;
-  let lease: CoordinationLease | null = null;
-  do {
+  let lease: CoordinationLease | null;
+  for (;;) {
     if (signal?.aborted) throw signal.reason;
     lease = await coordinator.acquireLease(
       `resource:${userId}:document:${documentId}`,
@@ -192,7 +192,7 @@ const acquireDocumentResourceLease = async (
     if (lease) break;
     if (Date.now() >= deadline) throw new DocumentResourceBusyError();
     await waitForLeaseRetry(25, signal);
-  } while (!lease);
+  }
 
   let closed = false;
   let lost = false;
@@ -1977,7 +1977,7 @@ export class DocumentService {
                 executionSpec
               )
             : undefined;
-        let localIndexReady =
+        const localIndexReady =
           localIndexProbe !== undefined &&
           (await platform.vectorStore.hasExactResourceIndex(localIndexProbe));
         const needsLazyPublication =
@@ -2022,7 +2022,6 @@ export class DocumentService {
                 () => lease!.assertHeld()
               );
             }
-            localIndexReady = true;
             searchableDocument = latest;
             documentChunks = latestChunks;
           } catch (error) {

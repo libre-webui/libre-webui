@@ -56,7 +56,7 @@ export function parseFollowUpSuggestions(raw: string): string[] {
     const cleaned = line
       .trim()
       .replace(/^```(?:\w+)?\s*|\s*```$/g, '')
-      .replace(/^[-*••]+\s*/, '')
+      .replace(/^[-*•]+\s*/, '')
       .replace(/^\d+[.)]\s*/, '')
       .replace(/^["'`]+|["'`]+$/g, '')
       .trim();

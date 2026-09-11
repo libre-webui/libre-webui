@@ -88,6 +88,10 @@ silently reviving a dormant route.
 
 Credentials can come from environment variables or from user settings.
 
+Credential availability checks wait for the current user's credential lookup.
+They report whether an effective key exists without returning the key; a lookup
+failure returns an error instead of reporting that credentials are available.
+
 Environment examples:
 
 ```env

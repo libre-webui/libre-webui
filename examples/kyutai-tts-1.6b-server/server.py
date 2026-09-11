@@ -21,7 +21,6 @@ Features:
 import argparse
 import asyncio
 import io
-import os
 import re
 import sys
 import threading
@@ -34,7 +33,6 @@ import torch
 if sys.version_info >= (3, 12):
     torch._dynamo.config.suppress_errors = True
     # Monkey-patch torch.compile to be a no-op
-    _original_compile = torch.compile
     torch.compile = lambda func, *args, **kwargs: func
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -44,10 +42,10 @@ from pydantic import BaseModel
 # Kyutai TTS imports
 try:
     from moshi.models.loaders import CheckpointInfo
-    from moshi.models.tts import DEFAULT_DSM_TTS_REPO, DEFAULT_DSM_TTS_VOICE_REPO, TTSModel
+    from moshi.models.tts import DEFAULT_DSM_TTS_REPO, TTSModel
 except ImportError:
     print("Error: moshi package not installed. Install with: pip install moshi")
-    exit(1)
+    sys.exit(1)
 
 app = FastAPI(
     title="Kyutai TTS 1.6B OpenAI-Compatible API",
