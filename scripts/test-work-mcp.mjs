@@ -263,7 +263,7 @@ test('connected tools reach network-enabled runs and stay off offline ones', asy
   // A network-enabled run offers the namespaced tools and a call round-trips
   // through the hardened gateway to the MCP server.
   providerScript.push(
-    (request, observer) => {
+    request => {
       const names = toolNames(request);
       assert.ok(names.includes('notes_mcp__echo_note'), names.join(','));
       assert.ok(names.includes('notes_mcp__write_note'));
@@ -272,7 +272,7 @@ test('connected tools reach network-enabled runs and stay off offline ones', asy
       assert.match(request.messages[0].content, /notes_mcp__echo_note/);
       return toolTurn('call-1', 'notes_mcp__echo_note', {
         text: 'from work',
-      })(request, observer);
+      })(request);
     },
     textTurn('Echoed.')
   );
@@ -389,14 +389,14 @@ test('servers missing a personal credential are filtered at offer time', async (
 
   await toolServers.setToolServerCredential(userId, secured.id, 'token-123');
   providerScript.push(
-    (request, observer) => {
+    request => {
       assert.ok(
         toolNames(request).includes('secured_mcp__echo_note'),
         'the credentialed server is offered'
       );
       return toolTurn('call-4', 'secured_mcp__echo_note', {
         text: 'secured',
-      })(request, observer);
+      })(request);
     },
     textTurn('Secured echo done.')
   );

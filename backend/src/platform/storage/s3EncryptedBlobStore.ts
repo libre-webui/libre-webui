@@ -1340,7 +1340,7 @@ export class S3EncryptedBlobStore implements BlobStore {
       metadataCommitted = true;
       return descriptor;
     } catch (error) {
-      if (uploaded && !metadataCommitted) {
+      if (uploaded) {
         let outcome: 'absent' | { descriptor: BlobDescriptor };
         try {
           if (!storedMetadata) {

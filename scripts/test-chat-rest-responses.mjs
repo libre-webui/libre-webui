@@ -833,7 +833,7 @@ test('one enormous delta is split across events instead of failing', async () =>
     yield { type: 'done' };
   };
 
-  const queued = await chatService.queueDurableGeneration({
+  await chatService.queueDurableGeneration({
     sessionId: session.id,
     userId: 'chat-rest-user',
     userMessageId: 'user-oversized-single-delta',
@@ -890,7 +890,7 @@ test('a reply larger than the durable event ceiling still completes once', async
     yield { type: 'done' };
   };
 
-  const queued = await chatService.queueDurableGeneration({
+  await chatService.queueDurableGeneration({
     sessionId: session.id,
     userId: 'chat-rest-user',
     userMessageId: 'user-oversized-completion',
@@ -948,7 +948,7 @@ test('a provider that reports usage produces real token statistics', async () =>
     yield { type: 'done' };
   };
 
-  const queued = await chatService.queueDurableGeneration({
+  await chatService.queueDurableGeneration({
     sessionId: session.id,
     userId: 'chat-rest-user',
     userMessageId: 'user-plugin-usage-statistics',

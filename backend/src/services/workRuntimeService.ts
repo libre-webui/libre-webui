@@ -3342,6 +3342,9 @@ export class WorkRuntimeService {
           throw leaseLostError();
         };
         if (sharedLease) {
+          const scheduleRenewal = (): void => {
+            if (!closed && !lost) renewalTimer = setTimeout(renew, 20_000);
+          };
           const renew = async (): Promise<void> => {
             if (closed) return;
             try {
@@ -3356,7 +3359,7 @@ export class WorkRuntimeService {
             } catch {
               markLost();
             }
-            if (!closed && !lost) renewalTimer = setTimeout(renew, 20_000);
+            scheduleRenewal();
           };
           renewalTimer = setTimeout(renew, 20_000);
           renewalTimer.unref?.();

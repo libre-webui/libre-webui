@@ -131,6 +131,9 @@ class ChatService {
       markLost();
       throw leaseLostError();
     };
+    const scheduleRenewal = (): void => {
+      if (!closed && !leaseLost) renewalTimer = setTimeout(renew, 10_000);
+    };
     const renew = async (): Promise<void> => {
       if (closed) return;
       try {
@@ -138,7 +141,7 @@ class ChatService {
       } catch {
         markLost();
       }
-      if (!closed && !leaseLost) renewalTimer = setTimeout(renew, 10_000);
+      scheduleRenewal();
     };
     renewalTimer = setTimeout(renew, 10_000);
     try {

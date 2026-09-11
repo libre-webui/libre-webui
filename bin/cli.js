@@ -180,7 +180,6 @@ const main = () => {
     ...runtimeEnvironment(),
     SERVE_FRONTEND: 'true',
   };
-  const port = env.PORT || '8080';
 
   console.log(`
 ╭─────────────────────────────────────────────────╮

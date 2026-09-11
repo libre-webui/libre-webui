@@ -2,7 +2,6 @@
 
 const fs = require('fs');
 const path = require('path');
-const { execSync } = require('child_process');
 
 const COPYRIGHT_HEADER = `/*
  * Libre WebUI

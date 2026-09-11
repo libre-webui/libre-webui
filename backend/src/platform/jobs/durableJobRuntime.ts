@@ -181,5 +181,6 @@ export const closeDurableJobRuntime =
   async (): Promise<EmbeddedDurableJobWorkerStopResult> => {
     const current = runtime;
     runtime = undefined;
-    return current?.stop() ?? { activeAtStop: 0, abandoned: 0, failed: 0 };
+    if (current) return current.stop();
+    return { activeAtStop: 0, abandoned: 0, failed: 0 };
   };

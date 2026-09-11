@@ -589,11 +589,7 @@ export const ChatPage: React.FC = () => {
             navigate('/', { replace: true });
           }
         }
-      } else if (
-        !sessionId &&
-        sessions.length > 0 &&
-        location.pathname === '/'
-      ) {
+      } else if (sessions.length > 0 && location.pathname === '/') {
         // No sessionId in URL but we have sessions, redirect to the most recent session
         // Only redirect from root path (/), not from /chat (which should show welcome screen)
         navigate(`/c/${sessions[0].id}`, { replace: true });
@@ -1259,7 +1255,7 @@ export const ChatPage: React.FC = () => {
               lastAssistantMessage={lastAssistantMessage}
             />
           )}
-          {currentSession && <ChatSourcesPanel session={currentSession} />}
+          <ChatSourcesPanel session={currentSession} />
           <ChatControlsPanel
             session={currentSession}
             open={controlsOpen}

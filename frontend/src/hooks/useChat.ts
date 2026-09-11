@@ -1021,10 +1021,6 @@ export const useChat = (sessionId: string) => {
             assistantMessageId, // Send the message ID to backend
             isPrivate: isPrivateSession, // Private sessions don't persist to DB
             ...(webSearch === true ? { webSearch: true } : {}),
-            ...(tools === true && !isPrivateSession ? { tools: true } : {}),
-            ...(tools === true && !isPrivateSession && toolSelection
-              ? { toolSelection }
-              : {}),
             ...(isPrivateSession
               ? {
                   model: session?.model,

@@ -365,12 +365,12 @@ export const verifyLegacyCiphertextIntegrity = (
              FROM voice_profiles`
           )
           .get() as Aggregate;
-        selectedRecords = addBounded(
+        addBounded(
           selectedRecords,
           Number(aggregate.records),
           resolvedLimits.maxRecords
         );
-        selectedBytes = addBounded(
+        addBounded(
           selectedBytes,
           Number(aggregate.bytes),
           resolvedLimits.maxCiphertextBytes

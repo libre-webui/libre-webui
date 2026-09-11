@@ -152,6 +152,9 @@ class GalleryService {
       lost = true;
       throw new Error('The shared generated media write lease was lost');
     };
+    const scheduleRenewal = (): void => {
+      if (!closed && !lost) renewalTimer = setTimeout(renew, 10_000);
+    };
     const renew = async (): Promise<void> => {
       if (closed || lost) return;
       try {
@@ -159,7 +162,7 @@ class GalleryService {
       } catch {
         lost = true;
       }
-      if (!closed && !lost) renewalTimer = setTimeout(renew, 10_000);
+      scheduleRenewal();
     };
     renewalTimer = setTimeout(renew, 10_000);
     renewalTimer.unref?.();
