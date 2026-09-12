@@ -1921,23 +1921,43 @@
       "success": "Taxa de sucesso",
       "successDetail": "{{count}} chamada(s) com falha",
       "latency": "Latência média",
-      "latencyDetail": "Tempo total do provedor"
+      "latencyDetail": "Tempo total do provedor",
+      "coverage": "{{percent}}% das chamadas reportam a utilização de tokens"
     },
     "activity": {
       "title": "Consumo ao longo do tempo",
-      "callsDescription": "Solicitações diárias de saída para plugins ativados",
-      "tokensDescription": "Totais diários de tokens reportados pelos provedores",
-      "chartLabel": "Gráfico diário de {{metric}} do provedor"
+      "callsDescription": "Pedidos diários por modelo",
+      "tokensDescription": "Tokens reportados diariamente por modelo",
+      "chartLabel": "Gráfico diário de {{metric}} do provedor",
+      "compareHint": "Passe o cursor sobre um modelo ou dê-lhe foco para acompanhar a sua linha. Selecione-o para o manter destacado.",
+      "showAll": "Mostrar todos os modelos",
+      "highlightModel": "Destacar {{model}}",
+      "highlightedModel": "{{model}} destacado",
+      "allModels": "Todos os modelos",
+      "exploreDay": "Explorar a utilização diária",
+      "topModels": "Os 12 modelos mais utilizados são apresentados por predefinição. Selecione qualquer modelo abaixo para o acompanhar individualmente.",
+      "noTokens": "Nenhum token reportado neste período",
+      "breakdownUnavailable": "Não está disponível uma discriminação por modelo para este período.",
+      "peak": "Dia de pico",
+      "dayTotal": "Total diário",
+      "loadingModel": "A carregar {{model}}…"
     },
     "models": {
       "title": "Consumo por modelo",
       "description": "Os modelos com maior tráfego neste período.",
       "model": "Modelo",
       "success": "Sucesso",
-      "latency": "Latência"
+      "latency": "Latência",
+      "share": "Proporção das chamadas",
+      "notCharted": "Selecione para carregar este modelo no gráfico"
     },
     "providers": {
-      "title": "Tráfego de plugins ativados"
+      "title": "Tráfego de plugins ativados",
+      "description": "Volume de pedidos, fiabilidade e tempo de resposta por fornecedor.",
+      "share": "{{percent}}% das chamadas",
+      "failures": "{{count}} falhadas ou canceladas",
+      "models": "Modelos: {{count}}",
+      "noTokens": "Nenhum token reportado"
     },
     "capabilities": {
       "title": "Mix de capacidades",

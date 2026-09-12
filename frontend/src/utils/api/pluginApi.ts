@@ -56,6 +56,15 @@ export interface PluginUsageAnalytics {
     tokens: number;
     errors: number;
   }>;
+  modelSeries?: Array<{
+    model: string | null;
+    points: Array<{
+      timestamp: number;
+      calls: number;
+      tokens: number;
+      errors: number;
+    }>;
+  }>;
   plugins: Array<{
     pluginId: string;
     pluginName: string;
@@ -118,14 +127,25 @@ const emptyUsageAnalytics = (days: number): PluginUsageAnalytics => {
 };
 
 export const pluginApi = {
-  getUsage: (days = 30): Promise<ApiResponse<PluginUsageAnalytics>> => {
+  getUsage: (
+    days = 30,
+    model?: string,
+    to?: number
+  ): Promise<ApiResponse<PluginUsageAnalytics>> => {
     if (isDemoMode()) {
       return createDemoResponse<PluginUsageAnalytics>(
         emptyUsageAnalytics(days)
       );
     }
     return api
-      .get('/plugins/usage', { params: { days } })
+      .get('/plugins/usage', {
+        params: {
+          days,
+          ...(model === undefined
+            ? {}
+            : { model, ...(to === undefined ? {} : { to }) }),
+        },
+      })
       .then(res => res.data);
   },
 

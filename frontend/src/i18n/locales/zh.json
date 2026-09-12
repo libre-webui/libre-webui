@@ -1921,23 +1921,43 @@
       "success": "成功率",
       "successDetail": "{{count}} 次失败调用",
       "latency": "平均延迟",
-      "latencyDetail": "端到端提供商耗时"
+      "latencyDetail": "端到端提供商耗时",
+      "coverage": "{{percent}}% 的调用报告了令牌用量"
     },
     "activity": {
       "title": "随时间变化的消耗",
-      "callsDescription": "每日对已启用插件的出站请求",
-      "tokensDescription": "提供商报告的每日 token 总量",
-      "chartLabel": "每日提供商 {{metric}} 图表"
+      "callsDescription": "按模型统计的每日请求",
+      "tokensDescription": "按模型统计的每日已报告令牌",
+      "chartLabel": "每日提供商 {{metric}} 图表",
+      "compareHint": "将指针悬停在模型上或将焦点移到模型，即可查看其曲线。选中模型可保持高亮显示。",
+      "showAll": "显示所有模型",
+      "highlightModel": "高亮显示 {{model}}",
+      "highlightedModel": "{{model}} 已高亮显示",
+      "allModels": "所有模型",
+      "exploreDay": "查看每日用量",
+      "topModels": "默认显示使用量最高的 12 个模型。选择下方任意模型，即可单独查看其曲线。",
+      "noTokens": "此期间未报告令牌用量",
+      "breakdownUnavailable": "此期间暂无按模型细分的数据。",
+      "peak": "用量最高日",
+      "dayTotal": "每日总计",
+      "loadingModel": "正在加载 {{model}}…"
     },
     "models": {
       "title": "模型消耗",
       "description": "此期间承载最多流量的模型。",
       "model": "模型",
       "success": "成功",
-      "latency": "延迟"
+      "latency": "延迟",
+      "share": "调用占比",
+      "notCharted": "选择以在图表中加载此模型"
     },
     "providers": {
-      "title": "已启用插件的流量"
+      "title": "已启用插件的流量",
+      "description": "按提供商查看请求量、可靠性和响应时间。",
+      "share": "占调用总数的 {{percent}}%",
+      "failures": "{{count}} 次失败或已取消",
+      "models": "模型：{{count}}",
+      "noTokens": "未报告令牌用量"
     },
     "capabilities": {
       "title": "能力组合",

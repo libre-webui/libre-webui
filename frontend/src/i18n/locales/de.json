@@ -1921,23 +1921,43 @@
       "success": "Erfolgsquote",
       "successDetail": "{{count}} fehlgeschlagene Aufrufe",
       "latency": "Durchschnittliche Latenz",
-      "latencyDetail": "Ende-zu-Ende-Anbieterzeit"
+      "latencyDetail": "Ende-zu-Ende-Anbieterzeit",
+      "coverage": "{{percent}} % der Aufrufe melden die Tokennutzung"
     },
     "activity": {
       "title": "Verbrauch im Zeitverlauf",
-      "callsDescription": "Tägliche ausgehende Anfragen an aktivierte Plugins",
-      "tokensDescription": "Tägliche von Anbietern gemeldete Token-Gesamtsummen",
-      "chartLabel": "Tägliches Anbieter-{{metric}}-Diagramm"
+      "callsDescription": "Tägliche Anfragen nach Modell",
+      "tokensDescription": "Täglich gemeldete Tokens nach Modell",
+      "chartLabel": "Tägliches Anbieter-{{metric}}-Diagramm",
+      "compareHint": "Bewegen Sie den Zeiger über ein Modell oder fokussieren Sie es, um seiner Linie zu folgen. Wählen Sie es aus, um die Hervorhebung beizubehalten.",
+      "showAll": "Alle Modelle anzeigen",
+      "highlightModel": "{{model}} hervorheben",
+      "highlightedModel": "{{model}} hervorgehoben",
+      "allModels": "Alle Modelle",
+      "exploreDay": "Tägliche Nutzung erkunden",
+      "topModels": "Standardmäßig werden die 12 meistgenutzten Modelle angezeigt. Wählen Sie unten ein beliebiges Modell aus, um es einzeln zu verfolgen.",
+      "noTokens": "Keine Tokens in diesem Zeitraum gemeldet",
+      "breakdownUnavailable": "Für diesen Zeitraum ist keine Aufschlüsselung nach Modell verfügbar.",
+      "peak": "Tag mit höchster Nutzung",
+      "dayTotal": "Tagessumme",
+      "loadingModel": "{{model}} wird geladen…"
     },
     "models": {
       "title": "Modellverbrauch",
       "description": "Die Modelle mit dem meisten Datenverkehr in diesem Zeitraum.",
       "model": "Modell",
       "success": "Erfolg",
-      "latency": "Latenz"
+      "latency": "Latenz",
+      "share": "Anteil der Aufrufe",
+      "notCharted": "Auswählen, um dieses Modell im Diagramm zu laden"
     },
     "providers": {
-      "title": "Aktivierter Plugin-Datenverkehr"
+      "title": "Aktivierter Plugin-Datenverkehr",
+      "description": "Anfragevolumen, Zuverlässigkeit und Antwortzeit nach Anbieter.",
+      "share": "{{percent}} % der Aufrufe",
+      "failures": "{{count}} fehlgeschlagen oder abgebrochen",
+      "models": "Modelle: {{count}}",
+      "noTokens": "Keine Tokens gemeldet"
     },
     "capabilities": {
       "title": "Fähigkeitsmix",

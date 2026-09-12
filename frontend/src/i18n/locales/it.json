@@ -1921,23 +1921,43 @@
       "success": "Tasso di successo",
       "successDetail": "{{count}} chiamate non riuscite",
       "latency": "Latenza media",
-      "latencyDetail": "Tempo end-to-end del provider"
+      "latencyDetail": "Tempo end-to-end del provider",
+      "coverage": "Il {{percent}}% delle chiamate segnala l’utilizzo di token"
     },
     "activity": {
       "title": "Consumo nel tempo",
-      "callsDescription": "Richieste giornaliere in uscita ai plugin abilitati",
-      "tokensDescription": "Totali giornalieri di token segnalati dai provider",
-      "chartLabel": "Grafico giornaliero del {{metric}} del provider"
+      "callsDescription": "Richieste giornaliere per modello",
+      "tokensDescription": "Token segnalati giornalmente per modello",
+      "chartLabel": "Grafico giornaliero del {{metric}} del provider",
+      "compareHint": "Passa il puntatore su un modello o sposta il focus su di esso per seguirne la linea. Selezionalo per mantenerlo evidenziato.",
+      "showAll": "Mostra tutti i modelli",
+      "highlightModel": "Evidenzia {{model}}",
+      "highlightedModel": "{{model}} evidenziato",
+      "allModels": "Tutti i modelli",
+      "exploreDay": "Esplora l’utilizzo giornaliero",
+      "topModels": "Per impostazione predefinita vengono mostrati i 12 modelli più utilizzati. Seleziona un modello qui sotto per seguirlo singolarmente.",
+      "noTokens": "Nessun token segnalato in questo periodo",
+      "breakdownUnavailable": "La suddivisione per modello non è disponibile per questo periodo.",
+      "peak": "Giorno di picco",
+      "dayTotal": "Totale giornaliero",
+      "loadingModel": "Caricamento di {{model}}…"
     },
     "models": {
       "title": "Consumo dei modelli",
       "description": "I modelli con il maggior traffico in questo periodo.",
       "model": "Modello",
       "success": "Successo",
-      "latency": "Latenza"
+      "latency": "Latenza",
+      "share": "Quota delle chiamate",
+      "notCharted": "Seleziona per caricare questo modello nel grafico"
     },
     "providers": {
-      "title": "Traffico dei plugin abilitati"
+      "title": "Traffico dei plugin abilitati",
+      "description": "Volume delle richieste, affidabilità e tempo di risposta per fornitore.",
+      "share": "{{percent}}% delle chiamate",
+      "failures": "{{count}} non riuscite o annullate",
+      "models": "Modelli: {{count}}",
+      "noTokens": "Nessun token segnalato"
     },
     "capabilities": {
       "title": "Mix di capacità",

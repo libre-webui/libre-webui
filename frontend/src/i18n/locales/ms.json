@@ -1921,23 +1921,43 @@
       "success": "Kadar kejayaan",
       "successDetail": "{{count}} panggilan gagal",
       "latency": "Latensi purata",
-      "latencyDetail": "Masa pembekal hujung ke hujung"
+      "latencyDetail": "Masa pembekal hujung ke hujung",
+      "coverage": "{{percent}}% panggilan melaporkan penggunaan token"
     },
     "activity": {
       "title": "Penggunaan dari semasa ke semasa",
-      "callsDescription": "Permintaan keluar harian kepada pemalam yang didayakan",
-      "tokensDescription": "Jumlah token harian dilaporkan oleh pembekal",
-      "chartLabel": "Carta {{metric}} pembekal harian"
+      "callsDescription": "Permintaan harian mengikut model",
+      "tokensDescription": "Token yang dilaporkan setiap hari mengikut model",
+      "chartLabel": "Carta {{metric}} pembekal harian",
+      "compareHint": "Halakan penuding pada model atau fokuskan model untuk menjejaki garisnya. Pilih model untuk mengekalkan sorotan.",
+      "showAll": "Tunjukkan semua model",
+      "highlightModel": "Sorot {{model}}",
+      "highlightedModel": "{{model}} disorot",
+      "allModels": "Semua model",
+      "exploreDay": "Terokai penggunaan harian",
+      "topModels": "Secara lalai, 12 model yang paling banyak digunakan ditunjukkan. Pilih mana-mana model di bawah untuk menjejakinya secara individu.",
+      "noTokens": "Tiada token dilaporkan dalam tempoh ini",
+      "breakdownUnavailable": "Pecahan mengikut model tidak tersedia untuk tempoh ini.",
+      "peak": "Hari paling sibuk",
+      "dayTotal": "Jumlah harian",
+      "loadingModel": "Memuatkan {{model}}…"
     },
     "models": {
       "title": "Penggunaan model",
       "description": "Model yang membawa trafik paling banyak dalam tempoh ini.",
       "model": "Model",
       "success": "Berjaya",
-      "latency": "Latensi"
+      "latency": "Latensi",
+      "share": "Bahagian panggilan",
+      "notCharted": "Pilih untuk memuatkan model ini dalam carta"
     },
     "providers": {
-      "title": "Trafik pemalam didayakan"
+      "title": "Trafik pemalam didayakan",
+      "description": "Jumlah permintaan, kebolehpercayaan dan masa respons mengikut penyedia.",
+      "share": "{{percent}}% daripada panggilan",
+      "failures": "{{count}} gagal atau dibatalkan",
+      "models": "Model: {{count}}",
+      "noTokens": "Tiada token dilaporkan"
     },
     "capabilities": {
       "title": "Campuran keupayaan",

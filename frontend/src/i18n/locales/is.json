@@ -1921,23 +1921,43 @@
       "success": "Árangursprósent",
       "successDetail": "{{count}} misheppnuð köll",
       "latency": "Meðaltal seinkunar",
-      "latencyDetail": "Heildartími þjónustu"
+      "latencyDetail": "Heildartími þjónustu",
+      "coverage": "{{percent}}% kalla tilkynna tókanotkun"
     },
     "activity": {
       "title": "Notkun yfir tíma",
-      "callsDescription": "Daglegar útleiðarbeiningar til virkra viðbóta",
-      "tokensDescription": "Daglegar tölur um tákn frá þjónustum",
-      "chartLabel": "Daglegt graf yfir {{metric}} þjónustu"
+      "callsDescription": "Daglegar beiðnir eftir líkani",
+      "tokensDescription": "Daglega tilkynnt tókanotkun eftir líkani",
+      "chartLabel": "Daglegt graf yfir {{metric}} þjónustu",
+      "compareHint": "Haltu bendlinum yfir líkani eða færðu fókus á það til að fylgja línunni. Veldu það til að halda því auðkenndu.",
+      "showAll": "Sýna öll líkön",
+      "highlightModel": "Auðkenna {{model}}",
+      "highlightedModel": "{{model}} auðkennt",
+      "allModels": "Öll líkön",
+      "exploreDay": "Skoða daglega notkun",
+      "topModels": "Sjálfgefið eru 12 mest notuðu líkönin sýnd. Veldu hvaða líkan sem er hér fyrir neðan til að skoða það sérstaklega.",
+      "noTokens": "Engin tókanotkun tilkynnt á þessu tímabili",
+      "breakdownUnavailable": "Sundurliðun eftir líkani er ekki tiltæk fyrir þetta tímabil.",
+      "peak": "Dagur með mesta notkun",
+      "dayTotal": "Daglegt heildarmagn",
+      "loadingModel": "Hleð {{model}}…"
     },
     "models": {
       "title": "Notkun líkana",
       "description": "Líkönin með mest umferð á þessu tímabili.",
       "model": "Líkan",
       "success": "Tókst",
-      "latency": "Seinkun"
+      "latency": "Seinkun",
+      "share": "Hlutfall kalla",
+      "notCharted": "Veldu til að hlaða þessu líkani í grafið"
     },
     "providers": {
-      "title": "Umferð virkra viðbóta"
+      "title": "Umferð virkra viðbóta",
+      "description": "Fjöldi beiðna, áreiðanleiki og svartími eftir þjónustuveitanda.",
+      "share": "{{percent}}% kalla",
+      "failures": "{{count}} mistókust eða var hætt við",
+      "models": "Líkön: {{count}}",
+      "noTokens": "Engin tókanotkun tilkynnt"
     },
     "capabilities": {
       "title": "Fjölbreytni getu",

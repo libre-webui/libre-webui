@@ -1921,23 +1921,43 @@
       "success": "Úspěšnost",
       "successDetail": "{{count}} neúspěšných volání",
       "latency": "Průměrná latence",
-      "latencyDetail": "Celková doba odpovědi poskytovatele"
+      "latencyDetail": "Celková doba odpovědi poskytovatele",
+      "coverage": "{{percent}} % volání hlásí využití tokenů"
     },
     "activity": {
       "title": "Spotřeba v čase",
-      "callsDescription": "Denní odchozí požadavky na povolené zásuvné moduly",
-      "tokensDescription": "Denní součty tokenů nahlášené poskytovateli",
-      "chartLabel": "Graf denního {{metric}} poskytovatele"
+      "callsDescription": "Denní požadavky podle modelů",
+      "tokensDescription": "Denně hlášené tokeny podle modelů",
+      "chartLabel": "Graf denního {{metric}} poskytovatele",
+      "compareHint": "Najeďte na model ukazatelem nebo na něj přesuňte fokus a sledujte jeho křivku. Výběrem modelu zachováte zvýraznění.",
+      "showAll": "Zobrazit všechny modely",
+      "highlightModel": "Zvýraznit {{model}}",
+      "highlightedModel": "{{model}} zvýrazněn",
+      "allModels": "Všechny modely",
+      "exploreDay": "Prozkoumat denní využití",
+      "topModels": "Ve výchozím nastavení se zobrazuje 12 nejpoužívanějších modelů. Vyberte libovolný model níže a sledujte jej samostatně.",
+      "noTokens": "V tomto období nebyly nahlášeny žádné tokeny",
+      "breakdownUnavailable": "Pro toto období není k dispozici rozdělení podle modelů.",
+      "peak": "Den s nejvyšším využitím",
+      "dayTotal": "Denní součet",
+      "loadingModel": "Načítání {{model}}…"
     },
     "models": {
       "title": "Spotřeba modelů",
       "description": "Modely s největším provozem v tomto období.",
       "model": "Model",
       "success": "Úspěšnost",
-      "latency": "Latence"
+      "latency": "Latence",
+      "share": "Podíl volání",
+      "notCharted": "Vyberte pro načtení tohoto modelu do grafu"
     },
     "providers": {
-      "title": "Provoz povolených zásuvných modulů"
+      "title": "Provoz povolených zásuvných modulů",
+      "description": "Objem požadavků, spolehlivost a doba odezvy podle poskytovatele.",
+      "share": "{{percent}} % volání",
+      "failures": "Neúspěšná nebo zrušená: {{count}}",
+      "models": "Modely: {{count}}",
+      "noTokens": "Nebyly nahlášeny žádné tokeny"
     },
     "capabilities": {
       "title": "Mix schopností",

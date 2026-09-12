@@ -1921,23 +1921,43 @@
       "success": "Framgångsfrekvens",
       "successDetail": "{{count}} misslyckade anrop",
       "latency": "Genomsnittlig latens",
-      "latencyDetail": "Leverantörens tid från ände till ände"
+      "latencyDetail": "Leverantörens tid från ände till ände",
+      "coverage": "{{percent}} % av anropen rapporterar tokenanvändning"
     },
     "activity": {
       "title": "Förbrukning över tid",
-      "callsDescription": "Dagliga utgående förfrågningar till aktiverade plugins",
-      "tokensDescription": "Dagliga token-totaler rapporterade av leverantörer",
-      "chartLabel": "Dagligt diagram över leverantörens {{metric}}"
+      "callsDescription": "Dagliga förfrågningar per modell",
+      "tokensDescription": "Dagligen rapporterade token per modell",
+      "chartLabel": "Dagligt diagram över leverantörens {{metric}}",
+      "compareHint": "Håll pekaren över en modell eller ge den fokus för att följa dess kurva. Välj den för att behålla markeringen.",
+      "showAll": "Visa alla modeller",
+      "highlightModel": "Markera {{model}}",
+      "highlightedModel": "{{model}} markerad",
+      "allModels": "Alla modeller",
+      "exploreDay": "Utforska daglig användning",
+      "topModels": "De 12 mest använda modellerna visas som standard. Välj valfri modell nedan för att följa den enskilt.",
+      "noTokens": "Inga token rapporterade under den här perioden",
+      "breakdownUnavailable": "En uppdelning per modell är inte tillgänglig för den här perioden.",
+      "peak": "Dag med högst användning",
+      "dayTotal": "Daglig totalsumma",
+      "loadingModel": "Läser in {{model}}…"
     },
     "models": {
       "title": "Modellförbrukning",
       "description": "Modellerna med mest trafik under denna period.",
       "model": "Modell",
       "success": "Lyckade",
-      "latency": "Latens"
+      "latency": "Latens",
+      "share": "Andel av anrop",
+      "notCharted": "Välj för att läsa in den här modellen i diagrammet"
     },
     "providers": {
-      "title": "Trafik för aktiverade plugins"
+      "title": "Trafik för aktiverade plugins",
+      "description": "Antal förfrågningar, tillförlitlighet och svarstid per leverantör.",
+      "share": "{{percent}} % av anropen",
+      "failures": "{{count}} misslyckade eller avbrutna",
+      "models": "Modeller: {{count}}",
+      "noTokens": "Inga token rapporterade"
     },
     "capabilities": {
       "title": "Kapabilitetsmix",

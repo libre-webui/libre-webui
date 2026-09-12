@@ -2670,7 +2670,12 @@
         {
           "file": "docs/37-SYSTEM_MONITORING.md",
           "patterns": [
-            "The Usage page \\(`/usage`\\) charts user-attributed model and provider work"
+            "The Usage page \\(`/usage`\\) charts user-attributed model and provider work",
+            "top 12 model names by call count",
+            "Show all models",
+            "modelSeries",
+            "at most 13 named model lines",
+            "overview's `range.to`"
           ]
         },
         {
@@ -2691,6 +2696,82 @@
           "runner": "test:package",
           "name": "the usage endpoint is explicitly protected by administrator middleware",
           "behaviorPatterns": ["routeSource", "requireAdmin"]
+        },
+        {
+          "file": "scripts/test-plugin-usage-analytics.mjs",
+          "runner": "test:package",
+          "name": "model chart series bound names, combine providers, and reconcile UTC daily counters",
+          "behaviorPatterns": [
+            "analytics\\.modelSeries",
+            "assertDailyModelReconciliation",
+            "analytics\\.models\\.filter"
+          ]
+        },
+        {
+          "file": "scripts/test-plugin-usage-analytics.mjs",
+          "runner": "test:package",
+          "name": "focused model series isolate exact rare names without double counting",
+          "behaviorPatterns": [
+            "focused\\.modelSeries",
+            "focused\\.series, overview\\.series",
+            "assertDailyModelReconciliation\\(focused\\)",
+            "quotedModel"
+          ]
+        },
+        {
+          "file": "scripts/test-plugin-usage-analytics.mjs",
+          "runner": "test:package",
+          "name": "focused usage snapshots exclude later events and keep overview UTC boundaries",
+          "behaviorPatterns": [
+            "overview\\.range\\.to \\+ 2",
+            "focused\\.range, overview\\.range",
+            "focused\\.heatmap, overview\\.heatmap",
+            "assertDailyModelReconciliation\\(focused\\)"
+          ]
+        },
+        {
+          "file": "scripts/test-plugin-usage-analytics.mjs",
+          "runner": "test:package",
+          "name": "usage route rejects malformed model focus and preserves exact scalar names",
+          "behaviorPatterns": [
+            "response\\.status, 400",
+            "requests\\.at\\(-1\\)",
+            "repeat\\(1024\\)",
+            "snapshotTo: Number\\(to\\)"
+          ]
+        },
+        {
+          "file": "frontend/e2e/plugin-usage.spec.ts",
+          "runner": "test:e2e",
+          "name": "model colors link the chart and heatmap while highlighting preserves totals",
+          "behaviorPatterns": [
+            "usage-heatmap",
+            "data-highlighted",
+            "tableBefore",
+            "providersBefore"
+          ]
+        },
+        {
+          "file": "frontend/e2e/plugin-usage.spec.ts",
+          "runner": "test:e2e",
+          "name": "the daily explorer exposes per-model Calls and Tokens with keyboard navigation",
+          "behaviorPatterns": [
+            "Explore daily usage",
+            "slider\\.press\\('ArrowRight'\\)",
+            "usage-chart-day-detail"
+          ]
+        },
+        {
+          "file": "frontend/e2e/plugin-usage.spec.ts",
+          "runner": "test:e2e",
+          "name": "models outside the busiest twelve load and highlight their own history independently",
+          "behaviorPatterns": [
+            "requestedModels",
+            "outsideModel",
+            "otherOutsideModel",
+            "178 Calls",
+            "Show all models"
+          ]
         },
         {
           "file": "scripts/test-cost-governance.mjs",
@@ -2768,7 +2849,37 @@
               "file": "backend/src/services/pluginUsageService.ts",
               "patterns": [
                 "export interface PluginUsageEventInput",
-                "export interface PluginUsageAnalytics"
+                "export interface PluginUsageAnalytics",
+                "modelSeries: Array",
+                "model: string \\| null",
+                "focusedModel\\?: string",
+                "snapshotTo\\?: number"
+              ]
+            },
+            {
+              "file": "backend/src/routes/plugins.ts",
+              "patterns": [
+                "req\\.query\\.model",
+                "focusedModel\\.length > 1024",
+                "req\\.query\\.to",
+                "Number\\.isSafeInteger\\(snapshotTo\\)",
+                "getAnalytics\\(\\s*days,\\s*focusedModel,\\s*snapshotTo"
+              ]
+            },
+            {
+              "file": "frontend/src/utils/api/pluginApi.ts",
+              "patterns": [
+                "export interface PluginUsageAnalytics",
+                "modelSeries\\?: Array",
+                "to\\?: number"
+              ]
+            },
+            {
+              "file": "frontend/src/components/usage/UsageChart.tsx",
+              "patterns": [
+                "interface UsageChartProps",
+                "analytics: PluginUsageAnalytics",
+                "usage-chart-day-slider"
               ]
             }
           ]
@@ -2780,7 +2891,20 @@
           "evidence": [
             {
               "file": "backend/src/services/pluginUsageService.ts",
-              "patterns": ["MAX_ANALYTICS_DAYS", "RETENTION_DAYS"]
+              "patterns": [
+                "MAX_ANALYTICS_DAYS",
+                "RETENTION_DAYS",
+                "MODEL_SERIES_MAX_MODELS = 12"
+              ]
+            },
+            {
+              "file": "frontend/src/utils/pluginUsage.ts",
+              "patterns": [
+                "getUsageModelColors",
+                "getUsageChartSeries",
+                "matchesUsageSnapshot",
+                "key: 'total'"
+              ]
             }
           ]
         }

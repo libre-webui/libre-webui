@@ -1921,23 +1921,43 @@
       "success": "Wskaźnik sukcesu",
       "successDetail": "{{count}} nieudanych wywołań",
       "latency": "Średnie opóźnienie",
-      "latencyDetail": "Czas dostawcy end-to-end"
+      "latencyDetail": "Czas dostawcy end-to-end",
+      "coverage": "{{percent}}% wywołań raportuje użycie tokenów"
     },
     "activity": {
       "title": "Zużycie w czasie",
-      "callsDescription": "Codzienne żądania wychodzące do włączonych wtyczek",
-      "tokensDescription": "Codzienne sumy tokenów zgłaszane przez dostawców",
-      "chartLabel": "Codzienny wykres {{metric}} dostawcy"
+      "callsDescription": "Dzienne żądania według modeli",
+      "tokensDescription": "Dziennie zgłaszane tokeny według modeli",
+      "chartLabel": "Codzienny wykres {{metric}} dostawcy",
+      "compareHint": "Najedź na model lub ustaw na nim fokus, aby prześledzić jego linię. Wybierz go, aby zachować wyróżnienie.",
+      "showAll": "Pokaż wszystkie modele",
+      "highlightModel": "Wyróżnij {{model}}",
+      "highlightedModel": "Wyróżniono {{model}}",
+      "allModels": "Wszystkie modele",
+      "exploreDay": "Przeglądaj dzienne użycie",
+      "topModels": "Domyślnie wyświetlanych jest 12 najczęściej używanych modeli. Wybierz dowolny model poniżej, aby prześledzić go osobno.",
+      "noTokens": "Nie zgłoszono tokenów w tym okresie",
+      "breakdownUnavailable": "Podział według modeli nie jest dostępny dla tego okresu.",
+      "peak": "Dzień największego użycia",
+      "dayTotal": "Suma dzienna",
+      "loadingModel": "Ładowanie {{model}}…"
     },
     "models": {
       "title": "Zużycie modeli",
       "description": "Modele generujące największy ruch w tym okresie.",
       "model": "Model",
       "success": "Sukces",
-      "latency": "Opóźnienie"
+      "latency": "Opóźnienie",
+      "share": "Udział w wywołaniach",
+      "notCharted": "Wybierz, aby wczytać ten model na wykres"
     },
     "providers": {
-      "title": "Ruch włączonych wtyczek"
+      "title": "Ruch włączonych wtyczek",
+      "description": "Liczba żądań, niezawodność i czas odpowiedzi według dostawcy.",
+      "share": "{{percent}}% wywołań",
+      "failures": "Nieudane lub anulowane: {{count}}",
+      "models": "Modele: {{count}}",
+      "noTokens": "Nie zgłoszono tokenów"
     },
     "capabilities": {
       "title": "Rozkład możliwości",

@@ -338,10 +338,49 @@ router.get(
       return;
     }
 
+    const focusedModel = req.query.model;
+    if (
+      focusedModel !== undefined &&
+      (typeof focusedModel !== 'string' ||
+        focusedModel.length === 0 ||
+        focusedModel.length > 1024)
+    ) {
+      res.status(400).json({
+        success: false,
+        error: 'model must be a non-empty string of at most 1024 characters',
+      });
+      return;
+    }
+
+    const snapshotValue = req.query.to;
+    const snapshotTo =
+      typeof snapshotValue === 'string' ? Number(snapshotValue) : undefined;
+    if (
+      snapshotValue !== undefined &&
+      (focusedModel === undefined ||
+        typeof snapshotValue !== 'string' ||
+        snapshotValue.trim().length === 0 ||
+        snapshotTo === undefined ||
+        !Number.isSafeInteger(snapshotTo) ||
+        snapshotTo < 0 ||
+        snapshotTo > Date.now())
+    ) {
+      res.status(400).json({
+        success: false,
+        error:
+          'to requires model and must be a non-negative integer timestamp not in the future',
+      });
+      return;
+    }
+
     try {
       res.json({
         success: true,
-        data: await pluginUsageService.getAnalytics(days),
+        data: await pluginUsageService.getAnalytics(
+          days,
+          focusedModel,
+          snapshotTo
+        ),
       });
     } catch (error: unknown) {
       res.status(500).json({

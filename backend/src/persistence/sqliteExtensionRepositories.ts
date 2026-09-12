@@ -594,6 +594,54 @@ class SQLitePluginUsageRepository implements PluginUsageRepository {
       .all(from, bucketMs, from, to) as Array<Record<string, unknown>>;
   }
 
+  async modelSeries(
+    from: number,
+    to: number,
+    bucketMs: number,
+    maximumModels: number,
+    focusedModel?: string
+  ) {
+    return this.database
+      .prepare(
+        `WITH top_models AS (
+           SELECT model, COUNT(*) AS calls
+             FROM plugin_usage_events
+            WHERE created_at >= ? AND created_at <= ?
+            GROUP BY model
+            ORDER BY calls DESC, model ASC LIMIT ?
+         ), selected_models AS (
+           SELECT model, calls FROM top_models
+           UNION
+           SELECT model, COUNT(*) AS calls
+             FROM plugin_usage_events
+            WHERE created_at >= ? AND created_at <= ? AND model = ?
+            GROUP BY model
+         )
+         SELECT CAST((events.created_at - ?) / ? AS INTEGER) AS bucket,
+                selected_models.model, COUNT(*) AS calls,
+                SUM(COALESCE(events.total_tokens, 0)) AS tokens,
+                SUM(CASE WHEN events.status = 'error' THEN 1 ELSE 0 END) AS errors
+           FROM plugin_usage_events AS events
+           LEFT JOIN selected_models ON selected_models.model = events.model
+          WHERE events.created_at >= ? AND events.created_at <= ?
+          GROUP BY bucket, selected_models.model
+          ORDER BY selected_models.model IS NULL ASC, MAX(selected_models.calls) DESC,
+                   selected_models.model ASC, bucket ASC`
+      )
+      .all(
+        from,
+        to,
+        maximumModels,
+        from,
+        to,
+        focusedModel ?? null,
+        from,
+        bucketMs,
+        from,
+        to
+      ) as Array<Record<string, unknown>>;
+  }
+
   async plugins(from: number, to: number) {
     return this.database
       .prepare(

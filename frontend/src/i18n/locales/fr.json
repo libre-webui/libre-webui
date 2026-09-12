@@ -1921,23 +1921,43 @@
       "success": "Taux de réussite",
       "successDetail": "{{count}} appel(s) échoué(s)",
       "latency": "Latence moyenne",
-      "latencyDetail": "Temps de bout en bout du fournisseur"
+      "latencyDetail": "Temps de bout en bout du fournisseur",
+      "coverage": "{{percent}} % des appels indiquent une utilisation de jetons"
     },
     "activity": {
       "title": "Consommation au fil du temps",
-      "callsDescription": "Requêtes sortantes quotidiennes vers les plugins activés",
-      "tokensDescription": "Totaux quotidiens de jetons signalés par les fournisseurs",
-      "chartLabel": "Graphique quotidien des {{metric}} du fournisseur"
+      "callsDescription": "Requêtes quotidiennes par modèle",
+      "tokensDescription": "Jetons signalés chaque jour par modèle",
+      "chartLabel": "Graphique quotidien des {{metric}} du fournisseur",
+      "compareHint": "Survolez un modèle ou donnez-lui le focus pour suivre sa courbe. Sélectionnez-le pour le garder en surbrillance.",
+      "showAll": "Afficher tous les modèles",
+      "highlightModel": "Mettre {{model}} en surbrillance",
+      "highlightedModel": "{{model}} en surbrillance",
+      "allModels": "Tous les modèles",
+      "exploreDay": "Explorer l’utilisation quotidienne",
+      "topModels": "Les 12 modèles les plus utilisés sont affichés par défaut. Sélectionnez un modèle ci-dessous pour suivre sa courbe individuellement.",
+      "noTokens": "Aucun jeton signalé pendant cette période",
+      "breakdownUnavailable": "La répartition par modèle n’est pas disponible pour cette période.",
+      "peak": "Jour de pointe",
+      "dayTotal": "Total quotidien",
+      "loadingModel": "Chargement de {{model}}…"
     },
     "models": {
       "title": "Consommation par modèle",
       "description": "Les modèles générant le plus de trafic sur cette période.",
       "model": "Modèle",
       "success": "Succès",
-      "latency": "Latence"
+      "latency": "Latence",
+      "share": "Part des appels",
+      "notCharted": "Sélectionnez ce modèle pour le charger dans le graphique"
     },
     "providers": {
-      "title": "Trafic des plugins activés"
+      "title": "Trafic des plugins activés",
+      "description": "Volume de requêtes, fiabilité et temps de réponse par fournisseur.",
+      "share": "{{percent}} % des appels",
+      "failures": "{{count}} en échec ou annulés",
+      "models": "Modèles : {{count}}",
+      "noTokens": "Aucun jeton signalé"
     },
     "capabilities": {
       "title": "Répartition des capacités",

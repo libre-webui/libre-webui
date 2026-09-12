@@ -1921,23 +1921,43 @@
       "success": "Başarı oranı",
       "successDetail": "{{count}} başarısız çağrı",
       "latency": "Ortalama gecikme",
-      "latencyDetail": "Uçtan uca sağlayıcı süresi"
+      "latencyDetail": "Uçtan uca sağlayıcı süresi",
+      "coverage": "Çağrıların %{{percent}} kadarı token kullanımını bildiriyor"
     },
     "activity": {
       "title": "Zamanla tüketim",
-      "callsDescription": "Etkin eklentilere günlük giden istekler",
-      "tokensDescription": "Sağlayıcılar tarafından bildirilen günlük token toplamları",
-      "chartLabel": "Günlük sağlayıcı {{metric}} grafiği"
+      "callsDescription": "Modele göre günlük istekler",
+      "tokensDescription": "Modele göre günlük bildirilen tokenlar",
+      "chartLabel": "Günlük sağlayıcı {{metric}} grafiği",
+      "compareHint": "Bir modelin çizgisini izlemek için üzerine gelin veya odağı modele taşıyın. Vurguyu korumak için modeli seçin.",
+      "showAll": "Tüm modelleri göster",
+      "highlightModel": "{{model}} modelini vurgula",
+      "highlightedModel": "{{model}} vurgulandı",
+      "allModels": "Tüm modeller",
+      "exploreDay": "Günlük kullanımı incele",
+      "topModels": "Varsayılan olarak en yoğun kullanılan 12 model gösterilir. Ayrı olarak izlemek için aşağıdan herhangi bir modeli seçin.",
+      "noTokens": "Bu dönemde token bildirilmedi",
+      "breakdownUnavailable": "Bu dönem için model bazında dağılım mevcut değil.",
+      "peak": "En yoğun gün",
+      "dayTotal": "Günlük toplam",
+      "loadingModel": "{{model}} yükleniyor…"
     },
     "models": {
       "title": "Model tüketimi",
       "description": "Bu dönemde en çok trafiği taşıyan modeller.",
       "model": "Model",
       "success": "Başarı",
-      "latency": "Gecikme"
+      "latency": "Gecikme",
+      "share": "Çağrı payı",
+      "notCharted": "Bu modeli grafiğe yüklemek için seçin"
     },
     "providers": {
-      "title": "Etkin eklenti trafiği"
+      "title": "Etkin eklenti trafiği",
+      "description": "Sağlayıcıya göre istek hacmi, güvenilirlik ve yanıt süresi.",
+      "share": "Çağrıların %{{percent}} kadarı",
+      "failures": "{{count}} başarısız veya iptal edilmiş",
+      "models": "Modeller: {{count}}",
+      "noTokens": "Token bildirilmedi"
     },
     "capabilities": {
       "title": "Yetenek dağılımı",

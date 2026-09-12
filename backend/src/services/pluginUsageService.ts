@@ -27,6 +27,7 @@ const MAX_ANALYTICS_DAYS = 365;
 const HEATMAP_DAYS = 365;
 const HEATMAP_TOP_MODELS = 5;
 const HEATMAP_MODELS_PER_DAY = 5;
+const MODEL_SERIES_MAX_MODELS = 12;
 const RETENTION_DAYS = 400;
 
 export type PluginUsageCapability =
@@ -73,6 +74,10 @@ export interface PluginUsageAnalytics {
     calls: number;
     tokens: number;
     errors: number;
+  }>;
+  modelSeries: Array<{
+    model: string | null;
+    points: PluginUsageAnalytics['series'];
   }>;
   plugins: Array<{
     pluginId: string;
@@ -208,39 +213,76 @@ class PluginUsageService {
     }
   }
 
-  async getAnalytics(requestedDays = 30): Promise<PluginUsageAnalytics> {
+  async getAnalytics(
+    requestedDays = 30,
+    focusedModel?: string,
+    snapshotTo?: number
+  ): Promise<PluginUsageAnalytics> {
     const days = Math.min(
       MAX_ANALYTICS_DAYS,
       Math.max(MIN_ANALYTICS_DAYS, Math.round(requestedDays))
     );
-    const to = Date.now();
+    const to = snapshotTo ?? Date.now();
     const startOfToday = new Date(to);
     startOfToday.setUTCHours(0, 0, 0, 0);
     const from = startOfToday.getTime() - (days - 1) * DAY_MS;
     const heatmapFrom = startOfToday.getTime() - (HEATMAP_DAYS - 1) * DAY_MS;
     const repository = this.repository();
-    const [totals, seriesRows, plugins, models, heatmapRows, capabilities] =
-      await Promise.all([
-        repository.totals(from, to),
-        repository.series(from, to, DAY_MS),
-        repository.plugins(from, to),
-        repository.models(from, to),
-        repository.heatmap(heatmapFrom, to, DAY_MS),
-        repository.capabilities(from, to),
-      ]);
+    const [
+      totals,
+      modelSeriesRows,
+      plugins,
+      models,
+      heatmapRows,
+      capabilities,
+    ] = await Promise.all([
+      repository.totals(from, to),
+      repository.modelSeries(
+        from,
+        to,
+        DAY_MS,
+        MODEL_SERIES_MAX_MODELS,
+        focusedModel
+      ),
+      repository.plugins(from, to),
+      repository.models(from, to),
+      repository.heatmap(heatmapFrom, to, DAY_MS),
+      repository.capabilities(from, to),
+    ]);
 
-    const seriesByBucket = new Map(
-      seriesRows.map(row => [asNumber(row.bucket), row])
-    );
-    const series = Array.from({ length: days }, (_, bucket) => {
-      const row = seriesByBucket.get(bucket);
-      return {
+    const emptySeries = (): PluginUsageAnalytics['series'] =>
+      Array.from({ length: days }, (_, bucket) => ({
         timestamp: from + bucket * DAY_MS,
-        calls: asNumber(row?.calls),
-        tokens: asNumber(row?.tokens),
-        errors: asNumber(row?.errors),
-      };
-    });
+        calls: 0,
+        tokens: 0,
+        errors: 0,
+      }));
+    const series = emptySeries();
+    const pointsByModel = new Map<
+      string | null,
+      PluginUsageAnalytics['series']
+    >();
+    // Both chart shapes share one SQL snapshot, including the remaining-model
+    // bucket, so their daily counters reconcile during concurrent metering.
+    for (const row of modelSeriesRows) {
+      const bucket = asNumber(row.bucket);
+      if (!Number.isInteger(bucket) || bucket < 0 || bucket >= days) continue;
+      const model = row.model === null ? null : String(row.model);
+      let points = pointsByModel.get(model);
+      if (!points) {
+        points = emptySeries();
+        pointsByModel.set(model, points);
+      }
+      for (const metric of ['calls', 'tokens', 'errors'] as const) {
+        const value = asNumber(row[metric]);
+        points[bucket][metric] += value;
+        series[bucket][metric] += value;
+      }
+    }
+    const modelSeries = [...pointsByModel].map(([model, points]) => ({
+      model,
+      points,
+    }));
 
     const heatmapBuckets = new Map<
       number,
@@ -294,6 +336,7 @@ class PluginUsageService {
         uniqueUsers: asNumber(totals.unique_users),
       },
       series,
+      modelSeries,
       plugins: plugins.map(row => ({
         pluginId: String(row.plugin_id),
         pluginName: String(row.plugin_name),
@@ -347,6 +390,7 @@ class PluginUsageService {
         tokens: 0,
         errors: 0,
       })),
+      modelSeries: [],
       plugins: [],
       models: [],
       capabilities: [],

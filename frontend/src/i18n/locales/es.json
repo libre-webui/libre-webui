@@ -1921,23 +1921,43 @@
       "success": "Tasa de éxito",
       "successDetail": "{{count}} llamada(s) fallida(s)",
       "latency": "Latencia media",
-      "latencyDetail": "Tiempo de extremo a extremo del proveedor"
+      "latencyDetail": "Tiempo de extremo a extremo del proveedor",
+      "coverage": "El {{percent}} % de las llamadas informa del uso de tokens"
     },
     "activity": {
       "title": "Consumo a lo largo del tiempo",
-      "callsDescription": "Solicitudes salientes diarias a los complementos habilitados",
-      "tokensDescription": "Totales diarios de tokens reportados por los proveedores",
-      "chartLabel": "Gráfico diario de {{metric}} del proveedor"
+      "callsDescription": "Solicitudes diarias por modelo",
+      "tokensDescription": "Tokens notificados diariamente por modelo",
+      "chartLabel": "Gráfico diario de {{metric}} del proveedor",
+      "compareHint": "Pasa el cursor sobre un modelo o dale el foco para seguir su línea. Selecciónalo para mantenerlo resaltado.",
+      "showAll": "Mostrar todos los modelos",
+      "highlightModel": "Resaltar {{model}}",
+      "highlightedModel": "{{model}} resaltado",
+      "allModels": "Todos los modelos",
+      "exploreDay": "Explorar el uso diario",
+      "topModels": "Los 12 modelos más utilizados se muestran de forma predeterminada. Selecciona cualquier modelo a continuación para seguirlo individualmente.",
+      "noTokens": "No se notificaron tokens en este período",
+      "breakdownUnavailable": "No hay un desglose por modelo disponible para este período.",
+      "peak": "Día de mayor uso",
+      "dayTotal": "Total diario",
+      "loadingModel": "Cargando {{model}}…"
     },
     "models": {
       "title": "Consumo por modelo",
       "description": "Los modelos con mayor tráfico en este período.",
       "model": "Modelo",
       "success": "Éxito",
-      "latency": "Latencia"
+      "latency": "Latencia",
+      "share": "Proporción de llamadas",
+      "notCharted": "Selecciona para cargar este modelo en el gráfico"
     },
     "providers": {
-      "title": "Tráfico de complementos habilitados"
+      "title": "Tráfico de complementos habilitados",
+      "description": "Volumen de solicitudes, fiabilidad y tiempo de respuesta por proveedor.",
+      "share": "{{percent}} % de las llamadas",
+      "failures": "{{count}} fallidas o canceladas",
+      "models": "Modelos: {{count}}",
+      "noTokens": "No se notificaron tokens"
     },
     "capabilities": {
       "title": "Mezcla de capacidades",

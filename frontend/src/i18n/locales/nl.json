@@ -1921,23 +1921,43 @@
       "success": "Succespercentage",
       "successDetail": "{{count}} mislukte aanroep(en)",
       "latency": "Gemiddelde latentie",
-      "latencyDetail": "End-to-end providertijd"
+      "latencyDetail": "End-to-end providertijd",
+      "coverage": "{{percent}}% van de aanroepen rapporteert tokengebruik"
     },
     "activity": {
       "title": "Verbruik over tijd",
-      "callsDescription": "Dagelijkse uitgaande verzoeken naar ingeschakelde plug-ins",
-      "tokensDescription": "Dagelijkse token totalen gerapporteerd door providers",
-      "chartLabel": "Dagelijkse provider {{metric}} grafiek"
+      "callsDescription": "Dagelijkse aanvragen per model",
+      "tokensDescription": "Dagelijks gerapporteerde tokens per model",
+      "chartLabel": "Dagelijkse provider {{metric}} grafiek",
+      "compareHint": "Beweeg de aanwijzer over een model of geef het focus om de lijn te volgen. Selecteer het om het gemarkeerd te houden.",
+      "showAll": "Alle modellen tonen",
+      "highlightModel": "{{model}} markeren",
+      "highlightedModel": "{{model}} gemarkeerd",
+      "allModels": "Alle modellen",
+      "exploreDay": "Dagelijks gebruik bekijken",
+      "topModels": "Standaard worden de 12 meest gebruikte modellen getoond. Selecteer hieronder een model om het afzonderlijk te volgen.",
+      "noTokens": "Geen tokens gerapporteerd in deze periode",
+      "breakdownUnavailable": "Er is geen uitsplitsing per model beschikbaar voor deze periode.",
+      "peak": "Drukste dag",
+      "dayTotal": "Dagtotaal",
+      "loadingModel": "{{model}} laden…"
     },
     "models": {
       "title": "Modelverbruik",
       "description": "De modellen met het meeste verkeer in deze periode.",
       "model": "Model",
       "success": "Succes",
-      "latency": "Latentie"
+      "latency": "Latentie",
+      "share": "Aandeel van de aanroepen",
+      "notCharted": "Selecteer om dit model in de grafiek te laden"
     },
     "providers": {
-      "title": "Verkeer van ingeschakelde plug-ins"
+      "title": "Verkeer van ingeschakelde plug-ins",
+      "description": "Aanvraagvolume, betrouwbaarheid en reactietijd per provider.",
+      "share": "{{percent}}% van de aanroepen",
+      "failures": "{{count}} mislukt of geannuleerd",
+      "models": "Modellen: {{count}}",
+      "noTokens": "Geen tokens gerapporteerd"
     },
     "capabilities": {
       "title": "Mogelijkhedenmix",

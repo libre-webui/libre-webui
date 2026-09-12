@@ -1921,23 +1921,43 @@
       "success": "Tingkat keberhasilan",
       "successDetail": "{{count}} panggilan gagal",
       "latency": "Latensi rata-rata",
-      "latencyDetail": "Waktu provider end-to-end"
+      "latencyDetail": "Waktu provider end-to-end",
+      "coverage": "{{percent}}% panggilan melaporkan penggunaan token"
     },
     "activity": {
       "title": "Konsumsi dari waktu ke waktu",
-      "callsDescription": "Permintaan keluar harian ke plugin yang diaktifkan",
-      "tokensDescription": "Total token harian yang dilaporkan provider",
-      "chartLabel": "Bagan {{metric}} provider harian"
+      "callsDescription": "Permintaan harian per model",
+      "tokensDescription": "Token yang dilaporkan setiap hari per model",
+      "chartLabel": "Bagan {{metric}} provider harian",
+      "compareHint": "Arahkan penunjuk ke model atau fokuskan model untuk menelusuri garisnya. Pilih model agar tetap disorot.",
+      "showAll": "Tampilkan semua model",
+      "highlightModel": "Sorot {{model}}",
+      "highlightedModel": "{{model}} disorot",
+      "allModels": "Semua model",
+      "exploreDay": "Jelajahi penggunaan harian",
+      "topModels": "Secara default, 12 model yang paling banyak digunakan ditampilkan. Pilih model mana pun di bawah untuk menelusurinya satu per satu.",
+      "noTokens": "Tidak ada token yang dilaporkan dalam periode ini",
+      "breakdownUnavailable": "Rincian per model tidak tersedia untuk periode ini.",
+      "peak": "Hari tersibuk",
+      "dayTotal": "Total harian",
+      "loadingModel": "Memuat {{model}}…"
     },
     "models": {
       "title": "Konsumsi model",
       "description": "Model dengan traffic terbanyak pada periode ini.",
       "model": "Model",
       "success": "Berhasil",
-      "latency": "Latensi"
+      "latency": "Latensi",
+      "share": "Proporsi panggilan",
+      "notCharted": "Pilih untuk memuat model ini dalam grafik"
     },
     "providers": {
-      "title": "Traffic plugin aktif"
+      "title": "Traffic plugin aktif",
+      "description": "Volume permintaan, keandalan, dan waktu respons per penyedia.",
+      "share": "{{percent}}% dari panggilan",
+      "failures": "{{count}} gagal atau dibatalkan",
+      "models": "Model: {{count}}",
+      "noTokens": "Tidak ada token yang dilaporkan"
     },
     "capabilities": {
       "title": "Bauran kapabilitas",

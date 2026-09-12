@@ -1921,23 +1921,43 @@
       "success": "Succesrate",
       "successDetail": "{{count}} mislykkede kald",
       "latency": "Gennemsnitlig latens",
-      "latencyDetail": "Ende-til-ende udbydertid"
+      "latencyDetail": "Ende-til-ende udbydertid",
+      "coverage": "{{percent}} % af kaldene rapporterer tokenforbrug"
     },
     "activity": {
       "title": "Forbrug over tid",
-      "callsDescription": "Daglige udgående anmodninger til aktiverede plugins",
-      "tokensDescription": "Daglige token-totaler rapporteret af udbydere",
-      "chartLabel": "Daglig udbyder {{metric}}-diagram"
+      "callsDescription": "Daglige forespørgsler efter model",
+      "tokensDescription": "Dagligt rapporterede tokens efter model",
+      "chartLabel": "Daglig udbyder {{metric}}-diagram",
+      "compareHint": "Hold markøren over en model, eller giv den fokus for at følge dens kurve. Vælg den for at beholde fremhævningen.",
+      "showAll": "Vis alle modeller",
+      "highlightModel": "Fremhæv {{model}}",
+      "highlightedModel": "{{model}} fremhævet",
+      "allModels": "Alle modeller",
+      "exploreDay": "Udforsk dagligt forbrug",
+      "topModels": "De 12 mest brugte modeller vises som standard. Vælg en model nedenfor for at følge den enkeltvis.",
+      "noTokens": "Ingen tokens rapporteret i denne periode",
+      "breakdownUnavailable": "En opdeling efter model er ikke tilgængelig for denne periode.",
+      "peak": "Dag med størst forbrug",
+      "dayTotal": "Daglig total",
+      "loadingModel": "Indlæser {{model}}…"
     },
     "models": {
       "title": "Modelforbrug",
       "description": "De modeller, der bærer mest trafik i denne periode.",
       "model": "Model",
       "success": "Succes",
-      "latency": "Latens"
+      "latency": "Latens",
+      "share": "Andel af kald",
+      "notCharted": "Vælg for at indlæse denne model i diagrammet"
     },
     "providers": {
-      "title": "Aktiveret plugin-trafik"
+      "title": "Aktiveret plugin-trafik",
+      "description": "Antal forespørgsler, pålidelighed og svartid efter udbyder.",
+      "share": "{{percent}} % af kaldene",
+      "failures": "{{count}} mislykkedes eller blev annulleret",
+      "models": "Modeller: {{count}}",
+      "noTokens": "Ingen tokens rapporteret"
     },
     "capabilities": {
       "title": "Mulighedsmix",

@@ -122,10 +122,79 @@ provider request fail.
 
 The page offers 7, 30, and 90-day ranges over a single admin-only endpoint,
 `GET /api/plugins/usage?days=<1..365>` (default 30). It shows total calls,
-reported tokens, success rate, and average latency, a daily chart switchable
-between calls and tokens, a per-model table, per-plugin traffic shares, and the
-capability mix. Token totals include only calls where the provider reported
-usage metadata.
+reported tokens, success rate, average latency, and the share of calls that
+reported token usage. Reading the page is read-only and uses the deployment's
+existing usage ledger.
+
+### Explore models and providers
+
+Model colors connect the daily chart, yearly activity calendar, model table,
+and provider bars. Model names, values, and selection indicators accompany the
+colors. The activity calendar always covers the last 365 days, independently
+of the selected range; each day's color identifies its most-used model.
+
+The daily chart switches between **Calls** and **Tokens**. Hover over a model
+in its legend or move keyboard focus to it to trace that model's line. Select
+the model to keep it highlighted, select it again to release it, or choose
+**Show all models** to reset. The model table also provides a highlight action.
+Highlighting changes emphasis while preserving the daily totals, table values,
+and provider totals.
+
+Move the pointer across the chart or use **Explore daily usage** to inspect a
+day's total and model breakdown. The daily slider supports keyboard navigation:
+arrow keys move between days, and Home/End reach the first/last day. Daily
+buckets and their labels use UTC.
+
+By default, the chart shows the top 12 model names by call count in the selected
+period, including when viewing tokens. Every model remains individually
+inspectable: focus or select a model in the table or provider details to load
+its exact daily line, even when it is outside those 12. A loading message names
+the requested model while its history is fetched.
+
+An additional model's line is separated from **Other models**, and the
+remaining group excludes its calls, reported tokens, and failures. The chart
+contains at most 13 named model lines plus the remaining group, and their daily
+values still reconcile to the same totals. Choose **Show all models** to return
+to the default view.
+
+Daily lines combine calls with the same recorded model name across providers.
+The model table retains separate provider/model entries, so the same model can
+appear under more than one provider. Named models retain individual colors in
+the table and provider bars, including models outside the default chart.
+
+Provider details show each provider's share of requests, a bar divided by
+model, reported tokens, failed or cancelled calls, and average response time.
+The capability mix remains available below the model and provider breakdowns.
+
+Token totals include only calls where the provider reported usage metadata.
+The coverage percentage makes partial reporting visible; missing token counts
+are never estimated from requests or from another model. A period with no
+reported tokens shows an explanation in the Tokens view, and its request
+history remains available in Calls.
+
+The endpoint includes daily model points in `modelSeries`. An optional `model`
+query parameter requests one exact recorded model name alongside the default
+top 12, for example `GET /api/plugins/usage?days=30&model=<encoded-model-name>`.
+This is the same administrator-only, read-only endpoint: it queries the local
+usage ledger and never calls a model provider to retrieve history.
+
+An optional `to` parameter fixes the request's end boundary to a Unix timestamp
+in milliseconds. It requires `model` and accepts only a non-negative safe
+integer no later than the server's current time. The browser sends the
+overview's `range.to` when loading an individual model, preserving its UTC day
+and year boundaries and excluding calls after that timestamp. Without `to`,
+the endpoint uses the current time.
+
+Loading a model keeps the overview's cards, table, provider totals, and colors
+in place. Its daily line is added only when the response's time bounds and
+daily totals match that overview. The time boundary does not freeze the
+database: if historical backfills or deletions change those totals, the browser
+refreshes the overview before showing the model line.
+
+If an older server omits `modelSeries`, the chart shows the aggregate **All
+models** series with an explanation that the model breakdown is unavailable.
+The model table remains available; the browser does not infer daily model
+history from period totals or the yearly calendar.
 
 There is no switch to disable metering. Because the data is aggregated across
 accounts, inspecting it is restricted to administrators.

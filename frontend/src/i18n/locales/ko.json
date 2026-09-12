@@ -1921,23 +1921,43 @@
       "success": "성공률",
       "successDetail": "{{count}}건의 실패한 호출",
       "latency": "평균 지연 시간",
-      "latencyDetail": "엔드투엔드 제공자 시간"
+      "latencyDetail": "엔드투엔드 제공자 시간",
+      "coverage": "전체 호출의 {{percent}}%에서 토큰 사용량이 보고되었습니다"
     },
     "activity": {
       "title": "시간 경과에 따른 사용량",
-      "callsDescription": "활성화된 플러그인에 대한 일일 아웃바운드 요청",
-      "tokensDescription": "제공자가 보고한 일일 토큰 총량",
-      "chartLabel": "일일 제공자 {{metric}} 차트"
+      "callsDescription": "모델별 일일 요청",
+      "tokensDescription": "모델별 일일 보고 토큰",
+      "chartLabel": "일일 제공자 {{metric}} 차트",
+      "compareHint": "모델 위에 포인터를 올리거나 초점을 맞추면 해당 선을 확인할 수 있습니다. 선택하면 강조 표시가 유지됩니다.",
+      "showAll": "모든 모델 표시",
+      "highlightModel": "{{model}} 강조 표시",
+      "highlightedModel": "{{model}} 강조 표시됨",
+      "allModels": "모든 모델",
+      "exploreDay": "일별 사용량 살펴보기",
+      "topModels": "기본적으로 가장 많이 사용된 모델 12개를 표시합니다. 아래에서 원하는 모델을 선택하면 개별 추이를 확인할 수 있습니다.",
+      "noTokens": "이 기간에 보고된 토큰이 없습니다",
+      "breakdownUnavailable": "이 기간에는 모델별 세부 정보를 사용할 수 없습니다.",
+      "peak": "사용량이 가장 많은 날",
+      "dayTotal": "일일 합계",
+      "loadingModel": "{{model}} 불러오는 중…"
     },
     "models": {
       "title": "모델 사용량",
       "description": "이 기간 동안 트래픽이 가장 많은 모델입니다.",
       "model": "모델",
       "success": "성공",
-      "latency": "지연 시간"
+      "latency": "지연 시간",
+      "share": "호출 비중",
+      "notCharted": "선택하여 이 모델을 차트에 불러오기"
     },
     "providers": {
-      "title": "활성화된 플러그인 트래픽"
+      "title": "활성화된 플러그인 트래픽",
+      "description": "제공업체별 요청량, 안정성 및 응답 시간입니다.",
+      "share": "전체 호출의 {{percent}}%",
+      "failures": "실패 또는 취소 {{count}}건",
+      "models": "모델: {{count}}",
+      "noTokens": "보고된 토큰이 없습니다"
     },
     "capabilities": {
       "title": "기능 분포",

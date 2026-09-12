@@ -1921,23 +1921,43 @@
       "success": "Tỷ lệ thành công",
       "successDetail": "{{count}} cuộc gọi thất bại",
       "latency": "Độ trễ trung bình",
-      "latencyDetail": "Thời gian nhà cung cấp từ đầu đến cuối"
+      "latencyDetail": "Thời gian nhà cung cấp từ đầu đến cuối",
+      "coverage": "{{percent}}% lệnh gọi báo cáo mức sử dụng token"
     },
     "activity": {
       "title": "Mức sử dụng theo thời gian",
-      "callsDescription": "Yêu cầu gửi đi hàng ngày tới các plugin đã bật",
-      "tokensDescription": "Tổng token hàng ngày được báo cáo bởi nhà cung cấp",
-      "chartLabel": "Biểu đồ {{metric}} nhà cung cấp hàng ngày"
+      "callsDescription": "Yêu cầu hằng ngày theo mô hình",
+      "tokensDescription": "Token được báo cáo hằng ngày theo mô hình",
+      "chartLabel": "Biểu đồ {{metric}} nhà cung cấp hàng ngày",
+      "compareHint": "Di chuột lên mô hình hoặc chuyển tiêu điểm đến mô hình để theo dõi đường biểu diễn. Chọn mô hình để giữ trạng thái tô sáng.",
+      "showAll": "Hiển thị tất cả mô hình",
+      "highlightModel": "Tô sáng {{model}}",
+      "highlightedModel": "Đã tô sáng {{model}}",
+      "allModels": "Tất cả mô hình",
+      "exploreDay": "Khám phá mức sử dụng hằng ngày",
+      "topModels": "Mặc định hiển thị 12 mô hình được sử dụng nhiều nhất. Chọn bất kỳ mô hình nào bên dưới để theo dõi riêng.",
+      "noTokens": "Không có token nào được báo cáo trong giai đoạn này",
+      "breakdownUnavailable": "Không có dữ liệu phân tích theo mô hình cho giai đoạn này.",
+      "peak": "Ngày cao điểm",
+      "dayTotal": "Tổng hằng ngày",
+      "loadingModel": "Đang tải {{model}}…"
     },
     "models": {
       "title": "Mức sử dụng theo mô hình",
       "description": "Các mô hình có lượng truy cập cao nhất trong giai đoạn này.",
       "model": "Mô hình",
       "success": "Thành công",
-      "latency": "Độ trễ"
+      "latency": "Độ trễ",
+      "share": "Tỷ lệ lệnh gọi",
+      "notCharted": "Chọn để tải mô hình này vào biểu đồ"
     },
     "providers": {
-      "title": "Lưu lượng plugin đã bật"
+      "title": "Lưu lượng plugin đã bật",
+      "description": "Số lượng yêu cầu, độ tin cậy và thời gian phản hồi theo nhà cung cấp.",
+      "share": "{{percent}}% số lệnh gọi",
+      "failures": "{{count}} thất bại hoặc bị hủy",
+      "models": "Mô hình: {{count}}",
+      "noTokens": "Không có token nào được báo cáo"
     },
     "capabilities": {
       "title": "Phân bổ khả năng",

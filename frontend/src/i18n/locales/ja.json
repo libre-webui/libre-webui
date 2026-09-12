@@ -1921,23 +1921,43 @@
       "success": "成功率",
       "successDetail": "{{count}}件の失敗した呼び出し",
       "latency": "平均レイテンシ",
-      "latencyDetail": "エンドツーエンドのプロバイダ時間"
+      "latencyDetail": "エンドツーエンドのプロバイダ時間",
+      "coverage": "呼び出しの {{percent}}% でトークン使用量が報告されています"
     },
     "activity": {
       "title": "時間経過に伴う消費量",
-      "callsDescription": "有効なプラグインへの1日の送信リクエスト",
-      "tokensDescription": "プロバイダから報告された1日のトークン合計",
-      "chartLabel": "1日のプロバイダ {{metric}} チャート"
+      "callsDescription": "モデル別の日次リクエスト",
+      "tokensDescription": "モデル別の日次報告トークン",
+      "chartLabel": "1日のプロバイダ {{metric}} チャート",
+      "compareHint": "モデルにポインターを合わせるかフォーカスを移すと、その線を確認できます。選択すると強調表示を維持します。",
+      "showAll": "すべてのモデルを表示",
+      "highlightModel": "{{model}} を強調表示",
+      "highlightedModel": "{{model}} を強調表示中",
+      "allModels": "すべてのモデル",
+      "exploreDay": "日ごとの使用状況を確認",
+      "topModels": "既定では使用量が最も多い12モデルを表示します。下のモデルを選択すると、個別に推移を確認できます。",
+      "noTokens": "この期間に報告されたトークンはありません",
+      "breakdownUnavailable": "この期間のモデル別内訳は利用できません。",
+      "peak": "使用量が最も多い日",
+      "dayTotal": "1日の合計",
+      "loadingModel": "{{model}} を読み込み中…"
     },
     "models": {
       "title": "モデル消費量",
       "description": "この期間中に最もトラフィックが多いモデル。",
       "model": "モデル",
       "success": "成功",
-      "latency": "レイテンシ"
+      "latency": "レイテンシ",
+      "share": "呼び出しの割合",
+      "notCharted": "選択すると、このモデルをグラフに読み込みます"
     },
     "providers": {
-      "title": "有効なプラグインのトラフィック"
+      "title": "有効なプラグインのトラフィック",
+      "description": "プロバイダー別のリクエスト数、信頼性、応答時間。",
+      "share": "呼び出しの {{percent}}%",
+      "failures": "失敗またはキャンセル：{{count}} 件",
+      "models": "モデル：{{count}}",
+      "noTokens": "報告されたトークンはありません"
     },
     "capabilities": {
       "title": "機能の構成",

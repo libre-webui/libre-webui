@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import {
@@ -33,8 +33,15 @@ import { Button, PageHeader, PageShell } from '@/components/ui';
 import { CostGovernancePanel } from '@/components/CostGovernancePanel';
 import { pluginApi, type PluginUsageAnalytics } from '@/utils/api';
 import { cn } from '@/utils';
-
-type ChartMetric = 'calls' | 'tokens';
+import { UsageChart, type ChartMetric } from '@/components/usage/UsageChart';
+import {
+  getUsageChartSeries,
+  getUsageModelColors,
+  getProviderModelSegments,
+  matchesUsageSnapshot,
+  OTHER_MODEL_COLOR,
+  usageModelKey,
+} from '@/utils/pluginUsage';
 
 const integerFormatter = new Intl.NumberFormat(undefined, {
   maximumFractionDigits: 0,
@@ -58,193 +65,6 @@ const formatLatency = (milliseconds: number): string => {
 const successRate = (calls: number, errors: number): number =>
   calls === 0 ? 0 : ((calls - errors) / calls) * 100;
 
-interface UsageChartProps {
-  analytics: PluginUsageAnalytics;
-  metric: ChartMetric;
-  onMetricChange: (metric: ChartMetric) => void;
-}
-
-const UsageChart: React.FC<UsageChartProps> = ({
-  analytics,
-  metric,
-  onMetricChange,
-}) => {
-  const { t } = useTranslation();
-  const width = 960;
-  const height = 280;
-  const padding = { top: 22, right: 18, bottom: 42, left: 52 };
-  const values = analytics.series.map(point => point[metric]);
-  const maxValue = Math.max(1, ...values);
-  const chartWidth = width - padding.left - padding.right;
-  const chartHeight = height - padding.top - padding.bottom;
-  const xFor = (index: number): number =>
-    padding.left +
-    (analytics.series.length <= 1
-      ? chartWidth / 2
-      : (index / (analytics.series.length - 1)) * chartWidth);
-  const yFor = (value: number): number =>
-    padding.top + chartHeight - (value / maxValue) * chartHeight;
-  const points = analytics.series.map((point, index) => ({
-    x: xFor(index),
-    y: yFor(point[metric]),
-    point,
-  }));
-  const linePath = points
-    .map(({ x, y }, index) => `${index === 0 ? 'M' : 'L'} ${x} ${y}`)
-    .join(' ');
-  const areaPath = points.length
-    ? `${linePath} L ${points[points.length - 1].x} ${padding.top + chartHeight} L ${points[0].x} ${padding.top + chartHeight} Z`
-    : '';
-  const dateFormatter = new Intl.DateTimeFormat(undefined, {
-    month: 'short',
-    day: 'numeric',
-    timeZone: 'UTC',
-  });
-  const labelIndexes = Array.from(
-    new Set([
-      0,
-      Math.floor((analytics.series.length - 1) / 2),
-      analytics.series.length - 1,
-    ])
-  ).filter(index => index >= 0);
-
-  return (
-    <div
-      data-testid='plugin-usage-chart'
-      className='overflow-hidden rounded-2xl border border-gray-200/80 bg-white/80 shadow-subtle backdrop-blur-md dark:border-white/[0.08] dark:bg-dark-100/75'
-    >
-      <div className='flex flex-col gap-3 border-b border-gray-200/70 px-4 py-3 dark:border-white/[0.07] sm:flex-row sm:items-center sm:justify-between sm:px-5'>
-        <div>
-          <h2 className='text-sm font-medium text-gray-950 dark:text-dark-950'>
-            {t('usageAnalytics.activity.title')}
-          </h2>
-          <p className='mt-1 text-xs text-gray-500 dark:text-dark-500'>
-            {metric === 'calls'
-              ? t('usageAnalytics.activity.callsDescription')
-              : t('usageAnalytics.activity.tokensDescription')}
-          </p>
-        </div>
-        <div className='inline-flex w-fit rounded-xl bg-gray-100 p-1 dark:bg-dark-200/80'>
-          {(['calls', 'tokens'] as const).map(option => (
-            <button
-              key={option}
-              type='button'
-              aria-pressed={metric === option}
-              className={cn(
-                'rounded-lg px-3 py-1.5 text-xs font-medium transition-colors',
-                metric === option
-                  ? 'bg-white text-gray-950 shadow-sm dark:bg-dark-300 dark:text-dark-950'
-                  : 'text-gray-500 hover:text-gray-800 dark:text-dark-500 dark:hover:text-dark-800'
-              )}
-              onClick={() => onMetricChange(option)}
-            >
-              {t(`usageAnalytics.metrics.${option}`)}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div className='px-2 pb-3 pt-4 sm:px-5 sm:pt-6'>
-        <svg
-          viewBox={`0 0 ${width} ${height}`}
-          className='h-auto w-full overflow-visible'
-          role='img'
-          aria-label={t('usageAnalytics.activity.chartLabel', {
-            metric: t(`usageAnalytics.metrics.${metric}`),
-          })}
-        >
-          <defs>
-            <linearGradient id='plugin-usage-area' x1='0' y1='0' x2='0' y2='1'>
-              <stop
-                offset='0%'
-                stopColor='rgb(var(--color-primary-500))'
-                stopOpacity='0.28'
-              />
-              <stop
-                offset='100%'
-                stopColor='rgb(var(--color-primary-500))'
-                stopOpacity='0.015'
-              />
-            </linearGradient>
-          </defs>
-          {[0, 0.25, 0.5, 0.75, 1].map(ratio => {
-            const y = padding.top + chartHeight * ratio;
-            const value = Math.round(maxValue * (1 - ratio));
-            return (
-              <g key={ratio}>
-                <line
-                  x1={padding.left}
-                  x2={width - padding.right}
-                  y1={y}
-                  y2={y}
-                  className='stroke-gray-200 dark:stroke-white/[0.07]'
-                  strokeDasharray={ratio === 1 ? undefined : '4 8'}
-                />
-                <text
-                  x={padding.left - 12}
-                  y={y + 4}
-                  textAnchor='end'
-                  className='fill-gray-400 text-[11px] dark:fill-dark-500'
-                >
-                  {formatCount(value)}
-                </text>
-              </g>
-            );
-          })}
-          {areaPath && <path d={areaPath} fill='url(#plugin-usage-area)' />}
-          {linePath && (
-            <path
-              d={linePath}
-              fill='none'
-              className='stroke-primary-500 dark:stroke-primary-400'
-              strokeWidth='3'
-              strokeLinecap='round'
-              strokeLinejoin='round'
-            />
-          )}
-          {(analytics.series.length <= 31 ? points : []).map(
-            ({ x, y, point }) => (
-              <circle
-                key={point.timestamp}
-                cx={x}
-                cy={y}
-                r='4'
-                className='fill-white stroke-primary-500 dark:fill-dark-100 dark:stroke-primary-400'
-                strokeWidth='2.5'
-              >
-                <title>
-                  {`${dateFormatter.format(point.timestamp)}: ${formatCount(point[metric])} ${t(`usageAnalytics.metrics.${metric}`).toLocaleLowerCase()}`}
-                </title>
-              </circle>
-            )
-          )}
-          {labelIndexes.map(index => {
-            const point = analytics.series[index];
-            if (!point) return null;
-            const anchor =
-              index === 0
-                ? 'start'
-                : index === analytics.series.length - 1
-                  ? 'end'
-                  : 'middle';
-            return (
-              <text
-                key={point.timestamp}
-                x={xFor(index)}
-                y={height - 10}
-                textAnchor={anchor}
-                className='fill-gray-500 text-[12px] dark:fill-dark-500'
-              >
-                {dateFormatter.format(point.timestamp)}
-              </text>
-            );
-          })}
-        </svg>
-      </div>
-    </div>
-  );
-};
-
 const DAY_MS = 24 * 60 * 60 * 1000;
 const CELL = 10;
 const CELL_GAP = 2;
@@ -252,24 +72,6 @@ const CELL_PITCH = CELL + CELL_GAP;
 const HEATMAP_LEFT_PAD = 30;
 const HEATMAP_TOP_PAD = 16;
 
-// Fixed categorical assignment, ranked by yearly calls. Light/dark steps were
-// both run through the palette validator against the app surfaces.
-const MODEL_FILLS = [
-  'fill-blue-500',
-  'fill-emerald-500 dark:fill-emerald-600',
-  'fill-amber-500 dark:fill-amber-600',
-  'fill-violet-500',
-  'fill-rose-500',
-];
-const MODEL_CHIPS = [
-  'bg-blue-500',
-  'bg-emerald-500 dark:bg-emerald-600',
-  'bg-amber-500 dark:bg-amber-600',
-  'bg-violet-500',
-  'bg-rose-500',
-];
-const OTHER_FILL = 'fill-gray-400 dark:fill-gray-500';
-const OTHER_CHIP = 'bg-gray-400 dark:bg-gray-500';
 const EMPTY_FILL = 'fill-gray-950/[0.06] dark:fill-white/[0.07]';
 const INTENSITY_OPACITY = [0, 0.35, 0.55, 0.75, 1];
 
@@ -283,11 +85,20 @@ interface HeatmapTooltip {
 
 const UsageHeatmap: React.FC<{
   heatmap: NonNullable<PluginUsageAnalytics['heatmap']>;
-}> = ({ heatmap }) => {
+  colors: Map<string, string>;
+  chartModels: string[];
+  focusedModel?: string;
+}> = ({ heatmap, colors, chartModels, focusedModel }) => {
   const { t, i18n } = useTranslation();
   const [tooltip, setTooltip] = useState<HeatmapTooltip | null>(null);
+  const visibleModels = [...new Set([...heatmap.models, ...chartModels])];
+  const colorFor = (model: string | undefined): string =>
+    model !== undefined &&
+    (visibleModels.includes(model) || model === focusedModel)
+      ? (colors.get(usageModelKey(model)) ?? OTHER_MODEL_COLOR)
+      : OTHER_MODEL_COLOR;
 
-  const { weeks, firstColStart, cellsByDay, maxCalls, modelRank, totalCalls } =
+  const { weeks, firstColStart, cellsByDay, maxCalls, totalCalls } =
     useMemo(() => {
       const cellsByDay = new Map(
         heatmap.cells.map(cell => [cell.timestamp, cell])
@@ -297,9 +108,6 @@ const UsageHeatmap: React.FC<{
       const firstColStart = start - new Date(start).getUTCDay() * DAY_MS;
       const weeks = Math.ceil((end - firstColStart + DAY_MS) / (7 * DAY_MS));
       const maxCalls = Math.max(1, ...heatmap.cells.map(cell => cell.calls));
-      const modelRank = new Map(
-        heatmap.models.map((model, index) => [model, index])
-      );
       const totalCalls = heatmap.cells.reduce(
         (sum, cell) => sum + cell.calls,
         0
@@ -309,7 +117,6 @@ const UsageHeatmap: React.FC<{
         firstColStart,
         cellsByDay,
         maxCalls,
-        modelRank,
         totalCalls,
       };
     }, [heatmap]);
@@ -354,11 +161,8 @@ const UsageHeatmap: React.FC<{
       ? 0
       : Math.min(4, Math.max(1, Math.ceil((calls / maxCalls) * 4)));
 
-  const fillFor = (cell: { models: Array<{ model: string }> }): string => {
-    const top = cell.models[0]?.model;
-    const rank = top !== undefined ? modelRank.get(top) : undefined;
-    return rank !== undefined ? MODEL_FILLS[rank] : OTHER_FILL;
-  };
+  const fillFor = (cell: { models: Array<{ model: string }> }): string =>
+    colorFor(cell.models[0]?.model);
 
   const showTooltip = (
     event: React.MouseEvent<SVGRectElement>,
@@ -383,7 +187,7 @@ const UsageHeatmap: React.FC<{
   return (
     <section
       data-testid='usage-heatmap'
-      className='overflow-hidden rounded-2xl border border-gray-200/80 bg-white/80 shadow-subtle backdrop-blur-md dark:border-white/[0.08] dark:bg-dark-100/75'
+      className='min-w-0 overflow-hidden rounded-2xl border border-gray-200/80 bg-white/80 shadow-subtle backdrop-blur-md dark:border-white/[0.08] dark:bg-dark-100/75'
     >
       <div className='flex flex-col gap-1 border-b border-gray-200/70 px-4 py-3 dark:border-white/[0.07] sm:flex-row sm:items-center sm:justify-between sm:px-5'>
         <div>
@@ -405,6 +209,7 @@ const UsageHeatmap: React.FC<{
         <div className='overflow-x-auto'>
           <svg
             viewBox={`0 0 ${width} ${height}`}
+            direction='ltr'
             className='h-auto w-full min-w-[640px]'
             role='img'
             aria-label={t('usageAnalytics.heatmap.title')}
@@ -448,11 +253,13 @@ const UsageHeatmap: React.FC<{
                     width={CELL}
                     height={CELL}
                     rx={2}
+                    data-model={cell?.models[0]?.model}
+                    fill={cell && level > 0 ? fillFor(cell) : undefined}
                     fillOpacity={level === 0 ? 1 : INTENSITY_OPACITY[level]}
                     strokeWidth={tooltip?.timestamp === timestamp ? 1 : 0}
                     className={cn(
-                      'transition-opacity',
-                      level === 0 || !cell ? EMPTY_FILL : fillFor(cell),
+                      'motion-safe:transition-opacity',
+                      (level === 0 || !cell) && EMPTY_FILL,
                       tooltip?.timestamp === timestamp
                         ? 'stroke-gray-500 dark:stroke-white/60'
                         : 'stroke-transparent'
@@ -493,12 +300,10 @@ const UsageHeatmap: React.FC<{
               >
                 <span className='flex min-w-0 items-center gap-1.5'>
                   <span
-                    className={cn(
-                      'h-2 w-2 shrink-0 rounded-[3px]',
-                      modelRank.has(entry.model)
-                        ? MODEL_CHIPS[modelRank.get(entry.model) as number]
-                        : OTHER_CHIP
-                    )}
+                    className='h-2 w-2 shrink-0 rounded-[3px]'
+                    style={{
+                      backgroundColor: colorFor(entry.model),
+                    }}
                   />
                   <span
                     className='truncate font-mono text-gray-700 dark:text-dark-700'
@@ -516,16 +321,17 @@ const UsageHeatmap: React.FC<{
         )}
         <div className='mt-3 flex flex-wrap items-center justify-between gap-3'>
           <div className='flex flex-wrap items-center gap-x-4 gap-y-1.5'>
-            {heatmap.models.map((model, index) => (
+            {visibleModels.map(model => (
               <span
                 key={model}
                 className='flex items-center gap-1.5 text-[11px] text-gray-600 dark:text-dark-600'
               >
                 <span
-                  className={cn(
-                    'h-2.5 w-2.5 rounded-[3px]',
-                    MODEL_CHIPS[index]
-                  )}
+                  className='h-2.5 w-2.5 rounded-[3px]'
+                  style={{
+                    backgroundColor:
+                      colors.get(usageModelKey(model)) ?? OTHER_MODEL_COLOR,
+                  }}
                 />
                 <span className='font-mono' dir='ltr'>
                   {model}
@@ -533,7 +339,10 @@ const UsageHeatmap: React.FC<{
               </span>
             ))}
             <span className='flex items-center gap-1.5 text-[11px] text-gray-600 dark:text-dark-600'>
-              <span className={cn('h-2.5 w-2.5 rounded-[3px]', OTHER_CHIP)} />
+              <span
+                className='h-2.5 w-2.5 rounded-[3px]'
+                style={{ backgroundColor: OTHER_MODEL_COLOR }}
+              />
               {t('usageAnalytics.heatmap.other')}
             </span>
           </div>
@@ -543,7 +352,7 @@ const UsageHeatmap: React.FC<{
             {INTENSITY_OPACITY.slice(1).map(opacity => (
               <span
                 key={opacity}
-                className='h-2.5 w-2.5 rounded-[3px] bg-primary-500'
+                className='h-2.5 w-2.5 rounded-[3px] bg-gray-500'
                 style={{ opacity }}
               />
             ))}
@@ -559,8 +368,10 @@ const PluginUsagePage: React.FC = () => {
   const { t } = useTranslation();
   const [days, setDays] = useState(30);
   const [metric, setMetric] = useState<ChartMetric>('calls');
+  const [selectedModel, setSelectedModel] = useState<string>();
+  const [previewModel, setPreviewModel] = useState<string>();
   const {
-    data: analytics,
+    data: overviewAnalytics,
     error,
     isLoading,
     isFetching,
@@ -575,12 +386,126 @@ const PluginUsagePage: React.FC = () => {
       return response.data;
     },
   });
-  const errorMessage = error
-    ? error instanceof Error
-      ? error.message
+  const overviewKeys = useMemo(
+    () =>
+      new Set(
+        overviewAnalytics
+          ? getUsageChartSeries(overviewAnalytics).map(series => series.key)
+          : []
+      ),
+    [overviewAnalytics]
+  );
+  const availableModelKeys = useMemo(
+    () =>
+      new Set([
+        ...overviewKeys,
+        ...(overviewAnalytics?.models.map(entry =>
+          usageModelKey(entry.model)
+        ) ?? []),
+      ]),
+    [overviewKeys, overviewAnalytics]
+  );
+  const selected =
+    selectedModel && availableModelKeys.has(selectedModel)
+      ? selectedModel
+      : undefined;
+  const preview =
+    previewModel && availableModelKeys.has(previewModel)
+      ? previewModel
+      : undefined;
+  const canLoadModels = overviewKeys.has('other');
+  const focusKey = canLoadModels
+    ? [preview, selected].find(
+        key => key?.startsWith('model:') && !overviewKeys.has(key)
+      )
+    : undefined;
+  const focusModel = focusKey?.slice('model:'.length);
+  const focusedQuery = useQuery({
+    queryKey: [
+      'plugin-usage',
+      days,
+      'model',
+      focusModel,
+      overviewAnalytics?.range.to,
+    ],
+    enabled: focusModel !== undefined,
+    staleTime: 30_000,
+    queryFn: async () => {
+      const response = await pluginApi.getUsage(
+        days,
+        focusModel,
+        overviewAnalytics?.range.to
+      );
+      if (!response.success || !response.data)
+        throw new Error(response.error || t('usageAnalytics.loadFailed'));
+      return response.data;
+    },
+  });
+  const analytics = overviewAnalytics;
+  const focusedMatches =
+    !!overviewAnalytics &&
+    !!focusedQuery.data &&
+    matchesUsageSnapshot(overviewAnalytics, focusedQuery.data);
+  const chartAnalytics = useMemo(
+    () =>
+      overviewAnalytics && focusModel !== undefined && focusedMatches
+        ? { ...overviewAnalytics, modelSeries: focusedQuery.data!.modelSeries }
+        : overviewAnalytics,
+    [overviewAnalytics, focusModel, focusedMatches, focusedQuery.data]
+  );
+  const reconciledResponse = useRef<PluginUsageAnalytics | null>(null);
+  useEffect(() => {
+    if (
+      focusModel !== undefined &&
+      focusedQuery.data &&
+      !focusedMatches &&
+      !isFetching &&
+      reconciledResponse.current !== focusedQuery.data
+    ) {
+      // Historical backfills or deletions can change a timestamp-bounded view.
+      // Refresh the shared overview once before overlaying incompatible data.
+      reconciledResponse.current = focusedQuery.data;
+      void refetch();
+    }
+  }, [focusModel, focusedQuery.data, focusedMatches, isFetching, refetch]);
+  const viewError =
+    error ?? (focusModel !== undefined ? focusedQuery.error : null);
+  const errorMessage = viewError
+    ? viewError instanceof Error
+      ? viewError.message
       : t('usageAnalytics.loadFailed')
     : null;
-
+  const loadingModel =
+    focusModel !== undefined && !focusedMatches && !viewError
+      ? focusModel
+      : undefined;
+  // A focused response adds a series, but must not reassign any existing color.
+  const colors = useMemo(
+    () =>
+      overviewAnalytics
+        ? getUsageModelColors(overviewAnalytics)
+        : new Map<string, string>(),
+    [overviewAnalytics]
+  );
+  const chartKeys = useMemo(
+    () =>
+      new Set(
+        chartAnalytics
+          ? getUsageChartSeries(chartAnalytics).map(series => series.key)
+          : []
+      ),
+    [chartAnalytics]
+  );
+  const highlighted = preview ?? selected;
+  const selectModel = (key?: string) => setSelectedModel(key);
+  const chartKeyFor = (model: string | null): string | undefined => {
+    if (!overviewAnalytics?.modelSeries?.length) return undefined;
+    if (model === null && !overviewKeys.has('other')) return undefined;
+    // Distinct model rows always have distinct interaction identities, even
+    // while their on-demand series is loading. Only the actual remainder uses
+    // the Other key.
+    return usageModelKey(model);
+  };
   const totals = analytics?.totals;
   const cards = useMemo(
     () => [
@@ -595,8 +520,10 @@ const PluginUsagePage: React.FC = () => {
       {
         label: t('usageAnalytics.cards.tokens'),
         value: formatCount(totals?.reportedTokens ?? 0),
-        detail: t('usageAnalytics.cards.tokensDetail', {
-          count: totals?.meteredCalls ?? 0,
+        detail: t('usageAnalytics.cards.coverage', {
+          percent: totals?.calls
+            ? ((totals.meteredCalls / totals.calls) * 100).toFixed(1)
+            : '0',
         }),
         icon: Gauge,
       },
@@ -625,7 +552,7 @@ const PluginUsagePage: React.FC = () => {
     return (
       <PageShell width='wide'>
         <div className='flex min-h-[50vh] items-center justify-center'>
-          <Loader2 className='h-7 w-7 animate-spin text-primary-500' />
+          <Loader2 className='h-7 w-7 motion-safe:animate-spin text-primary-500' />
         </div>
       </PageShell>
     );
@@ -645,12 +572,16 @@ const PluginUsagePage: React.FC = () => {
                   key={option}
                   type='button'
                   className={cn(
-                    'rounded-lg px-3 py-1.5 text-xs font-medium transition-colors',
+                    'min-h-9 rounded-lg px-3 py-1.5 text-xs font-medium motion-safe:transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary-500',
                     days === option
                       ? 'bg-gray-950 text-white dark:bg-white dark:text-gray-950'
                       : 'text-gray-500 hover:text-gray-900 dark:text-dark-500 dark:hover:text-dark-900'
                   )}
-                  onClick={() => setDays(option)}
+                  aria-pressed={days === option}
+                  onClick={() => {
+                    setDays(option);
+                    setPreviewModel(undefined);
+                  }}
                 >
                   {t('usageAnalytics.days', { count: option })}
                 </button>
@@ -659,11 +590,20 @@ const PluginUsagePage: React.FC = () => {
             <Button
               variant='outline'
               size='sm'
-              onClick={() => void refetch()}
-              disabled={isFetching}
+              onClick={() => {
+                void refetch();
+                if (focusModel !== undefined) void focusedQuery.refetch();
+              }}
+              disabled={
+                isFetching ||
+                (focusModel !== undefined && focusedQuery.isFetching)
+              }
             >
               <RefreshCw
-                className={cn('h-4 w-4', isFetching && 'animate-spin')}
+                className={cn(
+                  'h-4 w-4',
+                  isFetching && 'motion-safe:animate-spin'
+                )}
               />
               <span className='sr-only'>{t('usageAnalytics.refresh')}</span>
             </Button>
@@ -683,7 +623,7 @@ const PluginUsagePage: React.FC = () => {
       </div>
 
       {analytics && (
-        <div className='space-y-4'>
+        <div className='min-w-0 space-y-4'>
           <div className='grid gap-3 sm:grid-cols-2 xl:grid-cols-4'>
             {cards.map(card => {
               const Icon = card.icon;
@@ -710,13 +650,31 @@ const PluginUsagePage: React.FC = () => {
           </div>
 
           {analytics.heatmap && analytics.heatmap.cells.length > 0 && (
-            <UsageHeatmap heatmap={analytics.heatmap} />
+            <UsageHeatmap
+              heatmap={analytics.heatmap}
+              colors={colors}
+              focusedModel={
+                highlighted?.startsWith('model:')
+                  ? highlighted.slice('model:'.length)
+                  : undefined
+              }
+              chartModels={(overviewAnalytics?.modelSeries ?? []).flatMap(
+                series => (series.model === null ? [] : [series.model])
+              )}
+            />
           )}
 
           <UsageChart
-            analytics={analytics}
+            analytics={chartAnalytics ?? analytics}
             metric={metric}
             onMetricChange={setMetric}
+            colors={colors}
+            highlighted={highlighted}
+            selected={selected}
+            onHighlight={setPreviewModel}
+            onSelect={selectModel}
+            loadingModel={loadingModel}
+            canLoadModels={canLoadModels}
           />
 
           {analytics.totals.calls === 0 ? (
@@ -730,8 +688,8 @@ const PluginUsagePage: React.FC = () => {
               </p>
             </div>
           ) : (
-            <div className='grid gap-4 xl:grid-cols-[1.15fr_0.85fr]'>
-              <section className='overflow-hidden rounded-2xl border border-gray-200/80 bg-white/80 shadow-subtle backdrop-blur-md dark:border-white/[0.08] dark:bg-dark-100/75'>
+            <div className='grid min-w-0 gap-4 xl:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]'>
+              <section className='min-w-0 overflow-hidden rounded-2xl border border-gray-200/80 bg-white/80 shadow-subtle backdrop-blur-md dark:border-white/[0.08] dark:bg-dark-100/75'>
                 <div className='border-b border-gray-200/70 px-4 py-3 dark:border-white/[0.07] sm:px-5'>
                   <h2 className='text-sm font-medium text-gray-950 dark:text-dark-950'>
                     {t('usageAnalytics.models.title')}
@@ -741,7 +699,10 @@ const PluginUsagePage: React.FC = () => {
                   </p>
                 </div>
                 <div className='overflow-x-auto'>
-                  <table className='w-full min-w-[620px] text-start text-sm'>
+                  <table
+                    data-testid='usage-model-table'
+                    className='w-full min-w-[620px] text-start text-sm'
+                  >
                     <thead className='text-[11px] uppercase tracking-[0.1em] text-gray-400 dark:text-dark-500'>
                       <tr>
                         <th className='px-5 py-2 text-start font-medium'>
@@ -762,21 +723,87 @@ const PluginUsagePage: React.FC = () => {
                       </tr>
                     </thead>
                     <tbody className='divide-y divide-gray-100 dark:divide-white/[0.06]'>
-                      {analytics.models.slice(0, 12).map(model => (
-                        <tr key={`${model.pluginId}:${model.model}`}>
+                      {analytics.models.map(model => (
+                        <tr
+                          key={JSON.stringify([
+                            model.pluginId,
+                            model.pluginName,
+                            model.model,
+                          ])}
+                          data-testid='usage-model-row'
+                          data-model={model.model}
+                          data-highlighted={
+                            highlighted === chartKeyFor(model.model)
+                          }
+                          onMouseEnter={() =>
+                            setPreviewModel(chartKeyFor(model.model))
+                          }
+                          onMouseLeave={() => setPreviewModel(undefined)}
+                          className={cn(
+                            highlighted === chartKeyFor(model.model) &&
+                              highlighted &&
+                              'bg-gray-50 dark:bg-dark-200/70'
+                          )}
+                        >
                           <td className='px-5 py-2.5'>
-                            <div
-                              className='max-w-[260px] truncate font-medium text-gray-900 dark:text-dark-900'
-                              title={model.model}
+                            <button
+                              type='button'
+                              disabled={!chartKeyFor(model.model)}
+                              aria-label={t(
+                                'usageAnalytics.activity.highlightModel',
+                                { model: model.model }
+                              )}
+                              aria-pressed={
+                                !!selected &&
+                                selected === chartKeyFor(model.model)
+                              }
+                              className='flex min-h-9 max-w-[260px] items-center gap-2 rounded-md text-start font-medium text-gray-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-500 dark:text-dark-900'
+                              title={
+                                chartKeys.has(usageModelKey(model.model))
+                                  ? model.model
+                                  : t('usageAnalytics.models.notCharted')
+                              }
+                              onFocus={() =>
+                                setPreviewModel(chartKeyFor(model.model))
+                              }
+                              onBlur={() => setPreviewModel(undefined)}
+                              onClick={() =>
+                                selectModel(
+                                  selected === chartKeyFor(model.model)
+                                    ? undefined
+                                    : chartKeyFor(model.model)
+                                )
+                              }
                             >
-                              {model.model}
-                            </div>
+                              <span
+                                aria-hidden='true'
+                                className='h-2.5 w-2.5 shrink-0 rounded-full'
+                                style={{
+                                  backgroundColor:
+                                    colors.get(usageModelKey(model.model)) ??
+                                    OTHER_MODEL_COLOR,
+                                }}
+                              />
+                              <span className='truncate' dir='ltr'>
+                                {model.model}
+                              </span>
+                            </button>
                             <div className='mt-0.5 text-xs text-gray-500 dark:text-dark-500'>
                               {model.pluginName}
                             </div>
                           </td>
                           <td className='px-4 py-2.5 text-end tabular-nums text-gray-700 dark:text-dark-700'>
                             {formatCount(model.calls)}
+                            <div
+                              className='mt-1 text-[11px] text-gray-500 dark:text-dark-500'
+                              title={t('usageAnalytics.models.share')}
+                            >
+                              {(
+                                (model.calls / analytics.totals.calls) *
+                                100
+                              ).toFixed(1)}
+                              %
+                            </div>
                           </td>
                           <td className='px-4 py-2.5 text-end tabular-nums text-gray-700 dark:text-dark-700'>
                             {model.tokens ? formatCount(model.tokens) : '—'}
@@ -794,41 +821,183 @@ const PluginUsagePage: React.FC = () => {
                 </div>
               </section>
 
-              <div className='space-y-4'>
-                <section className='rounded-2xl border border-gray-200/80 bg-white/80 p-4 shadow-subtle backdrop-blur-md dark:border-white/[0.08] dark:bg-dark-100/75 sm:p-5'>
+              <div className='min-w-0 space-y-4'>
+                <section
+                  data-testid='usage-provider-breakdown'
+                  className='min-w-0 rounded-2xl border border-gray-200/80 bg-white/80 p-4 shadow-subtle dark:border-white/[0.08] dark:bg-dark-100/75 sm:p-5'
+                >
                   <h2 className='text-sm font-medium text-gray-950 dark:text-dark-950'>
                     {t('usageAnalytics.providers.title')}
                   </h2>
-                  <div className='mt-5 space-y-4'>
-                    {analytics.plugins.slice(0, 8).map(plugin => {
+                  <p className='mt-1 text-xs leading-5 text-gray-500 dark:text-dark-500'>
+                    {t('usageAnalytics.providers.description')}
+                  </p>
+                  <div className='mt-4 divide-y divide-gray-200/70 dark:divide-white/[0.07]'>
+                    {analytics.plugins.map(plugin => {
                       const share = analytics.totals.calls
                         ? (plugin.calls / analytics.totals.calls) * 100
                         : 0;
+                      const segments = getProviderModelSegments(
+                        analytics,
+                        plugin.pluginId,
+                        plugin.calls,
+                        plugin.pluginName
+                      );
                       return (
-                        <div key={plugin.pluginId}>
-                          <div className='flex items-center justify-between gap-4 text-sm'>
+                        <article
+                          key={JSON.stringify([
+                            plugin.pluginId,
+                            plugin.pluginName,
+                          ])}
+                          data-provider={plugin.pluginId}
+                          className='py-4 first:pt-0 last:pb-0'
+                        >
+                          <div className='flex items-start justify-between gap-3'>
                             <div className='min-w-0'>
-                              <div className='truncate font-medium text-gray-900 dark:text-dark-900'>
+                              <h3
+                                className='truncate text-sm font-medium text-gray-900 dark:text-dark-900'
+                                title={plugin.pluginName}
+                              >
                                 {plugin.pluginName}
+                              </h3>
+                              <p className='mt-1 text-xs text-gray-500 dark:text-dark-500'>
+                                {t('usageAnalytics.providers.share', {
+                                  percent: share.toFixed(1),
+                                })}
+                              </p>
+                            </div>
+                            <div className='shrink-0 text-end'>
+                              <div className='text-base font-medium tabular-nums text-gray-950 dark:text-dark-950'>
+                                {formatCount(plugin.calls)}
                               </div>
-                              <div className='mt-0.5 text-xs text-gray-500 dark:text-dark-500'>
-                                {formatCount(plugin.tokens)}{' '}
-                                {t(
-                                  'usageAnalytics.metrics.tokens'
-                                ).toLocaleLowerCase()}
+                              <div className='text-[11px] text-gray-500 dark:text-dark-500'>
+                                {t('usageAnalytics.metrics.calls')}
                               </div>
                             </div>
-                            <span className='shrink-0 tabular-nums text-gray-600 dark:text-dark-600'>
-                              {formatCount(plugin.calls)}
-                            </span>
                           </div>
-                          <div className='mt-2 h-1.5 overflow-hidden rounded-full bg-gray-100 dark:bg-dark-300'>
-                            <div
-                              className='h-full rounded-full bg-primary-500 dark:bg-primary-400'
-                              style={{ width: `${Math.max(2, share)}%` }}
-                            />
+                          <div
+                            className='my-3 flex h-2 overflow-hidden rounded-full bg-gray-100 dark:bg-dark-300'
+                            aria-hidden='true'
+                          >
+                            {segments.map(segment => (
+                              <span
+                                key={usageModelKey(segment.model)}
+                                data-model={segment.model ?? '__other__'}
+                                title={`${segment.model ?? t('usageAnalytics.heatmap.other')}: ${formatCount(segment.calls)}`}
+                                style={{
+                                  width: `${plugin.calls ? (segment.calls / plugin.calls) * 100 : 0}%`,
+                                  backgroundColor:
+                                    colors.get(usageModelKey(segment.model)) ??
+                                    OTHER_MODEL_COLOR,
+                                  opacity:
+                                    highlighted &&
+                                    highlighted !== chartKeyFor(segment.model)
+                                      ? 0.25
+                                      : 1,
+                                }}
+                              />
+                            ))}
                           </div>
-                        </div>
+                          <dl className='grid grid-cols-3 gap-2'>
+                            <div>
+                              <dt className='text-[10px] text-gray-500 dark:text-dark-500'>
+                                {t('usageAnalytics.metrics.tokens')}
+                              </dt>
+                              <dd
+                                className='mt-1 text-xs tabular-nums text-gray-800 dark:text-dark-800'
+                                title={
+                                  plugin.tokens
+                                    ? undefined
+                                    : t('usageAnalytics.providers.noTokens')
+                                }
+                              >
+                                {plugin.tokens
+                                  ? formatCount(plugin.tokens)
+                                  : '—'}
+                              </dd>
+                            </div>
+                            <div>
+                              <dt className='text-[10px] text-gray-500 dark:text-dark-500'>
+                                {t('usageAnalytics.models.success')}
+                              </dt>
+                              <dd className='mt-1 text-xs tabular-nums text-gray-800 dark:text-dark-800'>
+                                {successRate(
+                                  plugin.calls,
+                                  plugin.errors
+                                ).toFixed(1)}
+                                %
+                              </dd>
+                            </div>
+                            <div>
+                              <dt className='text-[10px] text-gray-500 dark:text-dark-500'>
+                                {t('usageAnalytics.models.latency')}
+                              </dt>
+                              <dd className='mt-1 text-xs tabular-nums text-gray-800 dark:text-dark-800'>
+                                {formatLatency(plugin.averageLatencyMs)}
+                              </dd>
+                            </div>
+                          </dl>
+                          {plugin.errors > 0 && (
+                            <p className='mt-2 flex items-center gap-1 text-[11px] text-gray-500 dark:text-dark-500'>
+                              <TriangleAlert className='h-3 w-3' />
+                              {t('usageAnalytics.providers.failures', {
+                                count: plugin.errors,
+                              })}
+                            </p>
+                          )}
+                          <div className='mt-3 flex flex-wrap gap-1.5'>
+                            {segments.map(segment => {
+                              const key = chartKeyFor(segment.model);
+                              const label =
+                                segment.model ??
+                                t('usageAnalytics.heatmap.other');
+                              return (
+                                <button
+                                  key={usageModelKey(segment.model)}
+                                  type='button'
+                                  disabled={!key}
+                                  aria-label={t(
+                                    'usageAnalytics.activity.highlightModel',
+                                    { model: label }
+                                  )}
+                                  aria-pressed={!!selected && selected === key}
+                                  title={label}
+                                  onMouseEnter={() => setPreviewModel(key)}
+                                  onMouseLeave={() =>
+                                    setPreviewModel(undefined)
+                                  }
+                                  onFocus={() => setPreviewModel(key)}
+                                  onBlur={() => setPreviewModel(undefined)}
+                                  onClick={() =>
+                                    selectModel(
+                                      selected === key ? undefined : key
+                                    )
+                                  }
+                                  className={cn(
+                                    'flex min-h-8 min-w-0 max-w-full items-center gap-1.5 rounded-md border px-2 py-1 text-[11px] text-gray-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary-500 dark:text-dark-700',
+                                    highlighted && highlighted === key
+                                      ? 'border-gray-400 bg-gray-50 dark:border-dark-500 dark:bg-dark-200'
+                                      : 'border-gray-200/70 dark:border-white/[0.07]'
+                                  )}
+                                >
+                                  <span
+                                    className='h-2 w-2 shrink-0 rounded-full'
+                                    style={{
+                                      backgroundColor:
+                                        colors.get(
+                                          usageModelKey(segment.model)
+                                        ) ?? OTHER_MODEL_COLOR,
+                                    }}
+                                    aria-hidden='true'
+                                  />
+                                  <span className='truncate' dir='auto'>
+                                    {label}
+                                  </span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </article>
                       );
                     })}
                   </div>

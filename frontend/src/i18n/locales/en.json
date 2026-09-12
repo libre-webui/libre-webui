@@ -1921,23 +1921,43 @@
       "success": "Success rate",
       "successDetail": "{{count}} failed call(s)",
       "latency": "Average latency",
-      "latencyDetail": "End-to-end provider time"
+      "latencyDetail": "End-to-end provider time",
+      "coverage": "{{percent}}% of calls report token usage"
     },
     "activity": {
       "title": "Consumption over time",
-      "callsDescription": "Daily outbound requests to enabled plugins",
-      "tokensDescription": "Daily token totals reported by providers",
-      "chartLabel": "Daily provider {{metric}} chart"
+      "callsDescription": "Daily requests by model",
+      "tokensDescription": "Daily reported tokens by model",
+      "chartLabel": "Daily provider {{metric}} chart",
+      "compareHint": "Hover or focus a model to trace its line. Select it to keep it highlighted.",
+      "showAll": "Show all models",
+      "highlightModel": "Highlight {{model}}",
+      "highlightedModel": "{{model}} highlighted",
+      "allModels": "All models",
+      "exploreDay": "Explore daily usage",
+      "topModels": "The 12 busiest models are shown by default. Select any model below to trace it individually.",
+      "noTokens": "No tokens reported in this period",
+      "breakdownUnavailable": "A model breakdown is not available for this period.",
+      "peak": "Peak day",
+      "dayTotal": "Daily total",
+      "loadingModel": "Loading {{model}}…"
     },
     "models": {
       "title": "Model consumption",
       "description": "The models carrying the most traffic in this period.",
       "model": "Model",
       "success": "Success",
-      "latency": "Latency"
+      "latency": "Latency",
+      "share": "Share of calls",
+      "notCharted": "Select to load this model in the chart"
     },
     "providers": {
-      "title": "Enabled plugin traffic"
+      "title": "Enabled plugin traffic",
+      "description": "Request volume, reliability, and response time by provider.",
+      "share": "{{percent}}% of calls",
+      "failures": "{{count}} failed or cancelled",
+      "models": "Models: {{count}}",
+      "noTokens": "No tokens reported"
     },
     "capabilities": {
       "title": "Capability mix",

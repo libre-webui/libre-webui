@@ -714,6 +714,42 @@ class PostgresPluginUsageRepository implements PluginUsageRepository {
     );
   }
 
+  modelSeries(
+    from: number,
+    to: number,
+    bucketMs: number,
+    maximumModels: number,
+    focusedModel?: string
+  ) {
+    return this.rows(
+      `WITH top_models AS (
+         SELECT model, COUNT(*) AS calls
+           FROM plugin_usage_events
+          WHERE created_at >= $1 AND created_at <= $3
+          GROUP BY model
+          ORDER BY COUNT(*) DESC, model COLLATE "C" ASC LIMIT $4
+       ), selected_models AS (
+         SELECT model, calls FROM top_models
+         UNION
+         SELECT model, COUNT(*) AS calls
+           FROM plugin_usage_events
+          WHERE created_at >= $1 AND created_at <= $3 AND model = $5
+          GROUP BY model
+       )
+       SELECT floor((events.created_at - $1)::numeric / $2)::bigint AS bucket,
+              selected_models.model, COUNT(*)::text AS calls,
+              COALESCE(SUM(events.total_tokens), 0)::text AS tokens,
+              COUNT(*) FILTER (WHERE events.status = 'error')::text AS errors
+         FROM plugin_usage_events AS events
+         LEFT JOIN selected_models ON selected_models.model = events.model
+        WHERE events.created_at >= $1 AND events.created_at <= $3
+        GROUP BY bucket, selected_models.model
+        ORDER BY selected_models.model IS NULL ASC, MAX(selected_models.calls) DESC,
+                 selected_models.model COLLATE "C" ASC, bucket ASC`,
+      [from, bucketMs, to, maximumModels, focusedModel ?? null]
+    );
+  }
+
   plugins(from: number, to: number) {
     return this.rows(
       `SELECT plugin_id, plugin_name, COUNT(*)::text AS calls,

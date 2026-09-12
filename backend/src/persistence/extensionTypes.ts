@@ -181,6 +181,14 @@ export interface PluginUsageRepository {
     to: number,
     bucketMs: number
   ): Promise<Array<Record<string, unknown>>>;
+  /** Top names and an optional exact focus, with remaining traffic under null. */
+  modelSeries(
+    from: number,
+    to: number,
+    bucketMs: number,
+    maximumModels: number,
+    focusedModel?: string
+  ): Promise<Array<Record<string, unknown>>>;
   plugins(from: number, to: number): Promise<Array<Record<string, unknown>>>;
   models(from: number, to: number): Promise<Array<Record<string, unknown>>>;
   heatmap(
