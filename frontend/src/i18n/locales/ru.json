@@ -3443,9 +3443,9 @@
     },
     "templatesTitle": "Начните с шаблона",
     "templates": {
-      "petstore": {
-        "name": "Демо Petstore",
-        "description": "Публичное демонстрационное API для безопасной первой сквозной проверки."
+      "exa": {
+        "name": "Exa",
+        "description": "Ищите в интернете и загружайте страницы с помощью Exa."
       },
       "internalOpenApi": {
         "name": "Внутреннее API",

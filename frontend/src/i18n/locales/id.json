@@ -3443,9 +3443,9 @@
     },
     "templatesTitle": "Mulai dari templat",
     "templates": {
-      "petstore": {
-        "name": "Demo Petstore",
-        "description": "API demo publik untuk uji coba menyeluruh pertama yang aman."
+      "exa": {
+        "name": "Exa",
+        "description": "Telusuri web dan ambil halaman dengan Exa."
       },
       "internalOpenApi": {
         "name": "API internal",

@@ -3443,9 +3443,9 @@
     },
     "templatesTitle": "เริ่มจากเทมเพลต",
     "templates": {
-      "petstore": {
-        "name": "เดโม Petstore",
-        "description": "API เดโมสาธารณะสำหรับทดสอบครบวงจรครั้งแรกอย่างปลอดภัย"
+      "exa": {
+        "name": "Exa",
+        "description": "ค้นหาเว็บและดึงหน้าเว็บด้วย Exa"
       },
       "internalOpenApi": {
         "name": "API ภายใน",

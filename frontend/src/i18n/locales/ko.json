@@ -3443,9 +3443,9 @@
     },
     "templatesTitle": "템플릿으로 시작하기",
     "templates": {
-      "petstore": {
-        "name": "Petstore 데모",
-        "description": "안전하게 처음 엔드투엔드로 시험해 볼 수 있는 공개 데모 API."
+      "exa": {
+        "name": "Exa",
+        "description": "Exa로 웹을 검색하고 페이지를 가져오세요."
       },
       "internalOpenApi": {
         "name": "내부 API",

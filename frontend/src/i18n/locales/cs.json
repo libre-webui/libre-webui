@@ -3443,9 +3443,9 @@
     },
     "templatesTitle": "Začněte ze šablony",
     "templates": {
-      "petstore": {
-        "name": "Ukázka Petstore",
-        "description": "Veřejné ukázkové API pro bezpečný první test od začátku do konce."
+      "exa": {
+        "name": "Exa",
+        "description": "Prohledávejte web a načítejte stránky pomocí Exa."
       },
       "internalOpenApi": {
         "name": "Interní API",

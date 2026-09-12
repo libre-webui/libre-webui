@@ -3443,9 +3443,9 @@
     },
     "templatesTitle": "ابدأ من قالب",
     "templates": {
-      "petstore": {
-        "name": "عرض Petstore التجريبي",
-        "description": "واجهة تجريبية عامة لاختبار أول آمن من طرف إلى طرف."
+      "exa": {
+        "name": "Exa",
+        "description": "ابحث في الويب واجلب الصفحات باستخدام Exa."
       },
       "internalOpenApi": {
         "name": "واجهة داخلية",

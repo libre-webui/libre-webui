@@ -326,6 +326,67 @@ test('tool servers register, scope, and collect credentials through the UI', asy
   await expect(row).toContainText('Credential set');
 });
 
+test('the Exa template prepares an MCP server and waits for explicit registration', async ({
+  page,
+}, testInfo) => {
+  await signIn(page, 'admin');
+  const toolsApi = await mockToolsApi(page, { role: 'admin' });
+  await page.goto('/');
+  await openSettingsTab(page, 'tools');
+  const templates = page.getByTestId('tool-server-template');
+  const exa = templates.filter({
+    has: page.getByText('Exa', { exact: true }),
+  });
+  const baseUrl = 'https://mcp.exa.ai/mcp?tools=web_search_exa,web_fetch_exa';
+  const description = 'Search the web and fetch pages with Exa.';
+  await expect(exa).toHaveCount(1);
+  await expect(exa).toContainText(description);
+  await expect(templates.filter({ hasText: /Petstore/i })).toHaveCount(0);
+  await exa.click();
+
+  const modal = page.getByTestId('tool-server-modal');
+  await expect(modal).toBeVisible();
+  await expect(modal.getByLabel('Name', { exact: true })).toHaveValue('Exa');
+  await expect(modal.getByLabel('Description', { exact: true })).toHaveValue(
+    description
+  );
+  await expect(modal.getByLabel('Kind', { exact: true })).toHaveValue('mcp');
+  await expect(modal.getByLabel('Base URL', { exact: true })).toHaveValue(
+    baseUrl
+  );
+  await expect(modal.getByLabel('Authentication')).toHaveValue('none');
+  await expect(modal.getByLabel('Who can use it')).toHaveValue('admins-only');
+  await expect(modal.getByLabel('Spec URL', { exact: true })).toHaveCount(0);
+  await expect(modal.getByTestId('tool-server-save')).toBeEnabled();
+  expect(toolsApi.registerRequests).toEqual([]);
+  await page.screenshot({ path: testInfo.outputPath('exa-registration.png') });
+
+  await modal.getByRole('button', { name: 'Cancel', exact: true }).click();
+  await expect(modal).toHaveCount(0);
+  await expect(page.getByTestId('tool-server-row')).toHaveCount(0);
+  expect(toolsApi.registerRequests).toEqual([]);
+
+  await exa.click();
+  await expect(modal.getByLabel('Base URL', { exact: true })).toHaveValue(
+    baseUrl
+  );
+  expect(toolsApi.registerRequests).toEqual([]);
+  await modal.getByTestId('tool-server-save').click();
+  await expect(modal).toHaveCount(0);
+  await expect(page.getByTestId('tool-server-row')).toContainText('Exa');
+  expect(toolsApi.registerRequests).toEqual([
+    {
+      name: 'Exa',
+      description,
+      kind: 'mcp',
+      baseUrl,
+      authMode: 'none',
+      accessMode: 'admins-only',
+      enabled: true,
+    },
+  ]);
+});
+
 test('an administrator expands a server to override the tools it pinned', async ({
   page,
 }) => {

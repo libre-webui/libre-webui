@@ -3443,9 +3443,9 @@
     },
     "templatesTitle": "টেমপ্লেট থেকে শুরু করুন",
     "templates": {
-      "petstore": {
-        "name": "Petstore ডেমো",
-        "description": "নিরাপদ প্রথম প্রান্ত-থেকে-প্রান্ত পরীক্ষার জন্য একটি পাবলিক ডেমো API।"
+      "exa": {
+        "name": "Exa",
+        "description": "Exa দিয়ে ওয়েবে অনুসন্ধান করুন এবং পৃষ্ঠা সংগ্রহ করুন।"
       },
       "internalOpenApi": {
         "name": "অভ্যন্তরীণ API",

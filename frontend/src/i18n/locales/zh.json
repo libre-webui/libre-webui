@@ -3443,9 +3443,9 @@
     },
     "templatesTitle": "从模板开始",
     "templates": {
-      "petstore": {
-        "name": "Petstore 演示",
-        "description": "公开的演示 API，可安全地完成第一次端到端测试。"
+      "exa": {
+        "name": "Exa",
+        "description": "使用 Exa 搜索网页并获取页面。"
       },
       "internalOpenApi": {
         "name": "内部 API",

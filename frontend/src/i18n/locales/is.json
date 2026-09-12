@@ -3443,9 +3443,9 @@
     },
     "templatesTitle": "Byrjaðu á sniðmáti",
     "templates": {
-      "petstore": {
-        "name": "Petstore-sýnidæmi",
-        "description": "Opið sýni-API fyrir örugga fyrstu heildarprófun."
+      "exa": {
+        "name": "Exa",
+        "description": "Leitaðu á vefnum og sæktu síður með Exa."
       },
       "internalOpenApi": {
         "name": "Innra API",

@@ -3443,9 +3443,9 @@
     },
     "templatesTitle": "Bir şablonla başlayın",
     "templates": {
-      "petstore": {
-        "name": "Petstore demosu",
-        "description": "Güvenli bir ilk uçtan uca deneme için herkese açık demo API."
+      "exa": {
+        "name": "Exa",
+        "description": "Exa ile web’de arama yapın ve sayfaları getirin."
       },
       "internalOpenApi": {
         "name": "Dahili API",

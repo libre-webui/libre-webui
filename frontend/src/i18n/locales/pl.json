@@ -3443,9 +3443,9 @@
     },
     "templatesTitle": "Zacznij od szablonu",
     "templates": {
-      "petstore": {
-        "name": "Demo Petstore",
-        "description": "Publiczne API demonstracyjne na bezpieczny pierwszy test od początku do końca."
+      "exa": {
+        "name": "Exa",
+        "description": "Przeszukuj internet i pobieraj strony za pomocą Exa."
       },
       "internalOpenApi": {
         "name": "Wewnętrzne API",

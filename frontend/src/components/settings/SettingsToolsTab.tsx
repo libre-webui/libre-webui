@@ -223,7 +223,12 @@ export const SettingsToolsTab: React.FC = () => {
             );
             if (!template) return;
             setEditing(null);
-            setTemplatePrefill(template.input);
+            setTemplatePrefill({
+              ...template.input,
+              description:
+                template.input.description ??
+                t(`toolsPage.templates.${template.id}.description`),
+            });
             setModalOpen(true);
           }}
         />

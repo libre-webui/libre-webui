@@ -3443,9 +3443,9 @@
     },
     "templatesTitle": "Start fra en skabelon",
     "templates": {
-      "petstore": {
-        "name": "Petstore-demo",
-        "description": "Et offentligt demo-API til en sikker første ende-til-ende-test."
+      "exa": {
+        "name": "Exa",
+        "description": "Søg på nettet, og hent sider med Exa."
       },
       "internalOpenApi": {
         "name": "Internt API",

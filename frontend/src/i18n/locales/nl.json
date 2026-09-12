@@ -3443,9 +3443,9 @@
     },
     "templatesTitle": "Begin met een sjabloon",
     "templates": {
-      "petstore": {
-        "name": "Petstore-demo",
-        "description": "Een openbare demo-API voor een veilige eerste end-to-endtest."
+      "exa": {
+        "name": "Exa",
+        "description": "Doorzoek het web en haal pagina’s op met Exa."
       },
       "internalOpenApi": {
         "name": "Interne API",

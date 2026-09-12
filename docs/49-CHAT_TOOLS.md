@@ -185,6 +185,22 @@ follows them. Typing `$` in the composer autocompletes your skill slugs.
    approval card: **Allow once**, **Allow for this chat**, **Always
    allow**, or **Deny**. Nothing is sent until you choose.
 
+### Exa MCP — search and fetch the web
+
+In **Settings → Tools → Start from a template**, choose **Exa** to prefill
+an MCP registration with:
+
+```text
+https://mcp.exa.ai/mcp?tools=web_search_exa,web_fetch_exa
+```
+
+The URL selects `web_search_exa` and `web_fetch_exa` using
+[Exa's tool selection parameter](https://exa.ai/docs/reference/exa-mcp).
+The template uses no authentication and limits access to administrators by
+default. Review the form and select **Save** to connect and pin
+the tool inventory. Opening or cancelling the template does not contact Exa.
+Search queries and requested URLs are sent to Exa when these tools run.
+
 ### An MCP server — for example an issue tracker
 
 1. **Settings → Tools → Register server**: name `Issues`, kind `MCP`, base

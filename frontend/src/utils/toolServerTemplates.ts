@@ -30,15 +30,11 @@ export interface ToolServerTemplate {
 
 export const TOOL_SERVER_TEMPLATES: readonly ToolServerTemplate[] = [
   {
-    id: 'petstore',
+    id: 'exa',
     input: {
-      name: 'Petstore demo',
-      description:
-        'The public Swagger Petstore demo API — safe to register for a ' +
-        'first end-to-end test of OpenAPI tools.',
-      kind: 'openapi',
-      baseUrl: 'https://petstore3.swagger.io/api/v3',
-      specUrl: 'https://petstore3.swagger.io/api/v3/openapi.json',
+      name: 'Exa',
+      kind: 'mcp',
+      baseUrl: 'https://mcp.exa.ai/mcp?tools=web_search_exa,web_fetch_exa',
       authMode: 'none',
       accessMode: 'admins-only',
     },

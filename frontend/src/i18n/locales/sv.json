@@ -3443,9 +3443,9 @@
     },
     "templatesTitle": "Börja från en mall",
     "templates": {
-      "petstore": {
-        "name": "Petstore-demo",
-        "description": "Ett offentligt demo-API för ett tryggt första test från början till slut."
+      "exa": {
+        "name": "Exa",
+        "description": "Sök på webben och hämta sidor med Exa."
       },
       "internalOpenApi": {
         "name": "Internt API",

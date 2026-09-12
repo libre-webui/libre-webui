@@ -3443,9 +3443,9 @@
     },
     "templatesTitle": "Mit einer Vorlage starten",
     "templates": {
-      "petstore": {
-        "name": "Petstore-Demo",
-        "description": "Eine öffentliche Demo-API für einen sicheren ersten Ende-zu-Ende-Test."
+      "exa": {
+        "name": "Exa",
+        "description": "Durchsuche das Web und rufe Seiten mit Exa ab."
       },
       "internalOpenApi": {
         "name": "Interne API",
