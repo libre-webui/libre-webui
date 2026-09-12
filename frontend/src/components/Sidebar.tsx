@@ -416,19 +416,25 @@ export const Sidebar: React.FC<SidebarProps> = ({
         )}
 
         <div className='flex flex-col h-full'>
-          <SidebarHeader
-            sidebarCompact={sidebarCompact}
-            isElectron={isElectron}
-            showWork={showWork}
-            activeMode={isWorkRoute ? 'work' : isChatRoute ? 'chat' : null}
-            selectedModel={selectedModel}
-            modelCount={models.length}
-            onToggleCompact={handleToggleSidebarCompact}
-            onStartWork={handleStartWork}
-            onCreateSession={handleCreateSession}
-          />
+          <div
+            data-testid='sidebar-browse-scroll-region'
+            className={cn(
+              'min-h-0 flex-1',
+              sidebarCompact ? 'scroll-region scrollbar-thin' : 'flex flex-col'
+            )}
+          >
+            <SidebarHeader
+              sidebarCompact={sidebarCompact}
+              isElectron={isElectron}
+              showWork={showWork}
+              activeMode={isWorkRoute ? 'work' : isChatRoute ? 'chat' : null}
+              selectedModel={selectedModel}
+              modelCount={models.length}
+              onToggleCompact={handleToggleSidebarCompact}
+              onStartWork={handleStartWork}
+              onCreateSession={handleCreateSession}
+            />
 
-          {!sidebarCompact && (
             <SidebarNavigation
               sidebarCompact={sidebarCompact}
               activePath={location.pathname}
@@ -436,49 +442,49 @@ export const Sidebar: React.FC<SidebarProps> = ({
               unseenRunCount={unseenRunCount}
               onMobileNavigate={compactOnMobile}
             />
-          )}
 
-          {isWorkRoute && showWork ? (
-            <SidebarWorkTasks
-              tasks={workTasks}
-              personas={personas}
-              currentTaskId={currentWorkTaskId}
-              loading={loadingWorkTasks}
-              actionLoading={workActionLoading}
-              sidebarCompact={sidebarCompact}
-              onSelectTask={handleSelectWorkTask}
-              onDeleteTask={task => void handleDeleteWorkTask(task)}
-              onExpandSidebar={handleToggleSidebarCompact}
-            />
-          ) : (
-            <SidebarSessions
-              sessions={sessions.filter(session => !session.archived)}
-              personas={personas}
-              currentSessionId={currentSessionId}
-              generatingTitleForSession={awaitingTitleSessionId}
-              sidebarCompact={sidebarCompact}
-              editingSessionId={editingSessionId}
-              editingTitle={editingTitle}
-              onEditingTitleChange={setEditingTitle}
-              onSelectSession={handleSelectSession}
-              onStartEditing={handleStartEditing}
-              onSaveEdit={handleSaveEdit}
-              onCancelEdit={handleCancelEdit}
-              onDeleteSession={handleDeleteSession}
-              onArchiveSession={handleArchiveSession}
-              onTogglePinSession={handleTogglePinSession}
-              folders={folders}
-              onCreateFolder={name => void createFolder(name)}
-              onRenameFolder={(folderId, name) =>
-                void renameFolder(folderId, name)
-              }
-              onDeleteFolder={folderId => void deleteFolder(folderId)}
-              onMoveSession={(sessionId, folderId) =>
-                void moveSessionToFolder(sessionId, folderId)
-              }
-              onExpandSidebar={handleToggleSidebarCompact}
-            />
-          )}
+            {isWorkRoute && showWork ? (
+              <SidebarWorkTasks
+                tasks={workTasks}
+                personas={personas}
+                currentTaskId={currentWorkTaskId}
+                loading={loadingWorkTasks}
+                actionLoading={workActionLoading}
+                sidebarCompact={sidebarCompact}
+                onSelectTask={handleSelectWorkTask}
+                onDeleteTask={task => void handleDeleteWorkTask(task)}
+                onExpandSidebar={handleToggleSidebarCompact}
+              />
+            ) : (
+              <SidebarSessions
+                sessions={sessions.filter(session => !session.archived)}
+                personas={personas}
+                currentSessionId={currentSessionId}
+                generatingTitleForSession={awaitingTitleSessionId}
+                sidebarCompact={sidebarCompact}
+                editingSessionId={editingSessionId}
+                editingTitle={editingTitle}
+                onEditingTitleChange={setEditingTitle}
+                onSelectSession={handleSelectSession}
+                onStartEditing={handleStartEditing}
+                onSaveEdit={handleSaveEdit}
+                onCancelEdit={handleCancelEdit}
+                onDeleteSession={handleDeleteSession}
+                onArchiveSession={handleArchiveSession}
+                onTogglePinSession={handleTogglePinSession}
+                folders={folders}
+                onCreateFolder={name => void createFolder(name)}
+                onRenameFolder={(folderId, name) =>
+                  void renameFolder(folderId, name)
+                }
+                onDeleteFolder={folderId => void deleteFolder(folderId)}
+                onMoveSession={(sessionId, folderId) =>
+                  void moveSessionToFolder(sessionId, folderId)
+                }
+                onExpandSidebar={handleToggleSidebarCompact}
+              />
+            )}
+          </div>
 
           <NotificationBell sidebarCompact={sidebarCompact} />
 

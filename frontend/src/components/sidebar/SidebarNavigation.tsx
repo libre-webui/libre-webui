@@ -65,8 +65,8 @@ const DESTINATIONS = [
 
 /**
  * Secondary destinations. They are also reachable from the tab bar's new-tab
- * menu, Home, and the command palette, so the sidebar keeps them to a single
- * icon row and gives the space back to the session list.
+ * menu, Home, and the command palette. The expanded sidebar uses an icon row;
+ * the compact rail stacks the same destinations below Chat, Work, and Search.
  */
 export function SidebarNavigation({
   sidebarCompact,
@@ -78,7 +78,7 @@ export function SidebarNavigation({
   const { t } = useTranslation();
 
   return (
-    <div className={cn('pb-3', sidebarCompact ? 'px-2' : 'px-3')}>
+    <div className={cn('shrink-0 pb-3', sidebarCompact ? 'px-2' : 'px-3')}>
       <nav
         data-testid='sidebar-navigation'
         aria-label={t('sidebar.navigation.exploreLabel', 'Explore')}
@@ -90,7 +90,8 @@ export function SidebarNavigation({
         {DESTINATIONS.filter(
           destination => destination.path !== '/agents' || showAgents
         ).map(({ path, icon: Icon, labelKey }) => {
-          const active = activePath === path;
+          const active =
+            activePath === path || activePath.startsWith(`${path}/`);
           const label = t(labelKey);
           return (
             <Link
@@ -102,7 +103,7 @@ export function SidebarNavigation({
               aria-current={active ? 'page' : undefined}
               className={cn(
                 'relative flex items-center justify-center rounded-xl transition-colors duration-150 touch-manipulation outline-none focus-visible:ring-2 focus-visible:ring-primary-500/30',
-                sidebarCompact ? 'h-9 w-9' : 'h-9 flex-1',
+                sidebarCompact ? 'h-[44px] w-[44px] shrink-0' : 'h-9 flex-1',
                 active
                   ? 'bg-nav-active text-ink'
                   : 'text-ink-muted hover:bg-interactive-hover hover:text-ink'
@@ -111,10 +112,10 @@ export function SidebarNavigation({
               {sidebarCompact && active && (
                 <span
                   aria-hidden='true'
-                  className='absolute -start-2 h-5 w-0.5 rounded-full bg-primary-500 shadow-[0_0_12px_rgb(var(--color-primary-500)/0.55)]'
+                  className='absolute -start-1 h-5 w-0.5 rounded-full bg-primary-500'
                 />
               )}
-              <Icon className='h-[18px] w-[18px] shrink-0' />
+              <Icon aria-hidden='true' className='h-[18px] w-[18px] shrink-0' />
               {path === '/automations' && unseenRunCount > 0 && (
                 <span
                   data-testid='automations-unseen-badge'

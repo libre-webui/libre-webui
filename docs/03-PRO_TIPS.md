@@ -73,6 +73,14 @@ conversation, and document context still applies when it is enabled. For a
 conversation that must not leave your infrastructure, combine incognito with a
 local Ollama model.
 
+## Use the Compact Sidebar
+
+The compact sidebar keeps direct shortcuts to Channels, Notes, Calendar,
+Automations, Personas, and Imagine beneath Chat, Work, and Search. The Agents
+shortcut appears when enabled for your account. Hover over an icon for its
+label; the current destination stays highlighted. On short screens, scroll
+the shortcuts while settings and account controls remain at the bottom.
+
 ## Scroll Through Panels
 
 Chat and Work lists fade softly at edges where more items are available.

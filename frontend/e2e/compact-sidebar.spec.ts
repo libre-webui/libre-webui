@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 import { mockLibreWebUiApi } from './lib/mockApi';
 
 const sessions = Array.from({ length: 8 }, (_, index) => ({
@@ -49,7 +49,7 @@ test('desktop compact sidebar hides the unreadable session list', async ({
     .poll(async () => (await sidebar.boundingBox())?.width ?? 0)
     .toBeLessThan(90);
   await expect(page.getByTestId('sidebar-rail-expand')).toBeVisible();
-  await expect(page.getByTestId('sidebar-navigation')).toHaveCount(0);
+  await expect(page.getByTestId('sidebar-navigation')).toBeVisible();
   // Session titles cannot be read at rail width, so no session list at all.
   await expect(page.getByTestId('sidebar-compact-session')).toHaveCount(0);
   await expect(page.getByTestId('sidebar-mobile-chats')).toBeHidden();
@@ -59,4 +59,152 @@ test('desktop compact sidebar hides the unreadable session list', async ({
   await expect(
     sidebar.getByText('Northern lights research', { exact: true })
   ).toBeVisible();
+});
+
+async function prepareCompactSidebar(
+  page: Page,
+  options: {
+    role?: 'admin' | 'user';
+    agentsEnabled?: boolean;
+    language?: 'en' | 'ar';
+  } = {}
+) {
+  const systemInfo = {
+    requiresAuth: true,
+    hasUsers: true,
+    userCount: 2,
+    version: '0.25.0-e2e',
+    agentsEnabled: options.agentsEnabled ?? false,
+    turnstile: { enabled: false },
+  };
+  await mockLibreWebUiApi(page, {
+    sessions,
+    systemInfo,
+    authRole: options.role ?? 'admin',
+  });
+  await page.addInitScript(language => {
+    localStorage.setItem('auth-token', 'e2e-token');
+    localStorage.setItem('i18nextLng', language);
+  }, options.language ?? 'en');
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto('/chat');
+  await page.getByTestId('sidebar-toggle-size').click();
+  await expect
+    .poll(
+      async () => (await page.getByTestId('sidebar').boundingBox())?.width ?? 0
+    )
+    .toBeLessThan(90);
+}
+
+const destinations = [
+  { name: 'Channels', path: '/channels' },
+  { name: 'Notes', path: '/notes' },
+  { name: 'Calendar', path: '/calendar' },
+  { name: 'Automations', path: '/automations' },
+  { name: 'Personas', path: '/personas' },
+  { name: 'Imagine', path: '/gallery' },
+] as const;
+
+test('compact Explore links navigate with accessible labels and active states', async ({
+  page,
+}, testInfo) => {
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await prepareCompactSidebar(page);
+  const sidebar = page.getByTestId('sidebar');
+  const navigation = sidebar.getByTestId('sidebar-navigation');
+  await expect(navigation.getByRole('link')).toHaveCount(destinations.length);
+  await expect(sidebar.getByTestId('sidebar-chat-button')).toBeVisible();
+  await expect(sidebar.getByTestId('sidebar-work-button')).toBeVisible();
+  await expect(sidebar.getByTestId('sidebar-search-button')).toBeVisible();
+  await page.screenshot({
+    path: testInfo.outputPath('compact-explore-desktop.png'),
+  });
+  for (const { name, path } of destinations) {
+    const link = navigation.getByRole('link', { name, exact: true });
+    await expect(link).toHaveAttribute('title', name);
+    await expect(link).toHaveAttribute('href', path);
+    const bounds = await link.boundingBox();
+    expect(bounds).not.toBeNull();
+    expect(bounds!.width).toBeGreaterThanOrEqual(44);
+    expect(bounds!.height).toBeGreaterThanOrEqual(44);
+    await link.click();
+    await expect.poll(() => new URL(page.url()).pathname).toBe(path);
+    await expect(link).toHaveAttribute('aria-current', 'page');
+    await expect(navigation.locator('[aria-current="page"]')).toHaveCount(1);
+    expect((await sidebar.boundingBox())!.width).toBeLessThan(90);
+    await expect(sidebar.getByTestId('sidebar-compact-session')).toHaveCount(0);
+  }
+
+  await navigation.getByRole('link', { name: 'Channels', exact: true }).focus();
+  await page.keyboard.press('Tab');
+  const notes = navigation.getByRole('link', { name: 'Notes', exact: true });
+  await expect(notes).toBeFocused();
+  await expect(notes).not.toHaveCSS('box-shadow', 'none');
+  await page.keyboard.press('Enter');
+  await expect.poll(() => new URL(page.url()).pathname).toBe('/notes');
+  await expect(notes).toHaveAttribute('aria-current', 'page');
+});
+
+for (const { role, agentsEnabled, visible } of [
+  { role: 'admin', agentsEnabled: true, visible: true },
+  { role: 'admin', agentsEnabled: false, visible: false },
+  { role: 'user', agentsEnabled: true, visible: false },
+] as const) {
+  test(`compact Agents access for ${role} with opt-in ${agentsEnabled}`, async ({
+    page,
+  }) => {
+    await prepareCompactSidebar(page, { role, agentsEnabled });
+    const navigation = page.getByTestId('sidebar-navigation');
+    await expect(
+      navigation.getByRole('link', { name: 'Agents', exact: true })
+    ).toHaveCount(visible ? 1 : 0);
+    await expect(navigation.getByRole('link')).toHaveCount(
+      destinations.length + (visible ? 1 : 0)
+    );
+  });
+}
+
+test('short mobile RTL rails scroll Explore while keeping settings and account reachable', async ({
+  page,
+}, testInfo) => {
+  await page.setViewportSize({ width: 390, height: 400 });
+  await prepareCompactSidebar(page, { language: 'ar', agentsEnabled: true });
+  await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
+  const sidebar = page.getByTestId('sidebar');
+  const browse = sidebar.getByTestId('sidebar-browse-scroll-region');
+  const navigation = browse.getByTestId('sidebar-navigation');
+  await expect
+    .poll(() =>
+      browse.evaluate(element => element.scrollHeight - element.clientHeight)
+    )
+    .toBeGreaterThan(0);
+  const agents = navigation.locator('a[href="/agents"]');
+  await agents.scrollIntoViewIfNeeded();
+  await expect(agents).toBeInViewport();
+  await expect
+    .poll(() => browse.evaluate(element => element.scrollTop))
+    .toBeGreaterThan(0);
+  const settings = sidebar.getByTestId('sidebar-rail-settings-button');
+  const account = sidebar.getByTestId('sidebar-rail-user-menu-button');
+  await expect(settings).toBeInViewport();
+  await expect(account).toBeInViewport();
+  await expect(browse.getByTestId('sidebar-rail-settings-button')).toHaveCount(
+    0
+  );
+  await page.screenshot({
+    path: testInfo.outputPath('compact-explore-mobile-rtl.png'),
+  });
+  await navigation.locator('a[href="/gallery"]').click();
+  await expect.poll(() => new URL(page.url()).pathname).toBe('/gallery');
+  await expect(navigation.locator('a[href="/gallery"]')).toHaveAttribute(
+    'aria-current',
+    'page'
+  );
+  expect((await sidebar.boundingBox())!.width).toBeLessThan(90);
+  await settings.click();
+  await expect(page.getByTestId('settings-modal-panel')).toBeVisible();
+  await page.keyboard.press('Escape');
+  await account.click();
+  await expect(account).toHaveAttribute('aria-expanded', 'true');
+  await expect(page.getByTestId('sidebar-user-menu')).toBeVisible();
 });
