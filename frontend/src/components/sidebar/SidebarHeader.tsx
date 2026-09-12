@@ -21,6 +21,7 @@ import { Logo } from '@/components/Logo';
 import { LogoMark } from '@/components/LogoMark';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { cn, isMac } from '@/utils';
+import { compactSidebarButtonClass } from './compactSidebarStyles';
 
 interface SidebarHeaderProps {
   sidebarCompact: boolean;
@@ -38,14 +39,14 @@ interface SidebarHeaderProps {
 export function CompactSidebarSearch() {
   const { t } = useTranslation();
   return (
-    <div className='flex justify-center px-2 pb-3'>
+    <div className='flex shrink-0 justify-center px-2'>
       <button
         type='button'
         data-testid='sidebar-search-button'
         onClick={() => window.dispatchEvent(new Event('libre:open-palette'))}
         title={t('palette.search', 'Search')}
         aria-label={t('palette.search', 'Search')}
-        className='flex h-[44px] w-[44px] shrink-0 items-center justify-center rounded-xl text-ink transition-colors hover:bg-interactive-hover outline-none focus-visible:ring-2 focus-visible:ring-primary-500/30 touch-manipulation'
+        className={compactSidebarButtonClass}
       >
         <Search aria-hidden='true' className='h-[18px] w-[18px]' />
       </button>
@@ -73,21 +74,18 @@ export function SidebarHeader({
   const createDisabled = !selectedModel || modelCount === 0;
   const disabledTitle = createDisabled ? t('chat.model.noModelsTooltip') : '';
 
-  const railButton =
-    'flex h-9 w-9 items-center justify-center rounded-full text-ink transition-colors hover:bg-interactive-hover outline-none focus-visible:ring-2 focus-visible:ring-primary-500/30 touch-manipulation';
-
   if (sidebarCompact) {
     return (
       <div
         className={cn(
-          'flex flex-col items-center gap-3 px-2 pt-4 pb-2',
+          'flex shrink-0 flex-col items-center gap-[4px] px-2 pt-[8px]',
           isElectron && 'pt-10'
         )}
       >
         <button
           type='button'
           onClick={onToggleCompact}
-          className={cn(railButton, 'group')}
+          className={cn(compactSidebarButtonClass, 'group')}
           title={t('sidebar.expandSidebar')}
           aria-label={t('sidebar.expandSidebar')}
           data-testid='sidebar-rail-expand'
@@ -104,7 +102,10 @@ export function SidebarHeader({
           type='button'
           onClick={onCreateSession}
           disabled={createDisabled}
-          className={cn(railButton, createDisabled && 'opacity-40')}
+          className={cn(
+            compactSidebarButtonClass,
+            createDisabled && 'opacity-40'
+          )}
           title={createDisabled ? disabledTitle : t('chat.session.chat')}
           aria-label={t('chat.session.chat')}
           aria-pressed={activeMode === 'chat'}
@@ -117,7 +118,7 @@ export function SidebarHeader({
           <button
             type='button'
             onClick={onStartWork}
-            className={railButton}
+            className={compactSidebarButtonClass}
             title={t('chat.session.work')}
             aria-label={t('chat.session.work')}
             aria-pressed={activeMode === 'work'}

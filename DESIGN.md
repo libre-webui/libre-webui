@@ -239,6 +239,10 @@ The sidebar is the navigation anchor — darker than the chat area to recede vis
 The compact sidebar keeps the Explore destinations as labeled icon shortcuts
 below Chat and Work, with Search last. Its navigation scrolls when vertical
 space is limited, while settings and account controls remain at the bottom.
+Compact navigation uses one centered 44px hit area and 4px row spacing across
+primary actions, destinations, history controls, and Search. Empty history
+sections add no gap or separator. The compact rail shares the top bar's frame
+without the border or shadow reserved for an expanded mobile overlay.
 
 ### Chat Area
 

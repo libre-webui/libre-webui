@@ -67,7 +67,8 @@ for (const mode of ['light', 'dark', 'amoled', 'celestial'] as const) {
     await expectFade(region, 0, 24);
 
     await page.getByTestId('sidebar-toggle-size').click();
-    await expectFade(region, 0, 0);
+    await expect(region).toBeHidden();
+    await expect(region).toHaveCSS('mask-image', 'none');
     await page.getByTestId('sidebar-rail-expand').click();
     await expectFade(region, 0, 24);
 

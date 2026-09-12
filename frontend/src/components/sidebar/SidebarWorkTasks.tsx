@@ -29,6 +29,7 @@ import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui';
 import { SidebarHoverCard } from './SidebarHoverCard';
 import { SidebarScrollArea } from './SidebarScrollArea';
+import { compactSidebarButtonClass } from './compactSidebarStyles';
 import { useSidebarMenu } from './useSidebarMenu';
 import type { Persona } from '@/types';
 import type { WorkTaskSummary } from '@/types/work';
@@ -456,8 +457,14 @@ export function SidebarWorkTasks({
   };
 
   return (
-    <SidebarScrollArea data-testid='sidebar-work-task-scroll-region'>
-      <div className={cn('px-3 py-3', sidebarCompact && 'px-2')}>
+    <SidebarScrollArea
+      data-testid='sidebar-work-task-scroll-region'
+      compact={sidebarCompact}
+      compactClassName={
+        compactAgentTasks.length === 0 ? 'md:hidden' : undefined
+      }
+    >
+      <div className={sidebarCompact ? 'p-0' : 'px-3 py-3'}>
         {!sidebarCompact && tasks.length > 0 && (
           <div className='mb-2 flex items-center justify-between px-1'>
             <h3 className='text-xs font-medium text-ink-subtle'>
@@ -472,14 +479,14 @@ export function SidebarWorkTasks({
         )}
 
         {sidebarCompact ? (
-          <div className='flex flex-col items-center gap-1'>
+          <div className='flex flex-col items-center gap-[4px]'>
             <button
               type='button'
               onClick={onExpandSidebar}
               data-testid='sidebar-mobile-work-tasks'
               aria-label={`${t('work.tasks.title', { defaultValue: 'Work tasks' })} (${tasks.length})`}
               title={t('work.tasks.title', { defaultValue: 'Work tasks' })}
-              className='relative flex h-12 w-12 items-center justify-center rounded-xl text-gray-500 outline-none transition-colors hover:bg-white/70 hover:text-gray-950 focus-visible:ring-2 focus-visible:ring-primary-500/30 dark:text-dark-600 dark:hover:bg-dark-200 dark:hover:text-dark-950 md:hidden'
+              className={cn(compactSidebarButtonClass, 'relative md:hidden')}
             >
               <Briefcase className='h-[18px] w-[18px]' />
               {tasks.length > 0 && (
@@ -491,7 +498,7 @@ export function SidebarWorkTasks({
 
             <div
               data-testid='sidebar-compact-work-agent-list'
-              className='flex w-full flex-col items-center gap-1'
+              className='flex w-full flex-col items-center gap-[4px] empty:hidden'
             >
               {compactAgentTasks.map(task => {
                 const selected = currentTaskId === task.id;
@@ -528,10 +535,11 @@ export function SidebarWorkTasks({
                     aria-label={accessibleLabel}
                     title={accessibleLabel}
                     className={cn(
-                      'relative flex h-12 w-12 items-center justify-center rounded-xl outline-none transition-colors focus-visible:ring-2 focus-visible:ring-primary-500/30',
+                      compactSidebarButtonClass,
+                      'relative',
                       selected
                         ? 'bg-primary-500/10 text-primary-700 ring-1 ring-primary-500/10 dark:bg-primary-500/15 dark:text-primary-300 dark:ring-primary-400/10'
-                        : 'text-gray-500 hover:bg-white/70 hover:text-gray-950 dark:text-dark-600 dark:hover:bg-dark-200 dark:hover:text-dark-950'
+                        : undefined
                     )}
                   >
                     {selected && (

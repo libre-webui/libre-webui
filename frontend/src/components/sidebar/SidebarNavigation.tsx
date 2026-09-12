@@ -27,6 +27,7 @@ import {
   MessagesSquare,
 } from 'lucide-react';
 import { cn } from '@/utils';
+import { compactSidebarButtonClass } from './compactSidebarStyles';
 
 interface SidebarNavigationProps {
   sidebarCompact: boolean;
@@ -78,13 +79,15 @@ export function SidebarNavigation({
   const { t } = useTranslation();
 
   return (
-    <div className={cn('shrink-0 pb-3', sidebarCompact ? 'px-2' : 'px-3')}>
+    <div className={cn('shrink-0', sidebarCompact ? 'px-2' : 'px-3 pb-3')}>
       <nav
         data-testid='sidebar-navigation'
         aria-label={t('sidebar.navigation.exploreLabel', 'Explore')}
         className={cn(
-          'flex gap-1',
-          sidebarCompact ? 'flex-col items-center' : 'items-center'
+          'flex',
+          sidebarCompact
+            ? 'flex-col items-center gap-[4px]'
+            : 'items-center gap-1'
         )}
       >
         {DESTINATIONS.filter(
@@ -102,19 +105,15 @@ export function SidebarNavigation({
               aria-label={label}
               aria-current={active ? 'page' : undefined}
               className={cn(
-                'relative flex items-center justify-center rounded-xl transition-colors duration-150 touch-manipulation outline-none focus-visible:ring-2 focus-visible:ring-primary-500/30',
-                sidebarCompact ? 'h-[44px] w-[44px] shrink-0' : 'h-9 flex-1',
+                sidebarCompact
+                  ? compactSidebarButtonClass
+                  : 'relative flex h-9 flex-1 items-center justify-center rounded-xl transition-colors duration-150 touch-manipulation outline-none focus-visible:ring-2 focus-visible:ring-primary-500/30',
                 active
                   ? 'bg-nav-active text-ink'
-                  : 'text-ink-muted hover:bg-interactive-hover hover:text-ink'
+                  : !sidebarCompact &&
+                      'text-ink-muted hover:bg-interactive-hover hover:text-ink'
               )}
             >
-              {sidebarCompact && active && (
-                <span
-                  aria-hidden='true'
-                  className='absolute -start-1 h-5 w-0.5 rounded-full bg-primary-500'
-                />
-              )}
               <Icon aria-hidden='true' className='h-[18px] w-[18px] shrink-0' />
               {path === '/automations' && unseenRunCount > 0 && (
                 <span

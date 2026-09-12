@@ -40,6 +40,7 @@ import { Button, Input } from '@/components/ui';
 import { GenerationIndicator } from '@/components/ui/GenerationIndicator';
 import { SidebarHoverCard } from './SidebarHoverCard';
 import { SidebarScrollArea } from './SidebarScrollArea';
+import { compactSidebarButtonClass } from './compactSidebarStyles';
 import { useSidebarMenu } from './useSidebarMenu';
 import type { ChatSession, Persona, SessionFolder } from '@/types';
 import { cn, formatTimestamp, truncateText } from '@/utils';
@@ -388,8 +389,12 @@ export function SidebarSessions({
     })).filter(group => group.sessions.length > 0),
   ];
   return (
-    <SidebarScrollArea data-testid='sidebar-session-scroll-region'>
-      <div className={cn('px-3 py-3', sidebarCompact && 'px-2')}>
+    <SidebarScrollArea
+      data-testid='sidebar-session-scroll-region'
+      compact={sidebarCompact}
+      compactClassName='md:hidden'
+    >
+      <div className={sidebarCompact ? 'p-0' : 'px-3 py-3'}>
         {!sidebarCompact && sessions.length > 0 && (
           <div className='mb-1 flex h-7 items-center justify-between px-1.5'>
             <h3 className='text-xs font-medium text-ink-subtle'>
@@ -434,14 +439,14 @@ export function SidebarSessions({
           </div>
         )}
         {sidebarCompact ? (
-          <div className='flex flex-col items-center gap-1'>
+          <div className='flex flex-col items-center gap-[4px]'>
             <button
               type='button'
               onClick={onExpandSidebar}
               data-testid='sidebar-mobile-chats'
               aria-label={`${t('chat.session.chats')} (${sessions.length})`}
               title={t('chat.session.chats')}
-              className='relative flex h-12 w-12 items-center justify-center rounded-xl text-gray-500 outline-none transition-colors hover:bg-white/70 hover:text-gray-950 focus-visible:ring-2 focus-visible:ring-primary-500/30 dark:text-dark-600 dark:hover:bg-dark-200 dark:hover:text-dark-950 md:hidden'
+              className={cn(compactSidebarButtonClass, 'relative md:hidden')}
             >
               <MessageSquare className='h-[18px] w-[18px]' />
               {sessions.length > 0 && (

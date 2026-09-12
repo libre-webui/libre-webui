@@ -287,3 +287,143 @@ test('short mobile RTL rails scroll Explore while keeping settings and account r
   await expect(account).toHaveAttribute('aria-expanded', 'true');
   await expect(page.getByTestId('sidebar-user-menu')).toBeVisible();
 });
+
+for (const layout of [
+  { width: 1280, height: 900, fontSize: 15, language: 'en' },
+  { width: 1280, height: 900, fontSize: 16, language: 'en' },
+  { width: 900, height: 900, fontSize: 15, language: 'en' },
+  { width: 900, height: 900, fontSize: 16, language: 'en' },
+  { width: 900, height: 400, fontSize: 15, language: 'en' },
+  { width: 390, height: 400, fontSize: 16, language: 'ar' },
+] as const) {
+  test(`compact rail stays symmetric at ${layout.width}x${layout.height}, ${layout.fontSize}px, ${layout.language}`, async ({
+    page,
+  }, testInfo) => {
+    await page.setViewportSize({ width: layout.width, height: layout.height });
+    await prepareCompactSidebar(page, {
+      language: layout.language,
+      agentsEnabled: true,
+    });
+    if (layout.fontSize === 16) {
+      await page.evaluate(() => {
+        document.documentElement.style.fontSize = '16px';
+      });
+    }
+    await expect(page.locator('html')).toHaveCSS(
+      'font-size',
+      `${layout.fontSize}px`
+    );
+    const sidebar = page.getByTestId('sidebar');
+    const browse = sidebar.getByTestId('sidebar-browse-scroll-region');
+    await expect(sidebar).toHaveCSS('border-inline-end-width', '0px');
+    await expect(sidebar).toHaveCSS('box-shadow', 'none');
+
+    const geometryErrors = () =>
+      sidebar.evaluate(element => {
+        const browse = element.querySelector<HTMLElement>(
+          '[data-testid="sidebar-browse-scroll-region"]'
+        )!;
+        const sidebarBounds = element.getBoundingClientRect();
+        const center = sidebarBounds.x + sidebarBounds.width / 2;
+        const visible = (node: Element) =>
+          node.getClientRects().length > 0 &&
+          getComputedStyle(node).visibility !== 'hidden';
+        const controls = [
+          ...browse.querySelectorAll<HTMLElement>('button, a[href]'),
+        ].filter(visible);
+        const errors: string[] = [];
+        let previousY: number | undefined;
+        for (const control of controls) {
+          const bounds = control.getBoundingClientRect();
+          const name = control.dataset.testid || control.getAttribute('href');
+          const centerY = bounds.y + bounds.height / 2;
+          if (
+            Math.abs(bounds.width - 44) > 0.1 ||
+            Math.abs(bounds.height - 44) > 0.1
+          )
+            errors.push(
+              `${name}: ${bounds.width}x${bounds.height}, expected 44x44`
+            );
+          if (Math.abs(bounds.x + bounds.width / 2 - center) > 0.1)
+            errors.push(
+              `${name}: off-center by ${bounds.x + bounds.width / 2 - center}px`
+            );
+          if (
+            previousY !== undefined &&
+            Math.abs(centerY - previousY - 48) > 0.1
+          )
+            errors.push(
+              `${name}: spacing ${centerY - previousY}px, expected 48px`
+            );
+          previousY = centerY;
+          for (const icon of [...control.querySelectorAll('svg')].filter(
+            visible
+          )) {
+            const iconBounds = icon.getBoundingClientRect();
+            if (Math.abs(iconBounds.x + iconBounds.width / 2 - center) > 0.1)
+              errors.push(`${name}: icon off-center`);
+          }
+        }
+        if (controls.at(-1)?.dataset.testid !== 'sidebar-search-button')
+          errors.push('Search must remain last');
+        if (Math.abs(browse.clientWidth - element.clientWidth) > 1)
+          errors.push(
+            `Scrollbar reserves ${element.clientWidth - browse.clientWidth}px`
+          );
+        for (const footer of [
+          ...element.querySelectorAll<HTMLElement>('button'),
+        ].filter(node => !browse.contains(node) && visible(node))) {
+          const bounds = footer.getBoundingClientRect();
+          if (Math.abs(bounds.x + bounds.width / 2 - center) > 0.1)
+            errors.push(
+              `${footer.dataset.testid || footer.getAttribute('aria-label')}: footer off-center`
+            );
+        }
+        return errors;
+      });
+    await expect.poll(geometryErrors).toEqual([]);
+
+    if (layout.width >= 768) {
+      const dividers = await browse.evaluate(
+        element =>
+          [...element.querySelectorAll('div')].filter(node => {
+            if (!node.getClientRects().length) return false;
+            const style = getComputedStyle(node);
+            return (
+              parseFloat(style.borderTopWidth) > 0 ||
+              parseFloat(style.borderBottomWidth) > 0
+            );
+          }).length
+      );
+      expect(dividers).toBe(0);
+    }
+    if (layout.height === 400) {
+      await expect
+        .poll(() =>
+          browse.evaluate(
+            element => element.scrollHeight - element.clientHeight
+          )
+        )
+        .toBeGreaterThan(0);
+      const search = browse.getByTestId('sidebar-search-button');
+      await search.scrollIntoViewIfNeeded();
+      await expect(search).toBeInViewport();
+      await expect(
+        sidebar.getByTestId('sidebar-rail-settings-button')
+      ).toBeInViewport();
+      await expect(
+        sidebar.getByTestId('sidebar-rail-user-menu-button')
+      ).toBeInViewport();
+      await expect.poll(geometryErrors).toEqual([]);
+    }
+    await page.screenshot({
+      path: testInfo.outputPath(
+        `rail-${layout.width}-${layout.height}-${layout.fontSize}-${layout.language}.png`
+      ),
+    });
+    if (layout.width < 1024) {
+      await sidebar.getByTestId('sidebar-rail-expand').click();
+      await expect(sidebar).toHaveCSS('border-inline-end-width', '1px');
+    }
+  });
+}

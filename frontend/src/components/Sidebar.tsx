@@ -393,14 +393,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
         className={cn(
           // The end border only exists while the sidebar overlays content on
           // small screens; on desktop it shares one surface with the top bar.
-          'fixed inset-y-0 start-0 z-50 max-lg:border-e border-black/[0.04] dark:border-white/[0.06] transform transition-[width,transform,background-color] duration-200 ease-out shadow-[0_24px_80px_rgba(15,23,42,0.12)]',
+          'fixed inset-y-0 start-0 z-50 transform transition-[width,transform,background-color] duration-200 ease-out',
           sidebarCompact
-            ? 'w-16'
-            : 'w-72 max-sm:w-[calc(100vw-4.5rem)] max-sm:max-w-80',
+            ? 'w-16 border-0 [box-shadow:none]'
+            : 'w-72 max-sm:w-[calc(100vw-4.5rem)] max-sm:max-w-80 max-lg:border-e border-black/[0.04] dark:border-white/[0.06] shadow-[0_24px_80px_rgba(15,23,42,0.12)] lg:shadow-none',
           isOpen
             ? 'translate-x-0'
             : 'ltr:-translate-x-full rtl:translate-x-full',
-          'lg:shadow-none',
           theme.mode === 'celestial'
             ? 'bg-sidebar/30 backdrop-blur-xl lg:bg-transparent lg:backdrop-filter-none'
             : 'bg-sidebar',
@@ -423,7 +422,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
             data-testid='sidebar-browse-scroll-region'
             className={cn(
               'min-h-0 flex-1',
-              sidebarCompact ? 'scroll-region scrollbar-thin' : 'flex flex-col'
+              sidebarCompact
+                ? 'scroll-region flex flex-col gap-[4px] pb-[8px] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden'
+                : 'flex flex-col'
             )}
           >
             <SidebarHeader

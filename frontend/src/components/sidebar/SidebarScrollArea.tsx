@@ -16,20 +16,26 @@
  */
 
 import { useLayoutEffect, useRef, type ReactNode } from 'react';
+import { cn } from '@/utils';
 
 interface SidebarScrollAreaProps {
   children: ReactNode;
   'data-testid': string;
+  compact?: boolean;
+  compactClassName?: string;
 }
 
 export function SidebarScrollArea({
   children,
   'data-testid': testId,
+  compact = false,
+  compactClassName,
 }: SidebarScrollAreaProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
 
   useLayoutEffect(() => {
+    if (compact) return;
     const scrollArea = scrollRef.current;
     const content = contentRef.current;
     if (!scrollArea || !content) return;
@@ -64,15 +70,27 @@ export function SidebarScrollArea({
       scrollArea.removeEventListener('scroll', scheduleUpdate);
       observer.disconnect();
       if (frame !== null) cancelAnimationFrame(frame);
+      scrollArea.style.removeProperty('--sidebar-fade-top');
+      scrollArea.style.removeProperty('--sidebar-fade-bottom');
     };
-  }, []);
+  }, [compact]);
 
   return (
-    <div className='flex min-h-0 flex-1 flex-col border-t border-black/[0.05] dark:border-white/[0.05]'>
+    <div
+      className={
+        compact
+          ? cn('shrink-0', compactClassName)
+          : 'flex min-h-0 flex-1 flex-col border-t border-black/[0.05] dark:border-white/[0.05]'
+      }
+    >
       <div
         ref={scrollRef}
         data-testid={testId}
-        className='sidebar-scroll-fade scroll-region min-h-0 flex-1 scrollbar-thin'
+        className={
+          compact
+            ? undefined
+            : 'sidebar-scroll-fade scroll-region min-h-0 flex-1 scrollbar-thin'
+        }
       >
         <div ref={contentRef}>{children}</div>
       </div>
