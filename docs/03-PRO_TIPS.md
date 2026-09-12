@@ -24,6 +24,17 @@ Good daily-driver examples:
 
 Open **Models** to see which models are running. Unload models you are not using when VRAM gets tight.
 
+## Name New Chats While the Reply Runs
+
+Enable **Auto Title** and choose a **Task Model** under **Settings → Defaults**.
+For a new saved chat, title generation summarizes your first message as soon
+as you send it, alongside the assistant response. The sidebar updates when
+the title is ready; a slow title request does not block the reply.
+
+The selected task model and provider handle the title request. A provider
+that serializes requests may still queue it. Follow-up messages, chats you
+have already named, and incognito chats do not trigger automatic titles.
+
 ## Use Incognito Chat for Conversations That Should Not Persist
 
 Start an incognito chat from the tab bar's `+` menu, the command palette, the
