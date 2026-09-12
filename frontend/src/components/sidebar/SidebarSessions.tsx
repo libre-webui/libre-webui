@@ -28,7 +28,6 @@ import {
   ExternalLink,
   Folder,
   FolderPlus,
-  Loader2,
   MessageSquare,
   MoreHorizontal,
   Pin,
@@ -38,6 +37,7 @@ import {
   Share2,
 } from 'lucide-react';
 import { Button, Input } from '@/components/ui';
+import { GenerationIndicator } from '@/components/ui/GenerationIndicator';
 import { SidebarHoverCard } from './SidebarHoverCard';
 import { SidebarScrollArea } from './SidebarScrollArea';
 import { useSidebarMenu } from './useSidebarMenu';
@@ -685,7 +685,7 @@ export function SidebarSessions({
                                     className='inline-flex items-center gap-1.5'
                                     title={t('chat.session.generatingTitle')}
                                   >
-                                    <Loader2 className='h-3.5 w-3.5 shrink-0 animate-spin text-ink-subtle' />
+                                    <GenerationIndicator />
                                     <span className='truncate'>
                                       {truncateText(session.title, 40)}
                                     </span>

@@ -726,10 +726,10 @@
       "autoTitle": {
         "title": "Automatische titelgeneratie",
         "enable": "Auto-titel inschakelen",
-        "enableDescription": "Automatisch titels genereren voor nieuwe gesprekken",
+        "enableDescription": "Chattitels en live samenvattingen van het denkproces genereren",
         "taskModel": "Taakmodel",
         "selectTaskModel": "Selecteer taakmodel",
-        "taskModelDescription": "Model gebruikt voor het genereren van gesprekstitels"
+        "taskModelDescription": "Model voor titels en live samenvattingen van het denkproces. Recente redeneerstappen worden naar dit model verzonden."
       },
       "updatingModel": "{{name}} bijwerken ({{current}}/{{total}})",
       "modelsProgress": "{{current}} van {{total}} modellen",

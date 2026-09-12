@@ -726,10 +726,10 @@
       "autoTitle": {
         "title": "Tự động tạo tiêu đề",
         "enable": "Bật tự động tạo tiêu đề",
-        "enableDescription": "Tự động tạo tiêu đề cho các cuộc trò chuyện mới",
+        "enableDescription": "Tạo tiêu đề trò chuyện và bản tóm tắt suy nghĩ theo thời gian thực",
         "taskModel": "Mô hình tác vụ",
         "selectTaskModel": "Chọn mô hình tác vụ",
-        "taskModelDescription": "Mô hình được sử dụng để tạo tiêu đề cuộc trò chuyện"
+        "taskModelDescription": "Mô hình dùng cho tiêu đề và bản tóm tắt suy nghĩ theo thời gian thực. Nội dung suy luận gần đây được gửi đến mô hình này."
       },
       "updatingModel": "Đang cập nhật {{name}} ({{current}}/{{total}})",
       "modelsProgress": "{{current}} trong {{total}} mô hình",

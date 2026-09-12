@@ -726,10 +726,10 @@
       "autoTitle": {
         "title": "自动生成标题",
         "enable": "启用自动标题",
-        "enableDescription": "自动为新对话生成标题",
+        "enableDescription": "生成聊天标题和实时思考摘要",
         "taskModel": "任务模型",
         "selectTaskModel": "选择任务模型",
-        "taskModelDescription": "用于生成对话标题的模型"
+        "taskModelDescription": "用于生成标题和实时思考摘要的模型。最近的推理内容会发送给此模型。"
       },
       "updatingModel": "正在更新 {{name}} ({{current}}/{{total}})",
       "modelsProgress": "{{total}} 个模型中的第 {{current}} 个",

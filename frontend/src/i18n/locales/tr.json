@@ -726,10 +726,10 @@
       "autoTitle": {
         "title": "Otomatik Başlık Oluşturma",
         "enable": "Otomatik Başlığı Etkinleştir",
-        "enableDescription": "Yeni konuşmalar için otomatik başlık oluştur",
+        "enableDescription": "Sohbet başlıkları ve canlı düşünce özetleri oluştur",
         "taskModel": "Görev Modeli",
         "selectTaskModel": "Görev modelini seçin",
-        "taskModelDescription": "Konuşma başlıkları oluşturmak için kullanılan model"
+        "taskModelDescription": "Başlıklar ve canlı düşünce özetleri için kullanılan model. Son akıl yürütme içeriği bu modele gönderilir."
       },
       "updatingModel": "{{name}} güncelleniyor ({{current}}/{{total}})",
       "modelsProgress": "{{total}} modelden {{current}}",

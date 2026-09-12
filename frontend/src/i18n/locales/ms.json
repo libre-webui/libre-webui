@@ -726,10 +726,10 @@
       "autoTitle": {
         "title": "Penjanaan Tajuk Auto",
         "enable": "Aktifkan Tajuk Auto",
-        "enableDescription": "Jana tajuk secara automatik untuk perbualan baharu",
+        "enableDescription": "Jana tajuk sembang dan ringkasan pemikiran secara langsung",
         "taskModel": "Model Tugas",
         "selectTaskModel": "Pilih model tugas",
-        "taskModelDescription": "Model yang digunakan untuk menjana tajuk perbualan"
+        "taskModelDescription": "Model yang digunakan untuk tajuk dan ringkasan pemikiran secara langsung. Penaakulan terkini dihantar kepada model ini."
       },
       "updatingModel": "Mengemas kini {{name}} ({{current}}/{{total}})",
       "modelsProgress": "{{current}} daripada {{total}} model",

@@ -726,10 +726,10 @@
       "autoTitle": {
         "title": "自動タイトル生成",
         "enable": "自動タイトルを有効",
-        "enableDescription": "新しい会話のタイトルを自動生成",
+        "enableDescription": "チャットのタイトルとリアルタイムの思考要約を生成",
         "taskModel": "タスクモデル",
         "selectTaskModel": "タスクモデルを選択",
-        "taskModelDescription": "会話タイトルの生成に使用するモデル"
+        "taskModelDescription": "タイトルとリアルタイムの思考要約に使用するモデル。直近の推論内容がこのモデルに送信されます。"
       },
       "updatingModel": "{{name}} を更新中 ({{current}}/{{total}})",
       "modelsProgress": "{{total}} モデル中 {{current}}",

@@ -726,10 +726,10 @@
       "autoTitle": {
         "title": "Automatyczne generowanie tytułów",
         "enable": "Włącz automatyczne tytuły",
-        "enableDescription": "Automatycznie generuj tytuły dla nowych rozmów",
+        "enableDescription": "Generuj tytuły czatów i bieżące podsumowania rozumowania",
         "taskModel": "Model zadań",
         "selectTaskModel": "Wybierz model zadań",
-        "taskModelDescription": "Model używany do generowania tytułów rozmów"
+        "taskModelDescription": "Model używany do tytułów i bieżących podsumowań rozumowania. Najnowsze rozumowanie jest wysyłane do tego modelu."
       },
       "updatingModel": "Aktualizacja {{name}} ({{current}}/{{total}})",
       "modelsProgress": "{{current}} z {{total}} modeli",

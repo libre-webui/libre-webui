@@ -58,6 +58,10 @@
           "patterns": [
             "Chat, documents, artifacts, and provider-backed features do not require Docker"
           ]
+        },
+        {
+          "file": "docs/03-PRO_TIPS.md",
+          "patterns": ["## Follow Live Thinking"]
         }
       ],
       "focusedTests": [
@@ -96,6 +100,12 @@
           "runner": "test:package",
           "name": "forking at a message copies the prefix with remapped identities",
           "behaviorPatterns": ["forkSession", "forkedFrom\\.sessionId"]
+        },
+        {
+          "file": "frontend/e2e/thinking-summary.spec.ts",
+          "runner": "test:e2e",
+          "name": "collapsed topics update from serialized requests using the latest bounded reasoning",
+          "behaviorPatterns": ["summarize-thinking", "thinking-summary"]
         }
       ],
       "backendRoutes": [
@@ -188,6 +198,12 @@
           "mount": "/api/chat",
           "method": "POST",
           "path": "/sessions/:sessionId/generate-title"
+        },
+        {
+          "file": "backend/src/routes/chat.ts",
+          "mount": "/api/chat",
+          "method": "POST",
+          "path": "/sessions/:sessionId/summarize-thinking"
         },
         {
           "file": "backend/src/routes/chat.ts",
@@ -324,6 +340,17 @@
                 "export interface ChatSession",
                 "export interface ChatMessage"
               ]
+            },
+            {
+              "file": "backend/src/services/thinkingSummaryService.ts",
+              "patterns": [
+                "parseThinkingSummaryRequest",
+                "ThinkingSummaryService"
+              ]
+            },
+            {
+              "file": "frontend/src/utils/api/chatApi.ts",
+              "patterns": ["summarizeThinking", "thinkingSummaryClient"]
             }
           ]
         },
@@ -345,6 +372,15 @@
               "patterns": [
                 "private defaultPreferences",
                 "systemMessage: 'You are a helpful assistant"
+              ]
+            },
+            {
+              "file": "frontend/src/hooks/useThinkingSummary.ts",
+              "patterns": [
+                "MAX_EXCERPT_LENGTH = 4000",
+                "UPDATE_INTERVAL_MS = 5000",
+                "!autoTitle",
+                "isPrivate"
               ]
             }
           ]
@@ -3234,7 +3270,7 @@
           "file": "docs/12-AUTHENTICATION.md",
           "patterns": [
             "Every login also creates a server-side session record bound into the JWT",
-            "Settings → API keys mints personal access tokens"
+            "Settings \u2192 API keys mints personal access tokens"
           ]
         },
         {
@@ -3789,7 +3825,7 @@
         {
           "file": "docs/41-DATA_PORTABILITY.md",
           "patterns": [
-            "Settings → Data Management",
+            "Settings \u2192 Data Management",
             "GET`  \\| `/api/preferences/export"
           ]
         }

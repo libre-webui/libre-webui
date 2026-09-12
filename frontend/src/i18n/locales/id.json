@@ -726,10 +726,10 @@
       "autoTitle": {
         "title": "Pembuatan Judul Otomatis",
         "enable": "Aktifkan Judul Otomatis",
-        "enableDescription": "Otomatis membuat judul untuk percakapan baru",
+        "enableDescription": "Buat judul chat dan ringkasan pemikiran secara langsung",
         "taskModel": "Model Tugas",
         "selectTaskModel": "Pilih model tugas",
-        "taskModelDescription": "Model yang digunakan untuk membuat judul percakapan"
+        "taskModelDescription": "Model yang digunakan untuk judul dan ringkasan pemikiran secara langsung. Penalaran terbaru dikirim ke model ini."
       },
       "updatingModel": "Memperbarui {{name}} ({{current}}/{{total}})",
       "modelsProgress": "{{current}} dari {{total}} model",

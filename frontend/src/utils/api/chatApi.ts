@@ -28,6 +28,14 @@ import { isDemoMode } from '@/utils/demoMode';
 import { API_BASE_URL } from '@/utils/config';
 import { api, createDemoResponse, logger } from './client';
 import { DEMO_SESSIONS, getDemoSessions } from './demoData';
+import { createHttpClient } from './httpClient';
+
+// Background summaries contain reasoning text. Keep their failures out of
+// the shared client's request-body error logging, including normal aborts.
+const thinkingSummaryClient = createHttpClient({
+  baseURL: API_BASE_URL,
+  timeout: 15000,
+});
 
 /** Server-wide context compaction settings, managed by administrators. */
 export interface CompactionConfig {
@@ -237,6 +245,31 @@ export const chatApi = {
         providerId,
       })
       .then(res => res.data);
+  },
+
+  // Ephemeral status summaries never update the chat title or message history.
+  summarizeThinking: (
+    sessionId: string,
+    request: {
+      model: string;
+      thinking: string;
+      providerType?: ChatProviderType | null;
+      providerId?: string | null;
+    },
+    signal?: AbortSignal
+  ): Promise<ApiResponse<{ summary: string }>> => {
+    if (isDemoMode()) return createDemoResponse({ summary: '' });
+    const token = localStorage.getItem('auth-token');
+    return thinkingSummaryClient
+      .post<ApiResponse<{ summary: string }>>(
+        `/chat/sessions/${sessionId}/summarize-thinking`,
+        request,
+        {
+          signal,
+          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        }
+      )
+      .then(response => response.data);
   },
 
   // Session folders

@@ -726,10 +726,10 @@
       "autoTitle": {
         "title": "Generazione titolo automatica",
         "enable": "Abilita titolo automatico",
-        "enableDescription": "Genera automaticamente titoli per le nuove conversazioni",
+        "enableDescription": "Genera titoli delle chat e riepiloghi del ragionamento in tempo reale",
         "taskModel": "Modello attività",
         "selectTaskModel": "Seleziona modello attività",
-        "taskModelDescription": "Modello usato per generare titoli conversazioni"
+        "taskModelDescription": "Modello usato per i titoli e i riepiloghi del ragionamento in tempo reale. Il ragionamento recente viene inviato a questo modello."
       },
       "updatingModel": "Aggiornamento di {{name}} ({{current}}/{{total}})",
       "modelsProgress": "{{current}} di {{total}} modelli",

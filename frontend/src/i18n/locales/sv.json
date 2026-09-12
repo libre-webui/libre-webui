@@ -726,10 +726,10 @@
       "autoTitle": {
         "title": "Automatisk titelgenerering",
         "enable": "Aktivera automatisk titel",
-        "enableDescription": "Generera automatiskt titlar för nya konversationer",
+        "enableDescription": "Generera chattitlar och löpande sammanfattningar av tankeprocessen",
         "taskModel": "Uppgiftsmodell",
         "selectTaskModel": "Välj uppgiftsmodell",
-        "taskModelDescription": "Modell som används för att generera konversationstitlar"
+        "taskModelDescription": "Modell för titlar och löpande sammanfattningar av tankeprocessen. De senaste resonemangen skickas till denna modell."
       },
       "updatingModel": "Uppdaterar {{name}} ({{current}}/{{total}})",
       "modelsProgress": "{{current}} av {{total}} modeller",

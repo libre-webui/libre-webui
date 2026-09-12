@@ -726,10 +726,10 @@
       "autoTitle": {
         "title": "Automatische Titelgenerierung",
         "enable": "Auto-Titel aktivieren",
-        "enableDescription": "Automatisch Titel für neue Gespräche generieren",
+        "enableDescription": "Chattitel und laufende Zusammenfassungen des Denkprozesses erstellen",
         "taskModel": "Aufgabenmodell",
         "selectTaskModel": "Aufgabenmodell auswählen",
-        "taskModelDescription": "Modell für die Generierung von Gesprächstiteln"
+        "taskModelDescription": "Modell für Titel und laufende Zusammenfassungen des Denkprozesses. Die jüngsten Überlegungen werden an dieses Modell gesendet."
       },
       "updatingModel": "{{name}} wird aktualisiert ({{current}}/{{total}})",
       "modelsProgress": "{{current}} von {{total}} Modellen",

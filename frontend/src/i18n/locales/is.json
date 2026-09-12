@@ -726,10 +726,10 @@
       "autoTitle": {
         "title": "Sjálfvirk titilgerð",
         "enable": "Virkja sjálfvirka titilgerð",
-        "enableDescription": "Búa sjálfkrafa til titla fyrir ný samtöl",
+        "enableDescription": "Búa til spjalltitla og samantektir á hugsunarferlinu í rauntíma",
         "taskModel": "Verkefnislíkan",
         "selectTaskModel": "Veldu verkefnislíkan",
-        "taskModelDescription": "Líkan notað til að búa til samtalstitla"
+        "taskModelDescription": "Líkan fyrir titla og samantektir á hugsunarferlinu í rauntíma. Nýjustu röksemdir eru sendar til þessa líkans."
       },
       "updatingModel": "Uppfæri {{name}} ({{current}}/{{total}})",
       "modelsProgress": "{{current}} af {{total}} módel",

@@ -21,6 +21,7 @@ import React, {
   useMemo,
   useRef,
   useCallback,
+  useId,
 } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
@@ -30,6 +31,7 @@ import {
 } from '@/types';
 import { ChatToolCallList } from '@/components/ChatToolCalls';
 import { MessageContent } from '@/components/ui';
+import { GenerationIndicator } from '@/components/ui/GenerationIndicator';
 import { GenerationStats } from '@/components/GenerationStats';
 import { ArtifactContainer } from '@/components/ArtifactContainer';
 import { TTSButton } from '@/components/TTSButton';
@@ -71,6 +73,7 @@ import {
 import { useAppStore } from '@/store/appStore';
 import { useAuthStore } from '@/store/authStore';
 import { useChatStore } from '@/store/chatStore';
+import { useThinkingSummary } from '@/hooks/useThinkingSummary';
 import { createLogger } from '@/utils/logger';
 import { evaluationsApi } from '@/utils/api/evaluationsApi';
 import { triggerHapticFeedback } from '@/utils/haptics';
@@ -254,6 +257,7 @@ const ChatMessageBase: React.FC<ChatMessageProps> = ({
   const [isSaving, setIsSaving] = useState(false);
   const [isSystemMessageExpanded, setIsSystemMessageExpanded] = useState(false);
   const [isThinkingExpanded, setIsThinkingExpanded] = useState(false);
+  const thinkingPanelId = useId();
   const [autoPlayState, setAutoPlayState] = useState<TTSPlaybackState>('idle');
   const [feedbackDetailsFor, setFeedbackDetailsFor] = useState<1 | -1 | null>(
     null
@@ -339,6 +343,19 @@ const ChatMessageBase: React.FC<ChatMessageProps> = ({
     ? undefined
     : (message.statistics?.thinking_duration_ms ??
       peekThinkingDuration(message.id));
+  const thinkingSummary = useThinkingSummary({
+    sessionId: currentSessionId,
+    messageId: message.id,
+    thinking: thinkingContent,
+    isThinking: thinkingStreaming,
+    isPrivate: currentSessionIsPrivate,
+  });
+  const completedThinkingLabel =
+    thinkingDurationMs !== undefined
+      ? t('chatMessage.thoughtFor', {
+          duration: formatThinkingDuration(thinkingDurationMs),
+        })
+      : t('chatMessage.thinking');
 
   const startAutoPlayback = useCallback(
     async (audioUnlock?: Promise<TTSAudioUnlockState>) => {
@@ -868,55 +885,84 @@ const ChatMessageBase: React.FC<ChatMessageProps> = ({
                 {(thinkingContent || thinkingStreaming) && (
                   <div className='mb-3 border-s border-gray-200 ps-3 dark:border-dark-300'>
                     <button
+                      type='button'
+                      data-testid='thinking-toggle'
+                      aria-expanded={isThinkingExpanded}
+                      aria-controls={thinkingPanelId}
                       onClick={() => setIsThinkingExpanded(!isThinkingExpanded)}
-                      className='flex items-center gap-1.5 text-xs text-ink-muted transition-colors hover:text-ink'
+                      className='flex min-h-11 max-w-full items-center gap-1.5 rounded-md py-2 text-start text-xs text-ink-muted transition-colors hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/30'
                     >
-                      <Brain
-                        className={cn(
-                          'h-3.5 w-3.5',
-                          thinkingStreaming &&
-                            'animate-pulse-subtle motion-reduce:animate-none'
-                        )}
-                      />
                       {thinkingStreaming ? (
-                        <span className='animate-shimmer bg-gradient-to-r from-ink-subtle via-ink to-ink-subtle bg-[length:200%_100%] bg-clip-text font-medium text-transparent motion-reduce:animate-none motion-reduce:bg-none motion-reduce:text-ink-muted'>
-                          {t('chatMessage.thinking')}…
-                        </span>
+                        <GenerationIndicator data-testid='thinking-generation-indicator' />
                       ) : (
-                        <span className='font-medium'>
-                          {thinkingDurationMs !== undefined
-                            ? t('chatMessage.thoughtFor', {
-                                duration:
-                                  formatThinkingDuration(thinkingDurationMs),
-                              })
-                            : t('chatMessage.thinking')}
-                        </span>
+                        <Brain
+                          aria-hidden='true'
+                          className='h-3.5 w-3.5 shrink-0'
+                        />
                       )}
+                      <span
+                        role='status'
+                        aria-live={thinkingStreaming ? 'polite' : 'off'}
+                        aria-atomic='true'
+                        className='min-w-0 [overflow-wrap:anywhere]'
+                      >
+                        <span
+                          key={thinkingSummary || 'thinking'}
+                          data-testid='thinking-summary'
+                          dir='auto'
+                          className={cn(
+                            'block font-medium',
+                            thinkingStreaming &&
+                              'animate-slide-up [animation-duration:140ms] motion-reduce:animate-none'
+                          )}
+                        >
+                          {thinkingSummary ||
+                            (thinkingStreaming
+                              ? `${t('chatMessage.thinking')}…`
+                              : completedThinkingLabel)}
+                        </span>
+                        {thinkingSummary && !thinkingStreaming && (
+                          <span className='mt-0.5 block text-ink-subtle'>
+                            {completedThinkingLabel}
+                          </span>
+                        )}
+                      </span>
                       {isThinkingExpanded ? (
-                        <ChevronUp className='h-3.5 w-3.5' />
+                        <ChevronUp
+                          aria-hidden='true'
+                          className='h-3.5 w-3.5 shrink-0'
+                        />
                       ) : (
-                        <ChevronDown className='h-3.5 w-3.5' />
+                        <ChevronDown
+                          aria-hidden='true'
+                          className='h-3.5 w-3.5 shrink-0'
+                        />
                       )}
                     </button>
-                    {isThinkingExpanded && thinkingContent && (
-                      <div
-                        dir='auto'
-                        className='mt-2 rounded-xl bg-gray-100/60 p-2.5 text-[13px] leading-relaxed text-gray-600 dark:bg-dark-200/60 dark:text-dark-700'
-                      >
-                        {/* Full markdown so fenced code inside the chain of
-                            thought gets the same treatment as message code. */}
+                    <div
+                      id={thinkingPanelId}
+                      data-testid='thinking-content'
+                      hidden={!isThinkingExpanded}
+                      dir='auto'
+                      className='mt-2 rounded-xl bg-gray-100/60 p-2.5 text-[13px] leading-relaxed text-gray-600 dark:bg-dark-200/60 dark:text-dark-700'
+                    >
+                      {/* Full markdown so fenced code inside the chain of
+                          thought gets the same treatment as message code. */}
+                      {isThinkingExpanded && thinkingContent && (
                         <MessageContent
                           content={thinkingContent}
                           isStreaming={thinkingStreaming}
                           className='text-[13px] text-ink-muted'
                         />
-                      </div>
-                    )}
+                      )}
+                    </div>
                   </div>
                 )}
                 <MessageContent
                   content={parsedContent}
-                  isStreaming={isStreaming}
+                  isStreaming={
+                    isStreaming && !(thinkingStreaming && !parsedContent)
+                  }
                 />
               </div>
             )}

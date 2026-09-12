@@ -47,6 +47,10 @@ import chatGenerationService from '../services/chatGenerationService.js';
 import preferencesService from '../services/preferencesService.js';
 import { ChatRequestService } from '../services/chatRequestService.js';
 import { TitleGenerationService } from '../services/titleGenerationService.js';
+import {
+  ThinkingSummaryInputError,
+  ThinkingSummaryService,
+} from '../services/thinkingSummaryService.js';
 import { FollowUpService } from '../services/followUpService.js';
 import {
   ApiResponse,
@@ -154,6 +158,12 @@ const rejectProcessLocalTeamGeneration = (res: Response): boolean => {
   return true;
 };
 const titleGenerationService = new TitleGenerationService({
+  chatService,
+  chatGenerationService,
+  pluginService,
+  ollamaService,
+});
+const thinkingSummaryService = new ThinkingSummaryService({
   chatService,
   chatGenerationService,
   pluginService,
@@ -1875,6 +1885,53 @@ router.post(
         success: false,
         error: getErrorMessage(error, 'Failed to generate title'),
       });
+    }
+  }
+);
+
+// Summaries are transient activity labels; they never modify the chat.
+router.post(
+  '/sessions/:sessionId/summarize-thinking',
+  async (
+    req: AuthenticatedRequest,
+    res: Response<ApiResponse<{ summary: string }>>
+  ): Promise<void> => {
+    const { controller, cleanup } = abortChatGenerationOnResponseClose(res);
+    if (req.aborted || res.destroyed) {
+      cleanup();
+      return;
+    }
+    try {
+      const input = req.body;
+      const result = await thinkingSummaryService.summarizeForSession({
+        sessionId: req.params.sessionId as string,
+        requestedModel: input?.model,
+        thinking: input?.thinking,
+        providerType: input?.providerType,
+        providerId: input?.providerId,
+        userId: req.user?.userId || 'default',
+        signal: controller.signal,
+      });
+      if (res.destroyed || res.writableEnded) return;
+      if (!result) {
+        res.status(404).json({ success: false, error: 'Session not found' });
+        return;
+      }
+      res.json({ success: true, data: result });
+    } catch (error) {
+      if (res.destroyed || res.writableEnded || controller.signal.aborted)
+        return;
+      const invalid =
+        error instanceof ThinkingSummaryInputError ||
+        error instanceof ChatProviderSelectionError;
+      const timedOut = error instanceof Error && error.name === 'TimeoutError';
+      res.status(invalid ? 400 : timedOut ? 504 : 502).json({
+        success: false,
+        // Provider errors may contain submitted text. Do not echo or log them.
+        error: invalid ? error.message : 'Could not summarize thinking.',
+      });
+    } finally {
+      cleanup();
     }
   }
 );

@@ -35,6 +35,26 @@ The selected task model and provider handle the title request. A provider
 that serializes requests may still queue it. Follow-up messages, chats you
 have already named, and incognito chats do not trigger automatic titles.
 
+## Follow Live Thinking
+
+When **Auto Title** is enabled and a **Task Model** is selected under
+**Settings → Defaults**, the collapsed thinking block shows a short activity
+summary while the assistant reasons. The same task model receives the latest
+reasoning excerpt to describe the current topic, so choose a local model when
+that text must stay on your machine.
+
+Summaries use at most the latest 4,000 characters, start after enough text is
+available, and update at most once every five seconds with one request in
+flight. A slow or failed summary never blocks the answer. The last summary
+remains visible for that rendered message after thinking ends, alongside its
+duration; expand the block to read the original reasoning. These summaries
+are temporary and are not saved in chat history.
+
+The activity text animates as it changes, with the same loading indicator as
+pending chat titles. Reduced-motion preferences disable both animations.
+Incognito chats and chats without an enabled task model keep the ordinary
+thinking label without making summary requests.
+
 ## Use Incognito Chat for Conversations That Should Not Persist
 
 Start an incognito chat from the tab bar's `+` menu, the command palette, the

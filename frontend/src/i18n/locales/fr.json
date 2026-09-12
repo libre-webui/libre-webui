@@ -726,10 +726,10 @@
       "autoTitle": {
         "title": "Génération automatique du titre",
         "enable": "Activer le titre automatique",
-        "enableDescription": "Générer automatiquement des titres pour les nouvelles conversations",
+        "enableDescription": "Générer des titres de discussion et des résumés du raisonnement en direct",
         "taskModel": "Modèle de tâche",
         "selectTaskModel": "Sélectionnez le modèle de tâche",
-        "taskModelDescription": "Modèle utilisé pour générer les titres des conversations"
+        "taskModelDescription": "Modèle utilisé pour les titres et les résumés du raisonnement en direct. Le raisonnement récent est envoyé à ce modèle."
       },
       "updatingModel": "Mise à jour de {{name}} ({{current}}/{{total}})",
       "modelsProgress": "{{current}} sur {{total}} modèles",

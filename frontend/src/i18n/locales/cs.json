@@ -726,10 +726,10 @@
       "autoTitle": {
         "title": "Automatické generování titulků",
         "enable": "Povolit automatické titulky",
-        "enableDescription": "Automaticky generovat titulky pro nové konverzace",
+        "enableDescription": "Generovat názvy chatů a průběžná shrnutí uvažování",
         "taskModel": "Model úloh",
         "selectTaskModel": "Vyberte model úloh",
-        "taskModelDescription": "Model používaný pro generování titulků konverzací"
+        "taskModelDescription": "Model používaný pro názvy a průběžná shrnutí uvažování. Tomuto modelu se odesílají nejnovější úvahy."
       },
       "updatingModel": "Aktualizace {{name}} ({{current}}/{{total}})",
       "modelsProgress": "{{current}} z {{total}} modelů",

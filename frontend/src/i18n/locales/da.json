@@ -726,10 +726,10 @@
       "autoTitle": {
         "title": "Automatisk titelgenerering",
         "enable": "Aktiver automatisk titel",
-        "enableDescription": "Generer automatisk titler til nye samtaler",
+        "enableDescription": "Generer chattitler og løbende opsummeringer af tankeprocessen",
         "taskModel": "Opgavemodel",
         "selectTaskModel": "Vælg opgavemodel",
-        "taskModelDescription": "Model brugt til at generere samtaletitler"
+        "taskModelDescription": "Model til titler og løbende opsummeringer af tankeprocessen. De seneste ræsonnementer sendes til denne model."
       },
       "updatingModel": "Opdaterer {{name}} ({{current}}/{{total}})",
       "modelsProgress": "{{current}} af {{total}} modeller",

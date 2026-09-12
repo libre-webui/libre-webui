@@ -726,10 +726,10 @@
       "autoTitle": {
         "title": "자동 제목 생성",
         "enable": "자동 제목 활성화",
-        "enableDescription": "새 대화의 제목을 자동으로 생성",
+        "enableDescription": "채팅 제목 및 실시간 사고 요약 생성",
         "taskModel": "작업 모델",
         "selectTaskModel": "작업 모델 선택",
-        "taskModelDescription": "대화 제목 생성에 사용되는 모델"
+        "taskModelDescription": "제목 및 실시간 사고 요약에 사용되는 모델입니다. 최근 추론 내용이 이 모델로 전송됩니다."
       },
       "updatingModel": "{{name}} 업데이트 중 ({{current}}/{{total}})",
       "modelsProgress": "{{total}}개 모델 중 {{current}}개",

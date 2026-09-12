@@ -726,10 +726,10 @@
       "autoTitle": {
         "title": "Generación automática de títulos",
         "enable": "Habilitar título automático",
-        "enableDescription": "Generar automáticamente títulos para nuevas conversaciones",
+        "enableDescription": "Generar títulos de chat y resúmenes del razonamiento en tiempo real",
         "taskModel": "Modelo de tarea",
         "selectTaskModel": "Seleccionar modelo de tarea",
-        "taskModelDescription": "Modelo usado para generar títulos de conversación"
+        "taskModelDescription": "Modelo usado para títulos y resúmenes del razonamiento en tiempo real. El razonamiento reciente se envía a este modelo."
       },
       "updatingModel": "Actualizando {{name}} ({{current}}/{{total}})",
       "modelsProgress": "{{current}} de {{total}} modelos",

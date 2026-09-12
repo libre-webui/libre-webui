@@ -24,6 +24,7 @@ import {
   type StreamingMarkdownSegment,
 } from './messageContentUtils';
 import { MessageCodeBlock } from './MessageCodeBlock';
+import { GenerationIndicator } from './GenerationIndicator';
 import {
   MESSAGE_CODE_BACKGROUND_DARK,
   MESSAGE_CODE_BACKGROUND_LIGHT,
@@ -196,10 +197,9 @@ const StreamingMessageContentBase: React.FC<StreamingMessageContentProps> = ({
         )
       )}
       {isStreaming && !isStreamingInsideCode && (
-        <span
+        <GenerationIndicator
           data-testid='message-streaming-cursor'
-          aria-hidden='true'
-          className='ms-1 inline-block h-5 w-1 animate-pulse rounded-full bg-primary-500 align-text-bottom'
+          className='ms-1 inline-block align-text-bottom'
         />
       )}
     </div>

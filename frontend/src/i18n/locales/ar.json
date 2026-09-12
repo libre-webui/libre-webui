@@ -726,10 +726,10 @@
       "autoTitle": {
         "title": "توليد العنوان التلقائي",
         "enable": "تفعيل العنوان التلقائي",
-        "enableDescription": "توليد عناوين تلقائياً للمحادثات الجديدة",
+        "enableDescription": "توليد عناوين المحادثات وملخصات مباشرة للتفكير",
         "taskModel": "نموذج المهام",
         "selectTaskModel": "اختر نموذج المهام",
-        "taskModelDescription": "النموذج المستخدم لتوليد عناوين المحادثات"
+        "taskModelDescription": "النموذج المستخدم للعناوين وملخصات التفكير المباشرة. تُرسَل أحدث مقاطع الاستدلال إلى هذا النموذج."
       },
       "updatingModel": "تحديث {{name}} ({{current}}/{{total}})",
       "modelsProgress": "{{current}} من {{total}} نماذج",

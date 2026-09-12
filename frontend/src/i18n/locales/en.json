@@ -726,10 +726,10 @@
       "autoTitle": {
         "title": "Auto Title Generation",
         "enable": "Enable Auto Title",
-        "enableDescription": "Automatically generate titles for new conversations",
+        "enableDescription": "Generate chat titles and live thinking summaries",
         "taskModel": "Task Model",
         "selectTaskModel": "Select task model",
-        "taskModelDescription": "Model used for generating conversation titles"
+        "taskModelDescription": "Model used for titles and live thinking summaries. Recent reasoning is sent to this model."
       },
       "updatingModel": "Updating {{name}} ({{current}}/{{total}})",
       "modelsProgress": "{{current}} of {{total}} models",
