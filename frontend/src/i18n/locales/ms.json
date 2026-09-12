@@ -641,7 +641,7 @@
       "background": {
         "title": "Imej Latar Belakang",
         "enable": "Aktifkan imej latar belakang",
-        "enableDescription": "Paparkan kertas dinding anda dalam Sembang dan Kerja.",
+        "enableDescription": "Paparkan kertas dinding anda pada Laman utama dan dalam Sembang dan Kerja.",
         "blur": "Kabur",
         "opacity": "Kelegapan",
         "upload": "Muat naik imej latar belakang",

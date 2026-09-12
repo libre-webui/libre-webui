@@ -49,11 +49,10 @@ const greetingKeyForHour = (hour: number): string => {
   return 'chat.greeting.evening';
 };
 
-const sectionLabelClass =
-  'mb-2 text-xs font-medium text-gray-500 dark:text-dark-500';
+const sectionLabelClass = 'mb-2 text-xs font-medium text-ink-muted';
 
 const rowClass =
-  'group flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-start text-sm text-gray-700 transition-colors hover:bg-white hover:text-gray-950 dark:text-dark-700 dark:hover:bg-dark-200 dark:hover:text-dark-950 outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40';
+  'group flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-start text-sm text-ink-muted transition-colors hover:bg-white hover:text-ink dark:hover:bg-dark-200 outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40';
 
 export const HomePage: React.FC = () => {
   const { t, i18n } = useTranslation();
@@ -99,12 +98,12 @@ export const HomePage: React.FC = () => {
       className='h-full overflow-y-auto scrollbar-thin'
     >
       <div className='mx-auto flex min-h-full w-full max-w-xl flex-col justify-center px-6 py-12'>
-        <h1 className='text-2xl font-semibold tracking-tight text-gray-950 dark:text-dark-950'>
+        <h1 className='text-2xl font-semibold tracking-tight text-ink'>
           {name ? `${greeting}, ${name}.` : `${greeting}.`}
         </h1>
         <p
           data-testid='app-version'
-          className='mt-1 font-mono text-xs text-gray-400 dark:text-dark-500'
+          className='mt-1 font-mono text-xs text-ink-subtle'
         >
           {window.location.host || 'Libre WebUI'}
           {appVersion ? ` · v${appVersion}` : ''}
@@ -119,9 +118,9 @@ export const HomePage: React.FC = () => {
               className={rowClass}
               onClick={() => startNewChat(navigate)}
             >
-              <MessageSquare className='h-4 w-4 shrink-0 text-gray-400 transition-colors group-hover:text-gray-600 dark:text-dark-500 dark:group-hover:text-dark-700' />
+              <MessageSquare className='h-4 w-4 shrink-0 text-ink-subtle transition-colors group-hover:text-ink-muted' />
               <span className='flex-1'>{t('tabs.newChat', 'New Chat')}</span>
-              <span className='font-mono text-[10px] tracking-wide text-gray-400 opacity-0 transition-opacity group-hover:opacity-100 dark:text-dark-500'>
+              <span className='font-mono text-[10px] tracking-wide text-ink-subtle opacity-0 transition-opacity group-hover:opacity-100'>
                 {mod}⇧O
               </span>
             </button>
@@ -131,7 +130,7 @@ export const HomePage: React.FC = () => {
               className={rowClass}
               onClick={() => startIncognitoChat(navigate)}
             >
-              <Ghost className='h-4 w-4 shrink-0 text-gray-400 transition-colors group-hover:text-gray-600 dark:text-dark-500 dark:group-hover:text-dark-700' />
+              <Ghost className='h-4 w-4 shrink-0 text-ink-subtle transition-colors group-hover:text-ink-muted' />
               <span className='flex-1'>
                 {t('chat.session.incognito', 'Incognito Chat')}
               </span>
@@ -143,9 +142,9 @@ export const HomePage: React.FC = () => {
                 className={rowClass}
                 onClick={() => startNewWork(navigate)}
               >
-                <Briefcase className='h-4 w-4 shrink-0 text-gray-400 transition-colors group-hover:text-gray-600 dark:text-dark-500 dark:group-hover:text-dark-700' />
+                <Briefcase className='h-4 w-4 shrink-0 text-ink-subtle transition-colors group-hover:text-ink-muted' />
                 <span className='flex-1'>{t('tabs.newWork', 'New Work')}</span>
-                <span className='font-mono text-[10px] tracking-wide text-gray-400 opacity-0 transition-opacity group-hover:opacity-100 dark:text-dark-500'>
+                <span className='font-mono text-[10px] tracking-wide text-ink-subtle opacity-0 transition-opacity group-hover:opacity-100'>
                   {mod}⇧U
                 </span>
               </button>
@@ -160,7 +159,7 @@ export const HomePage: React.FC = () => {
                 {t('home.continue', 'Continue')}
               </p>
               {showWork && activeRuntimes > 0 && (
-                <span className='flex items-center gap-1.5 font-mono text-[10px] text-gray-400 dark:text-dark-500'>
+                <span className='flex items-center gap-1.5 font-mono text-[10px] text-ink-subtle'>
                   <span className='h-1.5 w-1.5 animate-pulse-subtle rounded-full bg-[rgb(48,121,255)]' />
                   {activeRuntimes} {t('home.active', 'active')}
                 </span>
@@ -190,13 +189,13 @@ export const HomePage: React.FC = () => {
                     </span>
                     {task.hostPath && (
                       <span
-                        className='hidden max-w-[14rem] shrink-0 truncate font-mono text-[10px] text-gray-400 sm:inline dark:text-dark-500'
+                        className='hidden max-w-[14rem] shrink-0 truncate font-mono text-[10px] text-ink-subtle sm:inline'
                         title={task.hostPath}
                       >
                         {task.hostPath}
                       </span>
                     )}
-                    <span className='shrink-0 font-mono text-[10px] text-gray-400 dark:text-dark-500'>
+                    <span className='shrink-0 font-mono text-[10px] text-ink-subtle'>
                       {isWorkTaskActive(task)
                         ? t(status.labelKey, status.label)
                         : formatTimestamp(
@@ -215,11 +214,11 @@ export const HomePage: React.FC = () => {
                   className={rowClass}
                   onClick={() => navigate(`/c/${session.id}`)}
                 >
-                  <MessageSquare className='h-4 w-4 shrink-0 text-gray-400 dark:text-dark-500' />
+                  <MessageSquare className='h-4 w-4 shrink-0 text-ink-subtle' />
                   <span className='min-w-0 flex-1 truncate'>
                     {session.title || t('tabs.chat', 'Chat')}
                   </span>
-                  <span className='hidden shrink-0 font-mono text-[10px] text-gray-400 sm:inline dark:text-dark-500'>
+                  <span className='hidden shrink-0 font-mono text-[10px] text-ink-subtle sm:inline'>
                     {session.model.startsWith('persona:')
                       ? chatModels.find(
                           model =>
@@ -227,7 +226,7 @@ export const HomePage: React.FC = () => {
                         )?.personaName || t('chat.persona.label', 'Persona')
                       : session.model}
                   </span>
-                  <span className='shrink-0 font-mono text-[10px] text-gray-400 dark:text-dark-500'>
+                  <span className='shrink-0 font-mono text-[10px] text-ink-subtle'>
                     {formatTimestamp(session.updatedAt, i18n.language)}
                   </span>
                 </button>
@@ -275,7 +274,7 @@ export const HomePage: React.FC = () => {
                 className={rowClass}
                 onClick={() => navigate(path)}
               >
-                <Icon className='h-4 w-4 shrink-0 text-gray-400 transition-colors group-hover:text-gray-600 dark:text-dark-500 dark:group-hover:text-dark-700' />
+                <Icon className='h-4 w-4 shrink-0 text-ink-subtle transition-colors group-hover:text-ink-muted' />
                 <span className='flex-1'>{label}</span>
               </button>
             ))}

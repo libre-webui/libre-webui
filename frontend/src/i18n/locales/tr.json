@@ -641,7 +641,7 @@
       "background": {
         "title": "Arka Plan Görseli",
         "enable": "Arka plan görselini etkinleştir",
-        "enableDescription": "Duvar kâğıdınızı Sohbet ve İş alanında gösterin.",
+        "enableDescription": "Duvar kâğıdınızı Ana sayfada, Sohbet ve Çalışma alanlarında gösterin.",
         "blur": "Bulanıklık",
         "opacity": "Opaklık",
         "upload": "Arka plan görseli yükle",

@@ -641,7 +641,7 @@
       "background": {
         "title": "Achtergrondafbeelding",
         "enable": "Achtergrondafbeelding inschakelen",
-        "enableDescription": "Toon je achtergrond in Chat en Werk.",
+        "enableDescription": "Toon je achtergrond op Home en in Chat en Werk.",
         "blur": "Vervaging",
         "opacity": "Dekking",
         "upload": "Achtergrondafbeelding uploaden",

@@ -641,7 +641,7 @@
       "background": {
         "title": "Imagem de Fundo",
         "enable": "Ativar imagem de fundo",
-        "enableDescription": "Mostre o papel de parede no Chat e no Trabalho.",
+        "enableDescription": "Mostre o papel de parede no Início, no Chat e no Trabalho.",
         "blur": "Desfoque",
         "opacity": "Opacidade",
         "upload": "Enviar imagem de fundo",

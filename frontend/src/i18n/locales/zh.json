@@ -641,7 +641,7 @@
       "background": {
         "title": "背景图片",
         "enable": "启用背景图片",
-        "enableDescription": "在聊天和工作中显示壁纸。",
+        "enableDescription": "在主页、对话和工作中显示壁纸。",
         "blur": "模糊度",
         "opacity": "不透明度",
         "upload": "上传背景图片",

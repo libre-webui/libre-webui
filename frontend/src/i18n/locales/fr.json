@@ -641,7 +641,7 @@
       "background": {
         "title": "Image d'arrière-plan",
         "enable": "Activer l'image d'arrière-plan",
-        "enableDescription": "Afficher votre fond dans Chat et Travail.",
+        "enableDescription": "Afficher votre fond sur l’Accueil et dans Chat et Travail.",
         "blur": "Flou",
         "opacity": "Opacité",
         "upload": "Envoyer une image d'arrière-plan",

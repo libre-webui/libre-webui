@@ -135,12 +135,12 @@ async function chromePaint(page: Page) {
   );
 }
 
-async function assertWallpaperContained(page: Page) {
+async function assertWallpaperContained(page: Page, effect = 'dither') {
   const main = page.locator('[data-app-main]');
   const background = page.getByTestId('app-background');
   await expect(main).toHaveAttribute('data-wallpaper', 'true');
   await expect(main.getByTestId('app-background')).toHaveCount(1);
-  await expect(background).toHaveAttribute('data-effect', 'dither');
+  await expect(background).toHaveAttribute('data-effect', effect);
   await expect(background).toHaveAttribute('data-state', 'ready');
   await expect(background).toHaveCSS('pointer-events', 'none');
   const mainBox = (await main.boundingBox())!;
@@ -194,7 +194,7 @@ async function savedWallpaperSource(page: Page) {
 }
 
 for (const { name, mode, hour } of modes) {
-  test(`${name} confines wallpaper to Chat and Work without repainting navigation`, async ({
+  test(`${name} confines wallpaper to Home, Chat and Work without repainting navigation`, async ({
     page,
   }) => {
     await seedWallpaper(page, mode, hour, false);
@@ -211,6 +211,7 @@ for (const { name, mode, hour } of modes) {
     expect(await chromePaint(page)).toEqual(before);
 
     for (const route of [
+      '/',
       '/c/wallpaper-chat',
       '/work',
       '/work/wallpaper-task',
@@ -219,7 +220,6 @@ for (const { name, mode, hour } of modes) {
       await assertWallpaperContained(page);
     }
     for (const route of [
-      '/',
       '/notes',
       '/gallery',
       '/calendar',
@@ -237,13 +237,79 @@ for (const { name, mode, hour } of modes) {
   });
 }
 
-test('wallpaper stays inside mobile RTL Chat and Work while controls remain usable', async ({
+for (const mode of ['light', 'dark'] as const) {
+  test(`Home paints the saved wallpaper effect and intensity in ${mode} mode`, async ({
+    page,
+  }, testInfo) => {
+    await seedWallpaper(page, mode, 12);
+    await page.goto('/');
+    await expect(page.getByTestId('home-page')).toBeVisible();
+    await assertWallpaperContained(page);
+    await openSettingsTab(page, 'appearance');
+    await page.getByTestId('background-effect').selectOption('original');
+    await page.getByTestId('background-intensity').fill('0.55');
+    await expect(page.getByTestId('background-save-status')).toHaveText(
+      'Saved'
+    );
+    await page.keyboard.press('Escape');
+    await page.reload();
+    await expect(page.getByTestId('home-page')).toBeVisible();
+    await assertWallpaperContained(page, 'original');
+    await expect(page.getByTestId('app-background')).toHaveCSS(
+      '--wallpaper-intensity',
+      '0.55'
+    );
+    expect(await savedWallpaperSource(page)).toBe(wallpaper);
+    const contrast = await primaryTextContrast(
+      page,
+      page.getByTestId('home-new-chat').getByText('New Chat', { exact: true })
+    );
+    expect(
+      contrast.ratio,
+      JSON.stringify({ mode, ...contrast })
+    ).toBeGreaterThanOrEqual(4.5);
+    await page.screenshot({
+      path: testInfo.outputPath(`home-wallpaper-${mode}.png`),
+    });
+    await page.getByTestId('home-new-chat').click();
+    await expect(page).toHaveURL(/\/chat$/);
+    await expect(page.locator('[data-composer-box] textarea')).toBeEditable();
+    await assertWallpaperContained(page, 'original');
+  });
+}
+
+for (const hidden of ['disabled', 'zero intensity'] as const) {
+  test(`Home keeps its wallpaper hidden when ${hidden}`, async ({ page }) => {
+    await seedWallpaper(
+      page,
+      'dark',
+      12,
+      hidden !== 'disabled',
+      0,
+      wallpaper,
+      hidden === 'zero intensity' ? 0 : 0.8
+    );
+    await page.goto('/');
+    await expect(page.getByTestId('home-page')).toBeVisible();
+    await expect(page.getByTestId('app-background')).toHaveCount(0);
+    await expect(page.locator('[data-app-main]')).not.toHaveAttribute(
+      'data-wallpaper',
+      'true'
+    );
+    await page.getByTestId('home-new-chat').click();
+    await expect(page).toHaveURL(/\/chat$/);
+    await expect(page.locator('[data-composer-box] textarea')).toBeEditable();
+  });
+}
+
+test('wallpaper stays inside mobile RTL Home, Chat and Work while controls remain usable', async ({
   page,
 }) => {
   await page.setViewportSize({ width: 320, height: 844 });
   await seedWallpaper(page, 'celestial', 0);
   await page.addInitScript(() => localStorage.setItem('i18nextLng', 'ar'));
-  await page.goto('/c/wallpaper-chat');
+  await page.goto('/');
+  await expect(page.getByTestId('home-page')).toBeVisible();
   await expect(page.getByTestId('app-background')).toBeHidden();
   await page.getByTestId('sidebar-toggle-size').click();
   await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
@@ -251,6 +317,11 @@ test('wallpaper stays inside mobile RTL Chat and Work while controls remain usab
   await page.getByTestId('sidebar-rail-expand').click();
   await expect(page.getByTestId('app-background')).toBeHidden();
   await page.getByTestId('sidebar-toggle-size').click();
+  await assertWallpaperContained(page);
+  await page.getByTestId('home-new-chat').click();
+  await expect(page).toHaveURL(/\/chat$/);
+  await assertWallpaperContained(page);
+  await page.goto('/c/wallpaper-chat');
   await assertWallpaperContained(page);
   const main = (await page.locator('[data-app-main]').boundingBox())!;
   const sidebar = (await page.getByTestId('sidebar').boundingBox())!;
@@ -517,10 +588,12 @@ test('a delayed old image cannot overwrite a newly uploaded wallpaper', async ({
   );
 });
 
-async function primaryTextContrast(page: Page) {
-  const text = page.getByText('Readable content over a personal wallpaper.', {
+async function primaryTextContrast(
+  page: Page,
+  text = page.getByText('Readable content over a personal wallpaper.', {
     exact: true,
-  });
+  })
+) {
   await text.scrollIntoViewIfNeeded();
   const probe = await text.evaluate(element => {
     const range = document.createRange();

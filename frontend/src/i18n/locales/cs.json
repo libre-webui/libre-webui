@@ -641,7 +641,7 @@
       "background": {
         "title": "Obrázek pozadí",
         "enable": "Povolit obrázek pozadí",
-        "enableDescription": "Zobrazit tapetu v Chatu a Práci.",
+        "enableDescription": "Zobrazit tapetu na stránce Domů a v Chatu a Práci.",
         "blur": "Rozmazání",
         "opacity": "Průhlednost",
         "upload": "Nahrát obrázek pozadí",

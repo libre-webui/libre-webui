@@ -641,7 +641,7 @@
       "background": {
         "title": "Hình nền",
         "enable": "Bật hình nền",
-        "enableDescription": "Hiển thị hình nền trong Trò chuyện và Công việc.",
+        "enableDescription": "Hiển thị hình nền trên Trang chủ và trong Trò chuyện và Công việc.",
         "blur": "Độ mờ",
         "opacity": "Độ trong suốt",
         "upload": "Tải lên hình nền",

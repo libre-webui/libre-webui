@@ -641,7 +641,7 @@
       "background": {
         "title": "Baggrundsbillede",
         "enable": "Aktiver baggrundsbillede",
-        "enableDescription": "Vis dit baggrundsbillede i Chat og Arbejde.",
+        "enableDescription": "Vis dit baggrundsbillede på Hjem og i Chat og Arbejde.",
         "blur": "Sløring",
         "opacity": "Gennemsigtighed",
         "upload": "Upload baggrundsbillede",

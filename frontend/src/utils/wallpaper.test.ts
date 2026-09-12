@@ -27,8 +27,9 @@ import {
   wallpaperSampleSize,
 } from './wallpaper';
 
-test('only Chat and Work routes receive account wallpaper', () => {
+test('only Home, Chat, and Work routes receive account wallpaper', () => {
   for (const route of [
+    '/',
     '/chat',
     '/chat/',
     '/c/a-session',
@@ -39,7 +40,6 @@ test('only Chat and Work routes receive account wallpaper', () => {
   ])
     assert.equal(isWallpaperRoute(route), true, route);
   for (const route of [
-    '/',
     '/login',
     '/notes',
     '/calendar',

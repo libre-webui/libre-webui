@@ -641,7 +641,7 @@
       "background": {
         "title": "Immagine di sfondo",
         "enable": "Abilita immagine di sfondo",
-        "enableDescription": "Mostra lo sfondo in Chat e Lavoro.",
+        "enableDescription": "Mostra lo sfondo nella Home e in Chat e Lavoro.",
         "blur": "Sfocatura",
         "opacity": "Opacità",
         "upload": "Carica immagine di sfondo",

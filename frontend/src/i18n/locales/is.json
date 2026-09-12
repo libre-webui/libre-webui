@@ -641,7 +641,7 @@
       "background": {
         "title": "Bakgrunnsmynd",
         "enable": "Virkja bakgrunnsmynd",
-        "enableDescription": "Sýna veggfóðrið þitt í Spjalli og Vinnu.",
+        "enableDescription": "Sýna veggfóðrið þitt á heimasíðunni og í Spjalli og Vinnu.",
         "blur": "Þoka",
         "opacity": "Gegnsæi",
         "upload": "Hlaða upp bakgrunnsmynd",

@@ -641,7 +641,7 @@
       "background": {
         "title": "Background Image",
         "enable": "Enable background image",
-        "enableDescription": "Show your wallpaper in Chat and Work.",
+        "enableDescription": "Show your wallpaper on Home and in Chat and Work.",
         "blur": "Blur",
         "opacity": "Opacity",
         "upload": "Upload background image",

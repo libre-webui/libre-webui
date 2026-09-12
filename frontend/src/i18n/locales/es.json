@@ -641,7 +641,7 @@
       "background": {
         "title": "Imagen de fondo",
         "enable": "Habilitar imagen de fondo",
-        "enableDescription": "Muestra tu fondo en Chat y Trabajo.",
+        "enableDescription": "Muestra tu fondo en Inicio, Chat y Trabajo.",
         "blur": "Desenfoque",
         "opacity": "Opacidad",
         "upload": "Subir imagen de fondo",

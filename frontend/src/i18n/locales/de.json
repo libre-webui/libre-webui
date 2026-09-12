@@ -641,7 +641,7 @@
       "background": {
         "title": "Hintergrundbild",
         "enable": "Hintergrundbild aktivieren",
-        "enableDescription": "Zeige dein Hintergrundbild in Chat und Arbeit.",
+        "enableDescription": "Zeige dein Hintergrundbild auf der Startseite sowie in Chat und Arbeit.",
         "blur": "Unschärfe",
         "opacity": "Deckkraft",
         "upload": "Hintergrundbild hochladen",

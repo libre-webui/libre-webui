@@ -281,7 +281,7 @@ task brief more room than the compact follow-up input.
 
 ### Account Wallpaper
 
-Account wallpaper belongs inside the rounded Chat and Work content card. The
+Account wallpaper belongs inside the rounded Home, Chat, and Work content card. The
 sidebar, tab strip, and library pages retain their own theme surfaces. Mobile
 navigation overlays temporarily hide the wallpaper to keep it from showing
 through translucent chrome.

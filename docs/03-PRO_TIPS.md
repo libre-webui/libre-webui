@@ -170,7 +170,7 @@ system's reduced-motion preference, including during the theme's arrival sweep.
 
 In **Settings > Appearance > Background Image**, choose an image up to 10 MB.
 Your source image and settings are saved to your account. The wallpaper appears
-only in Chat and Work; it does not paint the sidebar, tab bar, or library pages.
+on Home and in Chat and Work; it does not paint the sidebar, tab bar, or library pages.
 
 **Dithered** creates distinct square pixels with open gaps in the shadows,
 inspired by the image's colors. Bright areas are softened before the dots are

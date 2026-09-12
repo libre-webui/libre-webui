@@ -641,7 +641,7 @@
       "background": {
         "title": "배경 이미지",
         "enable": "배경 이미지 활성화",
-        "enableDescription": "채팅과 작업에 배경화면을 표시합니다.",
+        "enableDescription": "홈, 채팅, 작업에 배경화면을 표시합니다.",
         "blur": "블러",
         "opacity": "불투명도",
         "upload": "배경 이미지 업로드",

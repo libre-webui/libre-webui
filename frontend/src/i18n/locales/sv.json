@@ -641,7 +641,7 @@
       "background": {
         "title": "Bakgrundsbild",
         "enable": "Aktivera bakgrundsbild",
-        "enableDescription": "Visa din bakgrund i Chatt och Arbete.",
+        "enableDescription": "Visa din bakgrund på Hem och i Chatt och Arbete.",
         "blur": "Oskärpa",
         "opacity": "Opacitet",
         "upload": "Ladda upp bakgrundsbild",

@@ -641,7 +641,7 @@
       "background": {
         "title": "背景画像",
         "enable": "背景画像を有効にする",
-        "enableDescription": "チャットと作業に壁紙を表示します。",
+        "enableDescription": "ホーム、チャット、作業に壁紙を表示します。",
         "blur": "ぼかし",
         "opacity": "不透明度",
         "upload": "背景画像をアップロード",

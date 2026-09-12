@@ -15,8 +15,9 @@
  * limitations under the License.
  */
 
-/** Wallpaper belongs to creation surfaces, never to navigation or libraries. */
+/** Wallpaper belongs to Home, Chat, and Work, never navigation or libraries. */
 export const isWallpaperRoute = (pathname: string): boolean =>
+  pathname === '/' ||
   /^\/(?:chat\/?|c\/[^/]+\/?|work(?:\/[^/]+)?\/?)$/.test(pathname);
 
 const MAX_SAMPLE_PIXELS = 524_288;

@@ -641,7 +641,7 @@
       "background": {
         "title": "Obraz tła",
         "enable": "Włącz obraz tła",
-        "enableDescription": "Pokaż tapetę w Czacie i Pracy.",
+        "enableDescription": "Pokaż tapetę na Stronie głównej oraz w Czacie i Pracy.",
         "blur": "Rozmycie",
         "opacity": "Przezroczystość",
         "upload": "Wyślij obraz tła",
