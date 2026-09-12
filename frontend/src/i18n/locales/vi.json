@@ -1692,6 +1692,22 @@
     "title": "Quản lý người dùng",
     "subtitle": "Quản lý tài khoản và quyền hạn người dùng",
     "pageDescription": "Quản lý tài khoản người dùng, quyền và kiểm soát truy cập cho phiên bản Libre WebUI của bạn.",
+    "sections": {
+      "users": "Người dùng",
+      "access": "Quyền truy cập và chính sách",
+      "security": "Bảo mật",
+      "defaults": "Thiết lập mặc định"
+    },
+    "directory": {
+      "title": "Tài khoản đang hoạt động",
+      "allRoles": "Tất cả vai trò",
+      "clearFilters": "Xóa bộ lọc",
+      "results": "{{visible}} trên {{total}} tài khoản",
+      "loadFailed": "Không thể tải người dùng. Hãy thử lại.",
+      "empty": "Chưa có tài khoản đang hoạt động",
+      "editSelfRole": "Bạn không thể thay đổi vai trò quản trị viên của chính mình.",
+      "deleteTitle": "Xóa người dùng"
+    },
     "loading": "Đang tải người dùng...",
     "createUser": "Tạo người dùng",
     "search": "Tìm kiếm người dùng...",

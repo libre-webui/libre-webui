@@ -1692,6 +1692,22 @@
     "title": "사용자 관리",
     "subtitle": "사용자 계정 및 권한 관리",
     "pageDescription": "Libre WebUI 인스턴스의 사용자 계정, 권한 및 액세스 제어를 관리합니다.",
+    "sections": {
+      "users": "사용자",
+      "access": "접근 및 정책",
+      "security": "보안",
+      "defaults": "기본 설정"
+    },
+    "directory": {
+      "title": "활성 계정",
+      "allRoles": "모든 역할",
+      "clearFilters": "필터 지우기",
+      "results": "전체 계정 {{total}}개 중 {{visible}}개",
+      "loadFailed": "사용자를 불러올 수 없습니다. 다시 시도하세요.",
+      "empty": "아직 활성 계정이 없습니다",
+      "editSelfRole": "자신의 관리자 역할은 변경할 수 없습니다.",
+      "deleteTitle": "사용자 삭제"
+    },
     "loading": "사용자 로딩 중...",
     "createUser": "사용자 만들기",
     "search": "사용자 검색...",

@@ -1692,6 +1692,22 @@
     "title": "Gestion des utilisateurs",
     "subtitle": "Gérez les comptes utilisateurs et les permissions",
     "pageDescription": "Gérez les comptes utilisateurs, les permissions et les contrôles d'accès pour votre instance Libre WebUI.",
+    "sections": {
+      "users": "Utilisateurs",
+      "access": "Accès et politiques",
+      "security": "Sécurité",
+      "defaults": "Paramètres par défaut"
+    },
+    "directory": {
+      "title": "Comptes actifs",
+      "allRoles": "Tous les rôles",
+      "clearFilters": "Effacer les filtres",
+      "results": "{{visible}} comptes sur {{total}}",
+      "loadFailed": "Impossible de charger les utilisateurs. Réessayez.",
+      "empty": "Aucun compte actif pour le moment",
+      "editSelfRole": "Vous ne pouvez pas modifier votre propre rôle d’administrateur.",
+      "deleteTitle": "Supprimer l’utilisateur"
+    },
     "loading": "Chargement des utilisateurs...",
     "createUser": "Créer un utilisateur",
     "search": "Rechercher des utilisateurs...",

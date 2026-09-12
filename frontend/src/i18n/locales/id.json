@@ -1692,6 +1692,22 @@
     "title": "Manajemen Pengguna",
     "subtitle": "Kelola akun dan izin pengguna",
     "pageDescription": "Kelola akun pengguna, izin, dan kontrol akses untuk instance Libre WebUI Anda.",
+    "sections": {
+      "users": "Pengguna",
+      "access": "Akses dan kebijakan",
+      "security": "Keamanan",
+      "defaults": "Pengaturan default"
+    },
+    "directory": {
+      "title": "Akun aktif",
+      "allRoles": "Semua peran",
+      "clearFilters": "Hapus filter",
+      "results": "{{visible}} dari {{total}} akun",
+      "loadFailed": "Tidak dapat memuat pengguna. Coba lagi.",
+      "empty": "Belum ada akun aktif",
+      "editSelfRole": "Anda tidak dapat mengubah peran administrator Anda sendiri.",
+      "deleteTitle": "Hapus pengguna"
+    },
     "loading": "Memuat pengguna...",
     "createUser": "Buat Pengguna",
     "search": "Cari pengguna...",

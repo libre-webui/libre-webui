@@ -1692,6 +1692,22 @@
     "title": "用户管理",
     "subtitle": "管理用户账户和权限",
     "pageDescription": "管理 Libre WebUI 实例的用户账户、权限和访问控制。",
+    "sections": {
+      "users": "用户",
+      "access": "访问与策略",
+      "security": "安全",
+      "defaults": "默认设置"
+    },
+    "directory": {
+      "title": "活跃账户",
+      "allRoles": "所有角色",
+      "clearFilters": "清除筛选",
+      "results": "共 {{total}} 个账户，显示 {{visible}} 个",
+      "loadFailed": "无法加载用户。请重试。",
+      "empty": "暂无活跃账户",
+      "editSelfRole": "您无法更改自己的管理员角色。",
+      "deleteTitle": "删除用户"
+    },
     "loading": "加载用户中...",
     "createUser": "创建用户",
     "search": "搜索用户...",

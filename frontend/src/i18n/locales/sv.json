@@ -1692,6 +1692,22 @@
     "title": "Användarhantering",
     "subtitle": "Hantera användarkonton och behörigheter",
     "pageDescription": "Hantera användarkonton, behörigheter och åtkomstkontroller för din Libre WebUI-instans.",
+    "sections": {
+      "users": "Användare",
+      "access": "Åtkomst och policyer",
+      "security": "Säkerhet",
+      "defaults": "Standardinställningar"
+    },
+    "directory": {
+      "title": "Aktiva konton",
+      "allRoles": "Alla roller",
+      "clearFilters": "Rensa filter",
+      "results": "{{visible}} av {{total}} konton",
+      "loadFailed": "Kunde inte läsa in användare. Försök igen.",
+      "empty": "Inga aktiva konton ännu",
+      "editSelfRole": "Du kan inte ändra din egen administratörsroll.",
+      "deleteTitle": "Ta bort användare"
+    },
     "loading": "Laddar användare...",
     "createUser": "Skapa användare",
     "search": "Sök användare...",

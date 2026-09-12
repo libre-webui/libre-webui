@@ -1692,6 +1692,22 @@
     "title": "Správa uživatelů",
     "subtitle": "Spravujte uživatelské účty a oprávnění",
     "pageDescription": "Spravujte uživatelské účty, oprávnění a řízení přístupu pro vaši instanci Libre WebUI.",
+    "sections": {
+      "users": "Uživatelé",
+      "access": "Přístup a zásady",
+      "security": "Zabezpečení",
+      "defaults": "Výchozí nastavení"
+    },
+    "directory": {
+      "title": "Aktivní účty",
+      "allRoles": "Všechny role",
+      "clearFilters": "Vymazat filtry",
+      "results": "{{visible}} z {{total}} účtů",
+      "loadFailed": "Uživatele se nepodařilo načíst. Zkuste to znovu.",
+      "empty": "Zatím žádné aktivní účty",
+      "editSelfRole": "Nemůžete změnit vlastní roli správce.",
+      "deleteTitle": "Smazat uživatele"
+    },
     "loading": "Načítání uživatelů...",
     "createUser": "Vytvořit uživatele",
     "search": "Hledat uživatele...",

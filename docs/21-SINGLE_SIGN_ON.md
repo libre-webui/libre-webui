@@ -113,8 +113,8 @@ account keeps its Libre account. New users are created with `oidc_`-prefixed
 usernames when registration allows it. An email already owned by an unlinked
 local account is rejected instead of silently merged. With
 `OIDC_SYNC_GROUPS=true`, membership of every Libre group whose name matches a
-claim value is claim-driven for OIDC users — create matching groups from the
-User Management tab in Settings first.
+claim value is claim-driven for OIDC users — create matching groups from
+Settings → User Management → Groups first.
 
 ## Shared Settings
 

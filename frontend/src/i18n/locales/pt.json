@@ -1692,6 +1692,22 @@
     "title": "Gerenciamento de Usuários",
     "subtitle": "Gerencie contas de usuários e permissões",
     "pageDescription": "Gerencie contas de usuário, permissões e controles de acesso para sua instância Libre WebUI.",
+    "sections": {
+      "users": "Usuários",
+      "access": "Acesso e políticas",
+      "security": "Segurança",
+      "defaults": "Configurações padrão"
+    },
+    "directory": {
+      "title": "Contas ativas",
+      "allRoles": "Todas as funções",
+      "clearFilters": "Limpar filtros",
+      "results": "{{visible}} de {{total}} contas",
+      "loadFailed": "Não foi possível carregar os usuários. Tente novamente.",
+      "empty": "Ainda não há contas ativas",
+      "editSelfRole": "Você não pode alterar sua própria função de administrador.",
+      "deleteTitle": "Excluir usuário"
+    },
     "loading": "Carregando usuários...",
     "createUser": "Criar Usuário",
     "search": "Pesquisar usuários...",

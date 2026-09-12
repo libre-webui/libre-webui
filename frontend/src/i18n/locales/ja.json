@@ -1692,6 +1692,22 @@
     "title": "ユーザー管理",
     "subtitle": "ユーザーアカウントと権限を管理",
     "pageDescription": "Libre WebUIインスタンスのユーザーアカウント、権限、アクセス制御を管理します。",
+    "sections": {
+      "users": "ユーザー",
+      "access": "アクセスとポリシー",
+      "security": "セキュリティ",
+      "defaults": "既定の設定"
+    },
+    "directory": {
+      "title": "有効なアカウント",
+      "allRoles": "すべてのロール",
+      "clearFilters": "フィルターをクリア",
+      "results": "全{{total}}件のアカウント中{{visible}}件",
+      "loadFailed": "ユーザーを読み込めませんでした。もう一度お試しください。",
+      "empty": "有効なアカウントはまだありません",
+      "editSelfRole": "自分の管理者ロールは変更できません。",
+      "deleteTitle": "ユーザーを削除"
+    },
     "loading": "ユーザーを読み込み中...",
     "createUser": "ユーザーを作成",
     "search": "ユーザーを検索...",

@@ -1692,6 +1692,22 @@
     "title": "Pengurusan Pengguna",
     "subtitle": "Urus akaun pengguna dan kebenaran",
     "pageDescription": "Urus akaun pengguna, kebenaran dan kawalan akses untuk contoh Libre WebUI anda.",
+    "sections": {
+      "users": "Pengguna",
+      "access": "Akses dan dasar",
+      "security": "Keselamatan",
+      "defaults": "Tetapan lalai"
+    },
+    "directory": {
+      "title": "Akaun aktif",
+      "allRoles": "Semua peranan",
+      "clearFilters": "Kosongkan penapis",
+      "results": "{{visible}} daripada {{total}} akaun",
+      "loadFailed": "Tidak dapat memuatkan pengguna. Cuba lagi.",
+      "empty": "Belum ada akaun aktif",
+      "editSelfRole": "Anda tidak boleh menukar peranan pentadbir anda sendiri.",
+      "deleteTitle": "Padam pengguna"
+    },
     "loading": "Memuatkan pengguna...",
     "createUser": "Cipta Pengguna",
     "search": "Cari pengguna...",

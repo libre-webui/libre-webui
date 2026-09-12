@@ -40,6 +40,35 @@ Local signup requires:
 
 Passwords are hashed with bcrypt before storage. Login and signup routes are rate-limited.
 
+## Managing Users
+
+Administrators open **Settings → User Management** to manage the instance.
+The `/users` URL opens the same settings area, starting with the account list.
+Administration is divided into five sections:
+
+- **Users:** accounts, pending registration approvals, account creation and
+  editing, deletion, and two-factor recovery.
+- **Groups:** group memberships and the effective-access lookup.
+- **Access & policies:** Work access and runtime policies, Ollama settings,
+  model downloads, web search, Agents, tools, and voice permissions.
+- **Security:** the instance two-factor policy and the security audit log.
+- **Defaults:** the theme used for sign-in and accounts without a personal
+  theme preference.
+
+Search the user list by username or email, and filter it by role to find the
+right account. Pending registrations remain separate from active accounts so
+approval work is easy to identify. Clear the search and role filter to return
+to the complete account list.
+
+**Create User** and **Edit User** open focused account forms. A blank password
+when editing keeps the current password. Deletion and two-factor reset ask for
+confirmation for the selected account before making a change.
+
+Section navigation supports the arrow keys, Home, and End, including
+right-to-left layouts. Switching sections preserves unfinished forms while
+User Management remains open. Other sections load when first opened, so
+opening the account list does not also load every policy and audit control.
+
 ## Registration Approval
 
 Public registration does not grant access by itself. Every account created
@@ -114,7 +143,8 @@ administrators because these operations change host resources.
 
 Work is restricted to administrators by default because it lets a selected
 model execute arbitrary commands inside a managed container. An administrator
-can open Work to all active users from the User Management tab in Settings; the setting
+can open Work to all active users from **Settings → User Management → Access &
+policies**; the setting
 persists across restarts and takes effect immediately, including for open
 terminal sessions. Host-folder workspaces remain admin-only in every mode
 because they bind-mount server paths. Treat everyone granted Work access as
@@ -136,8 +166,8 @@ and retry.
 
 ### Groups and Resource Grants
 
-Administrators can create groups and manage memberships from the User
-Management tab in Settings. Groups are principals for resource grants: the owner of a
+Administrators can create groups and manage memberships from **Settings → User
+Management → Groups**. Groups are principals for resource grants: the owner of a
 chat, note, document, knowledge collection, folder, persona, prompt,
 skill, or calendar can grant `read`, `write`, or `admin` access to a user
 or a group through the access API — every shareable surface uses the same
@@ -145,7 +175,7 @@ share dialog (see [Sharing](./56-SHARING.md)) — and administrators can
 scope registered tool servers to users or groups the same way. Resources stay private by default — the global `admin` role does not
 grant access to other users' content. Membership is evaluated at request
 time, so removing a member revokes group-granted access immediately. The
-"effective access" view on the User Management tab in Settings answers "why can this
+"effective access" view in the Groups section answers "why can this
 user access this?" by listing their role, groups, feature access, and every
 grant that reaches them.
 
@@ -158,7 +188,7 @@ redacted before they are stored: secret-like keys are dropped and payload
 sizes are capped, so passwords, tokens, and prompt content never enter the
 log. Group and grant mutations write their audit event inside the same
 database transaction, so a change cannot exist without its trail.
-Administrators can query the log from the User Management tab in Settings; retention
+Administrators can query the log from **Settings → User Management → Security**; retention
 defaults to 180 days (`AUDIT_RETENTION_DAYS`).
 
 ## Sessions
@@ -212,8 +242,8 @@ secret derived from (but distinct from) `JWT_SECRET`: it can never
 authenticate an API request, is bound to one account and one purpose, and is
 consumed on success.
 
-Administrators can require a second factor for every account (Users → the
-two-factor policy card, or pin it with `MFA_REQUIRED_MODE=required`). Users
+Administrators can require a second factor for every account (**Settings → User
+Management → Security**, or pin it with `MFA_REQUIRED_MODE=required`). Users
 without one are walked through enrollment at their next sign-in before a
 session is issued. Administrators can also reset a user's TOTP enrollment
 from the user list for account recovery; passkeys are left in place because

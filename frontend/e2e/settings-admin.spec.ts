@@ -63,10 +63,14 @@ test('administrators reach User Management from Settings and from /users', async
     modal.getByRole('heading', { name: 'User Management', exact: true })
   ).toBeVisible();
   await expect(
-    modal.getByRole('radiogroup', { name: 'Default theme' })
+    modal.getByRole('heading', { name: 'member', exact: true })
   ).toBeVisible();
   await expect(
-    modal.getByRole('heading', { name: 'member', exact: true })
+    modal.getByRole('tab', { name: 'Users', exact: true })
+  ).toHaveAttribute('aria-selected', 'true');
+  await modal.getByRole('tab', { name: 'Defaults', exact: true }).click();
+  await expect(
+    modal.getByRole('radiogroup', { name: 'Default theme' })
   ).toBeVisible();
   await page.keyboard.press('Escape');
 
@@ -78,8 +82,99 @@ test('administrators reach User Management from Settings and from /users', async
       .getByTestId('settings-scroll-region')
       .getByRole('heading', { name: 'User Management', exact: true })
   ).toBeVisible();
+  await expect(
+    page.getByRole('tab', { name: 'Users', exact: true })
+  ).toHaveAttribute('aria-selected', 'true');
+  await expect(
+    modal.getByRole('heading', { name: 'member', exact: true })
+  ).toBeVisible();
   await expect(page).toHaveURL(/\/$/);
 });
+
+test('administration sections load on demand and preserve group drafts', async ({
+  page,
+}) => {
+  await mockLibreWebUiApi(page, { systemInfo, authUsers: [admin, member] });
+  let groupRequests = 0;
+  await page.route('**/api/groups', async route => {
+    groupRequests += 1;
+    await route.fulfill({ json: { success: true, data: [] } });
+  });
+  await page.addInitScript(() => {
+    localStorage.setItem('i18nextLng', 'en');
+    localStorage.setItem('auth-token', 'admin-token');
+  });
+
+  await page.goto('/users');
+  const content = page.getByTestId('settings-scroll-region');
+  await expect(
+    content.getByRole('heading', { name: 'member', exact: true })
+  ).toBeVisible();
+  expect(groupRequests).toBe(0);
+  await expect(content.getByText('Work access', { exact: true })).toHaveCount(
+    0
+  );
+  await expect(
+    content.getByText('Security audit log', { exact: true })
+  ).toHaveCount(0);
+
+  await content.getByRole('tab', { name: 'Groups', exact: true }).click();
+  await expect.poll(() => groupRequests).toBe(1);
+  await content.getByRole('button', { name: 'New group' }).click();
+  await content
+    .getByRole('textbox', { name: 'Name', exact: true })
+    .fill('Support team');
+  await content.getByRole('tab', { name: 'Users', exact: true }).click();
+  await expect(
+    content.getByRole('textbox', { name: 'Name', exact: true })
+  ).toHaveCount(0);
+  await content.getByRole('tab', { name: 'Groups', exact: true }).click();
+  await expect(
+    content.getByRole('textbox', { name: 'Name', exact: true })
+  ).toHaveValue('Support team');
+  expect(groupRequests).toBe(1);
+});
+
+for (const language of ['en', 'ar'] as const) {
+  test(`administration section navigation supports the keyboard in ${language}`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await mockLibreWebUiApi(page, { systemInfo, authUsers: [admin, member] });
+    await page.addInitScript(language => {
+      localStorage.setItem('i18nextLng', language);
+      localStorage.setItem('auth-token', 'admin-token');
+    }, language);
+
+    await page.goto('/users');
+    const content = page.getByTestId('settings-scroll-region');
+    const tabs = content.getByRole('tablist').getByRole('tab');
+    await expect(tabs).toHaveCount(5);
+    await expect(tabs.nth(0)).toHaveAttribute('aria-selected', 'true');
+    await tabs.nth(0).focus();
+    await page.keyboard.press(language === 'ar' ? 'ArrowLeft' : 'ArrowRight');
+    await expect(tabs.nth(1)).toBeFocused();
+    await expect(tabs.nth(1)).toHaveAttribute('aria-selected', 'true');
+    await page.keyboard.press('End');
+    await expect(tabs.nth(4)).toBeFocused();
+    await expect(tabs.nth(4)).toHaveAttribute('aria-selected', 'true');
+    await page.keyboard.press(language === 'ar' ? 'ArrowLeft' : 'ArrowRight');
+    await expect(tabs.nth(0)).toBeFocused();
+    await page.keyboard.press(language === 'ar' ? 'ArrowRight' : 'ArrowLeft');
+    await expect(tabs.nth(4)).toBeFocused();
+    await page.keyboard.press('Home');
+    await expect(tabs.nth(0)).toBeFocused();
+    await expect(tabs.nth(0)).toHaveAttribute('tabindex', '0');
+    await expect(tabs.nth(1)).toHaveAttribute('tabindex', '-1');
+    const panelId = await tabs.nth(0).getAttribute('aria-controls');
+    await expect(content.locator(`[id="${panelId}"]`)).toBeVisible();
+    await expect(content.getByRole('tabpanel')).toHaveCount(1);
+    await expect
+      .poll(() => page.evaluate(() => document.documentElement.scrollWidth))
+      .toBeLessThanOrEqual(390);
+  });
+}
 
 test('regular users do not get the Administration group', async ({ page }) => {
   await mockLibreWebUiApi(page, { systemInfo, authUsers: [admin, member] });
@@ -153,6 +248,7 @@ for (const { language, theme, title } of [
       await expect(page.locator('html')).not.toHaveClass(/dark/);
     }
     const content = page.getByTestId('settings-scroll-region');
+    await content.getByRole('tablist').getByRole('tab').nth(2).click();
     const toggle = content
       .getByRole('heading', { name: title, exact: true })
       .locator('..')

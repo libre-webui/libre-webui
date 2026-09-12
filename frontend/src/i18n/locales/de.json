@@ -1692,6 +1692,22 @@
     "title": "Benutzerverwaltung",
     "subtitle": "Benutzerkonten und Berechtigungen verwalten",
     "pageDescription": "Verwalten Sie Benutzerkonten, Berechtigungen und Zugriffskontrollen für Ihre Libre WebUI-Instanz.",
+    "sections": {
+      "users": "Benutzer",
+      "access": "Zugriff und Richtlinien",
+      "security": "Sicherheit",
+      "defaults": "Standardeinstellungen"
+    },
+    "directory": {
+      "title": "Aktive Konten",
+      "allRoles": "Alle Rollen",
+      "clearFilters": "Filter zurücksetzen",
+      "results": "{{visible}} von {{total}} Konten",
+      "loadFailed": "Benutzer konnten nicht geladen werden. Versuche es erneut.",
+      "empty": "Noch keine aktiven Konten",
+      "editSelfRole": "Du kannst deine eigene Administratorrolle nicht ändern.",
+      "deleteTitle": "Benutzer löschen"
+    },
     "loading": "Benutzer werden geladen...",
     "createUser": "Benutzer erstellen",
     "search": "Benutzer suchen...",

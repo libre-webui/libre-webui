@@ -46,6 +46,10 @@ test('administrators set the instance default theme from the Users page', async 
   });
 
   await page.goto('/users');
+  await page
+    .getByTestId('settings-scroll-region')
+    .getByRole('tab', { name: 'Defaults', exact: true })
+    .click();
 
   const card = page.getByRole('radiogroup', { name: 'Default theme' });
   await expect(card.getByRole('radio', { name: 'Dark' })).toHaveAttribute(

@@ -1692,6 +1692,22 @@
     "title": "Notendastjórnun",
     "subtitle": "Stjórnaðu notendareikningum og heimildum",
     "pageDescription": "Stjórnaðu notendareikningum, heimildum og aðgangsstýringum fyrir Libre WebUI tilvikið þitt.",
+    "sections": {
+      "users": "Notendur",
+      "access": "Aðgangur og reglur",
+      "security": "Öryggi",
+      "defaults": "Sjálfgefnar stillingar"
+    },
+    "directory": {
+      "title": "Virkir reikningar",
+      "allRoles": "Öll hlutverk",
+      "clearFilters": "Hreinsa síur",
+      "results": "{{visible}} af {{total}} reikningum",
+      "loadFailed": "Ekki tókst að hlaða notendum. Reyndu aftur.",
+      "empty": "Engir virkir reikningar enn",
+      "editSelfRole": "Þú getur ekki breytt eigin stjórnandahlutverki.",
+      "deleteTitle": "Eyða notanda"
+    },
     "loading": "Hleður notendum...",
     "createUser": "Búa til notanda",
     "search": "Leita að notendum...",

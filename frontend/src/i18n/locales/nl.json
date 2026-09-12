@@ -1692,6 +1692,22 @@
     "title": "Gebruikersbeheer",
     "subtitle": "Beheer gebruikersaccounts en rechten",
     "pageDescription": "Beheer gebruikersaccounts, rechten en toegangscontrole voor uw Libre WebUI-instantie.",
+    "sections": {
+      "users": "Gebruikers",
+      "access": "Toegang en beleid",
+      "security": "Beveiliging",
+      "defaults": "Standaardinstellingen"
+    },
+    "directory": {
+      "title": "Actieve accounts",
+      "allRoles": "Alle rollen",
+      "clearFilters": "Filters wissen",
+      "results": "{{visible}} van {{total}} accounts",
+      "loadFailed": "Gebruikers konden niet worden geladen. Probeer het opnieuw.",
+      "empty": "Nog geen actieve accounts",
+      "editSelfRole": "Je kunt je eigen beheerdersrol niet wijzigen.",
+      "deleteTitle": "Gebruiker verwijderen"
+    },
     "loading": "Gebruikers laden...",
     "createUser": "Gebruiker aanmaken",
     "search": "Gebruikers zoeken...",

@@ -1692,6 +1692,22 @@
     "title": "Brugeradministration",
     "subtitle": "Administrer brugerkonti og tilladelser",
     "pageDescription": "Administrer brugerkonti, tilladelser og adgangskontrol for din Libre WebUI-instans.",
+    "sections": {
+      "users": "Brugere",
+      "access": "Adgang og politikker",
+      "security": "Sikkerhed",
+      "defaults": "Standardindstillinger"
+    },
+    "directory": {
+      "title": "Aktive konti",
+      "allRoles": "Alle roller",
+      "clearFilters": "Ryd filtre",
+      "results": "{{visible}} af {{total}} konti",
+      "loadFailed": "Kunne ikke indlæse brugere. Prøv igen.",
+      "empty": "Ingen aktive konti endnu",
+      "editSelfRole": "Du kan ikke ændre din egen administratorrolle.",
+      "deleteTitle": "Slet bruger"
+    },
     "loading": "Indlæser brugere...",
     "createUser": "Opret bruger",
     "search": "Søg brugere...",

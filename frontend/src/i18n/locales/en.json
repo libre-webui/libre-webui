@@ -1692,6 +1692,22 @@
     "title": "User Management",
     "subtitle": "Manage user accounts and permissions",
     "pageDescription": "Manage user accounts, permissions, and access controls for your Libre WebUI instance.",
+    "sections": {
+      "users": "Users",
+      "access": "Access & policies",
+      "security": "Security",
+      "defaults": "Defaults"
+    },
+    "directory": {
+      "title": "Active accounts",
+      "allRoles": "All roles",
+      "clearFilters": "Clear filters",
+      "results": "{{visible}} of {{total}} accounts",
+      "loadFailed": "Could not load users. Try again.",
+      "empty": "No active accounts yet",
+      "editSelfRole": "You cannot change your own administrator role.",
+      "deleteTitle": "Delete user"
+    },
     "loading": "Loading users...",
     "createUser": "Create User",
     "search": "Search users...",

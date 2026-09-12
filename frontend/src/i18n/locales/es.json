@@ -1692,6 +1692,22 @@
     "title": "Gestión de usuarios",
     "subtitle": "Gestiona cuentas de usuario y permisos",
     "pageDescription": "Gestiona cuentas de usuario, permisos y controles de acceso para tu instancia de Libre WebUI.",
+    "sections": {
+      "users": "Usuarios",
+      "access": "Acceso y políticas",
+      "security": "Seguridad",
+      "defaults": "Valores predeterminados"
+    },
+    "directory": {
+      "title": "Cuentas activas",
+      "allRoles": "Todos los roles",
+      "clearFilters": "Borrar filtros",
+      "results": "{{visible}} de {{total}} cuentas",
+      "loadFailed": "No se pudieron cargar los usuarios. Inténtalo de nuevo.",
+      "empty": "Aún no hay cuentas activas",
+      "editSelfRole": "No puedes cambiar tu propio rol de administrador.",
+      "deleteTitle": "Eliminar usuario"
+    },
     "loading": "Cargando usuarios...",
     "createUser": "Crear usuario",
     "search": "Buscar usuarios...",
