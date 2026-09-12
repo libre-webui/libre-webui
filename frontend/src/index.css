@@ -824,7 +824,13 @@ html.celestial.dark [data-user-bubble] {
 }
 /* While the user is typing, the chrome steps back so the words sit in the
    landscape; hovering or leaving the composer brings it back. */
-html.celestial [data-app-sidebar],
+html.celestial [data-app-sidebar] {
+  transition:
+    width 200ms cubic-bezier(0, 0, 0.2, 1),
+    transform 200ms cubic-bezier(0, 0, 0.2, 1),
+    background-color 200ms cubic-bezier(0, 0, 0.2, 1),
+    opacity 900ms ease;
+}
 html.celestial [data-app-tabbar] {
   transition: opacity 900ms ease;
 }
@@ -840,8 +846,8 @@ html.celestial[data-composing='true']
   [data-app-tabbar]:not(:hover):not(:focus-within) {
   opacity: 0.85;
 }
-/* Mobile navigation overlays the page, so its glass surface must not fade. */
-@media (min-width: 1024px) {
+/* Only docked navigation fades; phone overlays keep their reading surface. */
+@media (min-width: 768px) {
   html.celestial[data-composing='true']
     [data-app-sidebar]:not(:hover):not(:focus-within) {
     opacity: 0.85;
@@ -1388,6 +1394,9 @@ html.dark .celestial-sky__fog {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  html.celestial [data-app-sidebar] {
+    transition: none;
+  }
   .celestial-sky__star,
   .celestial-sky__cloud,
   .celestial-sky__sun::after,
@@ -1498,12 +1507,6 @@ html:not(.dark)
   :is([data-composer-box], [data-testid='work-composer-surface']) {
   background-color: rgb(var(--color-surface) / 0.92);
   backdrop-filter: blur(18px) saturate(1.08);
-}
-@media (max-width: 1023px) {
-  /* A translucent mobile navigation overlay must never reveal account art. */
-  [data-sidebar-overlay='true'] [data-testid='app-background'] {
-    visibility: hidden;
-  }
 }
 
 .dark .account-wallpaper__photo {

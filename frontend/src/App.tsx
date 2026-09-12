@@ -141,8 +141,9 @@ const SidebarLayoutSpacer: React.FC<{ isOpen: boolean; compact: boolean }> = ({
 }) => (
   <div
     aria-hidden='true'
+    data-sidebar-layout-spacer=''
     className={cn(
-      'hidden lg:block flex-shrink-0 transition-[width] duration-200 ease-out',
+      'hidden md:block flex-shrink-0 transition-[width] duration-200 ease-out motion-reduce:transition-none',
       isOpen ? (compact ? 'w-16' : 'w-72') : 'w-0'
     )}
   />
@@ -200,7 +201,6 @@ const ShellLayout: React.FC<ShellLayoutProps> = ({
     <div
       className='relative flex h-dvh min-h-0 overflow-hidden bg-sidebar text-ink'
       data-app-shell=''
-      data-sidebar-overlay={sidebarOpen && !sidebarCompact ? 'true' : undefined}
     >
       <ElectronTitleBar />
       <CelestialSky />
@@ -209,9 +209,9 @@ const ShellLayout: React.FC<ShellLayoutProps> = ({
       <div
         data-testid='app-shell-content'
         className={cn(
-          'relative z-10 flex min-h-0 min-w-0 flex-1 basis-0 flex-col bg-transparent transition-[margin,background-color] duration-200 ease-out lg:pb-2 lg:pe-2',
+          'relative z-10 flex min-h-0 min-w-0 flex-1 basis-0 flex-col bg-transparent transition-[margin,background-color] duration-200 ease-out motion-reduce:transition-none lg:pb-2 lg:pe-2',
           isElectron ? 'pt-8' : 'lg:pt-1.5',
-          sidebarOpen && sidebarCompact ? 'max-lg:ms-16' : 'max-lg:ms-0'
+          sidebarOpen ? 'max-md:ms-16' : 'max-md:ms-0'
         )}
       >
         {showDemoBanner && <DemoModeBanner message={demoMessage} />}

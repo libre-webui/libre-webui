@@ -241,8 +241,11 @@ below Chat and Work, with Search last. Its navigation scrolls when vertical
 space is limited, while settings and account controls remain at the bottom.
 Compact navigation uses one centered 44px hit area and 4px row spacing across
 primary actions, destinations, history controls, and Search. Empty history
-sections add no gap or separator. The compact rail shares the top bar's frame
-without the border or shadow reserved for an expanded mobile overlay.
+sections add no gap or separator. Both sidebar sizes share the top bar's frame
+without an edge border or shadow. From 768px, expansion moves the content
+alongside the sidebar with the same width timing. On phones, the content keeps
+its rail offset while the expanded sidebar overlays it. Celestial preserves
+the same geometry transition; reduced motion makes the change immediate.
 
 ### Chat Area
 
@@ -290,9 +293,9 @@ task brief more room than the compact follow-up input.
 ### Account Wallpaper
 
 Account wallpaper belongs inside the rounded Home, Chat, and Work content card. The
-sidebar, tab strip, and library pages retain their own theme surfaces. Mobile
-navigation overlays temporarily hide the wallpaper to keep it from showing
-through translucent chrome.
+sidebar, tab strip, and library pages retain their own theme surfaces.
+Expanding or collapsing navigation keeps the wallpaper visible on its content
+surface, including the uncovered content beside a mobile sidebar.
 
 Dithered is the default treatment: a bounded, locally processed pattern of
 distinct square pixels and open shadows that fades into the current canvas.

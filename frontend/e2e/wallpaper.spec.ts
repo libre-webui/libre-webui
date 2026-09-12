@@ -310,12 +310,12 @@ test('wallpaper stays inside mobile RTL Home, Chat and Work while controls remai
   await page.addInitScript(() => localStorage.setItem('i18nextLng', 'ar'));
   await page.goto('/');
   await expect(page.getByTestId('home-page')).toBeVisible();
-  await expect(page.getByTestId('app-background')).toBeHidden();
+  await assertWallpaperContained(page);
   await page.getByTestId('sidebar-toggle-size').click();
   await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
   await assertWallpaperContained(page);
   await page.getByTestId('sidebar-rail-expand').click();
-  await expect(page.getByTestId('app-background')).toBeHidden();
+  await assertWallpaperContained(page);
   await page.getByTestId('sidebar-toggle-size').click();
   await assertWallpaperContained(page);
   await page.getByTestId('home-new-chat').click();

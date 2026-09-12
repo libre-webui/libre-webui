@@ -188,8 +188,9 @@ the uploaded source is never changed. **Intensity** previews immediately and
 saves after you stop adjusting it. Zero intensity hides the wallpaper without
 removing it. You can also disable it temporarily, replace it, or remove it.
 
-The preview works across Light, Dark (grey), Pure Black, and Celestial. On mobile,
-opening navigation hides the wallpaper until the navigation overlay closes.
+The preview works across Light, Dark (grey), Pure Black, and Celestial.
+Wallpaper stays visible when navigation expands or collapses. On phones, the
+sidebar overlays part of the content while the uncovered wallpaper stays visible.
 Persona backgrounds stay specific to their chats and do not replace the account
 wallpaper. Image processing runs in your browser. If an external image cannot be
 processed because of its origin policy, a local visual fallback is used.

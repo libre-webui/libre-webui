@@ -421,9 +421,8 @@ for (const layout of [
         `rail-${layout.width}-${layout.height}-${layout.fontSize}-${layout.language}.png`
       ),
     });
-    if (layout.width < 1024) {
-      await sidebar.getByTestId('sidebar-rail-expand').click();
-      await expect(sidebar).toHaveCSS('border-inline-end-width', '1px');
-    }
+    await sidebar.getByTestId('sidebar-rail-expand').click();
+    await expect(sidebar).toHaveCSS('border-inline-end-width', '0px');
+    await expect(sidebar).toHaveCSS('box-shadow', 'none');
   });
 }

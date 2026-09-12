@@ -391,17 +391,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
         data-testid='sidebar'
         data-app-sidebar=''
         className={cn(
-          // The end border only exists while the sidebar overlays content on
-          // small screens; on desktop it shares one surface with the top bar.
-          'fixed inset-y-0 start-0 z-50 transform transition-[width,transform,background-color] duration-200 ease-out',
+          // Both sidebar sizes share the tab bar's frame without a seam.
+          'fixed inset-y-0 start-0 z-50 border-0 [box-shadow:none] transform transition-[width,transform,background-color] duration-200 ease-out motion-reduce:transition-none',
           sidebarCompact
-            ? 'w-16 border-0 [box-shadow:none]'
-            : 'w-72 max-sm:w-[calc(100vw-4.5rem)] max-sm:max-w-80 max-lg:border-e border-black/[0.04] dark:border-white/[0.06] shadow-[0_24px_80px_rgba(15,23,42,0.12)] lg:shadow-none',
+            ? 'w-16'
+            : 'w-72 max-sm:w-[calc(100vw-4.5rem)] max-sm:max-w-80',
           isOpen
             ? 'translate-x-0'
             : 'ltr:-translate-x-full rtl:translate-x-full',
           theme.mode === 'celestial'
-            ? 'bg-sidebar/30 backdrop-blur-xl lg:bg-transparent lg:backdrop-filter-none'
+            ? 'bg-sidebar/30 backdrop-blur-xl md:bg-transparent md:backdrop-filter-none'
             : 'bg-sidebar',
           'overscroll-behavior-contain',
           className
@@ -421,10 +420,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <div
             data-testid='sidebar-browse-scroll-region'
             className={cn(
-              'min-h-0 flex-1',
+              'min-h-0 flex-1 [&>*]:transition-none',
+              // Keep each mode's content at its final width while the frame
+              // moves, so labels do not wrap and icons do not sweep sideways.
               sidebarCompact
-                ? 'scroll-region flex flex-col gap-[4px] pb-[8px] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden'
-                : 'flex flex-col'
+                ? 'scroll-region flex flex-col gap-[4px] pb-[8px] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [&>*]:w-16'
+                : 'flex flex-col overflow-hidden [&>*]:w-72 max-sm:[&>*]:w-[calc(100vw-4.5rem)] max-sm:[&>*]:max-w-80'
             )}
           >
             <SidebarHeader
@@ -491,25 +492,29 @@ export const Sidebar: React.FC<SidebarProps> = ({
             {sidebarCompact && <CompactSidebarSearch />}
           </div>
 
-          <NotificationBell sidebarCompact={sidebarCompact} />
+          <div
+            className={cn('shrink-0 transition-none', sidebarCompact && 'w-16')}
+          >
+            <NotificationBell sidebarCompact={sidebarCompact} />
 
-          <SidebarUserSection
-            requiresAuth={systemInfo?.requiresAuth}
-            user={user}
-            isAdmin={admin}
-            pendingApprovalCount={pendingApprovalCount}
-            sidebarCompact={sidebarCompact}
-            userMenuOpen={userMenuOpen}
-            userMenuRef={userMenuRef}
-            pinnedShortcuts={pinnedAdminShortcuts}
-            onToggleShortcutPin={toggleAdminShortcut}
-            onToggleUserMenu={() => setUserMenuOpen(open => !open)}
-            onOpenSettings={handleOpenSettings}
-            onOpenAvatar={handleOpenAvatar}
-            onLogout={handleLogout}
-            onMobileNavigate={compactOnMobile}
-            onCloseUserMenu={() => setUserMenuOpen(false)}
-          />
+            <SidebarUserSection
+              requiresAuth={systemInfo?.requiresAuth}
+              user={user}
+              isAdmin={admin}
+              pendingApprovalCount={pendingApprovalCount}
+              sidebarCompact={sidebarCompact}
+              userMenuOpen={userMenuOpen}
+              userMenuRef={userMenuRef}
+              pinnedShortcuts={pinnedAdminShortcuts}
+              onToggleShortcutPin={toggleAdminShortcut}
+              onToggleUserMenu={() => setUserMenuOpen(open => !open)}
+              onOpenSettings={handleOpenSettings}
+              onOpenAvatar={handleOpenAvatar}
+              onLogout={handleLogout}
+              onMobileNavigate={compactOnMobile}
+              onCloseUserMenu={() => setUserMenuOpen(false)}
+            />
+          </div>
         </div>
       </div>
 
