@@ -65,8 +65,8 @@ export const ToolApprovalsSection: React.FC<ToolApprovalsSectionProps> = ({
               data-testid='tool-approval-row'
               className='flex flex-wrap items-center justify-between gap-3 rounded-xl border border-black/[0.05] bg-white/50 px-3 py-2 dark:border-white/[0.06] dark:bg-dark-100/50'
             >
-              <div className='min-w-0'>
-                <p className='truncate text-[13px] text-gray-900 dark:text-dark-900'>
+              <div className='min-w-0 flex-[1_1_16rem]'>
+                <p className='break-words text-[13px] text-gray-900 [overflow-wrap:anywhere] dark:text-dark-900'>
                   <code>{approval.toolName}</code>
                   {' · '}
                   {serverName(approval.serverId)}

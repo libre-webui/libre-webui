@@ -177,10 +177,10 @@ export const ToolServerCard: React.FC<ToolServerCardProps> = ({
       data-testid='tool-server-row'
       className='rounded-2xl border border-black/[0.06] bg-white/60 px-4 py-3 dark:border-white/[0.07] dark:bg-dark-100/60'
     >
-      <div className='flex items-start justify-between gap-3'>
-        <div className='min-w-0'>
+      <div className='flex flex-wrap items-start justify-between gap-3'>
+        <div className='min-w-0 flex-[1_1_16rem]'>
           <div className='flex flex-wrap items-center gap-2'>
-            <p className='truncate text-[14px] font-medium text-gray-900 dark:text-dark-900'>
+            <p className='min-w-0 max-w-full break-words text-[14px] font-medium text-gray-900 [overflow-wrap:anywhere] dark:text-dark-900'>
               {server.name}
             </p>
             <span className='rounded-full bg-black/[0.04] px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-gray-500 dark:bg-white/[0.06] dark:text-dark-500'>
@@ -212,7 +212,7 @@ export const ToolServerCard: React.FC<ToolServerCardProps> = ({
             )}
           </div>
           {server.description && (
-            <p className='mt-1 text-[12px] text-gray-500 dark:text-dark-500'>
+            <p className='mt-1 break-words text-[12px] text-gray-500 [overflow-wrap:anywhere] dark:text-dark-500'>
               {server.description}
             </p>
           )}
@@ -225,7 +225,7 @@ export const ToolServerCard: React.FC<ToolServerCardProps> = ({
             </p>
           )}
         </div>
-        <div className='flex shrink-0 items-center gap-1'>
+        <div className='flex min-w-0 max-w-full shrink-0 flex-wrap items-center gap-1 [&>button]:inline-flex [&>button]:min-h-11 [&>button]:min-w-11 [&>button]:items-center [&>button]:justify-center'>
           {server.authMode !== 'none' && (
             <IconAction
               icon={KeyRound}
@@ -284,7 +284,7 @@ export const ToolServerCard: React.FC<ToolServerCardProps> = ({
               aria-label={t('toolsPage.credential')}
               autoComplete='off'
               data-testid='tool-credential-secret'
-              className={`${modalFieldClass} sm:w-72`}
+              className={`${modalFieldClass} min-w-0 max-w-full sm:w-72`}
             />
             <Button
               size='sm'
@@ -330,9 +330,9 @@ export const ToolServerCard: React.FC<ToolServerCardProps> = ({
                   data-testid='tool-server-tool'
                   className='flex flex-wrap items-center justify-between gap-3 rounded-lg bg-black/[0.02] px-2.5 py-2 dark:bg-white/[0.03]'
                 >
-                  <div className='min-w-0'>
-                    <div className='flex items-center gap-2'>
-                      <code className='text-[12px] text-gray-900 dark:text-dark-900'>
+                  <div className='min-w-0 flex-[1_1_16rem]'>
+                    <div className='flex flex-wrap items-center gap-2'>
+                      <code className='min-w-0 max-w-full break-words text-[12px] text-gray-900 [overflow-wrap:anywhere] dark:text-dark-900'>
                         {tool.name}
                       </code>
                       {tool.sideEffect && (
@@ -342,13 +342,13 @@ export const ToolServerCard: React.FC<ToolServerCardProps> = ({
                       )}
                     </div>
                     {tool.description && (
-                      <p className='mt-0.5 text-[11px] text-gray-500 dark:text-dark-500'>
+                      <p className='mt-0.5 break-words text-[11px] text-gray-500 [overflow-wrap:anywhere] dark:text-dark-500'>
                         {tool.description}
                       </p>
                     )}
                   </div>
-                  <div className='flex items-center gap-4'>
-                    <label className='flex items-center gap-1.5 text-[11px] text-gray-500 dark:text-dark-500'>
+                  <div className='flex max-w-full flex-wrap items-center gap-x-4 gap-y-2'>
+                    <label className='flex min-w-0 items-center gap-1.5 text-[11px] text-gray-500 dark:text-dark-500'>
                       {t('toolsPage.sideEffectOverride')}
                       <Switch
                         checked={tool.sideEffect}
@@ -357,7 +357,7 @@ export const ToolServerCard: React.FC<ToolServerCardProps> = ({
                         }
                       />
                     </label>
-                    <label className='flex items-center gap-1.5 text-[11px] text-gray-500 dark:text-dark-500'>
+                    <label className='flex min-w-0 items-center gap-1.5 text-[11px] text-gray-500 dark:text-dark-500'>
                       {t('common.enabled')}
                       <Switch
                         checked={tool.enabled}

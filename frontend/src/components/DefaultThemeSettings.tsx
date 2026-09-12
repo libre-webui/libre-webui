@@ -102,7 +102,7 @@ export const DefaultThemeSettings: React.FC = () => {
   return (
     <div className='rounded-lg border border-gray-200 dark:border-dark-300 bg-white dark:bg-dark-100 p-4'>
       <div className='flex flex-wrap items-center justify-between gap-4'>
-        <div className='min-w-0 flex-1'>
+        <div className='min-w-0 flex-[1_1_18rem]'>
           <h4 className='text-sm font-medium text-gray-900 dark:text-gray-100'>
             {t('userManager.defaultTheme.title')}
           </h4>
@@ -125,7 +125,7 @@ export const DefaultThemeSettings: React.FC = () => {
           <div
             role='radiogroup'
             aria-label={t('userManager.defaultTheme.title')}
-            className='flex flex-wrap gap-2'
+            className='flex max-w-full flex-wrap gap-2'
           >
             {MODES.map(({ mode, icon: Icon, key }) => {
               const selected = theme?.mode === mode;
@@ -138,7 +138,7 @@ export const DefaultThemeSettings: React.FC = () => {
                   disabled={saving || theme === null}
                   onClick={() => void handleSelect(mode)}
                   className={cn(
-                    'flex items-center gap-2 rounded-lg border px-3 py-2 text-sm text-ink transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 disabled:cursor-not-allowed disabled:opacity-60',
+                    'flex min-h-11 max-w-full items-center gap-2 rounded-lg border px-3 py-2 text-sm text-ink transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 disabled:cursor-not-allowed disabled:opacity-60',
                     selected
                       ? 'border-line-strong bg-surface-subtle'
                       : 'border-line hover:bg-interactive-hover'

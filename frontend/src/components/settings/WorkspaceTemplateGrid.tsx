@@ -42,14 +42,14 @@ export const WorkspaceTemplateGrid: React.FC<{
       <p className='mb-2 text-[11px] font-medium uppercase tracking-wide text-gray-400 dark:text-dark-500 rtl:tracking-normal'>
         {title}
       </p>
-      <div className='grid gap-2 sm:grid-cols-2'>
+      <div className='grid grid-cols-[repeat(auto-fit,minmax(min(100%,16rem),1fr))] gap-2'>
         {cards.map(card => (
           <button
             key={card.id}
             type='button'
             onClick={() => onPick(card.id)}
             data-testid={testId}
-            className='rounded-2xl border border-black/[0.06] bg-white/40 px-4 py-3 text-start transition-colors hover:bg-white/80 dark:border-white/[0.07] dark:bg-dark-100/40 dark:hover:bg-dark-100/80'
+            className='min-w-0 rounded-2xl border border-black/[0.06] bg-white/40 px-4 py-3 text-start [overflow-wrap:anywhere] transition-colors hover:bg-white/80 dark:border-white/[0.07] dark:bg-dark-100/40 dark:hover:bg-dark-100/80'
           >
             <p className='text-[13px] font-medium text-gray-900 dark:text-dark-900'>
               {card.name}

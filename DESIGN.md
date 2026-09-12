@@ -336,6 +336,11 @@ Small pill-shaped chips for connection state, validation feedback, and system me
 
 Settings drawers, command palettes, and contextual overlays use the neutral-surface fill to distinguish themselves from the chat area without introducing a hard border.
 
+Settings headers and library cards adapt to the width available inside the
+panel, including when the navigation rail is visible. Actions wrap below the
+description before they squeeze its reading width. Theme choices and template
+grids also wrap within the panel; long names and identifiers remain contained.
+
 ## Accessibility
 
 All text meets WCAG AA contrast requirements at minimum. Primary text on neutral backgrounds exceeds 7:1 contrast ratio. White text on primary action buttons passes AA at body sizes for all preset accents and generated custom accents. Interactive elements have visible focus indicators using the active accent color with a 2px offset ring. No information is conveyed through color alone — status indicators pair color with iconography or text labels.

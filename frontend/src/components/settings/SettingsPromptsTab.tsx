@@ -255,13 +255,13 @@ export const SettingsPromptsTab: React.FC = () => {
               data-testid='prompt-row'
               className='rounded-2xl border border-black/[0.06] bg-white/60 px-4 py-3 dark:border-white/[0.07] dark:bg-dark-100/60'
             >
-              <div className='flex items-start justify-between gap-3'>
-                <div className='min-w-0'>
+              <div className='flex flex-wrap items-start gap-3'>
+                <div className='min-w-0 flex-[1_1_16rem] [overflow-wrap:anywhere]'>
                   <div className='flex flex-wrap items-center gap-2'>
-                    <p className='truncate text-[14px] font-medium text-gray-900 dark:text-dark-900'>
+                    <p className='max-w-full text-[14px] font-medium text-gray-900 dark:text-dark-900'>
                       {prompt.title}
                     </p>
-                    <code className='rounded-md bg-black/[0.04] px-1.5 py-0.5 text-[11px] text-gray-500 dark:bg-white/[0.06] dark:text-dark-500'>
+                    <code className='max-w-full rounded-md bg-black/[0.04] px-1.5 py-0.5 text-[11px] text-gray-500 dark:bg-white/[0.06] dark:text-dark-500'>
                       /{prompt.slug}
                     </code>
                     <span className='text-[11px] text-gray-400 dark:text-dark-500'>
@@ -279,7 +279,7 @@ export const SettingsPromptsTab: React.FC = () => {
                     {prompt.tags.map(tag => (
                       <span
                         key={tag}
-                        className='rounded-full bg-black/[0.04] px-2 py-0.5 text-[10px] text-gray-500 dark:bg-white/[0.06] dark:text-dark-500'
+                        className='max-w-full rounded-full bg-black/[0.04] px-2 py-0.5 text-[10px] text-gray-500 dark:bg-white/[0.06] dark:text-dark-500'
                       >
                         {tag}
                       </span>
@@ -291,7 +291,7 @@ export const SettingsPromptsTab: React.FC = () => {
                     </span>
                   </div>
                 </div>
-                <div className='flex shrink-0 items-center gap-1'>
+                <div className='flex min-w-0 max-w-full shrink-0 flex-wrap items-center gap-1 [&>button]:inline-flex [&>button]:min-h-11 [&>button]:min-w-11 [&>button]:items-center [&>button]:justify-center'>
                   <IconAction
                     icon={History}
                     label={t('promptsPage.history.open')}

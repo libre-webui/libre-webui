@@ -25,7 +25,7 @@ interface SettingsTabHeaderProps {
   className?: string;
 }
 
-/** Compact header for workspace tabs hosted inside the settings panel. */
+/** Wrap actions when the settings rail leaves too little room for prose. */
 export const SettingsTabHeader: React.FC<SettingsTabHeaderProps> = ({
   title,
   description,
@@ -34,11 +34,11 @@ export const SettingsTabHeader: React.FC<SettingsTabHeaderProps> = ({
 }) => (
   <header
     className={cn(
-      'mb-5 flex flex-col gap-3 border-b border-gray-200/70 pb-4 dark:border-white/[0.08] sm:flex-row sm:items-end sm:justify-between',
+      'mb-5 flex flex-wrap items-end justify-between gap-3 border-b border-gray-200/70 pb-4 dark:border-white/[0.08]',
       className
     )}
   >
-    <div className='min-w-0'>
+    <div className='min-w-0 flex-[1_1_18rem] [overflow-wrap:anywhere]'>
       <h3 className='text-lg font-medium text-gray-900 dark:text-dark-800'>
         {title}
       </h3>
@@ -49,7 +49,7 @@ export const SettingsTabHeader: React.FC<SettingsTabHeaderProps> = ({
       )}
     </div>
     {actions && (
-      <div className='flex shrink-0 flex-wrap items-center gap-2'>
+      <div className='flex max-w-full flex-wrap items-center gap-2 [&>button]:min-h-11 [&>button]:max-w-full'>
         {actions}
       </div>
     )}
