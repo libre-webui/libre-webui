@@ -66,7 +66,7 @@ const DESTINATIONS = [
 /**
  * Secondary destinations. They are also reachable from the tab bar's new-tab
  * menu, Home, and the command palette. The expanded sidebar uses an icon row;
- * the compact rail stacks the same destinations below Chat, Work, and Search.
+ * the compact rail stacks the same destinations between Chat/Work and Search.
  */
 export function SidebarNavigation({
   sidebarCompact,

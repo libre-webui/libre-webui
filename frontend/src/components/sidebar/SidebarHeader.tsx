@@ -34,11 +34,29 @@ interface SidebarHeaderProps {
   onCreateSession: () => void;
 }
 
+/** The last control in the compact rail's scrollable navigation. */
+export function CompactSidebarSearch() {
+  const { t } = useTranslation();
+  return (
+    <div className='flex justify-center px-2 pb-3'>
+      <button
+        type='button'
+        data-testid='sidebar-search-button'
+        onClick={() => window.dispatchEvent(new Event('libre:open-palette'))}
+        title={t('palette.search', 'Search')}
+        aria-label={t('palette.search', 'Search')}
+        className='flex h-[44px] w-[44px] shrink-0 items-center justify-center rounded-xl text-ink transition-colors hover:bg-interactive-hover outline-none focus-visible:ring-2 focus-visible:ring-primary-500/30 touch-manipulation'
+      >
+        <Search aria-hidden='true' className='h-[18px] w-[18px]' />
+      </button>
+    </div>
+  );
+}
+
 /**
  * Sidebar top block: logo row with the panel toggle at the trailing edge,
  * then elevated "New" action buttons and the search trigger. Collapsed, the
- * same controls stack as a slim icon rail (logo, actions, search — one 36px
- * icon each).
+ * logo and actions stack as a slim icon rail; Search follows the navigation.
  */
 export function SidebarHeader({
   sidebarCompact,
@@ -108,17 +126,6 @@ export function SidebarHeader({
             <Briefcase className='h-[18px] w-[18px]' />
           </button>
         )}
-
-        <button
-          type='button'
-          data-testid='sidebar-search-button'
-          onClick={() => window.dispatchEvent(new Event('libre:open-palette'))}
-          title={t('palette.search', 'Search')}
-          aria-label={t('palette.search', 'Search')}
-          className={railButton}
-        >
-          <Search className='h-[18px] w-[18px]' />
-        </button>
       </div>
     );
   }

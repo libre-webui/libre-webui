@@ -237,8 +237,8 @@ Rounded corners are generous but not circular. Buttons and cards use 12px. Messa
 The sidebar is the navigation anchor — darker than the chat area to recede visually. Conversation list items use secondary text by default, primary text on hover, and a subtle neutral-tertiary background highlight on the active conversation. Width is fixed at 288px when expanded and 72px in the compact rail, with the rail remaining available on mobile.
 
 The compact sidebar keeps the Explore destinations as labeled icon shortcuts
-below Chat, Work, and Search. Its navigation scrolls when vertical space is
-limited, while settings and account controls remain available at the bottom.
+below Chat and Work, with Search last. Its navigation scrolls when vertical
+space is limited, while settings and account controls remain at the bottom.
 
 ### Chat Area
 

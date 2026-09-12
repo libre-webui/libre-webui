@@ -145,6 +145,81 @@ test('compact Explore links navigate with accessible labels and active states', 
   await expect(notes).toHaveAttribute('aria-current', 'page');
 });
 
+test('Search follows compact browsing and still precedes Explore when expanded', async ({
+  page,
+}) => {
+  await prepareCompactSidebar(page);
+  const sidebar = page.getByTestId('sidebar');
+  const browse = sidebar.getByTestId('sidebar-browse-scroll-region');
+  const navigation = browse.getByTestId('sidebar-navigation');
+  const search = browse.getByTestId('sidebar-search-button');
+  await expect(
+    browse.locator('button:visible, a[href]:visible').last()
+  ).toHaveAttribute('data-testid', 'sidebar-search-button');
+  await navigation.getByRole('link').last().focus();
+  await page.keyboard.press('Tab');
+  await expect(search).toBeFocused();
+  await page.keyboard.press('Enter');
+  await expect(page.getByTestId('command-palette')).toBeVisible();
+  await expect(page.getByTestId('command-palette-input')).toBeFocused();
+  await page.keyboard.press('Escape');
+  await sidebar.getByTestId('sidebar-rail-expand').click();
+  const expandedSearch = sidebar.getByTestId('sidebar-search-button');
+  const searchBounds = (await expandedSearch.boundingBox())!;
+  const navigationBounds = (await navigation.boundingBox())!;
+  expect(searchBounds.y + searchBounds.height).toBeLessThanOrEqual(
+    navigationBounds.y
+  );
+});
+
+test('legacy User Management pins stay absent while System and Settings remain available', async ({
+  page,
+}) => {
+  await page.addInitScript(() => {
+    localStorage.setItem(
+      'libre-webui-app-state',
+      JSON.stringify({
+        state: { pinnedAdminShortcuts: ['users', 'system'] },
+        version: 0,
+      })
+    );
+  });
+  await prepareCompactSidebar(page);
+  const sidebar = page.getByTestId('sidebar');
+  await expect(sidebar.getByTestId('sidebar-rail-pinned-users')).toHaveCount(0);
+  const system = sidebar.getByTestId('sidebar-rail-pinned-system');
+  await expect(system).toBeVisible();
+  await sidebar.getByTestId('sidebar-rail-user-menu-button').click();
+  const menu = sidebar.getByTestId('sidebar-user-menu');
+  await expect(menu).toBeVisible();
+  await expect(
+    menu.getByRole('link', { name: 'User Management', exact: true })
+  ).toHaveCount(0);
+  await expect(menu.getByTestId('sidebar-shortcut-pin-users')).toHaveCount(0);
+  await expect(
+    menu.getByRole('link', { name: 'System', exact: true })
+  ).toBeVisible();
+  await sidebar.getByTestId('sidebar-rail-user-menu-button').click();
+  await system.click();
+  await expect.poll(() => new URL(page.url()).pathname).toBe('/system');
+  await sidebar.getByTestId('sidebar-rail-expand').click();
+  await expect(sidebar.getByTestId('sidebar-pinned-users')).toHaveCount(0);
+  await expect(sidebar.getByTestId('sidebar-pinned-system')).toBeVisible();
+  await sidebar.getByRole('button', { name: /e2e/ }).click();
+  await expect(menu).toBeVisible();
+  await expect(
+    menu.getByRole('link', { name: 'User Management', exact: true })
+  ).toHaveCount(0);
+  await expect(menu.getByTestId('sidebar-shortcut-pin-users')).toHaveCount(0);
+  await sidebar.getByRole('button', { name: /e2e/ }).click();
+  await sidebar.getByTestId('sidebar-settings-button').click();
+  const settings = page.getByTestId('settings-modal-panel');
+  await settings
+    .getByRole('tab', { name: 'User Management', exact: true })
+    .click();
+  await expect(settings.getByTestId('user-directory')).toBeVisible();
+});
+
 for (const { role, agentsEnabled, visible } of [
   { role: 'admin', agentsEnabled: true, visible: true },
   { role: 'admin', agentsEnabled: false, visible: false },
@@ -173,6 +248,10 @@ test('short mobile RTL rails scroll Explore while keeping settings and account r
   const sidebar = page.getByTestId('sidebar');
   const browse = sidebar.getByTestId('sidebar-browse-scroll-region');
   const navigation = browse.getByTestId('sidebar-navigation');
+  await expect(browse.getByTestId('sidebar-mobile-chats')).toBeVisible();
+  await expect(
+    browse.locator('button:visible, a[href]:visible').last()
+  ).toHaveAttribute('data-testid', 'sidebar-search-button');
   await expect
     .poll(() =>
       browse.evaluate(element => element.scrollHeight - element.clientHeight)

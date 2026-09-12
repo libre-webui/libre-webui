@@ -29,7 +29,6 @@ import {
   Server,
   Settings,
   Shield,
-  User as UserIcon,
 } from 'lucide-react';
 import type { User } from '@/types';
 import { cn } from '@/utils';
@@ -55,12 +54,6 @@ interface SidebarUserSectionProps {
 // Admin destinations that can be pinned out of the avatar menu into the
 // sidebar footer, so reaching them doesn't require opening the menu.
 const ADMIN_SHORTCUTS = [
-  {
-    id: 'users',
-    to: '/users',
-    icon: UserIcon,
-    labelKey: 'user.menu.userManagement',
-  },
   { id: 'system', to: '/system', icon: Server, labelKey: 'user.menu.system' },
   {
     id: 'usage',
@@ -146,11 +139,6 @@ export function SidebarUserSection({
             <span className='min-w-0 flex-1 text-start'>
               {t(shortcut.labelKey)}
             </span>
-            {shortcut.id === 'users' && pendingApprovalCount > 0 && (
-              <span className='rounded-md bg-error-500 px-1.5 py-0.5 text-[10px] font-semibold text-white'>
-                {pendingApprovalCount > 99 ? '99+' : pendingApprovalCount}
-              </span>
-            )}
           </Link>
           <button
             type='button'
@@ -199,11 +187,6 @@ export function SidebarUserSection({
               data-testid={`sidebar-rail-pinned-${shortcut.id}`}
             >
               <shortcut.icon className='h-[18px] w-[18px]' />
-              {shortcut.id === 'users' && pendingApprovalCount > 0 && (
-                <span className='absolute -end-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-md bg-error-500 px-1 text-[9px] font-semibold text-white shadow-sm'>
-                  {pendingApprovalCount > 99 ? '99+' : pendingApprovalCount}
-                </span>
-              )}
             </Link>
           ))}
           <button
@@ -308,11 +291,6 @@ export function SidebarUserSection({
               <span className='min-w-0 flex-1 truncate'>
                 {t(shortcut.labelKey)}
               </span>
-              {shortcut.id === 'users' && pendingApprovalCount > 0 && (
-                <span className='rounded-md bg-error-500 px-1.5 py-0.5 text-[10px] font-semibold text-white'>
-                  {pendingApprovalCount > 99 ? '99+' : pendingApprovalCount}
-                </span>
-              )}
             </Link>
           ))}
           <button

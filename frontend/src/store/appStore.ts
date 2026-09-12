@@ -97,7 +97,7 @@ interface AppState {
   isGenerating: boolean;
   setIsGenerating: (generating: boolean) => void;
 
-  // Admin shortcuts pinned into the sidebar footer (ids: users, system, usage)
+  // Admin shortcuts pinned into the sidebar footer (system, usage, evaluations)
   pinnedAdminShortcuts: string[];
   toggleAdminShortcut: (id: string) => void;
 

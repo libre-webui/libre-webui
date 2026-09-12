@@ -76,8 +76,8 @@ local Ollama model.
 ## Use the Compact Sidebar
 
 The compact sidebar keeps direct shortcuts to Channels, Notes, Calendar,
-Automations, Personas, and Imagine beneath Chat, Work, and Search. The Agents
-shortcut appears when enabled for your account. Hover over an icon for its
+Automations, Personas, and Imagine beneath Chat and Work, with Search last.
+The Agents shortcut appears when enabled for your account. Hover over an icon for its
 label; the current destination stays highlighted. On short screens, scroll
 the shortcuts while settings and account controls remain at the bottom.
 
@@ -113,11 +113,10 @@ Right-click a tab (or press `Shift + F10` on a focused tab) for:
 - **Close tabs to the right**
 - **Close all tabs**
 
-Home is always the first tab and cannot be closed. Administrators also get
-direct **User Management**, **System**, and **Provider Usage** entries in the
-`+` menu — and can pin any of the three into the sidebar footer (next to
-Settings) with the pin icon in the avatar menu, so they never need the menu
-again.
+Home is always the first tab and cannot be closed. Administrators can pin
+**System**, **Provider Usage**, and **Evaluations** into the sidebar footer
+using the pin icon in the avatar menu. User administration lives under
+**Settings → User Management**.
 
 ## Fly Around with the Command Palette
 

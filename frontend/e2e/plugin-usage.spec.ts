@@ -426,9 +426,7 @@ test('administrators open provider usage from the user menu', async ({
     page.getByTestId('sidebar-user-menu').locator('button, a')
   ).toHaveText([
     'Change Picture',
-    'User Management',
     // Icon-only pin toggles follow each admin shortcut row.
-    '',
     'System',
     '',
     'Provider Usage',

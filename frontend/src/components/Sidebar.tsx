@@ -33,7 +33,10 @@ import { createLogger } from '@/utils/logger';
 import { advanceWelcomePrompt } from '@/utils/welcomePrompts';
 import { triggerHapticFeedback } from '@/utils/haptics';
 import { AvatarModal } from '@/components/sidebar/AvatarModal';
-import { SidebarHeader } from '@/components/sidebar/SidebarHeader';
+import {
+  CompactSidebarSearch,
+  SidebarHeader,
+} from '@/components/sidebar/SidebarHeader';
 import { SidebarNavigation } from '@/components/sidebar/SidebarNavigation';
 import { SidebarSessions } from '@/components/sidebar/SidebarSessions';
 import { SidebarUserSection } from '@/components/sidebar/SidebarUserSection';
@@ -484,6 +487,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 onExpandSidebar={handleToggleSidebarCompact}
               />
             )}
+            {sidebarCompact && <CompactSidebarSearch />}
           </div>
 
           <NotificationBell sidebarCompact={sidebarCompact} />
