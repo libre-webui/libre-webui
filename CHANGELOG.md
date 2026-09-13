@@ -15,6 +15,100 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 📚 Documentation
 
+## [0.35.0] - 2026-09-13
+
+Chats name themselves while the reply runs and show what the model is thinking
+about, provider usage becomes an interactive chart, user administration is
+reorganized into five sections, and the compact sidebar carries every
+destination.
+
+### ✨ New Features
+
+- **Chat titles alongside replies.** With **Auto Title** on and a **Task
+  Model** chosen under **Settings > Defaults**, a new saved chat is named from
+  your first message as soon as you send it, in parallel with the reply. The
+  sidebar updates when the title is ready; a slow title never blocks the
+  answer. Follow-ups, chats you already named, and incognito chats are left
+  alone.
+- **Live thinking summaries.** While the assistant reasons, the collapsed
+  thinking block shows a short activity summary produced by the same task
+  model from the latest reasoning excerpt, so choose a local task model when
+  that text must stay on your machine. Summaries use at most the last 4,000
+  characters, refresh at most every five seconds with one request in flight,
+  and never block the answer. The last summary stays with the message beside
+  its duration; expand the block for the original reasoning. Summaries are not
+  saved to history, and incognito chats keep the plain label.
+- **Interactive provider usage.** The Provider Usage page connects a daily
+  chart, a 365-day activity calendar, the model table, and provider bars with
+  shared model colors. Switch the chart between **Calls** and **Tokens**,
+  hover or focus a model to trace it, select it to keep it highlighted, and
+  drag or arrow through days to inspect a day's breakdown. The chart shows the
+  top twelve models by default; any other model loads its exact daily line on
+  demand, separated from **Other models** without changing the totals. Token
+  totals count only calls whose provider reported usage, and the coverage
+  percentage says how much that is. The usage endpoint gains `modelSeries`
+  plus optional `model` and `to` parameters, read-only and local as before.
+- **User Management, reorganized.** Administrators now work in five sections
+  under **Settings > User Management**: Users (accounts, pending approvals,
+  creation and editing, deletion, two-factor recovery), Groups, Access &
+  policies (Work, Ollama, model downloads, web search, Agents, tools, voice),
+  Security (instance two-factor policy and audit log), and Defaults (the
+  sign-in theme). The account list is searchable by username or email and
+  filterable by role, pending registrations sit apart from active accounts,
+  **Create User** and **Edit User** open focused forms, and deletion and
+  two-factor reset confirm first. Sections take the arrow keys, Home, and
+  End, unfinished forms survive a section switch, and sections load when first
+  opened.
+- **Compact sidebar shortcuts.** The compact sidebar keeps Channels, Notes,
+  Calendar, Automations, Personas, and Imagine beneath Chat and Work, with
+  Search last and Agents when it is enabled for the account. Hover for
+  labels; the current destination stays highlighted; on short screens the
+  shortcuts scroll while settings and account controls stay at the bottom.
+  Administrators can pin **System**, **Provider Usage**, and **Evaluations**
+  into the sidebar footer from the avatar menu.
+- **Exa MCP template.** Under **Settings > Tools > Start from a template**,
+  **Exa** prefills an MCP registration for Exa's `web_search_exa` and
+  `web_fetch_exa` tools, administrator-only by default, replacing the Petstore
+  example. Nothing is sent to Exa until the tools run.
+- **Account wallpaper on Home.** The wallpaper now paints Home as well as
+  Chat and Work, stays visible while navigation expands or collapses, and
+  remains visible beside the mobile sidebar overlay.
+
+### 🔧 Improvements
+
+- **Sidebar geometry.** Compact navigation uses one centered 44px hit area
+  and even 4px row spacing across actions, destinations, history controls,
+  and Search; empty history sections add no gap. Both sidebar sizes share the
+  top bar's frame without an edge border or shadow. From 768px, expanding the
+  sidebar moves the content alongside it with matching timing; on phones the
+  expanded sidebar overlays the content. Celestial keeps the same transition
+  and reduced motion makes it immediate.
+- **Narrow settings panels.** Settings headers and library cards adapt to the
+  width inside the panel, actions wrap below descriptions instead of
+  squeezing them, and theme choices and template grids wrap; long names and
+  identifiers stay contained.
+- **Credential checks wait for the lookup.** Provider credential availability
+  checks now await the current user's credential lookup and report whether an
+  effective key exists without returning it; a lookup failure is an error
+  rather than a false "available".
+- Fifty CodeQL quality findings across the backend and the Python helpers
+  were resolved without loosening lease guards, ciphertext limits, or storage
+  recovery checks; Python helpers now exit reliably and report temporary-file
+  cleanup failures while keeping the original error.
+- CI and the team profile pull the pinned MinIO images from `quay.io/minio`;
+  hosts that restrict registry access must allow that host.
+
+### 📚 Documentation
+
+- Pro tips cover chat titles, live thinking, the compact sidebar, and the
+  wallpaper on Home; authentication describes the five administration
+  sections; system monitoring documents the usage chart and the extended
+  usage endpoint; chat tools describe the Exa template; the plugin
+  architecture page documents credential availability checks; the platform
+  foundation page notes the Quay-hosted MinIO images; capability contracts and
+  every page that pointed at the old user pages now point at Settings > User
+  Management; the Kubernetes example uses bracketed placeholders.
+
 ## [0.34.2] - 2026-09-10
 
 Scrollable panels now hint at what lies beyond their edges, and the dependency
