@@ -306,12 +306,11 @@ class AudioDiTEngine:
         validate_model_id(model_id)
 
         try:
-            import audiodit  # noqa: F401 - registers AudioDiT with Transformers
+            from audiodit import AudioDiTModel
             import librosa
             import numpy as np
             import torch
             import torch.nn.functional as torch_functional
-            from audiodit import AudioDiTModel
             from transformers import AutoTokenizer
         except ImportError as error:
             raise RuntimeError(

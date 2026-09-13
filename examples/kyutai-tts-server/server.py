@@ -85,13 +85,6 @@ VOICE_ALIASES = {
     "shimmer": "eponine",
 }
 
-# Additional voices from HuggingFace kyutai/tts-voices
-HUGGINGFACE_VOICE_PREFIXES = {
-    "alba-mackenna": "hf://kyutai/tts-voices/alba-mackenna/{style}.wav",
-    "vctk": "hf://kyutai/tts-voices/vctk/{speaker}.wav",
-    "expresso": "hf://kyutai/tts-voices/expresso/{speaker}.wav",
-}
-
 # Explicit emoji blocks avoid the overly broad U+24C2-U+1F251 range that
 # removes unrelated scripts and symbols.
 EMOJI_CODEPOINT_RANGES = (
