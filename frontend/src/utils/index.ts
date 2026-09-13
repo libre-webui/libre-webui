@@ -102,8 +102,22 @@ export function formatFileSize(bytes: number): string {
   return `${size.toFixed(1)} ${units[unitIndex]}`;
 }
 
+/**
+ * Random identifier characters from the Web Crypto API. `getRandomValues` is
+ * available in every context, including plain-http LAN origins where
+ * `randomUUID` is not, so ids never fall back to `Math.random`.
+ */
+export function secureRandomToken(length = 12): string {
+  const alphabet = '0123456789abcdefghijklmnopqrstuvwxyz';
+  const bytes = new Uint8Array(length);
+  globalThis.crypto.getRandomValues(bytes);
+  let token = '';
+  for (const byte of bytes) token += alphabet[byte % alphabet.length];
+  return token;
+}
+
 export function generateId(): string {
-  return Math.random().toString(36).substring(2) + Date.now().toString(36);
+  return secureRandomToken(11) + Date.now().toString(36);
 }
 
 export function truncateText(text: string, maxLength: number): string {

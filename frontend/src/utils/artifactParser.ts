@@ -16,6 +16,7 @@
  */
 
 import { Artifact } from '@/types';
+import { secureRandomToken } from './index';
 import {
   isFullHtmlDocument,
   mergeHtmlArtifactFiles,
@@ -424,7 +425,7 @@ function createArtifact(
 
   return {
     ...definition,
-    id: `artifact-${now}-${Math.random().toString(36).slice(2, 11)}`,
+    id: `artifact-${now}-${secureRandomToken(9)}`,
     createdAt: now,
     updatedAt: now,
   };
