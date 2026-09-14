@@ -380,6 +380,35 @@ const bundleSource = async (name: string): Promise<string> => {
   return librarySource(name);
 };
 
+/**
+ * Mermaid 12 ships the ELK layout engine as a lazily imported chunk. The
+ * runtime pins the classic dagre layout (see artifact-runtime/runtime.ts), so
+ * the chunk would only be dead weight inlined into the single-file bundle
+ * (about 1.8 MB). Swap it for a stub that reports the layout as unavailable.
+ */
+const MERMAID_ELK_STUB = '\0libre-artifact-mermaid-elk-stub';
+const stripMermaidElk = (): Plugin => ({
+  name: 'libre-artifact-strip-mermaid-elk',
+  enforce: 'pre',
+  resolveId(source, importer) {
+    if (
+      /(^|\/)elk-[\w-]+\.mjs$/.test(source) &&
+      importer?.includes(`${path.sep}mermaid${path.sep}`)
+    ) {
+      return MERMAID_ELK_STUB;
+    }
+    return null;
+  },
+  load(id) {
+    if (id !== MERMAID_ELK_STUB) return null;
+    return [
+      'export const render = () => {',
+      "  throw new Error('The ELK layout is not bundled with Libre WebUI artifacts; use the dagre layout.');",
+      '};',
+    ].join('\n');
+  },
+});
+
 /** Serves the generated entry sources, and React's registry stand-in. */
 const virtualModules = (
   entry: Record<string, string>,
@@ -463,6 +492,7 @@ const buildBundle = async (name: string, shareReact: boolean) => {
           : { [name]: await bundleSource(name) },
         shared
       ),
+      ...(name === 'mermaid' ? [stripMermaidElk()] : []),
     ],
     build: {
       outDir,

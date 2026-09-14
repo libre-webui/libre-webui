@@ -259,6 +259,10 @@ const drawMermaid = async () => {
 
     mermaid.initialize({
       startOnLoad: false,
+      // Mermaid 12 defaults to the ELK layout engine, which changes how
+      // existing diagrams look and pulls in a large extra chunk. Keep the
+      // classic dagre layout so artifacts render as they always have.
+      layout: 'dagre',
       theme:
         document.documentElement.dataset.colorScheme === 'dark'
           ? 'dark'
