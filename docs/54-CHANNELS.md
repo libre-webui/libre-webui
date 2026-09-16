@@ -15,16 +15,15 @@ durable, encrypted foundations as chat.
 
 ## Channel types and membership
 
-| Type      | Who can see it            | Who joins                                    |
-| --------- | ------------------------- | -------------------------------------------- |
-| `public`  | Everyone can browse it    | Anyone joins themselves                      |
-| `private` | Members only              | The owner invites members                    |
-| `dm`      | The two participants only | Opened automatically; always exactly two     |
+| Type      | Who can see it            | Who joins                                |
+| --------- | ------------------------- | ---------------------------------------- |
+| `public`  | Everyone can browse it    | Anyone joins themselves                  |
+| `private` | Members only              | The owner invites members                |
+| `dm`      | The two participants only | Opened automatically; always exactly two |
 
 Membership is the only authority over channel content: every read and
 write — including attachment downloads and live event delivery — checks
-the caller's membership first, and non-members receive a non-enumerating
-404. The global administrator role deliberately confers no access to
+the caller's membership first, and non-members receive a non-enumerating 404. The global administrator role deliberately confers no access to
 channel content.
 
 The creator of a public or private channel is its owner. Owners rename,
@@ -88,20 +87,25 @@ mention is queued cannot keep it alive: the job re-checks membership
 before generating and records a visible failure instead. Model failures
 surface on the reply itself rather than disappearing into a queue.
 
+A mention also reaches the mentioned member by email when they turned on
+**Channel mentions** under Settings → Notifications and an administrator has
+set up the outgoing mail server (see
+[Notifications](./55-NOTIFICATIONS.md#email)).
+
 Model replies use the recent channel conversation (up to 30 messages) as
 context. They run as one-shot completions: chat tools, knowledge
 retrieval, and web search are not wired into channel mentions yet.
 
 ## Limits
 
-| Limit                    | Value  |
-| ------------------------ | ------ |
-| Channels created per user | 50     |
-| Members per channel       | 200    |
-| Messages per channel      | 50,000 |
+| Limit                     | Value            |
+| ------------------------- | ---------------- |
+| Channels created per user | 50               |
+| Members per channel       | 200              |
+| Messages per channel      | 50,000           |
 | Message length            | 8,000 characters |
-| Attachments per message   | 5 × 10 MB |
-| Reactions per message     | 200    |
+| Attachments per message   | 5 × 10 MB        |
+| Reactions per message     | 200              |
 
 ## Boundaries
 

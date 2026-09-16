@@ -1230,7 +1230,17 @@
       "permissionDenied": "Le notifiche sono bloccate nelle impostazioni del browser per questo sito.",
       "unsupported": "Questo browser non supporta le notifiche push.",
       "workerMissing": "Il push richiede l'app installata. Ricarica l'app di produzione e riprova.",
-      "deviceNote": "Le notifiche valgono per dispositivo. Disconnettere la sessione rimuove anche la sua registrazione push."
+      "deviceNote": "Le notifiche valgono per dispositivo. Disconnettere la sessione rimuove anche la sua registrazione push.",
+      "emailTitle": "Notifiche email",
+      "emailHint": "I messaggi arrivano a {{address}}.",
+      "emailLoading": "Verifica della disponibilità dell'email…",
+      "emailUnavailable": "Un amministratore non ha ancora configurato un server di posta in uscita.",
+      "emailNoAddress": "Il tuo account non ha un indirizzo email. Chiedi a un amministratore di aggiungerne uno in Gestione utenti.",
+      "emailLoadFailed": "Impossibile verificare la disponibilità dell'email.",
+      "emailMentions": "Menzioni nei canali",
+      "emailMentionsHint": "Inviami un'email quando qualcuno mi menziona in un canale.",
+      "emailAutomations": "Risultati delle automazioni",
+      "emailAutomationsHint": "Inviami un'email con il risultato di ogni automazione eseguita, sia in caso di successo che di errore."
     }
   },
   "models": {
@@ -1916,6 +1926,49 @@
       "saved": "Impostazioni del provider Ollama salvate",
       "saveFailed": "Impossibile salvare le impostazioni del provider Ollama",
       "baseUrlLabel": "URL endpoint di Ollama"
+    },
+    "emailNotifications": {
+      "title": "Notifiche email",
+      "description": "Server di posta in uscita per le notifiche. Gli utenti scelgono quali notifiche ricevere nella propria casella in Impostazioni > Notifiche.",
+      "enabledToast": "Le notifiche email sono attive.",
+      "disabledToast": "Le notifiche email sono disattivate.",
+      "loadFailed": "Impossibile caricare le impostazioni email.",
+      "fromEnvironment": "Fornito dalle variabili d'ambiente; salva un valore qui per sovrascriverlo.",
+      "hostLabel": "Host SMTP",
+      "hostHint": "Il nome host del server di posta.",
+      "portLabel": "Porta",
+      "portHint": "Lascia vuoto per usare quella predefinita della modalità di sicurezza selezionata.",
+      "securityLabel": "Sicurezza della connessione",
+      "securityHint": "STARTTLS eleva una connessione in chiaro a una cifrata; TLS è cifrato fin dall'inizio.",
+      "security": {
+        "starttls": "STARTTLS (porta 587)",
+        "tls": "TLS (porta 465)",
+        "none": "Nessuna (solo rete affidabile)"
+      },
+      "verifyLabel": "Verifica certificato",
+      "verifyHint": "Disattivala solo per un relay con certificato autofirmato.",
+      "usernameLabel": "Nome utente",
+      "usernameHint": "Lascia vuoto se il server accetta la posta senza autenticazione.",
+      "passwordLabel": "Password",
+      "passwordHint": "Salvata in forma cifrata e non più mostrata.",
+      "passwordStored": "È salvata una password. Inseriscine una nuova per sostituirla.",
+      "clearPassword": "Rimuovi la password salvata",
+      "fromLabel": "Mittente",
+      "fromHint": "L'indirizzo From, con eventualmente un nome visualizzato.",
+      "appUrlLabel": "URL dell'applicazione",
+      "appUrlHint": "Usato per i link nei messaggi, ad esempio https://chat.example.com.",
+      "testRecipientLabel": "Destinatario di prova",
+      "testRecipientHint": "Per impostazione predefinita è il tuo indirizzo. Lascia vuoto per verificare solo la connessione.",
+      "test": "Invia prova",
+      "testing": "Invio…",
+      "testSent": "Messaggio di prova inviato a {{address}}.",
+      "testConnected": "Connessione al server di posta riuscita.",
+      "testFailed": "Il test dell'email non è riuscito.",
+      "saveBeforeTest": "Salva le modifiche prima di eseguire il test.",
+      "save": "Salva",
+      "saving": "Salvataggio…",
+      "saved": "Impostazioni email salvate.",
+      "saveFailed": "Impossibile salvare le impostazioni email."
     }
   },
   "usageAnalytics": {

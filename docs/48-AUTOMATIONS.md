@@ -23,7 +23,11 @@ instructions as a conversation, while **Work task** launches an isolated
 [Work](./33-WORKSPACES.md) sandbox with the instructions as its opening message,
 optionally under a named Work policy chosen in the form. With notifications on, a failed
 run also lands in the [notification inbox](./55-NOTIFICATIONS.md), so
-failures reach you even when the Automations page is closed. Names and
+failures reach you even when the Automations page is closed. Separately,
+turning on **Automation results** under Settings → Notifications → Email
+notifications emails you the outcome of every run once an administrator has
+configured an outgoing mail server (see
+[Notifications](./55-NOTIFICATIONS.md#email)). Names and
 instructions are encrypted at rest. Every automation belongs to the user
 who created it.
 
@@ -106,23 +110,23 @@ All endpoints except the webhook fire require authentication and operate
 only on the caller's own automations; the webhook fire authenticates with
 the per-automation secret instead.
 
-| Method   | Path                                             | Purpose                       |
-| -------- | ------------------------------------------------ | ----------------------------- |
-| `GET`    | `/api/automations`                               | List automations              |
-| `POST`   | `/api/automations`                               | Create an automation          |
-| `GET`    | `/api/automations/occurrences?from=&to=`         | Upcoming computed occurrences |
-| `GET`    | `/api/automations/runs`                          | Run history (filterable)      |
-| `GET`    | `/api/automations/runs/summary`                  | Unseen count + 30-day buckets |
-| `POST`   | `/api/automations/runs/seen`                     | Mark finished runs as seen    |
-| `GET`    | `/api/automations/:automationId`                 | Read one automation           |
-| `PUT`    | `/api/automations/:automationId`                 | Update an automation          |
-| `DELETE` | `/api/automations/:automationId`                 | Delete an automation          |
-| `POST`   | `/api/automations/:automationId/pause`           | Pause the schedule            |
-| `POST`   | `/api/automations/:automationId/resume`          | Resume the schedule           |
-| `POST`   | `/api/automations/:automationId/run`             | Run now (202 with a run id)   |
-| `POST`   | `/api/automations/:automationId/webhook`         | Fire via secret (202)         |
-| `POST`   | `/api/automations/:automationId/webhook-secret`  | Generate/rotate the secret    |
-| `DELETE` | `/api/automations/:automationId/webhook-secret`  | Disable the webhook           |
+| Method   | Path                                            | Purpose                       |
+| -------- | ----------------------------------------------- | ----------------------------- |
+| `GET`    | `/api/automations`                              | List automations              |
+| `POST`   | `/api/automations`                              | Create an automation          |
+| `GET`    | `/api/automations/occurrences?from=&to=`        | Upcoming computed occurrences |
+| `GET`    | `/api/automations/runs`                         | Run history (filterable)      |
+| `GET`    | `/api/automations/runs/summary`                 | Unseen count + 30-day buckets |
+| `POST`   | `/api/automations/runs/seen`                    | Mark finished runs as seen    |
+| `GET`    | `/api/automations/:automationId`                | Read one automation           |
+| `PUT`    | `/api/automations/:automationId`                | Update an automation          |
+| `DELETE` | `/api/automations/:automationId`                | Delete an automation          |
+| `POST`   | `/api/automations/:automationId/pause`          | Pause the schedule            |
+| `POST`   | `/api/automations/:automationId/resume`         | Resume the schedule           |
+| `POST`   | `/api/automations/:automationId/run`            | Run now (202 with a run id)   |
+| `POST`   | `/api/automations/:automationId/webhook`        | Fire via secret (202)         |
+| `POST`   | `/api/automations/:automationId/webhook-secret` | Generate/rotate the secret    |
+| `DELETE` | `/api/automations/:automationId/webhook-secret` | Disable the webhook           |
 
 A user may keep up to 50 automations; names are limited to 200 characters and
 instructions to 20,000.

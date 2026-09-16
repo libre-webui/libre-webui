@@ -1230,7 +1230,17 @@
       "permissionDenied": "Oznámení jsou pro tento web zablokována v nastavení prohlížeče.",
       "unsupported": "Tento prohlížeč nepodporuje push oznámení.",
       "workerMissing": "Push vyžaduje nainstalovanou aplikaci. Načtěte produkční aplikaci znovu a zkuste to znovu.",
-      "deviceNote": "Oznámení platí pro zařízení. Odhlášení relace odstraní i její push registraci."
+      "deviceNote": "Oznámení platí pro zařízení. Odhlášení relace odstraní i její push registraci.",
+      "emailTitle": "E-mailová oznámení",
+      "emailHint": "Zprávy budou chodit na {{address}}.",
+      "emailLoading": "Zjišťuje se, zda je e-mail dostupný…",
+      "emailUnavailable": "Administrátor zatím nenastavil server pro odchozí poštu.",
+      "emailNoAddress": "Váš účet nemá e-mailovou adresu. Požádejte správce, aby ji přidal ve Správě uživatelů.",
+      "emailLoadFailed": "Dostupnost e-mailu se nepodařilo zjistit.",
+      "emailMentions": "Zmínky v kanálech",
+      "emailMentionsHint": "Pošlete mi e-mail, když mě někdo zmíní v kanálu.",
+      "emailAutomations": "Výsledky automatizací",
+      "emailAutomationsHint": "Pošlete mi e-mail s výsledkem každého běhu automatizace, ať už proběhl úspěšně, nebo selhal."
     }
   },
   "models": {
@@ -1916,6 +1926,49 @@
       "saved": "Nastavení poskytovatele Ollama uloženo",
       "saveFailed": "Nepodařilo se uložit nastavení poskytovatele Ollama",
       "baseUrlLabel": "URL endpointu Ollama"
+    },
+    "emailNotifications": {
+      "title": "E-mailová oznámení",
+      "description": "Server pro odchozí poštu k oznámením. V Nastavení > Oznámení si uživatelé sami vybírají, která oznámení chtějí dostávat do schránky.",
+      "enabledToast": "E-mailová oznámení jsou zapnutá.",
+      "disabledToast": "E-mailová oznámení jsou vypnutá.",
+      "loadFailed": "Nastavení e-mailu se nepodařilo načíst.",
+      "fromEnvironment": "Hodnota je poskytována prostředím; uložením hodnoty zde ji přepíšete.",
+      "hostLabel": "SMTP server",
+      "hostHint": "Název hostitele poštovního serveru.",
+      "portLabel": "Port",
+      "portHint": "Ponechte prázdné pro výchozí hodnotu zvoleného režimu zabezpečení.",
+      "securityLabel": "Zabezpečení spojení",
+      "securityHint": "STARTTLS povýší obyčejné spojení na zabezpečené; TLS je šifrované od začátku.",
+      "security": {
+        "starttls": "STARTTLS (port 587)",
+        "tls": "TLS (port 465)",
+        "none": "Žádné (pouze důvěryhodná síť)"
+      },
+      "verifyLabel": "Ověřovat certifikát",
+      "verifyHint": "Vypněte pouze pro relay se samopodepsaným certifikátem.",
+      "usernameLabel": "Uživatelské jméno",
+      "usernameHint": "Ponechte prázdné, pokud server přijímá poštu bez přihlášení.",
+      "passwordLabel": "Heslo",
+      "passwordHint": "Ukládá se zašifrované a už se znovu nezobrazí.",
+      "passwordStored": "Heslo je uloženo. Chcete-li ho nahradit, zadejte nové.",
+      "clearPassword": "Odstranit uložené heslo",
+      "fromLabel": "Odesílatel",
+      "fromHint": "Adresa v poli Od, volitelně se zobrazovaným jménem.",
+      "appUrlLabel": "URL aplikace",
+      "appUrlHint": "Používá se pro odkazy ve zprávách, například https://chat.example.com.",
+      "testRecipientLabel": "Příjemce testu",
+      "testRecipientHint": "Výchozí je vaše vlastní adresa. Ponechte prázdné, chcete-li ověřit jen spojení.",
+      "test": "Odeslat test",
+      "testing": "Odesílání…",
+      "testSent": "Testovací zpráva byla odeslána na {{address}}.",
+      "testConnected": "Spojení s poštovním serverem navázáno.",
+      "testFailed": "Test e-mailu selhal.",
+      "saveBeforeTest": "Před testováním uložte své změny.",
+      "save": "Uložit",
+      "saving": "Ukládání...",
+      "saved": "Nastavení e-mailu bylo uloženo.",
+      "saveFailed": "Nastavení e-mailu se nepodařilo uložit."
     }
   },
   "usageAnalytics": {

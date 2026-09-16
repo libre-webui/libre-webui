@@ -1230,7 +1230,17 @@
       "permissionDenied": "Aviseringar är blockerade i webbläsarens inställningar för den här webbplatsen.",
       "unsupported": "Den här webbläsaren stöder inte pushaviseringar.",
       "workerMissing": "Push kräver den installerade appen. Ladda om produktionsappen och försök igen.",
-      "deviceNote": "Aviseringar gäller per enhet. Loggas sessionen ut tas även dess pushregistrering bort."
+      "deviceNote": "Aviseringar gäller per enhet. Loggas sessionen ut tas även dess pushregistrering bort.",
+      "emailTitle": "E-postaviseringar",
+      "emailHint": "Meddelanden skickas till {{address}}.",
+      "emailLoading": "Kontrollerar om e-post är tillgängligt…",
+      "emailUnavailable": "En administratör har inte ställt in en server för utgående e-post än.",
+      "emailNoAddress": "Ditt konto har ingen e-postadress. Be en administratör lägga till en under Användarhantering.",
+      "emailLoadFailed": "Det gick inte att kontrollera om e-post är tillgängligt.",
+      "emailMentions": "Omnämnanden i kanaler",
+      "emailMentionsHint": "Mejla mig när någon nämner mig i en kanal.",
+      "emailAutomations": "Automatiseringsresultat",
+      "emailAutomationsHint": "Mejla mig resultatet av varje automatiseringskörning, oavsett om den lyckades eller misslyckades."
     }
   },
   "models": {
@@ -1916,6 +1926,49 @@
       "saved": "Inställningarna för Ollama-leverantören har sparats",
       "saveFailed": "Det gick inte att spara inställningarna för Ollama-leverantören",
       "baseUrlLabel": "Endpoint-URL för Ollama"
+    },
+    "emailNotifications": {
+      "title": "E-postaviseringar",
+      "description": "Server för utgående e-post för aviseringar. Användarna väljer själva vilka aviseringar som når deras inkorg under Inställningar > Aviseringar.",
+      "enabledToast": "E-postaviseringar är på.",
+      "disabledToast": "E-postaviseringar är av.",
+      "loadFailed": "E-postinställningarna kunde inte läsas in.",
+      "fromEnvironment": "Tillhandahålls av miljön; spara ett värde här för att åsidosätta det.",
+      "hostLabel": "SMTP-värd",
+      "hostHint": "E-postserverns värdnamn.",
+      "portLabel": "Port",
+      "portHint": "Lämna tomt för standardvärdet för valt säkerhetsläge.",
+      "securityLabel": "Anslutningssäkerhet",
+      "securityHint": "STARTTLS uppgraderar en oskyddad anslutning; TLS är krypterat redan från start.",
+      "security": {
+        "starttls": "STARTTLS (port 587)",
+        "tls": "TLS (port 465)",
+        "none": "Ingen (endast betrodda nätverk)"
+      },
+      "verifyLabel": "Verifiera certifikat",
+      "verifyHint": "Stäng av bara för en relä med ett självsignerat certifikat.",
+      "usernameLabel": "Användarnamn",
+      "usernameHint": "Lämna tomt om servern tar emot e-post utan inloggning.",
+      "passwordLabel": "Lösenord",
+      "passwordHint": "Lagras krypterat och visas aldrig igen.",
+      "passwordStored": "Ett lösenord är sparat. Ange ett nytt för att ersätta det.",
+      "clearPassword": "Ta bort det sparade lösenordet",
+      "fromLabel": "Avsändare",
+      "fromHint": "Från-adressen, valfritt med ett visningsnamn.",
+      "appUrlLabel": "Programmets URL",
+      "appUrlHint": "Används för länkarna i meddelanden, till exempel https://chat.example.com.",
+      "testRecipientLabel": "Testmottagare",
+      "testRecipientHint": "Använder din egen adress som standard. Lämna tomt för att bara kontrollera anslutningen.",
+      "test": "Skicka test",
+      "testing": "Skickar…",
+      "testSent": "Testmeddelande skickat till {{address}}.",
+      "testConnected": "Anslöt till e-postservern.",
+      "testFailed": "E-posttestet misslyckades.",
+      "saveBeforeTest": "Spara dina ändringar innan du testar.",
+      "save": "Spara",
+      "saving": "Sparar…",
+      "saved": "E-postinställningarna har sparats.",
+      "saveFailed": "E-postinställningarna kunde inte sparas."
     }
   },
   "usageAnalytics": {

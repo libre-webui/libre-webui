@@ -195,6 +195,16 @@ Persona backgrounds stay specific to their chats and do not replace the account
 wallpaper. Image processing runs in your browser. If an external image cannot be
 processed because of its origin policy, a local visual fallback is used.
 
+## Get Mentions and Automation Results by Email
+
+Once an administrator has configured an outgoing mail server under Settings →
+User Management → Access & policies, open **Settings → Notifications** and
+turn on **Channel mentions**, **Automation results**, or both. A mention
+arrives with the message preview and a link to the channel; an automation
+run arrives with the reply it produced (or the error when it failed) and a
+link to the resulting chat or Work task. Both stay off until you turn them
+on, and they need an email address on your account.
+
 ## Keep Work Tasks Focused
 
 Use a separate Work task for each project or independent goal. Every task has

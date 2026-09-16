@@ -1230,7 +1230,17 @@
       "permissionDenied": "이 사이트의 알림이 브라우저 설정에서 차단되어 있습니다.",
       "unsupported": "이 브라우저는 푸시 알림을 지원하지 않습니다.",
       "workerMissing": "푸시는 설치된 앱이 필요합니다. 프로덕션 앱을 새로 고친 뒤 다시 시도하세요.",
-      "deviceNote": "알림은 기기별로 적용됩니다. 세션을 로그아웃하면 푸시 등록도 제거됩니다."
+      "deviceNote": "알림은 기기별로 적용됩니다. 세션을 로그아웃하면 푸시 등록도 제거됩니다.",
+      "emailTitle": "이메일 알림",
+      "emailHint": "메시지가 {{address}} 주소로 전송됩니다.",
+      "emailLoading": "이메일 사용 가능 여부를 확인하는 중…",
+      "emailUnavailable": "관리자가 아직 발신 메일 서버를 설정하지 않았습니다.",
+      "emailNoAddress": "계정에 이메일 주소가 없습니다. 관리자에게 사용자 관리에서 주소를 추가해 달라고 요청하세요.",
+      "emailLoadFailed": "이메일 사용 가능 여부를 확인할 수 없습니다.",
+      "emailMentions": "채널 멘션",
+      "emailMentionsHint": "채널에서 누군가 나를 멘션하면 이메일로 알려줍니다.",
+      "emailAutomations": "자동화 실행 결과",
+      "emailAutomationsHint": "자동화가 실행될 때마다 성공 여부와 관계없이 결과를 이메일로 보내줍니다."
     }
   },
   "models": {
@@ -1916,6 +1926,49 @@
       "saved": "Ollama 제공자 설정이 저장되었습니다",
       "saveFailed": "Ollama 제공자 설정을 저장할 수 없습니다",
       "baseUrlLabel": "Ollama 엔드포인트 URL"
+    },
+    "emailNotifications": {
+      "title": "이메일 알림",
+      "description": "알림 발송용 발신 메일 서버입니다. 사용자는 설정 > 알림에서 받은편지함으로 받을 알림을 직접 선택합니다.",
+      "enabledToast": "이메일 알림이 켜졌습니다.",
+      "disabledToast": "이메일 알림이 꺼졌습니다.",
+      "loadFailed": "이메일 설정을 불러올 수 없습니다.",
+      "fromEnvironment": "환경 변수로 제공되는 값입니다. 여기에 값을 저장하면 재정의됩니다.",
+      "hostLabel": "SMTP 호스트",
+      "hostHint": "메일 서버의 호스트 이름입니다.",
+      "portLabel": "포트",
+      "portHint": "선택한 보안 모드의 기본값을 사용하려면 비워 두세요.",
+      "securityLabel": "연결 보안",
+      "securityHint": "STARTTLS는 일반 연결을 암호화 연결로 전환하고, TLS는 처음부터 암호화된 상태로 연결합니다.",
+      "security": {
+        "starttls": "STARTTLS (포트 587)",
+        "tls": "TLS (포트 465)",
+        "none": "없음 (신뢰할 수 있는 네트워크 전용)"
+      },
+      "verifyLabel": "인증서 확인",
+      "verifyHint": "자체 서명된 인증서를 사용하는 릴레이일 때만 꺼 두세요.",
+      "usernameLabel": "사용자 이름",
+      "usernameHint": "서버가 로그인 없이 메일을 받아들이면 비워 두세요.",
+      "passwordLabel": "비밀번호",
+      "passwordHint": "암호화되어 저장되며 다시 표시되지 않습니다.",
+      "passwordStored": "비밀번호가 저장되어 있습니다. 새 비밀번호를 입력하면 교체됩니다.",
+      "clearPassword": "저장된 비밀번호 삭제",
+      "fromLabel": "보내는 사람",
+      "fromHint": "발신자(From) 주소이며, 표시 이름을 함께 지정할 수 있습니다.",
+      "appUrlLabel": "애플리케이션 URL",
+      "appUrlHint": "메시지에 들어갈 링크에 사용됩니다. 예: https://chat.example.com.",
+      "testRecipientLabel": "테스트 수신자",
+      "testRecipientHint": "기본값은 본인 주소입니다. 연결만 확인하려면 비워 두세요.",
+      "test": "테스트 보내기",
+      "testing": "보내는 중…",
+      "testSent": "테스트 메시지를 {{address}} 주소로 보냈습니다.",
+      "testConnected": "메일 서버에 연결되었습니다.",
+      "testFailed": "이메일 테스트에 실패했습니다.",
+      "saveBeforeTest": "테스트하기 전에 변경 사항을 저장하세요.",
+      "save": "저장",
+      "saving": "저장 중…",
+      "saved": "이메일 설정이 저장되었습니다.",
+      "saveFailed": "이메일 설정을 저장할 수 없습니다."
     }
   },
   "usageAnalytics": {

@@ -1230,7 +1230,17 @@
       "permissionDenied": "Notifikationer er blokeret i browserens indstillinger for dette websted.",
       "unsupported": "Denne browser understøtter ikke push-notifikationer.",
       "workerMissing": "Push kræver den installerede app. Genindlæs produktionsappen og prøv igen.",
-      "deviceNote": "Notifikationer gælder pr. enhed. Logges sessionen ud, fjernes dens push-registrering også."
+      "deviceNote": "Notifikationer gælder pr. enhed. Logges sessionen ud, fjernes dens push-registrering også.",
+      "emailTitle": "E-mailnotifikationer",
+      "emailHint": "Beskeder sendes til {{address}}.",
+      "emailLoading": "Undersøger, om e-mail er tilgængelig…",
+      "emailUnavailable": "En administrator har endnu ikke sat en udgående mailserver op.",
+      "emailNoAddress": "Din konto har ingen e-mailadresse. Bed en administrator om at tilføje en under Brugeradministration.",
+      "emailLoadFailed": "Det kunne ikke tjekkes, om e-mail er tilgængelig.",
+      "emailMentions": "Omtaler i kanaler",
+      "emailMentionsHint": "Send mig en e-mail, når nogen nævner mig i en kanal.",
+      "emailAutomations": "Automatiseringsresultater",
+      "emailAutomationsHint": "Send mig en e-mail med resultatet af hver automatiseringskørsel, uanset om den lykkedes eller fejlede."
     }
   },
   "models": {
@@ -1916,6 +1926,49 @@
       "saved": "Indstillinger for Ollama-udbyder gemt",
       "saveFailed": "Kunne ikke gemme indstillingerne for Ollama-udbyderen",
       "baseUrlLabel": "Ollama-endepunkts-URL"
+    },
+    "emailNotifications": {
+      "title": "E-mailnotifikationer",
+      "description": "Udgående mailserver til notifikationer. Brugerne vælger selv, hvilke notifikationer der skal havne i deres indbakke, under Indstillinger > Notifikationer.",
+      "enabledToast": "E-mailnotifikationer er slået til.",
+      "disabledToast": "E-mailnotifikationer er slået fra.",
+      "loadFailed": "E-mailindstillingerne kunne ikke indlæses.",
+      "fromEnvironment": "Angivet af miljøet; gem en værdi her for at tilsidesætte den.",
+      "hostLabel": "SMTP-host",
+      "hostHint": "Mailserverens værtsnavn.",
+      "portLabel": "Port",
+      "portHint": "Lad stå tom for standardværdien for den valgte sikkerhedstilstand.",
+      "securityLabel": "Forbindelsessikkerhed",
+      "securityHint": "STARTTLS opgraderer en almindelig forbindelse; TLS er krypteret fra starten.",
+      "security": {
+        "starttls": "STARTTLS (port 587)",
+        "tls": "TLS (port 465)",
+        "none": "Ingen (kun betroet netværk)"
+      },
+      "verifyLabel": "Verificer certifikat",
+      "verifyHint": "Slå kun fra for en relay med et selvsigneret certifikat.",
+      "usernameLabel": "Brugernavn",
+      "usernameHint": "Lad stå tom, når serveren tager imod mail uden login.",
+      "passwordLabel": "Adgangskode",
+      "passwordHint": "Gemmes krypteret og vises aldrig igen.",
+      "passwordStored": "Der er gemt en adgangskode. Indtast en ny for at erstatte den.",
+      "clearPassword": "Fjern den gemte adgangskode",
+      "fromLabel": "Afsender",
+      "fromHint": "From-adressen, eventuelt med et visningsnavn.",
+      "appUrlLabel": "Applikations-URL",
+      "appUrlHint": "Bruges til links i beskeder, for eksempel https://chat.example.com.",
+      "testRecipientLabel": "Testmodtager",
+      "testRecipientHint": "Er som standard din egen adresse. Lad stå tom for kun at tjekke forbindelsen.",
+      "test": "Send test",
+      "testing": "Sender…",
+      "testSent": "Testbesked sendt til {{address}}.",
+      "testConnected": "Forbundet til mailserveren.",
+      "testFailed": "E-mailtesten fejlede.",
+      "saveBeforeTest": "Gem dine ændringer, før du tester.",
+      "save": "Gem",
+      "saving": "Gemmer...",
+      "saved": "E-mailindstillingerne er gemt.",
+      "saveFailed": "E-mailindstillingerne kunne ikke gemmes."
     }
   },
   "usageAnalytics": {

@@ -1230,7 +1230,17 @@
       "permissionDenied": "Les notifications sont bloquées dans les réglages du navigateur pour ce site.",
       "unsupported": "Ce navigateur ne prend pas en charge les notifications push.",
       "workerMissing": "Le push nécessite l'application installée. Rechargez l'application de production et réessayez.",
-      "deviceNote": "Les notifications sont propres à chaque appareil. Déconnecter la session supprime aussi son enregistrement push."
+      "deviceNote": "Les notifications sont propres à chaque appareil. Déconnecter la session supprime aussi son enregistrement push.",
+      "emailTitle": "Notifications par e-mail",
+      "emailHint": "Les messages sont envoyés à {{address}}.",
+      "emailLoading": "Vérification de la disponibilité de l'e-mail…",
+      "emailUnavailable": "Un administrateur n'a pas encore configuré de serveur de messagerie sortant.",
+      "emailNoAddress": "Votre compte n'a pas d'adresse e-mail. Demandez à un administrateur d'en ajouter une dans Gestion des utilisateurs.",
+      "emailLoadFailed": "La disponibilité de l'e-mail n'a pas pu être vérifiée.",
+      "emailMentions": "Mentions dans les canaux",
+      "emailMentionsHint": "M'avertir par e-mail quand quelqu'un me mentionne dans un canal.",
+      "emailAutomations": "Résultats des automatisations",
+      "emailAutomationsHint": "M'avertir par e-mail du résultat de chaque exécution d'automatisation, qu'elle réussisse ou échoue."
     }
   },
   "models": {
@@ -1916,6 +1926,49 @@
       "saved": "Paramètres du fournisseur Ollama enregistrés",
       "saveFailed": "Impossible d'enregistrer les paramètres du fournisseur Ollama",
       "baseUrlLabel": "URL de l'endpoint Ollama"
+    },
+    "emailNotifications": {
+      "title": "Notifications par e-mail",
+      "description": "Serveur de messagerie sortant pour les notifications. Chaque utilisateur choisit les notifications qu'il reçoit par e-mail dans Paramètres > Notifications.",
+      "enabledToast": "Les notifications par e-mail sont activées.",
+      "disabledToast": "Les notifications par e-mail sont désactivées.",
+      "loadFailed": "Les paramètres de messagerie n'ont pas pu être chargés.",
+      "fromEnvironment": "Fourni par l'environnement ; enregistrez une valeur ici pour le remplacer.",
+      "hostLabel": "Hôte SMTP",
+      "hostHint": "Le nom d'hôte du serveur de messagerie.",
+      "portLabel": "Port",
+      "portHint": "Laissez vide pour utiliser la valeur par défaut du mode de sécurité choisi.",
+      "securityLabel": "Sécurité de la connexion",
+      "securityHint": "STARTTLS met à niveau une connexion en clair ; TLS est chiffré dès le départ.",
+      "security": {
+        "starttls": "STARTTLS (port 587)",
+        "tls": "TLS (port 465)",
+        "none": "Aucune (réseau de confiance uniquement)"
+      },
+      "verifyLabel": "Vérifier le certificat",
+      "verifyHint": "À désactiver uniquement pour un relais avec un certificat auto-signé.",
+      "usernameLabel": "Nom d'utilisateur",
+      "usernameHint": "Laissez vide si le serveur accepte le courrier sans connexion.",
+      "passwordLabel": "Mot de passe",
+      "passwordHint": "Stocké chiffré et jamais réaffiché.",
+      "passwordStored": "Un mot de passe est enregistré. Saisissez-en un nouveau pour le remplacer.",
+      "clearPassword": "Supprimer le mot de passe enregistré",
+      "fromLabel": "Expéditeur",
+      "fromHint": "L'adresse d'expédition, avec un nom d'affichage en option.",
+      "appUrlLabel": "URL de l'application",
+      "appUrlHint": "Utilisée pour les liens dans les messages, par exemple https://chat.example.com.",
+      "testRecipientLabel": "Destinataire du test",
+      "testRecipientHint": "Par défaut, votre propre adresse. Laissez vide pour ne vérifier que la connexion.",
+      "test": "Envoyer un test",
+      "testing": "Envoi en cours…",
+      "testSent": "Message de test envoyé à {{address}}.",
+      "testConnected": "Connecté au serveur de messagerie.",
+      "testFailed": "Le test d'e-mail a échoué.",
+      "saveBeforeTest": "Enregistrez vos modifications avant de tester.",
+      "save": "Enregistrer",
+      "saving": "Enregistrement…",
+      "saved": "Paramètres de messagerie enregistrés.",
+      "saveFailed": "Les paramètres de messagerie n'ont pas pu être enregistrés."
     }
   },
   "usageAnalytics": {

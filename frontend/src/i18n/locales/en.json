@@ -1230,7 +1230,17 @@
       "permissionDenied": "Notifications are blocked in the browser settings for this site.",
       "unsupported": "This browser does not support push notifications.",
       "workerMissing": "Push needs the installed app. Reload the production app and try again.",
-      "deviceNote": "Notifications are per device. Signing the session out also removes its push registration."
+      "deviceNote": "Notifications are per device. Signing the session out also removes its push registration.",
+      "emailTitle": "Email notifications",
+      "emailHint": "Messages go to {{address}}.",
+      "emailLoading": "Checking whether email is available…",
+      "emailUnavailable": "An administrator has not set up an outgoing mail server yet.",
+      "emailNoAddress": "Your account has no email address. Ask an administrator to add one under User Management.",
+      "emailLoadFailed": "Email availability could not be checked.",
+      "emailMentions": "Channel mentions",
+      "emailMentionsHint": "Email me when someone mentions me in a channel.",
+      "emailAutomations": "Automation results",
+      "emailAutomationsHint": "Email me the result of each automation run, whether it succeeded or failed."
     }
   },
   "models": {
@@ -1916,6 +1926,49 @@
       "saved": "Ollama provider settings saved",
       "saveFailed": "Could not save the Ollama provider settings",
       "baseUrlLabel": "Ollama endpoint URL"
+    },
+    "emailNotifications": {
+      "title": "Email notifications",
+      "description": "Outgoing mail server for notifications. Users choose which notifications reach their inbox under Settings > Notifications.",
+      "enabledToast": "Email notifications are on.",
+      "disabledToast": "Email notifications are off.",
+      "loadFailed": "The email settings could not be loaded.",
+      "fromEnvironment": "Provided by the environment; save a value here to override it.",
+      "hostLabel": "SMTP host",
+      "hostHint": "The host name of the mail server.",
+      "portLabel": "Port",
+      "portHint": "Leave empty for the default of the selected security mode.",
+      "securityLabel": "Connection security",
+      "securityHint": "STARTTLS upgrades a plain connection; TLS is encrypted from the start.",
+      "security": {
+        "starttls": "STARTTLS (port 587)",
+        "tls": "TLS (port 465)",
+        "none": "None (trusted network only)"
+      },
+      "verifyLabel": "Verify certificate",
+      "verifyHint": "Turn off only for a relay with a self-signed certificate.",
+      "usernameLabel": "Username",
+      "usernameHint": "Leave empty when the server accepts mail without signing in.",
+      "passwordLabel": "Password",
+      "passwordHint": "Stored encrypted and never shown again.",
+      "passwordStored": "A password is stored. Enter a new one to replace it.",
+      "clearPassword": "Remove the stored password",
+      "fromLabel": "Sender",
+      "fromHint": "The From address, optionally with a display name.",
+      "appUrlLabel": "Application URL",
+      "appUrlHint": "Used for the links in messages, for example https://chat.example.com.",
+      "testRecipientLabel": "Test recipient",
+      "testRecipientHint": "Defaults to your own address. Leave empty to only check the connection.",
+      "test": "Send test",
+      "testing": "Sending…",
+      "testSent": "Test message sent to {{address}}.",
+      "testConnected": "Connected to the mail server.",
+      "testFailed": "The email test failed.",
+      "saveBeforeTest": "Save your changes before testing.",
+      "save": "Save",
+      "saving": "Saving…",
+      "saved": "Email settings saved.",
+      "saveFailed": "The email settings could not be saved."
     }
   },
   "usageAnalytics": {

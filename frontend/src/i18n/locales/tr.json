@@ -1230,7 +1230,17 @@
       "permissionDenied": "Bu site için bildirimler tarayıcı ayarlarında engellenmiş.",
       "unsupported": "Bu tarayıcı push bildirimlerini desteklemiyor.",
       "workerMissing": "Push, yüklü uygulamayı gerektirir. Üretim uygulamasını yeniden yükleyip tekrar dene.",
-      "deviceNote": "Bildirimler cihaz başınadır. Oturumu kapatmak push kaydını da kaldırır."
+      "deviceNote": "Bildirimler cihaz başınadır. Oturumu kapatmak push kaydını da kaldırır.",
+      "emailTitle": "E-posta bildirimleri",
+      "emailHint": "İletiler {{address}} adresine gidiyor.",
+      "emailLoading": "E-postanın kullanılabilir olup olmadığı denetleniyor…",
+      "emailUnavailable": "Bir yönetici henüz giden posta sunucusu kurmadı.",
+      "emailNoAddress": "Hesabınızda e-posta adresi yok. Bir yöneticiden Kullanıcı Yönetimi altında bir adres eklemesini isteyin.",
+      "emailLoadFailed": "E-posta kullanılabilirliği denetlenemedi.",
+      "emailMentions": "Kanal bahsetmeleri",
+      "emailMentionsHint": "Bir kanalda biri benden bahsettiğinde e-posta gönder.",
+      "emailAutomations": "Otomasyon sonuçları",
+      "emailAutomationsHint": "Her otomasyon çalışmasının sonucunu, başarılı ya da başarısız olsun, e-postayla bildir."
     }
   },
   "models": {
@@ -1916,6 +1926,49 @@
       "saved": "Ollama sağlayıcı ayarları kaydedildi",
       "saveFailed": "Ollama sağlayıcı ayarları kaydedilemedi",
       "baseUrlLabel": "Ollama uç nokta URL'si"
+    },
+    "emailNotifications": {
+      "title": "E-posta bildirimleri",
+      "description": "Bildirimler için giden posta sunucusu. Kullanıcılar hangi bildirimlerin gelen kutularına ulaşacağını Ayarlar > Bildirimler altında seçer.",
+      "enabledToast": "E-posta bildirimleri açık.",
+      "disabledToast": "E-posta bildirimleri kapalı.",
+      "loadFailed": "E-posta ayarları yüklenemedi.",
+      "fromEnvironment": "Ortam değişkeniyle sağlanıyor; geçersiz kılmak için burada bir değer kaydedin.",
+      "hostLabel": "SMTP sunucusu",
+      "hostHint": "Posta sunucusunun ana bilgisayar adı.",
+      "portLabel": "Bağlantı noktası",
+      "portHint": "Seçilen güvenlik modunun varsayılanı için boş bırakın.",
+      "securityLabel": "Bağlantı güvenliği",
+      "securityHint": "STARTTLS düz bir bağlantıyı yükseltir; TLS baştan itibaren şifrelidir.",
+      "security": {
+        "starttls": "STARTTLS (bağlantı noktası 587)",
+        "tls": "TLS (bağlantı noktası 465)",
+        "none": "Yok (yalnızca güvenilir ağ)"
+      },
+      "verifyLabel": "Sertifikayı doğrula",
+      "verifyHint": "Yalnızca kendinden imzalı sertifikaya sahip bir aktarıcı için kapatın.",
+      "usernameLabel": "Kullanıcı adı",
+      "usernameHint": "Sunucu oturum açmadan posta kabul ediyorsa boş bırakın.",
+      "passwordLabel": "Parola",
+      "passwordHint": "Şifrelenmiş olarak saklanır ve bir daha gösterilmez.",
+      "passwordStored": "Kayıtlı bir parola var. Değiştirmek için yenisini girin.",
+      "clearPassword": "Kayıtlı parolayı kaldır",
+      "fromLabel": "Gönderen",
+      "fromHint": "Gönderen adresi, isteğe bağlı olarak bir görünen adla birlikte.",
+      "appUrlLabel": "Uygulama URL'si",
+      "appUrlHint": "İletilerdeki bağlantılar için kullanılır, örneğin https://chat.example.com.",
+      "testRecipientLabel": "Test alıcısı",
+      "testRecipientHint": "Varsayılan olarak kendi adresinizdir. Yalnızca bağlantıyı denetlemek için boş bırakın.",
+      "test": "Test gönder",
+      "testing": "Gönderiliyor…",
+      "testSent": "Test iletisi {{address}} adresine gönderildi.",
+      "testConnected": "Posta sunucusuna bağlanıldı.",
+      "testFailed": "E-posta testi başarısız oldu.",
+      "saveBeforeTest": "Test etmeden önce değişikliklerinizi kaydedin.",
+      "save": "Kaydet",
+      "saving": "Kaydediliyor…",
+      "saved": "E-posta ayarları kaydedildi.",
+      "saveFailed": "E-posta ayarları kaydedilemedi."
     }
   },
   "usageAnalytics": {

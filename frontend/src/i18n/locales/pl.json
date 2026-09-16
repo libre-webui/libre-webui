@@ -1230,7 +1230,17 @@
       "permissionDenied": "Powiadomienia są zablokowane w ustawieniach przeglądarki dla tej witryny.",
       "unsupported": "Ta przeglądarka nie obsługuje powiadomień push.",
       "workerMissing": "Push wymaga zainstalowanej aplikacji. Odśwież aplikację produkcyjną i spróbuj ponownie.",
-      "deviceNote": "Powiadomienia działają per urządzenie. Wylogowanie sesji usuwa też jej rejestrację push."
+      "deviceNote": "Powiadomienia działają per urządzenie. Wylogowanie sesji usuwa też jej rejestrację push.",
+      "emailTitle": "Powiadomienia e-mail",
+      "emailHint": "Wiadomości trafiają na adres {{address}}.",
+      "emailLoading": "Sprawdzanie dostępności poczty e-mail…",
+      "emailUnavailable": "Administrator nie skonfigurował jeszcze serwera poczty wychodzącej.",
+      "emailNoAddress": "Twoje konto nie ma adresu e-mail. Poproś administratora o dodanie go w sekcji Zarządzanie użytkownikami.",
+      "emailLoadFailed": "Nie udało się sprawdzić dostępności poczty e-mail.",
+      "emailMentions": "Wzmianki w kanałach",
+      "emailMentionsHint": "Wyślij mi e-mail, gdy ktoś wspomni o mnie w kanale.",
+      "emailAutomations": "Wyniki automatyzacji",
+      "emailAutomationsHint": "Wyślij mi e-mail z wynikiem każdego uruchomienia automatyzacji, niezależnie od tego, czy się powiodło."
     }
   },
   "models": {
@@ -1916,6 +1926,49 @@
       "saved": "Zapisano ustawienia dostawcy Ollama",
       "saveFailed": "Nie udało się zapisać ustawień dostawcy Ollama",
       "baseUrlLabel": "URL endpointu Ollama"
+    },
+    "emailNotifications": {
+      "title": "Powiadomienia e-mail",
+      "description": "Serwer poczty wychodzącej używany do powiadomień. Użytkownicy sami wybierają, które powiadomienia trafiają do ich skrzynki, w Ustawienia > Powiadomienia.",
+      "enabledToast": "Powiadomienia e-mail są włączone.",
+      "disabledToast": "Powiadomienia e-mail są wyłączone.",
+      "loadFailed": "Nie udało się wczytać ustawień poczty e-mail.",
+      "fromEnvironment": "Wartość podana przez środowisko; zapisz tu wartość, aby ją zastąpić.",
+      "hostLabel": "Host SMTP",
+      "hostHint": "Nazwa hosta serwera pocztowego.",
+      "portLabel": "Port",
+      "portHint": "Pozostaw puste, aby użyć domyślnego portu wybranego trybu zabezpieczeń.",
+      "securityLabel": "Zabezpieczenie połączenia",
+      "securityHint": "STARTTLS podnosi zwykłe połączenie do szyfrowanego; TLS jest szyfrowane od samego początku.",
+      "security": {
+        "starttls": "STARTTLS (port 587)",
+        "tls": "TLS (port 465)",
+        "none": "Brak (tylko zaufana sieć)"
+      },
+      "verifyLabel": "Sprawdzaj certyfikat",
+      "verifyHint": "Wyłącz tylko w przypadku przekaźnika z certyfikatem podpisanym samodzielnie.",
+      "usernameLabel": "Nazwa użytkownika",
+      "usernameHint": "Pozostaw puste, jeśli serwer przyjmuje pocztę bez logowania.",
+      "passwordLabel": "Hasło",
+      "passwordHint": "Przechowywane w postaci zaszyfrowanej i nigdy więcej nie wyświetlane.",
+      "passwordStored": "Hasło jest zapisane. Wprowadź nowe, aby je zastąpić.",
+      "clearPassword": "Usuń zapisane hasło",
+      "fromLabel": "Nadawca",
+      "fromHint": "Adres From, opcjonalnie z nazwą wyświetlaną.",
+      "appUrlLabel": "Adres URL aplikacji",
+      "appUrlHint": "Używany do linków w wiadomościach, na przykład https://chat.example.com.",
+      "testRecipientLabel": "Odbiorca testowy",
+      "testRecipientHint": "Domyślnie Twój własny adres. Pozostaw puste, aby sprawdzić tylko połączenie.",
+      "test": "Wyślij test",
+      "testing": "Wysyłanie…",
+      "testSent": "Wiadomość testowa wysłana na adres {{address}}.",
+      "testConnected": "Połączono z serwerem pocztowym.",
+      "testFailed": "Test poczty e-mail nie powiódł się.",
+      "saveBeforeTest": "Zapisz zmiany przed testem.",
+      "save": "Zapisz",
+      "saving": "Zapisywanie…",
+      "saved": "Ustawienia poczty e-mail zapisane.",
+      "saveFailed": "Nie udało się zapisać ustawień poczty e-mail."
     }
   },
   "usageAnalytics": {

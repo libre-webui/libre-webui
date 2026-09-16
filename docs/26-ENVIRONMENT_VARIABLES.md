@@ -321,6 +321,26 @@ If callback URLs are not set, Libre WebUI builds defaults from `BASE_URL`.
 | ------------- | ------- | --------------------------------------------------------------------------------------------------- |
 | `SEARXNG_URL` | unset   | Default SearXNG endpoint for the web-search setting; an admin still enables it in Settings > Search |
 
+## Email Notifications
+
+These variables seed the outgoing mail server that administrators manage under
+**Settings > User Management > Access & policies > Email notifications**. A
+value saved there takes precedence over the variable; clearing the field in
+the UI restores the variable. Email stays off until an administrator turns
+the switch on, and each user still opts in per notification kind under
+**Settings > Notifications**.
+
+| Variable                       | Default                    | Purpose                                                                                      |
+| ------------------------------ | -------------------------- | -------------------------------------------------------------------------------------------- |
+| `SMTP_HOST`                    | unset                      | Mail server host name                                                                        |
+| `SMTP_PORT`                    | `587`, or `465` with `tls` | Mail server port                                                                             |
+| `SMTP_SECURITY`                | `starttls`                 | `starttls` (upgrade a plain connection), `tls` (implicit TLS), or `none` (trusted network)   |
+| `SMTP_USER`                    | unset                      | Authentication user; leave unset for a relay that accepts mail without signing in            |
+| `SMTP_PASSWORD`                | unset                      | Authentication password; a password saved in the UI is stored encrypted and takes precedence |
+| `SMTP_FROM`                    | unset                      | Sender, for example `Libre WebUI <notifications@example.com>`                                |
+| `SMTP_TLS_REJECT_UNAUTHORIZED` | `true`                     | Set to `false` only for a relay with a self-signed certificate                               |
+| `BASE_URL`                     | unset                      | Public URL of the instance, used for the links inside messages                               |
+
 ## Libre Claw
 
 | Variable                | Default                 | Purpose                         |

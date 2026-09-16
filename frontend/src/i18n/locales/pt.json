@@ -1230,7 +1230,17 @@
       "permissionDenied": "As notificações estão bloqueadas nas configurações do navegador para este site.",
       "unsupported": "Este navegador não suporta notificações push.",
       "workerMissing": "O push requer o aplicativo instalado. Recarregue o aplicativo de produção e tente novamente.",
-      "deviceNote": "As notificações são por dispositivo. Encerrar a sessão também remove o registro push dela."
+      "deviceNote": "As notificações são por dispositivo. Encerrar a sessão também remove o registro push dela.",
+      "emailTitle": "Notificações por e-mail",
+      "emailHint": "As mensagens são enviadas para {{address}}.",
+      "emailLoading": "Verificando se o e-mail está disponível…",
+      "emailUnavailable": "Um administrador ainda não configurou um servidor de envio de e-mails.",
+      "emailNoAddress": "Sua conta não tem um endereço de e-mail. Peça a um administrador para adicionar um em Gerenciamento de Usuários.",
+      "emailLoadFailed": "Não foi possível verificar a disponibilidade do e-mail.",
+      "emailMentions": "Menções em canais",
+      "emailMentionsHint": "Avise-me por e-mail quando alguém me mencionar em um canal.",
+      "emailAutomations": "Resultados de automações",
+      "emailAutomationsHint": "Envie-me por e-mail o resultado de cada execução de automação, com sucesso ou falha."
     }
   },
   "models": {
@@ -1916,6 +1926,49 @@
       "saved": "Configurações do provedor Ollama salvas",
       "saveFailed": "Não foi possível salvar as configurações do provedor Ollama",
       "baseUrlLabel": "URL do endpoint do Ollama"
+    },
+    "emailNotifications": {
+      "title": "Notificações por e-mail",
+      "description": "Servidor de envio de e-mails para notificações. Os usuários escolhem quais notificações chegam à caixa de entrada em Configurações > Notificações.",
+      "enabledToast": "As notificações por e-mail estão ativadas.",
+      "disabledToast": "As notificações por e-mail estão desativadas.",
+      "loadFailed": "Não foi possível carregar as configurações de e-mail.",
+      "fromEnvironment": "Fornecido pelo ambiente; salve um valor aqui para substituí-lo.",
+      "hostLabel": "Host SMTP",
+      "hostHint": "O nome do host do servidor de e-mail.",
+      "portLabel": "Porta",
+      "portHint": "Deixe em branco para usar o padrão do modo de segurança selecionado.",
+      "securityLabel": "Segurança da conexão",
+      "securityHint": "O STARTTLS eleva uma conexão simples; o TLS já é criptografado desde o início.",
+      "security": {
+        "starttls": "STARTTLS (porta 587)",
+        "tls": "TLS (porta 465)",
+        "none": "Nenhuma (somente rede confiável)"
+      },
+      "verifyLabel": "Verificar certificado",
+      "verifyHint": "Desative apenas para um relay com certificado autoassinado.",
+      "usernameLabel": "Usuário",
+      "usernameHint": "Deixe em branco quando o servidor aceitar e-mails sem login.",
+      "passwordLabel": "Senha",
+      "passwordHint": "Armazenada de forma criptografada e nunca exibida novamente.",
+      "passwordStored": "Há uma senha armazenada. Digite uma nova para substituí-la.",
+      "clearPassword": "Remover a senha armazenada",
+      "fromLabel": "Remetente",
+      "fromHint": "O endereço De, opcionalmente com um nome de exibição.",
+      "appUrlLabel": "URL do aplicativo",
+      "appUrlHint": "Usada nos links das mensagens, por exemplo https://chat.example.com.",
+      "testRecipientLabel": "Destinatário do teste",
+      "testRecipientHint": "Usa seu próprio endereço por padrão. Deixe em branco para verificar apenas a conexão.",
+      "test": "Enviar teste",
+      "testing": "Enviando…",
+      "testSent": "Mensagem de teste enviada para {{address}}.",
+      "testConnected": "Conectado ao servidor de e-mail.",
+      "testFailed": "O teste de e-mail falhou.",
+      "saveBeforeTest": "Salve suas alterações antes de testar.",
+      "save": "Salvar",
+      "saving": "Salvando…",
+      "saved": "Configurações de e-mail salvas.",
+      "saveFailed": "Não foi possível salvar as configurações de e-mail."
     }
   },
   "usageAnalytics": {

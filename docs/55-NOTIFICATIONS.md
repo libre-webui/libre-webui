@@ -28,19 +28,19 @@ reading the list, not replaying the stream.
 
 ## What produces notifications
 
-| Type                | Produced when                                                    |
-| ------------------- | ---------------------------------------------------------------- |
-| `channel-dm`        | Someone sends you a direct message                               |
-| `channel-mention`   | Someone `@mentions` you in a channel, or replies to your message |
-| `channel-invite`    | You are added to a channel                                       |
-| `share`             | Someone shares a resource with you                               |
-| `automation-failed` | One of your automations fails (unless it opted out)              |
-| `calendar-reminder` | An event with a reminder offset reaches its reminder time        |
-| `work-run-finished` | One of your hired Work agents completes a run                    |
-| `work-run-attention`| A hired agent stops for input or hits an error                   |
-| `work-takeover`     | A Work agent asks you to take over its screen                    |
-| `work-approval`     | A Work run is waiting for you to approve a side-effecting action |
-| `system`            | Instance-level announcements                                     |
+| Type                 | Produced when                                                    |
+| -------------------- | ---------------------------------------------------------------- |
+| `channel-dm`         | Someone sends you a direct message                               |
+| `channel-mention`    | Someone `@mentions` you in a channel, or replies to your message |
+| `channel-invite`     | You are added to a channel                                       |
+| `share`              | Someone shares a resource with you                               |
+| `automation-failed`  | One of your automations fails (unless it opted out)              |
+| `calendar-reminder`  | An event with a reminder offset reaches its reminder time        |
+| `work-run-finished`  | One of your hired Work agents completes a run                    |
+| `work-run-attention` | A hired agent stops for input or hits an error                   |
+| `work-takeover`      | A Work agent asks you to take over its screen                    |
+| `work-approval`      | A Work run is waiting for you to approve a side-effecting action |
+| `system`             | Instance-level announcements                                     |
 
 Notifications are always published to the affected user only; a mention
 of a username that is not a member of the channel produces nothing.
@@ -94,6 +94,39 @@ and a secure origin. The offline shell and installability come from the same
 service worker: the app manifest makes Libre WebUI installable, navigations
 fall back to the cached shell when offline, and hashed build assets are
 cached immutably. API traffic is never cached.
+
+## Email
+
+Email is the third delivery channel, and the only one that needs setup by an
+administrator. **Settings → User Management → Access & policies → Email
+notifications** holds one outgoing SMTP server: host, port, connection
+security (STARTTLS, implicit TLS, or none for a trusted network), optional
+credentials, the sender address, and the public URL used for links. The
+`SMTP_*` environment variables in
+[Environment Variables](./26-ENVIRONMENT_VARIABLES.md) seed the same fields
+for container deployments; a value saved in the UI takes precedence. The
+password is stored encrypted and never returned to the browser. **Send
+test** delivers a message to the administrator's own address (or any address
+typed in) so the round trip is proven before users rely on it.
+
+Once the switch is on, each user chooses what reaches their inbox under
+**Settings → Notifications → Email notifications**:
+
+- **Channel mentions:** a message that mentions you in a channel, with the
+  preview and a link to the channel.
+- **Automation results:** the outcome of each of your automation runs,
+  success or failure. A chat run carries the assistant's reply itself (up
+  to a few thousand characters); a Work run carries the task's status line;
+  a failure carries the error. The link opens the resulting chat or task.
+
+Both switches stay off until the user turns them on, and they only work for
+accounts that have an email address, which the account holder sets at
+sign-up or an administrator adds under Users. Messages leave through the
+same durable job runtime as Web Push, with bounded retries for transient
+relay failures, and the SMTP client is a small built-in implementation
+(EHLO, STARTTLS, AUTH PLAIN or LOGIN) that never sends credentials over an
+unencrypted connection unless the mode is explicitly `none`. Bodies are
+plain text with an HTML alternative; no tracking, no external images.
 
 ## Boundaries
 

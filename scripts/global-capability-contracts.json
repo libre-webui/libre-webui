@@ -1657,6 +1657,13 @@
             "signing the session out",
             "aes128gcm before it leaves the instance"
           ]
+        },
+        {
+          "file": "docs/55-NOTIFICATIONS.md",
+          "patterns": [
+            "never sends credentials over an",
+            "stored encrypted and never returned to the browser"
+          ]
         }
       ],
       "focusedTests": [
@@ -1688,6 +1695,30 @@
           "behaviorPatterns": [
             "registerPushSessionCleanup",
             "session_id !== session.id"
+          ]
+        },
+        {
+          "file": "scripts/test-smtp-client.mjs",
+          "runner": "test:package",
+          "name": "credentials are never sent in clear text when TLS was expected",
+          "behaviorPatterns": ["ERR_SMTP_TLS", "security: 'starttls'"]
+        },
+        {
+          "file": "scripts/test-email-notifications.mjs",
+          "runner": "test:package",
+          "name": "email settings resolve from the environment, override from the UI, and never return the password",
+          "behaviorPatterns": [
+            "sources\\.host, 'env'",
+            "decryptAuthenticated\\(raw\\)"
+          ]
+        },
+        {
+          "file": "scripts/test-email-notifications.mjs",
+          "runner": "test:package",
+          "name": "a channel mention and an automation run are emailed only to users who opted in",
+          "behaviorPatterns": [
+            "only the opted-in user with an address",
+            "automation-run:run-1"
           ]
         }
       ],
@@ -1769,6 +1800,24 @@
           "mount": "/api/push",
           "method": "DELETE",
           "path": "/subscriptions"
+        },
+        {
+          "file": "backend/src/routes/email.ts",
+          "mount": "/api/email",
+          "method": "GET",
+          "path": "/settings"
+        },
+        {
+          "file": "backend/src/routes/email.ts",
+          "mount": "/api/email",
+          "method": "PUT",
+          "path": "/settings"
+        },
+        {
+          "file": "backend/src/routes/email.ts",
+          "mount": "/api/email",
+          "method": "POST",
+          "path": "/test"
         }
       ],
       "contractSurfaces": {
@@ -1778,7 +1827,8 @@
               "file": "backend/src/types/index.ts",
               "patterns": [
                 "export interface NotificationView",
-                "export interface WebhookTargetView"
+                "export interface WebhookTargetView",
+                "export interface EmailNotificationPreferences"
               ]
             }
           ]
@@ -3270,7 +3320,7 @@
           "file": "docs/12-AUTHENTICATION.md",
           "patterns": [
             "Every login also creates a server-side session record bound into the JWT",
-            "Settings \u2192 API keys mints personal access tokens"
+            "Settings → API keys mints personal access tokens"
           ]
         },
         {
@@ -3825,7 +3875,7 @@
         {
           "file": "docs/41-DATA_PORTABILITY.md",
           "patterns": [
-            "Settings \u2192 Data Management",
+            "Settings → Data Management",
             "GET`  \\| `/api/preferences/export"
           ]
         }

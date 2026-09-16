@@ -1230,7 +1230,17 @@
       "permissionDenied": "Notifikasi diblokir di pengaturan browser untuk situs ini.",
       "unsupported": "Browser ini tidak mendukung notifikasi push.",
       "workerMissing": "Push memerlukan aplikasi terpasang. Muat ulang aplikasi produksi dan coba lagi.",
-      "deviceNote": "Notifikasi berlaku per perangkat. Mengakhiri sesi juga menghapus pendaftaran push-nya."
+      "deviceNote": "Notifikasi berlaku per perangkat. Mengakhiri sesi juga menghapus pendaftaran push-nya.",
+      "emailTitle": "Notifikasi email",
+      "emailHint": "Pesan dikirim ke {{address}}.",
+      "emailLoading": "Memeriksa ketersediaan email…",
+      "emailUnavailable": "Administrator belum menyiapkan server email keluar.",
+      "emailNoAddress": "Akun Anda tidak memiliki alamat email. Minta administrator menambahkannya di Manajemen Pengguna.",
+      "emailLoadFailed": "Ketersediaan email tidak dapat diperiksa.",
+      "emailMentions": "Sebutan di kanal",
+      "emailMentionsHint": "Kirim email saat seseorang menyebut saya di sebuah kanal.",
+      "emailAutomations": "Hasil otomatisasi",
+      "emailAutomationsHint": "Kirim email berisi hasil setiap otomatisasi yang dijalankan, baik berhasil maupun gagal."
     }
   },
   "models": {
@@ -1916,6 +1926,49 @@
       "saved": "Pengaturan penyedia Ollama disimpan",
       "saveFailed": "Tidak dapat menyimpan pengaturan penyedia Ollama",
       "baseUrlLabel": "URL endpoint Ollama"
+    },
+    "emailNotifications": {
+      "title": "Notifikasi email",
+      "description": "Server email keluar untuk notifikasi. Pengguna memilih notifikasi mana yang masuk ke kotak masuk mereka di Pengaturan > Notifikasi.",
+      "enabledToast": "Notifikasi email aktif.",
+      "disabledToast": "Notifikasi email nonaktif.",
+      "loadFailed": "Pengaturan email tidak dapat dimuat.",
+      "fromEnvironment": "Disediakan lewat variabel environment; simpan nilai di sini untuk menggantinya.",
+      "hostLabel": "Host SMTP",
+      "hostHint": "Nama host server email.",
+      "portLabel": "Port",
+      "portHint": "Kosongkan untuk memakai default dari mode keamanan yang dipilih.",
+      "securityLabel": "Keamanan koneksi",
+      "securityHint": "STARTTLS meningkatkan koneksi biasa menjadi terenkripsi; TLS sudah terenkripsi sejak awal.",
+      "security": {
+        "starttls": "STARTTLS (port 587)",
+        "tls": "TLS (port 465)",
+        "none": "Tanpa enkripsi (khusus jaringan tepercaya)"
+      },
+      "verifyLabel": "Verifikasi sertifikat",
+      "verifyHint": "Matikan hanya untuk relay dengan sertifikat self-signed.",
+      "usernameLabel": "Nama pengguna",
+      "usernameHint": "Kosongkan jika server menerima email tanpa proses masuk.",
+      "passwordLabel": "Kata sandi",
+      "passwordHint": "Disimpan terenkripsi dan tidak akan ditampilkan lagi.",
+      "passwordStored": "Kata sandi tersimpan. Masukkan yang baru untuk menggantinya.",
+      "clearPassword": "Hapus kata sandi yang tersimpan",
+      "fromLabel": "Pengirim",
+      "fromHint": "Alamat From, boleh disertai nama tampilan.",
+      "appUrlLabel": "URL aplikasi",
+      "appUrlHint": "Dipakai untuk tautan di dalam pesan, misalnya https://chat.example.com.",
+      "testRecipientLabel": "Penerima uji coba",
+      "testRecipientHint": "Secara default memakai alamat Anda sendiri. Kosongkan untuk hanya memeriksa koneksi.",
+      "test": "Kirim uji coba",
+      "testing": "Mengirim…",
+      "testSent": "Pesan uji coba terkirim ke {{address}}.",
+      "testConnected": "Berhasil terhubung ke server email.",
+      "testFailed": "Uji coba email gagal.",
+      "saveBeforeTest": "Simpan perubahan Anda sebelum menguji.",
+      "save": "Simpan",
+      "saving": "Menyimpan…",
+      "saved": "Pengaturan email tersimpan.",
+      "saveFailed": "Pengaturan email tidak dapat disimpan."
     }
   },
   "usageAnalytics": {

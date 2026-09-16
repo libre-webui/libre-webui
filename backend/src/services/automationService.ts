@@ -443,13 +443,13 @@ class AutomationService {
       Date.now(),
       error
     );
-    if (finalized && status === 'failed' && context) {
-      // Failure awareness must not depend on the automations page being
-      // open; publish an in-app notification unless the automation opted
-      // out of notifications entirely.
+    if (finalized && context) {
       try {
         const automation = await this.getAutomationRecord(context.automationId);
-        if (automation && automation.notify !== 'off') {
+        if (automation && status === 'failed' && automation.notify !== 'off') {
+          // Failure awareness must not depend on the automations page being
+          // open; publish an in-app notification unless the automation opted
+          // out of notifications entirely.
           const { notificationService } =
             await import('./notificationService.js');
           await notificationService.publish({
@@ -461,11 +461,73 @@ class AutomationService {
             sourceKey: `automation-run-failed:${runId}`,
           });
         }
+        if (automation) {
+          // Email is a separate, per-user opt-in that covers both outcomes
+          // and carries the reply itself when the run produced one.
+          await this.emailRunOutcome(runId, status, error, context, automation);
+        }
       } catch {
-        // Best effort: the run row already records the failure.
+        // Best effort: the run row already records the outcome.
       }
     }
     return finalized;
+  }
+
+  /**
+   * Resolves what the run produced (the assistant reply for chat runs, the
+   * task's status line for Work runs) and hands it to the email service,
+   * which decides whether the owner wants it.
+   */
+  private async emailRunOutcome(
+    runId: string,
+    status: 'succeeded' | 'failed',
+    error: string | null,
+    context: { userId: string; automationId: string },
+    automation: Automation & { userId: string }
+  ): Promise<void> {
+    const { emailService } = await import('./emailService.js');
+    const recipient = await emailService.recipientFor(
+      context.userId,
+      'automationRuns'
+    );
+    if (!recipient) return;
+    const run = await repositories().automationRuns.findByOwner(
+      runId,
+      context.userId
+    );
+    let result: string | null = null;
+    let href = '/automations';
+    if (run?.session_id) {
+      href = `/c/${run.session_id}`;
+      if (run.assistant_message_id) {
+        const { default: chatService } = await import('./chatService.js');
+        const session = await chatService.getSession(
+          run.session_id,
+          context.userId
+        );
+        const reply = session?.messages.find(
+          (message: { id: string }) => message.id === run.assistant_message_id
+        );
+        result = reply?.content?.trim() || null;
+      }
+    } else if (run?.work_task_id) {
+      href = `/work/${run.work_task_id}`;
+      const { workTaskService } = await import('./workTaskService.js');
+      const task = await workTaskService.getTaskRecord(
+        run.work_task_id,
+        context.userId
+      );
+      result = task?.statusBlurb?.trim() || null;
+    }
+    await emailService.notifyAutomationRun({
+      userId: context.userId,
+      runId,
+      automationName: automation.name,
+      status,
+      error,
+      result,
+      href,
+    });
   }
 
   async runsSummary(userId: string): Promise<{

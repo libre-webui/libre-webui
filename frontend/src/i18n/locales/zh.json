@@ -1230,7 +1230,17 @@
       "permissionDenied": "此网站的通知已在浏览器设置中被屏蔽。",
       "unsupported": "此浏览器不支持推送通知。",
       "workerMissing": "推送需要已安装的应用。请重新加载正式版应用后重试。",
-      "deviceNote": "通知按设备生效。退出会话也会移除其推送注册。"
+      "deviceNote": "通知按设备生效。退出会话也会移除其推送注册。",
+      "emailTitle": "邮件通知",
+      "emailHint": "消息将发送到 {{address}}。",
+      "emailLoading": "正在检查邮件是否可用…",
+      "emailUnavailable": "管理员尚未设置发件邮件服务器。",
+      "emailNoAddress": "您的账户没有邮箱地址。请管理员在用户管理中添加一个。",
+      "emailLoadFailed": "无法检查邮件可用性。",
+      "emailMentions": "频道提及",
+      "emailMentionsHint": "有人在频道中提及我时通过邮件通知我。",
+      "emailAutomations": "自动化结果",
+      "emailAutomationsHint": "每次自动化运行的结果都通过邮件通知我，无论成功还是失败。"
     }
   },
   "models": {
@@ -1916,6 +1926,49 @@
       "saved": "Ollama 提供商设置已保存",
       "saveFailed": "无法保存 Ollama 提供商设置",
       "baseUrlLabel": "Ollama 端点 URL"
+    },
+    "emailNotifications": {
+      "title": "邮件通知",
+      "description": "用于通知的发件邮件服务器。用户可在设置 > 通知中选择哪些通知会发送到他们的收件箱。",
+      "enabledToast": "邮件通知已开启。",
+      "disabledToast": "邮件通知已关闭。",
+      "loadFailed": "无法加载邮件设置。",
+      "fromEnvironment": "由环境变量提供；在此保存一个值即可覆盖。",
+      "hostLabel": "SMTP 主机",
+      "hostHint": "邮件服务器的主机名。",
+      "portLabel": "端口",
+      "portHint": "留空则使用所选安全模式的默认端口。",
+      "securityLabel": "连接安全性",
+      "securityHint": "STARTTLS 会将普通连接升级为加密连接；TLS 从一开始就是加密的。",
+      "security": {
+        "starttls": "STARTTLS（端口 587）",
+        "tls": "TLS（端口 465）",
+        "none": "无（仅限受信任网络）"
+      },
+      "verifyLabel": "验证证书",
+      "verifyHint": "仅在中继服务器使用自签名证书时关闭。",
+      "usernameLabel": "用户名",
+      "usernameHint": "若服务器接受无需登录的邮件，可留空。",
+      "passwordLabel": "密码",
+      "passwordHint": "以加密方式存储，且不会再次显示。",
+      "passwordStored": "已保存密码。输入新密码即可替换。",
+      "clearPassword": "移除已保存的密码",
+      "fromLabel": "发件人",
+      "fromHint": "发件地址，可选择附带显示名称。",
+      "appUrlLabel": "应用 URL",
+      "appUrlHint": "用于消息中的链接，例如 https://chat.example.com。",
+      "testRecipientLabel": "测试收件人",
+      "testRecipientHint": "默认为您自己的地址。留空则仅检查连接。",
+      "test": "发送测试",
+      "testing": "发送中…",
+      "testSent": "测试消息已发送至 {{address}}。",
+      "testConnected": "已连接到邮件服务器。",
+      "testFailed": "邮件测试失败。",
+      "saveBeforeTest": "请在测试前保存更改。",
+      "save": "保存",
+      "saving": "保存中…",
+      "saved": "邮件设置已保存。",
+      "saveFailed": "无法保存邮件设置。"
     }
   },
   "usageAnalytics": {

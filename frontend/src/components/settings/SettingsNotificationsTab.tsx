@@ -18,9 +18,13 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'react-hot-toast';
-import { BellRing } from 'lucide-react';
+import { BellRing, Mail } from 'lucide-react';
 import { SettingsToggle } from './SettingsToggle';
 import { pushApi } from '@/utils/api/pushApi';
+import { emailApi, preferencesApi } from '@/utils/api';
+import type { EmailSettingsResponse } from '@/utils/api/emailApi';
+import { useAppStore } from '@/store/appStore';
+import type { EmailNotificationPreferences } from '@/types';
 import { createLogger } from '@/utils/logger';
 
 const logger = createLogger('components:settings-notifications');
@@ -56,6 +60,62 @@ export const SettingsNotificationsTab: React.FC = () => {
   const [enabled, setEnabled] = useState(false);
   const [busy, setBusy] = useState(false);
   const [workerReady, setWorkerReady] = useState(false);
+  const emailPreferences = useAppStore(
+    state => state.preferences.emailNotifications
+  );
+  const setPreferences = useAppStore(state => state.setPreferences);
+  const [email, setEmail] = useState<EmailSettingsResponse | null>(null);
+  const [emailLoadFailed, setEmailLoadFailed] = useState(false);
+  const [emailBusy, setEmailBusy] = useState<
+    keyof EmailNotificationPreferences | null
+  >(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    emailApi
+      .getSettings()
+      .then(response => {
+        if (cancelled) return;
+        if (response.success && response.data) setEmail(response.data);
+        else setEmailLoadFailed(true);
+      })
+      .catch(() => {
+        if (!cancelled) setEmailLoadFailed(true);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const updateEmailPreference = async (
+    kind: keyof EmailNotificationPreferences,
+    checked: boolean
+  ) => {
+    const previous: EmailNotificationPreferences = {
+      channelMentions: emailPreferences?.channelMentions === true,
+      automationRuns: emailPreferences?.automationRuns === true,
+    };
+    const next = { ...previous, [kind]: checked };
+    setEmailBusy(kind);
+    setPreferences({ emailNotifications: next });
+    try {
+      const response = await preferencesApi.updatePreferences({
+        emailNotifications: next,
+      });
+      if (!response.success) {
+        throw new Error(response.error || 'update failed');
+      }
+    } catch (error) {
+      setPreferences({ emailNotifications: previous });
+      toast.error(
+        t('settings.preferences.updateFailed', {
+          error: error instanceof Error ? error.message : String(error),
+        })
+      );
+    } finally {
+      setEmailBusy(null);
+    }
+  };
 
   const refresh = useCallback(async () => {
     if (!supported) return;
@@ -139,6 +199,19 @@ export const SettingsNotificationsTab: React.FC = () => {
     }
   };
 
+  const emailUnavailableReason = emailLoadFailed
+    ? t('settings.notifications.emailLoadFailed')
+    : email === null
+      ? null
+      : !email.available
+        ? t('settings.notifications.emailUnavailable')
+        : !email.recipient
+          ? t('settings.notifications.emailNoAddress')
+          : null;
+  const emailRecipientNote = email?.recipient
+    ? t('settings.notifications.emailHint', { address: email.recipient })
+    : t('settings.notifications.emailLoading');
+
   const unavailableReason = !supported
     ? t('settings.notifications.unsupported')
     : !workerReady
@@ -180,6 +253,51 @@ export const SettingsNotificationsTab: React.FC = () => {
       <p className='text-xs text-gray-500 dark:text-gray-400'>
         {t('settings.notifications.deviceNote')}
       </p>
+
+      <div
+        className='rounded-lg border border-gray-200 dark:border-dark-300 bg-white dark:bg-dark-100 p-4 space-y-4'
+        data-testid='settings-email-notifications'
+      >
+        <div>
+          <p className='flex items-center gap-2 text-sm font-medium text-gray-900 dark:text-gray-100'>
+            <Mail className='h-4 w-4 text-primary-500' />
+            {t('settings.notifications.emailTitle')}
+          </p>
+          <p className='mt-0.5 text-xs text-gray-500 dark:text-gray-400'>
+            {emailUnavailableReason ?? emailRecipientNote}
+          </p>
+        </div>
+        {(
+          [
+            ['channelMentions', 'emailMentions', 'emailMentionsHint'],
+            ['automationRuns', 'emailAutomations', 'emailAutomationsHint'],
+          ] as const
+        ).map(([kind, labelKey, hintKey]) => (
+          <div
+            key={kind}
+            className='flex items-center justify-between gap-4'
+            data-testid={`settings-email-${kind}`}
+          >
+            <div>
+              <p className='text-sm text-gray-900 dark:text-gray-100'>
+                {t(`settings.notifications.${labelKey}`)}
+              </p>
+              <p className='mt-0.5 text-xs text-gray-500 dark:text-gray-400'>
+                {t(`settings.notifications.${hintKey}`)}
+              </p>
+            </div>
+            <SettingsToggle
+              checked={emailPreferences?.[kind] === true}
+              disabled={
+                emailBusy !== null ||
+                (Boolean(emailUnavailableReason) &&
+                  emailPreferences?.[kind] !== true)
+              }
+              onChange={checked => void updateEmailPreference(kind, checked)}
+            />
+          </div>
+        ))}
+      </div>
     </div>
   );
 };

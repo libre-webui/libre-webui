@@ -1230,7 +1230,17 @@
       "permissionDenied": "Thông báo bị chặn trong cài đặt trình duyệt cho trang này.",
       "unsupported": "Trình duyệt này không hỗ trợ thông báo đẩy.",
       "workerMissing": "Thông báo đẩy cần ứng dụng đã cài đặt. Tải lại bản chạy chính thức và thử lại.",
-      "deviceNote": "Thông báo áp dụng theo thiết bị. Đăng xuất phiên cũng xóa đăng ký đẩy của nó."
+      "deviceNote": "Thông báo áp dụng theo thiết bị. Đăng xuất phiên cũng xóa đăng ký đẩy của nó.",
+      "emailTitle": "Thông báo qua email",
+      "emailHint": "Tin nhắn sẽ gửi đến {{address}}.",
+      "emailLoading": "Đang kiểm tra xem email có khả dụng không…",
+      "emailUnavailable": "Quản trị viên chưa thiết lập máy chủ gửi thư.",
+      "emailNoAddress": "Tài khoản của bạn chưa có địa chỉ email. Hãy nhờ quản trị viên thêm một địa chỉ trong mục Quản lý người dùng.",
+      "emailLoadFailed": "Không thể kiểm tra tình trạng khả dụng của email.",
+      "emailMentions": "Lượt nhắc trong kênh",
+      "emailMentionsHint": "Gửi email cho tôi khi có người nhắc đến tôi trong một kênh.",
+      "emailAutomations": "Kết quả tự động hóa",
+      "emailAutomationsHint": "Gửi email cho tôi kết quả của mỗi lần chạy tự động hóa, dù thành công hay thất bại."
     }
   },
   "models": {
@@ -1916,6 +1926,49 @@
       "saved": "Đã lưu cài đặt nhà cung cấp Ollama",
       "saveFailed": "Không thể lưu cài đặt nhà cung cấp Ollama",
       "baseUrlLabel": "URL điểm cuối Ollama"
+    },
+    "emailNotifications": {
+      "title": "Thông báo qua email",
+      "description": "Máy chủ gửi thư dùng cho thông báo. Người dùng chọn thông báo nào sẽ đến hộp thư của họ trong mục Cài đặt > Thông báo.",
+      "enabledToast": "Thông báo qua email đang bật.",
+      "disabledToast": "Thông báo qua email đang tắt.",
+      "loadFailed": "Không thể tải cài đặt email.",
+      "fromEnvironment": "Được cung cấp bởi biến môi trường; lưu một giá trị ở đây để ghi đè.",
+      "hostLabel": "Máy chủ SMTP",
+      "hostHint": "Tên máy chủ của máy chủ thư.",
+      "portLabel": "Cổng",
+      "portHint": "Để trống để dùng giá trị mặc định của chế độ bảo mật đã chọn.",
+      "securityLabel": "Bảo mật kết nối",
+      "securityHint": "STARTTLS nâng cấp một kết nối thường; TLS được mã hóa ngay từ đầu.",
+      "security": {
+        "starttls": "STARTTLS (cổng 587)",
+        "tls": "TLS (cổng 465)",
+        "none": "Không (chỉ mạng đáng tin cậy)"
+      },
+      "verifyLabel": "Xác minh chứng chỉ",
+      "verifyHint": "Chỉ tắt với một relay dùng chứng chỉ tự ký.",
+      "usernameLabel": "Tên đăng nhập",
+      "usernameHint": "Để trống nếu máy chủ chấp nhận thư mà không cần đăng nhập.",
+      "passwordLabel": "Mật khẩu",
+      "passwordHint": "Được lưu ở dạng mã hóa và không hiển thị lại.",
+      "passwordStored": "Đã lưu một mật khẩu. Nhập mật khẩu mới để thay thế.",
+      "clearPassword": "Xóa mật khẩu đã lưu",
+      "fromLabel": "Người gửi",
+      "fromHint": "Địa chỉ From, có thể kèm tên hiển thị.",
+      "appUrlLabel": "URL ứng dụng",
+      "appUrlHint": "Dùng cho các liên kết trong tin nhắn, ví dụ https://chat.example.com.",
+      "testRecipientLabel": "Người nhận thử nghiệm",
+      "testRecipientHint": "Mặc định là địa chỉ của chính bạn. Để trống để chỉ kiểm tra kết nối.",
+      "test": "Gửi thử",
+      "testing": "Đang gửi…",
+      "testSent": "Đã gửi tin nhắn thử đến {{address}}.",
+      "testConnected": "Đã kết nối đến máy chủ thư.",
+      "testFailed": "Kiểm tra email thất bại.",
+      "saveBeforeTest": "Hãy lưu thay đổi trước khi kiểm tra.",
+      "save": "Lưu",
+      "saving": "Đang lưu…",
+      "saved": "Đã lưu cài đặt email.",
+      "saveFailed": "Không thể lưu cài đặt email."
     }
   },
   "usageAnalytics": {

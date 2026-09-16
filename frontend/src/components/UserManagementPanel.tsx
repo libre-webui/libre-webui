@@ -22,6 +22,7 @@ import { AgentAccessSettings } from '@/components/AgentAccessSettings';
 import { DefaultThemeSettings } from '@/components/DefaultThemeSettings';
 import { ToolAccessSettings } from '@/components/ToolAccessSettings';
 import { VoiceAccessSettings } from '@/components/VoiceAccessSettings';
+import { EmailNotificationSettings } from './EmailNotificationSettings';
 import { MfaPolicySettings } from '@/components/MfaPolicySettings';
 import { GroupManager } from '@/components/GroupManager';
 import { SecurityAuditLog } from '@/components/SecurityAuditLog';
@@ -59,6 +60,7 @@ const renderSection = (section: SectionId) => {
           <AgentAccessSettings />
           <ToolAccessSettings />
           <VoiceAccessSettings />
+          <EmailNotificationSettings />
         </div>
       );
     case 'security':

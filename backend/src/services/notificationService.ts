@@ -211,6 +211,18 @@ class NotificationService {
     await this.dispatchPush(record).catch(error => {
       logger.warn('Push dispatch failed', { error });
     });
+    if (record.type === 'channel-mention') {
+      // Email is opt-in per user and only leaves once the row exists, so a
+      // deduplicated mention never produces a second message.
+      const { emailService } = await import('./emailService.js');
+      await emailService.notifyChannelMention({
+        userId: input.userId,
+        title: input.title,
+        ...(input.body ? { preview: input.body } : {}),
+        ...(input.href ? { href: input.href } : {}),
+        notificationId: record.id,
+      });
+    }
     return true;
   }
 

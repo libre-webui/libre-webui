@@ -448,6 +448,47 @@ type MockWorkTaskTransition = {
   messages?: MockWorkMessage[];
 };
 
+export interface MockEmailSettings {
+  available: boolean;
+  enabled: boolean;
+  host: string;
+  port: number;
+  security: 'tls' | 'starttls' | 'none';
+  username: string;
+  passwordConfigured: boolean;
+  from: string;
+  rejectUnauthorized: boolean;
+  appUrl: string;
+  configured: boolean;
+  sources: Record<
+    'host' | 'port' | 'security' | 'username' | 'password' | 'from' | 'appUrl',
+    'stored' | 'env' | 'default'
+  >;
+}
+
+const defaultEmailSettings: MockEmailSettings = {
+  available: false,
+  enabled: false,
+  host: '',
+  port: 587,
+  security: 'starttls',
+  username: '',
+  passwordConfigured: false,
+  from: '',
+  rejectUnauthorized: true,
+  appUrl: '',
+  configured: false,
+  sources: {
+    host: 'default',
+    port: 'default',
+    security: 'default',
+    username: 'default',
+    password: 'default',
+    from: 'default',
+    appUrl: 'default',
+  },
+};
+
 type MockOptions = {
   showWhatsNew?: boolean;
   systemInfo?: MockSystemInfo;
@@ -490,6 +531,8 @@ type MockOptions = {
   mediaVideoJobs?: MockVideoGenerationJob[];
   preferences?: Partial<typeof defaultPreferences>;
   preferenceUpdateFailures?: number;
+  emailSettings?: Partial<MockEmailSettings>;
+  emailTestFailure?: string;
   deferPreferenceUpdates?: boolean;
   generatedTitle?: {
     title: string;
@@ -727,6 +770,16 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
     },
   });
   const preferences = createPreferences(options.preferences);
+  const emailSettings: MockEmailSettings = {
+    ...defaultEmailSettings,
+    ...options.emailSettings,
+    sources: {
+      ...defaultEmailSettings.sources,
+      ...options.emailSettings?.sources,
+    },
+  };
+  emailSettings.configured =
+    emailSettings.host.length > 0 && emailSettings.from.length > 0;
   const preferencesByUserId = new Map(
     authUsers.map(user => [user.id, createPreferences(user.preferences)])
   );
@@ -2806,6 +2859,126 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
           }),
         });
         return;
+      }
+      if (path === '/email/settings' || path === '/email/test') {
+        const emailUser = authUserForRoute(route) ?? options.currentUser;
+        const isAdmin = emailUser?.role === 'admin';
+        const view = () => ({
+          available: emailSettings.enabled && emailSettings.configured,
+          enabled: emailSettings.enabled,
+          recipient: emailUser?.email ?? null,
+          ...(isAdmin
+            ? {
+                host: emailSettings.host,
+                port: emailSettings.port,
+                security: emailSettings.security,
+                username: emailSettings.username,
+                passwordConfigured: emailSettings.passwordConfigured,
+                from: emailSettings.from,
+                rejectUnauthorized: emailSettings.rejectUnauthorized,
+                appUrl: emailSettings.appUrl,
+                configured: emailSettings.configured,
+                sources: emailSettings.sources,
+              }
+            : {}),
+        });
+        if (method === 'GET' && path === '/email/settings') {
+          await route.fulfill({
+            status: 200,
+            contentType: 'application/json',
+            body: JSON.stringify({ success: true, data: view() }),
+          });
+          return;
+        }
+        if (!isAdmin) {
+          await route.fulfill({
+            status: 403,
+            contentType: 'application/json',
+            body: JSON.stringify({ success: false, message: 'Admin only' }),
+          });
+          return;
+        }
+        if (method === 'PUT' && path === '/email/settings') {
+          const body = JSON.parse(route.request().postData() || '{}') as Record<
+            string,
+            unknown
+          >;
+          if (typeof body.host === 'string') emailSettings.host = body.host;
+          if (typeof body.from === 'string') emailSettings.from = body.from;
+          if (typeof body.username === 'string') {
+            emailSettings.username = body.username;
+          }
+          if (typeof body.appUrl === 'string')
+            emailSettings.appUrl = body.appUrl;
+          if (typeof body.security === 'string') {
+            emailSettings.security =
+              body.security as MockEmailSettings['security'];
+          }
+          if (body.port !== undefined && body.port !== '') {
+            emailSettings.port = Number(body.port);
+          }
+          if (typeof body.password === 'string') {
+            emailSettings.passwordConfigured = body.password.length > 0;
+            emailSettings.sources.password = body.password
+              ? 'stored'
+              : 'default';
+          }
+          if (typeof body.rejectUnauthorized === 'boolean') {
+            emailSettings.rejectUnauthorized = body.rejectUnauthorized;
+          }
+          emailSettings.configured =
+            emailSettings.host.length > 0 && emailSettings.from.length > 0;
+          if (typeof body.enabled === 'boolean') {
+            if (body.enabled && !emailSettings.configured) {
+              await route.fulfill({
+                status: 400,
+                contentType: 'application/json',
+                body: JSON.stringify({
+                  success: false,
+                  error:
+                    'Enable email only with an SMTP host and a sender address configured.',
+                }),
+              });
+              return;
+            }
+            emailSettings.enabled = body.enabled;
+          }
+          await route.fulfill({
+            status: 200,
+            contentType: 'application/json',
+            body: JSON.stringify({ success: true, data: view() }),
+          });
+          return;
+        }
+        if (method === 'POST' && path === '/email/test') {
+          const body = JSON.parse(route.request().postData() || '{}') as {
+            to?: string;
+          };
+          if (options.emailTestFailure) {
+            await route.fulfill({
+              status: 502,
+              contentType: 'application/json',
+              body: JSON.stringify({
+                success: false,
+                error: options.emailTestFailure,
+              }),
+            });
+            return;
+          }
+          await route.fulfill({
+            status: 200,
+            contentType: 'application/json',
+            body: JSON.stringify({
+              success: true,
+              data: {
+                ok: true,
+                authenticated: emailSettings.username.length > 0,
+                sentTo: body.to ?? emailUser?.email ?? null,
+              },
+            }),
+          });
+          return;
+        }
       }
       if (method === 'GET' && path === '/push/public-key') {
         await route.fulfill({

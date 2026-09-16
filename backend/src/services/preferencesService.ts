@@ -21,6 +21,7 @@ import {
   UserPreferences,
   GenerationOptions,
   EmbeddingSettings,
+  EmailNotificationPreferences,
 } from '../types/index.js';
 import { createLogger } from '../utils/logger.js';
 import { normalizeChatProviderSelection } from '../utils/chatProviderSelection.js';
@@ -48,6 +49,14 @@ interface ExportData {
  */
 export const instanceDefaultModel = (): string =>
   (process.env.DEFAULT_MODEL || '').trim();
+
+/** Email opt-ins are booleans; anything else from a client reads as off. */
+const normalizeEmailNotifications = (
+  value: Partial<EmailNotificationPreferences> | undefined
+): EmailNotificationPreferences => ({
+  channelMentions: value?.channelMentions === true,
+  automationRuns: value?.automationRuns === true,
+});
 
 class PreferencesService {
   private defaultPreferences: UserPreferences = {
@@ -122,6 +131,7 @@ class PreferencesService {
     autoOpenArtifactPanel: true, // Open the artifact panel when a response generates one
     hapticFeedbackEnabled: false,
     workRemoteProviderDisclosureDismissed: false,
+    emailNotifications: { channelMentions: false, automationRuns: false },
     backgroundSettings: { ...DEFAULT_BACKGROUND_SETTINGS },
   };
 
@@ -210,6 +220,10 @@ class PreferencesService {
       imageGenSettings: {
         ...this.defaultPreferences.imageGenSettings!,
         ...preferences.imageGenSettings,
+      },
+      emailNotifications: {
+        ...this.defaultPreferences.emailNotifications!,
+        ...preferences.emailNotifications,
       },
     };
   }
@@ -321,6 +335,13 @@ class PreferencesService {
             ...normalizedUpdates.imageGenSettings,
           }
         : currentPreferences.imageGenSettings,
+      emailNotifications: normalizedUpdates.emailNotifications
+        ? normalizeEmailNotifications({
+            ...this.defaultPreferences.emailNotifications!,
+            ...currentPreferences.emailNotifications,
+            ...normalizedUpdates.emailNotifications,
+          })
+        : currentPreferences.emailNotifications,
     };
   }
 

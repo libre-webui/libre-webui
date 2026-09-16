@@ -1230,7 +1230,17 @@
       "permissionDenied": "Tilkynningar eru læstar í vafrastillingum fyrir þessa síðu.",
       "unsupported": "Þessi vafri styður ekki ýtitilkynningar.",
       "workerMissing": "Ýting krefst uppsetta forritsins. Endurhlaðið framleiðsluforritið og reynið aftur.",
-      "deviceNote": "Tilkynningar gilda á hvert tæki. Útskráning lotunnar fjarlægir einnig ýtiskráningu hennar."
+      "deviceNote": "Tilkynningar gilda á hvert tæki. Útskráning lotunnar fjarlægir einnig ýtiskráningu hennar.",
+      "emailTitle": "Tölvupóststilkynningar",
+      "emailHint": "Skilaboð fara á {{address}}.",
+      "emailLoading": "Athuga hvort tölvupóstur sé tiltækur…",
+      "emailUnavailable": "Kerfisstjóri hefur ekki sett upp útsendan póstþjón enn.",
+      "emailNoAddress": "Reikningurinn þinn er ekki með tölvupóstfang. Biddu kerfisstjóra að bæta einu við undir Notendastjórnun.",
+      "emailLoadFailed": "Ekki tókst að athuga hvort tölvupóstur sé tiltækur.",
+      "emailMentions": "Nefningar í rásum",
+      "emailMentionsHint": "Sendu mér tölvupóst þegar einhver nefnir mig í rás.",
+      "emailAutomations": "Niðurstöður sjálfvirkni",
+      "emailAutomationsHint": "Sendu mér tölvupóst um niðurstöðu hverrar sjálfvirknikeyrslu, hvort sem hún heppnaðist eða ekki."
     }
   },
   "models": {
@@ -1916,6 +1926,49 @@
       "saved": "Stillingar Ollama-veitanda vistaðar",
       "saveFailed": "Ekki tókst að vista stillingar Ollama-veitanda",
       "baseUrlLabel": "Endapunktur-URL fyrir Ollama"
+    },
+    "emailNotifications": {
+      "title": "Tölvupóststilkynningar",
+      "description": "Útsendur póstþjónn fyrir tilkynningar. Notendur velja sjálfir hvaða tilkynningar berast í pósthólfið þeirra undir Stillingar > Tilkynningar.",
+      "enabledToast": "Kveikt er á tölvupóststilkynningum.",
+      "disabledToast": "Slökkt er á tölvupóststilkynningum.",
+      "loadFailed": "Ekki tókst að hlaða tölvupóststillingum.",
+      "fromEnvironment": "Sett af umhverfisbreytum; vistaðu gildi hér til að yfirskrifa það.",
+      "hostLabel": "SMTP-vél",
+      "hostHint": "Vélarheiti póstþjónsins.",
+      "portLabel": "Gátt",
+      "portHint": "Skildu eftir autt til að nota sjálfgefna gátt fyrir valda öryggisstillingu.",
+      "securityLabel": "Öryggi tengingar",
+      "securityHint": "STARTTLS uppfærir venjulega tengingu í dulkóðaða; TLS er dulkóðað frá upphafi.",
+      "security": {
+        "starttls": "STARTTLS (gátt 587)",
+        "tls": "TLS (gátt 465)",
+        "none": "Ekkert (aðeins fyrir traust net)"
+      },
+      "verifyLabel": "Sannreyna skilríki",
+      "verifyHint": "Slökktu á þessu aðeins fyrir milliþjón með sjálfundirrituðu skilríki.",
+      "usernameLabel": "Notandanafn",
+      "usernameHint": "Skildu eftir autt ef þjónninn tekur við pósti án innskráningar.",
+      "passwordLabel": "Lykilorð",
+      "passwordHint": "Geymt dulkóðað og aldrei sýnt aftur.",
+      "passwordStored": "Lykilorð er vistað. Sláðu inn nýtt til að skipta því út.",
+      "clearPassword": "Fjarlægja vistað lykilorð",
+      "fromLabel": "Sendandi",
+      "fromHint": "From-heimilisfangið, mögulega með birtingarnafni.",
+      "appUrlLabel": "Vefslóð forrits",
+      "appUrlHint": "Notað fyrir tenglana í skilaboðunum, til dæmis https://chat.example.com.",
+      "testRecipientLabel": "Prófunarviðtakandi",
+      "testRecipientHint": "Sjálfgefið er þitt eigið heimilisfang. Skildu eftir autt til að aðeins athuga tenginguna.",
+      "test": "Senda prófun",
+      "testing": "Sendir…",
+      "testSent": "Prófunarskilaboð send á {{address}}.",
+      "testConnected": "Tenging við póstþjóninn tókst.",
+      "testFailed": "Tölvupóstprófunin mistókst.",
+      "saveBeforeTest": "Vistaðu breytingarnar þínar áður en þú prófar.",
+      "save": "Vista",
+      "saving": "Vistar…",
+      "saved": "Tölvupóststillingar vistaðar.",
+      "saveFailed": "Ekki tókst að vista tölvupóststillingarnar."
     }
   },
   "usageAnalytics": {

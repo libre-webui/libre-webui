@@ -1230,7 +1230,17 @@
       "permissionDenied": "このサイトの通知はブラウザ設定でブロックされています。",
       "unsupported": "このブラウザはプッシュ通知に対応していません。",
       "workerMissing": "プッシュにはインストール済みアプリが必要です。本番アプリを再読み込みして再試行してください。",
-      "deviceNote": "通知は端末ごとです。セッションからサインアウトするとプッシュ登録も削除されます。"
+      "deviceNote": "通知は端末ごとです。セッションからサインアウトするとプッシュ登録も削除されます。",
+      "emailTitle": "メール通知",
+      "emailHint": "メッセージは{{address}}宛てに届きます。",
+      "emailLoading": "メールが利用できるか確認しています…",
+      "emailUnavailable": "管理者がまだ送信用メールサーバーを設定していません。",
+      "emailNoAddress": "アカウントにメールアドレスが登録されていません。ユーザー管理から追加してもらうよう管理者に依頼してください。",
+      "emailLoadFailed": "メールの利用可否を確認できませんでした。",
+      "emailMentions": "チャンネルでのメンション",
+      "emailMentionsHint": "チャンネルで自分がメンションされたらメールで知らせます。",
+      "emailAutomations": "自動化の実行結果",
+      "emailAutomationsHint": "自動化が実行されるたびに、成功・失敗を問わず結果をメールで知らせます。"
     }
   },
   "models": {
@@ -1916,6 +1926,49 @@
       "saved": "Ollamaプロバイダーの設定を保存しました",
       "saveFailed": "Ollamaプロバイダーの設定を保存できませんでした",
       "baseUrlLabel": "OllamaエンドポイントURL"
+    },
+    "emailNotifications": {
+      "title": "メール通知",
+      "description": "通知用の送信メールサーバーです。ユーザーはどの通知を受信箱に届けるかを設定 > 通知から選べます。",
+      "enabledToast": "メール通知が有効になりました。",
+      "disabledToast": "メール通知が無効になりました。",
+      "loadFailed": "メール設定を読み込めませんでした。",
+      "fromEnvironment": "環境変数から設定されています。上書きする場合はここで値を保存してください。",
+      "hostLabel": "SMTPホスト",
+      "hostHint": "メールサーバーのホスト名です。",
+      "portLabel": "ポート",
+      "portHint": "選択した接続方式の既定値を使う場合は空欄のままにしてください。",
+      "securityLabel": "接続のセキュリティ",
+      "securityHint": "STARTTLSは平文接続を暗号化に切り替えます。TLSは最初から暗号化されています。",
+      "security": {
+        "starttls": "STARTTLS（ポート587）",
+        "tls": "TLS（ポート465）",
+        "none": "なし（信頼できるネットワーク限定）"
+      },
+      "verifyLabel": "証明書を検証",
+      "verifyHint": "自己署名証明書を使うリレーの場合のみオフにしてください。",
+      "usernameLabel": "ユーザー名",
+      "usernameHint": "サーバーがサインインなしでメールを受け付ける場合は空欄のままにしてください。",
+      "passwordLabel": "パスワード",
+      "passwordHint": "暗号化して保存され、二度と表示されません。",
+      "passwordStored": "パスワードが保存されています。新しいものを入力すると置き換わります。",
+      "clearPassword": "保存されたパスワードを削除",
+      "fromLabel": "送信者",
+      "fromHint": "Fromアドレスです。表示名を添えることもできます。",
+      "appUrlLabel": "アプリのURL",
+      "appUrlHint": "メッセージ内のリンクに使われます。例：https://chat.example.com",
+      "testRecipientLabel": "テスト送信先",
+      "testRecipientHint": "既定では自分のアドレスが使われます。接続確認だけを行う場合は空欄のままにしてください。",
+      "test": "テスト送信",
+      "testing": "送信中…",
+      "testSent": "テストメッセージを{{address}}に送信しました。",
+      "testConnected": "メールサーバーに接続できました。",
+      "testFailed": "メールのテストに失敗しました。",
+      "saveBeforeTest": "テストする前に変更を保存してください。",
+      "save": "保存",
+      "saving": "保存中…",
+      "saved": "メール設定を保存しました。",
+      "saveFailed": "メール設定を保存できませんでした。"
     }
   },
   "usageAnalytics": {

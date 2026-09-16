@@ -547,6 +547,11 @@ export interface TitleSettings {
   taskProviderId?: string | null;
 }
 
+export interface EmailNotificationPreferences {
+  channelMentions: boolean;
+  automationRuns: boolean;
+}
+
 export interface UserPreferences {
   theme: Theme;
   defaultModel: string;
@@ -577,6 +582,7 @@ export interface UserPreferences {
   autoOpenArtifactPanel?: boolean; // Open the artifact panel when a response generates one
   hapticFeedbackEnabled?: boolean; // Android Vibration API; unsupported platforms no-op
   workRemoteProviderDisclosureDismissed: boolean;
+  emailNotifications?: EmailNotificationPreferences;
   backgroundSettings?: {
     enabled: boolean;
     imageUrl: string;

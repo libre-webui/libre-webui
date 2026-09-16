@@ -38,6 +38,7 @@ import {
   CHAT_GENERATE_JOB_TYPE,
   WEBHOOK_DELIVER_JOB_TYPE,
   PUSH_DELIVER_JOB_TYPE,
+  EMAIL_DELIVER_JOB_TYPE,
   DOCUMENT_INGEST_IDEMPOTENCY_SCOPE,
   DOCUMENT_INGEST_JOB_TYPE,
   OWNER_DELETE_CONTENT_JOB_TYPE,
@@ -1637,6 +1638,53 @@ const deliverPush: DurableJobHandler = async context => {
   }
 };
 
+const readEmailPayload = (
+  payload: unknown
+): import('../../services/emailService.js').EmailDeliveryPayload => {
+  const record = payload as Record<string, unknown>;
+  if (
+    typeof record?.to !== 'string' ||
+    !record.to ||
+    typeof record.subject !== 'string' ||
+    typeof record.text !== 'string' ||
+    typeof record.kind !== 'string'
+  ) {
+    throw new DurableJobExecutionError(
+      false,
+      'invalid-payload',
+      'The email delivery payload is malformed'
+    );
+  }
+  return {
+    to: record.to,
+    subject: record.subject,
+    text: record.text,
+    ...(typeof record.html === 'string' ? { html: record.html } : {}),
+    kind: record.kind as import('../../services/emailService.js').EmailDeliveryPayload['kind'],
+  };
+};
+
+const deliverEmail: DurableJobHandler = async context => {
+  const payload = readEmailPayload(context.payload);
+  const email = await import('../../services/emailService.js');
+  await context.assertSideEffectAllowed();
+  try {
+    await email.emailService.deliver(payload);
+    return { resultReference: `email:${payload.kind}:delivered` };
+  } catch (error) {
+    if (context.signal.aborted) throw error;
+    if (error instanceof email.EmailSettingsError) {
+      // Email was switched off after the message was queued; nothing to retry.
+      return { resultReference: `email:${payload.kind}:unavailable` };
+    }
+    throw new DurableJobExecutionError(
+      email.isTransientEmailError(error),
+      'email-delivery-failed',
+      'The email notification could not be delivered'
+    );
+  }
+};
+
 const readEvalRunPayload = (payload: unknown): { runId: string } => {
   const record = payload as Record<string, unknown>;
   if (!record || typeof record.runId !== 'string') {
@@ -1803,5 +1851,6 @@ export const createDomainDurableJobHandlers = (): ReadonlyMap<
     [CHANNEL_MENTION_JOB_TYPE, runChannelMention],
     [WEBHOOK_DELIVER_JOB_TYPE, deliverWebhook],
     [PUSH_DELIVER_JOB_TYPE, deliverPush],
+    [EMAIL_DELIVER_JOB_TYPE, deliverEmail],
     [EVAL_RUN_JOB_TYPE, runEvaluation],
   ]);

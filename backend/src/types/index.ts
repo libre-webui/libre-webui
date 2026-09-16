@@ -430,6 +430,13 @@ export interface TitleSettings {
   taskProviderId?: string | null;
 }
 
+export interface EmailNotificationPreferences {
+  /** A channel message that mentions you. */
+  channelMentions: boolean;
+  /** The outcome of your automation runs, success or failure. */
+  automationRuns: boolean;
+}
+
 export interface UserPreferences {
   defaultModel: string;
   defaultProviderType?: ChatProviderType | null;
@@ -472,6 +479,8 @@ export interface UserPreferences {
   autoOpenArtifactPanel?: boolean; // Open the artifact panel when a response generates one
   hapticFeedbackEnabled?: boolean; // Android Vibration API; unsupported platforms no-op
   workRemoteProviderDisclosureDismissed: boolean;
+  /** Which notifications also go out by email when an SMTP server is set up. */
+  emailNotifications?: EmailNotificationPreferences;
   backgroundSettings?: {
     enabled: boolean;
     imageUrl: string;

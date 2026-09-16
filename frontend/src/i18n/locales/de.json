@@ -1230,7 +1230,17 @@
       "permissionDenied": "Benachrichtigungen sind in den Browsereinstellungen für diese Seite blockiert.",
       "unsupported": "Dieser Browser unterstützt keine Push-Benachrichtigungen.",
       "workerMissing": "Push benötigt die installierte App. Lade die Produktions-App neu und versuche es erneut.",
-      "deviceNote": "Benachrichtigungen gelten pro Gerät. Das Abmelden der Sitzung entfernt auch ihre Push-Registrierung."
+      "deviceNote": "Benachrichtigungen gelten pro Gerät. Das Abmelden der Sitzung entfernt auch ihre Push-Registrierung.",
+      "emailTitle": "E-Mail-Benachrichtigungen",
+      "emailHint": "Nachrichten gehen an {{address}}.",
+      "emailLoading": "Wird geprüft, ob E-Mail verfügbar ist…",
+      "emailUnavailable": "Ein Administrator hat noch keinen ausgehenden Mailserver eingerichtet.",
+      "emailNoAddress": "Für dieses Konto ist keine E-Mail-Adresse hinterlegt. Einen Administrator bitten, eine unter Benutzerverwaltung hinzuzufügen.",
+      "emailLoadFailed": "Die Verfügbarkeit von E-Mail konnte nicht geprüft werden.",
+      "emailMentions": "Erwähnungen in Kanälen",
+      "emailMentionsHint": "Per E-Mail benachrichtigen, wenn mich jemand in einem Kanal erwähnt.",
+      "emailAutomations": "Automatisierungsergebnisse",
+      "emailAutomationsHint": "Per E-Mail über das Ergebnis jedes Automatisierungslaufs informieren, egal ob erfolgreich oder fehlgeschlagen."
     }
   },
   "models": {
@@ -1916,6 +1926,49 @@
       "saved": "Ollama-Anbieter-Einstellungen gespeichert",
       "saveFailed": "Die Ollama-Anbieter-Einstellungen konnten nicht gespeichert werden",
       "baseUrlLabel": "Ollama-Endpunkt-URL"
+    },
+    "emailNotifications": {
+      "title": "E-Mail-Benachrichtigungen",
+      "description": "Ausgehender Mailserver für Benachrichtigungen. Nutzer legen unter Einstellungen > Benachrichtigungen fest, welche Benachrichtigungen ihr Postfach erreichen.",
+      "enabledToast": "E-Mail-Benachrichtigungen sind aktiviert.",
+      "disabledToast": "E-Mail-Benachrichtigungen sind deaktiviert.",
+      "loadFailed": "Die E-Mail-Einstellungen konnten nicht geladen werden.",
+      "fromEnvironment": "Von der Umgebung vorgegeben; zum Überschreiben hier einen Wert speichern.",
+      "hostLabel": "SMTP-Host",
+      "hostHint": "Der Hostname des Mailservers.",
+      "portLabel": "Port",
+      "portHint": "Leer lassen für den Standard des gewählten Sicherheitsmodus.",
+      "securityLabel": "Verbindungssicherheit",
+      "securityHint": "STARTTLS erweitert eine unverschlüsselte Verbindung; TLS ist von Anfang an verschlüsselt.",
+      "security": {
+        "starttls": "STARTTLS (Port 587)",
+        "tls": "TLS (Port 465)",
+        "none": "Keine (nur vertrauenswürdiges Netzwerk)"
+      },
+      "verifyLabel": "Zertifikat prüfen",
+      "verifyHint": "Nur bei einem Relay mit selbstsigniertem Zertifikat deaktivieren.",
+      "usernameLabel": "Benutzername",
+      "usernameHint": "Leer lassen, wenn der Server E-Mails ohne Anmeldung annimmt.",
+      "passwordLabel": "Passwort",
+      "passwordHint": "Wird verschlüsselt gespeichert und nie wieder angezeigt.",
+      "passwordStored": "Ein Passwort ist gespeichert. Ein neues eingeben, um es zu ersetzen.",
+      "clearPassword": "Gespeichertes Passwort entfernen",
+      "fromLabel": "Absender",
+      "fromHint": "Die Absenderadresse, optional mit Anzeigenamen.",
+      "appUrlLabel": "Anwendungs-URL",
+      "appUrlHint": "Wird für Links in Nachrichten verwendet, zum Beispiel https://chat.example.com.",
+      "testRecipientLabel": "Testempfänger",
+      "testRecipientHint": "Standardmäßig die eigene Adresse. Leer lassen, um nur die Verbindung zu prüfen.",
+      "test": "Test senden",
+      "testing": "Wird gesendet…",
+      "testSent": "Testnachricht an {{address}} gesendet.",
+      "testConnected": "Verbindung zum Mailserver hergestellt.",
+      "testFailed": "Der E-Mail-Test ist fehlgeschlagen.",
+      "saveBeforeTest": "Änderungen vor dem Testen speichern.",
+      "save": "Speichern",
+      "saving": "Wird gespeichert…",
+      "saved": "E-Mail-Einstellungen gespeichert.",
+      "saveFailed": "Die E-Mail-Einstellungen konnten nicht gespeichert werden."
     }
   },
   "usageAnalytics": {

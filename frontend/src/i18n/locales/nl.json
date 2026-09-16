@@ -1230,7 +1230,17 @@
       "permissionDenied": "Meldingen zijn geblokkeerd in de browserinstellingen voor deze site.",
       "unsupported": "Deze browser ondersteunt geen pushmeldingen.",
       "workerMissing": "Push vereist de geïnstalleerde app. Herlaad de productie-app en probeer opnieuw.",
-      "deviceNote": "Meldingen gelden per apparaat. Het afmelden van de sessie verwijdert ook de pushregistratie."
+      "deviceNote": "Meldingen gelden per apparaat. Het afmelden van de sessie verwijdert ook de pushregistratie.",
+      "emailTitle": "E-mailmeldingen",
+      "emailHint": "Berichten gaan naar {{address}}.",
+      "emailLoading": "Controleren of e-mail beschikbaar is…",
+      "emailUnavailable": "Een beheerder heeft nog geen uitgaande mailserver ingesteld.",
+      "emailNoAddress": "Je account heeft geen e-mailadres. Vraag een beheerder er een toe te voegen onder Gebruikersbeheer.",
+      "emailLoadFailed": "Kon niet controleren of e-mail beschikbaar is.",
+      "emailMentions": "Vermeldingen in kanalen",
+      "emailMentionsHint": "Stuur me een e-mail als iemand me in een kanaal vermeldt.",
+      "emailAutomations": "Resultaten van automatiseringen",
+      "emailAutomationsHint": "Stuur me een e-mail met het resultaat van elke automatiseringsrun, geslaagd of niet."
     }
   },
   "models": {
@@ -1916,6 +1926,49 @@
       "saved": "Instellingen voor Ollama-provider opgeslagen",
       "saveFailed": "Kon de instellingen voor de Ollama-provider niet opslaan",
       "baseUrlLabel": "Ollama-eindpunt-URL"
+    },
+    "emailNotifications": {
+      "title": "E-mailmeldingen",
+      "description": "Uitgaande mailserver voor meldingen. Gebruikers kiezen zelf welke meldingen in hun inbox terechtkomen, onder Instellingen > Meldingen.",
+      "enabledToast": "E-mailmeldingen staan aan.",
+      "disabledToast": "E-mailmeldingen staan uit.",
+      "loadFailed": "De e-mailinstellingen konden niet worden geladen.",
+      "fromEnvironment": "Aangeleverd via de omgeving; sla hier een waarde op om dit te overschrijven.",
+      "hostLabel": "SMTP-host",
+      "hostHint": "De hostnaam van de mailserver.",
+      "portLabel": "Poort",
+      "portHint": "Laat leeg voor de standaard van de gekozen beveiligingsmodus.",
+      "securityLabel": "Verbindingsbeveiliging",
+      "securityHint": "STARTTLS zet een onversleutelde verbinding om in een versleutelde; TLS is vanaf het begin versleuteld.",
+      "security": {
+        "starttls": "STARTTLS (poort 587)",
+        "tls": "TLS (poort 465)",
+        "none": "Geen (alleen vertrouwd netwerk)"
+      },
+      "verifyLabel": "Certificaat verifiëren",
+      "verifyHint": "Zet dit alleen uit voor een relay met een zelfondertekend certificaat.",
+      "usernameLabel": "Gebruikersnaam",
+      "usernameHint": "Laat leeg als de server mail accepteert zonder aan te melden.",
+      "passwordLabel": "Wachtwoord",
+      "passwordHint": "Wordt versleuteld opgeslagen en nooit meer getoond.",
+      "passwordStored": "Er is een wachtwoord opgeslagen. Voer een nieuw wachtwoord in om het te vervangen.",
+      "clearPassword": "Opgeslagen wachtwoord verwijderen",
+      "fromLabel": "Afzender",
+      "fromHint": "Het From-adres, eventueel met een weergavenaam.",
+      "appUrlLabel": "Applicatie-URL",
+      "appUrlHint": "Wordt gebruikt voor de links in berichten, bijvoorbeeld https://chat.example.com.",
+      "testRecipientLabel": "Testontvanger",
+      "testRecipientHint": "Standaard je eigen adres. Laat leeg om alleen de verbinding te testen.",
+      "test": "Test versturen",
+      "testing": "Versturen…",
+      "testSent": "Testbericht verstuurd naar {{address}}.",
+      "testConnected": "Verbonden met de mailserver.",
+      "testFailed": "De e-mailtest is mislukt.",
+      "saveBeforeTest": "Sla je wijzigingen op voordat je test.",
+      "save": "Opslaan",
+      "saving": "Opslaan…",
+      "saved": "E-mailinstellingen opgeslagen.",
+      "saveFailed": "De e-mailinstellingen konden niet worden opgeslagen."
     }
   },
   "usageAnalytics": {

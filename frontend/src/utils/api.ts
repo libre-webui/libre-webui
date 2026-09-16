@@ -53,6 +53,12 @@ export { channelsApi } from './api/channelsApi';
 export { notificationsApi } from './api/notificationsApi';
 export { automationsApi } from './api/automationsApi';
 export { searchApi } from './api/searchApi';
+export { emailApi } from './api/emailApi';
+export type {
+  EmailSettingsResponse,
+  EmailSettingsUpdate,
+  EmailTestResponse,
+} from './api/emailApi';
 export type { WebSearchConfigResponse } from './api/searchApi';
 export { huggingfaceHubApi } from './api/huggingfaceHubApi';
 export type { GgufFileInfo, HuggingFaceModel } from './api/huggingfaceHubApi';

@@ -1230,7 +1230,17 @@
       "permissionDenied": "Pemberitahuan disekat dalam tetapan pelayar untuk tapak ini.",
       "unsupported": "Pelayar ini tidak menyokong pemberitahuan tolak.",
       "workerMissing": "Tolakan memerlukan aplikasi yang dipasang. Muat semula aplikasi pengeluaran dan cuba lagi.",
-      "deviceNote": "Pemberitahuan adalah mengikut peranti. Log keluar sesi turut membuang pendaftaran tolaknya."
+      "deviceNote": "Pemberitahuan adalah mengikut peranti. Log keluar sesi turut membuang pendaftaran tolaknya.",
+      "emailTitle": "Pemberitahuan e-mel",
+      "emailHint": "Mesej akan dihantar ke {{address}}.",
+      "emailLoading": "Menyemak sama ada e-mel tersedia…",
+      "emailUnavailable": "Pentadbir belum menyediakan pelayan mel keluar.",
+      "emailNoAddress": "Akaun anda tiada alamat e-mel. Minta pentadbir menambahnya di bawah Pengurusan Pengguna.",
+      "emailLoadFailed": "Ketersediaan e-mel tidak dapat disemak.",
+      "emailMentions": "Sebutan saluran",
+      "emailMentionsHint": "Hantar e-mel kepada saya apabila seseorang menyebut saya dalam saluran.",
+      "emailAutomations": "Keputusan automasi",
+      "emailAutomationsHint": "Hantar e-mel kepada saya keputusan setiap larian automasi, sama ada berjaya atau gagal."
     }
   },
   "models": {
@@ -1916,6 +1926,49 @@
       "saved": "Tetapan penyedia Ollama disimpan",
       "saveFailed": "Tidak dapat menyimpan tetapan penyedia Ollama",
       "baseUrlLabel": "URL endpoint Ollama"
+    },
+    "emailNotifications": {
+      "title": "Pemberitahuan e-mel",
+      "description": "Pelayan mel keluar untuk pemberitahuan. Pengguna memilih pemberitahuan yang sampai ke peti masuk mereka di bawah Tetapan > Pemberitahuan.",
+      "enabledToast": "Pemberitahuan e-mel dihidupkan.",
+      "disabledToast": "Pemberitahuan e-mel dimatikan.",
+      "loadFailed": "Tetapan e-mel tidak dapat dimuatkan.",
+      "fromEnvironment": "Disediakan oleh persekitaran; simpan nilai di sini untuk mengatasinya.",
+      "hostLabel": "Hos SMTP",
+      "hostHint": "Nama hos pelayan mel.",
+      "portLabel": "Port",
+      "portHint": "Biarkan kosong untuk menggunakan lalai mod keselamatan yang dipilih.",
+      "securityLabel": "Keselamatan sambungan",
+      "securityHint": "STARTTLS menaik taraf sambungan biasa; TLS disulitkan sejak awal.",
+      "security": {
+        "starttls": "STARTTLS (port 587)",
+        "tls": "TLS (port 465)",
+        "none": "Tiada (rangkaian dipercayai sahaja)"
+      },
+      "verifyLabel": "Sahkan sijil",
+      "verifyHint": "Matikan hanya untuk geganti dengan sijil tandatangan sendiri.",
+      "usernameLabel": "Nama Pengguna",
+      "usernameHint": "Biarkan kosong jika pelayan menerima mel tanpa log masuk.",
+      "passwordLabel": "Kata Laluan",
+      "passwordHint": "Disimpan dalam bentuk disulitkan dan tidak akan dipaparkan semula.",
+      "passwordStored": "Kata laluan telah disimpan. Masukkan kata laluan baharu untuk menggantikannya.",
+      "clearPassword": "Buang kata laluan yang disimpan",
+      "fromLabel": "Penghantar",
+      "fromHint": "Alamat From, dengan nama paparan secara pilihan.",
+      "appUrlLabel": "URL Aplikasi",
+      "appUrlHint": "Digunakan untuk pautan dalam mesej, contohnya https://chat.example.com.",
+      "testRecipientLabel": "Penerima ujian",
+      "testRecipientHint": "Lalai kepada alamat anda sendiri. Biarkan kosong untuk hanya menyemak sambungan.",
+      "test": "Hantar ujian",
+      "testing": "Menghantar…",
+      "testSent": "Mesej ujian dihantar ke {{address}}.",
+      "testConnected": "Disambungkan ke pelayan mel.",
+      "testFailed": "Ujian e-mel gagal.",
+      "saveBeforeTest": "Simpan perubahan anda sebelum menguji.",
+      "save": "Simpan",
+      "saving": "Menyimpan…",
+      "saved": "Tetapan e-mel disimpan.",
+      "saveFailed": "Tetapan e-mel tidak dapat disimpan."
     }
   },
   "usageAnalytics": {
