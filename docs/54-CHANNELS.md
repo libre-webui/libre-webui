@@ -93,8 +93,27 @@ set up the outgoing mail server (see
 [Notifications](./55-NOTIFICATIONS.md#email)).
 
 Model replies use the recent channel conversation (up to 30 messages) as
-context. They run as one-shot completions: chat tools, knowledge
-retrieval, and web search are not wired into channel mentions yet.
+context.
+
+[Chat tools](./49-CHAT_TOOLS.md) are wired in: when the mentioning member
+passes the tools feature gate and has a non-empty catalog, the reply runs
+the same multi-round tool loop a chat turn runs, against that member's own
+visible tool servers and builtins. A channel binds no persona, so no
+persona tool binding narrows the catalog.
+
+Nobody is watching a mention the way someone watches a chat, so **a
+side-effecting tool call is declined outright** unless the member already
+holds a standing approval for it. The reply says so, and the model is told
+to run it from a chat instead. Read-only tools run without asking, exactly
+as they do in chat. Standing approvals are scoped per channel: an "allow
+for this chat" decision never carries into a channel, and a per-channel
+approval never leaks into another channel or into chat. Because only
+read-only work can run unattended, a retried mention job is safe to repeat.
+
+The reply carries a bounded summary of the calls it made (at most 12, with
+truncated arguments and result previews), shown as a "Tools used" disclosure
+under the message. Knowledge retrieval and web search are still not wired
+into channel mentions.
 
 ## Limits
 

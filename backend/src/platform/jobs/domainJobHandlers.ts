@@ -14,6 +14,9 @@ import durableChatGenerationService, {
   type DurableChatGenerationInput,
 } from '../../services/durableChatGenerationService.js';
 import pluginService from '../../services/pluginService.js';
+import type { AuthzActor } from '../../services/authorizationService.js';
+import type { ToolCatalog } from '../../services/toolGatewayService.js';
+import type { ChatToolCall } from '../../types/tools.js';
 import workAgentService from '../../services/workAgentService.js';
 import {
   cleanupPlatformOwnerContent,
@@ -1415,11 +1418,47 @@ const readChannelMentionPayload = (
 };
 
 /**
- * @model in a channel (CHANNEL-03): a one-shot completion executed with
- * the invoking user's credentials, model access, and provider routing —
- * never another member's. The pending reply row is authoritative; a
- * deleted reply skips generation, and failures surface on the reply
- * instead of dead-lettering silently.
+ * Standing approvals are scoped by session id, so a mention borrows the
+ * channel's own namespace: an "allow for this chat" decision can never leak
+ * into a channel, and an approval granted inside one channel stays there.
+ */
+const mentionApprovalScope = (channelId: string): string =>
+  `channel:${channelId}`;
+
+/**
+ * The tool context a mention runs with, or nothing when the member fails
+ * the tools feature gate or sees an empty catalog. Channels bind no
+ * persona, so the catalog is the member's whole visible surface, filtered
+ * by the same tool-server access modes and grants chat uses.
+ */
+const resolveMentionTools = async (
+  userId: string
+): Promise<{ actor: AuthzActor; catalog?: ToolCatalog }> => {
+  const { userModel } = await import('../../models/userModel.js');
+  const { actorCanUseTools, buildToolCatalog } =
+    await import('../../services/toolGatewayService.js');
+  const actorUser = await userModel.getUserById(userId);
+  const actor: AuthzActor = {
+    userId,
+    ...(actorUser?.role ? { role: actorUser.role } : {}),
+  };
+  if (!(await actorCanUseTools(actor))) return { actor };
+  const catalog = await buildToolCatalog(actor, {}, {});
+  return catalog.tools.length > 0 ? { actor, catalog } : { actor };
+};
+
+/**
+ * @model in a channel (CHANNEL-03): a completion executed with the
+ * invoking user's credentials, model access, and provider routing — never
+ * another member's. The pending reply row is authoritative; a deleted
+ * reply skips generation, and failures surface on the reply instead of
+ * dead-lettering silently.
+ *
+ * When the member may use tools and has a non-empty catalog, the reply runs
+ * through the same native tool loop chat uses. Nobody is watching a mention,
+ * so a side-effecting call without a standing approval is denied outright
+ * rather than left waiting; read-only tools run normally. That also keeps a
+ * job retry safe: only read-only work can have happened on the first try.
  */
 const runChannelMention: DurableJobHandler = async context => {
   const payload = readChannelMentionPayload(context.payload);
@@ -1486,21 +1525,67 @@ const runChannelMention: DurableJobHandler = async context => {
         : undefined,
       context.signal
     );
+    const ollamaMessages = pluginMessages.map(message => ({
+      role: message.role,
+      content: message.content,
+    }));
     await context.assertSideEffectAllowed();
-    const result = await chatGenerationService.executeNonStreaming({
-      target,
-      ollamaMessages: pluginMessages.map(message => ({
-        role: message.role,
-        content: message.content,
-      })),
-      pluginMessages,
-      userId: context.actorUserId,
-      signal: context.signal,
-    });
+
+    // Agent-CLI providers drive their own tools; everything else can run
+    // the native loop when the member has a catalog to run.
+    const tools =
+      target.providerType === 'agent'
+        ? { actor: undefined, catalog: undefined }
+        : await resolveMentionTools(context.actorUserId);
+
+    let assistantContent: string;
+    let toolCalls: ChatToolCall[] = [];
+    if (tools.actor && tools.catalog) {
+      const { runPluginToolLoop } =
+        await import('../../services/chatToolRuntimeService.js');
+      const { createToolRoundStarter } =
+        await import('../../services/toolRoundStarter.js');
+      const loop = runPluginToolLoop({
+        actor: tools.actor,
+        sessionId: mentionApprovalScope(payload.channelId),
+        assistantMessageId: payload.replyMessageId,
+        catalog: tools.catalog,
+        approvals: 'deny',
+        // A mention has no live transport to stream tool events to; the
+        // finished summaries land on the reply instead.
+        sink: { toolEvent: () => undefined },
+        signal: context.signal,
+        startRound: createToolRoundStarter({
+          target,
+          ollamaMessages,
+          pluginMessages,
+          userId: context.actorUserId,
+          ollamaState: {},
+          signal: context.signal,
+        }),
+      });
+      let streamed = '';
+      for await (const chunk of loop.chunks) {
+        if (chunk.type === 'content' && chunk.content)
+          streamed += chunk.content;
+      }
+      assistantContent = streamed;
+      toolCalls = loop.state.toolCalls;
+    } else {
+      const result = await chatGenerationService.executeNonStreaming({
+        target,
+        ollamaMessages,
+        pluginMessages,
+        userId: context.actorUserId,
+        signal: context.signal,
+      });
+      assistantContent = result.assistantContent;
+    }
     await context.assertSideEffectAllowed();
     await channelService.completeModelReply(
       payload.replyMessageId,
-      result.assistantContent.trim() || 'The model returned an empty reply.'
+      assistantContent.trim() || 'The model returned an empty reply.',
+      toolCalls
     );
     return { resultReference: `channel-mention:${payload.replyMessageId}` };
   } catch (error) {

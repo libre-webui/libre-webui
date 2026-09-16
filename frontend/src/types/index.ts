@@ -282,6 +282,8 @@ export interface ChannelMessage {
   attachments?: ChannelAttachment[];
   pending?: boolean;
   error?: string;
+  /** Bounded summaries of the tools an @model reply ran, if any. */
+  toolCalls?: ChatToolCall[];
 }
 
 export type NotificationType =

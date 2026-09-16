@@ -19,7 +19,8 @@
  * The native multi-round tool loop (CHAT-03) against a real catalog and a
  * scripted provider: chunk pass-through, the read-only round trip and the
  * wire messages it feeds back, approval approve/deny/standing, unknown
- * tools, the round cap, cancellation mid-approval, and the Ollama bridge.
+ * tools, the round cap, cancellation mid-approval, the unattended
+ * approvals:'deny' mode, and the Ollama bridge.
  */
 
 import assert from 'node:assert/strict';
@@ -263,6 +264,7 @@ const runLoop = (script, options = {}) => {
     catalog,
     startRound: provider.startRound,
     sink,
+    ...(options.approvals ? { approvals: options.approvals } : {}),
     ...(options.signal ? { signal: options.signal } : {}),
   });
   return { provider, sink, chunks, state };
@@ -779,4 +781,99 @@ test('a full loop over the Ollama bridge feeds native tool messages back', async
     echoed: 'GET',
     query: { limit: '3' },
   });
+});
+
+// === 10. Unattended surfaces: approvals: 'deny' ===
+
+test("approvals:'deny' refuses a side-effecting call without asking anyone", async () => {
+  const before = postCount();
+  const loop = runLoop(
+    [
+      [
+        toolCallChunk('c10', ADD_PET, { body: { name: 'Unattended' } }),
+        doneChunk,
+      ],
+      [contentChunk('understood'), doneChunk],
+    ],
+    { approvals: 'deny' }
+  );
+  const seen = await drain(loop.chunks);
+
+  assert.equal(postCount(), before, 'nothing reached the server');
+  assert.equal(
+    loop.sink.events.some(event => event.type === 'chat.approval.v1'),
+    false,
+    'no approval was ever requested'
+  );
+  // The call and result events still fire, so consumers see the usual shape.
+  const call = loop.sink.events.find(
+    event => event.type === 'chat.tool-call.v1'
+  );
+  assert.equal(call.toolCall.name, ADD_PET);
+  assert.equal(call.toolCall.status, 'denied');
+  const result = loop.sink.events.find(
+    event => event.type === 'chat.tool-result.v1'
+  );
+  assert.equal(result.status, 'denied');
+  assert.equal(result.isError, true);
+
+  const record = loop.state.toolCalls[0];
+  assert.equal(record.status, 'denied');
+  assert.equal(record.isError, true);
+  assert.match(record.resultPreview, /Run it from a chat instead/);
+
+  // The refusal reaches the model as the tool result, and the turn finishes.
+  const toolMessage = loop.provider.calls[1].extension.find(
+    message => message.role === 'tool'
+  );
+  assert.match(toolMessage.content, /cannot ask for/);
+  assert.equal(seen.at(-1).type, 'done');
+});
+
+test("approvals:'deny' still runs read-only tools and standing approvals", async () => {
+  const readOnly = runLoop(
+    [
+      [toolCallChunk('c11', GET_PETS, { limit: 2 }), doneChunk],
+      [contentChunk('two'), doneChunk],
+    ],
+    { approvals: 'deny' }
+  );
+  await drain(readOnly.chunks);
+  assert.equal(readOnly.state.toolCalls[0].status, 'succeeded');
+
+  // A standing 'always' decision is honoured on an unattended surface too.
+  const granted = runLoop([
+    [toolCallChunk('c12', ADD_PET, { body: { name: 'Granted' } }), doneChunk],
+    [contentChunk('ok'), doneChunk],
+  ]);
+  const consuming = drain(granted.chunks);
+  const approval = await awaitEvent(granted.sink, 'chat.approval.v1');
+  await approvals.decideApproval(actor.userId, approval.approvalId, {
+    approve: true,
+    scope: 'always',
+  });
+  await consuming;
+
+  const before = postCount();
+  const unattended = runLoop(
+    [
+      [
+        toolCallChunk('c13', ADD_PET, { body: { name: 'Standing' } }),
+        doneChunk,
+      ],
+      [contentChunk('ok'), doneChunk],
+    ],
+    { approvals: 'deny' }
+  );
+  await drain(unattended.chunks);
+  assert.equal(unattended.state.toolCalls[0].status, 'succeeded');
+  assert.equal(postCount(), before + 1);
+
+  const standing = await approvals.findStandingApproval(
+    actor.userId,
+    petServer.id,
+    'addPet',
+    SESSION_ID
+  );
+  assert.equal(await approvals.revokeApproval(actor.userId, standing.id), true);
 });

@@ -18,17 +18,31 @@
 import { expect, test, type Page } from '@playwright/test';
 import { mockLibreWebUiApi } from './lib/mockApi';
 
+type MockToolCall = {
+  id: string;
+  name: string;
+  arguments: string;
+  source: 'builtin' | 'openapi' | 'mcp';
+  serverName?: string;
+  sideEffect: boolean;
+  status: 'succeeded' | 'denied' | 'failed';
+  resultPreview?: string;
+  isError?: boolean;
+};
+
 type MockMessage = {
   id: string;
   channelId: string;
   parentId?: string;
   authorKind: 'user' | 'model';
+  model?: string;
   author: { userId: string; username: string } | null;
   content: string;
   createdAt: number;
   updatedAt: number;
   replyCount?: number;
   reactions?: Array<{ emoji: string; count: number; mine: boolean }>;
+  toolCalls?: MockToolCall[];
 };
 
 const CHANNEL = {
@@ -44,7 +58,48 @@ const CHANNEL = {
   latestMessageAt: 1_770_000_100_000,
 };
 
-async function mockChannelsApi(page: Page) {
+/**
+ * An @model reply that ran one read-only tool and declined one that writes,
+ * which is how a channel mention always handles a side-effecting call.
+ */
+const MODEL_REPLY: MockMessage = {
+  id: 'msg-model',
+  channelId: CHANNEL.id,
+  authorKind: 'model',
+  model: 'llama3.2:latest',
+  author: null,
+  content: 'There is one pet on file; I did not add the new one.',
+  createdAt: 1_770_000_055_000,
+  updatedAt: 1_770_000_055_000,
+  toolCalls: [
+    {
+      id: 'call-1',
+      name: 'channel_store__getPets',
+      arguments: '{"limit":1}',
+      source: 'openapi',
+      serverName: 'Channel Store',
+      sideEffect: false,
+      status: 'succeeded',
+      resultPreview: '{"pets":["ada"]}',
+      isError: false,
+    },
+    {
+      id: 'call-2',
+      name: 'channel_store__addPet',
+      arguments: '{"name":"rex"}',
+      source: 'openapi',
+      serverName: 'Channel Store',
+      sideEffect: true,
+      status: 'denied',
+      resultPreview:
+        'This tool needs approval, which channel mentions cannot ask for. ' +
+        'Run it from a chat instead.',
+      isError: true,
+    },
+  ],
+};
+
+async function mockChannelsApi(page: Page, extra: MockMessage[] = []) {
   const messages: MockMessage[] = [
     {
       id: 'msg-1',
@@ -57,6 +112,7 @@ async function mockChannelsApi(page: Page) {
       replyCount: 1,
       reactions: [{ emoji: '🎉', count: 2, mine: false }],
     },
+    ...extra,
   ];
 
   await page.route(/\/api\/channels(?:\/.*)?(?:\?.*)?$/, async route => {
@@ -306,5 +362,36 @@ test('the notification bell surfaces the inbox', async ({ page }) => {
   await expect(panel).toBeVisible();
   await expect(page.getByTestId('notification-item')).toContainText(
     'sam mentioned you in #engineering'
+  );
+});
+
+test('a model reply discloses the tools it ran and the one it declined', async ({
+  page,
+}) => {
+  await mockLibreWebUiApi(page);
+  await mockChannelsApi(page, [MODEL_REPLY]);
+  await page.goto('/channels');
+  await page.getByTestId('channel-item').click();
+
+  const reply = page
+    .getByTestId('channel-message')
+    .filter({ hasText: 'I did not add the new one' });
+  await expect(reply).toBeVisible();
+
+  // Collapsed by default: a count, not a wall of tool output.
+  const toggle = reply.getByTestId('channel-tool-calls-toggle');
+  await expect(toggle).toHaveText(/Tools used \(2\)/);
+  await expect(reply.getByTestId('channel-tool-call')).toHaveCount(0);
+
+  await toggle.click();
+  const calls = reply.getByTestId('channel-tool-call');
+  await expect(calls).toHaveCount(2);
+  await expect(calls.first()).toContainText('channel_store__getPets');
+  await expect(calls.first()).toContainText('Done');
+  await expect(calls.first()).toContainText('{"pets":["ada"]}');
+  await expect(calls.last()).toContainText('channel_store__addPet');
+  await expect(calls.last()).toContainText('Denied');
+  await expect(reply).toContainText(
+    'Tools that change things are declined in channels'
   );
 });

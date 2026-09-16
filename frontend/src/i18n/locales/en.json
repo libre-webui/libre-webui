@@ -3616,7 +3616,11 @@
     "unpin": "Unpin message",
     "edit": "Edit message",
     "deleteMessage": "Delete message",
-    "replyCount": "{{total}} replies"
+    "replyCount": "{{total}} replies",
+    "toolCalls": {
+      "summary": "Tools used ({{total}})",
+      "deniedHint": "Tools that change things are declined in channels. Run them from a chat."
+    }
   },
   "notifications": {
     "title": "Notifications",

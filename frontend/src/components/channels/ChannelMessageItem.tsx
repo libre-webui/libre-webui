@@ -20,6 +20,8 @@ import { useTranslation } from 'react-i18next';
 import {
   Bot,
   Check,
+  ChevronDown,
+  ChevronRight,
   Loader2,
   MessageSquareText,
   Paperclip,
@@ -27,12 +29,93 @@ import {
   Pin,
   SmilePlus,
   Trash2,
+  Wrench,
   X,
 } from 'lucide-react';
 import { cn, formatTimestamp } from '@/utils';
-import type { ChannelMessage } from '@/types';
+import type { ChannelMessage, ChatToolCall } from '@/types';
 
 const QUICK_EMOJI = ['👍', '🎉', '❤️', '😄', '👀', '🚀'];
+
+const TOOL_RESULT_PREVIEW_CHARS = 180;
+
+/**
+ * Compact record of the tools a channel model reply ran. Channels have no
+ * live approval prompt, so a side-effecting call arrives already denied;
+ * the hint says why rather than leaving it looking like a failure.
+ */
+const ChannelToolCalls: React.FC<{ calls: ChatToolCall[] }> = ({ calls }) => {
+  const { t } = useTranslation();
+  const [open, setOpen] = useState(false);
+  const denied = calls.some(call => call.status === 'denied');
+
+  return (
+    <div className='mt-1' data-testid='channel-tool-calls'>
+      <button
+        type='button'
+        onClick={() => setOpen(value => !value)}
+        aria-expanded={open}
+        className='flex items-center gap-1 text-[11px] font-medium text-gray-500 hover:text-gray-700 dark:text-dark-600 dark:hover:text-dark-800'
+        data-testid='channel-tool-calls-toggle'
+      >
+        {open ? (
+          <ChevronDown className='h-3 w-3' />
+        ) : (
+          <ChevronRight className='h-3 w-3' />
+        )}
+        <Wrench className='h-3 w-3' />
+        {t('channels.toolCalls.summary', { total: calls.length })}
+      </button>
+      {open && (
+        <div className='mt-1 space-y-1'>
+          {calls.map(call => (
+            <div
+              key={call.id}
+              className='rounded-lg border border-black/[0.06] px-2 py-1 dark:border-white/[0.08]'
+              data-testid='channel-tool-call'
+            >
+              <div className='flex items-baseline gap-1.5'>
+                <span
+                  dir='ltr'
+                  className='min-w-0 truncate text-[11px] font-medium text-gray-700 dark:text-dark-800'
+                >
+                  {call.name}
+                </span>
+                <span
+                  className={cn(
+                    'shrink-0 text-[10px]',
+                    call.status === 'succeeded'
+                      ? 'text-emerald-600 dark:text-emerald-400'
+                      : call.status === 'denied'
+                        ? 'text-amber-600 dark:text-amber-400'
+                        : call.status === 'failed'
+                          ? 'text-red-500'
+                          : 'text-gray-400 dark:text-dark-500'
+                  )}
+                >
+                  {t(`tools.callStatus.${call.status}`)}
+                </span>
+              </div>
+              {call.resultPreview && (
+                <p
+                  dir='ltr'
+                  className='mt-0.5 whitespace-pre-wrap break-words font-mono text-[10px] leading-snug text-gray-500 dark:text-dark-600'
+                >
+                  {call.resultPreview.slice(0, TOOL_RESULT_PREVIEW_CHARS)}
+                </p>
+              )}
+            </div>
+          ))}
+          {denied && (
+            <p className='text-[10px] text-gray-400 dark:text-dark-500'>
+              {t('channels.toolCalls.deniedHint')}
+            </p>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
 
 export interface ChannelMessageActions {
   onReply?: ((message: ChannelMessage) => void) | undefined;
@@ -153,6 +236,9 @@ export const ChannelMessageItem: React.FC<ChannelMessageItemProps> = ({
             <p className='whitespace-pre-wrap break-words text-[13px] leading-relaxed text-gray-800 dark:text-dark-800'>
               {message.content}
             </p>
+          )}
+          {isModel && (message.toolCalls?.length ?? 0) > 0 && (
+            <ChannelToolCalls calls={message.toolCalls!} />
           )}
           {(message.attachments?.length ?? 0) > 0 && (
             <div className='mt-1 space-y-1'>
