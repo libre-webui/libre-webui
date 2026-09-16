@@ -222,6 +222,114 @@ test('an idle preview is stopped through the preview path', async () => {
   service.beginShutdown();
 });
 
+test('a preview whose container is gone is marked stopped without idle-stop', async () => {
+  const task = makeTask('stale-preview-absent');
+  db.prepare(
+    `UPDATE work_tasks SET preview_status = 'running' WHERE id = ?`
+  ).run(task.id);
+  const service = new WorkRuntimeService();
+  const calls = [];
+  // No labeled container exists any more: `docker ps` lists nothing.
+  service.driver.docker = async args => {
+    calls.push(args);
+    return { exitCode: 0, stdout: '', stderr: '', truncated: false };
+  };
+  // No activity was ever noted and no lease is held: the idle sweep has
+  // nothing to say, and this must not depend on it.
+  const swept = await service.reconcileStalePreviews();
+  assert.deepEqual(swept, { stopped: 1 });
+  const row = db
+    .prepare('SELECT preview_status, preview_url FROM work_tasks WHERE id = ?')
+    .get(task.id);
+  assert.equal(row.preview_status, 'stopped');
+  assert.equal(row.preview_url, null);
+  assert.ok(!calls.some(args => args[0] === 'stop'));
+  // A second pass finds nothing left to do.
+  assert.deepEqual(await service.reconcileStalePreviews(), { stopped: 0 });
+  service.beginShutdown();
+});
+
+test('a running container with a dead preview process is reconciled, a held one is not', async () => {
+  const held = makeTask('stale-preview-held');
+  const dead = makeTask('stale-preview-dead');
+  for (const task of [held, dead]) {
+    db.prepare(
+      `UPDATE work_tasks SET preview_status = 'running' WHERE id = ?`
+    ).run(task.id);
+  }
+  const service = new WorkRuntimeService();
+  service.driver.docker = async args => {
+    if (args[0] === 'ps') {
+      return {
+        exitCode: 0,
+        stdout: [held, dead]
+          .map(task => `${task.containerName}\trunning\t${task.id}`)
+          .join('\n'),
+        stderr: '',
+        truncated: false,
+      };
+    }
+    return { exitCode: 0, stdout: '', stderr: '', truncated: false };
+  };
+  const probed = [];
+  service.isPreviewRunning = async task => {
+    probed.push(task.id);
+    return false;
+  };
+  // Someone is watching the first task's screen: it is in use, not stale.
+  service.screenHolds.set(held.id, 1);
+
+  const swept = await service.reconcileStalePreviews();
+  assert.deepEqual(swept, { stopped: 1 });
+  assert.deepEqual(probed, [dead.id]);
+  const statuses = Object.fromEntries(
+    [held, dead].map(task => [
+      task.id,
+      db
+        .prepare('SELECT preview_status FROM work_tasks WHERE id = ?')
+        .get(task.id).preview_status,
+    ])
+  );
+  assert.equal(statuses[held.id], 'running');
+  assert.equal(statuses[dead.id], 'stopped');
+  service.beginShutdown();
+  // Release the row for the next case, which runs a fresh service.
+  db.prepare(
+    `UPDATE work_tasks SET preview_status = 'stopped' WHERE id = ?`
+  ).run(held.id);
+});
+
+test('a preview still starting gets a grace period before it counts as stale', async () => {
+  const fresh = makeTask('stale-preview-starting');
+  db.prepare(
+    `UPDATE work_tasks SET preview_status = 'starting', updated_at = ? WHERE id = ?`
+  ).run(Date.now(), fresh.id);
+  const service = new WorkRuntimeService();
+  service.driver.docker = async () => ({
+    exitCode: 0,
+    stdout: '',
+    stderr: '',
+    truncated: false,
+  });
+  assert.deepEqual(await service.reconcileStalePreviews(), { stopped: 0 });
+  assert.equal(
+    db
+      .prepare('SELECT preview_status FROM work_tasks WHERE id = ?')
+      .get(fresh.id).preview_status,
+    'starting'
+  );
+  // Ten minutes later nothing came up: the row is abandoned.
+  const later = await service.reconcileStalePreviews(Date.now() + 10 * 60_000);
+  assert.deepEqual(later, { stopped: 1 });
+  assert.equal(
+    db
+      .prepare('SELECT preview_status FROM work_tasks WHERE id = ?')
+      .get(fresh.id).preview_status,
+    'stopped'
+  );
+  service.beginShutdown();
+});
+
 test('preview traffic through the signed proxy refreshes the idle clock', async () => {
   const proxyModule = await import(
     pathToFileURL(

@@ -642,6 +642,9 @@ interface RuntimeLease {
   sharedLeaseLost?: boolean;
 }
 
+/** How long a preview may sit at `starting` before it counts as abandoned. */
+const PREVIEW_START_GRACE_MS = 5 * 60_000;
+
 export class WorkRuntimeService {
   readonly driver: WorkRuntimeDriver;
   readonly runtimeKind: 'docker' | 'kubernetes';
@@ -1460,6 +1463,87 @@ export class WorkRuntimeService {
     return { stopped };
   }
 
+  /**
+   * Marks previews as stopped when nothing backs them any more. A preview
+   * row is otherwise reconciled only when its owner opens the Work list or
+   * the process boots, so a finished task nobody looks at could advertise a
+   * running preview for days and hold up every gate that reads the column
+   * (recovery snapshots, team backups, host updaters waiting for an idle
+   * platform). Runs on the idle timer whether or not idle-stop is
+   * configured, and never touches a task someone is using.
+   */
+  async reconcileStalePreviews(now = Date.now()): Promise<{ stopped: number }> {
+    if (
+      process.env.LIBRE_PROCESS_ROLE === 'app-external' ||
+      this.shuttingDown ||
+      this.recoveryPending
+    ) {
+      return { stopped: 0 };
+    }
+    const candidates = (await workTaskService.listAllTaskRecords()).filter(
+      task =>
+        task.previewStatus === 'starting' || task.previewStatus === 'running'
+    );
+    if (candidates.length === 0) return { stopped: 0 };
+    let discovered: DiscoveredWorkContainer[];
+    try {
+      discovered = await this.driver.listManaged();
+    } catch {
+      // The runtime is unreachable; the rows cannot be judged either way.
+      return { stopped: 0 };
+    }
+    const running = new Set(
+      discovered.filter(entry => entry.running).map(entry => entry.taskId)
+    );
+    let stopped = 0;
+    for (const task of candidates) {
+      // A preview that is still being brought up, or a task someone holds
+      // open, is not stale: leave the owner's own flows to settle it.
+      if (
+        this.activeCommands.has(task.id) ||
+        (this.terminalHolds.get(task.id) ?? 0) > 0 ||
+        (this.screenHolds.get(task.id) ?? 0) > 0 ||
+        (this.runtimeLeases.has(task.id) &&
+          !this.previewLeaseReleases.has(task.id))
+      ) {
+        continue;
+      }
+      if (
+        task.previewStatus === 'starting' &&
+        now - task.updatedAt < PREVIEW_START_GRACE_MS
+      ) {
+        continue;
+      }
+      if (
+        getPlatformRuntimeConfig().mode === 'team' &&
+        (await getCoordinator().listPresence(`work-task-active:${task.id}`))
+          .length > 0
+      ) {
+        continue;
+      }
+      try {
+        // Without a running container the preview cannot exist; with one,
+        // the same probe the Work list uses decides.
+        if (running.has(task.id) && (await this.isPreviewRunning(task))) {
+          continue;
+        }
+      } catch (error) {
+        logger.warn(
+          `Could not check the preview of Work task ${task.id}:`,
+          error
+        );
+        continue;
+      }
+      await this.markPreviewStopped(task.id);
+      this.releasePreviewLease(task.id);
+      stopped += 1;
+      logger.info(
+        `Marked the stale ${task.previewStatus} preview of Work task ${task.id} as stopped.`
+      );
+    }
+    return { stopped };
+  }
+
   private scheduleIdleSweep(): void {
     if (this.shuttingDown || this.idleTimer) {
       return;
@@ -1481,6 +1565,10 @@ export class WorkRuntimeService {
       void this.sweepIdleRuntimes()
         .catch(error => {
           logger.warn('Work idle sweep failed:', error);
+        })
+        .then(() => this.reconcileStalePreviews())
+        .catch(error => {
+          logger.warn('Work preview reconciliation failed:', error);
         })
         .finally(() => {
           this.scheduleIdleSweep();
