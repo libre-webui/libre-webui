@@ -35,6 +35,7 @@ import {
   ToolActivityRow,
   WorkLiveRunSurface,
 } from '@/components/work/WorkLiveRunSurface';
+import { useWorkRuns } from '@/hooks/useWorkRuns';
 import { useChatStore } from '@/store/chatStore';
 import type { Persona, User } from '@/types';
 import type {
@@ -91,6 +92,47 @@ function touchedFiles(tools: WorkLiveToolActivity[]): string[] {
     }
   }
   return paths;
+}
+
+interface WorkFileChipsProps {
+  paths: string[];
+  onOpenFile: (path: string) => void;
+}
+
+/** The artifacts a turn left behind: one click opens the file in Files. */
+function WorkFileChips({ paths, onOpenFile }: WorkFileChipsProps) {
+  const { t } = useTranslation();
+  if (paths.length === 0) return null;
+  return (
+    <div
+      data-testid='work-file-chips'
+      className='flex flex-wrap gap-1.5 pt-0.5'
+    >
+      {paths.map(path => {
+        const name = path.split('/').filter(Boolean).pop() ?? path;
+        return (
+          <button
+            key={path}
+            type='button'
+            data-testid='work-file-chip'
+            data-path={path}
+            onClick={() => onOpenFile(path)}
+            title={path}
+            aria-label={t('work.conversation.openFile', {
+              defaultValue: 'Open {{name}}',
+              name,
+            })}
+            className='flex max-w-full items-center gap-1.5 rounded-lg border border-line bg-surface px-2 py-1 text-[11px] text-ink transition-colors hover:border-line-strong hover:bg-surface-subtle'
+          >
+            <FileText className='h-3 w-3 shrink-0 text-ink-muted' />
+            <span className='truncate' dir='ltr'>
+              {name}
+            </span>
+          </button>
+        );
+      })}
+    </div>
+  );
 }
 
 interface WorkAvatarProps {
@@ -371,6 +413,25 @@ export function WorkConversation({
       ),
     [liveRunId, messages, t]
   );
+  // File chips after a reload: the live tool activity is gone, but the
+  // latest run persisted what it changed. Only paths the conversation did
+  // not already chip are added, so a loaded history shows each file once.
+  const { runs: latestRuns } = useWorkRuns(task.id, {
+    enabled: Boolean(onOpenFile),
+    limit: 1,
+    refreshToken: task.status,
+  });
+  const persistedRunFiles = useMemo(() => {
+    if (liveRun) return [];
+    const alreadyShown = new Set(
+      conversationItems.flatMap(({ item }) =>
+        item.type === 'tools' ? touchedFiles(item.tools) : []
+      )
+    );
+    return (latestRuns[0]?.changedFiles ?? []).filter(
+      path => !alreadyShown.has(path)
+    );
+  }, [conversationItems, latestRuns, liveRun]);
   const lastAssistantId = [...messages]
     .reverse()
     .find(
@@ -498,36 +559,8 @@ export function WorkConversation({
                           expandedByDefault={false}
                         />
                       ))}
-                      {files.length > 0 && (
-                        <div
-                          data-testid='work-file-chips'
-                          className='flex flex-wrap gap-1.5 pt-0.5'
-                        >
-                          {files.map(path => {
-                            const name =
-                              path.split('/').filter(Boolean).pop() ?? path;
-                            return (
-                              <button
-                                key={path}
-                                type='button'
-                                data-testid='work-file-chip'
-                                data-path={path}
-                                onClick={() => onOpenFile?.(path)}
-                                title={path}
-                                aria-label={t('work.conversation.openFile', {
-                                  defaultValue: 'Open {{name}}',
-                                  name,
-                                })}
-                                className='flex max-w-full items-center gap-1.5 rounded-lg border border-line bg-surface px-2 py-1 text-[11px] text-ink transition-colors hover:border-line-strong hover:bg-surface-subtle'
-                              >
-                                <FileText className='h-3 w-3 shrink-0 text-ink-muted' />
-                                <span className='truncate' dir='ltr'>
-                                  {name}
-                                </span>
-                              </button>
-                            );
-                          })}
-                        </div>
+                      {onOpenFile && (
+                        <WorkFileChips paths={files} onOpenFile={onOpenFile} />
                       )}
                     </div>
                   );
@@ -633,6 +666,14 @@ export function WorkConversation({
                   </article>
                 );
               })}
+              {onOpenFile && !liveRun && (
+                <div className='ms-14'>
+                  <WorkFileChips
+                    paths={persistedRunFiles}
+                    onOpenFile={onOpenFile}
+                  />
+                </div>
+              )}
               {liveRun && (
                 <article
                   className='flex gap-3'

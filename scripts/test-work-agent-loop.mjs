@@ -1720,7 +1720,8 @@ test('computer tools reach the model as live screenshots and persist text-only',
     )
     .run(userId, userId, now, now);
 
-  const screenshot = index => Buffer.from(`fake-png-${index}`).toString('base64');
+  const screenshot = index =>
+    Buffer.from(`fake-png-${index}`).toString('base64');
   const observation = index => ({
     width: 1280,
     height: 800,
@@ -1767,7 +1768,10 @@ test('computer tools reach the model as live screenshots and persist text-only',
         assert.ok(toolNames.includes('computer_observe'));
         assert.ok(toolNames.includes('computer_act'));
         return respond([
-          { id: 'observe-1', function: { name: 'computer_observe', arguments: {} } },
+          {
+            id: 'observe-1',
+            function: { name: 'computer_observe', arguments: {} },
+          },
         ]);
       }
       if (round === 2) {
@@ -1835,10 +1839,10 @@ test('computer tools reach the model as live screenshots and persist text-only',
   // Only the newest two screenshots stay in live context; the oldest one is
   // stripped back to its text observation before round 4.
   const round4Images = imageStates[3].filter(entry => entry.images?.length);
-  assert.deepEqual(
-    round4Images.map(entry => entry.images).flat(),
-    [screenshot(2), screenshot(3)]
-  );
+  assert.deepEqual(round4Images.map(entry => entry.images).flat(), [
+    screenshot(2),
+    screenshot(3),
+  ]);
 
   // Persisted transcripts keep the observation text and screenshot metadata
   // but never the image bytes.
@@ -1994,29 +1998,33 @@ test('computer results surface fences, focus, URL, and expectation verdicts', as
 
   replaceMethod(workRuntimeService, 'computerToolsAvailable', async () => true);
   const receivedExpects = [];
-  replaceMethod(workRuntimeService, 'computerAct', async (_task, _actions, expect) => {
-    receivedExpects.push(expect);
-    return {
-      width: 1280,
-      height: 800,
-      cursorX: 10,
-      cursorY: 20,
-      window: 'Sign in - Chromium',
-      windowId: 41943041,
-      windowCount: 3,
-      url: 'https://example.test/login',
-      pageFocus: false,
-      screenshotSha256: 'f'.repeat(64),
-      screenshotBase64: Buffer.from('fence-png').toString('base64'),
-      fence: {
-        afterAction: 1,
-        reason: 'focus_assertion_failed',
-        detail:
-          'Action 2 required keyboard focus matching "input#email" but the current focus is: browser-chrome. This and the remaining action(s) did not run.',
-      },
-      expect: { outcome: 'pending', unmet: ['urlContains'] },
-    };
-  });
+  replaceMethod(
+    workRuntimeService,
+    'computerAct',
+    async (_task, _actions, expect) => {
+      receivedExpects.push(expect);
+      return {
+        width: 1280,
+        height: 800,
+        cursorX: 10,
+        cursorY: 20,
+        window: 'Sign in - Chromium',
+        windowId: 41943041,
+        windowCount: 3,
+        url: 'https://example.test/login',
+        pageFocus: false,
+        screenshotSha256: 'f'.repeat(64),
+        screenshotBase64: Buffer.from('fence-png').toString('base64'),
+        fence: {
+          afterAction: 1,
+          reason: 'focus_assertion_failed',
+          detail:
+            'Action 2 required keyboard focus matching "input#email" but the current focus is: browser-chrome. This and the remaining action(s) did not run.',
+        },
+        expect: { outcome: 'pending', unmet: ['urlContains'] },
+      };
+    }
+  );
 
   const requests = [];
   replaceMethod(
@@ -2039,7 +2047,11 @@ test('computer results surface fences, focus, URL, and expectation verdicts', as
                   arguments: {
                     actions: [
                       { type: 'click', x: 100, y: 100 },
-                      { type: 'type', text: 'user@example.test', focus: 'input#email' },
+                      {
+                        type: 'type',
+                        text: 'user@example.test',
+                        focus: 'input#email',
+                      },
                     ],
                     expect: { urlContains: 'dashboard' },
                   },
@@ -2076,11 +2088,17 @@ test('computer results surface fences, focus, URL, and expectation verdicts', as
   const persisted = await workTaskService.getMessages(detail.id);
   const result = persisted.find(message => message.kind === 'tool_result');
   assert.ok(result);
-  assert.match(result.content, /BATCH STOPPED EARLY: Action 2 required keyboard focus/);
+  assert.match(
+    result.content,
+    /BATCH STOPPED EARLY: Action 2 required keyboard focus/
+  );
   assert.match(result.content, /Applied 1 of 2 actions/);
   assert.match(result.content, /Page URL: https:\/\/example\.test\/login/);
   assert.match(result.content, /Keyboard focus: the browser UI, NOT the page/);
-  assert.match(result.content, /Declared expectation: NOT yet observed \(pending: urlContains\)/);
+  assert.match(
+    result.content,
+    /Declared expectation: NOT yet observed \(pending: urlContains\)/
+  );
   assert.match(result.content, /Screenshot sha256: ffffffffffffffff/);
   assert.equal(result.metadata.fence.reason, 'focus_assertion_failed');
   assert.equal(result.metadata.expect.outcome, 'pending');
@@ -2767,9 +2785,7 @@ test('a user message sent mid-run reaches the model at the next round', async ()
   assert.equal(requests.length, 2);
   assert.equal((await workTaskService.getRun(runId)).status, 'completed');
   const persisted = await workTaskService.getMessages(detail.id);
-  const midRun = persisted.find(
-    message => message.metadata?.midRun === true
-  );
+  const midRun = persisted.find(message => message.metadata?.midRun === true);
   assert.equal(midRun?.content, 'also check the logs');
   // Without an active run the endpoint-facing method refuses.
   await assert.rejects(
@@ -2880,4 +2896,187 @@ test('an unanswered takeover keeps the screen held through a grace window', asyn
     1,
     'an answered request releases the wait hold promptly'
   );
+});
+
+test('a completed run persists its summary, changed files, and exit state', async () => {
+  const now = Date.now();
+  const userId = 'agent-loop-run-results-admin';
+  getDatabase()
+    .prepare(
+      `INSERT INTO users (
+        id, username, email, password_hash, role, avatar, created_at, updated_at
+      ) VALUES (?, ?, NULL, 'unused', 'admin', NULL, ?, ?)`
+    )
+    .run(userId, userId, now, now);
+
+  replaceMethod(workRuntimeService, 'prepare', async () => () => undefined);
+  replaceMethod(workRuntimeService, 'isPreviewRunning', async () => false);
+  replaceMethod(workRuntimeService, 'stopContainer', async () => undefined);
+  replaceMethod(workRuntimeService, 'writeFile', async (_task, filePath) => ({
+    path: filePath,
+    size: 12,
+  }));
+  replaceMethod(workRuntimeService, 'movePath', async (_task, from, to) => ({
+    from,
+    to,
+  }));
+  replaceMethod(workRuntimeService, 'deletePath', async (_task, filePath) => ({
+    path: filePath,
+    type: 'file',
+  }));
+  replaceMethod(workRuntimeService, 'readFile', async (_task, filePath) => ({
+    path: filePath,
+    content: 'read only',
+  }));
+
+  // Two writes to the same path, a move, a delete, and a read: only the
+  // mutating paths belong in the persisted result, de-duplicated.
+  const script = [
+    [
+      {
+        id: 'w1',
+        name: 'write_file',
+        args: { path: 'notes.md', content: 'a' },
+      },
+      {
+        id: 'w2',
+        name: 'write_file',
+        args: { path: 'notes.md', content: 'b' },
+      },
+    ],
+    [{ id: 'r1', name: 'read_file', args: { path: 'notes.md' } }],
+    [
+      {
+        id: 'm1',
+        name: 'move_file',
+        args: { from: 'notes.md', to: 'docs.md' },
+      },
+      { id: 'd1', name: 'delete_file', args: { path: 'stale.txt' } },
+    ],
+  ];
+  let round = 0;
+  replaceMethod(
+    workModelProviderService,
+    'generateChatStreamResponse',
+    async (request, _provider, _requestedUserId, observer) => {
+      const turn = script[round];
+      round += 1;
+      if (turn) {
+        return {
+          model: request.model,
+          created_at: new Date().toISOString(),
+          message: {
+            role: 'assistant',
+            content: '',
+            tool_calls: turn.map(call => ({
+              id: call.id,
+              function: { name: call.name, arguments: call.args },
+            })),
+          },
+          done: true,
+        };
+      }
+      const final = 'Renamed the notes.\nRemoved the stale draft.';
+      observer.onContent?.(final);
+      return {
+        model: request.model,
+        created_at: new Date().toISOString(),
+        message: { role: 'assistant', content: final },
+        done: true,
+      };
+    }
+  );
+
+  const detail = await workTaskService.createTaskWithRun(
+    userId,
+    'Tidy the workspace.',
+    'test-model',
+    true,
+    { providerType: 'plugin', providerId: 'test-plugin' }
+  );
+  const runId = detail.activeRun?.id;
+  assert.ok(runId);
+  await workAgentService.execute(detail.id, runId, userId);
+
+  const run = await workTaskService.getRun(runId);
+  assert.equal(run.status, 'completed');
+  assert.equal(run.exitState, 'completed');
+  assert.equal(run.summary, 'Renamed the notes.\nRemoved the stale draft.');
+  assert.deepEqual(run.changedFiles, ['notes.md', 'docs.md', 'stale.txt']);
+
+  // The same row reads back through the history listing, newest first.
+  const runs = await workTaskService.listRuns(detail.id, 20);
+  assert.equal(runs[0].id, runId);
+  assert.deepEqual(runs[0].changedFiles, ['notes.md', 'docs.md', 'stale.txt']);
+  // The status blurb keeps its own derivation: one line, not the summary.
+  const task = await workTaskService.requireTaskRecord(detail.id, userId);
+  assert.equal(task.statusBlurb, 'Renamed the notes.');
+});
+
+test('a failed run persists the error as its summary and a failed exit state', async () => {
+  const now = Date.now();
+  const userId = 'agent-loop-run-results-failure-admin';
+  getDatabase()
+    .prepare(
+      `INSERT INTO users (
+        id, username, email, password_hash, role, avatar, created_at, updated_at
+      ) VALUES (?, ?, NULL, 'unused', 'admin', NULL, ?, ?)`
+    )
+    .run(userId, userId, now, now);
+
+  replaceMethod(workRuntimeService, 'prepare', async () => () => undefined);
+  replaceMethod(workRuntimeService, 'isPreviewRunning', async () => false);
+  replaceMethod(workRuntimeService, 'stopContainer', async () => undefined);
+  replaceMethod(workRuntimeService, 'writeFile', async (_task, filePath) => ({
+    path: filePath,
+    size: 4,
+  }));
+
+  let round = 0;
+  replaceMethod(
+    workModelProviderService,
+    'generateChatStreamResponse',
+    async request => {
+      round += 1;
+      if (round === 1) {
+        return {
+          model: request.model,
+          created_at: new Date().toISOString(),
+          message: {
+            role: 'assistant',
+            content: '',
+            tool_calls: [
+              {
+                id: 'w1',
+                function: {
+                  name: 'write_file',
+                  arguments: { path: 'half-done.txt', content: 'x' },
+                },
+              },
+            ],
+          },
+          done: true,
+        };
+      }
+      throw new Error('The provider went away.');
+    }
+  );
+
+  const detail = await workTaskService.createTaskWithRun(
+    userId,
+    'Fail after one write.',
+    'test-model',
+    true,
+    { providerType: 'plugin', providerId: 'test-plugin' }
+  );
+  const runId = detail.activeRun?.id;
+  assert.ok(runId);
+  await workAgentService.execute(detail.id, runId, userId);
+
+  const run = await workTaskService.getRun(runId);
+  assert.equal(run.status, 'failed');
+  assert.equal(run.summary, 'The provider went away.');
+  assert.match(run.exitState, /^failed(:|$)/);
+  // Work the run did before it failed is still recorded.
+  assert.deepEqual(run.changedFiles, ['half-done.txt']);
 });

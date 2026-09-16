@@ -191,6 +191,12 @@ export interface WorkAdminTask {
   running: boolean | null;
   terminalSessions: number;
   usage: WorkTaskUsage[];
+  /** What the task's most recent finished run ended on, when it has one. */
+  lastRun?: {
+    exitState?: string;
+    finishedAt?: number;
+    summary?: string;
+  };
   updatedAt: number;
 }
 
@@ -293,6 +299,12 @@ export interface WorkRun {
   providerId?: string | null;
   status: WorkRunStatus;
   error?: string | null;
+  /** What the run ended on: the final assistant text, or the error. */
+  summary?: string | null;
+  /** Workspace paths the run created, moved, or deleted, first-touch order. */
+  changedFiles?: string[] | null;
+  /** Short machine reason for the terminal transition, e.g. `failed:error`. */
+  exitState?: string | null;
   createdAt: number;
   startedAt?: number | null;
   finishedAt?: number | null;

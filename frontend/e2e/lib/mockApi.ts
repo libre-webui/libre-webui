@@ -403,6 +403,9 @@ type MockWorkRun = {
   status:
     'queued' | 'preparing' | 'running' | 'completed' | 'failed' | 'cancelled';
   error?: string;
+  summary?: string;
+  changedFiles?: string[];
+  exitState?: string;
   createdAt: number;
   startedAt?: number;
   finishedAt?: number;
@@ -598,6 +601,8 @@ type MockOptions = {
   deferWorkFileUpdates?: boolean;
   workFileUpdateFailure?: string;
   workRunResult?: MockWorkRunResult;
+  /** Persisted run history per task id, newest first. */
+  workRuns?: Record<string, MockWorkRun[]>;
   workTaskTransition?: MockWorkTaskTransition;
   personas?: MockPersona[];
 };
@@ -822,6 +827,7 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
   const workFileContents = {
     ...(options.workFileContents ?? {}),
   };
+  const workRuns = structuredClone(options.workRuns ?? {});
   const workGitStatuses = structuredClone(options.workGitStatuses ?? {});
   const workGitDiffs = { ...(options.workGitDiffs ?? {}) };
   const createPreferences = (
@@ -934,6 +940,7 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
     providerId?: string;
   }> = [];
   const workCancelRequests: string[] = [];
+  const workRunHistoryRequests: Array<{ taskId: string; limit: number }> = [];
   const workFileUpdateRequests: Array<{
     taskId: string;
     path: string;
@@ -2022,6 +2029,34 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
         const limit = Number(url.searchParams.get('limit') || 200);
         workMessagePageRequests.push({ taskId, before, limit });
         await fulfillJson(route, workMessagePage(task, before, limit));
+        return;
+      }
+
+      const workRunHistoryMatch = path.match(
+        /^\/work\/tasks\/([^/]+)\/runs(?:\/([^/]+))?$/
+      );
+      if (workRunHistoryMatch && method === 'GET') {
+        const taskId = decodeURIComponent(workRunHistoryMatch[1]);
+        if (!workTasks.some(item => item.id === taskId)) {
+          await fulfillApiError(route, 404, 'Work task not found');
+          return;
+        }
+        const history = workRuns[taskId] ?? [];
+        const runId = workRunHistoryMatch[2]
+          ? decodeURIComponent(workRunHistoryMatch[2])
+          : undefined;
+        if (runId) {
+          const run = history.find(item => item.id === runId);
+          if (!run) {
+            await fulfillApiError(route, 404, 'Work run not found');
+            return;
+          }
+          await fulfillJson(route, run);
+          return;
+        }
+        const limit = Number(url.searchParams.get('limit') || 20);
+        workRunHistoryRequests.push({ taskId, limit });
+        await fulfillJson(route, history.slice(0, limit));
         return;
       }
 
@@ -3266,6 +3301,7 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
     workMessagePageRequests,
     applyWorkTaskTransition,
     workRunRequests,
+    workRunHistoryRequests,
     workCancelRequests,
     workFileUpdateRequests,
     releaseWorkFileUpdates: () => {

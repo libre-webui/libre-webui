@@ -12,6 +12,7 @@ import type {
 import type { WorkPreviewStatus, WorkTaskStatus } from '../../types/work.js';
 import {
   WorkPersistenceError,
+  workRunResultColumns,
   type CreateWorkRunBundle,
   type CreateWorkTaskBundle,
   type WorkAdmissionLimits,
@@ -578,6 +579,15 @@ export class PostgresWorkPersistence implements WorkPersistenceRepository {
     return this.findActiveRunWith(this.database, taskId);
   }
 
+  async listRuns(taskId: string, limit: number): Promise<WorkRunRow[]> {
+    const result = await this.database.query<StoredRunRow>(
+      `SELECT * FROM work_runs WHERE task_id = $1
+       ORDER BY created_at DESC, id DESC LIMIT $2`,
+      [taskId, limit]
+    );
+    return result.rows.map(runRow);
+  }
+
   async updateRun(input: {
     runId: string;
     status: WorkRunRow['status'];
@@ -585,14 +595,29 @@ export class PostgresWorkPersistence implements WorkPersistenceRepository {
     started: boolean;
     finished: boolean;
     now: number;
+    summary?: string | null;
+    changedFiles?: string[] | null;
+    exitState?: string | null;
   }): Promise<void> {
+    const results = workRunResultColumns(input);
     await this.database.query(
       `UPDATE work_runs SET status = $1, error = $2,
-       started_at = CASE WHEN $3 THEN COALESCE(started_at, $5) ELSE started_at END,
-       finished_at = CASE WHEN $4 THEN $5 ELSE finished_at END WHERE id = $6`,
+       summary = CASE WHEN $3 THEN $4 ELSE summary END,
+       changed_files = CASE WHEN $5 THEN $6 ELSE changed_files END,
+       exit_state = CASE WHEN $7 THEN $8 ELSE exit_state END,
+       started_at = CASE WHEN $9 THEN COALESCE(started_at, $11) ELSE started_at END,
+       finished_at = CASE WHEN $10 THEN $11 ELSE finished_at END WHERE id = $12`,
       [
         input.status,
         input.error === null ? null : replaceWorkTextNul(input.error),
+        results.writeSummary,
+        results.summary === null ? null : replaceWorkTextNul(results.summary),
+        results.writeChangedFiles,
+        results.changedFiles === null
+          ? null
+          : replaceWorkTextNul(results.changedFiles),
+        results.writeExitState,
+        results.exitState,
         input.started,
         input.finished,
         input.now,

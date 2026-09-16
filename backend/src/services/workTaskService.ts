@@ -51,6 +51,10 @@ import { randomUUID } from 'node:crypto';
 
 const logger = createLogger('services:work-task');
 export const WORK_MESSAGE_PAGE_SIZE = 200;
+/** Hard ceiling on a run-history page, whatever the caller asks for. */
+export const WORK_RUN_LIST_MAX = 100;
+/** Run-history page size when the caller does not ask for one. */
+export const WORK_RUN_LIST_DEFAULT = 20;
 export const WORK_MESSAGE_MAX_BYTES = 100_000;
 export const WORK_MESSAGE_METADATA_MAX_BYTES = 100_000;
 const WORK_MESSAGE_PAGE_MAX_BYTES = 1_000_000;
@@ -297,6 +301,9 @@ export class WorkTaskService {
       provider_id: selectedProvider.providerId || null,
       status: 'queued',
       error: null,
+      summary: null,
+      changed_files: null,
+      exit_state: null,
       created_at: now,
       started_at: null,
       finished_at: null,
@@ -396,6 +403,9 @@ export class WorkTaskService {
       provider_id: selectedProvider.providerId || null,
       status: 'queued',
       error: null,
+      summary: null,
+      changed_files: null,
+      exit_state: null,
       created_at: now,
       started_at: null,
       finished_at: null,
@@ -991,10 +1001,27 @@ export class WorkTaskService {
     return row ? mapRun(row) : undefined;
   }
 
+  /** Run history for one task, newest first. */
+  async listRuns(taskId: string, limit: number): Promise<WorkRun[]> {
+    const rows = await getWorkPersistence().listRuns(
+      taskId,
+      Math.max(1, Math.min(Math.trunc(limit), WORK_RUN_LIST_MAX))
+    );
+    return rows.map(mapRun);
+  }
+
   async updateRun(
     runId: string,
     status: WorkRunStatus,
-    options: { error?: string; started?: boolean; finished?: boolean } = {}
+    options: {
+      error?: string;
+      started?: boolean;
+      finished?: boolean;
+      /** Omitted leaves the stored result alone; null clears it. */
+      summary?: string | null;
+      changedFiles?: string[] | null;
+      exitState?: string | null;
+    } = {}
   ): Promise<WorkRun> {
     const now = Date.now();
     await getWorkPersistence().updateRun({
@@ -1004,6 +1031,19 @@ export class WorkTaskService {
       started: Boolean(options.started),
       finished: Boolean(options.finished),
       now,
+      ...(options.summary !== undefined
+        ? {
+            summary: options.summary
+              ? replaceWorkTextNul(options.summary)
+              : null,
+          }
+        : {}),
+      ...(options.changedFiles !== undefined
+        ? { changedFiles: options.changedFiles }
+        : {}),
+      ...(options.exitState !== undefined
+        ? { exitState: options.exitState }
+        : {}),
     });
     const run = await this.getRun(runId);
     if (!run) {
@@ -1294,6 +1334,21 @@ const mapTaskRecord = (row: TaskRow): WorkTaskRecord => ({
   updatedAt: row.updated_at,
 });
 
+/** Stored `changed_files` is a JSON array; a malformed value reads as none. */
+const parseChangedFiles = (value: string | null): string[] | undefined => {
+  if (!value) return undefined;
+  try {
+    const parsed: unknown = JSON.parse(value);
+    if (!Array.isArray(parsed)) return undefined;
+    const paths = parsed.filter(
+      (entry): entry is string => typeof entry === 'string' && entry.length > 0
+    );
+    return paths.length > 0 ? paths : undefined;
+  } catch {
+    return undefined;
+  }
+};
+
 const mapRun = (row: RunRow): WorkRun => ({
   id: row.id,
   taskId: row.task_id,
@@ -1302,6 +1357,9 @@ const mapRun = (row: RunRow): WorkRun => ({
   providerId: row.provider_id || undefined,
   status: row.status,
   error: row.error || undefined,
+  summary: row.summary || undefined,
+  changedFiles: parseChangedFiles(row.changed_files ?? null),
+  exitState: row.exit_state || undefined,
   createdAt: row.created_at,
   startedAt: row.started_at || undefined,
   finishedAt: row.finished_at || undefined,

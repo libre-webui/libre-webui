@@ -58,6 +58,8 @@ import workHostWorkspaceService, {
 import workTaskService, {
   WorkConflictError,
   WorkNotFoundError,
+  WORK_RUN_LIST_DEFAULT,
+  WORK_RUN_LIST_MAX,
 } from '../services/workTaskService.js';
 import {
   WorkCapabilities,
@@ -67,6 +69,7 @@ import {
   WorkMessage,
   WorkMessagePage,
   WorkProviderSelection,
+  WorkRun,
   WorkRunStatus,
   WorkTaskDetail,
   WorkTaskRecord,
@@ -365,6 +368,8 @@ router.use(
       req.method === 'GET' &&
       (/^\/tasks(?:\/[^/]+)?$/.test(req.path) ||
         /^\/tasks\/[^/]+\/messages$/.test(req.path) ||
+        /^\/tasks\/[^/]+\/runs$/.test(req.path) ||
+        /^\/tasks\/[^/]+\/runs\/[^/]+$/.test(req.path) ||
         /^\/tasks\/[^/]+\/runs\/[^/]+\/events$/.test(req.path));
     const teardownRoute =
       (req.method === 'POST' &&
@@ -543,6 +548,57 @@ router.get(
           Math.min(limit, 200)
         )
       );
+    } catch (error) {
+      sendError(res, error);
+    }
+  }
+);
+
+// Run history: what each past run of this task ended on, newest first.
+// Owner-scoped through requireTaskRecord, exactly like the message page.
+router.get(
+  '/tasks/:id/runs',
+  async (
+    req: AuthenticatedRequest,
+    res: Response<ApiResponse<WorkRun[]>>
+  ): Promise<void> => {
+    try {
+      const taskId = readTaskId(req);
+      const userId = requireUserId(req);
+      await workTaskService.requireTaskRecord(taskId, userId);
+      const limit =
+        optionalPositiveInteger(req.query.limit, 'limit') ??
+        WORK_RUN_LIST_DEFAULT;
+      sendSuccess(
+        res,
+        await workTaskService.listRuns(
+          taskId,
+          Math.min(limit, WORK_RUN_LIST_MAX)
+        )
+      );
+    } catch (error) {
+      sendError(res, error);
+    }
+  }
+);
+
+router.get(
+  '/tasks/:id/runs/:runId',
+  async (
+    req: AuthenticatedRequest,
+    res: Response<ApiResponse<WorkRun>>
+  ): Promise<void> => {
+    try {
+      const taskId = readTaskId(req);
+      const userId = requireUserId(req);
+      await workTaskService.requireTaskRecord(taskId, userId);
+      const run = await workTaskService.getRun(String(req.params.runId || ''));
+      // A run id from another task must read as missing, not as someone
+      // else's run: the task scope is the only thing the owner check covers.
+      if (!run || run.taskId !== taskId) {
+        throw new WorkRouteError('Work run not found.', 404);
+      }
+      sendSuccess(res, run);
     } catch (error) {
       sendError(res, error);
     }

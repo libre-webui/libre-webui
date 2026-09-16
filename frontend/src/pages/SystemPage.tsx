@@ -425,6 +425,23 @@ const WorkPanel: React.FC = () => {
       )
       .join(', ');
   };
+  // What the task's last finished run ended on. `exitState` is
+  // `state` or `state:reason`; the table shows the state, the tooltip keeps
+  // the whole thing.
+  const exitStateLabel = (exitState: string | undefined): string => {
+    switch ((exitState || '').split(':')[0]) {
+      case 'completed':
+        return t('work.runs.exitStates.completed');
+      case 'needs_input':
+        return t('work.runs.exitStates.needsInput');
+      case 'failed':
+        return t('work.runs.exitStates.failed');
+      case 'cancelled':
+        return t('work.runs.exitStates.cancelled');
+      default:
+        return '—';
+    }
+  };
   const previewLabel = (previewStatus: string): string =>
     previewStatus === 'running'
       ? t('systemPage.work.stateRunning')
@@ -504,7 +521,7 @@ const WorkPanel: React.FC = () => {
         <div className='overflow-x-auto'>
           <table
             data-testid='system-work-table'
-            className='w-full min-w-[760px] text-sm'
+            className='w-full min-w-[900px] text-sm'
           >
             <thead className='text-[11px] uppercase tracking-[0.1em] text-gray-400 dark:text-dark-500'>
               <tr>
@@ -525,6 +542,9 @@ const WorkPanel: React.FC = () => {
                 </th>
                 <th className='px-4 py-2 text-start font-medium'>
                   {t('systemPage.work.inUse')}
+                </th>
+                <th className='px-4 py-2 text-start font-medium'>
+                  {t('systemPage.work.lastRun')}
                 </th>
                 <th className='px-5 py-2 text-end font-medium'>
                   {t('systemPage.work.updated')}
@@ -578,6 +598,29 @@ const WorkPanel: React.FC = () => {
                     data-testid='work-admin-usage'
                   >
                     {usageLabel(task.usage)}
+                  </td>
+                  <td
+                    className='max-w-[240px] px-4 py-2.5 text-xs text-gray-600 dark:text-dark-600'
+                    data-testid='work-admin-last-run'
+                  >
+                    {task.lastRun ? (
+                      <>
+                        <div title={task.lastRun.exitState}>
+                          {exitStateLabel(task.lastRun.exitState)}
+                        </div>
+                        {task.lastRun.summary && (
+                          <div
+                            dir='auto'
+                            className='mt-0.5 truncate text-[10px] text-gray-500 dark:text-dark-500'
+                            title={task.lastRun.summary}
+                          >
+                            {task.lastRun.summary}
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                      t('systemPage.work.noRun')
+                    )}
                   </td>
                   <td className='px-5 py-2.5 text-end text-xs text-gray-600 dark:text-dark-600'>
                     {dateFormatter.format(task.updatedAt)}

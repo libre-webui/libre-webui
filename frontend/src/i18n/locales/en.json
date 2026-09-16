@@ -2160,6 +2160,8 @@
         "screen": "screen"
       },
       "updated": "Updated",
+      "lastRun": "Last run",
+      "noRun": "—",
       "stateRunning": "Running",
       "stateStopped": "Stopped",
       "stateStarting": "Starting",
@@ -2971,6 +2973,17 @@
       "approvalRuleLine": "Always allowed",
       "approvalRuleDelete": "Remove rule",
       "approvalRuleDeleteFailed": "Could not remove the rule."
+    },
+    "runs": {
+      "title": "Runs",
+      "empty": "No finished runs yet. Each run keeps what it produced and the files it changed.",
+      "fileCount": "Files ({{total}})",
+      "exitStates": {
+        "completed": "Completed",
+        "needsInput": "Needs input",
+        "failed": "Failed",
+        "cancelled": "Cancelled"
+      }
     },
     "approval": {
       "title": "Approval needed",

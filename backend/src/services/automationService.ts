@@ -517,7 +517,15 @@ class AutomationService {
         run.work_task_id,
         context.userId
       );
-      result = task?.statusBlurb?.trim() || null;
+      if (task) {
+        // What the run itself produced. The task status line is the
+        // fallback for runs recorded before summaries were persisted.
+        const runs = await workTaskService.listRuns(task.id, 5);
+        const summary = runs.find(
+          entry => entry.finishedAt !== undefined && entry.summary
+        )?.summary;
+        result = summary?.trim() || task.statusBlurb?.trim() || null;
+      }
     }
     await emailService.notifyAutomationRun({
       userId: context.userId,

@@ -86,6 +86,22 @@ const stubDeps = overrides => ({
           : [],
       ])
     ),
+  lastRun: async taskId =>
+    taskId === 't1'
+      ? {
+          id: 'run-t1',
+          taskId: 't1',
+          model: 'test',
+          providerType: 'ollama',
+          status: 'completed',
+          summary: `  Shipped the release notes.${' and more'.repeat(40)}`,
+          changedFiles: ['notes.md'],
+          exitState: 'completed',
+          createdAt: 10,
+          startedAt: 11,
+          finishedAt: 12,
+        }
+      : undefined,
   ...overrides,
 });
 
@@ -121,6 +137,28 @@ test('the overview aggregates tasks, live state, sessions, and orphans', async (
   assert.deepEqual(overview.orphanContainers, [
     { name: 'work-ghost', taskId: 'task-gone', running: false },
   ]);
+});
+
+test('the overview carries each task’s last finished run', async () => {
+  const overview = await buildWorkAdminOverview(stubDeps());
+  const [first, second] = overview.tasks;
+  assert.equal(first.lastRun.exitState, 'completed');
+  assert.equal(first.lastRun.finishedAt, 12);
+  // One trimmed line, not the whole reply.
+  assert.equal(first.lastRun.summary.length, 160);
+  assert.match(first.lastRun.summary, /^Shipped the release notes\./);
+  // A task that never finished a run simply has none.
+  assert.equal(second.lastRun, undefined);
+
+  // A run lookup that throws must not cost the whole overview.
+  const flaky = await buildWorkAdminOverview(
+    stubDeps({
+      lastRun: async () => {
+        throw new Error('run lookup failed');
+      },
+    })
+  );
+  assert.ok(flaky.tasks.every(task => task.lastRun === undefined));
 });
 
 test('an unavailable runtime degrades state to unknown, never fails', async () => {

@@ -34,6 +34,7 @@ import {
   setPersonaAvatarFallback,
 } from '@/utils/personaAvatar';
 import { workStatusPresentation } from '@/utils/workStatus';
+import { WorkRunHistory } from './WorkRunHistory';
 import { WorkspaceScreen } from './WorkspaceScreen';
 
 const TAUGHT_SKILL_PREFIX = 'taught-';
@@ -44,6 +45,8 @@ interface WorkAgentPanelProps {
   /** Only the visible tab keeps the mini screen connected. */
   active: boolean;
   onOpenScreen: () => void;
+  /** Opens a file a past run changed, in the workspace Files tab. */
+  onOpenFile?: (path: string) => void;
 }
 
 const sectionTitle =
@@ -54,6 +57,7 @@ export function WorkAgentPanel({
   persona,
   active,
   onOpenScreen,
+  onOpenFile,
 }: WorkAgentPanelProps) {
   const { t, i18n } = useTranslation();
   const status = workStatusPresentation[task.status];
@@ -480,6 +484,14 @@ export function WorkAgentPanel({
           </ul>
         )}
       </section>
+
+      {/* What this agent's past runs produced, newest first. */}
+      <WorkRunHistory
+        taskId={task.id}
+        active={active}
+        refreshToken={task.status}
+        onOpenFile={onOpenFile}
+      />
 
       <AutomationModal
         open={routineModalOpen}

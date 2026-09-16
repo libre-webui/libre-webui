@@ -47,10 +47,58 @@ export interface WorkRunRow {
   provider_id: string | null;
   status: WorkRunStatus;
   error: string | null;
+  /** Final assistant text (or the error) the run ended on. */
+  summary: string | null;
+  /** JSON array of workspace paths the run created, moved, or deleted. */
+  changed_files: string | null;
+  /** Short machine reason for the terminal transition, e.g. `failed:error`. */
+  exit_state: string | null;
   created_at: number;
   started_at: number | null;
   finished_at: number | null;
 }
+
+/** Longest run summary kept on a run row; the tail is dropped. */
+export const WORK_RUN_SUMMARY_MAX_CHARS = 4_000;
+/** Most changed paths kept on a run row, in first-touch order. */
+export const WORK_RUN_CHANGED_FILES_MAX = 200;
+/** Longest machine exit reason, e.g. `failed:model-error`. */
+export const WORK_RUN_EXIT_STATE_MAX_CHARS = 120;
+
+/**
+ * Normalises the optional run-result fields both engines share: an omitted
+ * field leaves the stored value alone, an explicit null clears it.
+ */
+export const workRunResultColumns = (input: {
+  summary?: string | null;
+  changedFiles?: string[] | null;
+  exitState?: string | null;
+}): {
+  writeSummary: boolean;
+  summary: string | null;
+  writeChangedFiles: boolean;
+  changedFiles: string | null;
+  writeExitState: boolean;
+  exitState: string | null;
+} => {
+  const paths = Array.isArray(input.changedFiles)
+    ? input.changedFiles
+        .filter(path => typeof path === 'string' && path.length > 0)
+        .slice(0, WORK_RUN_CHANGED_FILES_MAX)
+    : null;
+  return {
+    writeSummary: input.summary !== undefined,
+    summary: input.summary
+      ? input.summary.slice(0, WORK_RUN_SUMMARY_MAX_CHARS)
+      : null,
+    writeChangedFiles: input.changedFiles !== undefined,
+    changedFiles: paths && paths.length > 0 ? JSON.stringify(paths) : null,
+    writeExitState: input.exitState !== undefined,
+    exitState: input.exitState
+      ? input.exitState.slice(0, WORK_RUN_EXIT_STATE_MAX_CHARS)
+      : null,
+  };
+};
 
 export interface WorkMessageRow {
   id: string;
@@ -203,6 +251,8 @@ export interface WorkPersistenceRepository {
   }): Promise<WorkMessageRow[]>;
   findRun(runId: string): Promise<WorkRunRow | undefined>;
   findActiveRun(taskId: string): Promise<WorkRunRow | undefined>;
+  /** Run history for one task, newest first. */
+  listRuns(taskId: string, limit: number): Promise<WorkRunRow[]>;
   updateRun(input: {
     runId: string;
     status: WorkRunStatus;
@@ -210,6 +260,10 @@ export interface WorkPersistenceRepository {
     started: boolean;
     finished: boolean;
     now: number;
+    /** Omitted leaves the stored value alone; null clears it. */
+    summary?: string | null;
+    changedFiles?: string[] | null;
+    exitState?: string | null;
   }): Promise<void>;
   updateTaskStatus(
     taskId: string,
