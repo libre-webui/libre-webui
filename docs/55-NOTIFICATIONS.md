@@ -28,22 +28,27 @@ reading the list, not replaying the stream.
 
 ## What produces notifications
 
-| Type                | Produced when                                                    |
-| ------------------- | ---------------------------------------------------------------- |
-| `channel-dm`        | Someone sends you a direct message                               |
-| `channel-mention`   | Someone `@mentions` you in a channel, or replies to your message |
-| `channel-invite`    | You are added to a channel                                       |
-| `share`             | Someone shares a resource with you                               |
-| `automation-failed` | One of your automations fails (unless it opted out)              |
-| `calendar-reminder` | An event with a reminder offset reaches its reminder time        |
-| `work-run-finished` | One of your hired Work agents completes a run                    |
-| `work-run-attention`| A hired agent stops for input or hits an error                   |
-| `work-takeover`     | A Work agent asks you to take over its screen                    |
-| `work-approval`     | A Work run is waiting for you to approve a side-effecting action |
-| `system`            | Instance-level announcements                                     |
+| Type                 | Produced when                                                    |
+| -------------------- | ---------------------------------------------------------------- |
+| `channel-dm`         | Someone sends you a direct message                               |
+| `channel-mention`    | Someone `@mentions` you in a channel, or replies to your message |
+| `channel-invite`     | You are added to a channel                                       |
+| `share`              | Someone shares a resource with you                               |
+| `automation-failed`  | One of your automations fails (unless it opted out)              |
+| `calendar-reminder`  | An event with a reminder offset reaches its reminder time        |
+| `work-run-finished`  | One of your hired Work agents completes a run                    |
+| `work-run-attention` | A hired agent stops for input or hits an error                   |
+| `work-takeover`      | A Work agent asks you to take over its screen                    |
+| `work-approval`      | A Work run is waiting for you to approve a side-effecting action |
+| `system`             | Instance-level announcements                                     |
 
 Notifications are always published to the affected user only; a mention
 of a username that is not a member of the channel produces nothing.
+
+Notifications can also fire automations: an
+[automation](./48-AUTOMATIONS.md) with an `event` trigger runs whenever a
+notification of the chosen type reaches its owner, bounded by a one-minute
+per-automation cooldown.
 
 ## Outbound webhooks
 

@@ -67,9 +67,18 @@ router.post('/:automationId/webhook', async (req, res) => {
         .json({ success: false, error: 'This automation is paused' });
       return;
     }
+    // The posted JSON body rides into the run as the trigger payload, so a
+    // CI webhook can hand the routine the commit it is about. Arrays and
+    // scalars are ignored: the payload contract is a JSON object.
+    const body: unknown = req.body;
+    const payload =
+      body && typeof body === 'object' && !Array.isArray(body)
+        ? (body as Record<string, unknown>)
+        : undefined;
     const runId = await automationSchedulerService.runNow(
       automationId,
-      record.user_id
+      record.user_id,
+      payload ? { payload } : undefined
     );
     res.status(202).json({ success: true, data: { runId } });
   } catch (error) {

@@ -22,11 +22,12 @@
  * Date constructor renormalizes.
  */
 
-import type { AutomationTrigger } from '../types/index.js';
+import type { AutomationTrigger, NotificationType } from '../types/index.js';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 const TRIGGER_KINDS = [
+  'event',
   'once',
   'hourly',
   'daily',
@@ -34,6 +35,52 @@ const TRIGGER_KINDS = [
   'monthly',
   'yearly',
 ] as const;
+
+/**
+ * Which notification types may drive an event trigger. The map is exhaustive
+ * so a new NotificationType cannot be added without deciding this. An
+ * automation's own failure notice is excluded: firing on it would let a
+ * failing routine restart itself forever.
+ */
+const EVENT_TRIGGER_TYPES: Record<NotificationType, boolean> = {
+  'channel-mention': true,
+  'channel-dm': true,
+  'channel-invite': true,
+  share: true,
+  'automation-failed': false,
+  'calendar-reminder': true,
+  'media-ready': true,
+  'media-failed': true,
+  'budget-alert': true,
+  'work-run-finished': true,
+  'work-run-attention': true,
+  'work-takeover': true,
+  'work-approval': true,
+  system: true,
+};
+
+/** The notification types an event trigger may listen for, for the UI. */
+export const AUTOMATION_EVENT_TYPES: readonly NotificationType[] = (
+  Object.keys(EVENT_TRIGGER_TYPES) as NotificationType[]
+).filter(type => EVENT_TRIGGER_TYPES[type]);
+
+/** Longest optional title filter an event trigger may carry. */
+const MAX_EVENT_MATCH_LENGTH = 200;
+
+/**
+ * Does a notification satisfy an event trigger? The optional `match` is a
+ * case-insensitive substring test against the notification title — simple on
+ * purpose, so the rule reads the same way in the UI as it behaves here.
+ */
+export function eventTriggerMatches(
+  trigger: AutomationTrigger,
+  event: NotificationType,
+  title: string
+): boolean {
+  if (trigger.kind !== 'event' || trigger.event !== event) return false;
+  if (!trigger.match) return true;
+  return title.toLowerCase().includes(trigger.match.toLowerCase());
+}
 
 const isInt = (value: unknown, min: number, max: number): value is number =>
   typeof value === 'number' &&
@@ -65,6 +112,31 @@ export function validateTriggers(
     }
     const trigger = item as Record<string, unknown>;
     switch (trigger.kind) {
+      case 'event': {
+        const event = trigger.event;
+        if (
+          typeof event !== 'string' ||
+          !EVENT_TRIGGER_TYPES[event as NotificationType]
+        ) {
+          throw new InvalidTriggerError(
+            'An event trigger needs a known notification type'
+          );
+        }
+        if (
+          trigger.match !== undefined &&
+          (typeof trigger.match !== 'string' ||
+            trigger.match.length > MAX_EVENT_MATCH_LENGTH)
+        ) {
+          throw new InvalidTriggerError(
+            `An event trigger's match text must be a string of at most ${MAX_EVENT_MATCH_LENGTH} characters`
+          );
+        }
+        const match =
+          typeof trigger.match === 'string' && trigger.match.trim()
+            ? { match: trigger.match.trim() }
+            : {};
+        return { kind: 'event', event: event as NotificationType, ...match };
+      }
       case 'once': {
         if (!isInt(trigger.at, 0, 8.64e15)) {
           throw new InvalidTriggerError(
@@ -191,8 +263,9 @@ const atLocalTime = (
 
 /**
  * The first occurrence of a trigger strictly after `after`, or null when the
- * trigger is exhausted. The strictly-after invariant is what prevents a fired
- * occurrence from firing again.
+ * trigger is exhausted or has no schedule at all (event triggers). The
+ * strictly-after invariant is what prevents a fired occurrence from firing
+ * again.
  */
 export function nextOccurrence(
   trigger: AutomationTrigger,
@@ -200,6 +273,11 @@ export function nextOccurrence(
 ): number | null {
   const base = new Date(after);
   switch (trigger.kind) {
+    // Event triggers have no clock: they fire from the notification stream,
+    // so they never contribute a next-run time and never project onto a
+    // calendar range. An automation with only event triggers has no next run.
+    case 'event':
+      return null;
     case 'once':
       return trigger.at > after ? trigger.at : null;
     case 'hourly': {

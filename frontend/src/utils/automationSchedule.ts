@@ -17,7 +17,32 @@
 
 /** Human-readable trigger summaries. Names come from Intl, not the catalog. */
 
-import type { AutomationTrigger } from '@/types';
+import type { AutomationTrigger, NotificationType } from '@/types';
+
+/**
+ * The notification types an event trigger may listen for. Mirrors the
+ * server's allow-list; an automation's own failure notice is excluded so a
+ * failing routine cannot restart itself.
+ */
+export const AUTOMATION_EVENT_TYPES: readonly NotificationType[] = [
+  'channel-mention',
+  'channel-dm',
+  'channel-invite',
+  'share',
+  'calendar-reminder',
+  'media-ready',
+  'media-failed',
+  'budget-alert',
+  'work-run-finished',
+  'work-run-attention',
+  'work-takeover',
+  'work-approval',
+  'system',
+];
+
+/** True when no trigger carries a schedule, so there is no next run time. */
+export const isEventOnly = (triggers: AutomationTrigger[]): boolean =>
+  triggers.length > 0 && triggers.every(trigger => trigger.kind === 'event');
 
 const timeText = (hour: number, minute: number, locale: string): string =>
   new Intl.DateTimeFormat(locale, {
@@ -50,6 +75,16 @@ export function describeTrigger(
   t: (key: string, options?: Record<string, unknown>) => string
 ): string {
   switch (trigger.kind) {
+    case 'event':
+      return t(
+        trigger.match
+          ? 'automations.trigger.eventMatching'
+          : 'automations.trigger.event',
+        {
+          event: t(`automations.triggers.events.${trigger.event}`),
+          match: trigger.match ?? '',
+        }
+      );
     case 'once':
       return t('automations.trigger.once', {
         when: new Intl.DateTimeFormat(locale, {
@@ -108,6 +143,12 @@ export function isTriggerValid(trigger: AutomationTrigger): boolean {
     value >= min &&
     value <= max;
   switch (trigger.kind) {
+    case 'event':
+      return (
+        AUTOMATION_EVENT_TYPES.includes(trigger.event) &&
+        (trigger.match === undefined ||
+          (typeof trigger.match === 'string' && trigger.match.length <= 200))
+      );
     case 'once':
       return int(trigger.at, 0, 8.64e15);
     case 'hourly':

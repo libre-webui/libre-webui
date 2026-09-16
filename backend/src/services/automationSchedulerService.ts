@@ -38,6 +38,38 @@ import { createLogger } from '../utils/logger.js';
 
 const logger = createLogger('automation-scheduler');
 
+/** A trigger payload larger than this is dropped instead of carried. */
+export const MAX_TRIGGER_PAYLOAD_CHARS = 4000;
+
+/**
+ * Serialize a trigger payload for the job ledger, or return undefined when it
+ * is absent, unserializable, or too large to carry.
+ */
+const encodeTriggerPayload = (
+  payload: Record<string, unknown> | undefined,
+  automationId: string
+): string | undefined => {
+  if (!payload || typeof payload !== 'object') return undefined;
+  let encoded: string;
+  try {
+    encoded = JSON.stringify(payload);
+  } catch (error) {
+    logger.warn(
+      `Dropping an unserializable trigger payload for automation ${automationId}:`,
+      error
+    );
+    return undefined;
+  }
+  if (!encoded || encoded === '{}') return undefined;
+  if (encoded.length > MAX_TRIGGER_PAYLOAD_CHARS) {
+    logger.warn(
+      `Dropping a ${encoded.length}-character trigger payload for automation ${automationId}; the limit is ${MAX_TRIGGER_PAYLOAD_CHARS}`
+    );
+    return undefined;
+  }
+  return encoded;
+};
+
 const TICK_INTERVAL_MS = 60_000;
 const LEASE_KEY = 'automation-scheduler';
 const LEASE_TTL_MS = 55_000;
@@ -184,10 +216,20 @@ class AutomationSchedulerService {
     return fired;
   }
 
-  /** Enqueue a manual run outside the schedule (Run now). */
-  async runNow(automationId: string, userId: string): Promise<string> {
+  /**
+   * Enqueue a manual run outside the schedule (Run now, an inbound webhook,
+   * or an event trigger). An optional trigger payload rides along so the run
+   * can see what fired it; oversized payloads are dropped rather than
+   * truncated, because half a JSON document is worse than none.
+   */
+  async runNow(
+    automationId: string,
+    userId: string,
+    options?: { payload?: Record<string, unknown> }
+  ): Promise<string> {
     const now = Date.now();
     const run = await automationService.createRun(automationId, userId, now);
+    const triggerPayload = encodeTriggerPayload(options?.payload, automationId);
     await getDurableJobRuntime().service.enqueue({
       jobType: AUTOMATION_RUN_JOB_TYPE,
       actorUserId: userId,
@@ -195,7 +237,11 @@ class AutomationSchedulerService {
       idempotencyKey: `manual:${run.id}`,
       payload: {
         mode: 'encrypted',
-        value: { runId: run.id, automationId },
+        value: {
+          runId: run.id,
+          automationId,
+          ...(triggerPayload ? { triggerPayload } : {}),
+        },
       },
       maxAttempts: 3,
     });
