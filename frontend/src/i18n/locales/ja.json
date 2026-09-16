@@ -2151,12 +2151,43 @@
       "state": "状態",
       "preview": "プレビュー",
       "terminals": "ターミナル",
+      "inUse": "使用中",
+      "inUseNone": "なし",
       "updated": "更新日時",
+      "lastRun": "前回の実行",
+      "noRun": "—",
       "stateRunning": "実行中",
       "stateStopped": "停止",
       "stateStarting": "起動中",
       "stateUnknown": "不明",
-      "noTasks": "Work タスクはまだありません。"
+      "noTasks": "Work タスクはまだありません。",
+      "usageKinds": {
+        "command": "コマンド",
+        "preview": "プレビュー",
+        "terminal": "ターミナル",
+        "screen": "画面"
+      },
+      "recovery": {
+        "title": "復旧",
+        "description": "Work はまだサンドボックスを片付けています。ランタイムがそれぞれの停止を確認するまで、新しい Work の操作はブロックされたままです。",
+        "container": "コンテナ",
+        "task": "タスク",
+        "reason": "理由",
+        "attempts": "試行回数",
+        "lastError": "前回のエラー",
+        "nextAttempt": "次の試行",
+        "retry": "今すぐ再試行",
+        "retrying": "再試行しています…",
+        "reasonStartup": "起動時に実行中",
+        "reasonStopFailed": "停止に失敗",
+        "reasonRuntimeUnreachable": "ランタイムに到達できません",
+        "reasonOrphan": "タスクの記録なし",
+        "notScheduled": "予定なし",
+        "loadFailed": "保留中のクリーンアップを読み込めませんでした。",
+        "retrySucceeded": "保留中のクリーンアップ {{attempted}} 件中 {{cleared}} 件を完了しました。",
+        "retryPending": "保留中のクリーンアップ {{attempted}} 件を再試行中です。",
+        "retryFailed": "保留中のクリーンアップを再試行できませんでした。"
+      }
     },
     "recovery": {
       "title": "復旧訓練",
@@ -2806,7 +2837,9 @@
       "starting": "プレビューを開始中…",
       "frameTitle": "ワークスペースのプレビュー",
       "failed": "プレビューを開始できませんでした。アクティビティを確認して、別のコマンドをお試しください。",
-      "empty": "このワークスペース内でアプリを起動すると、ここで確認できます。"
+      "empty": "このワークスペース内でアプリを起動すると、ここで確認できます。",
+      "finished": "このタスクは完了しています。プレビューを開始するには再度開いてください。",
+      "reopenStart": "タスクを再度開いてプレビューを開始"
     },
     "mobile": {
       "surface": "タスク画面",
@@ -2900,7 +2933,9 @@
       "teachSaved": "スキル「{{name}}」として保存しました",
       "watchingLearning": "エージェントが見て学習しています",
       "unmute": "ミュート解除",
-      "mute": "ミュート"
+      "mute": "ミュート",
+      "finished": "このタスクは完了しています。画面を戻すには再度開いてください。",
+      "reopenOpen": "タスクを再度開いて画面を開く"
     },
     "computerSetup": {
       "title": "Work Computer",
@@ -2946,6 +2981,29 @@
       "allowAlways": "常に許可する",
       "deny": "拒否",
       "failed": "判断を送信できませんでした。"
+    },
+    "idleStopHint": "{{minutes}} 分間操作がないと停止します。",
+    "runs": {
+      "title": "実行",
+      "empty": "完了した実行はまだありません。各実行は生成した内容と変更したファイルを保持します。",
+      "fileCount": "ファイル ({{total}})",
+      "exitStates": {
+        "completed": "完了",
+        "needsInput": "入力待ち",
+        "failed": "失敗",
+        "cancelled": "キャンセル済み"
+      }
+    },
+    "recovery": {
+      "pending": "Work は新しい操作を受け付ける前に、{{pending}} 件のサンドボックスのクリーンアップを確認しています。",
+      "since": "{{time}} からブロックされています。",
+      "nextAttempt": "次の試行は {{time}}。",
+      "adminHint": "管理者はシステム > Work から再試行できます。",
+      "retry": "今すぐ再試行",
+      "retrying": "再試行しています…",
+      "retrySucceeded": "保留中のクリーンアップ {{attempted}} 件中 {{cleared}} 件を完了しました。",
+      "retryPending": "保留中のクリーンアップ {{attempted}} 件を再試行中です。",
+      "retryFailed": "保留中のクリーンアップを再試行できませんでした。"
     }
   },
   "personaBackground": {
@@ -3142,7 +3200,11 @@
       "targetWork": "Work タスク",
       "workPolicy": "Work ポリシー",
       "workPolicyDefault": "デフォルト（全体の制限）",
-      "taskBoundNote": "このルーティンはエージェント自身のワークスペースと会話の中で、エージェントのモデルとランタイムで実行されます。"
+      "taskBoundNote": "このルーティンはエージェント自身のワークスペースと会話の中で、エージェントのモデルとランタイムで実行されます。",
+      "event": "イベント",
+      "eventMatch": "一致させるテキスト",
+      "eventMatchPlaceholder": "タイトルに含まれる任意のテキスト",
+      "eventOnlyHint": "このルーティンにはスケジュールがありません。イベントが発生したときに実行され、頻度は1分に1回までです。"
     },
     "kind": {
       "once": "1回のみ",
@@ -3150,7 +3212,8 @@
       "daily": "毎日",
       "weekly": "毎週",
       "monthly": "毎月",
-      "yearly": "毎年"
+      "yearly": "毎年",
+      "event": "イベント発生時"
     },
     "trigger": {
       "once": "{{when}}に1回",
@@ -3158,7 +3221,9 @@
       "daily": "毎日{{time}}",
       "weekly": "毎週{{day}}の{{time}}",
       "monthly": "毎月{{day}}日の{{time}}",
-      "yearly": "毎年{{date}}の{{time}}"
+      "yearly": "毎年{{date}}の{{time}}",
+      "event": "{{event}}ときに実行されます",
+      "eventMatching": "{{event}}とき、タイトルに「{{match}}」が含まれる場合に実行されます"
     },
     "finishedNotification": "{{n}} 件の自動化の実行が完了しました",
     "templatesTitle": "テンプレート",
@@ -3190,6 +3255,23 @@
       "disable": "無効にする",
       "revealHint": "表示は一度だけです。Bearer トークンまたは X-Libre-Webhook-Secret ヘッダーとして送信してください。",
       "failed": "Webhook を更新できませんでした。"
+    },
+    "triggers": {
+      "events": {
+        "channel-mention": "誰かがチャンネルであなたにメンションする",
+        "channel-dm": "ダイレクトメッセージを受け取る",
+        "channel-invite": "チャンネルに招待される",
+        "share": "何かがあなたと共有される",
+        "calendar-reminder": "カレンダーのリマインダーが鳴る",
+        "media-ready": "メディアジョブが完了する",
+        "media-failed": "メディアジョブが失敗する",
+        "budget-alert": "予算アラートが発生する",
+        "work-run-finished": "エージェントの実行が完了する",
+        "work-run-attention": "エージェントの実行に対応が必要になる",
+        "work-takeover": "エージェントが操作の引き継ぎを求める",
+        "work-approval": "エージェントが承認を待っている",
+        "system": "システム通知が届く"
+      }
     }
   },
   "home": {
@@ -3366,7 +3448,11 @@
       "instructionsPlaceholder": "このスキルを読み込んだモデルが読む Markdown の指示です。",
       "instructionsHint": "スキルを使うときだけ読み込まれるので、それまでは長さのコストはかかりません。",
       "enabled": "有効",
-      "enabledHint": "無効なスキルは保存されたまま残りますが、モデルに提示されることはありません。"
+      "enabledHint": "無効なスキルは保存されたまま残りますが、モデルに提示されることはありません。",
+      "approval": "常に確認してから実行",
+      "approvalHint": "このスキルが読み込まれている間は、承認が他でオフになっていても、これらのツールが実行される前にエージェントが一時停止してあなたを待ちます。保存済みの「常に許可する」ルールがあなたの代わりに承認することはできません。",
+      "approvalTools": "承認が必要なツール",
+      "approvalToolsHint": "すべてのチェックボックスをオフのままにすると、制限されているすべてのツールが対象になります。"
     },
     "history": {
       "open": "バージョン履歴",
@@ -3456,7 +3542,8 @@
     "authModes": {
       "none": "認証なし",
       "bearer": "Bearer トークン",
-      "header": "カスタムヘッダー"
+      "header": "カスタムヘッダー",
+      "oauth": "対話型 OAuth"
     },
     "accessModes": {
       "admins-only": "管理者のみ",
@@ -3474,6 +3561,9 @@
       "specUrlHint": "任意です。空のままならベース URL を使います。",
       "authMode": "認証",
       "authHeader": "ヘッダー名",
+      "oauthClientId": "OAuth クライアント ID",
+      "oauthClientIdHint": "任意です。プロバイダーがクライアントを自動登録しない場合のみ必要です。",
+      "oauthClientSecret": "OAuth クライアントシークレット",
       "accessMode": "使える人",
       "timeoutMs": "タイムアウト（ミリ秒）",
       "maxResponseBytes": "最大レスポンス（バイト）",
@@ -3508,6 +3598,21 @@
         "name": "MCP サーバー",
         "description": "Streamable HTTP 経由の MCP サーバーの出発点。"
       }
+    },
+    "oauth": {
+      "title": "接続",
+      "hint": "接続するとプロバイダーのサインイン画面に移動します。トークンはこのサーバーに保存され、あなた自身の呼び出しにのみ使われます。",
+      "connect": "接続",
+      "reconnect": "再接続",
+      "disconnect": "切断",
+      "connected": "接続済み",
+      "notConnected": "未接続",
+      "expiresAt": "アクセスの有効期限は {{when}}",
+      "connectFailed": "接続を開始できませんでした。",
+      "disconnected": "ツールサーバーが切断されました",
+      "disconnectFailed": "ツールサーバーを切断できませんでした。",
+      "callbackSuccess": "ツールサーバーが接続されました",
+      "callbackError": "ツールサーバーに接続できませんでした。"
     }
   },
   "composer": {
@@ -3603,7 +3708,11 @@
     "unpin": "ピン留めを解除",
     "edit": "メッセージを編集",
     "deleteMessage": "メッセージを削除",
-    "replyCount": "{{total}} 件の返信"
+    "replyCount": "{{total}} 件の返信",
+    "toolCalls": {
+      "summary": "使用したツール ({{total}})",
+      "deniedHint": "変更を伴うツールはチャンネルでは拒否されます。チャットから実行してください。"
+    }
   },
   "notifications": {
     "title": "通知",

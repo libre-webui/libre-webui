@@ -2151,12 +2151,43 @@
       "state": "Status",
       "preview": "Voorbeeld",
       "terminals": "Terminals",
+      "inUse": "In gebruik",
+      "inUseNone": "Niemand",
       "updated": "Bijgewerkt",
+      "lastRun": "Laatste run",
+      "noRun": "—",
       "stateRunning": "Actief",
       "stateStopped": "Gestopt",
       "stateStarting": "Wordt gestart",
       "stateUnknown": "Onbekend",
-      "noTasks": "Nog geen Work-taken."
+      "noTasks": "Nog geen Work-taken.",
+      "usageKinds": {
+        "command": "opdracht",
+        "preview": "voorbeeld",
+        "terminal": "terminal",
+        "screen": "scherm"
+      },
+      "recovery": {
+        "title": "Herstel",
+        "description": "Sandboxes die Work nog aan het opruimen is. Nieuwe Work-bewerkingen blijven geblokkeerd totdat de runtime bevestigt dat elke sandbox is gestopt.",
+        "container": "Container",
+        "task": "Taak",
+        "reason": "Reden",
+        "attempts": "Pogingen",
+        "lastError": "Laatste fout",
+        "nextAttempt": "Volgende poging",
+        "retry": "Nu opnieuw proberen",
+        "retrying": "Opnieuw proberen…",
+        "reasonStartup": "Actief bij het opstarten",
+        "reasonStopFailed": "Stoppen mislukt",
+        "reasonRuntimeUnreachable": "Runtime niet bereikbaar",
+        "reasonOrphan": "Geen taakregistratie",
+        "notScheduled": "Niet gepland",
+        "loadFailed": "De openstaande opschoningen konden niet worden geladen.",
+        "retrySucceeded": "{{cleared}} van {{attempted}} openstaande opschoningen voltooid.",
+        "retryPending": "Nog steeds bezig met het opnieuw proberen van {{attempted}} openstaande opschoningen.",
+        "retryFailed": "De openstaande opschoningen konden niet opnieuw worden geprobeerd."
+      }
     },
     "recovery": {
       "title": "Hersteloefeningen",
@@ -2806,7 +2837,9 @@
       "starting": "Voorbeeld starten…",
       "frameTitle": "Werkruimtevoorbeeld",
       "failed": "Het voorbeeld kon niet worden gestart. Controleer Activiteit en probeer daarna een andere opdracht.",
-      "empty": "Start de app in deze werkruimte om deze hier te inspecteren."
+      "empty": "Start de app in deze werkruimte om deze hier te inspecteren.",
+      "finished": "Deze taak is voltooid. Open hem opnieuw om een voorbeeld te starten.",
+      "reopenStart": "Taak heropenen en voorbeeld starten"
     },
     "mobile": {
       "surface": "Taakweergave",
@@ -2900,7 +2933,9 @@
       "teachSaved": "Opgeslagen als vaardigheid \"{{name}}\"",
       "watchingLearning": "De agent kijkt mee en leert",
       "unmute": "Geluid aan",
-      "mute": "Dempen"
+      "mute": "Dempen",
+      "finished": "Deze taak is voltooid. Open hem opnieuw om het scherm terug te halen.",
+      "reopenOpen": "Taak heropenen en scherm openen"
     },
     "computerSetup": {
       "title": "Work Computer",
@@ -2946,6 +2981,29 @@
       "allowAlways": "Altijd toestaan",
       "deny": "Weigeren",
       "failed": "De beslissing kon niet worden verzonden."
+    },
+    "idleStopHint": "Stopt na {{minutes}} minuten zonder activiteit.",
+    "runs": {
+      "title": "Runs",
+      "empty": "Nog geen voltooide runs. Elke run bewaart wat hij heeft opgeleverd en de bestanden die hij heeft gewijzigd.",
+      "fileCount": "Bestanden ({{total}})",
+      "exitStates": {
+        "completed": "Voltooid",
+        "needsInput": "Invoer nodig",
+        "failed": "Mislukt",
+        "cancelled": "Geannuleerd"
+      }
+    },
+    "recovery": {
+      "pending": "Work bevestigt {{pending}} sandbox-opschoning(en) voordat het nieuwe bewerkingen accepteert.",
+      "since": "Geblokkeerd sinds {{time}}.",
+      "nextAttempt": "Volgende poging {{time}}.",
+      "adminHint": "Beheerders kunnen dit opnieuw proberen via Systeem > Work.",
+      "retry": "Nu opnieuw proberen",
+      "retrying": "Opnieuw proberen…",
+      "retrySucceeded": "{{cleared}} van {{attempted}} openstaande opschoningen voltooid.",
+      "retryPending": "Nog steeds bezig met het opnieuw proberen van {{attempted}} openstaande opschoningen.",
+      "retryFailed": "De openstaande opschoningen konden niet opnieuw worden geprobeerd."
     }
   },
   "personaBackground": {
@@ -3142,7 +3200,11 @@
       "targetWork": "Work-taak",
       "workPolicy": "Work-beleid",
       "workPolicyDefault": "Standaard (globale limieten)",
-      "taskBoundNote": "Deze routine draait binnen de eigen werkruimte en het gesprek van de agent, met het model en de runtime van de agent."
+      "taskBoundNote": "Deze routine draait binnen de eigen werkruimte en het gesprek van de agent, met het model en de runtime van de agent.",
+      "event": "Gebeurtenis",
+      "eventMatch": "Overeenkomende tekst",
+      "eventMatchPlaceholder": "Optionele tekst in de titel",
+      "eventOnlyHint": "Deze routine heeft geen schema. Hij wordt uitgevoerd zodra de gebeurtenis plaatsvindt, hoogstens één keer per minuut."
     },
     "kind": {
       "once": "Eenmalig",
@@ -3150,7 +3212,8 @@
       "daily": "Dagelijks",
       "weekly": "Wekelijks",
       "monthly": "Maandelijks",
-      "yearly": "Jaarlijks"
+      "yearly": "Jaarlijks",
+      "event": "Bij een gebeurtenis"
     },
     "trigger": {
       "once": "Eenmalig op {{when}}",
@@ -3158,7 +3221,9 @@
       "daily": "Dagelijks om {{time}}",
       "weekly": "Wekelijks op {{day}} om {{time}}",
       "monthly": "Maandelijks op dag {{day}} om {{time}}",
-      "yearly": "Jaarlijks op {{date}} om {{time}}"
+      "yearly": "Jaarlijks op {{date}} om {{time}}",
+      "event": "Wordt uitgevoerd wanneer {{event}}",
+      "eventMatching": "Wordt uitgevoerd wanneer {{event}} en de titel \"{{match}}\" bevat"
     },
     "finishedNotification": "{{n}} automatiseringsuitvoering(en) voltooid",
     "templatesTitle": "Sjablonen",
@@ -3190,6 +3255,23 @@
       "disable": "Uitschakelen",
       "revealHint": "Wordt één keer getoond. Stuur het als Bearer-token of X-Libre-Webhook-Secret-header.",
       "failed": "De webhook kon niet worden bijgewerkt."
+    },
+    "triggers": {
+      "events": {
+        "channel-mention": "iemand je in een kanaal noemt",
+        "channel-dm": "je een direct bericht ontvangt",
+        "channel-invite": "je voor een kanaal wordt uitgenodigd",
+        "share": "iets met je wordt gedeeld",
+        "calendar-reminder": "een agenda-herinnering afgaat",
+        "media-ready": "een mediataak is voltooid",
+        "media-failed": "een mediataak mislukt",
+        "budget-alert": "een budgetwaarschuwing afgaat",
+        "work-run-finished": "een agent-run is voltooid",
+        "work-run-attention": "een agent-run aandacht nodig heeft",
+        "work-takeover": "een agent je vraagt om over te nemen",
+        "work-approval": "een agent op je goedkeuring wacht",
+        "system": "er een systeemmelding binnenkomt"
+      }
     }
   },
   "home": {
@@ -3366,7 +3448,11 @@
       "instructionsPlaceholder": "Markdown-instructies die het model leest zodra het deze vaardigheid laadt.",
       "instructionsHint": "Wordt alleen geladen wanneer de vaardigheid wordt gebruikt, dus lengte kost tot dan niets.",
       "enabled": "Ingeschakeld",
-      "enabledHint": "Uitgeschakelde vaardigheden blijven bewaard, maar worden nooit aan het model aangeboden."
+      "enabledHint": "Uitgeschakelde vaardigheden blijven bewaard, maar worden nooit aan het model aangeboden.",
+      "approval": "Altijd vragen voordat",
+      "approvalHint": "Zolang deze vaardigheid geladen is, pauzeert de agent voor jou voordat deze gereedschappen draaien, zelfs als goedkeuringen verder uitstaan. Een opgeslagen \"Altijd toestaan\"-regel kan ze nooit voor je goedkeuren.",
+      "approvalTools": "Gereedschappen die goedkeuring nodig hebben",
+      "approvalToolsHint": "Laat alle vakjes leeg om elk beveiligd gereedschap te dekken."
     },
     "history": {
       "open": "Versiegeschiedenis",
@@ -3456,7 +3542,8 @@
     "authModes": {
       "none": "Geen authenticatie",
       "bearer": "Bearer-token",
-      "header": "Eigen header"
+      "header": "Eigen header",
+      "oauth": "Interactieve OAuth"
     },
     "accessModes": {
       "admins-only": "Alleen beheerders",
@@ -3474,6 +3561,9 @@
       "specUrlHint": "Optioneel. Leeg laten betekent: de basis-URL wordt gebruikt.",
       "authMode": "Authenticatie",
       "authHeader": "Headernaam",
+      "oauthClientId": "OAuth-client-ID",
+      "oauthClientIdHint": "Optioneel. Alleen nodig wanneer de provider clients niet automatisch registreert.",
+      "oauthClientSecret": "OAuth-clientgeheim",
       "accessMode": "Wie het mag gebruiken",
       "timeoutMs": "Time-out (ms)",
       "maxResponseBytes": "Max. antwoord (bytes)",
@@ -3508,6 +3598,21 @@
         "name": "MCP-server",
         "description": "Een startpunt voor een MCP-server via Streamable HTTP."
       }
+    },
+    "oauth": {
+      "title": "Verbinding",
+      "hint": "Verbinden stuurt je naar de provider om aan te melden. Tokens blijven op deze server en worden alleen gebruikt voor je eigen aanroepen.",
+      "connect": "Verbinden",
+      "reconnect": "Opnieuw verbinden",
+      "disconnect": "Verbinding verbreken",
+      "connected": "Verbonden",
+      "notConnected": "Niet verbonden",
+      "expiresAt": "Toegang verloopt {{when}}",
+      "connectFailed": "De verbinding kon niet worden gestart.",
+      "disconnected": "Verbinding met gereedschapsserver verbroken",
+      "disconnectFailed": "De verbinding met de gereedschapsserver kon niet worden verbroken.",
+      "callbackSuccess": "Verbonden met gereedschapsserver",
+      "callbackError": "De gereedschapsserver kon niet worden verbonden."
     }
   },
   "composer": {
@@ -3603,7 +3708,11 @@
     "unpin": "Bericht losmaken",
     "edit": "Bericht bewerken",
     "deleteMessage": "Bericht verwijderen",
-    "replyCount": "{{total}} reacties"
+    "replyCount": "{{total}} reacties",
+    "toolCalls": {
+      "summary": "Gebruikte gereedschappen ({{total}})",
+      "deniedHint": "Gereedschappen die iets wijzigen worden in kanalen geweigerd. Voer ze uit vanuit een chat."
+    }
   },
   "notifications": {
     "title": "Meldingen",

@@ -2151,12 +2151,43 @@
       "state": "Tilstand",
       "preview": "Forhåndsvisning",
       "terminals": "Terminaler",
+      "inUse": "I brug",
+      "inUseNone": "Ingen",
+      "usageKinds": {
+        "command": "kommando",
+        "preview": "forhåndsvisning",
+        "terminal": "terminal",
+        "screen": "skærm"
+      },
       "updated": "Opdateret",
+      "lastRun": "Sidste kørsel",
+      "noRun": "—",
       "stateRunning": "Kører",
       "stateStopped": "Stoppet",
       "stateStarting": "Starter",
       "stateUnknown": "Ukendt",
-      "noTasks": "Ingen Work-opgaver endnu."
+      "noTasks": "Ingen Work-opgaver endnu.",
+      "recovery": {
+        "title": "Genopretning",
+        "description": "Work er stadig ved at rydde op i sandkasser. Nye Work-handlinger forbliver blokeret, indtil runtime bekræfter, at hver enkelt er stoppet.",
+        "container": "Container",
+        "task": "Opgave",
+        "reason": "Årsag",
+        "attempts": "Forsøg",
+        "lastError": "Seneste fejl",
+        "nextAttempt": "Næste forsøg",
+        "retry": "Prøv igen nu",
+        "retrying": "Prøver igen…",
+        "reasonStartup": "Kørte ved opstart",
+        "reasonStopFailed": "Stop mislykkedes",
+        "reasonRuntimeUnreachable": "Runtime kan ikke nås",
+        "reasonOrphan": "Ingen opgaveregistrering",
+        "notScheduled": "Ikke planlagt",
+        "loadFailed": "Kunne ikke indlæse de afventende oprydninger.",
+        "retrySucceeded": "Ryddede {{cleared}} af {{attempted}} afventende oprydninger.",
+        "retryPending": "Prøver stadig {{attempted}} afventende oprydninger igen.",
+        "retryFailed": "Kunne ikke prøve de afventende oprydninger igen."
+      }
     },
     "recovery": {
       "title": "Genoprettelsesøvelser",
@@ -2806,7 +2837,9 @@
       "starting": "Starter forhåndsvisning…",
       "frameTitle": "Forhåndsvisning af arbejdsområde",
       "failed": "Forhåndsvisningen kunne ikke starte. Kontrollér Aktivitet, og prøv derefter en anden kommando.",
-      "empty": "Start appen i dette arbejdsområde for at undersøge den her."
+      "empty": "Start appen i dette arbejdsområde for at undersøge den her.",
+      "finished": "Denne opgave er afsluttet. Genåbn den for at starte en forhåndsvisning.",
+      "reopenStart": "Genåbn opgave og start forhåndsvisning"
     },
     "mobile": {
       "surface": "Opgavevisning",
@@ -2900,7 +2933,9 @@
       "teachSaved": "Gemt som færdigheden \"{{name}}\"",
       "watchingLearning": "Agenten ser med og lærer",
       "unmute": "Slå lyd til",
-      "mute": "Slå lyd fra"
+      "mute": "Slå lyd fra",
+      "finished": "Denne opgave er afsluttet. Genåbn den for at få skærmen tilbage.",
+      "reopenOpen": "Genåbn opgave og åbn skærmen"
     },
     "computerSetup": {
       "title": "Work Computer",
@@ -2939,6 +2974,17 @@
       "approvalRuleDelete": "Fjern regel",
       "approvalRuleDeleteFailed": "Reglen kunne ikke fjernes."
     },
+    "runs": {
+      "title": "Kørsler",
+      "empty": "Ingen fuldførte kørsler endnu. Hver kørsel gemmer det, den producerede, og de filer, den ændrede.",
+      "fileCount": "Filer ({{total}})",
+      "exitStates": {
+        "completed": "Fuldført",
+        "needsInput": "Kræver input",
+        "failed": "Mislykket",
+        "cancelled": "Annulleret"
+      }
+    },
     "approval": {
       "title": "Godkendelse påkrævet",
       "description": "Agenten vil køre {{tool}}. Handlingen kan ændre data eller få virkning uden for denne samtale.",
@@ -2946,6 +2992,18 @@
       "allowAlways": "Tillad altid",
       "deny": "Afvis",
       "failed": "Beslutningen kunne ikke sendes."
+    },
+    "idleStopHint": "Stopper efter {{minutes}} minutter uden aktivitet.",
+    "recovery": {
+      "pending": "Work bekræfter {{pending}} sandkasse-oprydning(er), før den accepterer nye handlinger.",
+      "since": "Blokeret siden {{time}}.",
+      "nextAttempt": "Næste forsøg {{time}}.",
+      "adminHint": "Administratorer kan prøve igen fra System > Work.",
+      "retry": "Prøv igen nu",
+      "retrying": "Prøver igen…",
+      "retrySucceeded": "Ryddede {{cleared}} af {{attempted}} afventende oprydninger.",
+      "retryPending": "Prøver stadig {{attempted}} afventende oprydninger igen.",
+      "retryFailed": "Kunne ikke prøve de afventende oprydninger igen."
     }
   },
   "personaBackground": {
@@ -3142,7 +3200,11 @@
       "targetWork": "Work-opgave",
       "workPolicy": "Work-politik",
       "workPolicyDefault": "Standard (globale grænser)",
-      "taskBoundNote": "Denne rutine kører inde i agentens eget arbejdsområde og samtale, med agentens model og runtime."
+      "taskBoundNote": "Denne rutine kører inde i agentens eget arbejdsområde og samtale, med agentens model og runtime.",
+      "event": "Hændelse",
+      "eventMatch": "Matchende tekst",
+      "eventMatchPlaceholder": "Valgfri tekst i titlen",
+      "eventOnlyHint": "Denne rutine har ingen tidsplan. Den kører, når hændelsen sker, højst én gang i minuttet."
     },
     "kind": {
       "once": "Én gang",
@@ -3150,7 +3212,8 @@
       "daily": "Dagligt",
       "weekly": "Ugentligt",
       "monthly": "Månedligt",
-      "yearly": "Årligt"
+      "yearly": "Årligt",
+      "event": "Ved en hændelse"
     },
     "trigger": {
       "once": "Én gang den {{when}}",
@@ -3158,7 +3221,9 @@
       "daily": "Dagligt kl. {{time}}",
       "weekly": "Ugentligt {{day}} kl. {{time}}",
       "monthly": "Månedligt den {{day}}. kl. {{time}}",
-      "yearly": "Årligt den {{date}} kl. {{time}}"
+      "yearly": "Årligt den {{date}} kl. {{time}}",
+      "event": "Kører når {{event}}",
+      "eventMatching": "Kører når {{event}}, og titlen indeholder \"{{match}}\""
     },
     "finishedNotification": "{{n}} automatiseringskørsler er færdige",
     "templatesTitle": "Skabeloner",
@@ -3190,6 +3255,23 @@
       "disable": "Deaktivér",
       "revealHint": "Vises kun én gang. Send den som Bearer-token eller X-Libre-Webhook-Secret-header.",
       "failed": "Webhooken kunne ikke opdateres."
+    },
+    "triggers": {
+      "events": {
+        "channel-mention": "nogen nævner dig i en kanal",
+        "channel-dm": "du modtager en direkte besked",
+        "channel-invite": "du bliver inviteret til en kanal",
+        "share": "noget bliver delt med dig",
+        "calendar-reminder": "en kalenderpåmindelse udløses",
+        "media-ready": "et medjob er færdigt",
+        "media-failed": "et medjob mislykkes",
+        "budget-alert": "en budgetadvarsel udløses",
+        "work-run-finished": "en agentkørsel er færdig",
+        "work-run-attention": "en agentkørsel kræver opmærksomhed",
+        "work-takeover": "en agent beder dig tage styringen",
+        "work-approval": "en agent venter på din godkendelse",
+        "system": "der kommer en systembesked"
+      }
     }
   },
   "home": {
@@ -3366,7 +3448,11 @@
       "instructionsPlaceholder": "Markdown-instruktioner, som modellen læser, når den indlæser færdigheden.",
       "instructionsHint": "Indlæses kun, når færdigheden bruges, så længden koster intet indtil da.",
       "enabled": "Aktiveret",
-      "enabledHint": "Deaktiverede færdigheder bliver gemt, men tilbydes aldrig modellen."
+      "enabledHint": "Deaktiverede færdigheder bliver gemt, men tilbydes aldrig modellen.",
+      "approval": "Spørg altid før",
+      "approvalHint": "Mens denne færdighed er indlæst, stopper agenten og venter på dig, før disse værktøjer kører, selv hvis godkendelser ellers er slået fra. En gemt \"Tillad altid\"-regel kan aldrig godkende dem for dig.",
+      "approvalTools": "Værktøjer, der kræver godkendelse",
+      "approvalToolsHint": "Lad alle felter være ukrydsede for at dække hvert spærret værktøj."
     },
     "history": {
       "open": "Versionshistorik",
@@ -3448,6 +3534,21 @@
     "credentialRemove": "Fjern",
     "credentialRemoved": "Adgangsoplysninger fjernet",
     "credentialRemoveFailed": "Adgangsoplysningerne kunne ikke fjernes.",
+    "oauth": {
+      "title": "Forbindelse",
+      "hint": "Tilslutning sender dig til udbyderen for at logge ind. Tokens forbliver på denne server og bruges kun til dine egne kald.",
+      "connect": "Opret forbindelse",
+      "reconnect": "Genopret forbindelse",
+      "disconnect": "Afbryd forbindelse",
+      "connected": "Forbundet",
+      "notConnected": "Ikke forbundet",
+      "expiresAt": "Adgangen udløber {{when}}",
+      "connectFailed": "Kunne ikke starte forbindelsen.",
+      "disconnected": "Værktøjsserver frakoblet",
+      "disconnectFailed": "Kunne ikke afbryde værktøjsserveren.",
+      "callbackSuccess": "Værktøjsserver forbundet",
+      "callbackError": "Værktøjsserveren kunne ikke forbindes."
+    },
     "builtinSource": "Denne server",
     "kinds": {
       "openapi": "OpenAPI",
@@ -3456,7 +3557,8 @@
     "authModes": {
       "none": "Ingen godkendelse",
       "bearer": "Bearer-token",
-      "header": "Egen header"
+      "header": "Egen header",
+      "oauth": "Interaktiv OAuth"
     },
     "accessModes": {
       "admins-only": "Kun administratorer",
@@ -3474,6 +3576,9 @@
       "specUrlHint": "Valgfrit. Bruger basis-URL'en, når feltet er tomt.",
       "authMode": "Godkendelse",
       "authHeader": "Headernavn",
+      "oauthClientId": "OAuth-klient-id",
+      "oauthClientIdHint": "Valgfrit. Kun nødvendigt, når udbyderen ikke registrerer klienter automatisk.",
+      "oauthClientSecret": "OAuth-klienthemmelighed",
       "accessMode": "Hvem må bruge den",
       "timeoutMs": "Timeout (ms)",
       "maxResponseBytes": "Maks. svar (bytes)",
@@ -3603,7 +3708,11 @@
     "unpin": "Frigør besked",
     "edit": "Rediger besked",
     "deleteMessage": "Slet besked",
-    "replyCount": "{{total}} svar"
+    "replyCount": "{{total}} svar",
+    "toolCalls": {
+      "summary": "Værktøjer brugt ({{total}})",
+      "deniedHint": "Værktøjer, der ændrer ting, afvises i kanaler. Kør dem fra en chat."
+    }
   },
   "notifications": {
     "title": "Notifikationer",

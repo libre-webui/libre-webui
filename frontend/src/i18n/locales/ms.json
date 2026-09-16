@@ -2151,12 +2151,43 @@
       "state": "Keadaan",
       "preview": "Pratonton",
       "terminals": "Terminal",
+      "inUse": "Digunakan",
+      "inUseNone": "Tiada",
       "updated": "Dikemas kini",
+      "lastRun": "Larian terakhir",
+      "noRun": "—",
       "stateRunning": "Berjalan",
       "stateStopped": "Berhenti",
       "stateStarting": "Bermula",
       "stateUnknown": "Tidak diketahui",
-      "noTasks": "Tiada tugas Work lagi."
+      "noTasks": "Tiada tugas Work lagi.",
+      "usageKinds": {
+        "command": "perintah",
+        "preview": "pratonton",
+        "terminal": "terminal",
+        "screen": "skrin"
+      },
+      "recovery": {
+        "title": "Pemulihan",
+        "description": "Kotak pasir yang masih dibersihkan oleh Work. Operasi Work baharu kekal disekat sehingga masa jalan mengesahkan setiap satu telah dihentikan.",
+        "container": "Bekas",
+        "task": "Tugas",
+        "reason": "Sebab",
+        "attempts": "Percubaan",
+        "lastError": "Ralat terakhir",
+        "nextAttempt": "Percubaan seterusnya",
+        "retry": "Cuba semula sekarang",
+        "retrying": "Mencuba semula…",
+        "reasonStartup": "Sedang berjalan semasa permulaan",
+        "reasonStopFailed": "Gagal dihentikan",
+        "reasonRuntimeUnreachable": "Masa jalan tidak dapat dihubungi",
+        "reasonOrphan": "Tiada rekod tugas",
+        "notScheduled": "Tidak dijadualkan",
+        "loadFailed": "Pembersihan tertunda tidak dapat dimuatkan.",
+        "retrySucceeded": "{{cleared}} daripada {{attempted}} pembersihan tertunda selesai.",
+        "retryPending": "Masih mencuba semula {{attempted}} pembersihan tertunda.",
+        "retryFailed": "Pembersihan tertunda tidak dapat dicuba semula."
+      }
     },
     "recovery": {
       "title": "Latihan pemulihan",
@@ -2806,7 +2837,9 @@
       "starting": "Memulakan pratonton…",
       "frameTitle": "Pratonton ruang kerja",
       "failed": "Pratonton tidak dapat dimulakan. Semak Aktiviti, kemudian cuba perintah lain.",
-      "empty": "Mulakan aplikasi dalam ruang kerja ini untuk memeriksanya di sini."
+      "empty": "Mulakan aplikasi dalam ruang kerja ini untuk memeriksanya di sini.",
+      "finished": "Tugas ini telah selesai. Buka semula untuk memulakan pratonton.",
+      "reopenStart": "Buka semula tugas dan mulakan pratonton"
     },
     "mobile": {
       "surface": "Paparan tugas",
@@ -2900,7 +2933,9 @@
       "teachSaved": "Disimpan sebagai kemahiran \"{{name}}\"",
       "watchingLearning": "Ejen sedang memerhati dan belajar",
       "unmute": "Nyahsenyapkan",
-      "mute": "Senyapkan"
+      "mute": "Senyapkan",
+      "finished": "Tugas ini telah selesai. Buka semula untuk memaparkan skrinnya kembali.",
+      "reopenOpen": "Buka semula tugas dan buka skrin"
     },
     "computerSetup": {
       "title": "Work Computer",
@@ -2946,6 +2981,29 @@
       "allowAlways": "Izinkan sentiasa",
       "deny": "Tolak",
       "failed": "Keputusan tidak dapat dihantar."
+    },
+    "idleStopHint": "Berhenti selepas {{minutes}} minit tanpa aktiviti.",
+    "runs": {
+      "title": "Larian",
+      "empty": "Belum ada larian selesai. Setiap larian menyimpan apa yang dihasilkannya dan fail yang diubahnya.",
+      "fileCount": "Fail ({{total}})",
+      "exitStates": {
+        "completed": "Selesai",
+        "needsInput": "Memerlukan input",
+        "failed": "Gagal",
+        "cancelled": "Dibatalkan"
+      }
+    },
+    "recovery": {
+      "pending": "Work sedang mengesahkan {{pending}} pembersihan kotak pasir sebelum menerima operasi baharu.",
+      "since": "Disekat sejak {{time}}.",
+      "nextAttempt": "Percubaan seterusnya {{time}}.",
+      "adminHint": "Pentadbir boleh cuba semula dari Sistem > Work.",
+      "retry": "Cuba semula sekarang",
+      "retrying": "Mencuba semula…",
+      "retrySucceeded": "{{cleared}} daripada {{attempted}} pembersihan tertunda selesai.",
+      "retryPending": "Masih mencuba semula {{attempted}} pembersihan tertunda.",
+      "retryFailed": "Pembersihan tertunda tidak dapat dicuba semula."
     }
   },
   "personaBackground": {
@@ -3142,7 +3200,11 @@
       "targetWork": "Tugas Work",
       "workPolicy": "Dasar Work",
       "workPolicyDefault": "Lalai (had global)",
-      "taskBoundNote": "Rutin ini berjalan di dalam ruang kerja dan perbualan ejen itu sendiri, dengan model dan masa jalan ejen."
+      "taskBoundNote": "Rutin ini berjalan di dalam ruang kerja dan perbualan ejen itu sendiri, dengan model dan masa jalan ejen.",
+      "event": "Peristiwa",
+      "eventMatch": "Teks padanan",
+      "eventMatchPlaceholder": "Teks pilihan dalam tajuk",
+      "eventOnlyHint": "Rutin ini tiada jadual. Ia berjalan apabila peristiwa berlaku, paling banyak sekali seminit."
     },
     "kind": {
       "once": "Sekali",
@@ -3150,7 +3212,8 @@
       "daily": "Harian",
       "weekly": "Mingguan",
       "monthly": "Bulanan",
-      "yearly": "Tahunan"
+      "yearly": "Tahunan",
+      "event": "Apabila peristiwa berlaku"
     },
     "trigger": {
       "once": "Sekali pada {{when}}",
@@ -3158,7 +3221,9 @@
       "daily": "Setiap hari pada {{time}}",
       "weekly": "Setiap {{day}} pada {{time}}",
       "monthly": "Setiap {{day}} haribulan pada {{time}}",
-      "yearly": "Setiap tahun pada {{date}} {{time}}"
+      "yearly": "Setiap tahun pada {{date}} {{time}}",
+      "event": "Berjalan apabila {{event}}",
+      "eventMatching": "Berjalan apabila {{event}} dan tajuk mengandungi \"{{match}}\""
     },
     "finishedNotification": "{{n}} larian automasi selesai",
     "templatesTitle": "Templat",
@@ -3190,6 +3255,23 @@
       "disable": "Nyahdayakan",
       "revealHint": "Dipaparkan sekali sahaja. Hantar sebagai token Bearer atau pengepala X-Libre-Webhook-Secret.",
       "failed": "Webhook tidak dapat dikemas kini."
+    },
+    "triggers": {
+      "events": {
+        "channel-mention": "seseorang menyebut anda dalam saluran",
+        "channel-dm": "anda menerima mesej terus",
+        "channel-invite": "anda dijemput ke saluran",
+        "share": "sesuatu dikongsi dengan anda",
+        "calendar-reminder": "peringatan kalendar berbunyi",
+        "media-ready": "tugas media selesai",
+        "media-failed": "tugas media gagal",
+        "budget-alert": "amaran bajet berbunyi",
+        "work-run-finished": "larian ejen selesai",
+        "work-run-attention": "larian ejen memerlukan perhatian",
+        "work-takeover": "ejen meminta anda mengambil alih",
+        "work-approval": "ejen sedang menunggu kelulusan anda",
+        "system": "notis sistem tiba"
+      }
     }
   },
   "home": {
@@ -3366,7 +3448,11 @@
       "instructionsPlaceholder": "Arahan Markdown yang dibaca model setelah memuatkan kemahiran ini.",
       "instructionsHint": "Dimuatkan hanya apabila kemahiran digunakan, jadi panjangnya tidak menelan kos sehingga waktu itu.",
       "enabled": "Diaktifkan",
-      "enabledHint": "Kemahiran yang dilumpuhkan kekal tersimpan tetapi tidak pernah ditawarkan kepada model."
+      "enabledHint": "Kemahiran yang dilumpuhkan kekal tersimpan tetapi tidak pernah ditawarkan kepada model.",
+      "approval": "Sentiasa tanya sebelum",
+      "approvalHint": "Semasa kemahiran ini dimuatkan, ejen akan berhenti seketika untuk anda sebelum alat ini berjalan, walaupun kelulusan dimatikan pada asasnya. Peraturan \"Izinkan sentiasa\" yang disimpan tidak akan pernah meluluskannya untuk anda.",
+      "approvalTools": "Alat yang memerlukan kelulusan",
+      "approvalToolsHint": "Biarkan semua kotak tidak ditanda untuk merangkumi semua alat yang dikawal."
     },
     "history": {
       "open": "Sejarah versi",
@@ -3456,7 +3542,8 @@
     "authModes": {
       "none": "Tiada pengesahan",
       "bearer": "Token bearer",
-      "header": "Pengepala tersuai"
+      "header": "Pengepala tersuai",
+      "oauth": "OAuth interaktif"
     },
     "accessModes": {
       "admins-only": "Pentadbir sahaja",
@@ -3474,6 +3561,9 @@
       "specUrlHint": "Pilihan. URL asas digunakan apabila dibiarkan kosong.",
       "authMode": "Pengesahan",
       "authHeader": "Nama pengepala",
+      "oauthClientId": "ID klien OAuth",
+      "oauthClientIdHint": "Pilihan. Hanya diperlukan apabila penyedia tidak mendaftarkan klien secara automatik.",
+      "oauthClientSecret": "Rahsia klien OAuth",
       "accessMode": "Siapa yang boleh menggunakannya",
       "timeoutMs": "Had masa (ms)",
       "maxResponseBytes": "Respons maksimum (bait)",
@@ -3508,6 +3598,21 @@
         "name": "Pelayan MCP",
         "description": "Titik permulaan untuk pelayan MCP melalui Streamable HTTP."
       }
+    },
+    "oauth": {
+      "title": "Sambungan",
+      "hint": "Menyambung akan menghantar anda ke penyedia untuk log masuk. Token kekal pada pelayan ini dan hanya digunakan untuk panggilan anda sendiri.",
+      "connect": "Sambung",
+      "reconnect": "Sambung semula",
+      "disconnect": "Putuskan sambungan",
+      "connected": "Disambungkan",
+      "notConnected": "Tidak disambungkan",
+      "expiresAt": "Akses luput {{when}}",
+      "connectFailed": "Sambungan tidak dapat dimulakan.",
+      "disconnected": "Pelayan alat diputuskan",
+      "disconnectFailed": "Pelayan alat tidak dapat diputuskan.",
+      "callbackSuccess": "Pelayan alat disambungkan",
+      "callbackError": "Pelayan alat tidak dapat disambungkan."
     }
   },
   "composer": {
@@ -3603,7 +3708,11 @@
     "unpin": "Nyahsemat mesej",
     "edit": "Sunting mesej",
     "deleteMessage": "Padam mesej",
-    "replyCount": "{{total}} balasan"
+    "replyCount": "{{total}} balasan",
+    "toolCalls": {
+      "summary": "Alat digunakan ({{total}})",
+      "deniedHint": "Alat yang mengubah keadaan ditolak dalam saluran. Jalankannya daripada sembang."
+    }
   },
   "notifications": {
     "title": "Pemberitahuan",

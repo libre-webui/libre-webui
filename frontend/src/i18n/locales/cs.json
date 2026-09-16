@@ -2151,12 +2151,43 @@
       "state": "Stav",
       "preview": "Náhled",
       "terminals": "Terminály",
+      "inUse": "Používáno",
+      "inUseNone": "Nikdo",
+      "usageKinds": {
+        "command": "příkaz",
+        "preview": "náhled",
+        "terminal": "terminál",
+        "screen": "obrazovka"
+      },
       "updated": "Aktualizováno",
+      "lastRun": "Poslední spuštění",
+      "noRun": "—",
       "stateRunning": "Běží",
       "stateStopped": "Zastaveno",
       "stateStarting": "Spouští se",
       "stateUnknown": "Neznámý",
-      "noTasks": "Zatím žádné úlohy Work."
+      "noTasks": "Zatím žádné úlohy Work.",
+      "recovery": {
+        "title": "Obnova",
+        "description": "Work stále uklízí sandboxy. Nové operace Work zůstávají zablokované, dokud běhové prostředí nepotvrdí zastavení každé z nich.",
+        "container": "Kontejner",
+        "task": "Úloha",
+        "reason": "Důvod",
+        "attempts": "Pokusy",
+        "lastError": "Poslední chyba",
+        "nextAttempt": "Další pokus",
+        "retry": "Zkusit znovu",
+        "retrying": "Zkouší se znovu…",
+        "reasonStartup": "Běží od startu",
+        "reasonStopFailed": "Zastavení selhalo",
+        "reasonRuntimeUnreachable": "Běhové prostředí je nedostupné",
+        "reasonOrphan": "Chybí záznam úlohy",
+        "notScheduled": "Nenaplánováno",
+        "loadFailed": "Čekající úklidy se nepodařilo načíst.",
+        "retrySucceeded": "Vyčištěno {{cleared}} z {{attempted}} čekajících úklidů.",
+        "retryPending": "Stále probíhá nový pokus u {{attempted}} čekajících úklidů.",
+        "retryFailed": "Čekající úklidy se nepodařilo zopakovat."
+      }
     },
     "recovery": {
       "title": "Cvičení obnovy",
@@ -2806,7 +2837,9 @@
       "starting": "Spouštění náhledu…",
       "frameTitle": "Náhled pracovního prostoru",
       "failed": "Náhled se nepodařilo spustit. Zkontrolujte Aktivitu a zkuste jiný příkaz.",
-      "empty": "Spusťte aplikaci v tomto pracovním prostoru, abyste ji zde mohli prohlédnout."
+      "empty": "Spusťte aplikaci v tomto pracovním prostoru, abyste ji zde mohli prohlédnout.",
+      "finished": "Tato úloha je dokončena. Znovu ji otevřete, abyste spustili náhled.",
+      "reopenStart": "Znovu otevřít úlohu a spustit náhled"
     },
     "mobile": {
       "surface": "Plocha úlohy",
@@ -2900,7 +2933,9 @@
       "teachSaved": "Uloženo jako dovednost \"{{name}}\"",
       "watchingLearning": "Agent sleduje a učí se",
       "unmute": "Zapnout zvuk",
-      "mute": "Ztlumit"
+      "mute": "Ztlumit",
+      "finished": "Tato úloha je dokončena. Znovu ji otevřete, abyste obnovili její obrazovku.",
+      "reopenOpen": "Znovu otevřít úlohu a otevřít obrazovku"
     },
     "computerSetup": {
       "title": "Work Computer",
@@ -2939,6 +2974,17 @@
       "approvalRuleDelete": "Odebrat pravidlo",
       "approvalRuleDeleteFailed": "Pravidlo se nepodařilo odebrat."
     },
+    "runs": {
+      "title": "Běhy",
+      "empty": "Zatím žádné dokončené běhy. Každý běh uchovává, co vytvořil, a soubory, které změnil.",
+      "fileCount": "Soubory ({{total}})",
+      "exitStates": {
+        "completed": "Dokončeno",
+        "needsInput": "Vyžaduje vstup",
+        "failed": "Selhalo",
+        "cancelled": "Zrušeno"
+      }
+    },
     "approval": {
       "title": "Je potřeba schválení",
       "description": "Agent chce spustit {{tool}}. Tato akce může změnit data nebo zasáhnout mimo tuto konverzaci.",
@@ -2946,6 +2992,18 @@
       "allowAlways": "Povolit vždy",
       "deny": "Odmítnout",
       "failed": "Rozhodnutí se nepodařilo odeslat."
+    },
+    "idleStopHint": "Zastaví se po {{minutes}} minutách bez aktivity.",
+    "recovery": {
+      "pending": "Work potvrzuje {{pending}} úklidů sandboxů, než přijme nové operace.",
+      "since": "Blokováno od {{time}}.",
+      "nextAttempt": "Další pokus {{time}}.",
+      "adminHint": "Administrátoři to mohou zkusit znovu v Systém > Work.",
+      "retry": "Zkusit znovu",
+      "retrying": "Zkouší se znovu…",
+      "retrySucceeded": "Vyčištěno {{cleared}} z {{attempted}} čekajících úklidů.",
+      "retryPending": "Stále probíhá nový pokus u {{attempted}} čekajících úklidů.",
+      "retryFailed": "Čekající úklidy se nepodařilo zopakovat."
     }
   },
   "personaBackground": {
@@ -3142,7 +3200,11 @@
       "targetWork": "Úloha Work",
       "workPolicy": "Zásada Work",
       "workPolicyDefault": "Výchozí (globální limity)",
-      "taskBoundNote": "Tato rutina běží uvnitř vlastního pracovního prostoru a konverzace agenta, s modelem a běhovým prostředím agenta."
+      "taskBoundNote": "Tato rutina běží uvnitř vlastního pracovního prostoru a konverzace agenta, s modelem a běhovým prostředím agenta.",
+      "event": "Událost",
+      "eventMatch": "Shodující se text",
+      "eventMatchPlaceholder": "Volitelný text v názvu",
+      "eventOnlyHint": "Tato rutina nemá žádný plán. Spustí se, když nastane událost, nejvýše jednou za minutu."
     },
     "kind": {
       "once": "Jednou",
@@ -3150,7 +3212,8 @@
       "daily": "Denně",
       "weekly": "Týdně",
       "monthly": "Měsíčně",
-      "yearly": "Ročně"
+      "yearly": "Ročně",
+      "event": "Při události"
     },
     "trigger": {
       "once": "Jednou {{when}}",
@@ -3158,7 +3221,9 @@
       "daily": "Denně v {{time}}",
       "weekly": "Týdně v {{day}} v {{time}}",
       "monthly": "Měsíčně {{day}}. den v {{time}}",
-      "yearly": "Ročně {{date}} v {{time}}"
+      "yearly": "Ročně {{date}} v {{time}}",
+      "event": "Spustí se, když {{event}}",
+      "eventMatching": "Spustí se, když {{event}} a název obsahuje „{{match}}“"
     },
     "finishedNotification": "Dokončeno {{n}} běhů automatizace",
     "templatesTitle": "Šablony",
@@ -3190,6 +3255,23 @@
       "disable": "Zakázat",
       "revealHint": "Zobrazeno jen jednou. Odešlete jako Bearer token nebo hlavičku X-Libre-Webhook-Secret.",
       "failed": "Webhook se nepodařilo aktualizovat."
+    },
+    "triggers": {
+      "events": {
+        "channel-mention": "vás někdo zmíní v kanálu",
+        "channel-dm": "obdržíte přímou zprávu",
+        "channel-invite": "jste pozváni do kanálu",
+        "share": "s vámi někdo něco sdílí",
+        "calendar-reminder": "spustí se připomínka z kalendáře",
+        "media-ready": "dokončí se mediální úloha",
+        "media-failed": "selže mediální úloha",
+        "budget-alert": "spustí se upozornění na rozpočet",
+        "work-run-finished": "dokončí se běh agenta",
+        "work-run-attention": "běh agenta potřebuje pozornost",
+        "work-takeover": "agent vás požádá o převzetí ovládání",
+        "work-approval": "agent čeká na vaše schválení",
+        "system": "přijde systémové oznámení"
+      }
     }
   },
   "home": {
@@ -3366,7 +3448,11 @@
       "instructionsPlaceholder": "Instrukce v Markdownu, které model přečte, jakmile tuto dovednost načte.",
       "instructionsHint": "Načítají se jen při použití dovednosti, takže do té doby jejich délka nic nestojí.",
       "enabled": "Povoleno",
-      "enabledHint": "Zakázané dovednosti zůstávají uložené, ale modelu se nikdy nenabízejí."
+      "enabledHint": "Zakázané dovednosti zůstávají uložené, ale modelu se nikdy nenabízejí.",
+      "approval": "Vždy se zeptat před",
+      "approvalHint": "Dokud je tato dovednost načtena, agent se před spuštěním těchto nástrojů zastaví a počká na vás, i když jsou schválení jinak vypnutá. Uložené pravidlo „Vždy povolit“ je za vás nikdy nemůže schválit.",
+      "approvalTools": "Nástroje vyžadující schválení",
+      "approvalToolsHint": "Nechte všechna políčka nezaškrtnutá, aby to pokrylo každý zabezpečený nástroj."
     },
     "history": {
       "open": "Historie verzí",
@@ -3448,6 +3534,21 @@
     "credentialRemove": "Odebrat",
     "credentialRemoved": "Přihlašovací údaj odebrán",
     "credentialRemoveFailed": "Přihlašovací údaj se nepodařilo odebrat.",
+    "oauth": {
+      "title": "Připojení",
+      "hint": "Připojení vás pošle k poskytovateli, abyste se přihlásili. Tokeny zůstávají na tomto serveru a používají se pouze pro vaše vlastní volání.",
+      "connect": "Připojit",
+      "reconnect": "Znovu připojit",
+      "disconnect": "Odpojit",
+      "connected": "Připojeno",
+      "notConnected": "Nepřipojeno",
+      "expiresAt": "Přístup vyprší {{when}}",
+      "connectFailed": "Připojení se nepodařilo spustit.",
+      "disconnected": "Nástrojový server odpojen",
+      "disconnectFailed": "Nástrojový server se nepodařilo odpojit.",
+      "callbackSuccess": "Nástrojový server připojen",
+      "callbackError": "Nástrojový server se nepodařilo připojit."
+    },
     "builtinSource": "Tento server",
     "kinds": {
       "openapi": "OpenAPI",
@@ -3456,7 +3557,8 @@
     "authModes": {
       "none": "Bez ověření",
       "bearer": "Token Bearer",
-      "header": "Vlastní hlavička"
+      "header": "Vlastní hlavička",
+      "oauth": "Interaktivní OAuth"
     },
     "accessModes": {
       "admins-only": "Pouze správci",
@@ -3474,6 +3576,9 @@
       "specUrlHint": "Nepovinné. Když zůstane prázdné, použije se základní URL.",
       "authMode": "Ověření",
       "authHeader": "Název hlavičky",
+      "oauthClientId": "ID klienta OAuth",
+      "oauthClientIdHint": "Volitelné. Potřeba jen tehdy, když poskytovatel neregistruje klienty automaticky.",
+      "oauthClientSecret": "Tajný klíč klienta OAuth",
       "accessMode": "Kdo ho může používat",
       "timeoutMs": "Časový limit (ms)",
       "maxResponseBytes": "Maximální odpověď (bajty)",
@@ -3603,7 +3708,11 @@
     "unpin": "Odepnout zprávu",
     "edit": "Upravit zprávu",
     "deleteMessage": "Smazat zprávu",
-    "replyCount": "Odpovědí: {{total}}"
+    "replyCount": "Odpovědí: {{total}}",
+    "toolCalls": {
+      "summary": "Použité nástroje ({{total}})",
+      "deniedHint": "Nástroje, které něco mění, se v kanálech odmítají. Spusťte je z chatu."
+    }
   },
   "notifications": {
     "title": "Oznámení",

@@ -2151,12 +2151,43 @@
       "state": "Estado",
       "preview": "Vista previa",
       "terminals": "Terminales",
+      "inUse": "En uso",
+      "inUseNone": "Nadie",
       "updated": "Actualizado",
+      "lastRun": "Última ejecución",
+      "noRun": "—",
       "stateRunning": "En ejecución",
       "stateStopped": "Detenido",
       "stateStarting": "Iniciando",
       "stateUnknown": "Desconocido",
-      "noTasks": "Aún no hay tareas de Work."
+      "noTasks": "Aún no hay tareas de Work.",
+      "usageKinds": {
+        "command": "comando",
+        "preview": "vista previa",
+        "terminal": "terminal",
+        "screen": "pantalla"
+      },
+      "recovery": {
+        "title": "Recuperación",
+        "description": "Sandboxes que Work todavía está limpiando. Las nuevas operaciones de Work permanecen bloqueadas hasta que el entorno confirme que cada una se ha detenido.",
+        "container": "Contenedor",
+        "task": "Tarea",
+        "reason": "Motivo",
+        "attempts": "Intentos",
+        "lastError": "Último error",
+        "nextAttempt": "Próximo intento",
+        "retry": "Reintentar ahora",
+        "retrying": "Reintentando…",
+        "reasonStartup": "En ejecución al iniciar",
+        "reasonStopFailed": "Error al detener",
+        "reasonRuntimeUnreachable": "Entorno no accesible",
+        "reasonOrphan": "Sin registro de tarea",
+        "notScheduled": "No programado",
+        "loadFailed": "No se pudieron cargar las limpiezas pendientes.",
+        "retrySucceeded": "Se resolvieron {{cleared}} de {{attempted}} limpiezas pendientes.",
+        "retryPending": "Todavía reintentando {{attempted}} limpiezas pendientes.",
+        "retryFailed": "No se pudieron reintentar las limpiezas pendientes."
+      }
     },
     "recovery": {
       "title": "Simulacros de recuperación",
@@ -2806,7 +2837,9 @@
       "starting": "Iniciando vista previa…",
       "frameTitle": "Vista previa del espacio de trabajo",
       "failed": "No se pudo iniciar la vista previa. Revisa Actividad e inténtalo con otro comando.",
-      "empty": "Inicia la aplicación dentro de este espacio de trabajo para inspeccionarla aquí."
+      "empty": "Inicia la aplicación dentro de este espacio de trabajo para inspeccionarla aquí.",
+      "finished": "Esta tarea ha terminado. Vuelve a abrirla para iniciar una vista previa.",
+      "reopenStart": "Reabrir tarea e iniciar vista previa"
     },
     "mobile": {
       "surface": "Vista de la tarea",
@@ -2900,7 +2933,9 @@
       "teachSaved": "Guardado como habilidad \"{{name}}\"",
       "watchingLearning": "El agente está observando y aprendiendo",
       "unmute": "Activar sonido",
-      "mute": "Silenciar"
+      "mute": "Silenciar",
+      "finished": "Esta tarea ha terminado. Vuelve a abrirla para recuperar su pantalla.",
+      "reopenOpen": "Reabrir tarea y abrir la pantalla"
     },
     "computerSetup": {
       "title": "Work Computer",
@@ -2946,6 +2981,29 @@
       "allowAlways": "Permitir siempre",
       "deny": "Rechazar",
       "failed": "No se pudo enviar la decisión."
+    },
+    "idleStopHint": "Se detiene tras {{minutes}} minutos sin actividad.",
+    "runs": {
+      "title": "Ejecuciones",
+      "empty": "Aún no hay ejecuciones terminadas. Cada ejecución conserva lo que produjo y los archivos que cambió.",
+      "fileCount": "Archivos ({{total}})",
+      "exitStates": {
+        "completed": "Completado",
+        "needsInput": "Requiere información",
+        "failed": "Fallido",
+        "cancelled": "Cancelado"
+      }
+    },
+    "recovery": {
+      "pending": "Work está confirmando {{pending}} limpieza(s) de sandbox antes de aceptar nuevas operaciones.",
+      "since": "Bloqueado desde {{time}}.",
+      "nextAttempt": "Próximo intento {{time}}.",
+      "adminHint": "Los administradores pueden reintentarlo desde Sistema > Work.",
+      "retry": "Reintentar ahora",
+      "retrying": "Reintentando…",
+      "retrySucceeded": "Se resolvieron {{cleared}} de {{attempted}} limpiezas pendientes.",
+      "retryPending": "Todavía reintentando {{attempted}} limpiezas pendientes.",
+      "retryFailed": "No se pudieron reintentar las limpiezas pendientes."
     }
   },
   "personaBackground": {
@@ -3142,7 +3200,11 @@
       "targetWork": "Tarea de Work",
       "workPolicy": "Política de Work",
       "workPolicyDefault": "Predeterminada (límites globales)",
-      "taskBoundNote": "Esta rutina se ejecuta dentro del espacio de trabajo y la conversación del propio agente, con su modelo y su entorno."
+      "taskBoundNote": "Esta rutina se ejecuta dentro del espacio de trabajo y la conversación del propio agente, con su modelo y su entorno.",
+      "event": "Evento",
+      "eventMatch": "Texto coincidente",
+      "eventMatchPlaceholder": "Texto opcional en el título",
+      "eventOnlyHint": "Esta rutina no tiene horario. Se ejecuta cuando ocurre el evento, como máximo una vez por minuto."
     },
     "kind": {
       "once": "Una vez",
@@ -3150,7 +3212,8 @@
       "daily": "Diaria",
       "weekly": "Semanal",
       "monthly": "Mensual",
-      "yearly": "Anual"
+      "yearly": "Anual",
+      "event": "En un evento"
     },
     "trigger": {
       "once": "Una vez el {{when}}",
@@ -3158,7 +3221,9 @@
       "daily": "Diariamente a las {{time}}",
       "weekly": "Semanalmente el {{day}} a las {{time}}",
       "monthly": "Mensualmente el día {{day}} a las {{time}}",
-      "yearly": "Anualmente el {{date}} a las {{time}}"
+      "yearly": "Anualmente el {{date}} a las {{time}}",
+      "event": "Se ejecuta cuando {{event}}",
+      "eventMatching": "Se ejecuta cuando {{event}} y el título contiene \"{{match}}\""
     },
     "finishedNotification": "{{n}} ejecuciones de automatización finalizadas",
     "templatesTitle": "Plantillas",
@@ -3190,6 +3255,23 @@
       "disable": "Desactivar",
       "revealHint": "Se muestra una sola vez. Envíalo como token Bearer o en la cabecera X-Libre-Webhook-Secret.",
       "failed": "No se pudo actualizar el webhook."
+    },
+    "triggers": {
+      "events": {
+        "channel-mention": "alguien te mencione en un canal",
+        "channel-dm": "recibas un mensaje directo",
+        "channel-invite": "te inviten a un canal",
+        "share": "algo se comparta contigo",
+        "calendar-reminder": "se active un recordatorio de calendario",
+        "media-ready": "termine un trabajo multimedia",
+        "media-failed": "falle un trabajo multimedia",
+        "budget-alert": "se dispare una alerta de presupuesto",
+        "work-run-finished": "termine una ejecución del agente",
+        "work-run-attention": "una ejecución del agente necesite atención",
+        "work-takeover": "un agente te pida tomar el control",
+        "work-approval": "un agente esté esperando tu aprobación",
+        "system": "llegue una notificación del sistema"
+      }
     }
   },
   "home": {
@@ -3366,7 +3448,11 @@
       "instructionsPlaceholder": "Instrucciones en Markdown que el modelo lee al cargar esta habilidad.",
       "instructionsHint": "Se cargan solo cuando se usa la habilidad, así que su longitud no cuesta nada hasta entonces.",
       "enabled": "Habilitada",
-      "enabledHint": "Las habilidades deshabilitadas siguen guardadas, pero nunca se ofrecen al modelo."
+      "enabledHint": "Las habilidades deshabilitadas siguen guardadas, pero nunca se ofrecen al modelo.",
+      "approval": "Preguntar siempre antes de",
+      "approvalHint": "Mientras esta habilidad esté cargada, el agente se detiene y espera tu aprobación antes de ejecutar estas herramientas, incluso si las aprobaciones están desactivadas. Una regla guardada de \"Permitir siempre\" nunca puede aprobarlas por ti.",
+      "approvalTools": "Herramientas que necesitan aprobación",
+      "approvalToolsHint": "Deja todas las casillas sin marcar para cubrir cada herramienta restringida."
     },
     "history": {
       "open": "Historial de versiones",
@@ -3456,7 +3542,8 @@
     "authModes": {
       "none": "Sin autenticación",
       "bearer": "Token Bearer",
-      "header": "Cabecera personalizada"
+      "header": "Cabecera personalizada",
+      "oauth": "OAuth interactivo"
     },
     "accessModes": {
       "admins-only": "Solo administradores",
@@ -3474,6 +3561,9 @@
       "specUrlHint": "Opcional. Si se deja vacío se usa la URL base.",
       "authMode": "Autenticación",
       "authHeader": "Nombre de la cabecera",
+      "oauthClientId": "ID de cliente de OAuth",
+      "oauthClientIdHint": "Opcional. Solo es necesario cuando el proveedor no registra clientes automáticamente.",
+      "oauthClientSecret": "Secreto de cliente de OAuth",
       "accessMode": "Quién puede usarlo",
       "timeoutMs": "Tiempo de espera (ms)",
       "maxResponseBytes": "Respuesta máxima (bytes)",
@@ -3508,6 +3598,21 @@
         "name": "Servidor MCP",
         "description": "Un punto de partida para un servidor MCP sobre Streamable HTTP."
       }
+    },
+    "oauth": {
+      "title": "Conexión",
+      "hint": "Al conectar, se te enviará al proveedor para iniciar sesión. Los tokens permanecen en este servidor y solo se usan para tus propias llamadas.",
+      "connect": "Conectar",
+      "reconnect": "Reconectar",
+      "disconnect": "Desconectar",
+      "connected": "Conectado",
+      "notConnected": "No conectado",
+      "expiresAt": "El acceso caduca {{when}}",
+      "connectFailed": "No se pudo iniciar la conexión.",
+      "disconnected": "Servidor de herramientas desconectado",
+      "disconnectFailed": "No se pudo desconectar el servidor de herramientas.",
+      "callbackSuccess": "Servidor de herramientas conectado",
+      "callbackError": "No se pudo conectar el servidor de herramientas."
     }
   },
   "composer": {
@@ -3603,7 +3708,11 @@
     "unpin": "Desfijar mensaje",
     "edit": "Editar mensaje",
     "deleteMessage": "Eliminar mensaje",
-    "replyCount": "{{total}} respuestas"
+    "replyCount": "{{total}} respuestas",
+    "toolCalls": {
+      "summary": "Herramientas usadas ({{total}})",
+      "deniedHint": "Las herramientas que cambian algo se rechazan en los canales. Ejecútalas desde un chat."
+    }
   },
   "notifications": {
     "title": "Notificaciones",

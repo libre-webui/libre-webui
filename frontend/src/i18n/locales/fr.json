@@ -2151,12 +2151,43 @@
       "state": "État",
       "preview": "Aperçu",
       "terminals": "Terminaux",
+      "inUse": "En cours d'utilisation",
+      "inUseNone": "Personne",
       "updated": "Mis à jour",
+      "lastRun": "Dernière exécution",
+      "noRun": "—",
       "stateRunning": "En cours",
       "stateStopped": "Arrêté",
       "stateStarting": "Démarrage",
       "stateUnknown": "Inconnu",
-      "noTasks": "Aucune tâche Work pour l'instant."
+      "noTasks": "Aucune tâche Work pour l'instant.",
+      "usageKinds": {
+        "command": "commande",
+        "preview": "aperçu",
+        "terminal": "terminal",
+        "screen": "écran"
+      },
+      "recovery": {
+        "title": "Récupération",
+        "description": "Bacs à sable que Work est encore en train de nettoyer. Les nouvelles opérations Work restent bloquées jusqu'à ce que l'environnement confirme que chacun est arrêté.",
+        "container": "Conteneur",
+        "task": "Tâche",
+        "reason": "Raison",
+        "attempts": "Tentatives",
+        "lastError": "Dernière erreur",
+        "nextAttempt": "Prochaine tentative",
+        "retry": "Réessayer maintenant",
+        "retrying": "Nouvelle tentative…",
+        "reasonStartup": "En cours au démarrage",
+        "reasonStopFailed": "Échec de l'arrêt",
+        "reasonRuntimeUnreachable": "Environnement injoignable",
+        "reasonOrphan": "Aucun enregistrement de tâche",
+        "notScheduled": "Non planifié",
+        "loadFailed": "Impossible de charger les nettoyages en attente.",
+        "retrySucceeded": "{{cleared}} nettoyage(s) en attente résolu(s) sur {{attempted}}.",
+        "retryPending": "Nouvelle tentative en cours pour {{attempted}} nettoyages en attente.",
+        "retryFailed": "Impossible de relancer les nettoyages en attente."
+      }
     },
     "recovery": {
       "title": "Exercices de restauration",
@@ -2806,7 +2837,9 @@
       "starting": "Démarrage de l'aperçu…",
       "frameTitle": "Aperçu de l'espace de travail",
       "failed": "Impossible de démarrer l'aperçu. Consultez Activité, puis essayez une autre commande.",
-      "empty": "Démarrez l'application dans cet espace de travail pour l'inspecter ici."
+      "empty": "Démarrez l'application dans cet espace de travail pour l'inspecter ici.",
+      "finished": "Cette tâche est terminée. Rouvrez-la pour démarrer un aperçu.",
+      "reopenStart": "Rouvrir la tâche et démarrer l'aperçu"
     },
     "mobile": {
       "surface": "Vue de la tâche",
@@ -2900,7 +2933,9 @@
       "teachSaved": "Enregistré comme compétence \"{{name}}\"",
       "watchingLearning": "L'agent observe et apprend",
       "unmute": "Activer le son",
-      "mute": "Couper le son"
+      "mute": "Couper le son",
+      "finished": "Cette tâche est terminée. Rouvrez-la pour retrouver son écran.",
+      "reopenOpen": "Rouvrir la tâche et ouvrir l'écran"
     },
     "computerSetup": {
       "title": "Work Computer",
@@ -2946,6 +2981,29 @@
       "allowAlways": "Toujours autoriser",
       "deny": "Refuser",
       "failed": "Impossible d'envoyer la décision."
+    },
+    "idleStopHint": "S'arrête après {{minutes}} minutes d'inactivité.",
+    "runs": {
+      "title": "Exécutions",
+      "empty": "Aucune exécution terminée pour l'instant. Chaque exécution conserve ce qu'elle a produit et les fichiers qu'elle a modifiés.",
+      "fileCount": "Fichiers ({{total}})",
+      "exitStates": {
+        "completed": "Terminé",
+        "needsInput": "Saisie requise",
+        "failed": "Échoué",
+        "cancelled": "Annulé"
+      }
+    },
+    "recovery": {
+      "pending": "Work confirme {{pending}} nettoyage(s) de bac à sable avant d'accepter de nouvelles opérations.",
+      "since": "Bloqué depuis {{time}}.",
+      "nextAttempt": "Prochaine tentative {{time}}.",
+      "adminHint": "Les administrateurs peuvent réessayer depuis Système > Work.",
+      "retry": "Réessayer maintenant",
+      "retrying": "Nouvelle tentative…",
+      "retrySucceeded": "{{cleared}} nettoyage(s) en attente résolu(s) sur {{attempted}}.",
+      "retryPending": "Nouvelle tentative en cours pour {{attempted}} nettoyages en attente.",
+      "retryFailed": "Impossible de relancer les nettoyages en attente."
     }
   },
   "personaBackground": {
@@ -3142,7 +3200,11 @@
       "targetWork": "Tâche Work",
       "workPolicy": "Politique Work",
       "workPolicyDefault": "Par défaut (limites globales)",
-      "taskBoundNote": "Cette routine s'exécute dans l'espace de travail et la conversation de l'agent, avec le modèle et l'environnement de l'agent."
+      "taskBoundNote": "Cette routine s'exécute dans l'espace de travail et la conversation de l'agent, avec le modèle et l'environnement de l'agent.",
+      "event": "Événement",
+      "eventMatch": "Texte correspondant",
+      "eventMatchPlaceholder": "Texte facultatif dans le titre",
+      "eventOnlyHint": "Cette routine n'a pas d'horaire. Elle s'exécute quand l'événement se produit, au plus une fois par minute."
     },
     "kind": {
       "once": "Une fois",
@@ -3150,7 +3212,8 @@
       "daily": "Quotidien",
       "weekly": "Hebdomadaire",
       "monthly": "Mensuel",
-      "yearly": "Annuel"
+      "yearly": "Annuel",
+      "event": "Sur un événement"
     },
     "trigger": {
       "once": "Une fois le {{when}}",
@@ -3158,7 +3221,9 @@
       "daily": "Tous les jours à {{time}}",
       "weekly": "Chaque {{day}} à {{time}}",
       "monthly": "Le {{day}} de chaque mois à {{time}}",
-      "yearly": "Chaque année le {{date}} à {{time}}"
+      "yearly": "Chaque année le {{date}} à {{time}}",
+      "event": "S'exécute quand {{event}}",
+      "eventMatching": "S'exécute quand {{event}} et que le titre contient \"{{match}}\""
     },
     "finishedNotification": "{{n}} exécution(s) d’automatisation terminée(s)",
     "templatesTitle": "Modèles",
@@ -3190,6 +3255,23 @@
       "disable": "Désactiver",
       "revealHint": "Affiché une seule fois. Envoyez-le comme jeton Bearer ou dans l’en-tête X-Libre-Webhook-Secret.",
       "failed": "Impossible de mettre à jour le webhook."
+    },
+    "triggers": {
+      "events": {
+        "channel-mention": "quelqu'un vous mentionne dans un canal",
+        "channel-dm": "vous recevez un message direct",
+        "channel-invite": "vous êtes invité à un canal",
+        "share": "quelque chose est partagé avec vous",
+        "calendar-reminder": "un rappel de calendrier se déclenche",
+        "media-ready": "une tâche multimédia se termine",
+        "media-failed": "une tâche multimédia échoue",
+        "budget-alert": "une alerte de budget se déclenche",
+        "work-run-finished": "une exécution d'agent se termine",
+        "work-run-attention": "une exécution d'agent a besoin d'attention",
+        "work-takeover": "un agent vous demande de prendre la main",
+        "work-approval": "un agent attend votre approbation",
+        "system": "une notification système arrive"
+      }
     }
   },
   "home": {
@@ -3366,7 +3448,11 @@
       "instructionsPlaceholder": "Instructions en Markdown que le modèle lit une fois cette compétence chargée.",
       "instructionsHint": "Chargées seulement quand la compétence sert : leur longueur ne coûte rien avant ça.",
       "enabled": "Activée",
-      "enabledHint": "Les compétences désactivées restent enregistrées mais ne sont jamais proposées au modèle."
+      "enabledHint": "Les compétences désactivées restent enregistrées mais ne sont jamais proposées au modèle.",
+      "approval": "Toujours demander avant",
+      "approvalHint": "Tant que cette compétence est chargée, l'agent s'arrête avant ces outils et attend votre approbation, même si les approbations sont désactivées ailleurs. Une règle enregistrée \"Toujours autoriser\" ne peut jamais les approuver à votre place.",
+      "approvalTools": "Outils qui ont besoin d'une approbation",
+      "approvalToolsHint": "Laissez toutes les cases décochées pour couvrir chaque outil soumis à approbation."
     },
     "history": {
       "open": "Historique des versions",
@@ -3456,7 +3542,8 @@
     "authModes": {
       "none": "Aucune authentification",
       "bearer": "Token Bearer",
-      "header": "En-tête personnalisé"
+      "header": "En-tête personnalisé",
+      "oauth": "OAuth interactif"
     },
     "accessModes": {
       "admins-only": "Administrateurs uniquement",
@@ -3474,6 +3561,9 @@
       "specUrlHint": "Facultatif. L'URL de base est utilisée si le champ reste vide.",
       "authMode": "Authentification",
       "authHeader": "Nom de l'en-tête",
+      "oauthClientId": "ID client OAuth",
+      "oauthClientIdHint": "Facultatif. Nécessaire uniquement si le fournisseur n'enregistre pas les clients automatiquement.",
+      "oauthClientSecret": "Secret client OAuth",
       "accessMode": "Qui peut l'utiliser",
       "timeoutMs": "Délai d'attente (ms)",
       "maxResponseBytes": "Réponse max (octets)",
@@ -3508,6 +3598,21 @@
         "name": "Serveur MCP",
         "description": "Un point de départ pour un serveur MCP via Streamable HTTP."
       }
+    },
+    "oauth": {
+      "title": "Connexion",
+      "hint": "La connexion vous redirige vers le fournisseur pour vous authentifier. Les jetons restent sur ce serveur et ne servent qu'à vos propres appels.",
+      "connect": "Connecter",
+      "reconnect": "Reconnecter",
+      "disconnect": "Déconnecter",
+      "connected": "Connecté",
+      "notConnected": "Non connecté",
+      "expiresAt": "L'accès expire {{when}}",
+      "connectFailed": "Impossible de démarrer la connexion.",
+      "disconnected": "Serveur d'outils déconnecté",
+      "disconnectFailed": "Impossible de déconnecter le serveur d'outils.",
+      "callbackSuccess": "Serveur d'outils connecté",
+      "callbackError": "Impossible de connecter le serveur d'outils."
     }
   },
   "composer": {
@@ -3603,7 +3708,11 @@
     "unpin": "Désépingler le message",
     "edit": "Modifier le message",
     "deleteMessage": "Supprimer le message",
-    "replyCount": "{{total}} réponses"
+    "replyCount": "{{total}} réponses",
+    "toolCalls": {
+      "summary": "Outils utilisés ({{total}})",
+      "deniedHint": "Les outils qui modifient des données sont refusés dans les canaux. Exécutez-les depuis une conversation."
+    }
   },
   "notifications": {
     "title": "Notifications",

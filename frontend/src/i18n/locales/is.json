@@ -2151,12 +2151,43 @@
       "state": "Staða",
       "preview": "Forskoðun",
       "terminals": "Skjáhermar",
+      "inUse": "Í notkun",
+      "inUseNone": "Enginn",
       "updated": "Uppfært",
+      "lastRun": "Síðast keyrt",
+      "noRun": "—",
       "stateRunning": "Í keyrslu",
       "stateStopped": "Stöðvað",
       "stateStarting": "Ræsist",
       "stateUnknown": "Óþekkt",
-      "noTasks": "Engin Work-verkefni ennþá."
+      "noTasks": "Engin Work-verkefni ennþá.",
+      "usageKinds": {
+        "command": "skipun",
+        "preview": "forskoðun",
+        "terminal": "skjáhermir",
+        "screen": "skjár"
+      },
+      "recovery": {
+        "title": "Endurheimt",
+        "description": "Work er enn að hreinsa sandkassa. Nýjar Work-aðgerðir eru áfram lokaðar þar til keyrsluumhverfið staðfestir að hver þeirra hafi stöðvast.",
+        "container": "Gámur",
+        "task": "Verkefni",
+        "reason": "Ástæða",
+        "attempts": "Tilraunir",
+        "lastError": "Síðasta villa",
+        "nextAttempt": "Næsta tilraun",
+        "retry": "Reyna aftur núna",
+        "retrying": "Reynir aftur…",
+        "reasonStartup": "Keyrir við ræsingu",
+        "reasonStopFailed": "Stöðvun mistókst",
+        "reasonRuntimeUnreachable": "Næst ekki í keyrsluumhverfið",
+        "reasonOrphan": "Engin verkefnisskrá",
+        "notScheduled": "Ekki áætlað",
+        "loadFailed": "Ekki tókst að hlaða inn hreinsunum í bið.",
+        "retrySucceeded": "Hreinsaði {{cleared}} af {{attempted}} hreinsunum í bið.",
+        "retryPending": "Er enn að reyna {{attempted}} hreinsanir í bið.",
+        "retryFailed": "Ekki tókst að reyna aftur hreinsanir í bið."
+      }
     },
     "recovery": {
       "title": "Endurheimtaræfingar",
@@ -2806,7 +2837,9 @@
       "starting": "Ræsi forskoðun…",
       "frameTitle": "Forskoðun vinnusvæðis",
       "failed": "Ekki tókst að hefja forskoðun. Athugaðu Virkni og prófaðu aðra skipun.",
-      "empty": "Ræstu forritið á þessu vinnusvæði til að skoða það hér."
+      "empty": "Ræstu forritið á þessu vinnusvæði til að skoða það hér.",
+      "finished": "Þetta verkefni er lokið. Opnaðu það aftur til að hefja forskoðun.",
+      "reopenStart": "Opna verkefni aftur og hefja forskoðun"
     },
     "mobile": {
       "surface": "Verkefnissvæði",
@@ -2900,7 +2933,9 @@
       "teachSaved": "Vistað sem færni \"{{name}}\"",
       "watchingLearning": "Agentinn fylgist með og lærir",
       "unmute": "Kveikja á hljóði",
-      "mute": "Þagga"
+      "mute": "Þagga",
+      "finished": "Þetta verkefni er lokið. Opnaðu það aftur til að fá skjáinn til baka.",
+      "reopenOpen": "Opna verkefni aftur og opna skjáinn"
     },
     "computerSetup": {
       "title": "Work Computer",
@@ -2946,6 +2981,29 @@
       "allowAlways": "Leyfa alltaf",
       "deny": "Hafna",
       "failed": "Ekki tókst að senda ákvörðunina."
+    },
+    "idleStopHint": "Stöðvast eftir {{minutes}} mínútur án virkni.",
+    "runs": {
+      "title": "Keyrslur",
+      "empty": "Engar loknar keyrslur ennþá. Hver keyrsla geymir það sem hún skilaði og þær skrár sem hún breytti.",
+      "fileCount": "Skrár ({{total}})",
+      "exitStates": {
+        "completed": "Lokið",
+        "needsInput": "Þarf inntak",
+        "failed": "Mistókst",
+        "cancelled": "Hætt við"
+      }
+    },
+    "recovery": {
+      "pending": "Work er að staðfesta {{pending}} sandkassahreinsanir áður en það tekur við nýjum aðgerðum.",
+      "since": "Lokað síðan {{time}}.",
+      "nextAttempt": "Næsta tilraun {{time}}.",
+      "adminHint": "Stjórnendur geta reynt aftur í Kerfi > Work.",
+      "retry": "Reyna aftur núna",
+      "retrying": "Reynir aftur…",
+      "retrySucceeded": "Hreinsaði {{cleared}} af {{attempted}} hreinsunum í bið.",
+      "retryPending": "Er enn að reyna {{attempted}} hreinsanir í bið.",
+      "retryFailed": "Ekki tókst að reyna aftur hreinsanir í bið."
     }
   },
   "personaBackground": {
@@ -3142,7 +3200,11 @@
       "targetWork": "Work-verkefni",
       "workPolicy": "Work-regla",
       "workPolicyDefault": "Sjálfgefið (almenn mörk)",
-      "taskBoundNote": "Þessi venja keyrir inni í vinnusvæði og samtali fulltrúans sjálfs, með líkani og keyrsluumhverfi fulltrúans."
+      "taskBoundNote": "Þessi venja keyrir inni í vinnusvæði og samtali fulltrúans sjálfs, með líkani og keyrsluumhverfi fulltrúans.",
+      "event": "Atburður",
+      "eventMatch": "Samsvarandi texti",
+      "eventMatchPlaceholder": "Valfrjáls texti í titlinum",
+      "eventOnlyHint": "Þessi venja hefur enga áætlun. Hún keyrir þegar atburðurinn gerist, í mesta lagi einu sinni á mínútu."
     },
     "kind": {
       "once": "Einu sinni",
@@ -3150,7 +3212,8 @@
       "daily": "Daglega",
       "weekly": "Vikulega",
       "monthly": "Mánaðarlega",
-      "yearly": "Árlega"
+      "yearly": "Árlega",
+      "event": "Við atburð"
     },
     "trigger": {
       "once": "Einu sinni {{when}}",
@@ -3158,7 +3221,9 @@
       "daily": "Daglega kl. {{time}}",
       "weekly": "Vikulega á {{day}} kl. {{time}}",
       "monthly": "Mánaðarlega þann {{day}}. kl. {{time}}",
-      "yearly": "Árlega þann {{date}} kl. {{time}}"
+      "yearly": "Árlega þann {{date}} kl. {{time}}",
+      "event": "Keyrir þegar {{event}}",
+      "eventMatching": "Keyrir þegar {{event}} og titillinn inniheldur „{{match}}“"
     },
     "finishedNotification": "{{n}} sjálfvirknikeyrslum lokið",
     "templatesTitle": "Sniðmát",
@@ -3190,6 +3255,23 @@
       "disable": "Óvirkja",
       "revealHint": "Birt aðeins einu sinni. Sendu það sem Bearer-tákn eða X-Libre-Webhook-Secret-haus.",
       "failed": "Ekki tókst að uppfæra webhook."
+    },
+    "triggers": {
+      "events": {
+        "channel-mention": "einhver nefnir þig í rás",
+        "channel-dm": "þú færð bein skilaboð",
+        "channel-invite": "þér er boðið í rás",
+        "share": "einhverju er deilt með þér",
+        "calendar-reminder": "áminning í dagatalinu fer af stað",
+        "media-ready": "miðlaverkefni lýkur",
+        "media-failed": "miðlaverkefni mistekst",
+        "budget-alert": "fjárhagsviðvörun fer af stað",
+        "work-run-finished": "keyrslu fulltrúa lýkur",
+        "work-run-attention": "keyrsla fulltrúa þarfnast athygli",
+        "work-takeover": "fulltrúi biður þig um að taka við stjórn",
+        "work-approval": "fulltrúi bíður eftir samþykki þínu",
+        "system": "kerfistilkynning berst"
+      }
     }
   },
   "home": {
@@ -3366,7 +3448,11 @@
       "instructionsPlaceholder": "Markdown-leiðbeiningar sem líkanið les þegar það sækir þessa færni.",
       "instructionsHint": "Sóttar aðeins þegar færnin er notuð, svo lengdin kostar ekkert fram að því.",
       "enabled": "Virk",
-      "enabledHint": "Óvirk færni helst vistuð en er aldrei boðin líkaninu."
+      "enabledHint": "Óvirk færni helst vistuð en er aldrei boðin líkaninu.",
+      "approval": "Spyrja alltaf áður en",
+      "approvalHint": "Á meðan þessi færni er hlaðin bíður fulltrúinn eftir þér áður en þessi tól keyra, jafnvel þótt samþykki séu annars óvirk. Vistuð „Leyfa alltaf“-regla getur aldrei samþykkt þau fyrir þig.",
+      "approvalTools": "Tól sem þurfa samþykki",
+      "approvalToolsHint": "Skildu alla reiti eftir ómerkta til að ná yfir öll takmörkuð tól."
     },
     "history": {
       "open": "Útgáfusaga",
@@ -3456,7 +3542,8 @@
     "authModes": {
       "none": "Engin auðkenning",
       "bearer": "Bearer-tóki",
-      "header": "Sérsniðinn haus"
+      "header": "Sérsniðinn haus",
+      "oauth": "Gagnvirkt OAuth"
     },
     "accessModes": {
       "admins-only": "Aðeins stjórnendur",
@@ -3474,6 +3561,9 @@
       "specUrlHint": "Valfrjálst. Grunnslóðin er notuð ef reiturinn er tómur.",
       "authMode": "Auðkenning",
       "authHeader": "Heiti hauss",
+      "oauthClientId": "OAuth biðlaraauðkenni",
+      "oauthClientIdHint": "Valfrjálst. Aðeins þörf á því ef þjónustuveitan skráir ekki biðlara sjálfkrafa.",
+      "oauthClientSecret": "OAuth biðlaraleyndarmál",
       "accessMode": "Hverjir mega nota hann",
       "timeoutMs": "Tímamörk (ms)",
       "maxResponseBytes": "Hámarkssvar (bæti)",
@@ -3508,6 +3598,21 @@
         "name": "MCP-þjónn",
         "description": "Upphafspunktur fyrir MCP-þjón yfir Streamable HTTP."
       }
+    },
+    "oauth": {
+      "title": "Tenging",
+      "hint": "Tenging vísar þér á þjónustuveituna til að skrá þig inn. Tókin haldast á þessum netþjóni og eru aðeins notuð fyrir þín eigin köll.",
+      "connect": "Tengja",
+      "reconnect": "Endurtengja",
+      "disconnect": "Aftengja",
+      "connected": "Tengt",
+      "notConnected": "Ekki tengt",
+      "expiresAt": "Aðgangur rennur út {{when}}",
+      "connectFailed": "Ekki tókst að hefja tenginguna.",
+      "disconnected": "Tólaþjónn aftengdur",
+      "disconnectFailed": "Ekki tókst að aftengja tólaþjóninn.",
+      "callbackSuccess": "Tólaþjónn tengdur",
+      "callbackError": "Ekki tókst að tengja tólaþjóninn."
     }
   },
   "composer": {
@@ -3603,7 +3708,11 @@
     "unpin": "Losa skilaboð",
     "edit": "Breyta skilaboðum",
     "deleteMessage": "Eyða skilaboðum",
-    "replyCount": "{{total}} svör"
+    "replyCount": "{{total}} svör",
+    "toolCalls": {
+      "summary": "Tól notuð ({{total}})",
+      "deniedHint": "Tólum sem breyta einhverju er hafnað í rásum. Keyrðu þau úr spjalli."
+    }
   },
   "notifications": {
     "title": "Tilkynningar",

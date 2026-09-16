@@ -2151,12 +2151,43 @@
       "state": "Durum",
       "preview": "Önizleme",
       "terminals": "Terminaller",
+      "inUse": "Kullanımda",
+      "inUseNone": "Kimse yok",
       "updated": "Güncellendi",
+      "lastRun": "Son çalıştırma",
+      "noRun": "—",
       "stateRunning": "Çalışıyor",
       "stateStopped": "Durduruldu",
       "stateStarting": "Başlatılıyor",
       "stateUnknown": "Bilinmiyor",
-      "noTasks": "Henüz Work görevi yok."
+      "noTasks": "Henüz Work görevi yok.",
+      "usageKinds": {
+        "command": "komut",
+        "preview": "önizleme",
+        "terminal": "terminal",
+        "screen": "ekran"
+      },
+      "recovery": {
+        "title": "Kurtarma",
+        "description": "Work'ün hâlâ temizlemekte olduğu korumalı alanlar. Çalışma zamanı her birinin durduğunu onaylayana kadar yeni Work işlemleri engelli kalır.",
+        "container": "Kapsayıcı",
+        "task": "Görev",
+        "reason": "Neden",
+        "attempts": "Denemeler",
+        "lastError": "Son hata",
+        "nextAttempt": "Sonraki deneme",
+        "retry": "Şimdi yeniden dene",
+        "retrying": "Yeniden deneniyor…",
+        "reasonStartup": "Başlangıçta çalışıyor",
+        "reasonStopFailed": "Durdurma başarısız oldu",
+        "reasonRuntimeUnreachable": "Çalışma zamanına ulaşılamıyor",
+        "reasonOrphan": "Görev kaydı yok",
+        "notScheduled": "Planlanmadı",
+        "loadFailed": "Bekleyen temizlikler yüklenemedi.",
+        "retrySucceeded": "{{attempted}} bekleyen temizlikten {{cleared}} tanesi tamamlandı.",
+        "retryPending": "{{attempted}} bekleyen temizlik hâlâ yeniden deneniyor.",
+        "retryFailed": "Bekleyen temizlikler yeniden denenemedi."
+      }
     },
     "recovery": {
       "title": "Kurtarma tatbikatları",
@@ -2806,7 +2837,9 @@
       "starting": "Önizleme başlatılıyor…",
       "frameTitle": "Çalışma alanı önizlemesi",
       "failed": "Önizleme başlatılamadı. Etkinliği kontrol edip başka bir komut deneyin.",
-      "empty": "Burada incelemek için uygulamayı bu çalışma alanında başlatın."
+      "empty": "Burada incelemek için uygulamayı bu çalışma alanında başlatın.",
+      "finished": "Bu görev tamamlandı. Önizleme başlatmak için yeniden açın.",
+      "reopenStart": "Görevi yeniden aç ve önizlemeyi başlat"
     },
     "mobile": {
       "surface": "Görev alanı",
@@ -2900,7 +2933,9 @@
       "teachSaved": "\"{{name}}\" becerisi olarak kaydedildi",
       "watchingLearning": "Ajan izliyor ve öğreniyor",
       "unmute": "Sesi aç",
-      "mute": "Sessize al"
+      "mute": "Sessize al",
+      "finished": "Bu görev tamamlandı. Ekranını geri getirmek için yeniden açın.",
+      "reopenOpen": "Görevi yeniden aç ve ekranı aç"
     },
     "computerSetup": {
       "title": "Work Computer",
@@ -2946,6 +2981,29 @@
       "allowAlways": "Her zaman izin ver",
       "deny": "Reddet",
       "failed": "Karar gönderilemedi."
+    },
+    "idleStopHint": "{{minutes}} dakika etkinlik olmazsa durur.",
+    "runs": {
+      "title": "Çalıştırmalar",
+      "empty": "Henüz tamamlanmış bir çalıştırma yok. Her çalıştırma ürettiklerini ve değiştirdiği dosyaları saklar.",
+      "fileCount": "Dosyalar ({{total}})",
+      "exitStates": {
+        "completed": "Tamamlandı",
+        "needsInput": "Girdi gerekiyor",
+        "failed": "Başarısız oldu",
+        "cancelled": "İptal edildi"
+      }
+    },
+    "recovery": {
+      "pending": "Work, yeni işlemleri kabul etmeden önce {{pending}} korumalı alan temizliğini onaylıyor.",
+      "since": "{{time}} itibarıyla engellendi.",
+      "nextAttempt": "Sonraki deneme {{time}}.",
+      "adminHint": "Yöneticiler Sistem > Work üzerinden yeniden deneyebilir.",
+      "retry": "Şimdi yeniden dene",
+      "retrying": "Yeniden deneniyor…",
+      "retrySucceeded": "{{attempted}} bekleyen temizlikten {{cleared}} tanesi tamamlandı.",
+      "retryPending": "{{attempted}} bekleyen temizlik hâlâ yeniden deneniyor.",
+      "retryFailed": "Bekleyen temizlikler yeniden denenemedi."
     }
   },
   "personaBackground": {
@@ -3142,7 +3200,11 @@
       "targetWork": "Work görevi",
       "workPolicy": "Work politikası",
       "workPolicyDefault": "Varsayılan (genel sınırlar)",
-      "taskBoundNote": "Bu rutin, ajanın kendi çalışma alanı ve konuşması içinde, ajanın modeli ve çalışma zamanıyla çalışır."
+      "taskBoundNote": "Bu rutin, ajanın kendi çalışma alanı ve konuşması içinde, ajanın modeli ve çalışma zamanıyla çalışır.",
+      "event": "Olay",
+      "eventMatch": "Eşleşen metin",
+      "eventMatchPlaceholder": "Başlıkta geçen isteğe bağlı metin",
+      "eventOnlyHint": "Bu rutinin zamanlaması yok. Olay gerçekleştiğinde, dakikada en fazla bir kez çalışır."
     },
     "kind": {
       "once": "Bir kez",
@@ -3150,7 +3212,8 @@
       "daily": "Günlük",
       "weekly": "Haftalık",
       "monthly": "Aylık",
-      "yearly": "Yıllık"
+      "yearly": "Yıllık",
+      "event": "Bir olayda"
     },
     "trigger": {
       "once": "{{when}} tarihinde bir kez",
@@ -3158,7 +3221,9 @@
       "daily": "Her gün {{time}}",
       "weekly": "Her {{day}} {{time}}",
       "monthly": "Her ayın {{day}}. günü {{time}}",
-      "yearly": "Her yıl {{date}} {{time}}"
+      "yearly": "Her yıl {{date}} {{time}}",
+      "event": "{{event}} çalışır",
+      "eventMatching": "{{event}} ve başlık \"{{match}}\" içerdiğinde çalışır"
     },
     "finishedNotification": "{{n}} otomasyon çalıştırması tamamlandı",
     "templatesTitle": "Şablonlar",
@@ -3190,6 +3255,23 @@
       "disable": "Devre dışı bırak",
       "revealHint": "Yalnızca bir kez gösterilir. Bearer belirteci veya X-Libre-Webhook-Secret üst bilgisi olarak gönderin.",
       "failed": "Webhook güncellenemedi."
+    },
+    "triggers": {
+      "events": {
+        "channel-mention": "biri sizi bir kanalda etiketlediğinde",
+        "channel-dm": "bir doğrudan mesaj aldığınızda",
+        "channel-invite": "bir kanala davet edildiğinizde",
+        "share": "sizinle bir şey paylaşıldığında",
+        "calendar-reminder": "bir takvim hatırlatıcısı tetiklendiğinde",
+        "media-ready": "bir medya işi tamamlandığında",
+        "media-failed": "bir medya işi başarısız olduğunda",
+        "budget-alert": "bir bütçe uyarısı tetiklendiğinde",
+        "work-run-finished": "bir ajan çalıştırması tamamlandığında",
+        "work-run-attention": "bir ajan çalıştırması ilginizi gerektirdiğinde",
+        "work-takeover": "bir ajan kontrolü almanızı istediğinde",
+        "work-approval": "bir ajan onayınızı beklediğinde",
+        "system": "bir sistem bildirimi geldiğinde"
+      }
     }
   },
   "home": {
@@ -3366,7 +3448,11 @@
       "instructionsPlaceholder": "Modelin bu beceriyi yükledikten sonra okuduğu Markdown yönergeleri.",
       "instructionsHint": "Yalnızca beceri kullanıldığında yüklenir, o zamana kadar uzunluğunun bir maliyeti olmaz.",
       "enabled": "Etkin",
-      "enabledHint": "Devre dışı beceriler kayıtlı kalır ama modele hiçbir zaman sunulmaz."
+      "enabledHint": "Devre dışı beceriler kayıtlı kalır ama modele hiçbir zaman sunulmaz.",
+      "approval": "Çalıştırmadan önce her zaman sor",
+      "approvalHint": "Bu beceri yüklüyken, onaylar genelde kapalı olsa bile ajan bu araçlar çalışmadan önce sizin için duraklar. Kaydedilmiş bir \"Her zaman izin ver\" kuralı bunları sizin yerinize asla onaylayamaz.",
+      "approvalTools": "Onay gerektiren araçlar",
+      "approvalToolsHint": "Her kısıtlı aracı kapsamak için tüm kutucukları işaretsiz bırakın."
     },
     "history": {
       "open": "Sürüm geçmişi",
@@ -3456,7 +3542,8 @@
     "authModes": {
       "none": "Kimlik doğrulama yok",
       "bearer": "Bearer belirteci",
-      "header": "Özel başlık"
+      "header": "Özel başlık",
+      "oauth": "Etkileşimli OAuth"
     },
     "accessModes": {
       "admins-only": "Yalnızca yöneticiler",
@@ -3474,6 +3561,9 @@
       "specUrlHint": "İsteğe bağlı. Boş bırakılırsa temel URL kullanılır.",
       "authMode": "Kimlik doğrulama",
       "authHeader": "Başlık adı",
+      "oauthClientId": "OAuth istemci kimliği",
+      "oauthClientIdHint": "İsteğe bağlı. Yalnızca sağlayıcı istemcileri otomatik olarak kaydetmediğinde gereklidir.",
+      "oauthClientSecret": "OAuth istemci gizli anahtarı",
       "accessMode": "Kimler kullanabilir",
       "timeoutMs": "Zaman aşımı (ms)",
       "maxResponseBytes": "Azami yanıt (bayt)",
@@ -3508,6 +3598,21 @@
         "name": "MCP sunucusu",
         "description": "Streamable HTTP üzerinden çalışan bir MCP sunucusu için başlangıç noktası."
       }
+    },
+    "oauth": {
+      "title": "Bağlantı",
+      "hint": "Bağlanmak sizi oturum açmak için sağlayıcıya yönlendirir. Belirteçler bu sunucuda kalır ve yalnızca sizin çağrılarınız için kullanılır.",
+      "connect": "Bağlan",
+      "reconnect": "Yeniden bağlan",
+      "disconnect": "Bağlantıyı kes",
+      "connected": "Bağlandı",
+      "notConnected": "Bağlı değil",
+      "expiresAt": "Erişim {{when}} tarihinde sona eriyor",
+      "connectFailed": "Bağlantı başlatılamadı.",
+      "disconnected": "Araç sunucusu bağlantısı kesildi",
+      "disconnectFailed": "Araç sunucusunun bağlantısı kesilemedi.",
+      "callbackSuccess": "Araç sunucusu bağlandı",
+      "callbackError": "Araç sunucusu bağlanamadı."
     }
   },
   "composer": {
@@ -3603,7 +3708,11 @@
     "unpin": "Sabitlemeyi kaldır",
     "edit": "Mesajı düzenle",
     "deleteMessage": "Mesajı sil",
-    "replyCount": "{{total}} yanıt"
+    "replyCount": "{{total}} yanıt",
+    "toolCalls": {
+      "summary": "Kullanılan araçlar ({{total}})",
+      "deniedHint": "Değişiklik yapan araçlar kanallarda reddedilir. Bunları bir sohbetten çalıştırın."
+    }
   },
   "notifications": {
     "title": "Bildirimler",

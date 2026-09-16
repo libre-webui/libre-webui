@@ -2151,12 +2151,43 @@
       "state": "Estado",
       "preview": "Pré-visualização",
       "terminals": "Terminais",
+      "inUse": "Em uso",
+      "inUseNone": "Ninguém",
       "updated": "Atualizado",
+      "lastRun": "Última execução",
+      "noRun": "—",
       "stateRunning": "Em execução",
       "stateStopped": "Parado",
       "stateStarting": "Iniciando",
       "stateUnknown": "Desconhecido",
-      "noTasks": "Ainda não há tarefas do Work."
+      "noTasks": "Ainda não há tarefas do Work.",
+      "usageKinds": {
+        "command": "comando",
+        "preview": "pré-visualização",
+        "terminal": "terminal",
+        "screen": "tela"
+      },
+      "recovery": {
+        "title": "Recuperação",
+        "description": "Sandboxes que o Work ainda está limpando. Novas operações do Work ficam bloqueadas até que o runtime confirme que cada uma foi parada.",
+        "container": "Contêiner",
+        "task": "Tarefa",
+        "reason": "Motivo",
+        "attempts": "Tentativas",
+        "lastError": "Último erro",
+        "nextAttempt": "Próxima tentativa",
+        "retry": "Tentar novamente",
+        "retrying": "Tentando novamente…",
+        "reasonStartup": "Em execução na inicialização",
+        "reasonStopFailed": "Falha ao parar",
+        "reasonRuntimeUnreachable": "Runtime inacessível",
+        "reasonOrphan": "Sem registro de tarefa",
+        "notScheduled": "Não agendado",
+        "loadFailed": "Não foi possível carregar as limpezas pendentes.",
+        "retrySucceeded": "Concluídas {{cleared}} de {{attempted}} limpezas pendentes.",
+        "retryPending": "Ainda tentando {{attempted}} limpezas pendentes.",
+        "retryFailed": "Não foi possível repetir as limpezas pendentes."
+      }
     },
     "recovery": {
       "title": "Simulações de recuperação",
@@ -2806,7 +2837,9 @@
       "starting": "Iniciando pré-visualização…",
       "frameTitle": "Pré-visualização do espaço de trabalho",
       "failed": "Não foi possível iniciar a pré-visualização. Verifique Atividade e tente outro comando.",
-      "empty": "Inicie o aplicativo neste espaço de trabalho para inspecioná-lo aqui."
+      "empty": "Inicie o aplicativo neste espaço de trabalho para inspecioná-lo aqui.",
+      "finished": "Esta tarefa está concluída. Reabra-a para iniciar uma pré-visualização.",
+      "reopenStart": "Reabrir tarefa e iniciar pré-visualização"
     },
     "mobile": {
       "surface": "Visualização da tarefa",
@@ -2900,7 +2933,9 @@
       "teachSaved": "Salvo como habilidade \"{{name}}\"",
       "watchingLearning": "O agente está observando e aprendendo",
       "unmute": "Ativar som",
-      "mute": "Silenciar"
+      "mute": "Silenciar",
+      "finished": "Esta tarefa está concluída. Reabra-a para trazer a tela de volta.",
+      "reopenOpen": "Reabrir tarefa e abrir a tela"
     },
     "computerSetup": {
       "title": "Work Computer",
@@ -2946,6 +2981,29 @@
       "allowAlways": "Permitir sempre",
       "deny": "Recusar",
       "failed": "Não foi possível enviar a decisão."
+    },
+    "idleStopHint": "Para depois de {{minutes}} minutos sem atividade.",
+    "runs": {
+      "title": "Execuções",
+      "empty": "Ainda não há execuções concluídas. Cada execução guarda o que produziu e os arquivos que alterou.",
+      "fileCount": "Arquivos ({{total}})",
+      "exitStates": {
+        "completed": "Concluído",
+        "needsInput": "Precisa de entrada",
+        "failed": "Falhou",
+        "cancelled": "Cancelado"
+      }
+    },
+    "recovery": {
+      "pending": "O Work está confirmando {{pending}} limpeza(s) de sandbox antes de aceitar novas operações.",
+      "since": "Bloqueado desde {{time}}.",
+      "nextAttempt": "Próxima tentativa {{time}}.",
+      "adminHint": "Administradores podem tentar novamente em Sistema > Work.",
+      "retry": "Tentar novamente",
+      "retrying": "Tentando novamente…",
+      "retrySucceeded": "Concluídas {{cleared}} de {{attempted}} limpezas pendentes.",
+      "retryPending": "Ainda tentando {{attempted}} limpezas pendentes.",
+      "retryFailed": "Não foi possível repetir as limpezas pendentes."
     }
   },
   "personaBackground": {
@@ -3142,7 +3200,11 @@
       "targetWork": "Tarefa do Work",
       "workPolicy": "Política do Work",
       "workPolicyDefault": "Padrão (limites globais)",
-      "taskBoundNote": "Esta rotina é executada dentro do espaço de trabalho e da conversa do próprio agente, com o modelo e o runtime do agente."
+      "taskBoundNote": "Esta rotina é executada dentro do espaço de trabalho e da conversa do próprio agente, com o modelo e o runtime do agente.",
+      "event": "Evento",
+      "eventMatch": "Texto correspondente",
+      "eventMatchPlaceholder": "Texto opcional no título",
+      "eventOnlyHint": "Esta rotina não tem agendamento. Ela é executada quando o evento acontece, no máximo uma vez por minuto."
     },
     "kind": {
       "once": "Uma vez",
@@ -3150,7 +3212,8 @@
       "daily": "Diária",
       "weekly": "Semanal",
       "monthly": "Mensal",
-      "yearly": "Anual"
+      "yearly": "Anual",
+      "event": "Em um evento"
     },
     "trigger": {
       "once": "Uma vez em {{when}}",
@@ -3158,7 +3221,9 @@
       "daily": "Diariamente às {{time}}",
       "weekly": "Semanalmente na {{day}} às {{time}}",
       "monthly": "Mensalmente no dia {{day}} às {{time}}",
-      "yearly": "Anualmente em {{date}} às {{time}}"
+      "yearly": "Anualmente em {{date}} às {{time}}",
+      "event": "Executa quando {{event}}",
+      "eventMatching": "Executa quando {{event}} e o título contém \"{{match}}\""
     },
     "finishedNotification": "{{n}} execuções de automação concluídas",
     "templatesTitle": "Modelos",
@@ -3190,6 +3255,23 @@
       "disable": "Desativar",
       "revealHint": "Mostrado apenas uma vez. Envie como token Bearer ou no cabeçalho X-Libre-Webhook-Secret.",
       "failed": "Não foi possível atualizar o webhook."
+    },
+    "triggers": {
+      "events": {
+        "channel-mention": "alguém menciona você em um canal",
+        "channel-dm": "você recebe uma mensagem direta",
+        "channel-invite": "você é convidado para um canal",
+        "share": "algo é compartilhado com você",
+        "calendar-reminder": "um lembrete do calendário dispara",
+        "media-ready": "uma tarefa de mídia termina",
+        "media-failed": "uma tarefa de mídia falha",
+        "budget-alert": "um alerta de orçamento dispara",
+        "work-run-finished": "uma execução do agente termina",
+        "work-run-attention": "uma execução do agente precisa de atenção",
+        "work-takeover": "um agente pede que você assuma o controle",
+        "work-approval": "um agente está esperando sua aprovação",
+        "system": "um aviso do sistema chega"
+      }
     }
   },
   "home": {
@@ -3366,7 +3448,11 @@
       "instructionsPlaceholder": "Instruções em Markdown que o modelo lê quando carrega esta habilidade.",
       "instructionsHint": "Carregadas só quando a habilidade é usada, então o tamanho aqui não custa nada até lá.",
       "enabled": "Ativada",
-      "enabledHint": "Habilidades desativadas continuam salvas, mas nunca são oferecidas ao modelo."
+      "enabledHint": "Habilidades desativadas continuam salvas, mas nunca são oferecidas ao modelo.",
+      "approval": "Sempre perguntar antes",
+      "approvalHint": "Enquanto esta habilidade estiver carregada, o agente pausa para você antes que essas ferramentas rodem, mesmo que as aprovações estejam desativadas. Uma regra salva de \"Permitir sempre\" nunca pode aprová-las por você.",
+      "approvalTools": "Ferramentas que precisam de aprovação",
+      "approvalToolsHint": "Deixe todas as caixas desmarcadas para cobrir toda ferramenta restrita."
     },
     "history": {
       "open": "Histórico de versões",
@@ -3456,7 +3542,8 @@
     "authModes": {
       "none": "Sem autenticação",
       "bearer": "Token Bearer",
-      "header": "Cabeçalho personalizado"
+      "header": "Cabeçalho personalizado",
+      "oauth": "OAuth interativo"
     },
     "accessModes": {
       "admins-only": "Somente administradores",
@@ -3474,6 +3561,9 @@
       "specUrlHint": "Opcional. Se ficar vazio, usa a URL base.",
       "authMode": "Autenticação",
       "authHeader": "Nome do cabeçalho",
+      "oauthClientId": "ID do cliente OAuth",
+      "oauthClientIdHint": "Opcional. Necessário apenas quando o provedor não registra clientes automaticamente.",
+      "oauthClientSecret": "Segredo do cliente OAuth",
       "accessMode": "Quem pode usar",
       "timeoutMs": "Tempo limite (ms)",
       "maxResponseBytes": "Resposta máxima (bytes)",
@@ -3508,6 +3598,21 @@
         "name": "Servidor MCP",
         "description": "Um ponto de partida para um servidor MCP sobre Streamable HTTP."
       }
+    },
+    "oauth": {
+      "title": "Conexão",
+      "hint": "Conectar leva você até o provedor para iniciar sessão. Os tokens ficam neste servidor e são usados somente para as suas próprias chamadas.",
+      "connect": "Conectar",
+      "reconnect": "Reconectar",
+      "disconnect": "Desconectar",
+      "connected": "Conectado",
+      "notConnected": "Não conectado",
+      "expiresAt": "O acesso expira {{when}}",
+      "connectFailed": "Não foi possível iniciar a conexão.",
+      "disconnected": "Servidor de ferramentas desconectado",
+      "disconnectFailed": "Não foi possível desconectar o servidor de ferramentas.",
+      "callbackSuccess": "Servidor de ferramentas conectado",
+      "callbackError": "Não foi possível conectar o servidor de ferramentas."
     }
   },
   "composer": {
@@ -3603,7 +3708,11 @@
     "unpin": "Desafixar mensagem",
     "edit": "Editar mensagem",
     "deleteMessage": "Excluir mensagem",
-    "replyCount": "{{total}} respostas"
+    "replyCount": "{{total}} respostas",
+    "toolCalls": {
+      "summary": "Ferramentas usadas ({{total}})",
+      "deniedHint": "Ferramentas que alteram dados são recusadas em canais. Execute-as a partir de um chat."
+    }
   },
   "notifications": {
     "title": "Notificações",

@@ -2151,12 +2151,43 @@
       "state": "Stan",
       "preview": "Podgląd",
       "terminals": "Terminale",
+      "inUse": "W użyciu",
+      "inUseNone": "Nikt",
       "updated": "Zaktualizowano",
+      "lastRun": "Ostatni przebieg",
+      "noRun": "—",
       "stateRunning": "Działa",
       "stateStopped": "Zatrzymane",
       "stateStarting": "Uruchamianie",
       "stateUnknown": "Nieznany",
-      "noTasks": "Brak zadań Work."
+      "noTasks": "Brak zadań Work.",
+      "usageKinds": {
+        "command": "polecenie",
+        "preview": "podgląd",
+        "terminal": "terminal",
+        "screen": "ekran"
+      },
+      "recovery": {
+        "title": "Odzyskiwanie",
+        "description": "Piaskownice, które Work wciąż porządkuje. Nowe operacje Work pozostają zablokowane, dopóki środowisko uruchomieniowe nie potwierdzi zatrzymania każdej z nich.",
+        "container": "Kontener",
+        "task": "Zadanie",
+        "reason": "Powód",
+        "attempts": "Próby",
+        "lastError": "Ostatni błąd",
+        "nextAttempt": "Następna próba",
+        "retry": "Ponów teraz",
+        "retrying": "Ponawianie…",
+        "reasonStartup": "Działa od uruchomienia",
+        "reasonStopFailed": "Zatrzymanie nie powiodło się",
+        "reasonRuntimeUnreachable": "Środowisko uruchomieniowe niedostępne",
+        "reasonOrphan": "Brak wpisu zadania",
+        "notScheduled": "Nie zaplanowano",
+        "loadFailed": "Nie udało się załadować oczekujących porządków.",
+        "retrySucceeded": "Ukończono {{cleared}} z {{attempted}} oczekujących porządków.",
+        "retryPending": "Wciąż ponawiane: {{attempted}} oczekujących porządków.",
+        "retryFailed": "Nie udało się ponowić oczekujących porządków."
+      }
     },
     "recovery": {
       "title": "Ćwiczenia odzyskiwania",
@@ -2806,7 +2837,9 @@
       "starting": "Uruchamianie podglądu…",
       "frameTitle": "Podgląd obszaru roboczego",
       "failed": "Nie udało się uruchomić podglądu. Sprawdź Aktywność i spróbuj użyć innego polecenia.",
-      "empty": "Uruchom aplikację w tym obszarze roboczym, aby ją tutaj wyświetlić."
+      "empty": "Uruchom aplikację w tym obszarze roboczym, aby ją tutaj wyświetlić.",
+      "finished": "To zadanie zostało zakończone. Otwórz je ponownie, aby uruchomić podgląd.",
+      "reopenStart": "Otwórz zadanie ponownie i uruchom podgląd"
     },
     "mobile": {
       "surface": "Widok zadania",
@@ -2900,7 +2933,9 @@
       "teachSaved": "Zapisano jako umiejętność \"{{name}}\"",
       "watchingLearning": "Agent obserwuje i uczy się",
       "unmute": "Włącz dźwięk",
-      "mute": "Wycisz"
+      "mute": "Wycisz",
+      "finished": "To zadanie zostało zakończone. Otwórz je ponownie, aby przywrócić jego ekran.",
+      "reopenOpen": "Otwórz zadanie ponownie i otwórz ekran"
     },
     "computerSetup": {
       "title": "Work Computer",
@@ -2946,6 +2981,29 @@
       "allowAlways": "Pozwalaj zawsze",
       "deny": "Odmów",
       "failed": "Nie udało się wysłać decyzji."
+    },
+    "idleStopHint": "Zatrzymuje się po {{minutes}} minutach bez aktywności.",
+    "runs": {
+      "title": "Przebiegi",
+      "empty": "Nie ma jeszcze ukończonych przebiegów. Każdy przebieg zachowuje to, co wytworzył, oraz zmienione pliki.",
+      "fileCount": "Pliki ({{total}})",
+      "exitStates": {
+        "completed": "Ukończono",
+        "needsInput": "Wymaga danych",
+        "failed": "Niepowodzenie",
+        "cancelled": "Anulowano"
+      }
+    },
+    "recovery": {
+      "pending": "Work potwierdza {{pending}} porządków piaskownicy, zanim zaakceptuje nowe operacje.",
+      "since": "Zablokowane od {{time}}.",
+      "nextAttempt": "Następna próba: {{time}}.",
+      "adminHint": "Administratorzy mogą ponowić próbę w System > Work.",
+      "retry": "Ponów teraz",
+      "retrying": "Ponawianie…",
+      "retrySucceeded": "Ukończono {{cleared}} z {{attempted}} oczekujących porządków.",
+      "retryPending": "Wciąż ponawiane: {{attempted}} oczekujących porządków.",
+      "retryFailed": "Nie udało się ponowić oczekujących porządków."
     }
   },
   "personaBackground": {
@@ -3142,7 +3200,11 @@
       "targetWork": "Zadanie Work",
       "workPolicy": "Zasada Work",
       "workPolicyDefault": "Domyślna (limity globalne)",
-      "taskBoundNote": "Ta rutyna działa w przestrzeni roboczej i rozmowie samego agenta, z modelem i środowiskiem uruchomieniowym agenta."
+      "taskBoundNote": "Ta rutyna działa w przestrzeni roboczej i rozmowie samego agenta, z modelem i środowiskiem uruchomieniowym agenta.",
+      "event": "Zdarzenie",
+      "eventMatch": "Dopasowywany tekst",
+      "eventMatchPlaceholder": "Opcjonalny tekst w tytule",
+      "eventOnlyHint": "Ta rutyna nie ma harmonogramu. Uruchamia się, gdy wystąpi zdarzenie, maksymalnie raz na minutę."
     },
     "kind": {
       "once": "Raz",
@@ -3150,7 +3212,8 @@
       "daily": "Codziennie",
       "weekly": "Co tydzień",
       "monthly": "Co miesiąc",
-      "yearly": "Co rok"
+      "yearly": "Co rok",
+      "event": "Przy zdarzeniu"
     },
     "trigger": {
       "once": "Raz, {{when}}",
@@ -3158,7 +3221,9 @@
       "daily": "Codziennie o {{time}}",
       "weekly": "Co tydzień w {{day}} o {{time}}",
       "monthly": "Co miesiąc {{day}}. dnia o {{time}}",
-      "yearly": "Co rok {{date}} o {{time}}"
+      "yearly": "Co rok {{date}} o {{time}}",
+      "event": "Uruchamia się, gdy {{event}}",
+      "eventMatching": "Uruchamia się, gdy {{event}} i tytuł zawiera \"{{match}}\""
     },
     "finishedNotification": "Ukończono {{n}} uruchomień automatyzacji",
     "templatesTitle": "Szablony",
@@ -3190,6 +3255,23 @@
       "disable": "Wyłącz",
       "revealHint": "Wyświetlane tylko raz. Wyślij jako token Bearer lub nagłówek X-Libre-Webhook-Secret.",
       "failed": "Nie udało się zaktualizować webhooka."
+    },
+    "triggers": {
+      "events": {
+        "channel-mention": "ktoś wspomni o Tobie na kanale",
+        "channel-dm": "otrzymasz wiadomość prywatną",
+        "channel-invite": "zostaniesz zaproszony na kanał",
+        "share": "coś zostanie z Tobą udostępnione",
+        "calendar-reminder": "zadzwoni przypomnienie z kalendarza",
+        "media-ready": "zadanie multimedialne zostanie ukończone",
+        "media-failed": "zadanie multimedialne się nie powiedzie",
+        "budget-alert": "włączy się alert budżetowy",
+        "work-run-finished": "przebieg agenta się zakończy",
+        "work-run-attention": "przebieg agenta będzie wymagał uwagi",
+        "work-takeover": "agent poprosi Cię o przejęcie kontroli",
+        "work-approval": "agent będzie czekał na Twoją zgodę",
+        "system": "pojawi się powiadomienie systemowe"
+      }
     }
   },
   "home": {
@@ -3366,7 +3448,11 @@
       "instructionsPlaceholder": "Instrukcje w Markdownie, które model czyta po wczytaniu tej umiejętności.",
       "instructionsHint": "Wczytywane tylko wtedy, gdy umiejętność jest używana, więc do tego czasu ich długość nic nie kosztuje.",
       "enabled": "Włączona",
-      "enabledHint": "Wyłączone umiejętności pozostają zapisane, ale nigdy nie są proponowane modelowi."
+      "enabledHint": "Wyłączone umiejętności pozostają zapisane, ale nigdy nie są proponowane modelowi.",
+      "approval": "Zawsze pytaj przed",
+      "approvalHint": "Gdy ta umiejętność jest wczytana, agent zatrzymuje się i czeka na Twoją zgodę, zanim te narzędzia zostaną uruchomione, nawet jeśli zgody są ogólnie wyłączone. Zapisana reguła \"Pozwalaj zawsze\" nigdy nie może zatwierdzić ich za Ciebie.",
+      "approvalTools": "Narzędzia wymagające zgody",
+      "approvalToolsHint": "Pozostaw wszystkie pola niezaznaczone, aby objąć każde zastrzeżone narzędzie."
     },
     "history": {
       "open": "Historia wersji",
@@ -3456,7 +3542,8 @@
     "authModes": {
       "none": "Bez uwierzytelniania",
       "bearer": "Token Bearer",
-      "header": "Własny nagłówek"
+      "header": "Własny nagłówek",
+      "oauth": "Interaktywny OAuth"
     },
     "accessModes": {
       "admins-only": "Tylko administratorzy",
@@ -3474,6 +3561,9 @@
       "specUrlHint": "Opcjonalne. Gdy pole jest puste, używany jest bazowy URL.",
       "authMode": "Uwierzytelnianie",
       "authHeader": "Nazwa nagłówka",
+      "oauthClientId": "Identyfikator klienta OAuth",
+      "oauthClientIdHint": "Opcjonalne. Potrzebne tylko wtedy, gdy dostawca nie rejestruje klientów automatycznie.",
+      "oauthClientSecret": "Sekret klienta OAuth",
       "accessMode": "Kto może z niego korzystać",
       "timeoutMs": "Limit czasu (ms)",
       "maxResponseBytes": "Maks. odpowiedź (bajty)",
@@ -3508,6 +3598,21 @@
         "name": "Serwer MCP",
         "description": "Punkt wyjścia dla serwera MCP przez Streamable HTTP."
       }
+    },
+    "oauth": {
+      "title": "Połączenie",
+      "hint": "Połączenie przeniesie Cię do dostawcy, aby się zalogować. Tokeny pozostają na tym serwerze i są używane wyłącznie do Twoich własnych wywołań.",
+      "connect": "Połącz",
+      "reconnect": "Połącz ponownie",
+      "disconnect": "Rozłącz",
+      "connected": "Połączono",
+      "notConnected": "Nie połączono",
+      "expiresAt": "Dostęp wygasa {{when}}",
+      "connectFailed": "Nie udało się rozpocząć połączenia.",
+      "disconnected": "Rozłączono z serwerem narzędzi",
+      "disconnectFailed": "Nie udało się rozłączyć z serwerem narzędzi.",
+      "callbackSuccess": "Połączono z serwerem narzędzi",
+      "callbackError": "Nie udało się połączyć z serwerem narzędzi."
     }
   },
   "composer": {
@@ -3603,7 +3708,11 @@
     "unpin": "Odepnij wiadomość",
     "edit": "Edytuj wiadomość",
     "deleteMessage": "Usuń wiadomość",
-    "replyCount": "Odpowiedzi: {{total}}"
+    "replyCount": "Odpowiedzi: {{total}}",
+    "toolCalls": {
+      "summary": "Użyte narzędzia ({{total}})",
+      "deniedHint": "Narzędzia, które coś zmieniają, są odrzucane w kanałach. Uruchom je z czatu."
+    }
   },
   "notifications": {
     "title": "Powiadomienia",

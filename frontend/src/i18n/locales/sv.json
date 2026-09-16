@@ -2151,12 +2151,43 @@
       "state": "Tillstånd",
       "preview": "Förhandsvisning",
       "terminals": "Terminaler",
+      "inUse": "Används",
+      "inUseNone": "Ingen",
       "updated": "Uppdaterad",
+      "lastRun": "Senaste körning",
+      "noRun": "—",
       "stateRunning": "Körs",
       "stateStopped": "Stoppad",
       "stateStarting": "Startar",
       "stateUnknown": "Okänd",
-      "noTasks": "Inga Work-uppgifter ännu."
+      "noTasks": "Inga Work-uppgifter ännu.",
+      "usageKinds": {
+        "command": "kommando",
+        "preview": "förhandsvisning",
+        "terminal": "terminal",
+        "screen": "skärm"
+      },
+      "recovery": {
+        "title": "Återställning",
+        "description": "Sandlådor som Work fortfarande städar upp. Nya Work-åtgärder förblir blockerade tills körmiljön bekräftar att var och en har stoppats.",
+        "container": "Container",
+        "task": "Uppgift",
+        "reason": "Orsak",
+        "attempts": "Försök",
+        "lastError": "Senaste fel",
+        "nextAttempt": "Nästa försök",
+        "retry": "Försök igen nu",
+        "retrying": "Försöker igen…",
+        "reasonStartup": "Körs vid uppstart",
+        "reasonStopFailed": "Det gick inte att stoppa",
+        "reasonRuntimeUnreachable": "Körmiljön ej nåbar",
+        "reasonOrphan": "Ingen uppgiftspost",
+        "notScheduled": "Inte schemalagt",
+        "loadFailed": "De väntande rensningarna kunde inte läsas in.",
+        "retrySucceeded": "Rensade {{cleared}} av {{attempted}} väntande rensningar.",
+        "retryPending": "Försöker fortfarande med {{attempted}} väntande rensningar.",
+        "retryFailed": "De väntande rensningarna kunde inte försökas igen."
+      }
     },
     "recovery": {
       "title": "Återställningsövningar",
@@ -2806,7 +2837,9 @@
       "starting": "Startar förhandsgranskning…",
       "frameTitle": "Förhandsgranskning av arbetsyta",
       "failed": "Det gick inte att starta förhandsgranskningen. Kontrollera Aktivitet och prova sedan ett annat kommando.",
-      "empty": "Starta appen på den här arbetsytan för att granska den här."
+      "empty": "Starta appen på den här arbetsytan för att granska den här.",
+      "finished": "Den här uppgiften är avslutad. Öppna den igen för att starta en förhandsgranskning.",
+      "reopenStart": "Öppna uppgiften igen och starta förhandsgranskning"
     },
     "mobile": {
       "surface": "Uppgiftsvy",
@@ -2900,7 +2933,9 @@
       "teachSaved": "Sparad som färdigheten \"{{name}}\"",
       "watchingLearning": "Agenten tittar på och lär sig",
       "unmute": "Slå på ljud",
-      "mute": "Stäng av ljud"
+      "mute": "Stäng av ljud",
+      "finished": "Den här uppgiften är avslutad. Öppna den igen för att få tillbaka skärmen.",
+      "reopenOpen": "Öppna uppgiften igen och öppna skärmen"
     },
     "computerSetup": {
       "title": "Work Computer",
@@ -2946,6 +2981,29 @@
       "allowAlways": "Tillåt alltid",
       "deny": "Neka",
       "failed": "Beslutet kunde inte skickas."
+    },
+    "idleStopHint": "Stoppar efter {{minutes}} minuter utan aktivitet.",
+    "runs": {
+      "title": "Körningar",
+      "empty": "Inga avslutade körningar ännu. Varje körning behåller det den producerade och filerna den ändrade.",
+      "fileCount": "Filer ({{total}})",
+      "exitStates": {
+        "completed": "Slutförd",
+        "needsInput": "Behöver indata",
+        "failed": "Misslyckades",
+        "cancelled": "Avbruten"
+      }
+    },
+    "recovery": {
+      "pending": "Work bekräftar {{pending}} rensning(ar) av sandlådor innan nya åtgärder tillåts.",
+      "since": "Blockerad sedan {{time}}.",
+      "nextAttempt": "Nästa försök {{time}}.",
+      "adminHint": "Administratörer kan försöka igen från System > Work.",
+      "retry": "Försök igen nu",
+      "retrying": "Försöker igen…",
+      "retrySucceeded": "Rensade {{cleared}} av {{attempted}} väntande rensningar.",
+      "retryPending": "Försöker fortfarande med {{attempted}} väntande rensningar.",
+      "retryFailed": "De väntande rensningarna kunde inte försökas igen."
     }
   },
   "personaBackground": {
@@ -3142,7 +3200,11 @@
       "targetWork": "Work-uppgift",
       "workPolicy": "Work-policy",
       "workPolicyDefault": "Standard (globala gränser)",
-      "taskBoundNote": "Den här rutinen körs inne i agentens egen arbetsyta och konversation, med agentens modell och körmiljö."
+      "taskBoundNote": "Den här rutinen körs inne i agentens egen arbetsyta och konversation, med agentens modell och körmiljö.",
+      "event": "Händelse",
+      "eventMatch": "Matchande text",
+      "eventMatchPlaceholder": "Valfri text i titeln",
+      "eventOnlyHint": "Den här rutinen har inget schema. Den körs när händelsen inträffar, högst en gång i minuten."
     },
     "kind": {
       "once": "En gång",
@@ -3150,7 +3212,8 @@
       "daily": "Dagligen",
       "weekly": "Varje vecka",
       "monthly": "Varje månad",
-      "yearly": "Varje år"
+      "yearly": "Varje år",
+      "event": "Vid en händelse"
     },
     "trigger": {
       "once": "En gång den {{when}}",
@@ -3158,7 +3221,9 @@
       "daily": "Dagligen kl. {{time}}",
       "weekly": "Varje {{day}} kl. {{time}}",
       "monthly": "Den {{day}}:e varje månad kl. {{time}}",
-      "yearly": "Varje år den {{date}} kl. {{time}}"
+      "yearly": "Varje år den {{date}} kl. {{time}}",
+      "event": "Körs när {{event}}",
+      "eventMatching": "Körs när {{event}} och titeln innehåller \"{{match}}\""
     },
     "finishedNotification": "{{n}} automatiseringskörningar klara",
     "templatesTitle": "Mallar",
@@ -3190,6 +3255,23 @@
       "disable": "Inaktivera",
       "revealHint": "Visas bara en gång. Skicka den som Bearer-token eller X-Libre-Webhook-Secret-header.",
       "failed": "Webhooken kunde inte uppdateras."
+    },
+    "triggers": {
+      "events": {
+        "channel-mention": "någon nämner dig i en kanal",
+        "channel-dm": "du får ett direktmeddelande",
+        "channel-invite": "du bjuds in till en kanal",
+        "share": "något delas med dig",
+        "calendar-reminder": "en kalenderpåminnelse utlöses",
+        "media-ready": "ett mediejobb blir klart",
+        "media-failed": "ett mediejobb misslyckas",
+        "budget-alert": "en budgetvarning utlöses",
+        "work-run-finished": "en agentkörning slutförs",
+        "work-run-attention": "en agentkörning behöver uppmärksamhet",
+        "work-takeover": "en agent ber dig ta över",
+        "work-approval": "en agent väntar på ditt godkännande",
+        "system": "ett systemmeddelande kommer in"
+      }
     }
   },
   "home": {
@@ -3366,7 +3448,11 @@
       "instructionsPlaceholder": "Markdown-instruktioner som modellen läser när den läser in färdigheten.",
       "instructionsHint": "Läses bara in när färdigheten används, så längden kostar ingenting fram till dess.",
       "enabled": "Aktiverad",
-      "enabledHint": "Inaktiverade färdigheter finns kvar sparade men erbjuds aldrig till modellen."
+      "enabledHint": "Inaktiverade färdigheter finns kvar sparade men erbjuds aldrig till modellen.",
+      "approval": "Fråga alltid innan",
+      "approvalHint": "Medan den här färdigheten är inläst pausar agenten för dig innan dessa verktyg körs, även om godkännanden annars är avstängda. En sparad regel för \"Tillåt alltid\" kan aldrig godkänna dem åt dig.",
+      "approvalTools": "Verktyg som behöver godkännande",
+      "approvalToolsHint": "Lämna alla rutor avmarkerade för att omfatta alla spärrade verktyg."
     },
     "history": {
       "open": "Versionshistorik",
@@ -3456,7 +3542,8 @@
     "authModes": {
       "none": "Ingen autentisering",
       "bearer": "Bearer-token",
-      "header": "Egen header"
+      "header": "Egen header",
+      "oauth": "Interaktiv OAuth"
     },
     "accessModes": {
       "admins-only": "Endast administratörer",
@@ -3474,6 +3561,9 @@
       "specUrlHint": "Valfritt. Bas-URL:en används när fältet är tomt.",
       "authMode": "Autentisering",
       "authHeader": "Headernamn",
+      "oauthClientId": "OAuth-klient-ID",
+      "oauthClientIdHint": "Valfritt. Behövs bara när leverantören inte registrerar klienter automatiskt.",
+      "oauthClientSecret": "OAuth-klienthemlighet",
       "accessMode": "Vem som får använda den",
       "timeoutMs": "Tidsgräns (ms)",
       "maxResponseBytes": "Max svar (byte)",
@@ -3508,6 +3598,21 @@
         "name": "MCP-server",
         "description": "En utgångspunkt för en MCP-server över Streamable HTTP."
       }
+    },
+    "oauth": {
+      "title": "Anslutning",
+      "hint": "Att ansluta skickar dig till leverantören för att logga in. Token stannar på den här servern och används bara för dina egna anrop.",
+      "connect": "Anslut",
+      "reconnect": "Återanslut",
+      "disconnect": "Koppla från",
+      "connected": "Ansluten",
+      "notConnected": "Inte ansluten",
+      "expiresAt": "Åtkomsten upphör {{when}}",
+      "connectFailed": "Anslutningen kunde inte startas.",
+      "disconnected": "Verktygsservern frånkopplad",
+      "disconnectFailed": "Verktygsservern kunde inte kopplas från.",
+      "callbackSuccess": "Verktygsservern ansluten",
+      "callbackError": "Verktygsservern kunde inte anslutas."
     }
   },
   "composer": {
@@ -3603,7 +3708,11 @@
     "unpin": "Lossa meddelande",
     "edit": "Redigera meddelande",
     "deleteMessage": "Ta bort meddelande",
-    "replyCount": "{{total}} svar"
+    "replyCount": "{{total}} svar",
+    "toolCalls": {
+      "summary": "Verktyg använda ({{total}})",
+      "deniedHint": "Verktyg som ändrar saker avvisas i kanaler. Kör dem från en chatt."
+    }
   },
   "notifications": {
     "title": "Aviseringar",

@@ -2151,12 +2151,43 @@
       "state": "状态",
       "preview": "预览",
       "terminals": "终端",
+      "inUse": "使用中",
+      "inUseNone": "无人使用",
       "updated": "更新时间",
+      "lastRun": "上次运行",
+      "noRun": "—",
       "stateRunning": "运行中",
       "stateStopped": "已停止",
       "stateStarting": "启动中",
       "stateUnknown": "未知",
-      "noTasks": "暂无 Work 任务。"
+      "noTasks": "暂无 Work 任务。",
+      "usageKinds": {
+        "command": "命令",
+        "preview": "预览",
+        "terminal": "终端",
+        "screen": "屏幕"
+      },
+      "recovery": {
+        "title": "恢复",
+        "description": "Work 仍在清理的沙箱。在运行时确认每一个都已停止之前，新的 Work 操作将保持阻塞。",
+        "container": "容器",
+        "task": "任务",
+        "reason": "原因",
+        "attempts": "尝试次数",
+        "lastError": "上次错误",
+        "nextAttempt": "下次尝试",
+        "retry": "立即重试",
+        "retrying": "正在重试…",
+        "reasonStartup": "启动时正在运行",
+        "reasonStopFailed": "停止失败",
+        "reasonRuntimeUnreachable": "运行时不可达",
+        "reasonOrphan": "没有任务记录",
+        "notScheduled": "未计划",
+        "loadFailed": "无法加载待处理的清理项。",
+        "retrySucceeded": "已清理 {{attempted}} 项中的 {{cleared}} 项待处理清理。",
+        "retryPending": "仍在重试 {{attempted}} 项待处理清理。",
+        "retryFailed": "无法重试待处理的清理项。"
+      }
     },
     "recovery": {
       "title": "恢复演练",
@@ -2806,7 +2837,9 @@
       "starting": "正在启动预览…",
       "frameTitle": "工作区预览",
       "failed": "无法启动预览。请检查“活动”，然后尝试其他命令。",
-      "empty": "在此工作区中启动应用，即可在这里查看。"
+      "empty": "在此工作区中启动应用，即可在这里查看。",
+      "finished": "此任务已结束。重新打开它以启动预览。",
+      "reopenStart": "重新打开任务并启动预览"
     },
     "mobile": {
       "surface": "任务视图",
@@ -2900,7 +2933,9 @@
       "teachSaved": "已保存为技能“{{name}}”",
       "watchingLearning": "代理正在观看并学习",
       "unmute": "取消静音",
-      "mute": "静音"
+      "mute": "静音",
+      "finished": "此任务已结束。重新打开它以恢复其屏幕。",
+      "reopenOpen": "重新打开任务并打开屏幕"
     },
     "computerSetup": {
       "title": "Work Computer",
@@ -2946,6 +2981,29 @@
       "allowAlways": "始终允许",
       "deny": "拒绝",
       "failed": "无法发送该决定。"
+    },
+    "idleStopHint": "无活动 {{minutes}} 分钟后停止。",
+    "runs": {
+      "title": "运行记录",
+      "empty": "还没有已完成的运行。每次运行都会保留其产出和它更改过的文件。",
+      "fileCount": "文件（{{total}}）",
+      "exitStates": {
+        "completed": "已完成",
+        "needsInput": "需要输入",
+        "failed": "失败",
+        "cancelled": "已取消"
+      }
+    },
+    "recovery": {
+      "pending": "Work 正在确认 {{pending}} 项沙箱清理，之后才会接受新操作。",
+      "since": "自 {{time}} 起被阻塞。",
+      "nextAttempt": "下次尝试时间 {{time}}。",
+      "adminHint": "管理员可以从“系统 > Work”重试。",
+      "retry": "立即重试",
+      "retrying": "正在重试…",
+      "retrySucceeded": "已清理 {{attempted}} 项中的 {{cleared}} 项待处理清理。",
+      "retryPending": "仍在重试 {{attempted}} 项待处理清理。",
+      "retryFailed": "无法重试待处理的清理项。"
     }
   },
   "personaBackground": {
@@ -3142,7 +3200,11 @@
       "targetWork": "Work 任务",
       "workPolicy": "Work 策略",
       "workPolicyDefault": "默认（全局限制）",
-      "taskBoundNote": "此例行任务在智能体自己的工作区和对话中运行，使用智能体的模型和运行时。"
+      "taskBoundNote": "此例行任务在智能体自己的工作区和对话中运行，使用智能体的模型和运行时。",
+      "event": "事件",
+      "eventMatch": "匹配文本",
+      "eventMatchPlaceholder": "标题中的可选文本",
+      "eventOnlyHint": "此例行任务没有计划。它会在事件发生时运行，每分钟最多一次。"
     },
     "kind": {
       "once": "一次",
@@ -3150,7 +3212,8 @@
       "daily": "每天",
       "weekly": "每周",
       "monthly": "每月",
-      "yearly": "每年"
+      "yearly": "每年",
+      "event": "在事件发生时"
     },
     "trigger": {
       "once": "{{when}} 运行一次",
@@ -3158,7 +3221,9 @@
       "daily": "每天 {{time}}",
       "weekly": "每周{{day}} {{time}}",
       "monthly": "每月 {{day}} 日 {{time}}",
-      "yearly": "每年 {{date}} {{time}}"
+      "yearly": "每年 {{date}} {{time}}",
+      "event": "在{{event}}时运行",
+      "eventMatching": "在{{event}}且标题包含“{{match}}”时运行"
     },
     "finishedNotification": "{{n}} 个自动化运行已完成",
     "templatesTitle": "模板",
@@ -3190,6 +3255,23 @@
       "disable": "禁用",
       "revealHint": "仅显示一次。请作为 Bearer 令牌或 X-Libre-Webhook-Secret 请求头发送。",
       "failed": "无法更新 Webhook。"
+    },
+    "triggers": {
+      "events": {
+        "channel-mention": "有人在频道中提到你",
+        "channel-dm": "你收到一条私信",
+        "channel-invite": "你被邀请加入一个频道",
+        "share": "有内容与你共享",
+        "calendar-reminder": "日历提醒触发",
+        "media-ready": "媒体任务完成",
+        "media-failed": "媒体任务失败",
+        "budget-alert": "预算提醒触发",
+        "work-run-finished": "智能体运行完成",
+        "work-run-attention": "智能体运行需要处理",
+        "work-takeover": "智能体请求你接管",
+        "work-approval": "智能体正在等待你的批准",
+        "system": "系统通知到达"
+      }
     }
   },
   "home": {
@@ -3366,7 +3448,11 @@
       "instructionsPlaceholder": "模型加载这个技能后会读取的 Markdown 指令。",
       "instructionsHint": "只有用到这个技能时才会加载，所以在那之前写多长都不占成本。",
       "enabled": "已启用",
-      "enabledHint": "停用的技能仍会保存，但绝不会提供给模型。"
+      "enabledHint": "停用的技能仍会保存，但绝不会提供给模型。",
+      "approval": "运行前始终询问",
+      "approvalHint": "此技能加载期间，即使总体审批已关闭，智能体也会在这些工具运行前暂停等待你确认。已保存的“始终允许”规则永远无法替你批准它们。",
+      "approvalTools": "需要批准的工具",
+      "approvalToolsHint": "全部勾选框留空即可覆盖每一个受限工具。"
     },
     "history": {
       "open": "版本历史",
@@ -3456,7 +3542,8 @@
     "authModes": {
       "none": "无需认证",
       "bearer": "Bearer 令牌",
-      "header": "自定义请求头"
+      "header": "自定义请求头",
+      "oauth": "交互式 OAuth"
     },
     "accessModes": {
       "admins-only": "仅管理员",
@@ -3474,6 +3561,9 @@
       "specUrlHint": "可选。留空时使用基础 URL。",
       "authMode": "认证",
       "authHeader": "请求头名称",
+      "oauthClientId": "OAuth 客户端 ID",
+      "oauthClientIdHint": "可选。仅当服务方不会自动注册客户端时才需要。",
+      "oauthClientSecret": "OAuth 客户端密钥",
       "accessMode": "谁可以使用",
       "timeoutMs": "超时（毫秒）",
       "maxResponseBytes": "最大响应（字节）",
@@ -3508,6 +3598,21 @@
         "name": "MCP 服务器",
         "description": "通过 Streamable HTTP 接入 MCP 服务器的起点。"
       }
+    },
+    "oauth": {
+      "title": "连接",
+      "hint": "连接会将你带到该服务方进行登录。令牌保存在此服务器上，仅用于你自己的调用。",
+      "connect": "连接",
+      "reconnect": "重新连接",
+      "disconnect": "断开连接",
+      "connected": "已连接",
+      "notConnected": "未连接",
+      "expiresAt": "访问权限将于 {{when}} 过期",
+      "connectFailed": "无法开始连接。",
+      "disconnected": "工具服务器已断开连接",
+      "disconnectFailed": "无法断开工具服务器的连接。",
+      "callbackSuccess": "工具服务器已连接",
+      "callbackError": "无法连接工具服务器。"
     }
   },
   "composer": {
@@ -3603,7 +3708,11 @@
     "unpin": "取消置顶",
     "edit": "编辑消息",
     "deleteMessage": "删除消息",
-    "replyCount": "{{total}} 条回复"
+    "replyCount": "{{total}} 条回复",
+    "toolCalls": {
+      "summary": "已使用的工具（{{total}}）",
+      "deniedHint": "会更改内容的工具在频道中会被拒绝。请在聊天中运行它们。"
+    }
   },
   "notifications": {
     "title": "通知",

@@ -2151,12 +2151,43 @@
       "state": "Stato",
       "preview": "Anteprima",
       "terminals": "Terminali",
+      "inUse": "In uso",
+      "inUseNone": "Nessuno",
       "updated": "Aggiornato",
+      "lastRun": "Ultima esecuzione",
+      "noRun": "—",
       "stateRunning": "In esecuzione",
       "stateStopped": "Fermo",
       "stateStarting": "In avvio",
       "stateUnknown": "Sconosciuto",
-      "noTasks": "Nessuna attività Work per ora."
+      "noTasks": "Nessuna attività Work per ora.",
+      "usageKinds": {
+        "command": "comando",
+        "preview": "anteprima",
+        "terminal": "terminale",
+        "screen": "schermo"
+      },
+      "recovery": {
+        "title": "Ripristino",
+        "description": "Work sta ancora ripulendo le sandbox. Le nuove operazioni Work restano bloccate finché il runtime non conferma che ciascuna è stata arrestata.",
+        "container": "Container",
+        "task": "Attività",
+        "reason": "Motivo",
+        "attempts": "Tentativi",
+        "lastError": "Ultimo errore",
+        "nextAttempt": "Prossimo tentativo",
+        "retry": "Riprova ora",
+        "retrying": "Nuovo tentativo…",
+        "reasonStartup": "In esecuzione all'avvio",
+        "reasonStopFailed": "Arresto non riuscito",
+        "reasonRuntimeUnreachable": "Runtime non raggiungibile",
+        "reasonOrphan": "Nessun record dell'attività",
+        "notScheduled": "Non programmato",
+        "loadFailed": "Impossibile caricare le pulizie in sospeso.",
+        "retrySucceeded": "Completate {{cleared}} pulizie su {{attempted}} in sospeso.",
+        "retryPending": "Nuovo tentativo in corso per {{attempted}} pulizie in sospeso.",
+        "retryFailed": "Impossibile ritentare le pulizie in sospeso."
+      }
     },
     "recovery": {
       "title": "Esercitazioni di ripristino",
@@ -2806,7 +2837,9 @@
       "starting": "Avvio anteprima…",
       "frameTitle": "Anteprima dello spazio di lavoro",
       "failed": "Impossibile avviare l'anteprima. Controlla Attività, quindi prova un altro comando.",
-      "empty": "Avvia l'app in questo spazio di lavoro per esaminarla qui."
+      "empty": "Avvia l'app in questo spazio di lavoro per esaminarla qui.",
+      "finished": "Questa attività è terminata. Riaprila per avviare un'anteprima.",
+      "reopenStart": "Riapri l'attività e avvia l'anteprima"
     },
     "mobile": {
       "surface": "Vista attività",
@@ -2900,7 +2933,9 @@
       "teachSaved": "Salvato come competenza \"{{name}}\"",
       "watchingLearning": "L'agente sta osservando e imparando",
       "unmute": "Attiva audio",
-      "mute": "Disattiva audio"
+      "mute": "Disattiva audio",
+      "finished": "Questa attività è terminata. Riaprila per ripristinare il suo schermo.",
+      "reopenOpen": "Riapri l'attività e apri lo schermo"
     },
     "computerSetup": {
       "title": "Work Computer",
@@ -2946,6 +2981,29 @@
       "allowAlways": "Consenti sempre",
       "deny": "Rifiuta",
       "failed": "Impossibile inviare la decisione."
+    },
+    "idleStopHint": "Si interrompe dopo {{minutes}} minuti di inattività.",
+    "runs": {
+      "title": "Esecuzioni",
+      "empty": "Nessuna esecuzione conclusa per ora. Ogni esecuzione conserva ciò che ha prodotto e i file che ha modificato.",
+      "fileCount": "File ({{total}})",
+      "exitStates": {
+        "completed": "Completata",
+        "needsInput": "Input necessario",
+        "failed": "Non riuscita",
+        "cancelled": "Annullata"
+      }
+    },
+    "recovery": {
+      "pending": "Work sta confermando {{pending}} pulizie della sandbox prima di accettare nuove operazioni.",
+      "since": "Bloccato dalle {{time}}.",
+      "nextAttempt": "Prossimo tentativo alle {{time}}.",
+      "adminHint": "Gli amministratori possono riprovare da Sistema > Work.",
+      "retry": "Riprova ora",
+      "retrying": "Nuovo tentativo…",
+      "retrySucceeded": "Completate {{cleared}} pulizie su {{attempted}} in sospeso.",
+      "retryPending": "Nuovo tentativo in corso per {{attempted}} pulizie in sospeso.",
+      "retryFailed": "Impossibile ritentare le pulizie in sospeso."
     }
   },
   "personaBackground": {
@@ -3142,7 +3200,11 @@
       "targetWork": "Attività Work",
       "workPolicy": "Politica Work",
       "workPolicyDefault": "Predefinita (limiti globali)",
-      "taskBoundNote": "Questa routine viene eseguita nello spazio di lavoro e nella conversazione dell'agente, con il modello e il runtime dell'agente."
+      "taskBoundNote": "Questa routine viene eseguita nello spazio di lavoro e nella conversazione dell'agente, con il modello e il runtime dell'agente.",
+      "event": "Evento",
+      "eventMatch": "Testo corrispondente",
+      "eventMatchPlaceholder": "Testo facoltativo nel titolo",
+      "eventOnlyHint": "Questa routine non ha una pianificazione. Viene eseguita quando si verifica l'evento, al massimo una volta al minuto."
     },
     "kind": {
       "once": "Una volta",
@@ -3150,7 +3212,8 @@
       "daily": "Giornaliera",
       "weekly": "Settimanale",
       "monthly": "Mensile",
-      "yearly": "Annuale"
+      "yearly": "Annuale",
+      "event": "A un evento"
     },
     "trigger": {
       "once": "Una volta il {{when}}",
@@ -3158,7 +3221,9 @@
       "daily": "Ogni giorno alle {{time}}",
       "weekly": "Ogni {{day}} alle {{time}}",
       "monthly": "Il giorno {{day}} di ogni mese alle {{time}}",
-      "yearly": "Ogni anno il {{date}} alle {{time}}"
+      "yearly": "Ogni anno il {{date}} alle {{time}}",
+      "event": "Viene eseguita quando {{event}}",
+      "eventMatching": "Viene eseguita quando {{event}} e il titolo contiene «{{match}}»"
     },
     "finishedNotification": "{{n}} esecuzioni di automazione completate",
     "templatesTitle": "Modelli",
@@ -3190,6 +3255,23 @@
       "disable": "Disattiva",
       "revealHint": "Mostrato una sola volta. Invialo come token Bearer o nell’header X-Libre-Webhook-Secret.",
       "failed": "Impossibile aggiornare il webhook."
+    },
+    "triggers": {
+      "events": {
+        "channel-mention": "qualcuno ti menziona in un canale",
+        "channel-dm": "ricevi un messaggio diretto",
+        "channel-invite": "vieni invitato in un canale",
+        "share": "qualcosa viene condiviso con te",
+        "calendar-reminder": "un promemoria del calendario si attiva",
+        "media-ready": "un'elaborazione multimediale termina",
+        "media-failed": "un'elaborazione multimediale fallisce",
+        "budget-alert": "un avviso di budget si attiva",
+        "work-run-finished": "un'esecuzione dell'agente termina",
+        "work-run-attention": "un'esecuzione dell'agente richiede attenzione",
+        "work-takeover": "un agente ti chiede di prendere il controllo",
+        "work-approval": "un agente è in attesa della tua approvazione",
+        "system": "arriva una notifica di sistema"
+      }
     }
   },
   "home": {
@@ -3366,7 +3448,11 @@
       "instructionsPlaceholder": "Istruzioni in Markdown che il modello legge quando carica questa competenza.",
       "instructionsHint": "Vengono caricate solo quando la competenza è in uso, quindi finché non serve la lunghezza non costa nulla.",
       "enabled": "Abilitata",
-      "enabledHint": "Le competenze disabilitate restano salvate ma non vengono mai offerte al modello."
+      "enabledHint": "Le competenze disabilitate restano salvate ma non vengono mai offerte al modello.",
+      "approval": "Chiedi sempre prima di",
+      "approvalHint": "Mentre questa competenza è caricata, l'agente si ferma e aspetta la tua approvazione prima che questi strumenti vengano eseguiti, anche se le approvazioni sono altrimenti disattivate. Una regola «Consenti sempre» salvata non potrà mai approvarli al posto tuo.",
+      "approvalTools": "Strumenti che richiedono l'approvazione",
+      "approvalToolsHint": "Lascia tutte le caselle deselezionate per coprire ogni strumento soggetto a restrizioni."
     },
     "history": {
       "open": "Cronologia versioni",
@@ -3456,7 +3542,8 @@
     "authModes": {
       "none": "Nessuna autenticazione",
       "bearer": "Token Bearer",
-      "header": "Intestazione personalizzata"
+      "header": "Intestazione personalizzata",
+      "oauth": "OAuth interattivo"
     },
     "accessModes": {
       "admins-only": "Solo amministratori",
@@ -3474,6 +3561,9 @@
       "specUrlHint": "Facoltativo. Se lasciato vuoto si usa l'URL di base.",
       "authMode": "Autenticazione",
       "authHeader": "Nome dell'intestazione",
+      "oauthClientId": "ID client OAuth",
+      "oauthClientIdHint": "Facoltativo. Necessario solo se il provider non registra i client automaticamente.",
+      "oauthClientSecret": "Segreto client OAuth",
       "accessMode": "Chi può usarlo",
       "timeoutMs": "Timeout (ms)",
       "maxResponseBytes": "Risposta massima (byte)",
@@ -3508,6 +3598,21 @@
         "name": "Server MCP",
         "description": "Un punto di partenza per un server MCP su Streamable HTTP."
       }
+    },
+    "oauth": {
+      "title": "Connessione",
+      "hint": "Connettersi ti porta al provider per accedere. I token restano su questo server e vengono usati solo per le tue chiamate.",
+      "connect": "Connetti",
+      "reconnect": "Riconnetti",
+      "disconnect": "Disconnetti",
+      "connected": "Connesso",
+      "notConnected": "Non connesso",
+      "expiresAt": "L'accesso scade {{when}}",
+      "connectFailed": "Impossibile avviare la connessione.",
+      "disconnected": "Server di strumenti disconnesso",
+      "disconnectFailed": "Impossibile disconnettere il server di strumenti.",
+      "callbackSuccess": "Server di strumenti connesso",
+      "callbackError": "Impossibile connettere il server di strumenti."
     }
   },
   "composer": {
@@ -3603,7 +3708,11 @@
     "unpin": "Sblocca il messaggio",
     "edit": "Modifica messaggio",
     "deleteMessage": "Elimina messaggio",
-    "replyCount": "{{total}} risposte"
+    "replyCount": "{{total}} risposte",
+    "toolCalls": {
+      "summary": "Strumenti usati ({{total}})",
+      "deniedHint": "Gli strumenti che modificano qualcosa vengono rifiutati nei canali. Eseguili da una chat."
+    }
   },
   "notifications": {
     "title": "Notifiche",

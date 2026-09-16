@@ -2151,12 +2151,43 @@
       "state": "Trạng thái",
       "preview": "Xem trước",
       "terminals": "Terminal",
+      "inUse": "Đang dùng",
+      "inUseNone": "Không ai",
       "updated": "Đã cập nhật",
+      "lastRun": "Lần chạy gần nhất",
+      "noRun": "—",
       "stateRunning": "Đang chạy",
       "stateStopped": "Đã dừng",
       "stateStarting": "Đang khởi động",
       "stateUnknown": "Không rõ",
-      "noTasks": "Chưa có tác vụ Work nào."
+      "noTasks": "Chưa có tác vụ Work nào.",
+      "usageKinds": {
+        "command": "lệnh",
+        "preview": "xem trước",
+        "terminal": "terminal",
+        "screen": "màn hình"
+      },
+      "recovery": {
+        "title": "Khôi phục",
+        "description": "Các sandbox mà Work vẫn đang dọn dẹp. Các thao tác Work mới sẽ bị chặn cho đến khi môi trường chạy xác nhận từng cái đã dừng.",
+        "container": "Container",
+        "task": "Tác vụ",
+        "reason": "Lý do",
+        "attempts": "Số lần thử",
+        "lastError": "Lỗi gần nhất",
+        "nextAttempt": "Lần thử tiếp theo",
+        "retry": "Thử lại ngay",
+        "retrying": "Đang thử lại…",
+        "reasonStartup": "Đang chạy khi khởi động",
+        "reasonStopFailed": "Dừng thất bại",
+        "reasonRuntimeUnreachable": "Không kết nối được môi trường chạy",
+        "reasonOrphan": "Không có bản ghi tác vụ",
+        "notScheduled": "Chưa lên lịch",
+        "loadFailed": "Không thể tải danh sách dọn dẹp đang chờ.",
+        "retrySucceeded": "Đã dọn {{cleared}} trong số {{attempted}} mục đang chờ.",
+        "retryPending": "Vẫn đang thử lại {{attempted}} mục dọn dẹp đang chờ.",
+        "retryFailed": "Không thể thử lại các mục dọn dẹp đang chờ."
+      }
     },
     "recovery": {
       "title": "Diễn tập khôi phục",
@@ -2806,7 +2837,9 @@
       "starting": "Đang bắt đầu xem trước…",
       "frameTitle": "Xem trước không gian làm việc",
       "failed": "Không thể bắt đầu bản xem trước. Hãy kiểm tra Hoạt động rồi thử một lệnh khác.",
-      "empty": "Khởi động ứng dụng trong không gian làm việc này để kiểm tra tại đây."
+      "empty": "Khởi động ứng dụng trong không gian làm việc này để kiểm tra tại đây.",
+      "finished": "Tác vụ này đã kết thúc. Mở lại để bắt đầu xem trước.",
+      "reopenStart": "Mở lại tác vụ và bắt đầu xem trước"
     },
     "mobile": {
       "surface": "Chế độ xem tác vụ",
@@ -2900,7 +2933,9 @@
       "teachSaved": "Đã lưu thành kỹ năng \"{{name}}\"",
       "watchingLearning": "Tác nhân đang quan sát và học",
       "unmute": "Bật tiếng",
-      "mute": "Tắt tiếng"
+      "mute": "Tắt tiếng",
+      "finished": "Tác vụ này đã kết thúc. Mở lại để lấy lại màn hình của nó.",
+      "reopenOpen": "Mở lại tác vụ và mở màn hình"
     },
     "computerSetup": {
       "title": "Work Computer",
@@ -2946,6 +2981,29 @@
       "allowAlways": "Luôn cho phép",
       "deny": "Từ chối",
       "failed": "Không thể gửi quyết định."
+    },
+    "idleStopHint": "Dừng sau {{minutes}} phút không hoạt động.",
+    "runs": {
+      "title": "Lượt chạy",
+      "empty": "Chưa có lượt chạy nào hoàn tất. Mỗi lượt chạy lưu lại những gì nó tạo ra và các tệp nó đã thay đổi.",
+      "fileCount": "Tệp ({{total}})",
+      "exitStates": {
+        "completed": "Hoàn tất",
+        "needsInput": "Cần nhập liệu",
+        "failed": "Thất bại",
+        "cancelled": "Đã hủy"
+      }
+    },
+    "recovery": {
+      "pending": "Work đang xác nhận {{pending}} lượt dọn dẹp sandbox trước khi chấp nhận thao tác mới.",
+      "since": "Đã bị chặn từ {{time}}.",
+      "nextAttempt": "Lần thử tiếp theo {{time}}.",
+      "adminHint": "Quản trị viên có thể thử lại từ Hệ thống > Work.",
+      "retry": "Thử lại ngay",
+      "retrying": "Đang thử lại…",
+      "retrySucceeded": "Đã dọn {{cleared}} trong số {{attempted}} mục đang chờ.",
+      "retryPending": "Vẫn đang thử lại {{attempted}} mục dọn dẹp đang chờ.",
+      "retryFailed": "Không thể thử lại các mục dọn dẹp đang chờ."
     }
   },
   "personaBackground": {
@@ -3142,7 +3200,11 @@
       "targetWork": "Tác vụ Work",
       "workPolicy": "Chính sách Work",
       "workPolicyDefault": "Mặc định (giới hạn chung)",
-      "taskBoundNote": "Thói quen này chạy bên trong không gian làm việc và cuộc trò chuyện của chính tác nhân, với mô hình và môi trường chạy của tác nhân."
+      "taskBoundNote": "Thói quen này chạy bên trong không gian làm việc và cuộc trò chuyện của chính tác nhân, với mô hình và môi trường chạy của tác nhân.",
+      "event": "Sự kiện",
+      "eventMatch": "Văn bản khớp",
+      "eventMatchPlaceholder": "Văn bản không bắt buộc trong tiêu đề",
+      "eventOnlyHint": "Thói quen này không có lịch chạy. Nó chạy khi sự kiện xảy ra, tối đa một lần mỗi phút."
     },
     "kind": {
       "once": "Một lần",
@@ -3150,7 +3212,8 @@
       "daily": "Hằng ngày",
       "weekly": "Hằng tuần",
       "monthly": "Hằng tháng",
-      "yearly": "Hằng năm"
+      "yearly": "Hằng năm",
+      "event": "Khi có sự kiện"
     },
     "trigger": {
       "once": "Một lần vào {{when}}",
@@ -3158,7 +3221,9 @@
       "daily": "Hằng ngày lúc {{time}}",
       "weekly": "Hằng tuần vào {{day}} lúc {{time}}",
       "monthly": "Hằng tháng vào ngày {{day}} lúc {{time}}",
-      "yearly": "Hằng năm vào {{date}} lúc {{time}}"
+      "yearly": "Hằng năm vào {{date}} lúc {{time}}",
+      "event": "Chạy khi {{event}}",
+      "eventMatching": "Chạy khi {{event}} và tiêu đề chứa \"{{match}}\""
     },
     "finishedNotification": "{{n}} lần chạy tự động hóa đã hoàn tất",
     "templatesTitle": "Mẫu",
@@ -3190,6 +3255,23 @@
       "disable": "Tắt",
       "revealHint": "Chỉ hiển thị một lần. Gửi dưới dạng token Bearer hoặc header X-Libre-Webhook-Secret.",
       "failed": "Không thể cập nhật webhook."
+    },
+    "triggers": {
+      "events": {
+        "channel-mention": "có người nhắc đến bạn trong một kênh",
+        "channel-dm": "bạn nhận được tin nhắn trực tiếp",
+        "channel-invite": "bạn được mời vào một kênh",
+        "share": "có thứ gì đó được chia sẻ với bạn",
+        "calendar-reminder": "một lời nhắc lịch được kích hoạt",
+        "media-ready": "một tác vụ media hoàn tất",
+        "media-failed": "một tác vụ media thất bại",
+        "budget-alert": "một cảnh báo ngân sách được kích hoạt",
+        "work-run-finished": "một lượt chạy tác nhân hoàn tất",
+        "work-run-attention": "một lượt chạy tác nhân cần chú ý",
+        "work-takeover": "một tác nhân đề nghị bạn tiếp quản",
+        "work-approval": "một tác nhân đang chờ bạn phê duyệt",
+        "system": "có thông báo hệ thống"
+      }
     }
   },
   "home": {
@@ -3366,7 +3448,11 @@
       "instructionsPlaceholder": "Hướng dẫn dạng Markdown mà mô hình đọc sau khi nạp kỹ năng này.",
       "instructionsHint": "Chỉ được nạp khi kỹ năng được dùng, nên độ dài ở đây không tốn gì cho tới lúc đó.",
       "enabled": "Đã bật",
-      "enabledHint": "Kỹ năng đã tắt vẫn được lưu nhưng không bao giờ được đưa cho mô hình."
+      "enabledHint": "Kỹ năng đã tắt vẫn được lưu nhưng không bao giờ được đưa cho mô hình.",
+      "approval": "Luôn hỏi trước khi chạy",
+      "approvalHint": "Khi kỹ năng này được nạp, tác nhân sẽ tạm dừng để hỏi bạn trước khi các công cụ này chạy, ngay cả khi phê duyệt nói chung đang tắt. Một quy tắc \"Luôn cho phép\" đã lưu không bao giờ có thể tự động phê duyệt chúng thay bạn.",
+      "approvalTools": "Công cụ cần phê duyệt",
+      "approvalToolsHint": "Để trống tất cả các ô để áp dụng cho mọi công cụ bị hạn chế."
     },
     "history": {
       "open": "Lịch sử phiên bản",
@@ -3456,7 +3542,8 @@
     "authModes": {
       "none": "Không xác thực",
       "bearer": "Token Bearer",
-      "header": "Header tùy chỉnh"
+      "header": "Header tùy chỉnh",
+      "oauth": "OAuth tương tác"
     },
     "accessModes": {
       "admins-only": "Chỉ quản trị viên",
@@ -3474,6 +3561,9 @@
       "specUrlHint": "Không bắt buộc. Để trống thì dùng URL gốc.",
       "authMode": "Xác thực",
       "authHeader": "Tên header",
+      "oauthClientId": "ID ứng dụng khách OAuth",
+      "oauthClientIdHint": "Không bắt buộc. Chỉ cần khi nhà cung cấp không tự động đăng ký ứng dụng khách.",
+      "oauthClientSecret": "Mật khẩu ứng dụng khách OAuth",
       "accessMode": "Ai được dùng",
       "timeoutMs": "Thời gian chờ (ms)",
       "maxResponseBytes": "Phản hồi tối đa (byte)",
@@ -3508,6 +3598,21 @@
         "name": "Máy chủ MCP",
         "description": "Điểm khởi đầu cho một máy chủ MCP qua Streamable HTTP."
       }
+    },
+    "oauth": {
+      "title": "Kết nối",
+      "hint": "Kết nối sẽ đưa bạn đến nhà cung cấp để đăng nhập. Token được giữ trên máy chủ này và chỉ dùng cho các lệnh gọi của riêng bạn.",
+      "connect": "Kết nối",
+      "reconnect": "Kết nối lại",
+      "disconnect": "Ngắt kết nối",
+      "connected": "Đã kết nối",
+      "notConnected": "Chưa kết nối",
+      "expiresAt": "Quyền truy cập hết hạn {{when}}",
+      "connectFailed": "Không thể bắt đầu kết nối.",
+      "disconnected": "Máy chủ công cụ đã ngắt kết nối",
+      "disconnectFailed": "Không thể ngắt kết nối máy chủ công cụ.",
+      "callbackSuccess": "Đã kết nối máy chủ công cụ",
+      "callbackError": "Không thể kết nối máy chủ công cụ."
     }
   },
   "composer": {
@@ -3603,7 +3708,11 @@
     "unpin": "Bỏ ghim tin nhắn",
     "edit": "Sửa tin nhắn",
     "deleteMessage": "Xóa tin nhắn",
-    "replyCount": "{{total}} trả lời"
+    "replyCount": "{{total}} trả lời",
+    "toolCalls": {
+      "summary": "Công cụ đã dùng ({{total}})",
+      "deniedHint": "Các công cụ làm thay đổi dữ liệu bị từ chối trong kênh. Hãy chạy chúng từ một cuộc trò chuyện."
+    }
   },
   "notifications": {
     "title": "Thông báo",

@@ -2151,12 +2151,43 @@
       "state": "Zustand",
       "preview": "Vorschau",
       "terminals": "Terminals",
+      "inUse": "In Verwendung",
+      "inUseNone": "Niemand",
       "updated": "Aktualisiert",
+      "lastRun": "Letzter Lauf",
+      "noRun": "—",
       "stateRunning": "Läuft",
       "stateStopped": "Gestoppt",
       "stateStarting": "Startet",
       "stateUnknown": "Unbekannt",
-      "noTasks": "Noch keine Work-Aufgaben."
+      "noTasks": "Noch keine Work-Aufgaben.",
+      "usageKinds": {
+        "command": "Befehl",
+        "preview": "Vorschau",
+        "terminal": "Terminal",
+        "screen": "Bildschirm"
+      },
+      "recovery": {
+        "title": "Wiederherstellung",
+        "description": "Sandboxes, die Work noch aufräumt. Neue Work-Vorgänge bleiben blockiert, bis die Laufzeitumgebung bestätigt, dass jede einzelne gestoppt ist.",
+        "container": "Container",
+        "task": "Aufgabe",
+        "reason": "Grund",
+        "attempts": "Versuche",
+        "lastError": "Letzter Fehler",
+        "nextAttempt": "Nächster Versuch",
+        "retry": "Jetzt erneut versuchen",
+        "retrying": "Wird erneut versucht…",
+        "reasonStartup": "Läuft beim Start",
+        "reasonStopFailed": "Stopp fehlgeschlagen",
+        "reasonRuntimeUnreachable": "Laufzeitumgebung nicht erreichbar",
+        "reasonOrphan": "Kein Aufgabendatensatz",
+        "notScheduled": "Nicht geplant",
+        "loadFailed": "Die ausstehenden Bereinigungen konnten nicht geladen werden.",
+        "retrySucceeded": "{{cleared}} von {{attempted}} ausstehenden Bereinigungen erledigt.",
+        "retryPending": "{{attempted}} ausstehende Bereinigungen werden weiterhin erneut versucht.",
+        "retryFailed": "Die ausstehenden Bereinigungen konnten nicht erneut versucht werden."
+      }
     },
     "recovery": {
       "title": "Wiederherstellungsübungen",
@@ -2806,7 +2837,9 @@
       "starting": "Vorschau wird gestartet…",
       "frameTitle": "Arbeitsbereichsvorschau",
       "failed": "Die Vorschau konnte nicht gestartet werden. Prüfen Sie „Aktivität“ und versuchen Sie es mit einem anderen Befehl.",
-      "empty": "Starten Sie die App in diesem Arbeitsbereich, um sie hier zu prüfen."
+      "empty": "Starten Sie die App in diesem Arbeitsbereich, um sie hier zu prüfen.",
+      "finished": "Diese Aufgabe ist beendet. Öffnen Sie sie erneut, um eine Vorschau zu starten.",
+      "reopenStart": "Aufgabe erneut öffnen und Vorschau starten"
     },
     "mobile": {
       "surface": "Aufgabenansicht",
@@ -2900,7 +2933,9 @@
       "teachSaved": "Als Skill \"{{name}}\" gespeichert",
       "watchingLearning": "Der Agent schaut zu und lernt",
       "unmute": "Ton einschalten",
-      "mute": "Stummschalten"
+      "mute": "Stummschalten",
+      "finished": "Diese Aufgabe ist beendet. Öffne sie erneut, um ihren Bildschirm zurückzuholen.",
+      "reopenOpen": "Aufgabe erneut öffnen und Bildschirm öffnen"
     },
     "computerSetup": {
       "title": "Work Computer",
@@ -2946,6 +2981,29 @@
       "allowAlways": "Immer zulassen",
       "deny": "Ablehnen",
       "failed": "Die Entscheidung konnte nicht gesendet werden."
+    },
+    "idleStopHint": "Stoppt nach {{minutes}} Minuten ohne Aktivität.",
+    "runs": {
+      "title": "Läufe",
+      "empty": "Noch keine abgeschlossenen Läufe. Jeder Lauf behält, was er erzeugt hat, und die Dateien, die er geändert hat.",
+      "fileCount": "Dateien ({{total}})",
+      "exitStates": {
+        "completed": "Abgeschlossen",
+        "needsInput": "Eingabe erforderlich",
+        "failed": "Fehlgeschlagen",
+        "cancelled": "Abgebrochen"
+      }
+    },
+    "recovery": {
+      "pending": "Work bestätigt gerade {{pending}} Sandbox-Bereinigung(en), bevor neue Vorgänge möglich sind.",
+      "since": "Blockiert seit {{time}}.",
+      "nextAttempt": "Nächster Versuch {{time}}.",
+      "adminHint": "Administratoren können es unter System > Work erneut versuchen.",
+      "retry": "Jetzt erneut versuchen",
+      "retrying": "Wird erneut versucht…",
+      "retrySucceeded": "{{cleared}} von {{attempted}} ausstehenden Bereinigungen erledigt.",
+      "retryPending": "{{attempted}} ausstehende Bereinigungen werden weiterhin erneut versucht.",
+      "retryFailed": "Die ausstehenden Bereinigungen konnten nicht erneut versucht werden."
     }
   },
   "personaBackground": {
@@ -3142,7 +3200,11 @@
       "targetWork": "Work-Aufgabe",
       "workPolicy": "Work-Richtlinie",
       "workPolicyDefault": "Standard (globale Limits)",
-      "taskBoundNote": "Diese Routine läuft im eigenen Arbeitsbereich und Gespräch des Agenten, mit Modell und Laufzeitumgebung des Agenten."
+      "taskBoundNote": "Diese Routine läuft im eigenen Arbeitsbereich und Gespräch des Agenten, mit Modell und Laufzeitumgebung des Agenten.",
+      "event": "Ereignis",
+      "eventMatch": "Übereinstimmender Text",
+      "eventMatchPlaceholder": "Optionaler Text im Titel",
+      "eventOnlyHint": "Diese Routine hat keinen Zeitplan. Sie läuft, wenn das Ereignis eintritt, höchstens einmal pro Minute."
     },
     "kind": {
       "once": "Einmalig",
@@ -3150,7 +3212,8 @@
       "daily": "Täglich",
       "weekly": "Wöchentlich",
       "monthly": "Monatlich",
-      "yearly": "Jährlich"
+      "yearly": "Jährlich",
+      "event": "Bei einem Ereignis"
     },
     "trigger": {
       "once": "Einmalig am {{when}}",
@@ -3158,7 +3221,9 @@
       "daily": "Täglich um {{time}}",
       "weekly": "Wöchentlich am {{day}} um {{time}}",
       "monthly": "Monatlich am {{day}}. um {{time}}",
-      "yearly": "Jährlich am {{date}} um {{time}}"
+      "yearly": "Jährlich am {{date}} um {{time}}",
+      "event": "Wird ausgeführt, wenn {{event}}",
+      "eventMatching": "Wird ausgeführt, wenn {{event}} und der Titel \"{{match}}\" enthält"
     },
     "finishedNotification": "{{n}} Automationslauf/-läufe abgeschlossen",
     "templatesTitle": "Vorlagen",
@@ -3190,6 +3255,23 @@
       "disable": "Deaktivieren",
       "revealHint": "Wird nur einmal angezeigt. Sende es als Bearer-Token oder X-Libre-Webhook-Secret-Header.",
       "failed": "Der Webhook konnte nicht aktualisiert werden."
+    },
+    "triggers": {
+      "events": {
+        "channel-mention": "jemand dich in einem Kanal erwähnt",
+        "channel-dm": "du eine Direktnachricht bekommst",
+        "channel-invite": "du in einen Kanal eingeladen wirst",
+        "share": "etwas mit dir geteilt wird",
+        "calendar-reminder": "eine Kalendererinnerung ausgelöst wird",
+        "media-ready": "ein Medienauftrag fertig ist",
+        "media-failed": "ein Medienauftrag fehlschlägt",
+        "budget-alert": "ein Budgetalarm ausgelöst wird",
+        "work-run-finished": "ein Agentenlauf abgeschlossen ist",
+        "work-run-attention": "ein Agentenlauf deine Aufmerksamkeit braucht",
+        "work-takeover": "ein Agent dich bittet zu übernehmen",
+        "work-approval": "ein Agent auf deine Genehmigung wartet",
+        "system": "eine Systemmeldung eintrifft"
+      }
     }
   },
   "home": {
@@ -3366,7 +3448,11 @@
       "instructionsPlaceholder": "Markdown-Anweisungen, die das Modell liest, sobald es diesen Skill lädt.",
       "instructionsHint": "Wird nur beim Einsatz des Skills geladen, Länge kostet hier also bis dahin nichts.",
       "enabled": "Aktiviert",
-      "enabledHint": "Deaktivierte Skills bleiben gespeichert, werden dem Modell aber nie angeboten."
+      "enabledHint": "Deaktivierte Skills bleiben gespeichert, werden dem Modell aber nie angeboten.",
+      "approval": "Immer vorher fragen",
+      "approvalHint": "Solange dieser Skill geladen ist, pausiert der Agent vor diesen Werkzeugen und wartet auf deine Genehmigung, selbst wenn Genehmigungen sonst deaktiviert sind. Eine gespeicherte Regel \"Immer zulassen\" kann sie nie automatisch für dich genehmigen.",
+      "approvalTools": "Werkzeuge, die eine Genehmigung brauchen",
+      "approvalToolsHint": "Lass alle Kästchen leer, um jedes gesperrte Werkzeug abzudecken."
     },
     "history": {
       "open": "Versionsverlauf",
@@ -3456,7 +3542,8 @@
     "authModes": {
       "none": "Keine Authentifizierung",
       "bearer": "Bearer-Token",
-      "header": "Eigener Header"
+      "header": "Eigener Header",
+      "oauth": "Interaktives OAuth"
     },
     "accessModes": {
       "admins-only": "Nur Administratoren",
@@ -3474,6 +3561,9 @@
       "specUrlHint": "Optional. Leer bedeutet: die Basis-URL wird verwendet.",
       "authMode": "Authentifizierung",
       "authHeader": "Header-Name",
+      "oauthClientId": "OAuth-Client-ID",
+      "oauthClientIdHint": "Optional. Nur nötig, wenn der Anbieter Clients nicht automatisch registriert.",
+      "oauthClientSecret": "OAuth-Client-Secret",
       "accessMode": "Wer es nutzen darf",
       "timeoutMs": "Zeitlimit (ms)",
       "maxResponseBytes": "Max. Antwort (Bytes)",
@@ -3508,6 +3598,21 @@
         "name": "MCP-Server",
         "description": "Ein Ausgangspunkt für einen MCP-Server über Streamable HTTP."
       }
+    },
+    "oauth": {
+      "title": "Verbindung",
+      "hint": "Beim Verbinden wirst du zum Anbieter weitergeleitet, um dich anzumelden. Tokens bleiben auf diesem Server und werden nur für deine eigenen Aufrufe verwendet.",
+      "connect": "Verbinden",
+      "reconnect": "Neu verbinden",
+      "disconnect": "Trennen",
+      "connected": "Verbunden",
+      "notConnected": "Nicht verbunden",
+      "expiresAt": "Zugriff läuft {{when}} ab",
+      "connectFailed": "Die Verbindung konnte nicht gestartet werden.",
+      "disconnected": "Werkzeugserver getrennt",
+      "disconnectFailed": "Der Werkzeugserver konnte nicht getrennt werden.",
+      "callbackSuccess": "Werkzeugserver verbunden",
+      "callbackError": "Der Werkzeugserver konnte nicht verbunden werden."
     }
   },
   "composer": {
@@ -3603,7 +3708,11 @@
     "unpin": "Nachricht lösen",
     "edit": "Nachricht bearbeiten",
     "deleteMessage": "Nachricht löschen",
-    "replyCount": "{{total}} Antworten"
+    "replyCount": "{{total}} Antworten",
+    "toolCalls": {
+      "summary": "Verwendete Werkzeuge ({{total}})",
+      "deniedHint": "Werkzeuge, die etwas verändern, werden in Kanälen abgelehnt. Führe sie stattdessen in einem Chat aus."
+    }
   },
   "notifications": {
     "title": "Benachrichtigungen",
