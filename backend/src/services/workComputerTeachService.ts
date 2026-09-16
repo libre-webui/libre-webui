@@ -32,6 +32,7 @@ import {
   getSkillBySlug,
   listSkills,
   Skill,
+  SkillApprovalPolicy,
   updateSkill,
 } from './skillService.js';
 import { WorkRuntimeError } from './workRuntimeShared.js';
@@ -81,6 +82,14 @@ export interface WorkTeachPlaybook {
   /** Distinct web hosts visited during the demonstration. */
   hosts: string[];
   instructions: string;
+  /**
+   * Structured form of the prose approval boundary. A demonstration that
+   * redacted secret input replays through territory the user must see, so
+   * the taught skill forces a decision before each screen action instead of
+   * trusting the model to have read the paragraph.
+   */
+  approvalPolicy: SkillApprovalPolicy;
+  approvalTools: string[];
 }
 
 type Step =
@@ -505,7 +514,19 @@ Summarize the end state and how it was verified.
 ## Failure handling
 If a step cannot be completed as demonstrated, stop and ask the user; do not improvise around errors.`;
 
-  return { steps: lines, redactions, typedInputs, hosts, instructions };
+  return {
+    steps: lines,
+    redactions,
+    typedInputs,
+    hosts,
+    instructions,
+    ...(redactions > 0
+      ? {
+          approvalPolicy: 'always' as const,
+          approvalTools: ['computer_act'],
+        }
+      : { approvalPolicy: 'inherit' as const, approvalTools: [] }),
+  };
 }
 
 const slugify = (name: string): string =>
@@ -559,6 +580,8 @@ export class WorkComputerTeachService {
       description: `Taught on the Work Computer: ${name}`,
       instructions: playbook.instructions,
       enabled: true,
+      approvalPolicy: playbook.approvalPolicy,
+      approvalTools: playbook.approvalTools,
     });
     return { skill, playbook };
   }
@@ -641,9 +664,15 @@ export class WorkComputerTeachService {
    * The owner's enabled taught skills, newest first and bounded, for
    * injection into a computer-enabled Work run's system prompt.
    */
-  async taughtSkillsForUser(
-    userId: string
-  ): Promise<Array<{ slug: string; name: string; instructions: string }>> {
+  async taughtSkillsForUser(userId: string): Promise<
+    Array<{
+      slug: string;
+      name: string;
+      instructions: string;
+      approvalPolicy: SkillApprovalPolicy;
+      approvalTools: string[];
+    }>
+  > {
     const all = await listSkills(userId);
     return all
       .filter(
@@ -658,6 +687,8 @@ export class WorkComputerTeachService {
         // A hand-edited taught skill can grow; keep one skill from
         // dominating the run's system prompt.
         instructions: skill.instructions.slice(0, 6_000),
+        approvalPolicy: skill.approvalPolicy,
+        approvalTools: skill.approvalTools,
       }));
   }
 }

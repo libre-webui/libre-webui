@@ -350,6 +350,9 @@ const promptVersion = (row: NumericRow): StoredPromptVersionRecord => ({
 
 const skill = (row: NumericRow): StoredSkillRecord => ({
   ...(row as unknown as StoredSkillRecord),
+  // Nullable text columns arrive as null on pre-migration rows.
+  approval_policy: (row.approval_policy as string | null) ?? null,
+  approval_tools: (row.approval_tools as string | null) ?? null,
   enabled: number(row.enabled, 'skill enabled'),
   version: number(row.version, 'skill version'),
   created_at: number(row.created_at, 'skill created_at'),
@@ -3259,14 +3262,16 @@ class PostgresSkillRepository implements SkillRepository {
       const result = await client.query(
         `INSERT INTO skills
            (id, user_id, slug, name, description, instructions, enabled,
-            version, created_at, updated_at)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+            approval_policy, approval_tools, version, created_at, updated_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
          ON CONFLICT (id) DO UPDATE SET
            slug = EXCLUDED.slug,
            name = EXCLUDED.name,
            description = EXCLUDED.description,
            instructions = EXCLUDED.instructions,
            enabled = EXCLUDED.enabled,
+           approval_policy = EXCLUDED.approval_policy,
+           approval_tools = EXCLUDED.approval_tools,
            version = EXCLUDED.version,
            updated_at = EXCLUDED.updated_at
          WHERE skills.user_id = EXCLUDED.user_id`,
@@ -3278,6 +3283,8 @@ class PostgresSkillRepository implements SkillRepository {
           value.description,
           value.instructions,
           value.enabled,
+          value.approval_policy,
+          value.approval_tools,
           value.version,
           value.created_at,
           value.updated_at,

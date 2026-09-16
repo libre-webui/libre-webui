@@ -339,7 +339,23 @@ action is not executed, and the run ends as **Needs input** with a normal
 handoff instead of waiting out its budget.
 
 Approvals gate actions, not visibility: `write_file` and the read-only tools
-stay ungated, and every decision lands in the security audit log.
+stay ungated by the task-level setting, and every decision lands in the
+security audit log.
+
+#### Approvals a skill requires
+
+A [skill](./51-SKILLS.md) can declare that it always needs a decision before
+named tools run. When such a skill is loaded into a run — bound to the
+agent's persona, or a taught procedure the run picked up — those tools gate
+**even when approvals are off for the task**, and the decision card says
+_Required by skill <name>_.
+
+This demand is stronger than the task-level setting in two ways. It reaches
+tools the setting leaves alone (`write_file` among them), and **Always
+allow** cannot satisfy it: a stored rule is the user's standing convenience,
+and a skill that says _always ask_ outranks it. **Allow once** still works —
+that is a fresh decision, which is exactly what the skill asked for. Tools
+the skill did not name are unaffected and keep running unattended.
 
 ### Understand task status
 
@@ -1175,7 +1191,7 @@ backend, not merely the browser or desktop interface.
 | Source development on a local computer    | Supported under the same Docker and provider requirements.                                                                                                                                                                                                                                                                           | Supported through the development API origin on port 3001.                                        |
 | Electron desktop client                   | Conditional. Electron uses an external Libre WebUI backend and does not provide a separate Work runtime.                                                                                                                                                                                                                             | Supported through that backend's signed proxy URL.                                                |
 | Bare-metal or VM backend on a remote host | Runs, files, and provider calls work when Docker is available on that host.                                                                                                                                                                                                                                                          | Supported when the public reverse proxy preserves HTTP and WebSocket traffic.                     |
-| Standard repository Docker Compose        | Supported by default on Docker Desktop: the image ships the Docker CLI, Compose mounts the host Docker socket, and Work ports route through `host.docker.internal`. Native Docker Engine additionally needs a reachable non-public `WORK_PREVIEW_BIND`.                                                                                | Supported through the same public Libre WebUI origin.                                             |
+| Standard repository Docker Compose        | Supported by default on Docker Desktop: the image ships the Docker CLI, Compose mounts the host Docker socket, and Work ports route through `host.docker.internal`. Native Docker Engine additionally needs a reachable non-public `WORK_PREVIEW_BIND`.                                                                              | Supported through the same public Libre WebUI origin.                                             |
 | Current Kubernetes/Helm deployment        | Supported with `--set work.enabled=true`: sandboxes run as Pods with PVC workspaces (runs, files, commands, git, interactive terminals, and the Work Computer screen and audio at the Pod IP), under a namespace-scoped Role and default-deny NetworkPolicies — no Docker socket anywhere. See the [Kubernetes guide](./KUBERNETES). | Supported when the backend runs in-cluster: the signed proxy targets the sandbox Pod IP directly. |
 
 ### Running Work when Libre WebUI is itself in Docker
@@ -1338,44 +1354,44 @@ Work access from the database. Work is admin-only by default; an administrator
 can open ordinary task operations to active users. Host-folder selection and
 administrative policy/access endpoints remain admin-only.
 
-| Method   | Path                                | Purpose                                           |
-| -------- | ----------------------------------- | ------------------------------------------------- |
-| `GET`    | `/capabilities`                     | Selected runtime/provider availability and limits |
-| `GET`    | `/tasks`                            | List the current administrator's tasks            |
-| `POST`   | `/tasks`                            | Create a task and its first asynchronous run      |
-| `GET`    | `/tasks/:id`                        | Load task state and recent messages               |
-| `GET`    | `/tasks/:id/messages`               | Page older messages                               |
-| `PATCH`  | `/tasks/:id`                        | Rename or change the explicit model route         |
-| `DELETE` | `/tasks/:id`                        | Remove the task and durable workspace             |
-| `POST`   | `/tasks/:id/runs`                   | Start a follow-up run                             |
-| `POST`   | `/tasks/:id/messages`               | Message the agent during an active run            |
-| `GET`    | `/tasks/:taskId/runs/:runId/events` | Stream authenticated live run events using SSE    |
-| `POST`   | `/tasks/:id/cancel`                 | Cancel the active run                             |
+| Method   | Path                                | Purpose                                             |
+| -------- | ----------------------------------- | --------------------------------------------------- |
+| `GET`    | `/capabilities`                     | Selected runtime/provider availability and limits   |
+| `GET`    | `/tasks`                            | List the current administrator's tasks              |
+| `POST`   | `/tasks`                            | Create a task and its first asynchronous run        |
+| `GET`    | `/tasks/:id`                        | Load task state and recent messages                 |
+| `GET`    | `/tasks/:id/messages`               | Page older messages                                 |
+| `PATCH`  | `/tasks/:id`                        | Rename or change the explicit model route           |
+| `DELETE` | `/tasks/:id`                        | Remove the task and durable workspace               |
+| `POST`   | `/tasks/:id/runs`                   | Start a follow-up run                               |
+| `POST`   | `/tasks/:id/messages`               | Message the agent during an active run              |
+| `GET`    | `/tasks/:taskId/runs/:runId/events` | Stream authenticated live run events using SSE      |
+| `POST`   | `/tasks/:id/cancel`                 | Cancel the active run                               |
 | `GET`    | `/tasks/:id/approvals`              | Pending approvals plus the task's Auto Review state |
-| `PUT`    | `/tasks/:id/approvals`              | Toggle the per-task approvals opt-in              |
+| `PUT`    | `/tasks/:id/approvals`              | Toggle the per-task approvals opt-in                |
 | `POST`   | `/tasks/:id/approvals/:approvalId`  | Decide a pending approval (allow once/always, deny) |
-| `DELETE` | `/tasks/:id/approval-rules/:ruleId` | Remove an Always-allow rule                       |
-| `GET`    | `/computer/setup`                   | Work Computer setup status (admin)                |
-| `POST`   | `/computer/setup`                   | Build the GUI image and create the policy (admin) |
-| `POST`   | `/tasks/:id/computer/start`         | Start the task's Work Computer session            |
-| `GET`    | `/tasks/:id/computer/control`       | Who is driving the screen; agent takeover request |
-| `POST`   | `/tasks/:id/computer/control`       | Take over (or renew control of) the screen        |
-| `DELETE` | `/tasks/:id/computer/control`       | Hand the screen back to the agent                 |
-| `POST`   | `/tasks/:id/computer/teach`         | Save a recorded demonstration as a taught skill   |
-| `POST`   | `/tasks/:id/computer/anchor`        | Resolve the element under a recorded click        |
-| `POST`   | `/computer/skills/:slug/trace`      | Append a worked/failed line to a taught skill     |
-| `GET`    | `/tasks/:id/files`                  | List a workspace directory                        |
-| `GET`    | `/tasks/:id/file`                   | Read a workspace text file                        |
-| `PUT`    | `/tasks/:id/file`                   | Save a workspace text file                        |
-| `GET`    | `/tasks/:id/git`                    | Read guarded local Git status and history         |
-| `GET`    | `/tasks/:id/git/diff`               | Read a bounded local diff                         |
-| `POST`   | `/tasks/:id/git/init`               | Initialize local Git                              |
-| `POST`   | `/tasks/:id/git/stage`              | Stage explicit workspace paths                    |
-| `POST`   | `/tasks/:id/git/commit`             | Commit staged changes                             |
-| `POST`   | `/tasks/:id/git/branches`           | Create a local branch                             |
-| `POST`   | `/tasks/:id/git/switch`             | Switch to an existing clean local branch          |
-| `POST`   | `/tasks/:id/preview/start`          | Start the managed preview                         |
-| `POST`   | `/tasks/:id/preview/stop`           | Stop the managed preview                          |
+| `DELETE` | `/tasks/:id/approval-rules/:ruleId` | Remove an Always-allow rule                         |
+| `GET`    | `/computer/setup`                   | Work Computer setup status (admin)                  |
+| `POST`   | `/computer/setup`                   | Build the GUI image and create the policy (admin)   |
+| `POST`   | `/tasks/:id/computer/start`         | Start the task's Work Computer session              |
+| `GET`    | `/tasks/:id/computer/control`       | Who is driving the screen; agent takeover request   |
+| `POST`   | `/tasks/:id/computer/control`       | Take over (or renew control of) the screen          |
+| `DELETE` | `/tasks/:id/computer/control`       | Hand the screen back to the agent                   |
+| `POST`   | `/tasks/:id/computer/teach`         | Save a recorded demonstration as a taught skill     |
+| `POST`   | `/tasks/:id/computer/anchor`        | Resolve the element under a recorded click          |
+| `POST`   | `/computer/skills/:slug/trace`      | Append a worked/failed line to a taught skill       |
+| `GET`    | `/tasks/:id/files`                  | List a workspace directory                          |
+| `GET`    | `/tasks/:id/file`                   | Read a workspace text file                          |
+| `PUT`    | `/tasks/:id/file`                   | Save a workspace text file                          |
+| `GET`    | `/tasks/:id/git`                    | Read guarded local Git status and history           |
+| `GET`    | `/tasks/:id/git/diff`               | Read a bounded local diff                           |
+| `POST`   | `/tasks/:id/git/init`               | Initialize local Git                                |
+| `POST`   | `/tasks/:id/git/stage`              | Stage explicit workspace paths                      |
+| `POST`   | `/tasks/:id/git/commit`             | Commit staged changes                               |
+| `POST`   | `/tasks/:id/git/branches`           | Create a local branch                               |
+| `POST`   | `/tasks/:id/git/switch`             | Switch to an existing clean local branch            |
+| `POST`   | `/tasks/:id/preview/start`          | Start the managed preview                           |
+| `POST`   | `/tasks/:id/preview/stop`           | Stop the managed preview                            |
 
 The task ID is always checked against the authenticated owner. Current account
 status, role, and Work-access policy are read from the database on each request,

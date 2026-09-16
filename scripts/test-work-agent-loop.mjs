@@ -1720,7 +1720,8 @@ test('computer tools reach the model as live screenshots and persist text-only',
     )
     .run(userId, userId, now, now);
 
-  const screenshot = index => Buffer.from(`fake-png-${index}`).toString('base64');
+  const screenshot = index =>
+    Buffer.from(`fake-png-${index}`).toString('base64');
   const observation = index => ({
     width: 1280,
     height: 800,
@@ -1767,7 +1768,10 @@ test('computer tools reach the model as live screenshots and persist text-only',
         assert.ok(toolNames.includes('computer_observe'));
         assert.ok(toolNames.includes('computer_act'));
         return respond([
-          { id: 'observe-1', function: { name: 'computer_observe', arguments: {} } },
+          {
+            id: 'observe-1',
+            function: { name: 'computer_observe', arguments: {} },
+          },
         ]);
       }
       if (round === 2) {
@@ -1835,10 +1839,10 @@ test('computer tools reach the model as live screenshots and persist text-only',
   // Only the newest two screenshots stay in live context; the oldest one is
   // stripped back to its text observation before round 4.
   const round4Images = imageStates[3].filter(entry => entry.images?.length);
-  assert.deepEqual(
-    round4Images.map(entry => entry.images).flat(),
-    [screenshot(2), screenshot(3)]
-  );
+  assert.deepEqual(round4Images.map(entry => entry.images).flat(), [
+    screenshot(2),
+    screenshot(3),
+  ]);
 
   // Persisted transcripts keep the observation text and screenshot metadata
   // but never the image bytes.
@@ -1994,29 +1998,33 @@ test('computer results surface fences, focus, URL, and expectation verdicts', as
 
   replaceMethod(workRuntimeService, 'computerToolsAvailable', async () => true);
   const receivedExpects = [];
-  replaceMethod(workRuntimeService, 'computerAct', async (_task, _actions, expect) => {
-    receivedExpects.push(expect);
-    return {
-      width: 1280,
-      height: 800,
-      cursorX: 10,
-      cursorY: 20,
-      window: 'Sign in - Chromium',
-      windowId: 41943041,
-      windowCount: 3,
-      url: 'https://example.test/login',
-      pageFocus: false,
-      screenshotSha256: 'f'.repeat(64),
-      screenshotBase64: Buffer.from('fence-png').toString('base64'),
-      fence: {
-        afterAction: 1,
-        reason: 'focus_assertion_failed',
-        detail:
-          'Action 2 required keyboard focus matching "input#email" but the current focus is: browser-chrome. This and the remaining action(s) did not run.',
-      },
-      expect: { outcome: 'pending', unmet: ['urlContains'] },
-    };
-  });
+  replaceMethod(
+    workRuntimeService,
+    'computerAct',
+    async (_task, _actions, expect) => {
+      receivedExpects.push(expect);
+      return {
+        width: 1280,
+        height: 800,
+        cursorX: 10,
+        cursorY: 20,
+        window: 'Sign in - Chromium',
+        windowId: 41943041,
+        windowCount: 3,
+        url: 'https://example.test/login',
+        pageFocus: false,
+        screenshotSha256: 'f'.repeat(64),
+        screenshotBase64: Buffer.from('fence-png').toString('base64'),
+        fence: {
+          afterAction: 1,
+          reason: 'focus_assertion_failed',
+          detail:
+            'Action 2 required keyboard focus matching "input#email" but the current focus is: browser-chrome. This and the remaining action(s) did not run.',
+        },
+        expect: { outcome: 'pending', unmet: ['urlContains'] },
+      };
+    }
+  );
 
   const requests = [];
   replaceMethod(
@@ -2039,7 +2047,11 @@ test('computer results surface fences, focus, URL, and expectation verdicts', as
                   arguments: {
                     actions: [
                       { type: 'click', x: 100, y: 100 },
-                      { type: 'type', text: 'user@example.test', focus: 'input#email' },
+                      {
+                        type: 'type',
+                        text: 'user@example.test',
+                        focus: 'input#email',
+                      },
                     ],
                     expect: { urlContains: 'dashboard' },
                   },
@@ -2076,11 +2088,17 @@ test('computer results surface fences, focus, URL, and expectation verdicts', as
   const persisted = await workTaskService.getMessages(detail.id);
   const result = persisted.find(message => message.kind === 'tool_result');
   assert.ok(result);
-  assert.match(result.content, /BATCH STOPPED EARLY: Action 2 required keyboard focus/);
+  assert.match(
+    result.content,
+    /BATCH STOPPED EARLY: Action 2 required keyboard focus/
+  );
   assert.match(result.content, /Applied 1 of 2 actions/);
   assert.match(result.content, /Page URL: https:\/\/example\.test\/login/);
   assert.match(result.content, /Keyboard focus: the browser UI, NOT the page/);
-  assert.match(result.content, /Declared expectation: NOT yet observed \(pending: urlContains\)/);
+  assert.match(
+    result.content,
+    /Declared expectation: NOT yet observed \(pending: urlContains\)/
+  );
   assert.match(result.content, /Screenshot sha256: ffffffffffffffff/);
   assert.equal(result.metadata.fence.reason, 'focus_assertion_failed');
   assert.equal(result.metadata.expect.outcome, 'pending');
@@ -2695,6 +2713,142 @@ test('taught skills load into computer-enabled runs and surface as skill events'
   assert.equal(taughtEvent?.data.name, 'Export the weekly report');
 });
 
+test('a taught skill forces approval for its tools with approvals off', async () => {
+  const { default: workComputerTeachService } = await distModule(
+    'services/workComputerTeachService.js'
+  );
+  const { workApprovalService } = await distModule(
+    'services/workApprovalService.js'
+  );
+  const now = Date.now();
+  const userId = 'agent-loop-forced-approval-admin';
+  getDatabase()
+    .prepare(
+      `INSERT INTO users (
+        id, username, email, password_hash, role, avatar, created_at, updated_at
+      ) VALUES (?, ?, NULL, 'unused', 'admin', NULL, ?, ?)`
+    )
+    .run(userId, userId, now, now);
+
+  replaceMethod(workRuntimeService, 'computerToolsAvailable', async () => true);
+  replaceMethod(workComputerTeachService, 'taughtSkillsForUser', async () => [
+    {
+      slug: 'taught-careful-deploy',
+      name: 'Careful deploy',
+      instructions: '## Steps\n1. Run the deploy script.',
+      approvalPolicy: 'always',
+      approvalTools: ['run_command'],
+    },
+  ]);
+  let commandsRun = 0;
+  replaceMethod(workRuntimeService, 'runCommand', async () => {
+    commandsRun += 1;
+    return { stdout: 'deployed', stderr: '', exitCode: 0 };
+  });
+  let listedFiles = 0;
+  replaceMethod(workRuntimeService, 'listFiles', async () => {
+    listedFiles += 1;
+    return { entries: [] };
+  });
+
+  let round = 0;
+  replaceMethod(
+    workModelProviderService,
+    'generateChatStreamResponse',
+    async request => {
+      round += 1;
+      if (round === 1) {
+        return {
+          model: request.model,
+          created_at: new Date().toISOString(),
+          message: {
+            role: 'assistant',
+            content: '',
+            tool_calls: [
+              {
+                id: 'forced-command',
+                function: {
+                  name: 'run_command',
+                  arguments: { command: 'deploy.sh' },
+                },
+              },
+              {
+                id: 'ungated-list',
+                function: { name: 'list_files', arguments: { path: '.' } },
+              },
+            ],
+          },
+          done: true,
+        };
+      }
+      return {
+        model: request.model,
+        created_at: new Date().toISOString(),
+        message: { role: 'assistant', content: 'Done.' },
+        done: true,
+      };
+    }
+  );
+
+  // Approvals are off for this task and its policy: only the skill asks.
+  const detail = await workTaskService.createTaskWithRun(
+    userId,
+    'Deploy the app.',
+    'test-model',
+    true,
+    { providerType: 'plugin', providerId: 'test-plugin' }
+  );
+  const runId = detail.activeRun?.id;
+  assert.ok(runId);
+  assert.notEqual(
+    (await workTaskService.getTaskRecord(detail.id, userId)).approvalsEnabled,
+    true
+  );
+
+  const events = [];
+  const unsubscribe = workEventService.subscribe(detail.id, runId, event => {
+    events.push(event);
+    // Deny from the subscriber so the run does not sit out the timeout.
+    if (event.type === 'approval' && event.data.status === 'pending') {
+      void workApprovalService.decide(
+        detail.id,
+        event.data.approvalId,
+        userId,
+        { approve: false, scope: 'once' }
+      );
+    }
+  });
+  try {
+    await workAgentService.execute(detail.id, runId, userId);
+  } finally {
+    unsubscribe();
+  }
+
+  // The skill's tool was gated and denied; it never ran.
+  const approval = events.find(
+    event => event.type === 'approval' && event.data.status === 'pending'
+  );
+  assert.ok(approval, 'the skill forced an approval request');
+  assert.equal(approval.data.name, 'run_command');
+  assert.equal(
+    approval.data.summary?.requiredBySkill,
+    'Careful deploy',
+    'the request says which skill demands it'
+  );
+  assert.equal(commandsRun, 0, 'a denied forced call never executes');
+
+  // A tool the skill did not name is untouched by the demand: with
+  // approvals off it runs without asking.
+  assert.equal(listedFiles, 1, 'an unnamed tool still runs unattended');
+  assert.equal(
+    events.filter(
+      event => event.type === 'approval' && event.data.status === 'pending'
+    ).length,
+    1,
+    'only the skill-named tool was gated'
+  );
+});
+
 test('a user message sent mid-run reaches the model at the next round', async () => {
   const now = Date.now();
   const userId = 'agent-loop-midrun-admin';
@@ -2767,9 +2921,7 @@ test('a user message sent mid-run reaches the model at the next round', async ()
   assert.equal(requests.length, 2);
   assert.equal((await workTaskService.getRun(runId)).status, 'completed');
   const persisted = await workTaskService.getMessages(detail.id);
-  const midRun = persisted.find(
-    message => message.metadata?.midRun === true
-  );
+  const midRun = persisted.find(message => message.metadata?.midRun === true);
   assert.equal(midRun?.content, 'also check the logs');
   // Without an active run the endpoint-facing method refuses.
   await assert.rejects(

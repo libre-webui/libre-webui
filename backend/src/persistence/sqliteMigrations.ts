@@ -1118,6 +1118,18 @@ const AUTOMATION_WEBHOOKS_REQUIRED_SCHEMA = {
   automations: ['webhook_secret_hash'],
 } as const;
 
+/**
+ * Per-skill approval gating. `approval_policy` is `'always'` (every tool call
+ * this skill makes needs an explicit approval) or null/`'inherit'` (the skill
+ * defers to the run's own approval setting). `approval_tools` is a JSON array
+ * of tool names the policy applies to. Both are null on every pre-migration
+ * row, so existing skills keep inheriting the run's approval setting, which is
+ * exactly the pre-migration behavior.
+ */
+const SKILL_APPROVALS_REQUIRED_SCHEMA = {
+  skills: ['approval_policy', 'approval_tools'],
+} as const;
+
 const WORK_APPROVALS_REQUIRED_SCHEMA = {
   work_policies: ['approvals_required'],
   work_tasks: ['approvals_enabled'],
@@ -3795,6 +3807,10 @@ const collectMissingAutomationWebhooksSchema = (
 ): string[] =>
   collectMissingColumns(database, AUTOMATION_WEBHOOKS_REQUIRED_SCHEMA);
 
+const collectMissingSkillApprovalsSchema = (
+  database: Database.Database
+): string[] => collectMissingColumns(database, SKILL_APPROVALS_REQUIRED_SCHEMA);
+
 const collectMissingWorkApprovalsSchema = (
   database: Database.Database
 ): string[] => [
@@ -3868,6 +3884,7 @@ function collectMissingSchemaAtVersion(
     ...(version >= 27 ? collectMissingAgentSeenSchema(database) : []),
     ...(version >= 28 ? collectMissingWorkApprovalsSchema(database) : []),
     ...(version >= 29 ? collectMissingAutomationWebhooksSchema(database) : []),
+    ...(version >= 30 ? collectMissingSkillApprovalsSchema(database) : []),
   ];
 }
 
@@ -3981,6 +3998,8 @@ const WORK_APPROVALS_MIGRATION_CHECKSUM =
   '09ece410455c755a5c4b6b6f2bc1f6cc3191b58a40a119cffe337f8a1e6eae21';
 const AUTOMATION_WEBHOOKS_MIGRATION_CHECKSUM =
   'a136ac591774852516f4de5c4f97d607259d57aa7d16db37249bc1c3e2dcd776';
+const SKILL_APPROVALS_MIGRATION_CHECKSUM =
+  '809068dbd0d17798bad418a8ded99cd8fc52f5a186570d203db780db0a7c5f41';
 
 const MIGRATIONS: readonly SQLiteMigration[] = [
   {
@@ -4506,6 +4525,21 @@ const MIGRATIONS: readonly SQLiteMigration[] = [
       if (missing.length > 0) {
         throw new Error(
           `SQLite automation webhooks schema is incomplete; missing ${missing.join(', ')}`
+        );
+      }
+    },
+  },
+  {
+    version: 30,
+    name: 'skill-approvals',
+    checksum: SKILL_APPROVALS_MIGRATION_CHECKSUM,
+    apply(database) {
+      addColumnIfMissing(database, 'skills', 'approval_policy', 'TEXT');
+      addColumnIfMissing(database, 'skills', 'approval_tools', 'TEXT');
+      const missing = collectMissingSkillApprovalsSchema(database);
+      if (missing.length > 0) {
+        throw new Error(
+          `SQLite skill approvals schema is incomplete; missing ${missing.join(', ')}`
         );
       }
     },

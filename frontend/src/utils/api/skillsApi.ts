@@ -26,6 +26,10 @@ export interface Skill {
   description: string;
   instructions: string;
   enabled: boolean;
+  /** `always`: the gated tools below pause for the user whenever this skill is loaded. */
+  approvalPolicy: 'inherit' | 'always';
+  /** Gated tool names the policy covers; empty under `always` means every gated tool. */
+  approvalTools: string[];
   version: number;
   createdAt: number;
   updatedAt: number;
@@ -38,6 +42,8 @@ export interface SkillInput {
   description: string;
   instructions: string;
   enabled?: boolean;
+  approvalPolicy?: 'inherit' | 'always';
+  approvalTools?: string[];
 }
 
 export interface SkillRevision {
@@ -53,6 +59,8 @@ export interface SkillExport {
   description: string;
   instructions: string;
   enabled: boolean;
+  approvalPolicy: 'inherit' | 'always';
+  approvalTools: string[];
   version: number;
   exportedAt: number;
   format: string;

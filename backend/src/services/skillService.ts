@@ -60,6 +60,28 @@ import {
 } from '../utils/resourceLimits.js';
 import { randomUUID } from 'node:crypto';
 
+/**
+ * Tools a skill may demand approval for. `write_file` is here even though it
+ * is not gated by the run-level approval setting: a skill saying "always ask
+ * before you write files" is exactly the case this exists for.
+ */
+export const SKILL_APPROVAL_TOOLS: readonly string[] = [
+  'run_command',
+  'computer_act',
+  'delete_file',
+  'move_file',
+  'message_agent',
+  'write_file',
+];
+
+/**
+ * `inherit` follows the run's own approval setting. `always` forces a
+ * decision for the listed tools whenever the skill is loaded, even when
+ * approvals are off for the run — and an "Always allow" rule cannot satisfy
+ * it. An empty tool list under `always` means every gated tool.
+ */
+export type SkillApprovalPolicy = 'inherit' | 'always';
+
 export interface Skill {
   id: string;
   slug: string;
@@ -67,6 +89,8 @@ export interface Skill {
   description: string;
   instructions: string;
   enabled: boolean;
+  approvalPolicy: SkillApprovalPolicy;
+  approvalTools: string[];
   version: number;
   createdAt: number;
   updatedAt: number;
@@ -79,6 +103,8 @@ export interface SkillInput {
   description?: unknown;
   instructions?: unknown;
   enabled?: unknown;
+  approvalPolicy?: unknown;
+  approvalTools?: unknown;
 }
 
 export interface SkillRevision {
@@ -115,6 +141,8 @@ export interface SkillExport {
   description: string;
   instructions: string;
   enabled: boolean;
+  approvalPolicy: SkillApprovalPolicy;
+  approvalTools: string[];
   version: number;
   exportedAt: number;
   format: typeof SKILL_EXPORT_FORMAT;
@@ -168,11 +196,64 @@ interface NormalizedSkill {
   description: string;
   instructions: string;
   enabled: boolean;
+  approvalPolicy: SkillApprovalPolicy;
+  approvalTools: string[];
 }
+
+/** Parse the stored JSON tool list, tolerating null and hand-edited rows. */
+const readStoredApprovalTools = (value: string | null): string[] => {
+  if (!value) return [];
+  try {
+    const decoded = JSON.parse(value) as unknown;
+    if (!Array.isArray(decoded)) return [];
+    return decoded.filter((entry): entry is string =>
+      SKILL_APPROVAL_TOOLS.includes(entry as string)
+    );
+  } catch {
+    return [];
+  }
+};
+
+/** Untrusted input into a tool list: known names only, deduplicated. */
+const readApprovalTools = (value: unknown, fallback: string[]): string[] => {
+  if (value === undefined) return fallback;
+  if (!Array.isArray(value)) {
+    throw new ResourcePolicyError('approvalTools must be an array', 400);
+  }
+  const names = new Set<string>();
+  for (const entry of value) {
+    if (typeof entry !== 'string' || !SKILL_APPROVAL_TOOLS.includes(entry)) {
+      throw new ResourcePolicyError(
+        `approvalTools may only contain ${SKILL_APPROVAL_TOOLS.join(', ')}`,
+        400
+      );
+    }
+    names.add(entry);
+  }
+  return [...names];
+};
+
+const readApprovalPolicy = (
+  value: unknown,
+  fallback: SkillApprovalPolicy
+): SkillApprovalPolicy => {
+  if (value === undefined || value === null) return fallback;
+  if (value !== 'inherit' && value !== 'always') {
+    throw new ResourcePolicyError(
+      "approvalPolicy must be 'inherit' or 'always'",
+      400
+    );
+  }
+  return value;
+};
 
 const normalize = (
   input: SkillInput,
-  fallbackEnabled = true
+  fallbackEnabled = true,
+  fallbackApproval: { policy: SkillApprovalPolicy; tools: string[] } = {
+    policy: 'inherit',
+    tools: [],
+  }
 ): NormalizedSkill => ({
   slug: readSlug(input.slug),
   name: readText(input.name, 'name', MAX_SKILL_NAME_LENGTH, true) as string,
@@ -190,6 +271,17 @@ const normalize = (
   ) as string,
   enabled:
     input.enabled === undefined ? fallbackEnabled : input.enabled !== false,
+  approvalPolicy: readApprovalPolicy(
+    input.approvalPolicy,
+    fallbackApproval.policy
+  ),
+  // The tool list only means anything under `always`; clearing it with the
+  // policy keeps a re-enabled switch from resurrecting a stale selection.
+  approvalTools:
+    readApprovalPolicy(input.approvalPolicy, fallbackApproval.policy) ===
+    'always'
+      ? readApprovalTools(input.approvalTools, fallbackApproval.tools)
+      : [],
 });
 
 const mapSkillRow = (row: StoredSkillRecord): Skill => ({
@@ -199,6 +291,8 @@ const mapSkillRow = (row: StoredSkillRecord): Skill => ({
   description: encryptionService.decrypt(row.description),
   instructions: encryptionService.decrypt(row.instructions),
   enabled: row.enabled === 1,
+  approvalPolicy: row.approval_policy === 'always' ? 'always' : 'inherit',
+  approvalTools: readStoredApprovalTools(row.approval_tools),
   version: row.version,
   createdAt: row.created_at,
   updatedAt: row.updated_at,
@@ -216,6 +310,13 @@ const toRow = (
   description: encryptionService.encrypt(normalized.description),
   instructions: encryptionService.encrypt(normalized.instructions),
   enabled: normalized.enabled ? 1 : 0,
+  // Null is the inherit default, so a pre-migration row and a skill that
+  // opted out read identically.
+  approval_policy: normalized.approvalPolicy === 'always' ? 'always' : null,
+  approval_tools:
+    normalized.approvalPolicy === 'always'
+      ? JSON.stringify(normalized.approvalTools)
+      : null,
   version: skill.version,
   created_at: skill.createdAt,
   updated_at: skill.updatedAt,
@@ -371,8 +472,14 @@ export const updateSkill = async (
       description: input.description,
       instructions: input.instructions,
       enabled: input.enabled,
+      approvalPolicy: input.approvalPolicy,
+      approvalTools: input.approvalTools,
     },
-    existing.enabled === 1
+    existing.enabled === 1,
+    {
+      policy: existing.approval_policy === 'always' ? 'always' : 'inherit',
+      tools: readStoredApprovalTools(existing.approval_tools),
+    }
   );
   await assertSlugAvailable(existing.user_id, normalized.slug, skillId);
   const skill: Skill = {
@@ -777,6 +884,8 @@ export const exportSkill = async (
     description: skill.description,
     instructions: skill.instructions,
     enabled: skill.enabled,
+    approvalPolicy: skill.approvalPolicy,
+    approvalTools: skill.approvalTools,
     version: skill.version,
     exportedAt: Date.now(),
     format: SKILL_EXPORT_FORMAT,
@@ -805,7 +914,11 @@ export const importSkill = async (
   // win when present — they preserve state markdown cannot (enabled).
   const normalized = normalize(
     typeof raw.markdown === 'string' && typeof raw.instructions !== 'string'
-      ? skillFromMarkdown(raw.markdown)
+      ? {
+          ...skillFromMarkdown(raw.markdown),
+          approvalPolicy: raw.approvalPolicy,
+          approvalTools: raw.approvalTools,
+        }
       : (raw as SkillInput)
   );
   const existing = await skills().findBySlug(userId, normalized.slug);

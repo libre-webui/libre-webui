@@ -875,6 +875,8 @@ export interface StoredSkillRecord {
   version: number;
   created_at: number;
   updated_at: number;
+  approval_policy: string | null;
+  approval_tools: string | null;
 }
 
 export interface StoredSkillVersionRecord {

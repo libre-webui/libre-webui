@@ -29,6 +29,8 @@ type MockSkill = {
   description: string;
   instructions: string;
   enabled: boolean;
+  approvalPolicy: 'inherit' | 'always';
+  approvalTools: string[];
   version: number;
   createdAt: number;
   updatedAt: number;
@@ -48,6 +50,8 @@ const seededSkill: MockSkill = {
   description: 'Use when asked to review a diff.',
   instructions: 'Read the diff and comment on correctness first.',
   enabled: true,
+  approvalPolicy: 'inherit',
+  approvalTools: [],
   version: 1,
   createdAt: 1_770_000_000_000,
   updatedAt: 1_770_000_000_000,
@@ -125,6 +129,8 @@ async function mockSkillsApi(page: Page, initialSkills: MockSkill[]) {
         description: body.description ?? '',
         instructions: body.instructions ?? '',
         enabled: body.enabled !== false,
+        approvalPolicy: body.approvalPolicy ?? 'inherit',
+        approvalTools: body.approvalTools ?? [],
         version: 1,
         createdAt: clock,
         updatedAt: clock,
@@ -163,6 +169,8 @@ async function mockSkillsApi(page: Page, initialSkills: MockSkill[]) {
           .join('')
           .trim(),
         enabled: true,
+        approvalPolicy: 'inherit',
+        approvalTools: [],
         version: 1,
         createdAt: clock,
         updatedAt: clock,
@@ -424,6 +432,8 @@ test('skills manage manifest fields and version history through the UI', async (
     description: 'Use when writing a changelog entry.',
     instructions: 'Group changes by feature, then fixes.',
     enabled: true,
+    approvalPolicy: 'inherit',
+    approvalTools: [],
   });
 
   const row = page
@@ -483,6 +493,8 @@ test('a skill imports from a remote store URL through the modal', async ({
           description: 'Imported from a remote store.',
           instructions: '# Remote style',
           enabled: true,
+          approvalPolicy: 'inherit',
+          approvalTools: [],
           version: 1,
           createdAt: 1_770_000_000_000,
           updatedAt: 1_770_000_000_000,
@@ -594,4 +606,64 @@ test('the skill modal manages bundled companion files', async ({ page }) => {
 
   await page.getByTestId('skill-file-delete').click();
   await expect(page.getByTestId('skill-file-row')).toHaveCount(0);
+});
+
+test('a skill demands approval for named tools and reopens with them set', async ({
+  page,
+}) => {
+  await mockLibreWebUiApi(page);
+  const skillsApi = await mockSkillsApi(page, []);
+
+  await page.goto('/');
+  await openSettingsTab(page, 'skills');
+  await expect(page.getByTestId('skills-page')).toBeVisible();
+
+  await page.getByTestId('skill-new').click();
+  await expect(page.getByTestId('skill-modal')).toBeVisible();
+  await page.getByTestId('skill-slug').fill('deploy');
+  await page.getByTestId('skill-name').fill('Deploy');
+  await page
+    .getByTestId('skill-description')
+    .fill('Use when shipping to production.');
+  await page
+    .getByTestId('skill-instructions')
+    .fill('Run the gate, then the deploy script.');
+
+  // The tool list only appears once the skill demands approval.
+  const approval = page.getByTestId('skill-approval');
+  await expect(
+    approval.getByTestId('skill-approval-tool-run_command')
+  ).toHaveCount(0);
+  await page.getByTestId('skill-approval-always').click();
+  await approval.getByTestId('skill-approval-tool-run_command').check();
+  await approval.getByTestId('skill-approval-tool-computer_act').check();
+  await page.getByTestId('skill-save').click();
+  await expect(page.getByTestId('skill-modal')).toHaveCount(0);
+
+  expect(skillsApi.createRequests).toHaveLength(1);
+  expect(skillsApi.createRequests[0]).toMatchObject({
+    slug: 'deploy',
+    approvalPolicy: 'always',
+  });
+  expect(skillsApi.createRequests[0].approvalTools).toEqual([
+    'run_command',
+    'computer_act',
+  ]);
+
+  // Reopening the saved skill brings the policy and the two tools back.
+  const row = page.getByTestId('skill-row').filter({ hasText: 'Deploy' });
+  await row.getByTestId('skill-edit').click();
+  await expect(page.getByTestId('skill-modal')).toBeVisible();
+  await expect(
+    page.getByTestId('skill-approval-always').getByRole('switch')
+  ).toHaveAttribute('aria-checked', 'true');
+  await expect(
+    approval.getByTestId('skill-approval-tool-run_command')
+  ).toBeChecked();
+  await expect(
+    approval.getByTestId('skill-approval-tool-computer_act')
+  ).toBeChecked();
+  await expect(
+    approval.getByTestId('skill-approval-tool-write_file')
+  ).not.toBeChecked();
 });

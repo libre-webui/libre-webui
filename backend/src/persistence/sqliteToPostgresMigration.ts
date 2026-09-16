@@ -1280,6 +1280,8 @@ const TABLE_MAPPINGS: readonly TableMapping[] = Object.freeze([
       'version',
       'created_at',
       'updated_at',
+      'approval_policy',
+      'approval_tools',
     ],
     ['id'],
     { integers: [...timestamps, 'enabled', 'version'] }

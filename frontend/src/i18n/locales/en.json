@@ -3337,7 +3337,11 @@
       "instructionsPlaceholder": "Markdown instructions the model reads once it loads this skill.",
       "instructionsHint": "Loaded only when the skill is used, so length here costs nothing until then.",
       "enabled": "Enabled",
-      "enabledHint": "Disabled skills stay saved but are never offered to the model."
+      "enabledHint": "Disabled skills stay saved but are never offered to the model.",
+      "approval": "Always ask before",
+      "approvalHint": "While this skill is loaded the agent pauses for you before these tools run, even if approvals are otherwise off. A saved \"Always allow\" rule can never approve them for you.",
+      "approvalTools": "Tools that need approval",
+      "approvalToolsHint": "Leave every box unchecked to cover every gated tool."
     },
     "history": {
       "open": "Version history",
