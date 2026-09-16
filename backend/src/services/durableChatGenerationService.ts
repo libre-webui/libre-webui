@@ -20,17 +20,15 @@ import {
 import { extractStatistics } from '../utils/generationUtils.js';
 import { formatPluginStreamToolCalls } from '../utils/pluginStreaming.js';
 import { createChatStreamCoalescer } from '../utils/chatStreamCoalescer.js';
-import { toOpenAICompatibleTools } from '../utils/pluginChatAdapter.js';
 import agentCliService from './agentCliService.js';
 import chatGenerationService from './chatGenerationService.js';
 import { ChatRequestService } from './chatRequestService.js';
 import type { AuthzActor } from './authorizationService.js';
 import {
-  ollamaStreamAsPluginChunks,
   runPluginToolLoop,
-  toOllamaExtensionMessages,
   type ToolLoopEventSink,
 } from './chatToolRuntimeService.js';
+import { createToolRoundStarter } from './toolRoundStarter.js';
 import {
   actorCanUseTools,
   buildToolCatalog,
@@ -323,15 +321,14 @@ const streamGeneratedAssistant = async (
           catalog: toolContext.catalog,
           sink: toolSink,
           signal: context.signal,
-          startRound: (extension, tools) =>
-            pluginService.executePluginStreamRequest(
-              prepared.target.actualModelName,
-              [...prepared.pluginMessages, ...extension],
-              { ...prepared.target.mergedOptions, tools: [...tools] },
-              input.actorUserId,
-              activePluginId,
-              context.signal
-            ),
+          startRound: createToolRoundStarter({
+            target: prepared.target,
+            ollamaMessages: prepared.ollamaMessages,
+            pluginMessages: prepared.pluginMessages,
+            userId: input.actorUserId,
+            ollamaState: {},
+            signal: context.signal,
+          }),
         })
       : undefined;
     try {
@@ -452,25 +449,14 @@ const streamGeneratedAssistant = async (
       catalog: toolContext.catalog,
       sink: toolSink,
       signal: context.signal,
-      startRound: (extension, tools) =>
-        ollamaStreamAsPluginChunks(
-          {
-            model: prepared.target.actualModelName,
-            messages: [
-              ...prepared.ollamaMessages,
-              ...toOllamaExtensionMessages(extension),
-            ],
-            stream: true,
-            options: prepared.target.mergedOptions as Record<string, unknown>,
-            ...(tools.length > 0
-              ? { tools: toOpenAICompatibleTools([...tools]) }
-              : {}),
-          },
-          ollamaService,
-          bridgeState,
-          context.signal,
-          { userId: input.actorUserId }
-        ),
+      startRound: createToolRoundStarter({
+        target: prepared.target,
+        ollamaMessages: prepared.ollamaMessages,
+        pluginMessages: prepared.pluginMessages,
+        userId: input.actorUserId,
+        ollamaState: bridgeState,
+        signal: context.signal,
+      }),
     });
     try {
       for await (const chunk of loop.chunks) {

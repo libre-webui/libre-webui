@@ -76,6 +76,7 @@ import type {
   ChannelSummary,
   ChannelType,
 } from '../types/index.js';
+import type { ChatToolCall, ChatToolCallStatus } from '../types/tools.js';
 
 const logger = createLogger('channels');
 
@@ -143,17 +144,114 @@ interface MessageViewContext {
   >;
 }
 
+/**
+ * Tool summaries ride along in a model reply's encrypted metadata, so they
+ * are bounded on the way in: a channel row is not a place to park a whole
+ * tool transcript.
+ */
+const MAX_REPLY_TOOL_CALLS = 12;
+const MAX_TOOL_ARGUMENT_CHARS = 1024;
+const MAX_TOOL_PREVIEW_CHARS = 500;
+
+const TOOL_CALL_STATUSES = new Set<string>([
+  'awaiting_approval',
+  'running',
+  'succeeded',
+  'failed',
+  'denied',
+  'cancelled',
+]);
+
+const clampText = (value: string, maximum: number): string =>
+  value.length > maximum ? `${value.slice(0, maximum)}…` : value;
+
+/** Bound a turn's tool calls to what a channel reply may carry. */
+export const boundReplyToolCalls = (
+  calls: readonly ChatToolCall[]
+): ChatToolCall[] =>
+  calls.slice(0, MAX_REPLY_TOOL_CALLS).map(call => ({
+    id: call.id,
+    name: call.name,
+    arguments: clampText(call.arguments, MAX_TOOL_ARGUMENT_CHARS),
+    source: call.source,
+    ...(call.serverId ? { serverId: call.serverId } : {}),
+    ...(call.serverName ? { serverName: call.serverName } : {}),
+    sideEffect: call.sideEffect === true,
+    status: call.status,
+    ...(call.startedAt !== undefined ? { startedAt: call.startedAt } : {}),
+    ...(call.finishedAt !== undefined ? { finishedAt: call.finishedAt } : {}),
+    ...(call.error
+      ? { error: clampText(call.error, MAX_TOOL_PREVIEW_CHARS) }
+      : {}),
+    ...(call.resultPreview !== undefined
+      ? { resultPreview: clampText(call.resultPreview, MAX_TOOL_PREVIEW_CHARS) }
+      : {}),
+    ...(call.isError !== undefined ? { isError: call.isError } : {}),
+  }));
+
+/** Re-validate stored tool summaries; a malformed blob simply drops out. */
+const readToolCalls = (value: unknown): ChatToolCall[] => {
+  if (!Array.isArray(value)) return [];
+  const calls: ChatToolCall[] = [];
+  for (const entry of value) {
+    if (!entry || typeof entry !== 'object') continue;
+    const record = entry as Record<string, unknown>;
+    if (
+      typeof record.id !== 'string' ||
+      typeof record.name !== 'string' ||
+      typeof record.status !== 'string' ||
+      !TOOL_CALL_STATUSES.has(record.status)
+    ) {
+      continue;
+    }
+    calls.push({
+      id: record.id,
+      name: record.name,
+      arguments: typeof record.arguments === 'string' ? record.arguments : '',
+      source:
+        record.source === 'openapi' || record.source === 'mcp'
+          ? record.source
+          : 'builtin',
+      ...(typeof record.serverId === 'string'
+        ? { serverId: record.serverId }
+        : {}),
+      ...(typeof record.serverName === 'string'
+        ? { serverName: record.serverName }
+        : {}),
+      sideEffect: record.sideEffect === true,
+      status: record.status as ChatToolCallStatus,
+      ...(typeof record.startedAt === 'number'
+        ? { startedAt: record.startedAt }
+        : {}),
+      ...(typeof record.finishedAt === 'number'
+        ? { finishedAt: record.finishedAt }
+        : {}),
+      ...(typeof record.error === 'string' ? { error: record.error } : {}),
+      ...(typeof record.resultPreview === 'string'
+        ? { resultPreview: record.resultPreview }
+        : {}),
+      ...(typeof record.isError === 'boolean'
+        ? { isError: record.isError }
+        : {}),
+    });
+    if (calls.length >= MAX_REPLY_TOOL_CALLS) break;
+  }
+  return calls;
+};
+
 const readMetadata = (
   row: StoredChannelMessageRecord
-): { pending?: boolean; error?: string } => {
+): { pending?: boolean; error?: string; toolCalls?: ChatToolCall[] } => {
   if (!row.metadata) return {};
   try {
     const decoded = JSON.parse(
       encryptionService.decrypt(row.metadata)
     ) as Record<string, unknown>;
+    const toolCalls = readToolCalls(decoded.toolCalls);
     return {
       ...(decoded.pending === true ? { pending: true } : {}),
       ...(typeof decoded.error === 'string' ? { error: decoded.error } : {}),
+      ...(toolCalls.length > 0 ? { toolCalls } : {}),
     };
   } catch {
     return {};
@@ -1335,15 +1433,22 @@ export class ChannelService {
   /** Reply completion used by the durable mention job. */
   async completeModelReply(
     replyMessageId: string,
-    content: string
+    content: string,
+    toolCalls: readonly ChatToolCall[] = []
   ): Promise<void> {
     const row = await messages().findById(replyMessageId);
     if (!row || row.deleted_at) return;
     const now = Date.now();
+    // Completion clears the pending/error state; the turn's tool summaries
+    // are the only metadata a finished reply keeps.
+    const bounded = boundReplyToolCalls(toolCalls);
     const next: StoredChannelMessageRecord = {
       ...row,
       content: encryptionService.encrypt(content),
-      metadata: null,
+      metadata:
+        bounded.length > 0
+          ? encryptionService.encrypt(JSON.stringify({ toolCalls: bounded }))
+          : null,
       updated_at: now,
     };
     await messages().update(next);

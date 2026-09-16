@@ -15,6 +15,8 @@
  * limitations under the License.
  */
 
+import type { ChatToolCall } from './tools.js';
+
 export interface GenerationStatistics {
   total_duration?: number; // Total time in nanoseconds
   load_duration?: number; // Model load time in nanoseconds
@@ -234,6 +236,8 @@ export interface ChannelMessageView {
   /** Model-reply lifecycle state for @model messages. */
   pending?: boolean;
   error?: string;
+  /** Bounded summaries of the tools an @model reply ran, if any. */
+  toolCalls?: ChatToolCall[];
 }
 
 export type NotificationType =

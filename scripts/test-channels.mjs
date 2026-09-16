@@ -41,6 +41,7 @@ const dataDir = await mkdtemp(path.join(os.tmpdir(), 'libre-channels-'));
 process.env.DATA_DIR = dataDir;
 process.env.JWT_SECRET = 'channels-test-secret-that-is-long-enough';
 process.env.ENCRYPTION_KEY ||= '5'.repeat(64);
+process.env.TOOLS_PRIVATE_NETWORK_ALLOWLIST = '127.0.0.1,localhost';
 
 const distModule = relativePath =>
   import(
@@ -74,13 +75,8 @@ const runtime = jobsModule.initializeDurableJobRuntime({
   env: process.env,
 });
 const eventsModule = await distModule('platform/events/index.js');
-const { getCoordinator } = await distModule(
-  'platform/coordination/service.js'
-);
-eventsModule.initializeDurableEventGateway(
-  runtime.service,
-  getCoordinator()
-);
+const { getCoordinator } = await distModule('platform/coordination/service.js');
+eventsModule.initializeDurableEventGateway(runtime.service, getCoordinator());
 
 const [
   { getDatabase },
@@ -90,6 +86,9 @@ const [
   { getDurableEventGateway },
   { channelEventStreamId, CHANNEL_MENTION_JOB_TYPE },
   { createDomainDurableJobHandlers },
+  toolServers,
+  toolAccess,
+  { default: ollamaService },
 ] = await Promise.all([
   distModule('db.js'),
   distModule('services/authService.js'),
@@ -98,6 +97,9 @@ const [
   distModule('platform/events/index.js'),
   distModule('platform/jobs/domainJobContracts.js'),
   distModule('platform/jobs/domainJobHandlers.js'),
+  distModule('services/toolServerService.js'),
+  distModule('services/toolAccessService.js'),
+  distModule('services/ollamaService.js'),
 ]);
 
 const database = getDatabase();
@@ -285,18 +287,14 @@ test('timeline: idempotent posts, ordering, threads, edit and tombstone rules', 
     ['First message', 'A threaded reply']
   );
   const rootPage = await channelService.listTimeline(alice, channel.id, {});
-  assert.equal(
-    rootPage.find(message => message.id === clientId).replyCount,
-    1
-  );
+  assert.equal(rootPage.find(message => message.id === clientId).replyCount, 1);
   // Thread replies stay out of the root timeline.
   assert.ok(!rootPage.some(message => message.id === reply.message.id));
 
   // Edits are author-only.
-  await assert.rejects(
-    channelService.editMessage(bob, clientId, 'Hijacked'),
-    { statusCode: 404 }
-  );
+  await assert.rejects(channelService.editMessage(bob, clientId, 'Hijacked'), {
+    statusCode: 404,
+  });
   const edited = await channelService.editMessage(
     alice,
     clientId,
@@ -380,9 +378,7 @@ test('reactions and pins update with stable counters', async () => {
   // Re-adding the same reaction is a no-op, not a double count.
   await channelService.react(bob, messageId, '🎉', true);
   let [message] = await channelService.listTimeline(bob, channel.id, {});
-  assert.deepEqual(message.reactions, [
-    { emoji: '🎉', count: 2, mine: true },
-  ]);
+  assert.deepEqual(message.reactions, [{ emoji: '🎉', count: 2, mine: true }]);
   await channelService.react(bob, messageId, '🎉', false);
   [message] = await channelService.listTimeline(bob, channel.id, {});
   assert.deepEqual(message.reactions, [
@@ -588,4 +584,268 @@ test('@model mentions run under the invoking member and fail safely', async () =
     afterRemoval.find(message => message.id === replyId).error,
     /no longer a member/
   );
+});
+
+/*
+ * Mentions and the native tool loop: a mock OpenAPI server gives the
+ * mention catalog one read-only GET and one side-effecting POST, and the
+ * provider is scripted at the Ollama seam so each round's tool calls are
+ * chosen by the test rather than by a model.
+ */
+
+const toolSpecDocument = {
+  openapi: '3.1.0',
+  info: { title: 'Channel Store', version: '1.0.0' },
+  paths: {
+    '/pets': {
+      get: {
+        operationId: 'getPets',
+        summary: 'List pets',
+        parameters: [
+          {
+            name: 'limit',
+            in: 'query',
+            required: false,
+            schema: { type: 'integer' },
+          },
+        ],
+      },
+      post: {
+        operationId: 'addPet',
+        summary: 'Add a pet',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: { name: { type: 'string' } },
+                required: ['name'],
+              },
+            },
+          },
+        },
+      },
+    },
+  },
+};
+
+const toolHttpLog = [];
+const toolHttpMock = createServer((request, response) => {
+  const url = new URL(request.url, 'http://mock.invalid');
+  const chunks = [];
+  request.on('data', chunk => chunks.push(chunk));
+  request.on('end', () => {
+    const body = Buffer.concat(chunks).toString('utf-8');
+    if (url.pathname === '/openapi.json') {
+      response.writeHead(200, { 'Content-Type': 'application/json' });
+      response.end(JSON.stringify(toolSpecDocument));
+      return;
+    }
+    toolHttpLog.push({ method: request.method, pathname: url.pathname, body });
+    response.writeHead(200, { 'Content-Type': 'application/json' });
+    response.end(JSON.stringify({ pets: ['ada'], echoed: request.method }));
+  });
+});
+const toolHttpPort = await new Promise((resolve, reject) => {
+  toolHttpMock.once('error', reject);
+  toolHttpMock.listen(0, '127.0.0.1', () =>
+    resolve(toolHttpMock.address().port)
+  );
+});
+after(async () => {
+  await new Promise(resolve => toolHttpMock.close(resolve));
+});
+
+const toolServer = await toolServers.registerToolServer(ALICE, {
+  name: 'Channel Store',
+  kind: 'openapi',
+  baseUrl: `http://127.0.0.1:${toolHttpPort}`,
+  specUrl: `http://127.0.0.1:${toolHttpPort}/openapi.json`,
+  authMode: 'none',
+  accessMode: 'all-users',
+});
+assert.ok(toolServer.id);
+const toolNs = toolServers.serverNamespace('Channel Store');
+const GET_PETS = `${toolNs}__getPets`;
+const ADD_PET = `${toolNs}__addPet`;
+
+// The provider seam: every round the loop opens lands here, and the test
+// decides what the "model" says. The stub only answers once a test arms it,
+// so the earlier "no reachable provider" assertions still see the real one.
+const providerRounds = [];
+const providerRequests = [];
+const oneShotRequests = [];
+let providerStubbed = false;
+const realChatStream =
+  ollamaService.generateChatStreamResponse.bind(ollamaService);
+const realChatResponse = ollamaService.generateChatResponse.bind(ollamaService);
+ollamaService.generateChatStreamResponse = async (...args) => {
+  if (!providerStubbed) return realChatStream(...args);
+  const [request, onChunk, , onDone] = args;
+  providerRequests.push(request);
+  const scripted = providerRounds[providerRequests.length - 1] ?? [
+    { message: { content: 'done' }, done: true },
+  ];
+  for (const chunk of scripted) onChunk(chunk);
+  onDone?.();
+};
+ollamaService.generateChatResponse = async (...args) => {
+  if (!providerStubbed) return realChatResponse(...args);
+  const [request] = args;
+  oneShotRequests.push(request);
+  return {
+    model: request.model,
+    created_at: new Date().toISOString(),
+    message: { role: 'assistant', content: 'plain one-shot reply' },
+    done: true,
+  };
+};
+
+const toolCallChunk = (name, args) => ({
+  message: {
+    content: '',
+    tool_calls: [{ function: { name, arguments: args } }],
+  },
+  done: false,
+});
+const finalChunk = content => ({ message: { content }, done: true });
+
+const MENTION_MODEL = 'nonexistent-model:latest';
+
+/** Post an @model mention and run its durable job to completion. */
+const runMention = async (user, channelId, content) => {
+  const posted = await channelService.postUserMessage(user, channelId, {
+    content,
+    mentionModel: MENTION_MODEL,
+  });
+  const replyMessageId = `${posted.message.id}-model`;
+  const handler = createDomainDurableJobHandlers().get(
+    CHANNEL_MENTION_JOB_TYPE
+  );
+  await handler({
+    payload: {
+      channelId,
+      promptMessageId: posted.message.id,
+      replyMessageId,
+      model: MENTION_MODEL,
+    },
+    actorUserId: user.userId,
+    attemptCount: 1,
+    signal: new AbortController().signal,
+    sideEffectLease: { jobId: 'tool-test', leaseToken: 1, workerId: 'test' },
+    reportProgress: async () => undefined,
+    assertSideEffectAllowed: async () => undefined,
+  });
+  const timeline = await channelService.listTimeline(user, channelId, {});
+  return timeline.find(message => message.id === replyMessageId);
+};
+
+const resetProvider = () => {
+  providerStubbed = true;
+  providerRounds.length = 0;
+  providerRequests.length = 0;
+  oneShotRequests.length = 0;
+  toolHttpLog.length = 0;
+};
+
+test('a mention runs read-only tools and records them on the reply', async () => {
+  await toolAccess.setToolAccessMode('all-users');
+  const channel = await channelService.createChannel(alice, {
+    type: 'private',
+    name: 'Tooling',
+    memberIds: [BOB],
+  });
+  resetProvider();
+  providerRounds.push(
+    [toolCallChunk(GET_PETS, { limit: 1 }), finalChunk('')],
+    [finalChunk('There is one pet, ada.')]
+  );
+
+  const reply = await runMention(bob, channel.id, 'How many pets are there?');
+
+  // Two provider rounds: the tool request, then the answer that used it.
+  assert.equal(providerRequests.length, 2);
+  assert.ok(
+    providerRequests[0].tools.some(tool => tool.function.name === GET_PETS),
+    'the catalog reached the provider'
+  );
+  assert.equal(reply.content, 'There is one pet, ada.');
+  assert.equal(reply.pending, undefined);
+
+  // The call really hit the mock server and its summary is on the view.
+  assert.equal(toolHttpLog.filter(entry => entry.method === 'GET').length, 1);
+  assert.equal(reply.toolCalls.length, 1);
+  assert.equal(reply.toolCalls[0].name, GET_PETS);
+  assert.equal(reply.toolCalls[0].status, 'succeeded');
+  assert.equal(reply.toolCalls[0].sideEffect, false);
+  assert.match(reply.toolCalls[0].resultPreview, /ada/);
+
+  // The summary is persisted, encrypted, on the reply row itself.
+  const stored = database
+    .prepare('SELECT metadata FROM channel_messages WHERE id = ?')
+    .get(reply.id);
+  assert.ok(stored.metadata);
+  assert.ok(!stored.metadata.includes(GET_PETS), 'metadata is encrypted');
+  const decoded = JSON.parse(encryptionService.decrypt(stored.metadata));
+  assert.equal(decoded.toolCalls[0].name, GET_PETS);
+
+  // The tool result is fed back to the second round as a tool message.
+  const secondRound = providerRequests[1].messages;
+  assert.ok(secondRound.some(message => message.role === 'tool'));
+});
+
+test('a mention declines a side-effecting tool instead of waiting for approval', async () => {
+  await toolAccess.setToolAccessMode('all-users');
+  const channel = await channelService.createChannel(alice, {
+    type: 'private',
+    name: 'Side effects',
+    memberIds: [BOB],
+  });
+  resetProvider();
+  providerRounds.push(
+    [toolCallChunk(ADD_PET, { name: 'ada' }), finalChunk('')],
+    [finalChunk('I cannot add a pet from a channel.')]
+  );
+
+  const reply = await runMention(bob, channel.id, 'Add a pet named ada');
+
+  assert.equal(reply.content, 'I cannot add a pet from a channel.');
+  assert.equal(reply.toolCalls.length, 1);
+  assert.equal(reply.toolCalls[0].name, ADD_PET);
+  assert.equal(reply.toolCalls[0].status, 'denied');
+  assert.equal(reply.toolCalls[0].isError, true);
+  assert.match(reply.toolCalls[0].resultPreview, /Run it from a chat instead/);
+
+  // Nothing reached the server, and no approval row was left pending.
+  assert.equal(toolHttpLog.filter(entry => entry.method === 'POST').length, 0);
+  const pending = database
+    .prepare(
+      "SELECT COUNT(*) AS total FROM tool_approvals WHERE status = 'pending'"
+    )
+    .get();
+  assert.equal(pending.total, 0);
+
+  // The model is told why, so it can answer instead of retrying blindly.
+  const secondRound = providerRequests[1].messages;
+  const toolMessage = secondRound.find(message => message.role === 'tool');
+  assert.match(toolMessage.content, /cannot ask for/);
+});
+
+test('a member without tool access gets the plain one-shot reply', async () => {
+  await toolAccess.setToolAccessMode('admins');
+  const channel = await channelService.createChannel(alice, {
+    type: 'private',
+    name: 'No tools',
+    memberIds: [BOB],
+  });
+  resetProvider();
+
+  const reply = await runMention(bob, channel.id, 'Summarize this please');
+
+  assert.equal(reply.content, 'plain one-shot reply');
+  assert.equal(reply.toolCalls, undefined);
+  assert.equal(oneShotRequests.length, 1);
+  assert.equal(providerRequests.length, 0, 'the tool loop never opened');
+  await toolAccess.setToolAccessMode('all-users');
 });

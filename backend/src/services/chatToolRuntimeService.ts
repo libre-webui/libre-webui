@@ -64,6 +64,15 @@ export const MAX_TOOL_CALLS_PER_ROUND = 8;
 const MAX_RECORDED_ARGUMENT_CHARS = 4096;
 const MAX_RESULT_PREVIEW_CHARS = 2000;
 
+/**
+ * What a side-effecting call is told when the surface running the loop has
+ * nobody to ask. The model sees this as the tool result, so it can explain
+ * the refusal instead of pretending the call ran.
+ */
+export const UNATTENDED_APPROVAL_DENIAL =
+  'This tool needs approval, which channel mentions cannot ask for. ' +
+  'Run it from a chat instead.';
+
 export interface ToolLoopEventSink {
   toolEvent(
     event:
@@ -89,6 +98,14 @@ export interface PluginToolLoopOptions {
     tools: readonly ProviderToolSpec[]
   ) => AsyncIterable<PluginStreamChunk>;
   sink: ToolLoopEventSink;
+  /**
+   * How a side-effecting call without a standing approval is handled.
+   * `'interactive'` (the default) opens a pending approval and waits for the
+   * user. `'deny'` is for unattended surfaces — channel mentions — where
+   * nobody is watching the turn: the call is recorded as denied at once.
+   * Read-only tools and standing approvals behave the same either way.
+   */
+  approvals?: 'interactive' | 'deny';
   signal?: AbortSignal;
 }
 
@@ -182,6 +199,28 @@ const executeRoundCall = async (
       entry.toolName,
       options.sessionId
     );
+    if (!standing && options.approvals === 'deny') {
+      // Nobody can be asked on this surface, so the call never runs. The
+      // call and result events still fire so every consumer sees the same
+      // shape it would see for a user-denied call.
+      record.status = 'denied';
+      await options.sink.toolEvent({
+        type: CHAT_TOOL_CALL_EVENT,
+        messageId: options.assistantMessageId,
+        toolCall: { ...record },
+      });
+      const executed = finish('denied', UNATTENDED_APPROVAL_DENIAL, true);
+      await options.sink.toolEvent({
+        type: CHAT_TOOL_RESULT_EVENT,
+        messageId: options.assistantMessageId,
+        toolCallId: call.id,
+        status: 'denied',
+        preview: executed.record.resultPreview ?? '',
+        isError: true,
+      });
+      return executed;
+    }
+
     if (!standing) {
       record.status = 'awaiting_approval';
       const pending = await createPendingApproval({
