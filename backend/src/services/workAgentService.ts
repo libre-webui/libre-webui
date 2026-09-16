@@ -36,6 +36,7 @@ import workPolicyService from './workPolicyService.js';
 import workApprovalService, {
   GATED_WORK_TOOLS,
 } from './workApprovalService.js';
+import { SKILL_APPROVAL_TOOLS } from './skillService.js';
 import {
   actorCanUseTools,
   buildToolCatalog,
@@ -910,6 +911,8 @@ export class WorkAgentService {
         slug: string;
         name: string;
         instructions: string;
+        approvalPolicy: string;
+        approvalTools: string[];
       }> = [];
       if (computerAvailable) {
         try {
@@ -919,6 +922,29 @@ export class WorkAgentService {
           logger.warn(`Could not load taught skills for run ${runId}:`, error);
         }
       }
+      // A loaded skill may demand approval for named tools no matter what
+      // the run's own approval setting says. Collected once per run, as the
+      // run's skills load: the value is the skill name, so the request can
+      // tell the user which skill is asking.
+      const forcedApprovalTools = new Map<string, string>();
+      const noteForcedSkill = (skill: {
+        name: string;
+        approvalPolicy: string;
+        approvalTools: readonly string[];
+      }): void => {
+        if (skill.approvalPolicy !== 'always') return;
+        // An empty list under `always` means every gateable tool.
+        const tools =
+          skill.approvalTools.length > 0
+            ? skill.approvalTools
+            : SKILL_APPROVAL_TOOLS;
+        for (const tool of tools) {
+          if (!forcedApprovalTools.has(tool)) {
+            forcedApprovalTools.set(tool, skill.name);
+          }
+        }
+      };
+      for (const skill of taughtSkills) noteForcedSkill(skill);
       let persona: { name: string; instructions?: string } | undefined;
       if (task.personaId) {
         try {
@@ -954,6 +980,30 @@ export class WorkAgentService {
           }
         } catch (error) {
           logger.warn(`Could not load persona for run ${runId}:`, error);
+        }
+      }
+      if (task.personaId) {
+        // Skills bound to the persona this agent runs under count as loaded
+        // for the whole run, so their approval demands apply from round one.
+        try {
+          const { personaService } = await import('./personaService.js');
+          const full = await personaService.getPersonaById(
+            task.personaId,
+            userId
+          );
+          const boundSkillIds = full?.bindings?.skill_ids ?? [];
+          if (boundSkillIds.length > 0) {
+            const { listSkills } = await import('./skillService.js');
+            for (const skill of await listSkills(userId)) {
+              if (!skill.enabled || !boundSkillIds.includes(skill.id)) continue;
+              noteForcedSkill(skill);
+            }
+          }
+        } catch (error) {
+          logger.warn(
+            `Could not read persona skill bindings for run ${runId}:`,
+            error
+          );
         }
       }
       for (const skill of workAgentSkillsForContext({ computerAvailable })) {
@@ -1529,11 +1579,15 @@ export class WorkAgentService {
                 'WORK_TOOL_BATCH_NOT_EXECUTED'
               );
             }
+            // A skill's demand gates the call on its own; the run-level
+            // setting still gates everything else it always did.
+            const forcedBySkill = forcedApprovalTools.get(call.function.name);
             const approvalVerdict =
-              approvalsActive &&
-              (GATED_WORK_TOOLS.has(call.function.name) ||
-                externalTools?.byName.get(call.function.name)?.sideEffect ===
-                  true)
+              forcedBySkill !== undefined ||
+              (approvalsActive &&
+                (GATED_WORK_TOOLS.has(call.function.name) ||
+                  externalTools?.byName.get(call.function.name)?.sideEffect ===
+                    true))
                 ? await this.awaitToolApproval(
                     task,
                     call,
@@ -1541,7 +1595,8 @@ export class WorkAgentService {
                     runId,
                     userId,
                     controller.signal,
-                    durableAttemptIdentity
+                    durableAttemptIdentity,
+                    forcedBySkill
                   )
                 : 'approved';
             if (approvalVerdict === 'denied') {
@@ -2728,13 +2783,21 @@ export class WorkAgentService {
     runId: string,
     userId: string,
     signal: AbortSignal,
-    durableAttemptIdentity: Parameters<typeof workEventService.publish>[5]
+    durableAttemptIdentity: Parameters<typeof workEventService.publish>[5],
+    forcedBySkill?: string
   ): Promise<'approved' | 'denied' | 'expired'> {
+    // The reason rides in the summary so every surface showing the request
+    // shows why it cannot be waved through.
+    const reasonedSummary =
+      forcedBySkill === undefined
+        ? summary
+        : { ...summary, requiredBySkill: forcedBySkill };
     if (
       await workApprovalService.callIsPreapproved(
         task.id,
         call.function.name,
-        summary
+        reasonedSummary,
+        forcedBySkill !== undefined
       )
     ) {
       return 'approved';
@@ -2745,7 +2808,7 @@ export class WorkAgentService {
       userId,
       toolCallId: call.id,
       toolName: call.function.name,
-      summary,
+      summary: reasonedSummary,
     });
     await workEventService.publish(
       task.id,
@@ -2765,7 +2828,13 @@ export class WorkAgentService {
     await this.notifyAgentLifecycle(task, {
       type: 'work-approval',
       title: `${task.title} is waiting for your approval`,
-      body: summarizeApprovalBody(call.function.name, summary),
+      body:
+        forcedBySkill === undefined
+          ? summarizeApprovalBody(call.function.name, summary)
+          : `Required by skill ${forcedBySkill}. ${summarizeApprovalBody(
+              call.function.name,
+              summary
+            )}`,
       sourceKey: `work-approval:${pending.approvalId}`,
     });
     const verdict = await workApprovalService.waitForDecision(

@@ -1015,9 +1015,21 @@ const deleteOwnerContent: DurableJobHandler = async context => {
   }
 };
 
+/**
+ * Appends the trigger payload an event or webhook fire carried, so the model
+ * sees what fired it. Scheduled runs carry none and read exactly as before.
+ */
+const withTriggerPayload = (
+  instructions: string,
+  triggerPayload: string | undefined
+): string =>
+  triggerPayload
+    ? `${instructions}\n\n---\nTrigger payload (JSON):\n${triggerPayload}`
+    : instructions;
+
 const readAutomationPayload = (
   value: unknown
-): { runId: string; automationId: string } => {
+): { runId: string; automationId: string; triggerPayload?: string } => {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
     throw new DurableJobExecutionError(
       false,
@@ -1038,11 +1050,19 @@ const readAutomationPayload = (
       'The automation run payload is invalid'
     );
   }
-  return { runId: record.runId, automationId: record.automationId };
+  return {
+    runId: record.runId,
+    automationId: record.automationId,
+    ...(typeof record.triggerPayload === 'string' && record.triggerPayload
+      ? { triggerPayload: record.triggerPayload }
+      : {}),
+  };
 };
 
 const runAutomation: DurableJobHandler = async context => {
-  const { runId, automationId } = readAutomationPayload(context.payload);
+  const { runId, automationId, triggerPayload } = readAutomationPayload(
+    context.payload
+  );
   const automationModule = await import('../../services/automationService.js');
   const automationService = automationModule.default;
   const { decodeProvider } = automationModule;
@@ -1116,7 +1136,7 @@ const runAutomation: DurableJobHandler = async context => {
         await workTaskService.createRun(
           boundTask.id,
           context.actorUserId,
-          automation.instructions,
+          withTriggerPayload(automation.instructions, triggerPayload),
           boundTask.model,
           {
             providerType: boundTask.providerType,
@@ -1231,7 +1251,7 @@ const runAutomation: DurableJobHandler = async context => {
         await import('../../services/workTaskService.js');
       const detail = await workTaskService.createTaskWithRun(
         context.actorUserId,
-        automation.instructions,
+        withTriggerPayload(automation.instructions, triggerPayload),
         model,
         policy?.networkDefault ?? true,
         workProvider,
@@ -1324,7 +1344,7 @@ const runAutomation: DurableJobHandler = async context => {
       userId: context.actorUserId,
       userMessageId,
       assistantMessageId,
-      message: automation.instructions,
+      message: withTriggerPayload(automation.instructions, triggerPayload),
       // Scheduled runs have no per-message toggle, so always request web
       // search; the generation pipeline only honors it when search is
       // available and the owner is authorized.

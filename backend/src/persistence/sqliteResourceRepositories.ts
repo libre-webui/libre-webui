@@ -2927,14 +2927,16 @@ class SQLiteSkillRepository implements SkillRepository {
         .prepare(
           `INSERT INTO skills
              (id, user_id, slug, name, description, instructions, enabled,
-              version, created_at, updated_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+              approval_policy, approval_tools, version, created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
            ON CONFLICT(id) DO UPDATE SET
              slug = excluded.slug,
              name = excluded.name,
              description = excluded.description,
              instructions = excluded.instructions,
              enabled = excluded.enabled,
+             approval_policy = excluded.approval_policy,
+             approval_tools = excluded.approval_tools,
              version = excluded.version,
              updated_at = excluded.updated_at
            WHERE skills.user_id = excluded.user_id`
@@ -2947,6 +2949,8 @@ class SQLiteSkillRepository implements SkillRepository {
           skill.description,
           skill.instructions,
           skill.enabled,
+          skill.approval_policy,
+          skill.approval_tools,
           skill.version,
           skill.created_at,
           skill.updated_at

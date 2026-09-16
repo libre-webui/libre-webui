@@ -71,6 +71,32 @@ appends a dated line to the skill's **Track record** section; each review
 is a normal skill version, so the history is editable and restorable here
 like any other change.
 
+## Required approvals
+
+A skill can carry an approval demand alongside its instructions. In the
+skill editor, **Always ask before** turns it on and a checklist picks the
+tools it covers: `run_command`, `computer_act`, `delete_file`, `move_file`,
+`message_agent`, and `write_file`. Leaving every box unchecked covers all
+six.
+
+While the skill is loaded — bound to the profile or persona for the turn, or
+loaded mid-turn with `load_skill` — those tools pause for the user before
+they run, no matter what the run's own approval setting says, and the
+request names the skill that is asking. A saved "Always allow" rule can
+never approve them: prose in the instructions is advice the model may
+paraphrase past, while this is enforced at the gate. A one-time "Allow once"
+still works, because that is a live decision rather than a stored rule. See
+[action approvals](./33-WORKSPACES.md#action-approvals-auto-review).
+
+The field travels with the skill: it round-trips through export and import
+in the JSON envelope. The SKILL.md interchange form carries instructions
+only, so a markdown-only import lands on the default (inherit) and the
+demand has to be set again.
+
+A [taught skill](#taught-skills) whose demonstration redacted a secret is
+saved with this turned on for `computer_act`: replaying it goes back through
+territory the user must see, and the prose boundary alone was never enough.
+
 ## Sharing and profiles
 
 Skills are private by default and shareable through the common

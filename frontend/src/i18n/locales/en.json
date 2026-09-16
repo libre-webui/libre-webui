@@ -3200,7 +3200,11 @@
       "targetWork": "Work task",
       "workPolicy": "Work policy",
       "workPolicyDefault": "Default (global limits)",
-      "taskBoundNote": "This routine runs inside the agent's own workspace and conversation, with the agent's model and runtime."
+      "taskBoundNote": "This routine runs inside the agent's own workspace and conversation, with the agent's model and runtime.",
+      "event": "Event",
+      "eventMatch": "Matching text",
+      "eventMatchPlaceholder": "Optional text in the title",
+      "eventOnlyHint": "This routine has no schedule. It runs when the event happens, at most once a minute."
     },
     "kind": {
       "once": "Once",
@@ -3208,7 +3212,8 @@
       "daily": "Daily",
       "weekly": "Weekly",
       "monthly": "Monthly",
-      "yearly": "Yearly"
+      "yearly": "Yearly",
+      "event": "On an event"
     },
     "trigger": {
       "once": "Once on {{when}}",
@@ -3216,7 +3221,9 @@
       "daily": "Daily at {{time}}",
       "weekly": "Weekly on {{day}} at {{time}}",
       "monthly": "Monthly on day {{day}} at {{time}}",
-      "yearly": "Yearly on {{date}} at {{time}}"
+      "yearly": "Yearly on {{date}} at {{time}}",
+      "event": "Runs when {{event}}",
+      "eventMatching": "Runs when {{event}} and the title contains \"{{match}}\""
     },
     "finishedNotification": "{{n}} automation run(s) finished",
     "templatesTitle": "Templates",
@@ -3248,6 +3255,23 @@
       "disable": "Disable",
       "revealHint": "Shown once. Send it as a Bearer token or an X-Libre-Webhook-Secret header.",
       "failed": "Could not update the webhook."
+    },
+    "triggers": {
+      "events": {
+        "channel-mention": "someone mentions you in a channel",
+        "channel-dm": "you receive a direct message",
+        "channel-invite": "you are invited to a channel",
+        "share": "something is shared with you",
+        "calendar-reminder": "a calendar reminder fires",
+        "media-ready": "a media job finishes",
+        "media-failed": "a media job fails",
+        "budget-alert": "a budget alert fires",
+        "work-run-finished": "an agent run finishes",
+        "work-run-attention": "an agent run needs attention",
+        "work-takeover": "an agent asks you to take over",
+        "work-approval": "an agent is waiting for your approval",
+        "system": "a system notice arrives"
+      }
     }
   },
   "home": {
@@ -3424,7 +3448,11 @@
       "instructionsPlaceholder": "Markdown instructions the model reads once it loads this skill.",
       "instructionsHint": "Loaded only when the skill is used, so length here costs nothing until then.",
       "enabled": "Enabled",
-      "enabledHint": "Disabled skills stay saved but are never offered to the model."
+      "enabledHint": "Disabled skills stay saved but are never offered to the model.",
+      "approval": "Always ask before",
+      "approvalHint": "While this skill is loaded the agent pauses for you before these tools run, even if approvals are otherwise off. A saved \"Always allow\" rule can never approve them for you.",
+      "approvalTools": "Tools that need approval",
+      "approvalToolsHint": "Leave every box unchecked to cover every gated tool."
     },
     "history": {
       "open": "Version history",

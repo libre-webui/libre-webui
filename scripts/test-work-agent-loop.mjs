@@ -2713,6 +2713,142 @@ test('taught skills load into computer-enabled runs and surface as skill events'
   assert.equal(taughtEvent?.data.name, 'Export the weekly report');
 });
 
+test('a taught skill forces approval for its tools with approvals off', async () => {
+  const { default: workComputerTeachService } = await distModule(
+    'services/workComputerTeachService.js'
+  );
+  const { workApprovalService } = await distModule(
+    'services/workApprovalService.js'
+  );
+  const now = Date.now();
+  const userId = 'agent-loop-forced-approval-admin';
+  getDatabase()
+    .prepare(
+      `INSERT INTO users (
+        id, username, email, password_hash, role, avatar, created_at, updated_at
+      ) VALUES (?, ?, NULL, 'unused', 'admin', NULL, ?, ?)`
+    )
+    .run(userId, userId, now, now);
+
+  replaceMethod(workRuntimeService, 'computerToolsAvailable', async () => true);
+  replaceMethod(workComputerTeachService, 'taughtSkillsForUser', async () => [
+    {
+      slug: 'taught-careful-deploy',
+      name: 'Careful deploy',
+      instructions: '## Steps\n1. Run the deploy script.',
+      approvalPolicy: 'always',
+      approvalTools: ['run_command'],
+    },
+  ]);
+  let commandsRun = 0;
+  replaceMethod(workRuntimeService, 'runCommand', async () => {
+    commandsRun += 1;
+    return { stdout: 'deployed', stderr: '', exitCode: 0 };
+  });
+  let listedFiles = 0;
+  replaceMethod(workRuntimeService, 'listFiles', async () => {
+    listedFiles += 1;
+    return { entries: [] };
+  });
+
+  let round = 0;
+  replaceMethod(
+    workModelProviderService,
+    'generateChatStreamResponse',
+    async request => {
+      round += 1;
+      if (round === 1) {
+        return {
+          model: request.model,
+          created_at: new Date().toISOString(),
+          message: {
+            role: 'assistant',
+            content: '',
+            tool_calls: [
+              {
+                id: 'forced-command',
+                function: {
+                  name: 'run_command',
+                  arguments: { command: 'deploy.sh' },
+                },
+              },
+              {
+                id: 'ungated-list',
+                function: { name: 'list_files', arguments: { path: '.' } },
+              },
+            ],
+          },
+          done: true,
+        };
+      }
+      return {
+        model: request.model,
+        created_at: new Date().toISOString(),
+        message: { role: 'assistant', content: 'Done.' },
+        done: true,
+      };
+    }
+  );
+
+  // Approvals are off for this task and its policy: only the skill asks.
+  const detail = await workTaskService.createTaskWithRun(
+    userId,
+    'Deploy the app.',
+    'test-model',
+    true,
+    { providerType: 'plugin', providerId: 'test-plugin' }
+  );
+  const runId = detail.activeRun?.id;
+  assert.ok(runId);
+  assert.notEqual(
+    (await workTaskService.getTaskRecord(detail.id, userId)).approvalsEnabled,
+    true
+  );
+
+  const events = [];
+  const unsubscribe = workEventService.subscribe(detail.id, runId, event => {
+    events.push(event);
+    // Deny from the subscriber so the run does not sit out the timeout.
+    if (event.type === 'approval' && event.data.status === 'pending') {
+      void workApprovalService.decide(
+        detail.id,
+        event.data.approvalId,
+        userId,
+        { approve: false, scope: 'once' }
+      );
+    }
+  });
+  try {
+    await workAgentService.execute(detail.id, runId, userId);
+  } finally {
+    unsubscribe();
+  }
+
+  // The skill's tool was gated and denied; it never ran.
+  const approval = events.find(
+    event => event.type === 'approval' && event.data.status === 'pending'
+  );
+  assert.ok(approval, 'the skill forced an approval request');
+  assert.equal(approval.data.name, 'run_command');
+  assert.equal(
+    approval.data.summary?.requiredBySkill,
+    'Careful deploy',
+    'the request says which skill demands it'
+  );
+  assert.equal(commandsRun, 0, 'a denied forced call never executes');
+
+  // A tool the skill did not name is untouched by the demand: with
+  // approvals off it runs without asking.
+  assert.equal(listedFiles, 1, 'an unnamed tool still runs unattended');
+  assert.equal(
+    events.filter(
+      event => event.type === 'approval' && event.data.status === 'pending'
+    ).length,
+    1,
+    'only the skill-named tool was gated'
+  );
+});
+
 test('a user message sent mid-run reaches the model at the next round', async () => {
   const now = Date.now();
   const userId = 'agent-loop-midrun-admin';

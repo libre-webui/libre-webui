@@ -673,6 +673,9 @@ export function registerWebSocketServer(
           // not leave approvals, audit rows, or provider-bound side effects),
           // gated by the tools feature and the turn's explicit request.
           let toolCatalog: ToolCatalog | undefined;
+          // Profile-bound skills carry their own approval demands into the
+          // turn's tool loop.
+          let toolSkillIds: readonly string[] | undefined;
           const toolActor: AuthzActor = {
             userId,
             ...(currentUser.role ? { role: currentUser.role } : {}),
@@ -709,6 +712,7 @@ export function registerWebSocketServer(
             );
             if (candidateCatalog.tools.length > 0) {
               toolCatalog = candidateCatalog;
+              toolSkillIds = personaBindings?.skill_ids;
             }
           }
           const toolSink: ToolLoopEventSink = {
@@ -759,6 +763,7 @@ export function registerWebSocketServer(
                       sessionId,
                       assistantMessageId,
                       catalog: toolCatalog,
+                      skillIds: toolSkillIds,
                       sink: toolSink,
                       signal: generationSignal,
                       startRound: (extension, tools) =>
@@ -971,6 +976,7 @@ export function registerWebSocketServer(
               sessionId,
               assistantMessageId,
               catalog: toolCatalog,
+              skillIds: toolSkillIds,
               sink: toolSink,
               signal: generationSignal,
               startRound: (extension, tools) =>

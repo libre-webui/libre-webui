@@ -52,6 +52,7 @@ import {
 import { isPublicIpAddress } from '../utils/webpageFetcher.js';
 import { createLogger } from '../utils/logger.js';
 import {
+  MAX_AUTOMATIONS_PER_USER,
   MAX_NOTIFICATION_BODY_LENGTH,
   MAX_NOTIFICATION_PAGE_SIZE,
   MAX_NOTIFICATION_TITLE_LENGTH,
@@ -61,13 +62,42 @@ import {
   MAX_WEBHOOK_TARGETS,
   MAX_WEBHOOK_URL_LENGTH,
 } from '../utils/resourceLimits.js';
+import { eventTriggerMatches } from '../utils/automationSchedule.js';
 import type {
+  AutomationTrigger,
   NotificationType,
   NotificationView,
   WebhookTargetView,
 } from '../types/index.js';
 
 const logger = createLogger('notifications');
+
+/** Source-key prefix of the notice an automation publishes when a run fails. */
+const AUTOMATION_RUN_FAILURE_PREFIX = 'automation-run-failed:';
+
+/**
+ * Minimum gap between two event fires of the same automation. A chatty
+ * event stream (a busy channel, a burst of media jobs) must not turn into a
+ * burst of runs, so each automation fires at most once per window.
+ */
+export const AUTOMATION_EVENT_COOLDOWN_MS = 60_000;
+
+const lastEventFireAt = new Map<string, number>();
+
+/** Claim an event fire for an automation, or refuse it while cooling down. */
+const claimEventFire = (automationId: string, now: number): boolean => {
+  const previous = lastEventFireAt.get(automationId);
+  if (previous !== undefined && now - previous < AUTOMATION_EVENT_COOLDOWN_MS) {
+    return false;
+  }
+  lastEventFireAt.set(automationId, now);
+  return true;
+};
+
+/** Test seam: forget every cooldown so a suite can fire back to back. */
+export const resetAutomationEventCooldowns = (): void => {
+  lastEventFireAt.clear();
+};
 
 export class NotificationError extends Error {
   constructor(
@@ -223,7 +253,80 @@ class NotificationService {
         notificationId: record.id,
       });
     }
+    await this.dispatchAutomationTriggers(record, input).catch(error => {
+      logger.warn('Automation event trigger dispatch failed', { error });
+    });
     return true;
+  }
+
+  /**
+   * Fires the owner's event-triggered automations. Best effort and never
+   * thrown to the caller: the notification is already durable, and a routine
+   * that could not start is a missed convenience, not a lost record.
+   */
+  private async dispatchAutomationTriggers(
+    record: StoredNotificationRecord,
+    input: PublishNotificationInput
+  ): Promise<void> {
+    const rows = await repositories().automations.listByOwner(
+      record.user_id,
+      MAX_AUTOMATIONS_PER_USER
+    );
+    const candidates = rows.filter(row => row.status === 'active');
+    if (candidates.length === 0) return;
+    // Loop guard: a run's own failure notice must never re-fire the routine
+    // that produced it. Event triggers cannot name `automation-failed` in
+    // the first place, so this only catches hand-edited trigger rows.
+    let selfAutomationId: string | undefined;
+    if (input.sourceKey?.startsWith(AUTOMATION_RUN_FAILURE_PREFIX)) {
+      const failedRunId = input.sourceKey.slice(
+        AUTOMATION_RUN_FAILURE_PREFIX.length
+      );
+      try {
+        const { default: automationService } =
+          await import('./automationService.js');
+        const run = await automationService.getRunRecord(
+          failedRunId,
+          record.user_id
+        );
+        selfAutomationId = run?.automation_id;
+      } catch {
+        // Unresolvable: fall through and let the cooldown bound the damage.
+      }
+    }
+    const title = decryptOptional(record.title) ?? '';
+    const type = isNotificationType(record.type) ? record.type : 'system';
+    for (const row of candidates) {
+      if (row.id === selfAutomationId) continue;
+      let triggers: AutomationTrigger[];
+      try {
+        triggers = JSON.parse(row.triggers) as AutomationTrigger[];
+      } catch {
+        continue;
+      }
+      if (
+        !triggers.some(trigger => eventTriggerMatches(trigger, type, title))
+      ) {
+        continue;
+      }
+      if (!claimEventFire(row.id, record.created_at)) continue;
+      try {
+        const { default: automationSchedulerService } =
+          await import('./automationSchedulerService.js');
+        await automationSchedulerService.runNow(row.id, row.user_id, {
+          payload: {
+            event: type,
+            title,
+            ...(record.body ? { body: decryptOptional(record.body) } : {}),
+            ...(record.href ? { href: record.href } : {}),
+          },
+        });
+      } catch (error) {
+        logger.warn(`Event trigger could not start automation ${row.id}`, {
+          error,
+        });
+      }
+    }
   }
 
   /**

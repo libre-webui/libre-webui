@@ -339,7 +339,23 @@ action is not executed, and the run ends as **Needs input** with a normal
 handoff instead of waiting out its budget.
 
 Approvals gate actions, not visibility: `write_file` and the read-only tools
-stay ungated, and every decision lands in the security audit log.
+stay ungated by the task-level setting, and every decision lands in the
+security audit log.
+
+#### Approvals a skill requires
+
+A [skill](./51-SKILLS.md) can declare that it always needs a decision before
+named tools run. When such a skill is loaded into a run — bound to the
+agent's persona, or a taught procedure the run picked up — those tools gate
+**even when approvals are off for the task**, and the decision card says
+_Required by skill <name>_.
+
+This demand is stronger than the task-level setting in two ways. It reaches
+tools the setting leaves alone (`write_file` among them), and **Always
+allow** cannot satisfy it: a stored rule is the user's standing convenience,
+and a skill that says _always ask_ outranks it. **Allow once** still works —
+that is a fresh decision, which is exactly what the skill asked for. Tools
+the skill did not name are unaffected and keep running unattended.
 
 ### Understand task status
 

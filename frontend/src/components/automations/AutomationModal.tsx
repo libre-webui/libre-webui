@@ -28,7 +28,7 @@ import type {
 import type { AutomationPayload } from '@/utils/api/automationsApi';
 import { automationsApi } from '@/utils/api/automationsApi';
 import toast from 'react-hot-toast';
-import { isTriggerValid } from '@/utils/automationSchedule';
+import { isEventOnly, isTriggerValid } from '@/utils/automationSchedule';
 import { workApi } from '@/utils/api';
 import type { WorkPolicy } from '@/types/work';
 import { cn } from '@/utils';
@@ -298,6 +298,14 @@ function AutomationModalForm({
                     }
                   />
                 ))}
+                {isEventOnly(triggers) && (
+                  <p
+                    data-testid='automation-event-only-hint'
+                    className='text-[12px] text-gray-500 dark:text-dark-500'
+                  >
+                    {t('automations.form.eventOnlyHint')}
+                  </p>
+                )}
                 {triggers.length < 5 && (
                   <button
                     type='button'

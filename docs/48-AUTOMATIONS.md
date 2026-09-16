@@ -36,6 +36,37 @@ Triggers reuse the calendar's shared model — `once`, `hourly`, `daily`,
 next run is always the earliest upcoming occurrence across its triggers,
 computed in the server's local timezone.
 
+### Event triggers
+
+A seventh kind, `event`, has no clock at all: it fires when one of your
+[notifications](./55-NOTIFICATIONS.md) arrives.
+
+```json
+{ "kind": "event", "event": "channel-mention", "match": "release" }
+```
+
+`event` is any notification type except `automation-failed` — a routine must
+not be able to restart itself from its own failure notice. The optional
+`match` is a case-insensitive substring test against the notification title;
+without it, every notification of that type fires the routine.
+
+An event trigger never contributes a next-run time. An automation whose
+triggers are all events therefore shows no next run: the list and the edit
+dialog say **Runs when …** instead. Mixing an event trigger with a schedule
+is fine — the scheduled triggers still drive the clock.
+
+Two guards bound the blast radius. A routine fires at most once per minute
+from events, no matter how busy the stream is, and a run's own failure
+notification never re-fires the routine that produced it.
+
+The run receives what fired it, appended to its instructions:
+
+```
+---
+Trigger payload (JSON):
+{"event":"channel-mention","title":"...","body":"...","href":"..."}
+```
+
 ## Execution
 
 A scheduler tick runs every minute behind a coordination lease, so exactly
@@ -107,6 +138,23 @@ secret comparison is constant-time, a missing automation and a wrong secret
 answer identically (no automation-id oracle), and a paused automation
 answers `409`: unlike the owner's Run now, an external caller cannot fire
 through a pause.
+
+A JSON object in the request body rides into the run as its trigger payload,
+so the routine can see what it is reacting to:
+
+```bash
+curl -X POST https://your-host/api/automations/<automationId>/webhook \
+  -H "Authorization: Bearer lwh_..." \
+  -H "Content-Type: application/json" \
+  -d '{"commit":"abc123","branch":"main"}'
+```
+
+The payload is appended to the instructions the run executes, under a
+`Trigger payload (JSON):` heading — for chat runs, new Work tasks, and
+task-bound routines alike. Only JSON objects are carried (arrays and scalars
+are ignored), and a payload whose serialized form exceeds 4000 characters is
+dropped rather than truncated, with a warning in the server log. A body-less
+fire behaves exactly as before.
 
 ## API
 

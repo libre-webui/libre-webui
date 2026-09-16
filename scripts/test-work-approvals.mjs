@@ -68,10 +68,13 @@ test.before(async () => {
 test('approval decisions gate side-effecting Work actions', async () => {
   // The gated set is exactly the side-effecting tools; read-only tools and
   // write_file (workspace-contained, high-frequency) stay ungated.
-  assert.deepEqual(
-    [...GATED_WORK_TOOLS].sort(),
-    ['computer_act', 'delete_file', 'message_agent', 'move_file', 'run_command']
-  );
+  assert.deepEqual([...GATED_WORK_TOOLS].sort(), [
+    'computer_act',
+    'delete_file',
+    'message_agent',
+    'move_file',
+    'run_command',
+  ]);
 
   const pending = await workApprovalService.createPending({
     taskId,
@@ -102,10 +105,15 @@ test('approval decisions gate side-effecting Work actions', async () => {
   assert.equal(approved.status, 'approved');
   assert.equal(approved.scope, 'once');
   assert.equal(
-    await workApprovalService.decide(taskId, pending.approvalId, 'approval-user', {
-      approve: false,
-      scope: 'once',
-    }),
+    await workApprovalService.decide(
+      taskId,
+      pending.approvalId,
+      'approval-user',
+      {
+        approve: false,
+        scope: 'once',
+      }
+    ),
     null
   );
   // A once-approval persists no rule.
@@ -132,26 +140,29 @@ test('approval decisions gate side-effecting Work actions', async () => {
 
   // ruleCovers semantics: run_command scopes to the command's first token,
   // every other tool matches tool-wide (null pattern).
-  assert.equal(deriveRulePattern('run_command', { command: 'npm run build' }), 'npm');
+  assert.equal(
+    deriveRulePattern('run_command', { command: 'npm run build' }),
+    'npm'
+  );
   assert.equal(deriveRulePattern('delete_file', { path: 'x' }), null);
   assert.equal(
-    ruleCovers(
-      { tool_name: 'run_command', pattern: 'npm' },
-      'run_command',
-      { command: 'npm test' }
-    ),
+    ruleCovers({ tool_name: 'run_command', pattern: 'npm' }, 'run_command', {
+      command: 'npm test',
+    }),
     true
   );
   assert.equal(
-    ruleCovers(
-      { tool_name: 'run_command', pattern: 'npm' },
-      'run_command',
-      { command: 'rm -rf /' }
-    ),
+    ruleCovers({ tool_name: 'run_command', pattern: 'npm' }, 'run_command', {
+      command: 'rm -rf /',
+    }),
     false
   );
   assert.equal(
-    ruleCovers({ tool_name: 'computer_act', pattern: null }, 'computer_act', {}),
+    ruleCovers(
+      { tool_name: 'computer_act', pattern: null },
+      'computer_act',
+      {}
+    ),
     true
   );
   assert.equal(
@@ -264,10 +275,15 @@ test('pending approvals expire and the waiter observes decisions', async () => {
   });
   assert.deepEqual(await workApprovalService.listPending(taskId), []);
   assert.equal(
-    await workApprovalService.decide(taskId, 'stale-approval', 'approval-user', {
-      approve: true,
-      scope: 'once',
-    }),
+    await workApprovalService.decide(
+      taskId,
+      'stale-approval',
+      'approval-user',
+      {
+        approve: true,
+        scope: 'once',
+      }
+    ),
     null
   );
 
@@ -284,10 +300,15 @@ test('pending approvals expire and the waiter observes decisions', async () => {
     taskId,
     pending.approvalId
   );
-  await workApprovalService.decide(taskId, pending.approvalId, 'approval-user', {
-    approve: true,
-    scope: 'once',
-  });
+  await workApprovalService.decide(
+    taskId,
+    pending.approvalId,
+    'approval-user',
+    {
+      approve: true,
+      scope: 'once',
+    }
+  );
   assert.equal((await waiter).status, 'approved');
 
   // Cancellation aborts the wait instead of leaving the run hanging.
@@ -358,8 +379,117 @@ test('the policy force-flag and per-task opt-in are tri-state', async () => {
     (await service.getTaskRecord(taskId, 'approval-user')).approvalsEnabled,
     undefined
   );
-  await assert.rejects(
-    service.setTaskApprovals(taskId, 'someone-else', true)
+  await assert.rejects(service.setTaskApprovals(taskId, 'someone-else', true));
+});
+
+test('a skill can force approval past an always-allow rule', async () => {
+  // Stand up an always-allow rule for `run_command`, the state that
+  // normally waves the next matching call straight through.
+  const pending = await workApprovalService.createPending({
+    taskId,
+    runId: 'run-forced',
+    userId: 'approval-user',
+    toolCallId: 'call-forced',
+    toolName: 'run_command',
+    summary: { command: 'npm run build' },
+  });
+  await workApprovalService.decide(
+    taskId,
+    pending.approvalId,
+    'approval-user',
+    {
+      approve: true,
+      scope: 'always',
+    }
+  );
+
+  // Without a skill demanding it, the rule holds.
+  assert.equal(
+    await workApprovalService.callIsPreapproved(taskId, 'run_command', {
+      command: 'npm run test',
+    }),
+    true
+  );
+
+  // A skill that demands approval for this tool is never satisfied by the
+  // stored rule; the user has to decide again.
+  assert.equal(
+    await workApprovalService.callIsPreapproved(
+      taskId,
+      'run_command',
+      { command: 'npm run test', requiredBySkill: 'Careful deploys' },
+      true
+    ),
+    false
+  );
+
+  // The demand is per call, not a mode: another tool with no rule and no
+  // skill demand is still simply unapproved, as before.
+  assert.equal(
+    await workApprovalService.callIsPreapproved(taskId, 'move_file', {
+      path: 'x',
+    }),
+    false
+  );
+
+  const rules = await workApprovalService.rulesForTask(taskId);
+  await workApprovalService.deleteRule(taskId, rules[0].id, 'approval-user');
+});
+
+test('skill-forced tools gate even with approvals off, and only those tools', () => {
+  const agentSource = readFileSync(
+    path.join(repoRoot, 'backend', 'src', 'services', 'workAgentService.ts'),
+    'utf8'
+  );
+  // The run's loaded skills contribute a forced set, and the per-call gate
+  // fires on it independently of the run-level approval setting.
+  assert.match(
+    agentSource,
+    /const forcedApprovalTools = new Map<string, string>\(\)/
+  );
+  assert.match(
+    agentSource,
+    /for \(const skill of taughtSkills\) noteForcedSkill\(skill\)/
+  );
+  assert.match(
+    agentSource,
+    /const forcedBySkill = forcedApprovalTools\.get\(call\.function\.name\)/
+  );
+  assert.match(
+    agentSource,
+    /forcedBySkill !== undefined \|\|\s*\(approvalsActive &&/
+  );
+  // The reason travels with the request so the surface can say which skill
+  // is asking, and the forced flag reaches the pre-approval check.
+  assert.match(agentSource, /requiredBySkill: forcedBySkill/);
+  assert.match(agentSource, /Required by skill \$\{forcedBySkill\}/);
+
+  // An empty tool list under `always` means every gateable tool.
+  const approvalSource = readFileSync(
+    path.join(repoRoot, 'backend', 'src', 'services', 'workApprovalService.ts'),
+    'utf8'
+  );
+  assert.match(approvalSource, /if \(forcedBySkill\) return false;/);
+
+  // The chat loop enforces the same demand, including skills the model
+  // loads mid-turn with load_skill.
+  const chatSource = readFileSync(
+    path.join(
+      repoRoot,
+      'backend',
+      'src',
+      'services',
+      'chatToolRuntimeService.ts'
+    ),
+    'utf8'
+  );
+  assert.match(
+    chatSource,
+    /entry\.sideEffect \|\| forcedBySkill !== undefined/
+  );
+  assert.match(
+    chatSource,
+    /absorbLoadedSkill\(forced, options, call\.arguments\)/
   );
 });
 

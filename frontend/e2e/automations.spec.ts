@@ -22,7 +22,13 @@ type MockAutomation = {
   id: string;
   name: string;
   instructions: string;
-  triggers: { kind: string; hour?: number; minute?: number }[];
+  triggers: {
+    kind: string;
+    hour?: number;
+    minute?: number;
+    event?: string;
+    match?: string;
+  }[];
   notify: 'app' | 'off';
   status: 'active' | 'paused';
   nextRunAt?: number;
@@ -56,6 +62,8 @@ const finishedRun = {
 
 async function mockAutomationsApi(page: Page) {
   const automations = [structuredClone(digest)];
+  /** The last create/update body, so a test can assert what the UI sent. */
+  const written: Partial<MockAutomation>[] = [];
 
   await page.route(/\/api\/automations(?:\/.*)?(?:\?.*)?$/, async route => {
     const request = route.request();
@@ -98,6 +106,7 @@ async function mockAutomationsApi(page: Page) {
     }
     if (method === 'POST' && path.endsWith('/api/automations')) {
       const body = request.postDataJSON() as Partial<MockAutomation>;
+      written.push(body);
       const created: MockAutomation = {
         id: `automation-${automations.length + 1}`,
         name: body.name ?? '',
@@ -113,6 +122,21 @@ async function mockAutomationsApi(page: Page) {
       await fulfill(created);
       return;
     }
+    if (method === 'PUT') {
+      const body = request.postDataJSON() as Partial<MockAutomation>;
+      written.push(body);
+      const id = path.split('/').pop() as string;
+      const index = automations.findIndex(item => item.id === id);
+      const updated: MockAutomation = {
+        ...automations[index],
+        ...body,
+        triggers: body.triggers ?? automations[index].triggers,
+        updatedAt: 1_770_000_003_000,
+      };
+      automations[index] = updated;
+      await fulfill(updated);
+      return;
+    }
 
     await route.fulfill({
       status: 405,
@@ -120,6 +144,8 @@ async function mockAutomationsApi(page: Page) {
       body: JSON.stringify({ success: false, error: 'Method not allowed' }),
     });
   });
+
+  return { written };
 }
 
 test('automations list their schedule and create from the modal', async ({
@@ -165,4 +191,44 @@ test('the runs tab shows history and opens the produced chat', async ({
   const runList = page.getByTestId('automation-run-list');
   await expect(runList).toContainText(digest.name);
   await expect(page.getByTestId('automation-run-open')).toBeVisible();
+});
+
+test('an event-triggered automation saves its event and match text', async ({
+  page,
+}) => {
+  await mockLibreWebUiApi(page);
+  const { written } = await mockAutomationsApi(page);
+
+  await page.goto('/automations');
+  await page.getByTestId('automation-new').click();
+  await expect(page.getByTestId('automation-modal')).toBeVisible();
+  await page.getByTestId('automation-name').fill('Release watcher');
+  await page
+    .getByTestId('automation-instructions')
+    .fill('Draft a reply to the mention.');
+
+  // Switching the kind to an event swaps the time fields for an event
+  // picker plus an optional title filter.
+  await page.getByTestId('automation-trigger-kind').selectOption('event');
+  await page
+    .getByTestId('automation-trigger-event')
+    .selectOption('channel-mention');
+  await page.getByTestId('automation-trigger-match').fill('release');
+
+  // An event-only routine tells the user it has no schedule.
+  await expect(page.getByTestId('automation-event-only-hint')).toBeVisible();
+
+  await page.getByTestId('automation-save').click();
+  await expect(page.getByTestId('automation-modal')).toHaveCount(0);
+
+  expect(written.at(-1)?.triggers).toEqual([
+    { kind: 'event', event: 'channel-mention', match: 'release' },
+  ]);
+
+  // The row describes when it runs instead of a next run time.
+  const row = page
+    .getByTestId('automation-row')
+    .filter({ hasText: 'Release watcher' });
+  await expect(row).toContainText('Runs when someone mentions you');
+  await expect(row).not.toContainText('Next run');
 });

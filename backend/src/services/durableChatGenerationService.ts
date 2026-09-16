@@ -186,6 +186,8 @@ interface GeneratedAssistant {
 interface DurableToolContext {
   actor: AuthzActor;
   catalog: ToolCatalog;
+  /** Profile-bound skills; they carry their own approval demands. */
+  skillIds?: readonly string[];
 }
 
 const streamGeneratedAssistant = async (
@@ -319,6 +321,7 @@ const streamGeneratedAssistant = async (
           sessionId: input.sessionId,
           assistantMessageId: input.assistantMessageId,
           catalog: toolContext.catalog,
+          skillIds: toolContext.skillIds,
           sink: toolSink,
           signal: context.signal,
           startRound: createToolRoundStarter({
@@ -447,6 +450,7 @@ const streamGeneratedAssistant = async (
       sessionId: input.sessionId,
       assistantMessageId: input.assistantMessageId,
       catalog: toolContext.catalog,
+      skillIds: toolContext.skillIds,
       sink: toolSink,
       signal: context.signal,
       startRound: createToolRoundStarter({
@@ -611,7 +615,13 @@ class DurableChatGenerationService {
             collectionIds: bindings?.knowledge_collection_ids,
           }
         );
-        if (catalog.tools.length > 0) toolContext = { actor, catalog };
+        if (catalog.tools.length > 0) {
+          toolContext = {
+            actor,
+            catalog,
+            ...(bindings?.skill_ids ? { skillIds: bindings.skill_ids } : {}),
+          };
+        }
       }
     }
 

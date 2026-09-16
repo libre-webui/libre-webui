@@ -74,12 +74,53 @@ const [
   { authService },
   { default: automationsRouter },
   { default: automationSchedulerService },
+  notificationsModule,
+  chatServiceModule,
+  { createDomainDurableJobHandlers },
+  { AUTOMATION_RUN_JOB_TYPE },
 ] = await Promise.all([
   distModule('db.js'),
   distModule('services/authService.js'),
   distModule('routes/automations.js'),
   distModule('services/automationSchedulerService.js'),
+  distModule('services/notificationService.js'),
+  distModule('services/chatService.js'),
+  distModule('platform/jobs/domainJobHandlers.js'),
+  distModule('platform/jobs/domainJobContracts.js'),
 ]);
+const { notificationService, resetAutomationEventCooldowns } =
+  notificationsModule;
+const runAutomationJob = createDomainDurableJobHandlers().get(
+  AUTOMATION_RUN_JOB_TYPE
+);
+
+// Every enqueue is recorded so a test can read back the exact job payload a
+// fire produced, the way the worker would.
+const enqueued = [];
+const realEnqueue = durableRuntime.service.enqueue.bind(durableRuntime.service);
+durableRuntime.service.enqueue = async request => {
+  enqueued.push(request);
+  return realEnqueue(request);
+};
+
+/** Run the automation job handler over a captured payload, as the worker does. */
+const executeAutomationJob = async (value, actorUserId) =>
+  runAutomationJob({
+    signal: new AbortController().signal,
+    payload: value,
+    actorUserId,
+    attemptCount: 1,
+    sideEffectLease: {},
+    reportProgress: () => undefined,
+    assertSideEffectAllowed: async () => undefined,
+  });
+
+const automationJobsFor = automationId =>
+  enqueued.filter(
+    job =>
+      job.jobType === AUTOMATION_RUN_JOB_TYPE &&
+      job.payload.value.automationId === automationId
+  );
 
 const database = getDatabase();
 const now = Date.now();
@@ -546,4 +587,173 @@ test('webhook secrets gate inbound fires with constant-time checks', async () =>
     headers: { Authorization: `Bearer ${nextSecret}` },
   });
   assert.equal(closedFire.status, 401);
+});
+
+test("an event trigger fires the owner's routine, once per cooldown window", async () => {
+  resetAutomationEventCooldowns();
+  const response = await fetch(baseUrl, {
+    method: 'POST',
+    headers: headersFor(ownerToken),
+    body: JSON.stringify({
+      name: 'Mention watcher',
+      instructions: 'Draft a reply to the mention.',
+      triggers: [{ kind: 'event', event: 'channel-mention', match: 'release' }],
+    }),
+  });
+  assert.equal(response.status, 200);
+  const automation = (await response.json()).data;
+  // An event-only routine is active but has no clock.
+  assert.equal(automation.status, 'active');
+  assert.equal(automation.nextRunAt, undefined);
+
+  // A non-matching title is ignored: the match text is part of the rule.
+  assert.equal(
+    await notificationService.publish({
+      userId: 'automation-owner',
+      type: 'channel-mention',
+      title: 'Ophelia mentioned you in #random',
+    }),
+    true
+  );
+  assert.equal(automationJobsFor(automation.id).length, 0);
+
+  // A matching notification fires exactly one run, carrying the event.
+  assert.equal(
+    await notificationService.publish({
+      userId: 'automation-owner',
+      type: 'channel-mention',
+      title: 'Ophelia mentioned you about the release',
+      body: 'Can you look at the release notes?',
+      href: '/channels/general',
+    }),
+    true
+  );
+  const fires = automationJobsFor(automation.id);
+  assert.equal(fires.length, 1, 'a matching notification fires exactly once');
+  assert.deepEqual(JSON.parse(fires[0].payload.value.triggerPayload), {
+    event: 'channel-mention',
+    title: 'Ophelia mentioned you about the release',
+    body: 'Can you look at the release notes?',
+    href: '/channels/general',
+  });
+  const runId = fires[0].payload.value.runId;
+  assert.equal(
+    database
+      .prepare('SELECT status FROM automation_runs WHERE id = ?')
+      .get(runId).status,
+    'queued'
+  );
+
+  // A second matching notification inside the cooldown is swallowed.
+  await notificationService.publish({
+    userId: 'automation-owner',
+    type: 'channel-mention',
+    title: 'Another mention about the release',
+    sourceKey: 'mention-2',
+  });
+  assert.equal(
+    automationJobsFor(automation.id).length,
+    1,
+    'the 60s cooldown prevents a second fire'
+  );
+
+  // Another user's notification never touches this owner's routines.
+  resetAutomationEventCooldowns();
+  await notificationService.publish({
+    userId: 'automation-stranger',
+    type: 'channel-mention',
+    title: 'A stranger mention about the release',
+  });
+  assert.equal(
+    automationJobsFor(automation.id).length,
+    1,
+    "another user's notification does not fire this routine"
+  );
+
+  // A wrong event type does not fire it either.
+  await notificationService.publish({
+    userId: 'automation-owner',
+    type: 'share',
+    title: 'A release was shared with you',
+  });
+  assert.equal(automationJobsFor(automation.id).length, 1);
+
+  // A paused routine stays dormant.
+  await fetch(`${baseUrl}/${automation.id}/pause`, {
+    method: 'POST',
+    headers: headersFor(ownerToken),
+  });
+  resetAutomationEventCooldowns();
+  await notificationService.publish({
+    userId: 'automation-owner',
+    type: 'channel-mention',
+    title: 'A paused release mention',
+  });
+  assert.equal(automationJobsFor(automation.id).length, 1);
+});
+
+test('a webhook body reaches the run as a trigger payload', async () => {
+  const createResponse = await fetch(baseUrl, {
+    method: 'POST',
+    headers: headersFor(ownerToken),
+    body: JSON.stringify({
+      name: 'Deploy reporter',
+      instructions: 'Summarize the deployment.',
+      triggers: [{ kind: 'daily', hour: 7, minute: 0 }],
+      provider: 'ollama',
+      model: 'test-model',
+    }),
+  });
+  const automation = (await createResponse.json()).data;
+  const rotated = await fetch(`${baseUrl}/${automation.id}/webhook-secret`, {
+    method: 'POST',
+    headers: headersFor(ownerToken),
+  });
+  const { secret } = (await rotated.json()).data;
+
+  const fired = await fetch(`${baseUrl}/${automation.id}/webhook`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${secret}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ commit: 'abc123', branch: 'main' }),
+  });
+  assert.equal(fired.status, 202);
+  const job = automationJobsFor(automation.id).at(-1);
+  assert.deepEqual(JSON.parse(job.payload.value.triggerPayload), {
+    commit: 'abc123',
+    branch: 'main',
+  });
+
+  // The handler appends the payload verbatim to the instructions it sends.
+  const chatService = chatServiceModule.default;
+  const realCreateSession = chatService.createSession;
+  const realQueue = chatService.queueDurableGeneration;
+  let sent;
+  chatService.createSession = async () => ({ id: 'webhook-payload-session' });
+  chatService.queueDurableGeneration = async input => {
+    sent = input;
+    return true;
+  };
+  try {
+    await executeAutomationJob(job.payload.value, 'automation-owner');
+  } finally {
+    chatService.createSession = realCreateSession;
+    chatService.queueDurableGeneration = realQueue;
+  }
+  assert.equal(
+    sent.message,
+    'Summarize the deployment.\n\n---\nTrigger payload (JSON):\n' +
+      '{"commit":"abc123","branch":"main"}'
+  );
+
+  // A body-less fire carries no payload and reads exactly as before.
+  const plain = await fetch(`${baseUrl}/${automation.id}/webhook`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${secret}` },
+  });
+  assert.equal(plain.status, 202);
+  const plainJob = automationJobsFor(automation.id).at(-1);
+  assert.equal(plainJob.payload.value.triggerPayload, undefined);
 });

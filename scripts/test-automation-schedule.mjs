@@ -29,8 +29,14 @@ const schedule = await import(
     path.join(repoRoot, 'backend', 'dist', 'utils', 'automationSchedule.js')
   ).href
 );
-const { nextOccurrence, nextRunAt, occurrencesBetween, validateTriggers } =
-  schedule;
+const {
+  AUTOMATION_EVENT_TYPES,
+  eventTriggerMatches,
+  nextOccurrence,
+  nextRunAt,
+  occurrencesBetween,
+  validateTriggers,
+} = schedule;
 
 const local = (...parts) => new Date(...parts).getTime();
 
@@ -191,4 +197,73 @@ test('DST transition days still fire at the local wall-clock time', () => {
   const fallNext = new Date(nextOccurrence(daily, fallBackEve));
   assert.equal(fallNext.getHours(), 9);
   assert.equal(fallNext.getDate(), 3);
+});
+
+test('event triggers validate against the notification allow-list', () => {
+  const normalized = validateTriggers([
+    { kind: 'event', event: 'channel-mention', match: '  release  ' },
+  ]);
+  assert.deepEqual(normalized, [
+    { kind: 'event', event: 'channel-mention', match: 'release' },
+  ]);
+
+  // An absent or blank match drops out entirely.
+  assert.deepEqual(validateTriggers([{ kind: 'event', event: 'share' }]), [
+    { kind: 'event', event: 'share' },
+  ]);
+  assert.deepEqual(
+    validateTriggers([{ kind: 'event', event: 'share', match: '   ' }]),
+    [{ kind: 'event', event: 'share' }]
+  );
+
+  // Unknown types are refused, and so is the automation's own failure
+  // notice: firing on it would let a failing routine restart itself.
+  assert.throws(
+    () => validateTriggers([{ kind: 'event', event: 'not-an-event' }]),
+    /known notification type/i
+  );
+  assert.throws(
+    () => validateTriggers([{ kind: 'event', event: 'automation-failed' }]),
+    /known notification type/i
+  );
+  assert.ok(!AUTOMATION_EVENT_TYPES.includes('automation-failed'));
+  assert.ok(AUTOMATION_EVENT_TYPES.includes('channel-mention'));
+
+  assert.throws(
+    () =>
+      validateTriggers([
+        { kind: 'event', event: 'share', match: 'x'.repeat(201) },
+      ]),
+    /match text/i
+  );
+
+  // The kind list the error message advertises now includes events.
+  assert.throws(() => validateTriggers([{ kind: 'sometimes' }]), /event/i);
+});
+
+test('an event trigger never contributes a next run time', () => {
+  const event = { kind: 'event', event: 'channel-mention' };
+  const now = local(2030, 5, 10, 7, 0);
+  assert.equal(nextOccurrence(event, now), null);
+  assert.equal(nextRunAt([event], now), null);
+  assert.deepEqual(occurrencesBetween([event], now, now + 864e5), []);
+
+  // Mixed with a schedule, the scheduled trigger still drives the clock.
+  const daily = { kind: 'daily', hour: 8, minute: 30 };
+  assert.equal(nextRunAt([event, daily], now), local(2030, 5, 10, 8, 30));
+});
+
+test('the optional match is a case-insensitive substring of the title', () => {
+  const plain = { kind: 'event', event: 'channel-mention' };
+  assert.ok(eventTriggerMatches(plain, 'channel-mention', 'anything'));
+  assert.ok(!eventTriggerMatches(plain, 'share', 'anything'));
+
+  const filtered = { kind: 'event', event: 'share', match: 'Release' };
+  assert.ok(eventTriggerMatches(filtered, 'share', 'the release notes'));
+  assert.ok(!eventTriggerMatches(filtered, 'share', 'the roadmap'));
+
+  // A scheduled trigger never matches an event.
+  assert.ok(
+    !eventTriggerMatches({ kind: 'daily', hour: 1, minute: 0 }, 'share', 'x')
+  );
 });

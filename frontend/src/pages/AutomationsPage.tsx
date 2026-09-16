@@ -44,7 +44,7 @@ import type {
 import { useChatStore } from '@/store/chatStore';
 import { cn, formatTimestamp } from '@/utils';
 import { createLogger } from '@/utils/logger';
-import { describeTriggers } from '@/utils/automationSchedule';
+import { describeTriggers, isEventOnly } from '@/utils/automationSchedule';
 import {
   AUTOMATION_TEMPLATES,
   type AutomationTemplate,
@@ -285,21 +285,24 @@ const AutomationsPage: React.FC = () => {
                           i18n.language,
                           t
                         )}
-                        {automation.nextRunAt && (
-                          <>
-                            {' · '}
-                            {t('automations.nextRun', {
-                              // Absolute, because relative formatting reads
-                              // future times as "just now".
-                              when: new Intl.DateTimeFormat(i18n.language, {
-                                month: 'short',
-                                day: 'numeric',
-                                hour: 'numeric',
-                                minute: '2-digit',
-                              }).format(automation.nextRunAt),
-                            })}
-                          </>
-                        )}
+                        {/* Event-only routines have no clock, so the
+                            description already says when they run. */}
+                        {!isEventOnly(automation.triggers) &&
+                          automation.nextRunAt && (
+                            <>
+                              {' · '}
+                              {t('automations.nextRun', {
+                                // Absolute, because relative formatting reads
+                                // future times as "just now".
+                                when: new Intl.DateTimeFormat(i18n.language, {
+                                  month: 'short',
+                                  day: 'numeric',
+                                  hour: 'numeric',
+                                  minute: '2-digit',
+                                }).format(automation.nextRunAt),
+                              })}
+                            </>
+                          )}
                       </p>
                     </div>
                     <div className='relative shrink-0'>

@@ -544,17 +544,13 @@ test('remote skill sources resolve to bounded raw-content candidates', () => {
     skillService.resolveSkillSourceCandidates(
       'https://github.com/acme/repo/tree/main/skills/writer'
     ),
-    [
-      'https://raw.githubusercontent.com/acme/repo/main/skills/writer/SKILL.md',
-    ]
+    ['https://raw.githubusercontent.com/acme/repo/main/skills/writer/SKILL.md']
   );
   assert.deepEqual(
     skillService.resolveSkillSourceCandidates(
       'https://github.com/acme/repo/blob/main/skills/writer/SKILL.md'
     ),
-    [
-      'https://raw.githubusercontent.com/acme/repo/main/skills/writer/SKILL.md',
-    ]
+    ['https://raw.githubusercontent.com/acme/repo/main/skills/writer/SKILL.md']
   );
   assert.deepEqual(
     skillService.resolveSkillSourceCandidates(
@@ -873,9 +869,7 @@ test('remote folder skills pull their companion files through the guard', async 
       );
       return;
     }
-    if (
-      url.pathname === '/repos/acme/repo/contents/skills/writer/templates'
-    ) {
+    if (url.pathname === '/repos/acme/repo/contents/skills/writer/templates') {
       res.writeHead(200, { 'content-type': 'application/json' });
       res.end(
         JSON.stringify([
@@ -923,4 +917,193 @@ test('remote folder skills pull their companion files through the guard', async 
   } finally {
     delete process.env.TOOLS_PRIVATE_NETWORK_ALLOWLIST;
   }
+});
+
+test('approval metadata round-trips through the API, export, and import', async () => {
+  // The default is inherit with no tools: a skill says nothing about
+  // approvals unless it is asked to.
+  let response = await post(baseUrl, ownerToken, {
+    slug: 'plain-approval',
+    name: 'Plain',
+    description: 'No approval opinion.',
+    instructions: INSTRUCTIONS,
+  });
+  assert.equal(response.status, 201);
+  const plain = (await response.json()).data;
+  assert.equal(plain.approvalPolicy, 'inherit');
+  assert.deepEqual(plain.approvalTools, []);
+
+  response = await post(baseUrl, ownerToken, {
+    slug: 'gated-approval',
+    name: 'Gated',
+    description: 'Always ask before shell and screen actions.',
+    instructions: INSTRUCTIONS,
+    approvalPolicy: 'always',
+    approvalTools: ['run_command', 'computer_act', 'run_command'],
+  });
+  assert.equal(response.status, 201);
+  const gated = (await response.json()).data;
+  assert.equal(gated.approvalPolicy, 'always');
+  assert.deepEqual(gated.approvalTools, ['run_command', 'computer_act']);
+
+  // The stored row keeps the policy and the JSON tool list.
+  const row = database
+    .prepare('SELECT approval_policy, approval_tools FROM skills WHERE id = ?')
+    .get(gated.id);
+  assert.equal(row.approval_policy, 'always');
+  assert.deepEqual(JSON.parse(row.approval_tools), [
+    'run_command',
+    'computer_act',
+  ]);
+  const plainRow = database
+    .prepare('SELECT approval_policy, approval_tools FROM skills WHERE id = ?')
+    .get(plain.id);
+  assert.equal(plainRow.approval_policy, null);
+  assert.equal(plainRow.approval_tools, null);
+
+  // Unknown tool names and unknown policies are refused.
+  response = await post(baseUrl, ownerToken, {
+    slug: 'bad-tools',
+    name: 'Bad',
+    description: 'x',
+    instructions: INSTRUCTIONS,
+    approvalPolicy: 'always',
+    approvalTools: ['rm_rf'],
+  });
+  assert.equal(response.status, 400);
+  response = await post(baseUrl, ownerToken, {
+    slug: 'bad-policy',
+    name: 'Bad',
+    description: 'x',
+    instructions: INSTRUCTIONS,
+    approvalPolicy: 'sometimes',
+  });
+  assert.equal(response.status, 400);
+
+  // An unrelated edit preserves the metadata instead of resetting it.
+  response = await fetch(`${baseUrl}/${gated.id}`, {
+    method: 'PUT',
+    headers: headersFor(ownerToken),
+    body: JSON.stringify({
+      slug: 'gated-approval',
+      name: 'Gated',
+      description: 'Always ask before shell and screen actions.',
+      instructions: `${INSTRUCTIONS} And check twice.`,
+    }),
+  });
+  assert.equal(response.status, 200);
+  const edited = (await response.json()).data;
+  assert.equal(edited.approvalPolicy, 'always');
+  assert.deepEqual(edited.approvalTools, ['run_command', 'computer_act']);
+
+  // Dropping back to inherit clears the tool list with it.
+  response = await fetch(`${baseUrl}/${gated.id}`, {
+    method: 'PUT',
+    headers: headersFor(ownerToken),
+    body: JSON.stringify({
+      slug: 'gated-approval',
+      name: 'Gated',
+      description: 'Always ask before shell and screen actions.',
+      instructions: INSTRUCTIONS,
+      approvalPolicy: 'inherit',
+    }),
+  });
+  const relaxed = (await response.json()).data;
+  assert.equal(relaxed.approvalPolicy, 'inherit');
+  assert.deepEqual(relaxed.approvalTools, []);
+
+  // Export carries the metadata, and importing it back restores it.
+  await fetch(`${baseUrl}/${gated.id}`, {
+    method: 'PUT',
+    headers: headersFor(ownerToken),
+    body: JSON.stringify({
+      slug: 'gated-approval',
+      name: 'Gated',
+      description: 'Always ask before shell and screen actions.',
+      instructions: INSTRUCTIONS,
+      approvalPolicy: 'always',
+      approvalTools: ['delete_file'],
+    }),
+  });
+  const exported = (
+    await (
+      await fetch(`${baseUrl}/${gated.id}/export`, {
+        headers: headersFor(ownerToken),
+      })
+    ).json()
+  ).data;
+  assert.equal(exported.approvalPolicy, 'always');
+  assert.deepEqual(exported.approvalTools, ['delete_file']);
+  const imported = (
+    await (
+      await post(`${baseUrl}/import`, ownerToken, {
+        skill: { ...exported, slug: 'gated-approval-copy' },
+      })
+    ).json()
+  ).data;
+  assert.equal(imported.approvalPolicy, 'always');
+  assert.deepEqual(imported.approvalTools, ['delete_file']);
+
+  // A markdown-only import carries no metadata, so it lands on inherit.
+  const markdownOnly = (
+    await (
+      await post(`${baseUrl}/import`, ownerToken, {
+        markdown: exported.markdown.replace(
+          'gated-approval',
+          'gated-approval-markdown'
+        ),
+      })
+    ).json()
+  ).data;
+  assert.equal(markdownOnly.approvalPolicy, 'inherit');
+  assert.deepEqual(markdownOnly.approvalTools, []);
+});
+
+test('a taught skill demands approval only when it redacted a secret', async () => {
+  const { buildWorkComputerPlaybook } = await distModule(
+    'services/workComputerTeachService.js'
+  );
+  const typing = (text, from) =>
+    [...text].map((key, index) => ({ t: from + index * 10, kind: 'key', key }));
+  const clean = buildWorkComputerPlaybook(
+    [
+      {
+        t: 0,
+        kind: 'down',
+        x: 5,
+        y: 5,
+        button: 0,
+        anchor: 'button#export (Export)',
+        url: 'https://example.test/reports',
+      },
+      { t: 60, kind: 'up', x: 5, y: 5, button: 0 },
+      ...typing('weekly', 120),
+    ],
+    { name: 'Export the weekly report' }
+  );
+  assert.equal(clean.redactions, 0);
+  assert.equal(clean.approvalPolicy, 'inherit');
+  assert.deepEqual(clean.approvalTools, []);
+
+  const secret = buildWorkComputerPlaybook(
+    [
+      {
+        t: 0,
+        kind: 'down',
+        x: 5,
+        y: 5,
+        button: 0,
+        anchor: 'input#password (Password)',
+        url: 'https://example.test/login',
+      },
+      { t: 60, kind: 'up', x: 5, y: 5, button: 0 },
+      ...typing('Hunter2!xy', 120),
+    ],
+    { name: 'Sign in and export' }
+  );
+  assert.ok(secret.redactions > 0, 'the secret-like input was redacted');
+  assert.equal(secret.approvalPolicy, 'always');
+  assert.deepEqual(secret.approvalTools, ['computer_act']);
+  // The prose boundary stays: the structured demand is in addition to it.
+  assert.match(secret.instructions, /## Approval boundaries/);
 });

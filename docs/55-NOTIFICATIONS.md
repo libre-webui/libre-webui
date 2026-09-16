@@ -45,6 +45,11 @@ reading the list, not replaying the stream.
 Notifications are always published to the affected user only; a mention
 of a username that is not a member of the channel produces nothing.
 
+Notifications can also fire automations: an
+[automation](./48-AUTOMATIONS.md) with an `event` trigger runs whenever a
+notification of the chosen type reaches its owner, bounded by a one-minute
+per-automation cooldown.
+
 ## Outbound webhooks
 
 Administrators can register webhook targets that receive team events.

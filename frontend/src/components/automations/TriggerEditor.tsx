@@ -25,8 +25,10 @@ import {
   toTimeInputValue,
   weekdayLabels,
 } from '@/utils/calendarDates';
+import { AUTOMATION_EVENT_TYPES } from '@/utils/automationSchedule';
 
 const KINDS = [
+  'event',
   'once',
   'hourly',
   'daily',
@@ -43,6 +45,8 @@ const timeValueOf = (hour: number, minute: number): string =>
 
 const defaultFor = (kind: AutomationTrigger['kind']): AutomationTrigger => {
   switch (kind) {
+    case 'event':
+      return { kind: 'event', event: 'channel-mention' };
     case 'once': {
       const at = new Date();
       at.setHours(at.getHours() + 1, 0, 0, 0);
@@ -81,12 +85,20 @@ export function TriggerEditor({
 
   const setTime = (value: string) => {
     const [hour, minute] = (value || '00:00').split(':').map(Number);
-    if (trigger.kind === 'hourly' || trigger.kind === 'once') return;
+    if (
+      trigger.kind === 'hourly' ||
+      trigger.kind === 'once' ||
+      trigger.kind === 'event'
+    ) {
+      return;
+    }
     onChange({ ...trigger, hour, minute });
   };
 
   const timeInput =
-    trigger.kind !== 'once' && trigger.kind !== 'hourly' ? (
+    trigger.kind !== 'once' &&
+    trigger.kind !== 'hourly' &&
+    trigger.kind !== 'event' ? (
       <input
         type='time'
         aria-label={t('automations.form.time')}
@@ -117,6 +129,44 @@ export function TriggerEditor({
           </option>
         ))}
       </select>
+
+      {trigger.kind === 'event' && (
+        <>
+          <select
+            aria-label={t('automations.form.event')}
+            value={trigger.event}
+            onChange={e =>
+              onChange({
+                ...trigger,
+                event: e.target
+                  .value as (typeof AUTOMATION_EVENT_TYPES)[number],
+              })
+            }
+            className={fieldClass}
+            data-testid='automation-trigger-event'
+          >
+            {AUTOMATION_EVENT_TYPES.map(event => (
+              <option key={event} value={event}>
+                {t(`automations.triggers.events.${event}`)}
+              </option>
+            ))}
+          </select>
+          <input
+            type='text'
+            aria-label={t('automations.form.eventMatch')}
+            placeholder={t('automations.form.eventMatchPlaceholder')}
+            value={trigger.match ?? ''}
+            onChange={e =>
+              onChange({
+                ...trigger,
+                match: e.target.value.slice(0, 200),
+              })
+            }
+            className={`${fieldClass} min-w-0 flex-1`}
+            data-testid='automation-trigger-match'
+          />
+        </>
+      )}
 
       {trigger.kind === 'once' && (
         <>

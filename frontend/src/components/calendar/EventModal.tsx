@@ -55,7 +55,15 @@ interface EventModalProps {
 
 const repeatOf = (recurrence?: AutomationTrigger): RepeatChoice => {
   if (!recurrence) return 'none';
-  if (recurrence.kind === 'once' || recurrence.kind === 'hourly') return 'none';
+  // Calendar repeats are the scheduled kinds only; anything else (once,
+  // hourly, an event trigger) has no equivalent in this picker.
+  if (
+    recurrence.kind === 'once' ||
+    recurrence.kind === 'hourly' ||
+    recurrence.kind === 'event'
+  ) {
+    return 'none';
+  }
   return recurrence.kind;
 };
 

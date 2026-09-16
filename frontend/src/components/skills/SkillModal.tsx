@@ -37,6 +37,19 @@ import type {
 /** Mirrors the backend's slug rule so bad input is caught before the round trip. */
 const SLUG_PATTERN = /^[a-z0-9][a-z0-9-]{0,63}$/;
 
+/**
+ * The tools an approval policy can gate. Literal tool identifiers, so they are
+ * shown verbatim rather than translated.
+ */
+const GATED_TOOLS = [
+  'run_command',
+  'computer_act',
+  'delete_file',
+  'move_file',
+  'message_agent',
+  'write_file',
+] as const;
+
 interface SkillModalProps {
   open: boolean;
   skill: Skill | null;
@@ -84,6 +97,21 @@ function SkillModalForm({
   const [description, setDescription] = useState(seed?.description ?? '');
   const [instructions, setInstructions] = useState(seed?.instructions ?? '');
   const [enabled, setEnabled] = useState(seed?.enabled ?? true);
+  const [approvalPolicy, setApprovalPolicy] = useState<'inherit' | 'always'>(
+    seed?.approvalPolicy ?? 'inherit'
+  );
+  const [approvalTools, setApprovalTools] = useState<string[]>(
+    seed?.approvalTools ?? []
+  );
+
+  const toggleApprovalTool = (tool: string, checked: boolean) =>
+    setApprovalTools(current =>
+      checked
+        ? [...current, tool].filter(
+            (name, index, list) => list.indexOf(name) === index
+          )
+        : current.filter(name => name !== tool)
+    );
 
   const slugValid = SLUG_PATTERN.test(slug.trim());
   const valid =
@@ -100,6 +128,9 @@ function SkillModalForm({
       description: description.trim(),
       instructions,
       enabled,
+      approvalPolicy,
+      // The tool list only means something under `always`.
+      approvalTools: approvalPolicy === 'always' ? approvalTools : [],
     });
   };
 
@@ -213,6 +244,59 @@ function SkillModalForm({
           </p>
         </div>
         <Switch checked={enabled} onChange={setEnabled} />
+      </div>
+
+      <div
+        className='rounded-xl border border-black/[0.06] px-3 py-2.5 dark:border-white/[0.07]'
+        data-testid='skill-approval'
+      >
+        <div className='flex items-center justify-between gap-4'>
+          <div>
+            <p className='text-[13px] font-medium text-gray-900 dark:text-dark-900'>
+              {t('skillsPage.form.approval')}
+            </p>
+            <p className='text-[11px] text-gray-400 dark:text-dark-500'>
+              {t('skillsPage.form.approvalHint')}
+            </p>
+          </div>
+          <span data-testid='skill-approval-always'>
+            <Switch
+              checked={approvalPolicy === 'always'}
+              onChange={next => setApprovalPolicy(next ? 'always' : 'inherit')}
+            />
+          </span>
+        </div>
+
+        {approvalPolicy === 'always' && (
+          <div className='mt-2.5 border-t border-black/[0.06] pt-2.5 dark:border-white/[0.07]'>
+            <p className='text-[13px] font-medium text-gray-900 dark:text-dark-900'>
+              {t('skillsPage.form.approvalTools')}
+            </p>
+            <div className='mt-1.5 flex flex-wrap gap-x-4 gap-y-1.5'>
+              {GATED_TOOLS.map(tool => (
+                <label
+                  key={tool}
+                  dir='ltr'
+                  className='flex cursor-pointer items-center gap-1.5 font-mono text-[12px] text-gray-700 dark:text-dark-800'
+                >
+                  <input
+                    type='checkbox'
+                    data-testid={`skill-approval-tool-${tool}`}
+                    checked={approvalTools.includes(tool)}
+                    onChange={event =>
+                      toggleApprovalTool(tool, event.target.checked)
+                    }
+                    className='h-3.5 w-3.5 rounded border-line-strong accent-primary-600'
+                  />
+                  {tool}
+                </label>
+              ))}
+            </div>
+            <p className='mt-1.5 text-[11px] text-gray-400 dark:text-dark-500'>
+              {t('skillsPage.form.approvalToolsHint')}
+            </p>
+          </div>
+        )}
       </div>
 
       {skill && <SkillFilesEditor skillId={skill.id} />}

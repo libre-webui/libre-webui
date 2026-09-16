@@ -177,6 +177,12 @@ export interface NoteAttachment {
 }
 
 export type AutomationTrigger =
+  /**
+   * Fires when an in-app notification of `event` reaches the owner, with an
+   * optional case-insensitive substring test against the title. Event
+   * triggers have no schedule, so they never produce a next-run time.
+   */
+  | { kind: 'event'; event: NotificationType; match?: string }
   | { kind: 'once'; at: number }
   | { kind: 'hourly'; minute: number; startHour?: number; endHour?: number }
   | { kind: 'daily'; hour: number; minute: number }

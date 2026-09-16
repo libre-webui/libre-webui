@@ -170,12 +170,20 @@ class WorkApprovalService {
     return rows.map(mapApprovalRule);
   }
 
-  /** Whether an existing rule already allows this call. */
+  /**
+   * Whether an existing rule already allows this call. A call forced by a
+   * loaded skill is never pre-approved: "Always allow" is the user's
+   * standing convenience, and a skill that says *always ask* outranks it.
+   * A one-time "Allow once" decision still works, because that is a fresh
+   * decision rather than a stored rule.
+   */
   async callIsPreapproved(
     taskId: string,
     toolName: string,
-    summary: Record<string, unknown>
+    summary: Record<string, unknown>,
+    forcedBySkill = false
   ): Promise<boolean> {
+    if (forcedBySkill) return false;
     const rules = await persistence().listApprovalRules(taskId);
     return rules.some(rule => ruleCovers(rule, toolName, summary));
   }

@@ -83,6 +83,8 @@ const readSkillBody = (body: Record<string, unknown>): SkillInput => ({
   description: body.description,
   instructions: body.instructions,
   enabled: body.enabled,
+  approvalPolicy: body.approvalPolicy,
+  approvalTools: body.approvalTools,
 });
 
 router.get('/', async (req: AuthenticatedRequest, res) => {

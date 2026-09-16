@@ -56,6 +56,12 @@ import {
   waitForDecision,
 } from './toolApprovalService.js';
 import { executeToolCall, type ToolCatalog } from './toolGatewayService.js';
+import {
+  getSkillBySlug,
+  listSkills,
+  SKILL_APPROVAL_TOOLS,
+  type Skill,
+} from './skillService.js';
 import type { OllamaChatStreamGenerator } from '../utils/ollamaStreaming.js';
 import { randomUUID } from 'node:crypto';
 
@@ -84,6 +90,12 @@ export interface ToolLoopEventSink {
 
 export interface PluginToolLoopOptions {
   actor: AuthzActor;
+  /**
+   * Skills the assistant profile binds for this turn. They count as loaded
+   * from round one, so a skill demanding approval applies before the model
+   * has asked for anything.
+   */
+  skillIds?: readonly string[] | undefined;
   /** The persisted session id; the loop never runs for private sessions. */
   sessionId: string;
   assistantMessageId: string;
@@ -108,6 +120,63 @@ export interface PluginToolLoopOptions {
   approvals?: 'interactive' | 'deny';
   signal?: AbortSignal;
 }
+
+/**
+ * Tools a loaded skill demands a decision for, mapped to the skill's name.
+ * Seeded from the profile's bound skills and extended as the model loads
+ * more with `load_skill` mid-turn.
+ */
+type ForcedApprovalTools = Map<string, string>;
+
+const noteForcedSkill = (
+  forced: ForcedApprovalTools,
+  skill: Pick<Skill, 'name' | 'approvalPolicy' | 'approvalTools'>
+): void => {
+  if (skill.approvalPolicy !== 'always') return;
+  // An empty list under `always` means every gateable tool.
+  const tools =
+    skill.approvalTools.length > 0 ? skill.approvalTools : SKILL_APPROVAL_TOOLS;
+  for (const tool of tools) {
+    if (!forced.has(tool)) forced.set(tool, skill.name);
+  }
+};
+
+/** The demands of the skills the profile binds, read once per turn. */
+const boundSkillApprovals = async (
+  options: PluginToolLoopOptions
+): Promise<ForcedApprovalTools> => {
+  const forced: ForcedApprovalTools = new Map();
+  if (!options.skillIds || options.skillIds.length === 0) return forced;
+  try {
+    for (const skill of await listSkills(options.actor.userId)) {
+      if (!skill.enabled || !options.skillIds.includes(skill.id)) continue;
+      noteForcedSkill(forced, skill);
+    }
+  } catch {
+    // A skill we cannot read cannot demand anything; the run-level approval
+    // policy still applies.
+  }
+  return forced;
+};
+
+/**
+ * A `load_skill` call brings its skill's approval demands into the turn,
+ * from the next call onward.
+ */
+const absorbLoadedSkill = async (
+  forced: ForcedApprovalTools,
+  options: PluginToolLoopOptions,
+  argumentsJson: string
+): Promise<void> => {
+  try {
+    const parsed = JSON.parse(argumentsJson) as { slug?: unknown };
+    if (typeof parsed.slug !== 'string' || !parsed.slug) return;
+    const skill = await getSkillBySlug(options.actor.userId, parsed.slug);
+    if (skill) noteForcedSkill(forced, skill);
+  } catch {
+    // Unparseable arguments never reached a skill either.
+  }
+};
 
 export interface PluginToolLoopState {
   /** Every tool call across every round, with final statuses. */
@@ -140,7 +209,8 @@ interface ExecutedCall {
 const executeRoundCall = async (
   options: PluginToolLoopOptions,
   call: RoundToolCall,
-  overflow: boolean
+  overflow: boolean,
+  forced: ForcedApprovalTools
 ): Promise<ExecutedCall> => {
   const entry: EffectiveTool | undefined = options.catalog.byName.get(
     call.name
@@ -192,13 +262,20 @@ const executeRoundCall = async (
     return finish('failed', `Unknown tool: ${call.name}`, true);
   }
 
-  if (entry.sideEffect) {
-    const standing = await findStandingApproval(
-      options.actor.userId,
-      entry.serverId ?? null,
-      entry.toolName,
-      options.sessionId
-    );
+  // A loaded skill can demand a decision for a tool the turn would
+  // otherwise run unattended, and its demand outranks a standing
+  // "Always allow" — that rule is a convenience, not an override.
+  const forcedBySkill = forced.get(entry.toolName);
+  if (entry.sideEffect || forcedBySkill !== undefined) {
+    const standing =
+      forcedBySkill === undefined
+        ? await findStandingApproval(
+            options.actor.userId,
+            entry.serverId ?? null,
+            entry.toolName,
+            options.sessionId
+          )
+        : null;
     if (!standing && options.approvals === 'deny') {
       // Nobody can be asked on this surface, so the call never runs. The
       // call and result events still fire so every consumer sees the same
@@ -293,6 +370,9 @@ const executeRoundCall = async (
     preview: executed.record.resultPreview ?? '',
     isError: executed.isError,
   });
+  if (entry.toolName === 'load_skill' && !executed.isError) {
+    await absorbLoadedSkill(forced, options, call.arguments);
+  }
   return executed;
 };
 
@@ -310,6 +390,7 @@ export function runPluginToolLoop(options: PluginToolLoopOptions): {
   const tools = providerToolSpecs(options.catalog);
 
   async function* compose(): AsyncGenerator<PluginStreamChunk, void, unknown> {
+    const forced = await boundSkillApprovals(options);
     const extension: ChatMessage[] = [];
     let promptTokens = 0;
     let completionTokens = 0;
@@ -385,7 +466,8 @@ export function runPluginToolLoop(options: PluginToolLoopOptions): {
           await executeRoundCall(
             options,
             call,
-            index >= MAX_TOOL_CALLS_PER_ROUND
+            index >= MAX_TOOL_CALLS_PER_ROUND,
+            forced
           )
         );
       }
