@@ -927,9 +927,34 @@ already at rest remain unchanged; and managed sandboxes whose task row no
 longer exists are removed. Ownership comes from the task label, never the
 resource name. Orphan removal assumes one Libre WebUI instance owns a runtime
 namespace or Docker daemon. Do not point two instances at the same Work
-resources. If the driver cannot prove cleanup, Work stays fail-closed, retries
-every 10 seconds, and blocks new mutable operations until runtime access is
-restored.
+resources. If the driver cannot prove cleanup, Work stays fail-closed and
+blocks new mutable operations until runtime access is restored.
+
+Recovery is visible rather than silent. Every sandbox still waiting to be
+cleaned up is tracked individually — which container, whether it belongs to a
+known task or is an orphan, why it is pending (`startup`, `stop-failed`,
+`runtime-unreachable`, or `orphan`), how many attempts it has cost, the
+runtime's last error message, and when the next attempt is due:
+
+- **System → Work** shows a **Recovery** section listing those items with the
+  owning task and user where the task row still exists, plus a **Retry now**
+  button that runs one sweep immediately instead of waiting out the backoff.
+  It is served by `GET /api/work/admin/recovery` and
+  `POST /api/work/admin/recovery/retry`, both admin-only and both deliberately
+  registered ahead of the fail-closed gate: the state they report is the very
+  state raising that gate.
+- **The Work page** replaces the generic "runtime unavailable" banner with how
+  many sandboxes are being cleaned up, since when, and when the next attempt
+  lands. Administrators get a **Retry now** button there too; everyone else is
+  pointed at System → Work.
+- `GET /api/work/capabilities` carries the same facts as structured
+  `recovery: { pending, since, nextAttemptAt }` alongside the prose `reason`.
+
+Automatic retries start 10 seconds after a failure and then double to a
+one-minute ceiling, so a runtime that is genuinely gone is not hammered while
+an operator repairs it. A manual retry ignores the backoff, restarts the
+cadence at its floor, and never starts a second sweep alongside one already
+running.
 
 ## Network Behavior
 
@@ -1358,6 +1383,8 @@ administrative policy/access endpoints remain admin-only.
 | Method   | Path                                | Purpose                                             |
 | -------- | ----------------------------------- | --------------------------------------------------- |
 | `GET`    | `/capabilities`                     | Selected runtime/provider availability and limits   |
+| `GET`    | `/admin/recovery`                   | Pending sandbox cleanups in detail (admin)          |
+| `POST`   | `/admin/recovery/retry`             | Sweep the pending cleanups now (admin)              |
 | `GET`    | `/tasks`                            | List the current administrator's tasks              |
 | `POST`   | `/tasks`                            | Create a task and its first asynchronous run        |
 | `GET`    | `/tasks/:id`                        | Load task state and recent messages                 |
@@ -1599,9 +1626,22 @@ characters or 400 lines. Formatting has a separate 100,000-character and
 ### Work says it is recovering sandboxes
 
 Startup or teardown could not prove that one or more known sandboxes stopped.
-Work remains fail-closed and retries every 10 seconds. Restore Docker daemon
-or Kubernetes API access and inspect the backend log. Do not delete task
-database rows while their labeled runtime resources still need reconciliation.
+Work remains fail-closed and retries automatically, starting after 10 seconds
+and backing off to once a minute.
+
+Open **System → Work → Recovery** to see exactly what is pending: the
+container name, the owning task and user when the task row still exists, the
+reason (`Running at startup`, `Stop failed`, `Runtime unreachable`, or
+`No task record`), the attempt count, the runtime's last error, and the next
+scheduled attempt. The Work page itself states the same thing instead of a
+bare "runtime unavailable".
+
+Restore Docker daemon or Kubernetes API access, then press **Retry now** to
+sweep immediately rather than waiting out the backoff; the same button appears
+on the Work page for administrators. If items persist, inspect the backend log
+for the driver error behind the last-error column. Do not delete task database
+rows while their labeled runtime resources still need reconciliation — that
+turns a recoverable task into an orphan container.
 
 ### Task deletion fails
 

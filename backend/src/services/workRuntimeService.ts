@@ -60,6 +60,8 @@ import {
   type ProcessOptions,
   type ProcessResult,
   type WorkCommandResult,
+  type WorkRecoveryItem,
+  type WorkRecoveryReason,
   WorkRuntimeError,
   workRuntimeConfig as config,
 } from './workRuntimeShared.js';
@@ -72,7 +74,11 @@ export {
   WorkRuntimeError,
   parseDnsServers,
 } from './workRuntimeShared.js';
-export type { WorkCommandResult } from './workRuntimeShared.js';
+export type {
+  WorkCommandResult,
+  WorkRecoveryItem,
+  WorkRecoveryReason,
+} from './workRuntimeShared.js';
 export {
   DockerWorkRuntimeDriver,
   buildWorkContainerRunArgs,
@@ -91,6 +97,10 @@ const logger = createLogger('services:work-runtime');
 
 const PREVIEW_READY_TIMEOUT_MS = 15_000;
 const PREVIEW_POLL_INTERVAL_MS = 250;
+
+/** First recovery retry, and the ceiling the doubling backoff stops at. */
+const RECOVERY_RETRY_BASE_MS = 10_000;
+const RECOVERY_RETRY_MAX_MS = 60_000;
 
 /** Per-session VNC passwords for the Work Computer screen. */
 export interface WorkComputerCredentials {
@@ -678,6 +688,18 @@ export class WorkRuntimeService {
   private recoveryTasks = new Map<string, WorkTaskRecord>();
   private recoveryOrphans = new Map<string, DiscoveredWorkContainer>();
   private recoveryInventory?: WorkTaskRecord[];
+  // Why each pending item is pending, keyed `task:<id>` / `orphan:<name>`.
+  // Set membership alone cannot answer "which sandbox, and what went wrong",
+  // which is the only question an operator has while Work is fail-closed.
+  private recoveryDetails = new Map<string, WorkRecoveryItem>();
+  // Retry cadence: 10s at first, doubling to a minute, so a runtime that is
+  // simply gone is not hammered once a second for hours.
+  private recoveryDelayMs = RECOVERY_RETRY_BASE_MS;
+  private recoverySweepInFlight?: Promise<{ stopped: number; failed: number }>;
+  // True while a sweep is stopping containers: the sweep owns the attempt
+  // bookkeeping for the failures it causes, so the stop path must not count
+  // the same attempt a second time.
+  private sweepingRecovery = false;
   // Sweeps left for the empty-inventory case before giving up on a runtime
   // that never appears (30 × 10s covers a late Docker socket proxy or
   // Kubernetes API without probing an intentionally disabled backend forever).
@@ -729,6 +751,146 @@ export class WorkRuntimeService {
       this.recoveryTasks.size +
       this.recoveryOrphans.size
     );
+  }
+
+  /**
+   * Per-item recovery state for the admin surface: which container, why it
+   * is still pending, how many attempts it has cost, what the runtime said
+   * last, and when it is tried again. Oldest first, so the item that has
+   * blocked Work the longest reads at the top.
+   */
+  recoveryInventoryDetail(): WorkRecoveryItem[] {
+    return [...this.recoveryDetails.values()]
+      .map(item => ({ ...item }))
+      .sort((left, right) => left.firstSeenAt - right.firstSeenAt);
+  }
+
+  /** When the oldest still-pending cleanup was first seen. */
+  get recoverySince(): number | null {
+    let earliest: number | null = null;
+    for (const item of this.recoveryDetails.values()) {
+      if (earliest === null || item.firstSeenAt < earliest) {
+        earliest = item.firstSeenAt;
+      }
+    }
+    return earliest;
+  }
+
+  /** When the next automatic sweep is due, or null when none is scheduled. */
+  get recoveryNextAttemptAt(): number | null {
+    let earliest: number | null = null;
+    for (const item of this.recoveryDetails.values()) {
+      if (
+        item.nextAttemptAt !== null &&
+        (earliest === null || item.nextAttemptAt < earliest)
+      ) {
+        earliest = item.nextAttemptAt;
+      }
+    }
+    return earliest;
+  }
+
+  /**
+   * Run one sweep right now instead of waiting out the backoff. The operator
+   * has usually just fixed the runtime, so the cadence restarts at its floor.
+   * Never starts a second sweep: an in-flight one is awaited instead.
+   */
+  async retryRecoveryNow(): Promise<{ attempted: number; cleared: number }> {
+    const attempted = this.recoveryPendingCount;
+    if (attempted === 0) return { attempted: 0, cleared: 0 };
+    if (this.recoveryTimer) {
+      clearTimeout(this.recoveryTimer);
+      this.recoveryTimer = undefined;
+    }
+    this.recoveryDelayMs = RECOVERY_RETRY_BASE_MS;
+    try {
+      await this.runRecoverySweep();
+    } finally {
+      this.scheduleRecoverySweep();
+    }
+    return {
+      attempted,
+      cleared: Math.max(0, attempted - this.recoveryPendingCount),
+    };
+  }
+
+  private recoveryKey(kind: 'task' | 'orphan', id: string): string {
+    return `${kind}:${id}`;
+  }
+
+  /** Records or refreshes one pending item without losing its history. */
+  private noteRecoveryItem(
+    seed: Pick<WorkRecoveryItem, 'kind' | 'containerName'> & {
+      taskId?: string;
+      reason: WorkRecoveryReason;
+      attempted?: boolean;
+      error?: unknown;
+    }
+  ): void {
+    const id = seed.kind === 'task' ? (seed.taskId ?? '') : seed.containerName;
+    const key = this.recoveryKey(seed.kind, id);
+    const now = Date.now();
+    const existing = this.recoveryDetails.get(key);
+    const item: WorkRecoveryItem = existing ?? {
+      kind: seed.kind,
+      taskId: seed.taskId,
+      containerName: seed.containerName,
+      reason: seed.reason,
+      attempts: 0,
+      firstSeenAt: now,
+      lastAttemptAt: null,
+      lastError: null,
+      nextAttemptAt: null,
+    };
+    item.containerName = seed.containerName;
+    // A reason only changes when a fresh attempt produced it; re-listing a
+    // known item must not downgrade "stop-failed" back to "startup".
+    if (!existing || seed.attempted) item.reason = seed.reason;
+    if (seed.attempted) {
+      item.attempts += 1;
+      item.lastAttemptAt = now;
+      item.lastError =
+        seed.error === undefined
+          ? item.lastError
+          : seed.error instanceof Error
+            ? seed.error.message
+            : String(seed.error);
+    }
+    this.recoveryDetails.set(key, item);
+  }
+
+  private clearRecoveryItem(kind: 'task' | 'orphan', id: string): void {
+    this.recoveryDetails.delete(this.recoveryKey(kind, id));
+  }
+
+  /**
+   * Closes a sweep round: everything still pending gets the same next-attempt
+   * stamp, then the cadence widens. A clean sweep restores the floor.
+   */
+  private closeRecoveryRound(): void {
+    if (this.recoveryDetails.size === 0) {
+      this.recoveryDelayMs = RECOVERY_RETRY_BASE_MS;
+      return;
+    }
+    const nextAttemptAt = Date.now() + this.recoveryDelayMs;
+    for (const item of this.recoveryDetails.values()) {
+      item.nextAttemptAt = nextAttemptAt;
+    }
+    this.recoveryDelayMs = Math.min(
+      RECOVERY_RETRY_MAX_MS,
+      this.recoveryDelayMs * 2
+    );
+  }
+
+  private runRecoverySweep(
+    assertRecoveryLease?: () => Promise<void>
+  ): Promise<{ stopped: number; failed: number }> {
+    if (this.recoverySweepInFlight) return this.recoverySweepInFlight;
+    const sweep = this.sweepRecoveryTasks(assertRecoveryLease).finally(() => {
+      this.recoverySweepInFlight = undefined;
+    });
+    this.recoverySweepInFlight = sweep;
+    return sweep;
   }
 
   assertAcceptingWork(): void {
@@ -787,7 +949,17 @@ export class WorkRuntimeService {
     assertRecoveryLease?: () => Promise<void>
   ): Promise<{ stopped: number; failed: number }> {
     this.recoveryInventory = tasks;
-    const result = await this.sweepRecoveryTasks(assertRecoveryLease);
+    // Every inventoried task is pending until reconciliation proves its
+    // container is at rest, so each one is visible from the first moment.
+    for (const task of tasks) {
+      this.noteRecoveryItem({
+        kind: 'task',
+        taskId: task.id,
+        containerName: task.containerName,
+        reason: 'startup',
+      });
+    }
+    const result = await this.runRecoverySweep(assertRecoveryLease);
     if (assertRecoveryLease) {
       // An external worker must never hand unfinished destructive recovery to
       // an unfenced background retry after releasing the global startup lease.
@@ -1274,6 +1446,23 @@ export class WorkRuntimeService {
         this.emptyInventorySweepsLeft -= 1;
         return { stopped: 0, failed: 0 };
       }
+      // The runtime itself is the obstacle, so say so on every pending item
+      // rather than leaving an operator to guess from a bare count.
+      const unreachable = this.shuttingDown
+        ? 'The Work runtime is shutting down.'
+        : this.runtimeUnavailableReason ||
+          `The ${this.runtimeKind} runtime is not available to the Libre WebUI backend.`;
+      for (const item of this.recoveryDetails.values()) {
+        this.noteRecoveryItem({
+          kind: item.kind,
+          taskId: item.taskId,
+          containerName: item.containerName,
+          reason: 'runtime-unreachable',
+          attempted: true,
+          error: unreachable,
+        });
+      }
+      this.closeRecoveryRound();
       return { stopped: 0, failed: this.recoveryPendingCount };
     }
 
@@ -1291,17 +1480,46 @@ export class WorkRuntimeService {
           'Could not list Work containers for startup reconciliation:',
           error
         );
+        for (const item of this.recoveryDetails.values()) {
+          this.noteRecoveryItem({
+            kind: item.kind,
+            taskId: item.taskId,
+            containerName: item.containerName,
+            reason: 'runtime-unreachable',
+            attempted: true,
+            error,
+          });
+        }
+        this.closeRecoveryRound();
         return { stopped: 0, failed: this.recoveryPendingCount };
       }
       const plan = planStartupReconciliation(
         this.recoveryInventory,
         discovered
       );
+      const stopping = new Set(plan.stop.map(task => task.id));
+      for (const task of this.recoveryInventory) {
+        // Proven at rest by the listing: it never blocked anything.
+        if (!stopping.has(task.id) && !this.recoveryTasks.has(task.id)) {
+          this.clearRecoveryItem('task', task.id);
+        }
+      }
       for (const task of plan.stop) {
         this.recoveryTasks.set(task.id, task);
+        this.noteRecoveryItem({
+          kind: 'task',
+          taskId: task.id,
+          containerName: task.containerName,
+          reason: 'startup',
+        });
       }
       for (const orphan of plan.removeOrphans) {
         this.recoveryOrphans.set(orphan.name, orphan);
+        this.noteRecoveryItem({
+          kind: 'orphan',
+          containerName: orphan.name,
+          reason: 'orphan',
+        });
       }
       await this.reportOrphanWorkspaces(this.recoveryInventory);
       this.recoveryInventory = undefined;
@@ -1316,28 +1534,44 @@ export class WorkRuntimeService {
 
     const tasks = [...this.recoveryTasks.values()];
     const orphans = [...this.recoveryOrphans.values()];
-    const [taskResults, orphanResults] = await Promise.all([
-      Promise.allSettled(
-        tasks.map(async task => {
-          await assertRecoveryLease();
-          await this.stopContainer(task);
-          await assertRecoveryLease();
-        })
-      ),
-      Promise.allSettled(
-        orphans.map(async orphan => {
-          await assertRecoveryLease();
-          await this.driver.removeOrphan(orphan.name);
-          await assertRecoveryLease();
-        })
-      ),
-    ]);
+    this.sweepingRecovery = true;
+    let taskResults: PromiseSettledResult<void>[];
+    let orphanResults: PromiseSettledResult<void>[];
+    try {
+      [taskResults, orphanResults] = await Promise.all([
+        Promise.allSettled(
+          tasks.map(async task => {
+            await assertRecoveryLease();
+            await this.stopContainer(task);
+            await assertRecoveryLease();
+          })
+        ),
+        Promise.allSettled(
+          orphans.map(async orphan => {
+            await assertRecoveryLease();
+            await this.driver.removeOrphan(orphan.name);
+            await assertRecoveryLease();
+          })
+        ),
+      ]);
+    } finally {
+      this.sweepingRecovery = false;
+    }
     let stopped = 0;
     taskResults.forEach((result, index) => {
       if (result.status === 'fulfilled') {
         this.recoveryTasks.delete(tasks[index].id);
+        this.clearRecoveryItem('task', tasks[index].id);
         stopped += 1;
       } else {
+        this.noteRecoveryItem({
+          kind: 'task',
+          taskId: tasks[index].id,
+          containerName: tasks[index].containerName,
+          reason: 'stop-failed',
+          attempted: true,
+          error: result.reason,
+        });
         logger.warn(
           `Could not stop Work container ${tasks[index].containerName} during recovery:`,
           result.reason
@@ -1347,14 +1581,23 @@ export class WorkRuntimeService {
     orphanResults.forEach((result, index) => {
       if (result.status === 'fulfilled') {
         this.recoveryOrphans.delete(orphans[index].name);
+        this.clearRecoveryItem('orphan', orphans[index].name);
         stopped += 1;
       } else {
+        this.noteRecoveryItem({
+          kind: 'orphan',
+          containerName: orphans[index].name,
+          reason: 'orphan',
+          attempted: true,
+          error: result.reason,
+        });
         logger.warn(
           `Could not remove orphaned Work container ${orphans[index].name} during recovery:`,
           result.reason
         );
       }
     });
+    this.closeRecoveryRound();
     if (this.recoveryPendingCount === 0 && (tasks.length || orphans.length)) {
       logger.info('Work startup container recovery completed.');
     }
@@ -1617,19 +1860,42 @@ export class WorkRuntimeService {
     }
     this.recoveryTimer = setTimeout(() => {
       this.recoveryTimer = undefined;
-      void this.sweepRecoveryTasks()
+      void this.runRecoverySweep()
         .catch(error => {
           logger.warn('Work startup container recovery retry failed:', error);
         })
         .finally(() => {
           this.scheduleRecoverySweep();
         });
-    }, 10_000);
+    }, this.nextRecoveryDelayMs());
     this.recoveryTimer.unref();
+  }
+
+  /**
+   * How long until the next sweep. The stamps written when the last round
+   * closed are authoritative, so a manual retry and the timer agree.
+   */
+  private nextRecoveryDelayMs(): number {
+    const due = this.recoveryNextAttemptAt;
+    if (due === null) return RECOVERY_RETRY_BASE_MS;
+    return Math.max(1_000, due - Date.now());
   }
 
   private queueFailedCleanup(task: WorkTaskRecord, error: unknown): void {
     this.recoveryTasks.set(task.id, task);
+    this.noteRecoveryItem({
+      kind: 'task',
+      taskId: task.id,
+      containerName: task.containerName,
+      reason: 'stop-failed',
+      attempted: !this.sweepingRecovery,
+      error,
+    });
+    if (!this.sweepingRecovery) {
+      // A first failure retries at the floor; repeated ones widen from there.
+      this.recoveryDelayMs = RECOVERY_RETRY_BASE_MS;
+      this.closeRecoveryRound();
+    }
     logger.warn(
       `Work is fail-closed until container ${task.containerName} can be stopped:`,
       error
@@ -1639,6 +1905,7 @@ export class WorkRuntimeService {
 
   private completeRecoveryTask(taskId: string): void {
     const removed = this.recoveryTasks.delete(taskId);
+    this.clearRecoveryItem('task', taskId);
     if (removed && this.recoveryPendingCount === 0) {
       logger.info('Pending Work container cleanup completed.');
     }

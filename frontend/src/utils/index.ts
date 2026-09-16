@@ -89,6 +89,29 @@ export function formatTimestamp(timestamp: number, locale = 'en'): string {
   }
 }
 
+/**
+ * Relative time that also reads correctly for instants in the future, which
+ * `formatTimestamp` (past-only, clamped at zero) cannot express: a scheduled
+ * retry has to say "in 40s", not "just now".
+ */
+export function formatRelativeTime(
+  timestamp: number,
+  locale = 'en',
+  now = Date.now()
+): string {
+  const seconds = Math.round((timestamp - now) / 1000);
+  const magnitude = Math.abs(seconds);
+  const relativeTime = getRelativeTimeFormatter(locale);
+  if (magnitude < 60) return relativeTime.format(seconds, 'second');
+  if (magnitude < 3600) {
+    return relativeTime.format(Math.round(seconds / 60), 'minute');
+  }
+  if (magnitude < 86_400) {
+    return relativeTime.format(Math.round(seconds / 3600), 'hour');
+  }
+  return relativeTime.format(Math.round(seconds / 86_400), 'day');
+}
+
 export function formatFileSize(bytes: number): string {
   const units = ['B', 'KB', 'MB', 'GB'];
   let size = bytes;

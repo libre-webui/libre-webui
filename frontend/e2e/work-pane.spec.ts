@@ -3625,3 +3625,67 @@ test('a finished task is reopened on purpose before its preview or screen starts
     .poll(() => mock.workComputerRequests)
     .toEqual([{ taskId: 'finished-screen', reopen: true }]);
 });
+
+const workRecovery = {
+  pending: 2,
+  since: Date.now() - 120_000,
+  nextAttemptAt: Date.now() + 40_000,
+  retryResult: { attempted: 2, cleared: 2 },
+};
+
+test('a recovering Work runtime explains itself instead of saying "unavailable"', async ({
+  page,
+}) => {
+  // A single-user deployment without authentication: nobody is an
+  // administrator, so this is the notice an ordinary user reads.
+  await mockLibreWebUiApi(page, { workRecovery });
+
+  await page.goto('/work');
+  const notice = page.getByTestId('work-recovery-notice');
+  await expect(notice).toBeVisible();
+  await expect(notice).toContainText('2 sandbox cleanup');
+  await expect(notice).toContainText('Blocked since');
+  await expect(notice).toContainText('Next attempt');
+  await expect(notice).toContainText('Administrators can retry');
+  // A non-administrator gets the pointer, never the destructive control.
+  await expect(page.getByTestId('work-recovery-notice-retry')).toHaveCount(0);
+});
+
+test('an administrator retries the pending cleanups from the Work notice', async ({
+  page,
+}) => {
+  const mock = await mockLibreWebUiApi(page, {
+    systemInfo: {
+      requiresAuth: true,
+      hasUsers: true,
+      userCount: 1,
+      version: '0.35.0-e2e',
+      turnstile: { enabled: false },
+    },
+    authUsers: [
+      {
+        id: 'admin-recovery-user',
+        username: 'admin',
+        email: 'admin@example.test',
+        role: 'admin',
+        token: 'admin-recovery-token',
+      },
+    ],
+    workRecovery,
+  });
+  await page.addInitScript(() => {
+    localStorage.setItem('auth-token', 'admin-recovery-token');
+  });
+
+  await page.goto('/work');
+  await expect(page.getByTestId('work-recovery-notice')).toBeVisible();
+  await expect(page.getByTestId('work-recovery-notice')).not.toContainText(
+    'Administrators can retry'
+  );
+
+  await page.getByTestId('work-recovery-notice-retry').click();
+  await expect(
+    page.getByText('Cleared 2 of 2 pending cleanups.')
+  ).toBeVisible();
+  expect(mock.workRecoveryRetryRequests.length).toBe(1);
+});

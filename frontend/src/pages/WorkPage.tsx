@@ -55,7 +55,7 @@ import {
   type WorkRunEvent,
   type WorkTask,
 } from '@/types/work';
-import { cn } from '@/utils';
+import { cn, formatRelativeTime } from '@/utils';
 import { preferencesApi, workApi } from '@/utils/api';
 import { clearWorkDraft, clearWorkTaskDrafts } from '@/utils/workDrafts';
 import { workStatusPresentation } from '@/utils/workStatus';
@@ -90,7 +90,7 @@ const waitForReconnect = (
   });
 
 export default function WorkPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
   const { taskId } = useParams<{ taskId: string }>();
@@ -99,6 +99,7 @@ export default function WorkPage() {
   const authenticatedUser = useAuthStore(state => state.user);
   const authenticatedUserId = authenticatedUser?.id ?? null;
   const [remoteDisclosureSaving, setRemoteDisclosureSaving] = useState(false);
+  const [retryingRecovery, setRetryingRecovery] = useState(false);
   const chatModels = useChatStore(state => state.models);
   const chatSelectedModel = useChatStore(state => state.selectedModel);
   const chatSelectedProviderType = useChatStore(
@@ -924,6 +925,59 @@ export default function WorkPage() {
   };
 
   const runtimeUnavailable = capabilities?.available === false;
+  // Recovery is a distinct kind of unavailable: nothing is misconfigured,
+  // Work is finishing a cleanup. Saying which and when beats "unavailable".
+  const recovery = capabilities?.recovery;
+  const recovering = (recovery?.pending ?? 0) > 0;
+  // The generic "runtime unavailable" banner only speaks for the cases the
+  // recovery notice above does not already explain.
+  const unavailableForConfiguration = runtimeUnavailable && !recovering;
+  const isAdministrator = authenticatedUser?.role === 'admin';
+  const retryRecovery = async () => {
+    setRetryingRecovery(true);
+    try {
+      const response = await workApi.retryAdminRecovery();
+      if (!response.success || !response.data) {
+        toast.error(
+          response.error ||
+            t('work.recovery.retryFailed', {
+              defaultValue: 'Could not retry the pending cleanups.',
+            })
+        );
+        return;
+      }
+      const { attempted, cleared } = response.data;
+      if (cleared > 0) {
+        toast.success(
+          t('work.recovery.retrySucceeded', {
+            attempted,
+            cleared,
+            defaultValue:
+              'Cleared {{cleared}} of {{attempted}} pending cleanups.',
+          })
+        );
+      } else {
+        toast.error(
+          t('work.recovery.retryPending', {
+            attempted,
+            defaultValue: 'Still retrying {{attempted}} pending cleanups.',
+          })
+        );
+      }
+    } catch (retryError) {
+      toast.error(
+        errorMessage(
+          retryError,
+          t('work.recovery.retryFailed', {
+            defaultValue: 'Could not retry the pending cleanups.',
+          })
+        )
+      );
+    } finally {
+      setRetryingRecovery(false);
+      await loadCapabilities();
+    }
+  };
   const runtimeReadyLabel = t('work.runtime.ready', {
     defaultValue: 'Runtime ready',
   });
@@ -1282,18 +1336,72 @@ export default function WorkPage() {
           )}
         </header>
 
-        {(runtimeUnavailable || error) && (
+        {recovering && recovery && (
+          <div
+            data-testid='work-recovery-notice'
+            className='flex shrink-0 flex-wrap items-center gap-2 border-b border-amber-500/20 bg-amber-500/10 px-4 py-2 text-xs text-ink'
+          >
+            <CircleAlert className='h-4 w-4 shrink-0' />
+            <span dir='auto' className='min-w-0 flex-1'>
+              {[
+                t('work.recovery.pending', {
+                  pending: recovery.pending,
+                  defaultValue:
+                    'Work is confirming {{pending}} sandbox cleanup(s) before it accepts new operations.',
+                }),
+                recovery.since
+                  ? t('work.recovery.since', {
+                      time: formatRelativeTime(recovery.since, i18n.language),
+                      defaultValue: 'Blocked since {{time}}.',
+                    })
+                  : null,
+                recovery.nextAttemptAt
+                  ? t('work.recovery.nextAttempt', {
+                      time: formatRelativeTime(
+                        recovery.nextAttemptAt,
+                        i18n.language
+                      ),
+                      defaultValue: 'Next attempt {{time}}.',
+                    })
+                  : null,
+                isAdministrator
+                  ? null
+                  : t('work.recovery.adminHint', {
+                      defaultValue:
+                        'Administrators can retry from System > Work.',
+                    }),
+              ]
+                .filter(Boolean)
+                .join(' ')}
+            </span>
+            {isAdministrator && (
+              <button
+                type='button'
+                data-testid='work-recovery-notice-retry'
+                onClick={() => void retryRecovery()}
+                disabled={retryingRecovery}
+                className='shrink-0 rounded-md border border-amber-500/40 px-2 py-1 font-medium transition-colors hover:bg-amber-500/20 disabled:opacity-60'
+              >
+                {retryingRecovery
+                  ? t('work.recovery.retrying', { defaultValue: 'Retrying…' })
+                  : t('work.recovery.retry', { defaultValue: 'Retry now' })}
+              </button>
+            )}
+          </div>
+        )}
+
+        {(unavailableForConfiguration || error) && (
           <div
             className={cn(
               'flex shrink-0 items-center gap-2 border-b px-4 py-2 text-xs',
-              runtimeUnavailable
+              unavailableForConfiguration
                 ? 'border-error-500/20 bg-error-500/10 text-error-700'
                 : 'border-amber-500/20 bg-amber-500/10 text-ink'
             )}
           >
             <CircleAlert className='h-4 w-4 shrink-0' />
             <span dir='auto' className='min-w-0 flex-1'>
-              {runtimeUnavailable
+              {unavailableForConfiguration
                 ? capabilities?.reason ||
                   t('work.runtime.reason', {
                     defaultValue:
@@ -1301,7 +1409,7 @@ export default function WorkPage() {
                   })
                 : error}
             </span>
-            {error && !runtimeUnavailable && (
+            {error && !unavailableForConfiguration && (
               <button
                 type='button'
                 className='rounded-md p-1 hover:bg-black/5'

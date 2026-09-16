@@ -29,6 +29,7 @@ import workTaskService from './workTaskService.js';
 import workTerminalService from './workTerminalService.js';
 import type { WorkTaskRecord, WorkTaskUsage } from '../types/work.js';
 import workUsageService from './workUsageService.js';
+import type { WorkRecoveryItem } from './workRuntimeShared.js';
 
 export interface WorkAdminTask {
   id: string;
@@ -156,4 +157,56 @@ export async function buildWorkAdminOverview(
     })),
     orphanContainers: managed.filter(entry => !taskIds.has(entry.taskId)),
   };
+}
+
+/**
+ * One pending cleanup, named rather than counted: the runtime knows the
+ * container and the failure, the task inventory knows whose task it was.
+ */
+export interface WorkAdminRecoveryItem extends WorkRecoveryItem {
+  /** null for an orphan, whose task row no longer exists. */
+  title: string | null;
+  ownerUsername: string | null;
+}
+
+interface WorkRecoveryDeps {
+  items: () => WorkRecoveryItem[];
+  listTasksWithOwner: () => Promise<
+    Array<{ record: WorkTaskRecord; ownerUsername: string }>
+  >;
+}
+
+const defaultRecoveryDeps: WorkRecoveryDeps = {
+  items: () => workRuntimeService.recoveryInventoryDetail(),
+  listTasksWithOwner: () => workTaskService.listAllTasksWithOwner(),
+};
+
+export async function buildWorkRecoveryList(
+  deps: WorkRecoveryDeps = defaultRecoveryDeps
+): Promise<WorkAdminRecoveryItem[]> {
+  const items = deps.items();
+  if (items.length === 0) return [];
+
+  // The owner lookup is only worth a query when something is actually
+  // pending, and a failing lookup must not hide the list itself.
+  let owners = new Map<string, { title: string; ownerUsername: string }>();
+  try {
+    owners = new Map(
+      (await deps.listTasksWithOwner()).map(({ record, ownerUsername }) => [
+        record.id,
+        { title: record.title, ownerUsername },
+      ])
+    );
+  } catch {
+    owners = new Map();
+  }
+
+  return items.map(item => {
+    const owner = item.taskId ? owners.get(item.taskId) : undefined;
+    return {
+      ...item,
+      title: owner?.title ?? null,
+      ownerUsername: owner?.ownerUsername ?? null,
+    };
+  });
 }

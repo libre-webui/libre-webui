@@ -2164,7 +2164,28 @@
       "stateStopped": "Stopped",
       "stateStarting": "Starting",
       "stateUnknown": "Unknown",
-      "noTasks": "No Work tasks yet."
+      "noTasks": "No Work tasks yet.",
+      "recovery": {
+        "title": "Recovery",
+        "description": "Sandboxes Work is still cleaning up. New Work operations stay blocked until the runtime confirms each one is stopped.",
+        "container": "Container",
+        "task": "Task",
+        "reason": "Reason",
+        "attempts": "Attempts",
+        "lastError": "Last error",
+        "nextAttempt": "Next attempt",
+        "retry": "Retry now",
+        "retrying": "Retrying…",
+        "reasonStartup": "Running at startup",
+        "reasonStopFailed": "Stop failed",
+        "reasonRuntimeUnreachable": "Runtime unreachable",
+        "reasonOrphan": "No task record",
+        "notScheduled": "Not scheduled",
+        "loadFailed": "Could not load the pending cleanups.",
+        "retrySucceeded": "Cleared {{cleared}} of {{attempted}} pending cleanups.",
+        "retryPending": "Still retrying {{attempted}} pending cleanups.",
+        "retryFailed": "Could not retry the pending cleanups."
+      }
     },
     "recovery": {
       "title": "Recovery drills",
@@ -2959,7 +2980,18 @@
       "deny": "Deny",
       "failed": "Could not send the decision."
     },
-    "idleStopHint": "Stops after {{minutes}} minutes without activity."
+    "idleStopHint": "Stops after {{minutes}} minutes without activity.",
+    "recovery": {
+      "pending": "Work is confirming {{pending}} sandbox cleanup(s) before it accepts new operations.",
+      "since": "Blocked since {{time}}.",
+      "nextAttempt": "Next attempt {{time}}.",
+      "adminHint": "Administrators can retry from System > Work.",
+      "retry": "Retry now",
+      "retrying": "Retrying…",
+      "retrySucceeded": "Cleared {{cleared}} of {{attempted}} pending cleanups.",
+      "retryPending": "Still retrying {{attempted}} pending cleanups.",
+      "retryFailed": "Could not retry the pending cleanups."
+    }
   },
   "personaBackground": {
     "label": "Background Image",

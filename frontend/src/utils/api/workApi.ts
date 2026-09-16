@@ -34,6 +34,8 @@ import type {
   WorkApprovalsState,
   WorkPolicy,
   WorkPolicyInput,
+  WorkRecoveryItem,
+  WorkRecoveryRetryResult,
   WorkTask,
   WorkTaskSummary,
 } from '@/types/work';
@@ -57,6 +59,12 @@ export const workApi = {
 
   adminOverview: (): Promise<ApiResponse<WorkAdminOverview>> =>
     api.get('/work/admin/overview').then(response => response.data),
+
+  adminRecovery: (): Promise<ApiResponse<WorkRecoveryItem[]>> =>
+    api.get('/work/admin/recovery').then(response => response.data),
+
+  retryAdminRecovery: (): Promise<ApiResponse<WorkRecoveryRetryResult>> =>
+    api.post('/work/admin/recovery/retry').then(response => response.data),
 
   listPolicies: (): Promise<ApiResponse<WorkPolicy[]>> =>
     api.get('/work/policies').then(response => response.data),

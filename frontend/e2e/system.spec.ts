@@ -253,3 +253,75 @@ test('system diagnostics remain contained on a mobile viewport', async ({
   );
   expect(overflow).toBeLessThanOrEqual(1);
 });
+
+test('administrators see and retry the pending Work sandbox cleanups', async ({
+  page,
+}) => {
+  const firstSeenAt = now - 90_000;
+  const mock = await mockLibreWebUiApi(page, {
+    systemInfo,
+    systemDiagnostics: diagnostics,
+    authUsers: [
+      {
+        id: 'admin-user',
+        username: 'admin',
+        email: 'admin@example.test',
+        role: 'admin',
+        status: 'active',
+        token: 'admin-token',
+      },
+    ],
+    workRecovery: {
+      pending: 2,
+      since: firstSeenAt,
+      nextAttemptAt: now + 40_000,
+      retryResult: { attempted: 2, cleared: 2 },
+      items: [
+        {
+          kind: 'task',
+          taskId: 'task-1',
+          containerName: 'libre-work-task-1',
+          reason: 'stop-failed',
+          attempts: 3,
+          firstSeenAt,
+          lastAttemptAt: now - 10_000,
+          lastError: 'transient Docker stop failure',
+          nextAttemptAt: now + 40_000,
+          title: 'Rebuild the landing page',
+          ownerUsername: 'alice',
+        },
+        {
+          kind: 'orphan',
+          containerName: 'libre-work-ghost',
+          reason: 'orphan',
+          attempts: 1,
+          firstSeenAt: now - 60_000,
+          lastAttemptAt: now - 10_000,
+          lastError: null,
+          nextAttemptAt: now + 40_000,
+          title: null,
+          ownerUsername: null,
+        },
+      ],
+    },
+  });
+  await page.addInitScript(() => {
+    localStorage.setItem('auth-token', 'admin-token');
+  });
+
+  await page.goto('/system');
+  const panel = page.getByTestId('work-recovery-panel');
+  await expect(panel).toBeVisible();
+  await expect(panel).toContainText('libre-work-task-1');
+  await expect(panel).toContainText('Rebuild the landing page');
+  await expect(panel).toContainText('alice');
+  await expect(panel).toContainText('Stop failed');
+  await expect(panel).toContainText('transient Docker stop failure');
+  await expect(panel).toContainText('libre-work-ghost');
+
+  await page.getByTestId('work-recovery-retry').click();
+  await expect(
+    page.getByText('Cleared 2 of 2 pending cleanups.')
+  ).toBeVisible();
+  expect(mock.workRecoveryRetryRequests.length).toBe(1);
+});

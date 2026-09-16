@@ -31,7 +31,9 @@ import {
 } from '../services/workAccessService.js';
 import {
   buildWorkAdminOverview,
+  buildWorkRecoveryList,
   type WorkAdminOverview,
+  type WorkAdminRecoveryItem,
 } from '../services/workAdminService.js';
 import workAgentService from '../services/workAgentService.js';
 import workEventService, {
@@ -182,9 +184,10 @@ router.get(
     const providerAvailable =
       providers.ollamaAvailable || providers.pluginAvailable;
     const recoveryPending = workRuntimeService.recoveryPending;
+    const recoveryPendingCount = workRuntimeService.recoveryPendingCount;
     const available = runtimeAvailable && !recoveryPending && providerAvailable;
     const reason = recoveryPending
-      ? `Work is safely retrying ${workRuntimeService.recoveryPendingCount} sandbox cleanup(s). New operations remain blocked until the configured runtime proves they are stopped.`
+      ? `Work is safely retrying ${recoveryPendingCount} sandbox cleanup(s). New operations remain blocked until the configured runtime proves they are stopped.`
       : !runtimeAvailable
         ? workRuntimeService.runtimeUnavailableReason ||
           `The ${workRuntimeService.runtimeKind} runtime is not available to the Libre WebUI backend.`
@@ -200,6 +203,16 @@ router.get(
       pluginAvailable: providers.pluginAvailable,
       runtimeImage: workRuntimeService.image,
       reason,
+      // Structured alongside `reason` so the interface can say how many
+      // sandboxes, since when, and when the next attempt lands instead of
+      // parsing a sentence.
+      recovery: recoveryPending
+        ? {
+            pending: recoveryPendingCount,
+            since: workRuntimeService.recoverySince,
+            nextAttemptAt: workRuntimeService.recoveryNextAttemptAt,
+          }
+        : undefined,
       limits: workRuntimeService.limits,
       activeRuntimes: workRuntimeService.activeRuntimeCounts(userId),
       terminal: {
@@ -303,6 +316,39 @@ router.get(
   ): Promise<void> => {
     try {
       sendSuccess(res, await buildWorkAdminOverview());
+    } catch (error) {
+      sendError(res, error);
+    }
+  }
+);
+
+// Recovery detail and its manual retry are the two things an administrator
+// needs while Work is fail-closed, so both are declared before the gate that
+// the very same recovery state raises.
+router.get(
+  '/admin/recovery',
+  requireAdmin,
+  async (
+    _req: AuthenticatedRequest,
+    res: Response<ApiResponse<WorkAdminRecoveryItem[]>>
+  ): Promise<void> => {
+    try {
+      sendSuccess(res, await buildWorkRecoveryList());
+    } catch (error) {
+      sendError(res, error);
+    }
+  }
+);
+
+router.post(
+  '/admin/recovery/retry',
+  requireAdmin,
+  async (
+    _req: AuthenticatedRequest,
+    res: Response<ApiResponse<{ attempted: number; cleared: number }>>
+  ): Promise<void> => {
+    try {
+      sendSuccess(res, await workRuntimeService.retryRecoveryNow());
     } catch (error) {
       sendError(res, error);
     }

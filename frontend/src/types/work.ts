@@ -209,6 +209,27 @@ export interface WorkAdminOverview {
   orphanContainers: Array<{ name: string; taskId: string; running: boolean }>;
 }
 
+/** One sandbox cleanup Work is still retrying, with its own history. */
+export interface WorkRecoveryItem {
+  kind: 'task' | 'orphan';
+  taskId?: string | null;
+  containerName: string;
+  reason: 'startup' | 'stop-failed' | 'runtime-unreachable' | 'orphan';
+  attempts: number;
+  firstSeenAt: number;
+  lastAttemptAt: number | null;
+  lastError: string | null;
+  nextAttemptAt: number | null;
+  /** null for an orphan, whose task record is gone. */
+  title?: string | null;
+  ownerUsername?: string | null;
+}
+
+export interface WorkRecoveryRetryResult {
+  attempted: number;
+  cleared: number;
+}
+
 export interface WorkCapabilities {
   available: boolean;
   runtime: 'docker' | 'kubernetes';
@@ -217,6 +238,12 @@ export interface WorkCapabilities {
   ollamaAvailable?: boolean;
   pluginAvailable?: boolean;
   reason?: string;
+  /** Present only while cleanups are pending; `reason` still carries prose. */
+  recovery?: {
+    pending: number;
+    since: number | null;
+    nextAttemptAt: number | null;
+  };
   limits?: {
     maxRounds?: number;
     commandTimeoutMs?: number;

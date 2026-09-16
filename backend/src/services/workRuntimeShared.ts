@@ -213,6 +213,30 @@ export interface WorkCommandResult {
   truncated: boolean;
 }
 
+/**
+ * Why a sandbox is still waiting to be cleaned up. Recovery used to be a
+ * set membership ("something is pending"); an operator staring at a blocked
+ * Work surface needs to know which container, why, and when it is tried
+ * again, so every pending item carries its own history.
+ */
+export type WorkRecoveryReason =
+  'startup' | 'stop-failed' | 'runtime-unreachable' | 'orphan';
+
+export interface WorkRecoveryItem {
+  kind: 'task' | 'orphan';
+  /** Absent for an orphan: its task row is gone. */
+  taskId?: string;
+  containerName: string;
+  reason: WorkRecoveryReason;
+  /** Cleanup attempts made so far, zero until the first one is tried. */
+  attempts: number;
+  firstSeenAt: number;
+  lastAttemptAt: number | null;
+  /** Message only: a stack trace in an admin payload leaks server paths. */
+  lastError: string | null;
+  nextAttemptAt: number | null;
+}
+
 export interface ProcessOptions {
   timeoutMs?: number;
   maxOutputChars?: number;
