@@ -1118,6 +1118,11 @@ const AUTOMATION_WEBHOOKS_REQUIRED_SCHEMA = {
   automations: ['webhook_secret_hash'],
 } as const;
 
+const WORK_RUN_RESULTS_REQUIRED_SCHEMA = {
+  work_runs: ['summary', 'changed_files', 'exit_state'],
+  skills: ['approval_policy', 'approval_tools'],
+} as const;
+
 const WORK_APPROVALS_REQUIRED_SCHEMA = {
   work_policies: ['approvals_required'],
   work_tasks: ['approvals_enabled'],
@@ -3795,6 +3800,11 @@ const collectMissingAutomationWebhooksSchema = (
 ): string[] =>
   collectMissingColumns(database, AUTOMATION_WEBHOOKS_REQUIRED_SCHEMA);
 
+const collectMissingWorkRunResultsSchema = (
+  database: Database.Database
+): string[] =>
+  collectMissingColumns(database, WORK_RUN_RESULTS_REQUIRED_SCHEMA);
+
 const collectMissingWorkApprovalsSchema = (
   database: Database.Database
 ): string[] => [
@@ -3981,6 +3991,8 @@ const WORK_APPROVALS_MIGRATION_CHECKSUM =
   '09ece410455c755a5c4b6b6f2bc1f6cc3191b58a40a119cffe337f8a1e6eae21';
 const AUTOMATION_WEBHOOKS_MIGRATION_CHECKSUM =
   'a136ac591774852516f4de5c4f97d607259d57aa7d16db37249bc1c3e2dcd776';
+const WORK_RUN_RESULTS_MIGRATION_CHECKSUM =
+  '0eee2956bbe4af84715660e9a01cb8bf1303b0c9ff8cb90050ee5c919badec08';
 
 const MIGRATIONS: readonly SQLiteMigration[] = [
   {
@@ -4506,6 +4518,27 @@ const MIGRATIONS: readonly SQLiteMigration[] = [
       if (missing.length > 0) {
         throw new Error(
           `SQLite automation webhooks schema is incomplete; missing ${missing.join(', ')}`
+        );
+      }
+    },
+  },
+  {
+    version: 30,
+    name: 'work-run-results',
+    checksum: WORK_RUN_RESULTS_MIGRATION_CHECKSUM,
+    apply(database) {
+      // A run keeps its own outcome: the reply summary, the files it
+      // changed and how it ended; a skill can pin tools that always need
+      // approval. Every column is nullable so existing rows are untouched.
+      addColumnIfMissing(database, 'work_runs', 'summary', 'TEXT');
+      addColumnIfMissing(database, 'work_runs', 'changed_files', 'TEXT');
+      addColumnIfMissing(database, 'work_runs', 'exit_state', 'TEXT');
+      addColumnIfMissing(database, 'skills', 'approval_policy', 'TEXT');
+      addColumnIfMissing(database, 'skills', 'approval_tools', 'TEXT');
+      const missing = collectMissingWorkRunResultsSchema(database);
+      if (missing.length > 0) {
+        throw new Error(
+          `SQLite work run results schema is incomplete; missing ${missing.join(', ')}`
         );
       }
     },
