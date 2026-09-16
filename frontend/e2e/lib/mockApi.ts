@@ -1533,6 +1533,35 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
         return;
       }
 
+      // Passive defaults for the MCP OAuth routes, so a tools surface that
+      // happens to render an OAuth server does not hit the network. Specs
+      // that drive the connect flow route these themselves.
+      if (
+        method === 'GET' &&
+        /^\/tools\/servers\/[^/]+\/oauth\/status$/.test(path)
+      ) {
+        await fulfillJson(route, { connected: false, configured: true });
+        return;
+      }
+
+      if (
+        method === 'POST' &&
+        /^\/tools\/servers\/[^/]+\/oauth\/start$/.test(path)
+      ) {
+        await fulfillJson(route, {
+          authorizeUrl: 'https://auth.example.test/authorize',
+        });
+        return;
+      }
+
+      if (
+        method === 'DELETE' &&
+        /^\/tools\/servers\/[^/]+\/oauth$/.test(path)
+      ) {
+        await fulfillJson(route, { deleted: true });
+        return;
+      }
+
       if (path === '/system' && method === 'GET') {
         if (!options.systemDiagnostics) {
           await fulfillApiError(route, 503, 'System diagnostics unavailable');

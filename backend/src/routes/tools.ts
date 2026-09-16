@@ -50,7 +50,10 @@ import {
   actorCanUseServer,
   deleteToolServer,
   deleteToolServerCredential,
+  disconnectToolServerOAuth,
+  ensurePinnedInventory,
   getToolServer,
+  getToolServerOAuthStatus,
   hasToolServerCredential,
   listServerTools,
   listToolServers,
@@ -59,13 +62,84 @@ import {
   refreshToolServer,
   registerToolServer,
   setToolServerCredential,
+  setToolServerOAuthTokens,
   updateToolServer,
   type ToolServerInput,
   type ToolServerUpdate,
 } from '../services/toolServerService.js';
+import {
+  buildAuthorizeUrl,
+  configureServerOAuth,
+  createPkcePair,
+  exchangeAuthorizationCode,
+  loadOAuthConfig,
+  mcpOAuthFlowScope,
+  mcpOAuthRedirectUri,
+} from '../services/mcpOAuthService.js';
+import {
+  beginScopedOAuthFlowWithPayload,
+  consumeScopedOAuthStatePayload,
+} from '../services/oauthSecurity.js';
 import type { ToolServer } from '../types/tools.js';
 
 const router = express.Router();
+
+/** Where the browser lands after an OAuth round trip. */
+const appUrl = (): string =>
+  (process.env.CORS_ORIGIN || 'http://localhost:5173')
+    .split(',')[0]
+    .trim()
+    .replace(/\/$/, '');
+
+/**
+ * The authorization server redirects the browser here as a top-level
+ * navigation, which carries no Authorization header — so this one route
+ * sits ahead of the router's authentication. Identity comes from the
+ * HttpOnly state cookie written by the authenticated start request, which
+ * also carries the PKCE verifier and is cleared as it is read.
+ */
+router.get('/servers/:id/oauth/callback', async (req, res) => {
+  const serverId = req.params.id as string;
+  const state = typeof req.query.state === 'string' ? req.query.state : '';
+  const payload = consumeScopedOAuthStatePayload(
+    req,
+    res,
+    mcpOAuthFlowScope(serverId),
+    state
+  );
+  const done = (status: 'connected' | 'error') => {
+    res.redirect(
+      `${appUrl()}/?mcpOAuth=${status}&serverId=${encodeURIComponent(serverId)}`
+    );
+  };
+  const code = typeof req.query.code === 'string' ? req.query.code : '';
+  if (!payload?.userId || !payload.verifier || !code || req.query.error) {
+    done('error');
+    return;
+  }
+  try {
+    const server = await getToolServer(serverId);
+    const config = await loadOAuthConfig(serverId);
+    if (!server || server.authMode !== 'oauth' || !config) {
+      done('error');
+      return;
+    }
+    const tokens = await exchangeAuthorizationCode(config, {
+      code,
+      codeVerifier: payload.verifier,
+      redirectUri: mcpOAuthRedirectUri(serverId),
+      timeoutMs: server.timeoutMs,
+    });
+    await setToolServerOAuthTokens(payload.userId, serverId, tokens);
+    // The tool list may have been refused before this sign-in existed.
+    await ensurePinnedInventory(payload.userId, serverId);
+    done('connected');
+  } catch {
+    // Failures here can quote the token request; nothing is logged.
+    done('error');
+  }
+});
+
 router.use(authenticate);
 
 const userIdOf = (req: AuthenticatedRequest): string =>
@@ -380,6 +454,83 @@ router.delete(
     }
   }
 );
+
+/** The server this actor may connect, or null when it is not theirs to use. */
+const oauthServerFor = async (
+  req: AuthenticatedRequest
+): Promise<ToolServer | null> => {
+  const actor = actorOf(req);
+  const server = await getToolServer(req.params.id as string);
+  if (!server || server.authMode !== 'oauth') return null;
+  if (!(await actorCanUseServer(actor, server))) return null;
+  return server;
+};
+
+router.get(
+  '/servers/:id/oauth/status',
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      const server = await oauthServerFor(req);
+      if (!server) return notFound(res);
+      const status = await getToolServerOAuthStatus(userIdOf(req), server.id);
+      res.json({ success: true, data: status } as ApiResponse);
+    } catch (error) {
+      sendToolError(res, error, 'Failed to read the connection');
+    }
+  }
+);
+
+router.post(
+  '/servers/:id/oauth/start',
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      const server = await oauthServerFor(req);
+      if (!server) return notFound(res);
+      // Registration normally discovers this; a server that changed its
+      // authorization server is re-discovered on demand here.
+      const config =
+        (await loadOAuthConfig(server.id)) ??
+        (await configureServerOAuth({
+          serverId: server.id,
+          baseUrl: server.baseUrl,
+          serverName: server.name,
+          timeoutMs: server.timeoutMs,
+        }));
+      const pkce = createPkcePair();
+      const state = beginScopedOAuthFlowWithPayload(
+        req,
+        res,
+        mcpOAuthFlowScope(server.id),
+        { verifier: pkce.verifier, userId: userIdOf(req) }
+      );
+      res.json({
+        success: true,
+        data: {
+          authorizeUrl: buildAuthorizeUrl(config, {
+            state,
+            codeChallenge: pkce.challenge,
+            redirectUri: mcpOAuthRedirectUri(server.id),
+          }),
+        },
+      } as ApiResponse);
+    } catch (error) {
+      sendToolError(res, error, 'Failed to start the connection');
+    }
+  }
+);
+
+router.delete('/servers/:id/oauth', async (req: AuthenticatedRequest, res) => {
+  try {
+    const deleted = await disconnectToolServerOAuth(
+      userIdOf(req),
+      req.params.id as string
+    );
+    if (!deleted) return notFound(res);
+    res.json({ success: true, data: { deleted: true } } as ApiResponse);
+  } catch (error) {
+    sendToolError(res, error, 'Failed to disconnect the tool server');
+  }
+});
 
 router.get('/approvals', async (req: AuthenticatedRequest, res) => {
   try {

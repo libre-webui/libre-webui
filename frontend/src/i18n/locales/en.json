@@ -3395,6 +3395,21 @@
     "credentialRemove": "Remove",
     "credentialRemoved": "Credential removed",
     "credentialRemoveFailed": "Could not remove the credential.",
+    "oauth": {
+      "title": "Connection",
+      "hint": "Connecting sends you to the provider to sign in. Tokens stay on this server and are used only for your own calls.",
+      "connect": "Connect",
+      "reconnect": "Reconnect",
+      "disconnect": "Disconnect",
+      "connected": "Connected",
+      "notConnected": "Not connected",
+      "expiresAt": "Access expires {{when}}",
+      "connectFailed": "Could not start the connection.",
+      "disconnected": "Tool server disconnected",
+      "disconnectFailed": "Could not disconnect the tool server.",
+      "callbackSuccess": "Tool server connected",
+      "callbackError": "The tool server could not be connected."
+    },
     "builtinSource": "This server",
     "kinds": {
       "openapi": "OpenAPI",
@@ -3403,7 +3418,8 @@
     "authModes": {
       "none": "No authentication",
       "bearer": "Bearer token",
-      "header": "Custom header"
+      "header": "Custom header",
+      "oauth": "Interactive OAuth"
     },
     "accessModes": {
       "admins-only": "Administrators only",
@@ -3421,6 +3437,9 @@
       "specUrlHint": "Optional. Defaults to the base URL when left empty.",
       "authMode": "Authentication",
       "authHeader": "Header name",
+      "oauthClientId": "OAuth client ID",
+      "oauthClientIdHint": "Optional. Only needed when the provider does not register clients automatically.",
+      "oauthClientSecret": "OAuth client secret",
       "accessMode": "Who can use it",
       "timeoutMs": "Timeout (ms)",
       "maxResponseBytes": "Max response (bytes)",

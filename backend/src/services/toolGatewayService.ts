@@ -36,6 +36,7 @@ import {
 } from './builtinToolsService.js';
 import { encryptionService } from './encryptionService.js';
 import {
+  isMcpAuthError,
   mcpCallTool,
   mcpInitialize,
   McpClientError,
@@ -49,6 +50,7 @@ import {
   getToolServer,
   listServerTools,
   resolveAuthHeaders,
+  ToolReauthRequiredError,
 } from './toolServerService.js';
 
 const MAX_CONCURRENT_CALLS_PER_USER = 4;
@@ -172,6 +174,11 @@ export interface ToolExecutionResult {
   text: string;
   isError: boolean;
   truncated: boolean;
+  /**
+   * The server's own sign-in has lapsed. The call failed for a reason only
+   * this person can fix, by connecting the server again.
+   */
+  needsReauth?: boolean;
 }
 
 const parseArguments = (argumentsJson: string): Record<string, unknown> => {
@@ -294,7 +301,16 @@ export async function executeToolCall(
       error instanceof ResourcePolicyError
         ? error.message
         : 'The tool call failed unexpectedly.';
-    result = { text: message, isError: true, truncated: false };
+    const needsReauth =
+      error instanceof ToolReauthRequiredError || isMcpAuthError(error);
+    result = {
+      text: needsReauth
+        ? `${message} Reconnect this tool server under Settings, Tools.`
+        : message,
+      isError: true,
+      truncated: false,
+      ...(needsReauth ? { needsReauth: true } : {}),
+    };
   } finally {
     const remaining = (activeCallsByUser.get(actor.userId) ?? 1) - 1;
     if (remaining <= 0) activeCallsByUser.delete(actor.userId);

@@ -62,6 +62,29 @@ export const SettingsToolsTab: React.FC = () => {
     []
   );
 
+  // The OAuth callback redirects the browser back to the app with a status
+  // flag. Report it once, then strip it so a reload cannot repeat the toast.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const status = params.get('mcpOAuth');
+    if (!status) return;
+    // The list below loads with this mount, so the fresh connection is
+    // already reflected; only the outcome needs saying.
+    if (status === 'connected') {
+      toast.success(t('toolsPage.oauth.callbackSuccess'));
+    } else {
+      toast.error(t('toolsPage.oauth.callbackError'));
+    }
+    params.delete('mcpOAuth');
+    params.delete('serverId');
+    const query = params.toString();
+    window.history.replaceState(
+      {},
+      '',
+      `${window.location.pathname}${query ? `?${query}` : ''}${window.location.hash}`
+    );
+  }, [t]);
+
   useEffect(() => {
     let cancelled = false;
     Promise.all([toolsApi.listServers(), toolsApi.listApprovals()])

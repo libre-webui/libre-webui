@@ -58,10 +58,21 @@ import { authorize, type AuthzActor } from './authorizationService.js';
 import { deleteGrantsForResource } from './resourceGrantService.js';
 import { recordAuditEvent } from './securityAuditService.js';
 import {
+  isMcpAuthError,
   mcpInitialize,
   mcpListTools,
   type McpEndpoint,
 } from './mcpClientService.js';
+import {
+  configureServerOAuth,
+  deleteOAuthConfig,
+  loadOAuthConfig,
+  parseOAuthTokens,
+  refreshAccessToken,
+  serializeOAuthTokens,
+  tokensAreFresh,
+  type McpOAuthTokens,
+} from './mcpOAuthService.js';
 import { parseOpenApiSpec } from './openApiToolService.js';
 
 const DEFAULT_TIMEOUT_MS = 30_000;
@@ -71,7 +82,12 @@ const DEFAULT_MAX_RESPONSE_BYTES = 256 * 1024;
 const MAX_RESPONSE_BYTES_CEILING = 4 * 1024 * 1024;
 
 const SERVER_KINDS: readonly ToolServerKind[] = ['openapi', 'mcp'];
-const AUTH_MODES: readonly ToolServerAuthMode[] = ['none', 'bearer', 'header'];
+const AUTH_MODES: readonly ToolServerAuthMode[] = [
+  'none',
+  'bearer',
+  'header',
+  'oauth',
+];
 const ACCESS_MODES: readonly ToolServerAccessMode[] = [
   'admins-only',
   'all-users',
@@ -84,6 +100,32 @@ const resources = () =>
 const credentialAad = (serverId: string, userId: string): Buffer =>
   Buffer.from(`tool-server-credential\0${serverId}\0${userId}`, 'utf-8');
 
+/**
+ * `auth_mode` carries a CHECK constraint written before interactive OAuth
+ * existed, and the schema is owned by a migration in flight. An OAuth
+ * server is therefore stored as a bearer server whose header column holds
+ * this marker: the pair *is* the fourth mode. Nothing else ever writes it,
+ * and it is translated away at both edges, so callers only ever see
+ * `authMode: 'oauth'`.
+ */
+const OAUTH_AUTH_HEADER_MARKER = '__libre_mcp_oauth__';
+
+const storedAuthMode = (mode: ToolServerAuthMode): string =>
+  mode === 'oauth' ? 'bearer' : mode;
+
+const storedAuthHeader = (
+  mode: ToolServerAuthMode,
+  header: string | undefined
+): string | null => {
+  if (mode === 'oauth') return OAUTH_AUTH_HEADER_MARKER;
+  return mode === 'header' ? (header ?? null) : null;
+};
+
+const readAuthMode = (row: StoredToolServerRecord): ToolServerAuthMode =>
+  row.auth_mode === 'bearer' && row.auth_header === OAUTH_AUTH_HEADER_MARKER
+    ? 'oauth'
+    : (row.auth_mode as ToolServerAuthMode);
+
 export const mapToolServerRow = (row: StoredToolServerRecord): ToolServer => ({
   id: row.id,
   name: encryptionService.decrypt(row.name),
@@ -94,8 +136,10 @@ export const mapToolServerRow = (row: StoredToolServerRecord): ToolServer => ({
   baseUrl: encryptionService.decrypt(row.base_url),
   ...(row.spec_digest ? { specDigest: row.spec_digest } : {}),
   specRevision: row.spec_revision,
-  authMode: row.auth_mode as ToolServerAuthMode,
-  ...(row.auth_header ? { authHeader: row.auth_header } : {}),
+  authMode: readAuthMode(row),
+  ...(row.auth_header && row.auth_header !== OAUTH_AUTH_HEADER_MARKER
+    ? { authHeader: row.auth_header }
+    : {}),
   accessMode: row.access_mode as ToolServerAccessMode,
   enabled: row.enabled === 1,
   timeoutMs: row.timeout_ms,
@@ -139,6 +183,10 @@ export interface ToolServerInput {
   specUrl?: string;
   authMode: ToolServerAuthMode;
   authHeader?: string;
+  /** OAuth only: a static client id when the server has no registration endpoint. */
+  oauthClientId?: string;
+  /** OAuth only: the matching client secret, encrypted with the metadata. */
+  oauthClientSecret?: string;
   accessMode: ToolServerAccessMode;
   enabled?: boolean;
   timeoutMs?: number;
@@ -173,9 +221,26 @@ const validateInput = (input: ToolServerInput): void => {
       400
     );
   }
+  if (input.authMode === 'oauth' && input.kind !== 'mcp') {
+    throw new ResourcePolicyError(
+      'Interactive OAuth is available for MCP servers only',
+      400
+    );
+  }
   validateToolServerUrl(input.baseUrl);
   if (input.specUrl !== undefined) validateToolServerUrl(input.specUrl);
 };
+
+/**
+ * Raised when a server's own credential is missing or spent and only the
+ * person can fix it, by connecting the server again.
+ */
+export class ToolReauthRequiredError extends ResourcePolicyError {
+  constructor(message: string) {
+    super(message, 400);
+    this.name = 'ToolReauthRequiredError';
+  }
+}
 
 const clampTimeout = (value: number | undefined): number =>
   Math.min(
@@ -193,6 +258,14 @@ interface PinnedInventory {
   specJson: string;
   digest: string;
   tools: ToolDefinition[];
+  /**
+   * The MCP server refused an unauthenticated listing. The registration
+   * stands with an empty inventory and is pinned on the first authenticated
+   * connection instead.
+   */
+  needsAuth?: boolean;
+  /** Verbatim WWW-Authenticate challenge behind `needsAuth`. */
+  authChallenge?: string;
 }
 
 /**
@@ -225,7 +298,8 @@ const readSpecEnvelope = (
 /** Fetch and pin the server's tool inventory (OpenAPI spec or MCP list). */
 const pinInventory = async (
   input: Pick<ToolServerInput, 'kind' | 'baseUrl' | 'specUrl'>,
-  timeoutMs: number
+  timeoutMs: number,
+  headers: Record<string, string> = {}
 ): Promise<PinnedInventory> => {
   if (input.kind === 'openapi') {
     const response = await secureToolRequest({
@@ -261,12 +335,28 @@ const pinInventory = async (
 
   const endpoint: McpEndpoint = {
     url: input.baseUrl,
-    headers: {},
+    headers,
     timeoutMs,
     maxResponseBytes: MAX_TOOL_SERVER_SPEC_BYTES,
   };
-  const session = await mcpInitialize(endpoint);
-  const descriptors = await mcpListTools(endpoint, session);
+  let descriptors;
+  try {
+    const session = await mcpInitialize(endpoint);
+    descriptors = await mcpListTools(endpoint, session);
+  } catch (error) {
+    // A server that gates its tool list behind a sign-in is still worth
+    // registering: the inventory is pinned once the first person connects.
+    if (!isMcpAuthError(error)) throw error;
+    return {
+      specJson: '[]',
+      digest: createHash('sha256').update('[]').digest('hex'),
+      tools: [],
+      needsAuth: true,
+      ...(error.wwwAuthenticate
+        ? { authChallenge: error.wwwAuthenticate }
+        : {}),
+    };
+  }
   if (descriptors.length === 0) {
     throw new ResourcePolicyError('The MCP server exposes no tools', 400);
   }
@@ -323,8 +413,26 @@ export async function registerToolServer(
   const timeoutMs = clampTimeout(input.timeoutMs);
   const inventory = await pinInventory(input, timeoutMs);
   const now = Date.now();
+  const serverId = randomUUID();
+  if (input.authMode === 'oauth') {
+    // Discovery (and registration) must succeed before the server is
+    // stored: a half-configured OAuth server has nothing to connect to.
+    await configureServerOAuth({
+      serverId,
+      baseUrl: input.baseUrl,
+      serverName: input.name.trim(),
+      ...(inventory.authChallenge
+        ? { challenge: inventory.authChallenge }
+        : {}),
+      ...(input.oauthClientId ? { clientId: input.oauthClientId } : {}),
+      ...(input.oauthClientSecret
+        ? { clientSecret: input.oauthClientSecret }
+        : {}),
+      timeoutMs,
+    });
+  }
   const record: StoredToolServerRecord = {
-    id: randomUUID(),
+    id: serverId,
     user_id: adminUserId,
     name: encryptionService.encrypt(input.name.trim()),
     description: input.description
@@ -337,9 +445,8 @@ export async function registerToolServer(
     ),
     spec_digest: inventory.digest,
     spec_revision: 1,
-    auth_mode: input.authMode,
-    auth_header:
-      input.authMode === 'header' ? (input.authHeader ?? null) : null,
+    auth_mode: storedAuthMode(input.authMode),
+    auth_header: storedAuthHeader(input.authMode, input.authHeader),
     access_mode: input.accessMode,
     enabled: input.enabled === false ? 0 : 1,
     timeout_ms: timeoutMs,
@@ -371,7 +478,11 @@ export async function registerToolServer(
     actorUserId: adminUserId,
     targetType: 'tool-server',
     targetId: record.id,
-    details: { kind: input.kind, digest: inventory.digest },
+    details: {
+      kind: input.kind,
+      digest: inventory.digest,
+      ...(inventory.needsAuth ? { needsAuth: true } : {}),
+    },
   });
   return mapToolServerRow(record);
 }
@@ -420,9 +531,17 @@ export async function updateToolServer(
     if (!AUTH_MODES.includes(update.authMode)) {
       throw new ResourcePolicyError('Invalid tool server auth mode', 400);
     }
-    merged.auth_mode = update.authMode;
+    merged.auth_mode = storedAuthMode(update.authMode);
+    merged.auth_header = storedAuthHeader(
+      update.authMode,
+      update.authHeader ?? existing.auth_header ?? undefined
+    );
+  } else if (update.authHeader !== undefined) {
+    // Never let an update overwrite the OAuth marker with a header name.
+    if (merged.auth_header !== OAUTH_AUTH_HEADER_MARKER) {
+      merged.auth_header = update.authHeader;
+    }
   }
-  if (update.authHeader !== undefined) merged.auth_header = update.authHeader;
   if (
     merged.auth_mode === 'header' &&
     !/^[!#$%&'*+.^_`|~0-9A-Za-z-]{1,128}$/.test(merged.auth_header ?? '')
@@ -472,7 +591,8 @@ export async function refreshToolServer(
       baseUrl: server.baseUrl,
       ...(storedEnvelope ? { specUrl: storedEnvelope.sourceUrl } : {}),
     },
-    server.timeoutMs
+    server.timeoutMs,
+    await bestEffortAuthHeaders(adminUserId, server)
   );
   const now = Date.now();
   const changed = inventory.digest !== existing.spec_digest;
@@ -513,6 +633,7 @@ export async function deleteToolServer(
   const deleted = await resources().toolServers.delete(serverId);
   if (deleted) {
     await deleteGrantsForResource('tool-server', serverId);
+    await deleteOAuthConfig(serverId);
     recordAuditEvent({
       action: 'tool-server.delete',
       result: 'success',
@@ -661,6 +782,12 @@ export async function setToolServerCredential(
   }
   const server = await resources().toolServers.findById(serverId);
   if (!server) throw new ResourcePolicyError('Unknown tool server', 400);
+  if (readAuthMode(server) === 'oauth') {
+    throw new ResourcePolicyError(
+      'This tool server signs in through OAuth; connect it instead of pasting a secret',
+      400
+    );
+  }
   const now = Date.now();
   await resources().toolServerCredentials.upsert({
     id: randomUUID(),
@@ -713,6 +840,213 @@ export async function hasToolServerCredential(
   );
 }
 
+// === Interactive OAuth (MCP) ===
+
+const decryptCredential = (
+  secret: string,
+  serverId: string,
+  userId: string
+): string =>
+  encryptionService
+    .decryptBuffer(
+      Buffer.from(secret, 'base64'),
+      credentialAad(serverId, userId)
+    )
+    .toString('utf-8');
+
+const storeCredentialSecret = async (
+  userId: string,
+  serverId: string,
+  secret: string
+): Promise<void> => {
+  const now = Date.now();
+  await resources().toolServerCredentials.upsert({
+    id: randomUUID(),
+    server_id: serverId,
+    user_id: userId,
+    secret: encryptionService
+      .encryptBuffer(
+        Buffer.from(secret, 'utf-8'),
+        credentialAad(serverId, userId)
+      )
+      .toString('base64'),
+    created_at: now,
+    updated_at: now,
+  });
+};
+
+/** Store one user's OAuth tokens as the encrypted credential envelope. */
+export async function setToolServerOAuthTokens(
+  userId: string,
+  serverId: string,
+  tokens: McpOAuthTokens
+): Promise<void> {
+  await storeCredentialSecret(userId, serverId, serializeOAuthTokens(tokens));
+  recordAuditEvent({
+    action: 'tool-server.oauth-connect',
+    result: 'success',
+    actorUserId: userId,
+    targetType: 'tool-server',
+    targetId: serverId,
+  });
+}
+
+const readOAuthTokens = async (
+  userId: string,
+  serverId: string
+): Promise<McpOAuthTokens | null> => {
+  const row = await resources().toolServerCredentials.find(serverId, userId);
+  if (!row) return null;
+  return parseOAuthTokens(decryptCredential(row.secret, serverId, userId));
+};
+
+export interface ToolServerOAuthStatus {
+  /** This user holds tokens for the server. */
+  connected: boolean;
+  /** The instance knows where to send this user to authorize. */
+  configured: boolean;
+  expiresAt?: number;
+  scope?: string;
+}
+
+export async function getToolServerOAuthStatus(
+  userId: string,
+  serverId: string
+): Promise<ToolServerOAuthStatus> {
+  const [config, tokens] = await Promise.all([
+    loadOAuthConfig(serverId),
+    readOAuthTokens(userId, serverId),
+  ]);
+  return {
+    connected: Boolean(tokens),
+    configured: Boolean(config),
+    ...(tokens?.expiresAt ? { expiresAt: tokens.expiresAt } : {}),
+    ...(tokens?.scope ? { scope: tokens.scope } : {}),
+  };
+}
+
+export async function disconnectToolServerOAuth(
+  userId: string,
+  serverId: string
+): Promise<boolean> {
+  const deleted = await resources().toolServerCredentials.delete(
+    serverId,
+    userId
+  );
+  if (deleted) {
+    recordAuditEvent({
+      action: 'tool-server.oauth-disconnect',
+      result: 'success',
+      actorUserId: userId,
+      targetType: 'tool-server',
+      targetId: serverId,
+    });
+  }
+  return deleted;
+}
+
+// One refresh per server and user at a time: several tool calls in one turn
+// would otherwise race to spend the same refresh token.
+const refreshFlights = new Map<string, Promise<McpOAuthTokens>>();
+
+const refreshOAuthTokens = async (
+  userId: string,
+  server: ToolServer,
+  tokens: McpOAuthTokens
+): Promise<McpOAuthTokens> => {
+  const key = `${server.id}:${userId}`;
+  const inFlight = refreshFlights.get(key);
+  if (inFlight) return inFlight;
+  const flight = (async () => {
+    const config = await loadOAuthConfig(server.id);
+    if (!config) {
+      throw new ToolReauthRequiredError(
+        'This tool server has no OAuth configuration; an administrator must register it again'
+      );
+    }
+    const refreshed = await refreshAccessToken(
+      config,
+      tokens,
+      server.timeoutMs
+    );
+    await storeCredentialSecret(
+      userId,
+      server.id,
+      serializeOAuthTokens(refreshed)
+    );
+    return refreshed;
+  })().finally(() => {
+    refreshFlights.delete(key);
+  });
+  refreshFlights.set(key, flight);
+  return flight;
+};
+
+/**
+ * Pin the inventory of a server that could not be read unauthenticated,
+ * using the credentials this user just obtained. Best effort: a failure
+ * here never breaks the connection that just succeeded.
+ */
+export async function ensurePinnedInventory(
+  userId: string,
+  serverId: string
+): Promise<void> {
+  const existing = await resources().toolServers.findById(serverId);
+  if (!existing) return;
+  const server = mapToolServerRow(existing);
+  if (server.kind !== 'mcp') return;
+  const pinned = await resources().toolServerTools.listByServer(serverId);
+  if (pinned.length > 0) return;
+  try {
+    const inventory = await pinInventory(
+      { kind: server.kind, baseUrl: server.baseUrl },
+      server.timeoutMs,
+      await resolveAuthHeaders(userId, server)
+    );
+    if (inventory.needsAuth || inventory.tools.length === 0) return;
+    const now = Date.now();
+    await resources().toolServers.replaceWithLimit(
+      {
+        ...existing,
+        spec: encryptionService.encrypt(
+          specEnvelope(server.baseUrl, inventory.specJson)
+        ),
+        spec_digest: inventory.digest,
+        spec_revision: existing.spec_revision + 1,
+        updated_at: now,
+      },
+      MAX_TOOL_SERVERS
+    );
+    await resources().toolServerTools.replaceAllForServer(
+      serverId,
+      toolRows(serverId, inventory.tools, now)
+    );
+    recordAuditEvent({
+      action: 'tool-server.refresh',
+      result: 'success',
+      actorUserId: userId,
+      targetType: 'tool-server',
+      targetId: serverId,
+      details: { digest: inventory.digest, changed: true },
+    });
+  } catch {
+    // The administrator can still refresh the server by hand.
+  }
+}
+
+/** Headers for an inventory read, when this user happens to have credentials. */
+const bestEffortAuthHeaders = async (
+  userId: string,
+  server: ToolServer
+): Promise<Record<string, string>> => {
+  if (server.authMode === 'none') return {};
+  try {
+    return await resolveAuthHeaders(userId, server);
+  } catch {
+    return {};
+  }
+};
+
 /** Resolve the outbound auth headers for this user on this server. */
 export async function resolveAuthHeaders(
   userId: string,
@@ -721,18 +1055,30 @@ export async function resolveAuthHeaders(
   if (server.authMode === 'none') return {};
   const row = await resources().toolServerCredentials.find(server.id, userId);
   if (!row) {
+    if (server.authMode === 'oauth') {
+      throw new ToolReauthRequiredError(
+        'This tool server is not connected yet; connect it under Settings, Tools'
+      );
+    }
     throw new ResourcePolicyError(
       'This tool server requires a personal credential; add one in Tools',
       400
     );
   }
-  const secret = encryptionService
-    .decryptBuffer(
-      Buffer.from(row.secret, 'base64'),
-      credentialAad(server.id, userId)
-    )
-    .toString('utf-8')
-    .replace(/[\r\n]/g, '');
+  const stored = decryptCredential(row.secret, server.id, userId);
+  if (server.authMode === 'oauth') {
+    const tokens = parseOAuthTokens(stored);
+    if (!tokens) {
+      throw new ToolReauthRequiredError(
+        'This tool server connection is no longer usable; connect it again'
+      );
+    }
+    const fresh = tokensAreFresh(tokens)
+      ? tokens
+      : await refreshOAuthTokens(userId, server, tokens);
+    return { Authorization: `Bearer ${fresh.accessToken}` };
+  }
+  const secret = stored.replace(/[\r\n]/g, '');
   if (server.authMode === 'bearer') {
     return { Authorization: `Bearer ${secret}` };
   }

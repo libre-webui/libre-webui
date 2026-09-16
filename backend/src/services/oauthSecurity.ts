@@ -31,6 +31,21 @@ const stateCookieName = (provider: OAuthProvider): string =>
 const stateCookiePath = (provider: OAuthProvider): string =>
   `/api/auth/oauth/${provider}`;
 
+/**
+ * Where one flow's state cookie lives. Sign-in providers are a fixed set;
+ * per-resource flows (one MCP tool server) key their own scope so two
+ * servers cannot consume each other's callback.
+ */
+export interface OAuthFlowScope {
+  cookieName: string;
+  cookiePath: string;
+}
+
+const providerScope = (provider: OAuthProvider): OAuthFlowScope => ({
+  cookieName: stateCookieName(provider),
+  cookiePath: stateCookiePath(provider),
+});
+
 const isSecureRequest = (req: Request): boolean =>
   req.secure || req.protocol === 'https';
 
@@ -89,23 +104,23 @@ export const beginOAuthFlow = (
   provider: OAuthProvider
 ): string => {
   const state = randomBytes(32).toString('base64url');
+  const scope = providerScope(provider);
   res.cookie(
-    stateCookieName(provider),
+    scope.cookieName,
     state,
-    cookieOptions(req, stateCookiePath(provider), STATE_TTL_MS)
+    cookieOptions(req, scope.cookiePath, STATE_TTL_MS)
   );
   return state;
 };
 
 /**
- * Start a browser-bound OAuth flow that also needs per-flow secrets (PKCE
- * verifier, OIDC nonce). The payload rides in the same HttpOnly state
- * cookie, encoded alongside the CSRF state.
+ * Scope-keyed variant of the payload flow, for OAuth against a resource
+ * this instance discovered at runtime rather than a built-in provider.
  */
-export const beginOAuthFlowWithPayload = (
+export const beginScopedOAuthFlowWithPayload = (
   req: Request,
   res: Response,
-  provider: OAuthProvider,
+  scope: OAuthFlowScope,
   payload: Record<string, string>
 ): string => {
   const state = randomBytes(32).toString('base64url');
@@ -114,26 +129,22 @@ export const beginOAuthFlowWithPayload = (
     'utf8'
   ).toString('base64url');
   res.cookie(
-    stateCookieName(provider),
+    scope.cookieName,
     envelope,
-    cookieOptions(req, stateCookiePath(provider), STATE_TTL_MS)
+    cookieOptions(req, scope.cookiePath, STATE_TTL_MS)
   );
   return state;
 };
 
-/**
- * Validate state and return the per-flow payload stored at flow start.
- * The cookie is always cleared, so a callback cannot be replayed.
- */
-export const consumeOAuthStatePayload = (
+/** Scope-keyed counterpart of consumeOAuthStatePayload. */
+export const consumeScopedOAuthStatePayload = (
   req: Request,
   res: Response,
-  provider: OAuthProvider,
+  scope: OAuthFlowScope,
   receivedState: string
 ): Record<string, string> | null => {
-  const path = stateCookiePath(provider);
-  const raw = readCookie(req, stateCookieName(provider));
-  res.clearCookie(stateCookieName(provider), clearCookieOptions(req, path));
+  const raw = readCookie(req, scope.cookieName);
+  res.clearCookie(scope.cookieName, clearCookieOptions(req, scope.cookiePath));
   if (!raw || !receivedState) return null;
   try {
     const parsed: unknown = JSON.parse(
@@ -156,6 +167,36 @@ export const consumeOAuthStatePayload = (
     return null;
   }
 };
+
+/**
+ * Start a browser-bound OAuth flow that also needs per-flow secrets (PKCE
+ * verifier, OIDC nonce). The payload rides in the same HttpOnly state
+ * cookie, encoded alongside the CSRF state.
+ */
+export const beginOAuthFlowWithPayload = (
+  req: Request,
+  res: Response,
+  provider: OAuthProvider,
+  payload: Record<string, string>
+): string =>
+  beginScopedOAuthFlowWithPayload(req, res, providerScope(provider), payload);
+
+/**
+ * Validate state and return the per-flow payload stored at flow start.
+ * The cookie is always cleared, so a callback cannot be replayed.
+ */
+export const consumeOAuthStatePayload = (
+  req: Request,
+  res: Response,
+  provider: OAuthProvider,
+  receivedState: string
+): Record<string, string> | null =>
+  consumeScopedOAuthStatePayload(
+    req,
+    res,
+    providerScope(provider),
+    receivedState
+  );
 
 /** Validate and clear OAuth state so a callback cannot be replayed in-browser. */
 export const consumeOAuthState = (

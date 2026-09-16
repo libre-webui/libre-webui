@@ -15,12 +15,13 @@
  * limitations under the License.
  */
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   ChevronDown,
   ChevronRight,
   KeyRound,
+  Link2,
   Loader2,
   Pencil,
   RefreshCw,
@@ -29,7 +30,11 @@ import {
 import toast from 'react-hot-toast';
 import { Button, IconAction, Switch, modalFieldClass } from '@/components/ui';
 import { toolsApi } from '@/utils/api';
-import type { ToolServerToolView, ToolServerView } from '@/utils/api/toolsApi';
+import type {
+  ToolServerOAuthStatus,
+  ToolServerToolView,
+  ToolServerView,
+} from '@/utils/api/toolsApi';
 import { cn } from '@/utils';
 import { createLogger } from '@/utils/logger';
 
@@ -72,6 +77,67 @@ export const ToolServerCard: React.FC<ToolServerCardProps> = ({
   const [credentialOpen, setCredentialOpen] = useState(false);
   const [secret, setSecret] = useState('');
   const [savingSecret, setSavingSecret] = useState(false);
+  const isOAuth = server.authMode === 'oauth';
+  const [oauthStatus, setOauthStatus] = useState<ToolServerOAuthStatus | null>(
+    null
+  );
+  const [oauthBusy, setOauthBusy] = useState(false);
+
+  // An OAuth server reports the connection per person, so the card asks
+  // rather than inferring it from the shared server row.
+  useEffect(() => {
+    if (!isOAuth) return undefined;
+    let cancelled = false;
+    toolsApi
+      .getOAuthStatus(server.id)
+      .then(response => {
+        if (cancelled || !response.success || !response.data) return;
+        setOauthStatus(response.data);
+      })
+      .catch(error => {
+        logger.error('Failed to read the OAuth status:', error);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [isOAuth, server.id]);
+
+  const oauthConnected = oauthStatus?.connected ?? server.hasCredential;
+
+  const handleConnect = async () => {
+    setOauthBusy(true);
+    try {
+      const response = await toolsApi.startOAuth(server.id);
+      if (!response.success || !response.data?.authorizeUrl) {
+        throw new Error(response.error);
+      }
+      // A full-page redirect, like every other sign-in here: the tokens are
+      // exchanged server-side and never touch this page.
+      window.location.assign(response.data.authorizeUrl);
+    } catch (error) {
+      logger.error('Failed to start the OAuth connection:', error);
+      toast.error(apiErrorMessage(error) || t('toolsPage.oauth.connectFailed'));
+      setOauthBusy(false);
+    }
+  };
+
+  const handleDisconnect = async () => {
+    setOauthBusy(true);
+    try {
+      const response = await toolsApi.disconnectOAuth(server.id);
+      if (!response.success) throw new Error(response.error);
+      setOauthStatus({ connected: false, configured: true });
+      toast.success(t('toolsPage.oauth.disconnected'));
+      onChanged();
+    } catch (error) {
+      logger.error('Failed to disconnect the tool server:', error);
+      toast.error(
+        apiErrorMessage(error) || t('toolsPage.oauth.disconnectFailed')
+      );
+    } finally {
+      setOauthBusy(false);
+    }
+  };
 
   const loadTools = async () => {
     setToolsLoading(true);
@@ -200,14 +266,18 @@ export const ToolServerCard: React.FC<ToolServerCardProps> = ({
               <span
                 className={cn(
                   'rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide',
-                  server.hasCredential
+                  (isOAuth ? oauthConnected : server.hasCredential)
                     ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400'
                     : 'bg-amber-500/10 text-amber-600 dark:text-amber-400'
                 )}
               >
-                {server.hasCredential
-                  ? t('toolsPage.credentialSet')
-                  : t('toolsPage.credentialMissing')}
+                {isOAuth
+                  ? oauthConnected
+                    ? t('toolsPage.oauth.connected')
+                    : t('toolsPage.oauth.notConnected')
+                  : server.hasCredential
+                    ? t('toolsPage.credentialSet')
+                    : t('toolsPage.credentialMissing')}
               </span>
             )}
           </div>
@@ -226,11 +296,19 @@ export const ToolServerCard: React.FC<ToolServerCardProps> = ({
           )}
         </div>
         <div className='flex min-w-0 max-w-full shrink-0 flex-wrap items-center gap-1 [&>button]:inline-flex [&>button]:min-h-11 [&>button]:min-w-11 [&>button]:items-center [&>button]:justify-center'>
-          {server.authMode !== 'none' && (
+          {server.authMode !== 'none' && !isOAuth && (
             <IconAction
               icon={KeyRound}
               label={t('toolsPage.credential')}
               testId='tool-credential-toggle'
+              onClick={() => setCredentialOpen(current => !current)}
+            />
+          )}
+          {isOAuth && (
+            <IconAction
+              icon={Link2}
+              label={t('toolsPage.oauth.title')}
+              testId='tool-oauth-toggle'
               onClick={() => setCredentialOpen(current => !current)}
             />
           )}
@@ -267,7 +345,48 @@ export const ToolServerCard: React.FC<ToolServerCardProps> = ({
         </div>
       </div>
 
-      {credentialOpen && server.authMode !== 'none' && (
+      {credentialOpen && isOAuth && (
+        <div
+          data-testid='tool-oauth-panel'
+          className='mt-3 rounded-xl border border-black/[0.06] bg-black/[0.02] p-3 dark:border-white/[0.07] dark:bg-white/[0.03]'
+        >
+          <p className='mb-2 text-[11px] text-gray-500 dark:text-dark-500'>
+            {t('toolsPage.oauth.hint')}
+          </p>
+          {oauthConnected && oauthStatus?.expiresAt && (
+            <p className='mb-2 text-[11px] text-gray-400 dark:text-dark-500'>
+              {t('toolsPage.oauth.expiresAt', {
+                when: new Date(oauthStatus.expiresAt).toLocaleString(),
+              })}
+            </p>
+          )}
+          <div className='flex flex-wrap items-center gap-2'>
+            <Button
+              size='sm'
+              disabled={oauthBusy}
+              onClick={() => void handleConnect()}
+              data-testid='tool-oauth-connect'
+            >
+              {oauthConnected
+                ? t('toolsPage.oauth.reconnect')
+                : t('toolsPage.oauth.connect')}
+            </Button>
+            {oauthConnected && (
+              <Button
+                size='sm'
+                variant='outline'
+                disabled={oauthBusy}
+                onClick={() => void handleDisconnect()}
+                data-testid='tool-oauth-disconnect'
+              >
+                {t('toolsPage.oauth.disconnect')}
+              </Button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {credentialOpen && server.authMode !== 'none' && !isOAuth && (
         <div
           data-testid='tool-credential-panel'
           className='mt-3 rounded-xl border border-black/[0.06] bg-black/[0.02] p-3 dark:border-white/[0.07] dark:bg-white/[0.03]'

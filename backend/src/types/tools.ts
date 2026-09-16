@@ -22,7 +22,7 @@
  */
 
 export type ToolServerKind = 'openapi' | 'mcp';
-export type ToolServerAuthMode = 'none' | 'bearer' | 'header';
+export type ToolServerAuthMode = 'none' | 'bearer' | 'header' | 'oauth';
 export type ToolServerAccessMode = 'admins-only' | 'all-users' | 'granted';
 
 export interface ToolServer {
