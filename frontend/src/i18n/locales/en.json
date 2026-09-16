@@ -2151,6 +2151,14 @@
       "state": "State",
       "preview": "Preview",
       "terminals": "Terminals",
+      "inUse": "In use",
+      "inUseNone": "Nobody",
+      "usageKinds": {
+        "command": "command",
+        "preview": "preview",
+        "terminal": "terminal",
+        "screen": "screen"
+      },
       "updated": "Updated",
       "stateRunning": "Running",
       "stateStopped": "Stopped",

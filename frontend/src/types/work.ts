@@ -190,6 +190,7 @@ export interface WorkAdminTask {
   /** null when the runtime could not be asked (backend unavailable). */
   running: boolean | null;
   terminalSessions: number;
+  usage: WorkTaskUsage[];
   updatedAt: number;
 }
 
@@ -270,6 +271,15 @@ export interface WorkRun {
   finishedAt?: number | null;
 }
 
+export type WorkUsageKind = 'command' | 'preview' | 'terminal' | 'screen';
+
+export interface WorkTaskUsage {
+  kind: WorkUsageKind;
+  userId: string;
+  since: number;
+  member: string;
+}
+
 export interface WorkTaskSummary {
   id: string;
   title: string;
@@ -299,6 +309,7 @@ export interface WorkTaskSummary {
   lastSeenAt?: number | null;
   /** Per-task opt-in to action approvals; absent = off (policy may force). */
   approvalsEnabled?: boolean | null;
+  usage?: WorkTaskUsage[];
 }
 
 export interface WorkTask extends WorkTaskSummary {

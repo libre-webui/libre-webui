@@ -74,6 +74,18 @@ const stubDeps = overrides => ({
   limits: () => ({ maxGlobal: 3, maxPerUser: 2 }),
   recoveryPending: () => 0,
   accessMode: () => 'admins',
+  usage: async taskIds =>
+    new Map(
+      taskIds.map(id => [
+        id,
+        id === 't1'
+          ? [
+              { kind: 'terminal', userId: 'u1', since: 5, member: 'a' },
+              { kind: 'screen', userId: 'u1', since: 6, member: 'b' },
+            ]
+          : [],
+      ])
+    ),
   ...overrides,
 });
 
@@ -95,6 +107,12 @@ test('the overview aggregates tasks, live state, sessions, and orphans', async (
   assert.equal(first.running, true);
   assert.equal(first.terminalSessions, 2);
   assert.equal(first.hostWorkspace, false);
+  // Live holds come from the usage registry, not from this process's memory.
+  assert.deepEqual(
+    first.usage.map(entry => entry.kind),
+    ['terminal', 'screen']
+  );
+  assert.deepEqual(second.usage, []);
   assert.equal(second.ownerUsername, 'bob');
   // A known task with no managed container is at rest, not unknown.
   assert.equal(second.running, false);

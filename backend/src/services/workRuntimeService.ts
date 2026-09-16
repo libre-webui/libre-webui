@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 
+import workUsageService from './workUsageService.js';
 import path from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { getWorkPersistence } from '../platform/workPersistence/index.js';
@@ -666,6 +667,7 @@ export class WorkRuntimeService {
   private lastRuntimeUnavailableReason: string | null = null;
   private runtimeLeases = new Map<string, RuntimeLease>();
   private previewLeaseReleases = new Map<string, () => void>();
+  private previewUsageReleases = new Map<string, () => void>();
   private terminalHolds = new Map<string, number>();
   private screenHolds = new Map<string, number>();
   // Cross-replica mirror of screenHolds: presence members that tell another
@@ -984,6 +986,8 @@ export class WorkRuntimeService {
   }
 
   private releasePreviewLease(taskId: string): void {
+    this.previewUsageReleases.get(taskId)?.();
+    this.previewUsageReleases.delete(taskId);
     if (!this.previewLeaseReleases.has(taskId)) return;
     const release = this.previewLeaseReleases.get(taskId);
     this.previewLeaseReleases.delete(taskId);
@@ -1060,10 +1064,16 @@ export class WorkRuntimeService {
     }
     const releaseLease = await this.prepare(task, signal);
     this.terminalHolds.set(task.id, (this.terminalHolds.get(task.id) ?? 0) + 1);
+    const releaseUsage = await workUsageService.begin(
+      task.id,
+      'terminal',
+      task.userId
+    );
     let released = false;
     return async () => {
       if (released) return;
       released = true;
+      releaseUsage();
       this.noteTaskActivity(task.id);
       const remaining = (this.terminalHolds.get(task.id) ?? 1) - 1;
       if (remaining <= 0) {
@@ -1108,10 +1118,16 @@ export class WorkRuntimeService {
     await this.assertTaskIsActive(task);
     const releasePresence = await this.acquireViewerPresence(task.id);
     this.screenHolds.set(task.id, (this.screenHolds.get(task.id) ?? 0) + 1);
+    const releaseUsage = await workUsageService.begin(
+      task.id,
+      'screen',
+      task.userId
+    );
     let released = false;
     return async () => {
       if (released) return;
       released = true;
+      releaseUsage();
       this.noteTaskActivity(task.id);
       const remaining = (this.screenHolds.get(task.id) ?? 1) - 1;
       if (remaining <= 0) {
@@ -1199,6 +1215,7 @@ export class WorkRuntimeService {
 
   beginShutdown(): void {
     this.shuttingDown = true;
+    workUsageService.stopHeartbeats();
     if (this.recoveryTimer) {
       clearTimeout(this.recoveryTimer);
       this.recoveryTimer = undefined;
@@ -1425,7 +1442,12 @@ export class WorkRuntimeService {
         (this.terminalHolds.get(task.id) ?? 0) > 0 ||
         (this.screenHolds.get(task.id) ?? 0) > 0 ||
         (this.runtimeLeases.has(task.id) &&
-          !this.previewLeaseReleases.has(task.id));
+          !this.previewLeaseReleases.has(task.id)) ||
+        // Holds from other processes: terminals, screens and commands
+        // record themselves in the usage registry.
+        (await workUsageService.list(task.id)).some(
+          entry => entry.kind !== 'preview'
+        );
       const sharedActivity =
         getPlatformRuntimeConfig().mode === 'team'
           ? await getCoordinator().getCache<number>(
@@ -1511,6 +1533,13 @@ export class WorkRuntimeService {
       if (
         task.previewStatus === 'starting' &&
         now - task.updatedAt < PREVIEW_START_GRACE_MS
+      ) {
+        continue;
+      }
+      if (
+        (await workUsageService.list(task.id)).some(
+          entry => entry.kind !== 'preview'
+        )
       ) {
         continue;
       }
@@ -2381,6 +2410,7 @@ export class WorkRuntimeService {
     const releaseLease = await this.acquireRuntimeLease(task);
     let commandRegistered = false;
     let containerStopped = false;
+    let releaseUsage: (() => void) | undefined;
     try {
       await this.ensureImage(task);
       await this.assertTaskIsActive(task);
@@ -2411,6 +2441,11 @@ export class WorkRuntimeService {
             }
             this.activeCommands.add(task.id);
             commandRegistered = true;
+            releaseUsage = await workUsageService.begin(
+              task.id,
+              'command',
+              task.userId
+            );
           } catch (error) {
             await this.stopContainerIfIdleWithLock(task, signal);
             throw error;
@@ -2458,6 +2493,7 @@ export class WorkRuntimeService {
       );
     } finally {
       this.activeCommands.delete(task.id);
+      releaseUsage?.();
       try {
         if (containerStopped) {
           this.releasePreviewLease(task.id);
@@ -2936,6 +2972,10 @@ export class WorkRuntimeService {
         releaseLease();
       } else {
         this.previewLeaseReleases.set(task.id, releaseLease);
+        this.previewUsageReleases.set(
+          task.id,
+          await workUsageService.begin(task.id, 'preview', task.userId)
+        );
       }
       leaseRetained = true;
       return url;

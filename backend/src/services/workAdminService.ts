@@ -27,7 +27,8 @@ import { getWorkAccessMode, type WorkAccessMode } from './workAccessService.js';
 import workRuntimeService from './workRuntimeService.js';
 import workTaskService from './workTaskService.js';
 import workTerminalService from './workTerminalService.js';
-import type { WorkTaskRecord } from '../types/work.js';
+import type { WorkTaskRecord, WorkTaskUsage } from '../types/work.js';
+import workUsageService from './workUsageService.js';
 
 export interface WorkAdminTask {
   id: string;
@@ -42,6 +43,8 @@ export interface WorkAdminTask {
   /** null when the runtime could not be asked (backend unavailable). */
   running: boolean | null;
   terminalSessions: number;
+  /** Live holds recorded by the usage registry: who is on this task now. */
+  usage: WorkTaskUsage[];
   updatedAt: number;
 }
 
@@ -78,6 +81,7 @@ interface WorkAdminDeps {
   limits: () => { maxGlobal: number; maxPerUser: number };
   recoveryPending: () => number;
   accessMode: () => Promise<WorkAccessMode> | WorkAccessMode;
+  usage: (taskIds: readonly string[]) => Promise<Map<string, WorkTaskUsage[]>>;
 }
 
 const defaultDeps: WorkAdminDeps = {
@@ -93,6 +97,7 @@ const defaultDeps: WorkAdminDeps = {
   }),
   recoveryPending: () => workRuntimeService.recoveryPendingCount,
   accessMode: () => getWorkAccessMode(),
+  usage: taskIds => workUsageService.listMany(taskIds),
 };
 
 export async function buildWorkAdminOverview(
@@ -120,6 +125,7 @@ export async function buildWorkAdminOverview(
   const taskIds = new Set(tasks.map(task => task.record.id));
 
   const limits = deps.limits();
+  const usageByTask = await deps.usage(tasks.map(task => task.record.id));
   return {
     generatedAt: Date.now(),
     accessMode: await deps.accessMode(),
@@ -145,6 +151,7 @@ export async function buildWorkAdminOverview(
       hostWorkspace: Boolean(record.hostPath),
       running: managedKnown ? (runningByTask.get(record.id) ?? false) : null,
       terminalSessions: deps.sessionCount(record.id),
+      usage: usageByTask.get(record.id) ?? [],
       updatedAt: record.updatedAt,
     })),
     orphanContainers: managed.filter(entry => !taskIds.has(entry.taskId)),

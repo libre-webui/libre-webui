@@ -299,6 +299,63 @@ test('a running container with a dead preview process is reconciled, a held one 
   ).run(held.id);
 });
 
+test('usage recorded outside process memory keeps another process from reconciling a task', async () => {
+  const usageModule = await import(
+    pathToFileURL(
+      path.join(repoRoot, 'backend', 'dist', 'services', 'workUsageService.js')
+    ).href
+  );
+  const { workUsageService, decodeUsageMember, encodeUsageMember } =
+    usageModule;
+  // A separator inside the user id is sanitized so the member stays parseable.
+  assert.equal(
+    decodeUsageMember(
+      encodeUsageMember({ kind: 'screen', userId: 'u|1', since: 42 }, 'p1')
+    )?.userId,
+    'u_1'
+  );
+  const decoded = decodeUsageMember(
+    encodeUsageMember(
+      { kind: 'terminal', userId: 'user-1', since: 42 },
+      'proc-1'
+    )
+  );
+  assert.deepEqual(decoded && { ...decoded, member: undefined }, {
+    kind: 'terminal',
+    userId: 'user-1',
+    since: 42,
+    member: undefined,
+  });
+  assert.equal(decodeUsageMember('bogus'), null);
+
+  const task = makeTask('stale-preview-in-use');
+  db.prepare(
+    `UPDATE work_tasks SET preview_status = 'running' WHERE id = ?`
+  ).run(task.id);
+  // Another process holds a terminal on this task: only the registry knows.
+  const release = await workUsageService.begin(
+    task.id,
+    'terminal',
+    task.userId
+  );
+  assert.deepEqual(
+    (await workUsageService.list(task.id)).map(entry => entry.kind),
+    ['terminal']
+  );
+  const service = new WorkRuntimeService();
+  service.driver.docker = async () => ({
+    exitCode: 0,
+    stdout: '',
+    stderr: '',
+    truncated: false,
+  });
+  assert.deepEqual(await service.reconcileStalePreviews(), { stopped: 0 });
+  release();
+  assert.deepEqual(await workUsageService.list(task.id), []);
+  assert.deepEqual(await service.reconcileStalePreviews(), { stopped: 1 });
+  service.beginShutdown();
+});
+
 test('a preview still starting gets a grace period before it counts as stale', async () => {
   const fresh = makeTask('stale-preview-starting');
   db.prepare(

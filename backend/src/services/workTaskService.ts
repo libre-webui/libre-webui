@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 
+import workUsageService from './workUsageService.js';
 import {
   getWorkPersistence,
   replaceWorkTextNul,
@@ -621,7 +622,9 @@ export class WorkTaskService {
     userId: string
   ): Promise<WorkTaskDetail | undefined> {
     const row = await getWorkPersistence().findTask(taskId, userId);
-    return row ? this.detailFromRow(row) : undefined;
+    if (!row) return undefined;
+    const detail = await this.detailFromRow(row);
+    return { ...detail, usage: await workUsageService.list(taskId) };
   }
 
   async requireTaskDetail(

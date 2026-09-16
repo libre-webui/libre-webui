@@ -79,6 +79,17 @@ export interface WorkRun {
   finishedAt?: number;
 }
 
+export type WorkUsageKind = 'command' | 'preview' | 'terminal' | 'screen';
+
+/** One live hold on a task, recorded outside process memory. */
+export interface WorkTaskUsage {
+  kind: WorkUsageKind;
+  userId: string;
+  since: number;
+  /** Opaque presence member; distinguishes holders of the same kind. */
+  member: string;
+}
+
 export interface WorkTaskDetail {
   id: string;
   title: string;
@@ -112,6 +123,8 @@ export interface WorkTaskDetail {
   lastSeenAt?: number;
   /** Per-task opt-in to action approvals; absent = off (policy may force). */
   approvalsEnabled?: boolean;
+  /** Live holds (commands, previews, terminals, screens) on this task. */
+  usage?: WorkTaskUsage[];
 }
 
 export type WorkLiveEventType =

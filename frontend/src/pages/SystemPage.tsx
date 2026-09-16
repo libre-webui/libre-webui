@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 
+import type { WorkTaskUsage } from '@/types/work';
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
@@ -228,6 +229,19 @@ const WorkPanel: React.FC = () => {
       : running
         ? t('systemPage.work.stateRunning')
         : t('systemPage.work.stateStopped');
+  // Live holds recorded outside process memory: "2 terminals, 1 screen".
+  const usageLabel = (usage: WorkTaskUsage[] | undefined): string => {
+    if (!usage || usage.length === 0) return t('systemPage.work.inUseNone');
+    const counts = new Map<string, number>();
+    for (const entry of usage) {
+      counts.set(entry.kind, (counts.get(entry.kind) ?? 0) + 1);
+    }
+    return [...counts.entries()]
+      .map(
+        ([kind, count]) => `${count} ${t(`systemPage.work.usageKinds.${kind}`)}`
+      )
+      .join(', ');
+  };
   const previewLabel = (previewStatus: string): string =>
     previewStatus === 'running'
       ? t('systemPage.work.stateRunning')
@@ -324,6 +338,9 @@ const WorkPanel: React.FC = () => {
                 <th className='px-4 py-2 text-start font-medium'>
                   {t('systemPage.work.terminals')}
                 </th>
+                <th className='px-4 py-2 text-start font-medium'>
+                  {t('systemPage.work.inUse')}
+                </th>
                 <th className='px-5 py-2 text-end font-medium'>
                   {t('systemPage.work.updated')}
                 </th>
@@ -370,6 +387,12 @@ const WorkPanel: React.FC = () => {
                   </td>
                   <td className='px-4 py-2.5 text-xs text-gray-600 dark:text-dark-600'>
                     {task.terminalSessions}
+                  </td>
+                  <td
+                    className='px-4 py-2.5 text-xs text-gray-600 dark:text-dark-600'
+                    data-testid='work-admin-usage'
+                  >
+                    {usageLabel(task.usage)}
                   </td>
                   <td className='px-5 py-2.5 text-end text-xs text-gray-600 dark:text-dark-600'>
                     {dateFormatter.format(task.updatedAt)}
