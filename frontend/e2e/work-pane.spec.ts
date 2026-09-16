@@ -2284,8 +2284,14 @@ test('shows tool activity, saves files, and isolates preview content', async ({
 
   await previewToolbar.getByTestId('work-stop-preview-button').press('Enter');
   await expect(frame).toHaveCount(0);
+  // The fixture task is completed, so starting its preview reopens it.
   expect(mock.workPreviewRequests).toEqual([
-    { taskId: 'preview-workspace', action: 'start', command: undefined },
+    {
+      taskId: 'preview-workspace',
+      action: 'start',
+      command: undefined,
+      reopen: true,
+    },
     { taskId: 'preview-workspace', action: 'stop' },
   ]);
 });
@@ -3575,4 +3581,47 @@ test('manages local workspace Git without exposing remote credentials', async ({
   expect(
     mock.workGitRequests.find(request => request.action === 'commit')
   ).toMatchObject({ message: 'Save app changes' });
+});
+
+test('a finished task is reopened on purpose before its preview or screen starts', async ({
+  page,
+}) => {
+  const finishedPreview = {
+    ...task('finished-task', 'Finished page', 'All done.'),
+    idleTimeoutMs: 30 * 60_000,
+  };
+  const finishedScreen = {
+    ...task('finished-screen', 'Finished desktop', 'All done.'),
+    computerAvailable: true,
+    idleTimeoutMs: 30 * 60_000,
+  };
+  const mock = await mockLibreWebUiApi(page, {
+    workTasks: [finishedPreview, finishedScreen],
+  });
+  await page.goto('/work/finished-task');
+
+  await page.getByTestId('work-preview-tab').click();
+  await expect(page.getByTestId('work-idle-hint')).toContainText('30 minutes');
+  const reopenPreview = page.getByTestId('work-preview-reopen');
+  await expect(reopenPreview).toBeVisible();
+  await expect(
+    page
+      .getByTestId('work-workspace-toolbar')
+      .getByTestId('work-start-preview-button')
+  ).toHaveAttribute('aria-label', 'Reopen task and start preview');
+  await reopenPreview.click();
+  await expect(page.getByTestId('work-preview-frame')).toBeVisible();
+  await expect
+    .poll(() => mock.workPreviewRequests)
+    .toEqual([{ taskId: 'finished-task', action: 'start', reopen: true }]);
+
+  // The screen never auto-starts on a finished task either.
+  await page.goto('/work/finished-screen');
+  await page.getByTestId('work-screen-tab').click();
+  await expect(page.getByTestId('work-screen-reopen')).toBeVisible();
+  expect(mock.workComputerRequests).toEqual([]);
+  await page.getByTestId('work-screen-reopen').click();
+  await expect
+    .poll(() => mock.workComputerRequests)
+    .toEqual([{ taskId: 'finished-screen', reopen: true }]);
 });

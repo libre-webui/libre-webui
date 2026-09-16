@@ -898,8 +898,16 @@ when set, a sweep stops any sandbox that has seen no activity — no command
 finished, no terminal attached, no preview request through the signed
 proxy — for that many milliseconds, freeing its admission slot. Stopping is
 cheap and the workspace persists, so an idled preview simply restarts on
-the next use. The default (`0`) keeps today's behavior: a preview runs
-until it is stopped explicitly.
+the next use. The default is thirty minutes; the preview and screen panes
+say so ("Stops after 30 minutes without activity"), a named policy can set
+its own value, and `0` turns the sweep off so a preview runs until it is
+stopped explicitly.
+
+A finished task (completed, failed, or cancelled) does not get a preview or
+a screen by accident: the panes offer **Reopen task and start preview** or
+**Reopen task and open the screen**, which puts the task back to idle
+first. The API mirrors this: `preview/start` and `computer/start` answer
+`409 WORK_TASK_FINISHED` unless the body carries `reopen: true`.
 
 Independently of idle-stop, a preview record that nothing backs any more
 is reconciled within about a minute: when the task's container is gone,
@@ -1294,7 +1302,7 @@ Work reads these variables in the backend process:
 | `WORK_DOCKER_SOCKET`                  | `DOCKER_HOST` if `unix://` or `tcp://`, else `/var/run/docker.sock`                           | Docker Engine endpoint used for interactive terminals      |
 | `WORK_TERMINAL_MAX_SESSIONS_PER_TASK` | `2`                                                                                           | Simultaneous interactive terminals per task                |
 | `WORK_TERMINAL_IDLE_TIMEOUT_MS`       | `900000`                                                                                      | Idle timeout before a terminal session closes              |
-| `WORK_RUNTIME_IDLE_TIMEOUT_MS`        | `0` (disabled)                                                                                | Stop a sandbox after this much inactivity (previews too)   |
+| `WORK_RUNTIME_IDLE_TIMEOUT_MS`        | `1800000` (30 min)                                                                            | Stop a sandbox after this much inactivity (previews too)   |
 | `WORK_K8S_NAMESPACE`                  | `libre-webui-work`                                                                            | Kubernetes sandbox Pod/PVC namespace                       |
 | `WORK_K8S_STORAGE_CLASS`              | cluster default                                                                               | StorageClass for Kubernetes workspace PVCs                 |
 | `WORK_K8S_WORKSPACE_SIZE`             | `5Gi`                                                                                         | Default per-task Kubernetes PVC size                       |

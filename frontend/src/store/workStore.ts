@@ -227,7 +227,11 @@ interface WorkState {
     content: string,
     expectedUpdatedAt?: number
   ) => Promise<WorkFile>;
-  startPreview: (taskId: string, command?: string) => Promise<WorkTask>;
+  startPreview: (
+    taskId: string,
+    command?: string,
+    options?: { reopen?: boolean }
+  ) => Promise<WorkTask>;
   stopPreview: (taskId: string) => Promise<WorkTask>;
   clearError: () => void;
   clearAllState: () => void;
@@ -892,9 +896,9 @@ export const useWorkStore = create<WorkState>((set, get) => {
       }
     },
 
-    startPreview: (taskId, command) =>
+    startPreview: (taskId, command, options) =>
       runTaskAction(
-        () => workApi.startPreview(taskId, command),
+        () => workApi.startPreview(taskId, command, options),
         'Could not start the workspace preview.',
         taskId
       ),

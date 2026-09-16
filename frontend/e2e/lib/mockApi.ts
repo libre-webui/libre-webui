@@ -876,10 +876,12 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
     expectedUpdatedAt?: number;
   }> = [];
   const pendingWorkFileUpdateReleases: Array<() => void> = [];
+  const workComputerRequests: Array<{ taskId: string; reopen?: boolean }> = [];
   const workPreviewRequests: Array<{
     taskId: string;
     action: 'start' | 'stop';
     command?: string;
+    reopen?: boolean;
   }> = [];
   const workGitRequests: Array<{
     taskId: string;
@@ -2158,12 +2160,33 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
           }
           const request = (route.request().postDataJSON() || {}) as {
             command?: string;
+            reopen?: boolean;
           };
           workPreviewRequests.push({
             taskId,
             action,
             command: request.command,
+            ...(request.reopen ? { reopen: true } : {}),
           });
+          if (
+            (task.status === 'completed' ||
+              task.status === 'failed' ||
+              task.status === 'cancelled') &&
+            !request.reopen
+          ) {
+            await route.fulfill({
+              status: 409,
+              contentType: 'application/json',
+              body: JSON.stringify({
+                success: false,
+                error:
+                  'This Work task is finished. Reopen it to start its preview or screen.',
+                message: 'WORK_TASK_FINISHED',
+              }),
+            });
+            return;
+          }
+          if (request.reopen) task.status = 'idle';
           task.previewStatus = 'running';
           task.previewUrl = `/api/work/previews/preview-workspace/49173.${'N'.repeat(22)}.${'S'.repeat(43)}/`;
         } else {
@@ -2980,6 +3003,53 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
           return;
         }
       }
+      const computerStart = path.match(
+        /^\/work\/tasks\/([^/]+)\/computer\/start$/
+      );
+      if (method === 'POST' && computerStart) {
+        const taskId = decodeURIComponent(computerStart[1]);
+        const task = workTasks.find(entry => entry.id === taskId);
+        if (!task) {
+          await route.fulfill({
+            status: 404,
+            contentType: 'application/json',
+            body: JSON.stringify({
+              success: false,
+              error: 'Work task not found.',
+            }),
+          });
+          return;
+        }
+        const request = (route.request().postDataJSON() || {}) as {
+          reopen?: boolean;
+        };
+        workComputerRequests.push({
+          taskId,
+          ...(request.reopen ? { reopen: true } : {}),
+        });
+        if (
+          (task.status === 'completed' ||
+            task.status === 'failed' ||
+            task.status === 'cancelled') &&
+          !request.reopen
+        ) {
+          await route.fulfill({
+            status: 409,
+            contentType: 'application/json',
+            body: JSON.stringify({
+              success: false,
+              error:
+                'This Work task is finished. Reopen it to start its preview or screen.',
+              message: 'WORK_TASK_FINISHED',
+            }),
+          });
+          return;
+        }
+        if (request.reopen) task.status = 'idle';
+        task.updatedAt = Date.now();
+        await fulfillJson(route, { ready: true });
+        return;
+      }
       if (method === 'GET' && path === '/push/public-key') {
         await route.fulfill({
           status: 200,
@@ -3071,6 +3141,7 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
         .forEach(releaseWorkFileUpdate => releaseWorkFileUpdate());
     },
     workPreviewRequests,
+    workComputerRequests,
     workGitRequests,
   };
 }

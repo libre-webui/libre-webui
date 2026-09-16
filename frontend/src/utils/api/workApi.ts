@@ -265,10 +265,14 @@ export const workApi = {
 
   startPreview: (
     taskId: string,
-    command?: string
+    command?: string,
+    options: { reopen?: boolean } = {}
   ): Promise<ApiResponse<WorkTask>> =>
     api
-      .post(`${taskPath(taskId)}/preview/start`, command ? { command } : {})
+      .post(`${taskPath(taskId)}/preview/start`, {
+        ...(command ? { command } : {}),
+        ...(options.reopen ? { reopen: true } : {}),
+      })
       .then(response => response.data),
 
   stopPreview: (taskId: string): Promise<ApiResponse<WorkTask>> =>

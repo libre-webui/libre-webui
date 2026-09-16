@@ -45,6 +45,7 @@ import {
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui';
+import { isFinishedWorkStatus } from '@/utils/workStatus';
 import { WorkAgentPanel } from '@/components/work/WorkAgentPanel';
 import { WorkLiveRunSurface } from '@/components/work/WorkLiveRunSurface';
 import { WorkspaceCodeEditor } from '@/components/work/WorkspaceCodeEditor';
@@ -102,7 +103,10 @@ interface WorkspacePaneProps {
     content: string,
     expectedUpdatedAt?: number
   ) => Promise<WorkFile | false>;
-  onStartPreview: (command?: string) => Promise<unknown>;
+  onStartPreview: (
+    command?: string,
+    options?: { reopen?: boolean }
+  ) => Promise<unknown>;
   onStopPreview: () => Promise<unknown>;
   onDirtyChange: (dirty: boolean) => void;
   terminal?: WorkCapabilities['terminal'];
@@ -850,12 +854,28 @@ export function WorkspacePane({
                   className='h-8 w-8 rounded-lg bg-primary-600 px-0 text-white hover:bg-primary-500 sm:w-auto sm:px-2.5'
                   disabled={actionLoading}
                   onClick={() =>
-                    void onStartPreview(previewCommand.trim() || undefined)
+                    void onStartPreview(
+                      previewCommand.trim() || undefined,
+                      // A finished task is reopened on purpose, and the
+                      // button says so.
+                      isFinishedWorkStatus(task.status)
+                        ? { reopen: true }
+                        : undefined
+                    )
                   }
                   aria-busy={actionLoading || undefined}
-                  aria-label={t('work.preview.start', {
-                    defaultValue: 'Start preview',
-                  })}
+                  aria-label={
+                    isFinishedWorkStatus(task.status)
+                      ? t('work.preview.reopenStart')
+                      : t('work.preview.start', {
+                          defaultValue: 'Start preview',
+                        })
+                  }
+                  title={
+                    isFinishedWorkStatus(task.status)
+                      ? t('work.preview.reopenStart')
+                      : undefined
+                  }
                 >
                   {actionLoading ? (
                     <Loader2 className='h-3.5 w-3.5 animate-spin' />
@@ -1125,7 +1145,12 @@ export function WorkspacePane({
           aria-labelledby='work-workspace-tab-screen'
           className='flex min-h-0 flex-1 flex-col'
         >
-          <WorkspaceScreen taskId={task.id} active={tab === 'screen'} />
+          <WorkspaceScreen
+            taskId={task.id}
+            active={tab === 'screen'}
+            taskStatus={task.status}
+            idleTimeoutMs={task.idleTimeoutMs ?? 0}
+          />
         </div>
       )}
 
@@ -1188,15 +1213,45 @@ export function WorkspacePane({
           ) : (
             <div className='m-auto max-w-sm px-6 text-center text-xs leading-relaxed text-ink-muted'>
               <Monitor className='mx-auto mb-3 h-8 w-8 text-ink-subtle' />
-              {task.previewStatus === 'failed'
-                ? t('work.preview.failed', {
-                    defaultValue:
-                      'The preview could not start. Check Activity, then try another command.',
-                  })
-                : t('work.preview.empty', {
-                    defaultValue:
-                      'Start the app inside this workspace to inspect it here.',
+              {isFinishedWorkStatus(task.status) ? (
+                <>
+                  <p>{t('work.preview.finished')}</p>
+                  <Button
+                    data-testid='work-preview-reopen'
+                    size='sm'
+                    variant='outline'
+                    className='mt-3'
+                    disabled={actionLoading}
+                    onClick={() =>
+                      void onStartPreview(previewCommand.trim() || undefined, {
+                        reopen: true,
+                      })
+                    }
+                  >
+                    {t('work.preview.reopenStart')}
+                  </Button>
+                </>
+              ) : task.previewStatus === 'failed' ? (
+                t('work.preview.failed', {
+                  defaultValue:
+                    'The preview could not start. Check Activity, then try another command.',
+                })
+              ) : (
+                t('work.preview.empty', {
+                  defaultValue:
+                    'Start the app inside this workspace to inspect it here.',
+                })
+              )}
+              {(task.idleTimeoutMs ?? 0) > 0 && (
+                <p
+                  className='mt-3 text-[11px] text-ink-subtle'
+                  data-testid='work-idle-hint'
+                >
+                  {t('work.idleStopHint', {
+                    minutes: Math.round((task.idleTimeoutMs ?? 0) / 60_000),
                   })}
+                </p>
+              )}
             </div>
           )}
         </div>

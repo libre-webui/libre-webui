@@ -1380,9 +1380,10 @@ router.post(
     const taskId = readTaskId(req);
     const userId = requireUserId(req);
     try {
-      const task = await workTaskService.requireMutableTaskRecord(
+      const task = await workTaskService.requireStartableTaskRecord(
         taskId,
-        userId
+        userId,
+        { reopen: req.body?.reopen === true }
       );
       await workRuntimeService.startComputer(task);
       // Watch access needs the session's view-only VNC password. Absent on
@@ -1636,9 +1637,10 @@ router.post(
     const taskId = readTaskId(req);
     const userId = requireUserId(req);
     try {
-      const task = await workTaskService.requireMutableTaskRecord(
+      const task = await workTaskService.requireStartableTaskRecord(
         taskId,
-        userId
+        userId,
+        { reopen: req.body?.reopen === true }
       );
       await workRuntimeService.startPreview(
         task,

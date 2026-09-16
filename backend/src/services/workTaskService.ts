@@ -30,6 +30,7 @@ import {
   WORK_EXECUTE_JOB_TYPE,
 } from '../platform/jobs/domainJobContracts.js';
 import { getDurableJobRuntime } from '../platform/jobs/durableJobRuntime.js';
+import { isFinishedWorkStatus } from '../types/work.js';
 import {
   WorkMessage,
   WorkMessagePage,
@@ -550,6 +551,27 @@ export class WorkTaskService {
     return task;
   }
 
+  /**
+   * A finished task does not get a preview or a screen by accident: the
+   * caller must say it is reopening the task, which puts it back to idle.
+   */
+  async requireStartableTaskRecord(
+    taskId: string,
+    userId: string,
+    options: { reopen?: boolean } = {}
+  ): Promise<WorkTaskRecord> {
+    const task = await this.requireMutableTaskRecord(taskId, userId);
+    if (!isFinishedWorkStatus(task.status)) return task;
+    if (!options.reopen) {
+      throw new WorkConflictError(
+        'This Work task is finished. Reopen it to start its preview or screen.',
+        'WORK_TASK_FINISHED'
+      );
+    }
+    await this.updateTaskStatus(taskId, 'idle', task.statusBlurb ?? null);
+    return { ...task, status: 'idle' };
+  }
+
   async assertTaskMutationAllowed(
     taskId: string,
     userId: string
@@ -624,7 +646,24 @@ export class WorkTaskService {
     const row = await getWorkPersistence().findTask(taskId, userId);
     if (!row) return undefined;
     const detail = await this.detailFromRow(row);
-    return { ...detail, usage: await workUsageService.list(taskId) };
+    return {
+      ...detail,
+      usage: await workUsageService.list(taskId),
+      idleTimeoutMs: await this.effectiveIdleTimeout(row.policy_id),
+    };
+  }
+
+  private async effectiveIdleTimeout(
+    policyId: string | null | undefined
+  ): Promise<number> {
+    try {
+      const { default: workPolicyService } =
+        await import('./workPolicyService.js');
+      return (await workPolicyService.resolve(policyId ?? undefined))
+        .idleTimeoutMs;
+    } catch {
+      return 0;
+    }
   }
 
   async requireTaskDetail(
@@ -1123,10 +1162,13 @@ export class WorkNotFoundError extends Error {
 
 export class WorkConflictError extends Error {
   readonly status = 409;
+  /** Machine-readable reason for clients that can offer a way out. */
+  readonly code?: string;
 
-  constructor(message: string) {
+  constructor(message: string, code?: string) {
     super(message);
     this.name = 'WorkConflictError';
+    if (code) this.code = code;
   }
 }
 

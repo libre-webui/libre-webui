@@ -71,3 +71,7 @@ export const workStatusPresentation: Record<
     animated: false,
   },
 };
+
+/** Finished tasks need an explicit reopen before a preview or screen starts. */
+export const isFinishedWorkStatus = (status: WorkTaskStatus): boolean =>
+  status === 'completed' || status === 'failed' || status === 'cancelled';

@@ -310,6 +310,7 @@ export interface WorkTaskSummary {
   /** Per-task opt-in to action approvals; absent = off (policy may force). */
   approvalsEnabled?: boolean | null;
   usage?: WorkTaskUsage[];
+  idleTimeoutMs?: number | null;
 }
 
 export interface WorkTask extends WorkTaskSummary {

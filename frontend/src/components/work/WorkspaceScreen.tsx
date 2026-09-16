@@ -25,6 +25,8 @@
  * hands the screen back with "I'm done".
  */
 
+import { isFinishedWorkStatus } from '@/utils/workStatus';
+import type { WorkTaskStatus } from '@/types/work';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -77,6 +79,10 @@ interface WorkspaceScreenProps {
   variant?: 'full' | 'mini';
   /** Invoked when the mini thumbnail is clicked to open the full Screen. */
   onExpand?: () => void;
+  /** A finished task asks before its screen is brought back. */
+  taskStatus?: WorkTaskStatus;
+  /** Effective idle-stop for the sandbox, shown as a hint; 0 when off. */
+  idleTimeoutMs?: number;
 }
 
 type ScreenState = 'idle' | 'starting' | 'connected' | 'disconnected';
@@ -103,11 +109,14 @@ export function WorkspaceScreen({
   active,
   variant = 'full',
   onExpand,
+  taskStatus,
+  idleTimeoutMs = 0,
 }: WorkspaceScreenProps) {
   const { t } = useTranslation();
   const mountRef = useRef<HTMLDivElement | null>(null);
   const rfbRef = useRef<RfbClient | null>(null);
   const [mode, setMode] = useState<ScreenMode>('view');
+  const [reopenConfirmed, setReopenConfirmed] = useState(false);
   const [attempt, setAttempt] = useState(0);
   const [connection, setConnection] = useState<ScreenConnection>(() => ({
     taskId,
@@ -223,13 +232,20 @@ export function WorkspaceScreen({
     rfbRef.current = null;
   }, []);
 
+  const needsReopen =
+    taskStatus !== undefined &&
+    isFinishedWorkStatus(taskStatus) &&
+    !reopenConfirmed;
+
   useEffect(() => {
-    if (!active) return;
+    if (!active || needsReopen) return;
     let disposed = false;
     let renewTimer: ReturnType<typeof setInterval> | undefined;
     (async () => {
       try {
-        const session = await startWorkComputer(taskId);
+        const session = await startWorkComputer(taskId, {
+          reopen: reopenConfirmed,
+        });
         if (!disposed) setTakeoverSupported(Boolean(session.viewOnlyPassword));
         let password = session.viewOnlyPassword;
         if (mode === 'control') {
@@ -284,7 +300,16 @@ export function WorkspaceScreen({
         releaseWorkScreenControl(taskId).catch(() => undefined);
       }
     };
-  }, [taskId, active, attempt, mode, disconnect, updateConnection]);
+  }, [
+    taskId,
+    active,
+    attempt,
+    mode,
+    disconnect,
+    updateConnection,
+    needsReopen,
+    reopenConfirmed,
+  ]);
 
   // Who is driving, and is the agent asking for a human? Polled only while
   // the pane is open; the mini thumbnail has no control UI to feed.
@@ -493,7 +518,12 @@ export function WorkspaceScreen({
         <div ref={mountRef} className='h-full w-full' />
         {state !== 'connected' && (
           <div className='pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-2 bg-canvas px-4 text-center'>
-            {state === 'starting' ? (
+            {needsReopen ? (
+              <>
+                <MonitorPlay size={18} className='text-ink-muted' />
+                <p className='text-xs text-ink'>{t('work.screen.finished')}</p>
+              </>
+            ) : state === 'starting' ? (
               <>
                 <Loader2 size={16} className='animate-spin text-ink-muted' />
                 <p className='text-xs text-ink'>{t('work.screen.starting')}</p>
@@ -519,6 +549,38 @@ export function WorkspaceScreen({
           })}
           className='absolute inset-0 cursor-pointer bg-transparent transition-colors hover:bg-white/5 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary-500/60'
         />
+      </div>
+    );
+  }
+
+  if (needsReopen) {
+    return (
+      <div
+        className='flex h-full min-h-[16rem] w-full flex-col items-center justify-center gap-3 px-6 text-center'
+        data-testid='work-screen'
+      >
+        <MonitorPlay size={24} className='text-ink-muted' />
+        <p className='max-w-sm text-xs leading-relaxed text-ink-muted'>
+          {t('work.screen.finished')}
+        </p>
+        <button
+          type='button'
+          data-testid='work-screen-reopen'
+          onClick={() => setReopenConfirmed(true)}
+          className={toolbarButton}
+        >
+          {t('work.screen.reopenOpen')}
+        </button>
+        {idleTimeoutMs > 0 && (
+          <p
+            className='text-[11px] text-ink-subtle'
+            data-testid='work-idle-hint'
+          >
+            {t('work.idleStopHint', {
+              minutes: Math.round(idleTimeoutMs / 60_000),
+            })}
+          </p>
+        )}
       </div>
     );
   }
@@ -555,6 +617,16 @@ export function WorkspaceScreen({
           <div className='rounded-md bg-emerald-500/15 px-2 py-0.5 text-[11px] text-emerald-500'>
             {t('work.screen.teachSaved', { name: teachSavedName })}
           </div>
+        )}
+        {idleTimeoutMs > 0 && (
+          <span
+            className='text-[11px] text-ink-subtle'
+            data-testid='work-idle-hint'
+          >
+            {t('work.idleStopHint', {
+              minutes: Math.round(idleTimeoutMs / 60_000),
+            })}
+          </span>
         )}
         <div className='min-w-0 flex-1' />
         <button

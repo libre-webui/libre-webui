@@ -224,7 +224,7 @@ test('Work runtime defaults pin the image and bound resource use', () => {
     audioPort: 6081,
     networkName: 'libre-webui-work',
     // Idle-stop is opt-in: 0 keeps previews running until stopped.
-    idleTimeoutMs: 0,
+    idleTimeoutMs: 30 * 60_000,
   });
   assert.match(WORK_RUNTIME_DEFAULTS.image, /@sha256:[a-f0-9]{64}$/);
   assert.doesNotMatch(WORK_RUNTIME_DEFAULTS.image, /:latest(?:@|$)/);

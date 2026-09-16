@@ -107,8 +107,8 @@ const stubDocker = (service, task, calls) => {
   };
 };
 
-test('the idle sweep is off by default and off while recovering', async () => {
-  assert.equal(WORK_RUNTIME_DEFAULTS.idleTimeoutMs, 0);
+test('the idle sweep defaults to thirty minutes and is off while recovering', async () => {
+  assert.equal(WORK_RUNTIME_DEFAULTS.idleTimeoutMs, 30 * 60_000);
   assert.equal(sharedModule.workRuntimeConfig.idleTimeoutMs, IDLE_MS);
 
   const service = new WorkRuntimeService();
@@ -354,6 +354,41 @@ test('usage recorded outside process memory keeps another process from reconcili
   assert.deepEqual(await workUsageService.list(task.id), []);
   assert.deepEqual(await service.reconcileStalePreviews(), { stopped: 1 });
   service.beginShutdown();
+});
+
+test('a finished task needs an explicit reopen before its preview or screen starts', async () => {
+  const taskModule = await import(
+    pathToFileURL(
+      path.join(repoRoot, 'backend', 'dist', 'services', 'workTaskService.js')
+    ).href
+  );
+  const { default: workTaskService, WorkConflictError } = taskModule;
+  const task = makeTask('finished-reopen');
+  db.prepare(`UPDATE work_tasks SET status = 'completed' WHERE id = ?`).run(
+    task.id
+  );
+  await assert.rejects(
+    workTaskService.requireStartableTaskRecord(task.id, task.userId),
+    error =>
+      error instanceof WorkConflictError && error.code === 'WORK_TASK_FINISHED'
+  );
+  const reopened = await workTaskService.requireStartableTaskRecord(
+    task.id,
+    task.userId,
+    { reopen: true }
+  );
+  assert.equal(reopened.status, 'idle');
+  assert.equal(
+    db.prepare('SELECT status FROM work_tasks WHERE id = ?').get(task.id)
+      .status,
+    'idle'
+  );
+  // An idle task passes straight through.
+  const again = await workTaskService.requireStartableTaskRecord(
+    task.id,
+    task.userId
+  );
+  assert.equal(again.status, 'idle');
 });
 
 test('a preview still starting gets a grace period before it counts as stale', async () => {

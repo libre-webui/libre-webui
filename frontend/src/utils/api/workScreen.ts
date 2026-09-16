@@ -32,11 +32,15 @@ export interface WorkScreenControlState {
  * session's view-only VNC password when the image supports takeover.
  */
 export async function startWorkComputer(
-  taskId: string
+  taskId: string,
+  options: { reopen?: boolean } = {}
 ): Promise<{ viewOnlyPassword?: string }> {
   const response = await api.post<
     ApiResponse<{ ready: boolean; viewOnlyPassword?: string }>
-  >(`/work/tasks/${encodeURIComponent(taskId)}/computer/start`);
+  >(
+    `/work/tasks/${encodeURIComponent(taskId)}/computer/start`,
+    options.reopen ? { reopen: true } : {}
+  );
   return { viewOnlyPassword: response.data.data?.viewOnlyPassword };
 }
 

@@ -2814,7 +2814,9 @@
       "starting": "Starting preview…",
       "frameTitle": "Workspace preview",
       "failed": "The preview could not start. Check Activity, then try another command.",
-      "empty": "Start the app inside this workspace to inspect it here."
+      "empty": "Start the app inside this workspace to inspect it here.",
+      "finished": "This task is finished. Reopen it to start a preview.",
+      "reopenStart": "Reopen task and start preview"
     },
     "mobile": {
       "surface": "Task surface",
@@ -2908,7 +2910,9 @@
       "teachSaved": "Saved as skill \"{{name}}\"",
       "watchingLearning": "The agent is watching and learning",
       "unmute": "Unmute",
-      "mute": "Mute"
+      "mute": "Mute",
+      "finished": "This task is finished. Reopen it to bring its screen back.",
+      "reopenOpen": "Reopen task and open the screen"
     },
     "computerSetup": {
       "title": "Work Computer",
@@ -2954,7 +2958,8 @@
       "allowAlways": "Always allow",
       "deny": "Deny",
       "failed": "Could not send the decision."
-    }
+    },
+    "idleStopHint": "Stops after {{minutes}} minutes without activity."
   },
   "personaBackground": {
     "label": "Background Image",

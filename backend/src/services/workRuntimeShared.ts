@@ -52,8 +52,9 @@ export const WORK_RUNTIME_DEFAULTS = {
   // screen port for GUI policies.
   audioPort: 6081,
   networkName: 'libre-webui-work',
-  // 0 disables the idle sweep: previews stay up until stopped explicitly.
-  idleTimeoutMs: 0,
+  // Previews and screens nobody touches stop after half an hour; 0 turns
+  // the sweep off so they stay up until stopped explicitly.
+  idleTimeoutMs: 30 * 60_000,
 } as const;
 
 // Two runtimes per administrator so a second task does not have to wait for
@@ -113,8 +114,8 @@ export const workRuntimeConfig = {
   // Stop a running sandbox after this much inactivity: no command finished,
   // no terminal attached, no preview request through the signed proxy.
   // Commands already stop their container on completion, so this mainly
-  // bounds how long an unwatched preview keeps a sandbox (and its admission
-  // slot) alive. 0 keeps today's behavior: previews run until stopped.
+  // bounds how long an unwatched preview or screen keeps a sandbox (and its
+  // admission slot) alive. 0 disables the sweep: previews run until stopped.
   idleTimeoutMs: positiveInteger(
     process.env.WORK_RUNTIME_IDLE_TIMEOUT_MS,
     WORK_RUNTIME_DEFAULTS.idleTimeoutMs

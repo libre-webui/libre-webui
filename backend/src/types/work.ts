@@ -24,6 +24,16 @@ export type WorkTaskStatus =
   | 'failed'
   | 'cancelled';
 
+/** Statuses after which a task needs an explicit reopen before its preview or screen starts. */
+export const FINISHED_WORK_STATUSES: readonly WorkTaskStatus[] = [
+  'completed',
+  'failed',
+  'cancelled',
+];
+
+export const isFinishedWorkStatus = (status: WorkTaskStatus): boolean =>
+  FINISHED_WORK_STATUSES.includes(status);
+
 export type WorkRunStatus =
   | 'queued'
   | 'preparing'
@@ -125,6 +135,8 @@ export interface WorkTaskDetail {
   approvalsEnabled?: boolean;
   /** Live holds (commands, previews, terminals, screens) on this task. */
   usage?: WorkTaskUsage[];
+  /** Effective idle-stop for this task's sandbox; 0 when disabled. */
+  idleTimeoutMs?: number;
 }
 
 export type WorkLiveEventType =

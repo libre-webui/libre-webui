@@ -1591,9 +1591,9 @@ export default function WorkPage() {
                   onLoadFile={path => loadFile(selectedTask.id, path)}
                   onClearSelectedFile={clearSelectedFile}
                   onSaveFile={saveWorkspaceFile}
-                  onStartPreview={command =>
+                  onStartPreview={(command, options) =>
                     runWorkspaceAction(
-                      () => startPreview(selectedTask.id, command),
+                      () => startPreview(selectedTask.id, command, options),
                       t('work.toasts.previewFailed', {
                         defaultValue: 'Could not start the preview.',
                       })
