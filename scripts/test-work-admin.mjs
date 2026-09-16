@@ -169,3 +169,38 @@ test('the overview route is admin-only and reachable while fail-closed', () => {
   const gateAt = source.indexOf('workRuntimeService.assertAcceptingWork()');
   assert.ok(overviewAt !== -1 && gateAt !== -1 && overviewAt < gateAt);
 });
+
+test('the recovery routes are admin-only and reachable while fail-closed', () => {
+  const source = readFileSync(
+    path.join(repoRoot, 'backend', 'src', 'routes', 'work.ts'),
+    'utf8'
+  );
+  assert.match(source, /router\.get\(\s*'\/admin\/recovery',\s*requireAdmin/);
+  assert.match(
+    source,
+    /router\.post\(\s*'\/admin\/recovery\/retry',\s*requireAdmin/
+  );
+
+  // Both are declared before the assertAcceptingWork gate: the state they
+  // report is the very state that raises the gate, so gating them would hide
+  // the only explanation and remove the only way out.
+  const gateAt = source.indexOf('workRuntimeService.assertAcceptingWork()');
+  const listAt = source.indexOf("'/admin/recovery'");
+  const retryAt = source.indexOf("'/admin/recovery/retry'");
+  assert.ok(listAt !== -1 && listAt < gateAt);
+  assert.ok(retryAt !== -1 && retryAt < gateAt);
+});
+
+test('capabilities report recovery as structured state, not only prose', () => {
+  const source = readFileSync(
+    path.join(repoRoot, 'backend', 'src', 'routes', 'work.ts'),
+    'utf8'
+  );
+  assert.match(source, /recovery: recoveryPending/);
+  assert.match(source, /pending: recoveryPendingCount/);
+  assert.match(source, /since: workRuntimeService\.recoverySince/);
+  assert.match(
+    source,
+    /nextAttemptAt: workRuntimeService\.recoveryNextAttemptAt/
+  );
+});

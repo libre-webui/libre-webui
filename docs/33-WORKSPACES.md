@@ -910,9 +910,34 @@ already at rest remain unchanged; and managed sandboxes whose task row no
 longer exists are removed. Ownership comes from the task label, never the
 resource name. Orphan removal assumes one Libre WebUI instance owns a runtime
 namespace or Docker daemon. Do not point two instances at the same Work
-resources. If the driver cannot prove cleanup, Work stays fail-closed, retries
-every 10 seconds, and blocks new mutable operations until runtime access is
-restored.
+resources. If the driver cannot prove cleanup, Work stays fail-closed and
+blocks new mutable operations until runtime access is restored.
+
+Recovery is visible rather than silent. Every sandbox still waiting to be
+cleaned up is tracked individually — which container, whether it belongs to a
+known task or is an orphan, why it is pending (`startup`, `stop-failed`,
+`runtime-unreachable`, or `orphan`), how many attempts it has cost, the
+runtime's last error message, and when the next attempt is due:
+
+- **System → Work** shows a **Recovery** section listing those items with the
+  owning task and user where the task row still exists, plus a **Retry now**
+  button that runs one sweep immediately instead of waiting out the backoff.
+  It is served by `GET /api/work/admin/recovery` and
+  `POST /api/work/admin/recovery/retry`, both admin-only and both deliberately
+  registered ahead of the fail-closed gate: the state they report is the very
+  state raising that gate.
+- **The Work page** replaces the generic "runtime unavailable" banner with how
+  many sandboxes are being cleaned up, since when, and when the next attempt
+  lands. Administrators get a **Retry now** button there too; everyone else is
+  pointed at System → Work.
+- `GET /api/work/capabilities` carries the same facts as structured
+  `recovery: { pending, since, nextAttemptAt }` alongside the prose `reason`.
+
+Automatic retries start 10 seconds after a failure and then double to a
+one-minute ceiling, so a runtime that is genuinely gone is not hammered while
+an operator repairs it. A manual retry ignores the backoff, restarts the
+cadence at its floor, and never starts a second sweep alongside one already
+running.
 
 ## Network Behavior
 
@@ -1175,7 +1200,7 @@ backend, not merely the browser or desktop interface.
 | Source development on a local computer    | Supported under the same Docker and provider requirements.                                                                                                                                                                                                                                                                           | Supported through the development API origin on port 3001.                                        |
 | Electron desktop client                   | Conditional. Electron uses an external Libre WebUI backend and does not provide a separate Work runtime.                                                                                                                                                                                                                             | Supported through that backend's signed proxy URL.                                                |
 | Bare-metal or VM backend on a remote host | Runs, files, and provider calls work when Docker is available on that host.                                                                                                                                                                                                                                                          | Supported when the public reverse proxy preserves HTTP and WebSocket traffic.                     |
-| Standard repository Docker Compose        | Supported by default on Docker Desktop: the image ships the Docker CLI, Compose mounts the host Docker socket, and Work ports route through `host.docker.internal`. Native Docker Engine additionally needs a reachable non-public `WORK_PREVIEW_BIND`.                                                                                | Supported through the same public Libre WebUI origin.                                             |
+| Standard repository Docker Compose        | Supported by default on Docker Desktop: the image ships the Docker CLI, Compose mounts the host Docker socket, and Work ports route through `host.docker.internal`. Native Docker Engine additionally needs a reachable non-public `WORK_PREVIEW_BIND`.                                                                              | Supported through the same public Libre WebUI origin.                                             |
 | Current Kubernetes/Helm deployment        | Supported with `--set work.enabled=true`: sandboxes run as Pods with PVC workspaces (runs, files, commands, git, interactive terminals, and the Work Computer screen and audio at the Pod IP), under a namespace-scoped Role and default-deny NetworkPolicies — no Docker socket anywhere. See the [Kubernetes guide](./KUBERNETES). | Supported when the backend runs in-cluster: the signed proxy targets the sandbox Pod IP directly. |
 
 ### Running Work when Libre WebUI is itself in Docker
@@ -1338,44 +1363,46 @@ Work access from the database. Work is admin-only by default; an administrator
 can open ordinary task operations to active users. Host-folder selection and
 administrative policy/access endpoints remain admin-only.
 
-| Method   | Path                                | Purpose                                           |
-| -------- | ----------------------------------- | ------------------------------------------------- |
-| `GET`    | `/capabilities`                     | Selected runtime/provider availability and limits |
-| `GET`    | `/tasks`                            | List the current administrator's tasks            |
-| `POST`   | `/tasks`                            | Create a task and its first asynchronous run      |
-| `GET`    | `/tasks/:id`                        | Load task state and recent messages               |
-| `GET`    | `/tasks/:id/messages`               | Page older messages                               |
-| `PATCH`  | `/tasks/:id`                        | Rename or change the explicit model route         |
-| `DELETE` | `/tasks/:id`                        | Remove the task and durable workspace             |
-| `POST`   | `/tasks/:id/runs`                   | Start a follow-up run                             |
-| `POST`   | `/tasks/:id/messages`               | Message the agent during an active run            |
-| `GET`    | `/tasks/:taskId/runs/:runId/events` | Stream authenticated live run events using SSE    |
-| `POST`   | `/tasks/:id/cancel`                 | Cancel the active run                             |
+| Method   | Path                                | Purpose                                             |
+| -------- | ----------------------------------- | --------------------------------------------------- |
+| `GET`    | `/capabilities`                     | Selected runtime/provider availability and limits   |
+| `GET`    | `/admin/recovery`                   | Pending sandbox cleanups in detail (admin)          |
+| `POST`   | `/admin/recovery/retry`             | Sweep the pending cleanups now (admin)              |
+| `GET`    | `/tasks`                            | List the current administrator's tasks              |
+| `POST`   | `/tasks`                            | Create a task and its first asynchronous run        |
+| `GET`    | `/tasks/:id`                        | Load task state and recent messages                 |
+| `GET`    | `/tasks/:id/messages`               | Page older messages                                 |
+| `PATCH`  | `/tasks/:id`                        | Rename or change the explicit model route           |
+| `DELETE` | `/tasks/:id`                        | Remove the task and durable workspace               |
+| `POST`   | `/tasks/:id/runs`                   | Start a follow-up run                               |
+| `POST`   | `/tasks/:id/messages`               | Message the agent during an active run              |
+| `GET`    | `/tasks/:taskId/runs/:runId/events` | Stream authenticated live run events using SSE      |
+| `POST`   | `/tasks/:id/cancel`                 | Cancel the active run                               |
 | `GET`    | `/tasks/:id/approvals`              | Pending approvals plus the task's Auto Review state |
-| `PUT`    | `/tasks/:id/approvals`              | Toggle the per-task approvals opt-in              |
+| `PUT`    | `/tasks/:id/approvals`              | Toggle the per-task approvals opt-in                |
 | `POST`   | `/tasks/:id/approvals/:approvalId`  | Decide a pending approval (allow once/always, deny) |
-| `DELETE` | `/tasks/:id/approval-rules/:ruleId` | Remove an Always-allow rule                       |
-| `GET`    | `/computer/setup`                   | Work Computer setup status (admin)                |
-| `POST`   | `/computer/setup`                   | Build the GUI image and create the policy (admin) |
-| `POST`   | `/tasks/:id/computer/start`         | Start the task's Work Computer session            |
-| `GET`    | `/tasks/:id/computer/control`       | Who is driving the screen; agent takeover request |
-| `POST`   | `/tasks/:id/computer/control`       | Take over (or renew control of) the screen        |
-| `DELETE` | `/tasks/:id/computer/control`       | Hand the screen back to the agent                 |
-| `POST`   | `/tasks/:id/computer/teach`         | Save a recorded demonstration as a taught skill   |
-| `POST`   | `/tasks/:id/computer/anchor`        | Resolve the element under a recorded click        |
-| `POST`   | `/computer/skills/:slug/trace`      | Append a worked/failed line to a taught skill     |
-| `GET`    | `/tasks/:id/files`                  | List a workspace directory                        |
-| `GET`    | `/tasks/:id/file`                   | Read a workspace text file                        |
-| `PUT`    | `/tasks/:id/file`                   | Save a workspace text file                        |
-| `GET`    | `/tasks/:id/git`                    | Read guarded local Git status and history         |
-| `GET`    | `/tasks/:id/git/diff`               | Read a bounded local diff                         |
-| `POST`   | `/tasks/:id/git/init`               | Initialize local Git                              |
-| `POST`   | `/tasks/:id/git/stage`              | Stage explicit workspace paths                    |
-| `POST`   | `/tasks/:id/git/commit`             | Commit staged changes                             |
-| `POST`   | `/tasks/:id/git/branches`           | Create a local branch                             |
-| `POST`   | `/tasks/:id/git/switch`             | Switch to an existing clean local branch          |
-| `POST`   | `/tasks/:id/preview/start`          | Start the managed preview                         |
-| `POST`   | `/tasks/:id/preview/stop`           | Stop the managed preview                          |
+| `DELETE` | `/tasks/:id/approval-rules/:ruleId` | Remove an Always-allow rule                         |
+| `GET`    | `/computer/setup`                   | Work Computer setup status (admin)                  |
+| `POST`   | `/computer/setup`                   | Build the GUI image and create the policy (admin)   |
+| `POST`   | `/tasks/:id/computer/start`         | Start the task's Work Computer session              |
+| `GET`    | `/tasks/:id/computer/control`       | Who is driving the screen; agent takeover request   |
+| `POST`   | `/tasks/:id/computer/control`       | Take over (or renew control of) the screen          |
+| `DELETE` | `/tasks/:id/computer/control`       | Hand the screen back to the agent                   |
+| `POST`   | `/tasks/:id/computer/teach`         | Save a recorded demonstration as a taught skill     |
+| `POST`   | `/tasks/:id/computer/anchor`        | Resolve the element under a recorded click          |
+| `POST`   | `/computer/skills/:slug/trace`      | Append a worked/failed line to a taught skill       |
+| `GET`    | `/tasks/:id/files`                  | List a workspace directory                          |
+| `GET`    | `/tasks/:id/file`                   | Read a workspace text file                          |
+| `PUT`    | `/tasks/:id/file`                   | Save a workspace text file                          |
+| `GET`    | `/tasks/:id/git`                    | Read guarded local Git status and history           |
+| `GET`    | `/tasks/:id/git/diff`               | Read a bounded local diff                           |
+| `POST`   | `/tasks/:id/git/init`               | Initialize local Git                                |
+| `POST`   | `/tasks/:id/git/stage`              | Stage explicit workspace paths                      |
+| `POST`   | `/tasks/:id/git/commit`             | Commit staged changes                               |
+| `POST`   | `/tasks/:id/git/branches`           | Create a local branch                               |
+| `POST`   | `/tasks/:id/git/switch`             | Switch to an existing clean local branch            |
+| `POST`   | `/tasks/:id/preview/start`          | Start the managed preview                           |
+| `POST`   | `/tasks/:id/preview/stop`           | Stop the managed preview                            |
 
 The task ID is always checked against the authenticated owner. Current account
 status, role, and Work-access policy are read from the database on each request,
@@ -1580,9 +1607,22 @@ characters or 400 lines. Formatting has a separate 100,000-character and
 ### Work says it is recovering sandboxes
 
 Startup or teardown could not prove that one or more known sandboxes stopped.
-Work remains fail-closed and retries every 10 seconds. Restore Docker daemon
-or Kubernetes API access and inspect the backend log. Do not delete task
-database rows while their labeled runtime resources still need reconciliation.
+Work remains fail-closed and retries automatically, starting after 10 seconds
+and backing off to once a minute.
+
+Open **System → Work → Recovery** to see exactly what is pending: the
+container name, the owning task and user when the task row still exists, the
+reason (`Running at startup`, `Stop failed`, `Runtime unreachable`, or
+`No task record`), the attempt count, the runtime's last error, and the next
+scheduled attempt. The Work page itself states the same thing instead of a
+bare "runtime unavailable".
+
+Restore Docker daemon or Kubernetes API access, then press **Retry now** to
+sweep immediately rather than waiting out the backoff; the same button appears
+on the Work page for administrators. If items persist, inspect the backend log
+for the driver error behind the last-error column. Do not delete task database
+rows while their labeled runtime resources still need reconciliation — that
+turns a recoverable task into an orphan container.
 
 ### Task deletion fails
 

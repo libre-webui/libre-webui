@@ -2284,6 +2284,18 @@
           "file": "backend/src/routes/work.ts",
           "mount": "/api/work",
           "method": "GET",
+          "path": "/admin/recovery"
+        },
+        {
+          "file": "backend/src/routes/work.ts",
+          "mount": "/api/work",
+          "method": "POST",
+          "path": "/admin/recovery/retry"
+        },
+        {
+          "file": "backend/src/routes/work.ts",
+          "mount": "/api/work",
+          "method": "GET",
           "path": "/tasks"
         },
         {

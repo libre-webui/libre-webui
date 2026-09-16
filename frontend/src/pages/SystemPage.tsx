@@ -16,7 +16,7 @@
  */
 
 import React from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import {
   Box,
@@ -34,10 +34,12 @@ import {
 } from 'lucide-react';
 
 import { Button, PageHeader, PageShell } from '@/components/ui';
-import { cn } from '@/utils';
+import { cn, formatRelativeTime } from '@/utils';
 import { systemApi, type SystemDiagnostics } from '@/utils/api';
 import { workApi } from '@/utils/api/workApi';
+import type { WorkRecoveryItem } from '@/types/work';
 import { RecoveryDrillsPanel } from '@/components/RecoveryDrillsPanel';
+import { toast } from 'react-hot-toast';
 
 const bytesFormatter = new Intl.NumberFormat(undefined, {
   maximumFractionDigits: 1,
@@ -170,6 +172,187 @@ const Meter: React.FC<{ value: number; tone?: 'primary' | 'warning' }> = ({
   </div>
 );
 
+/**
+ * The pending sandbox cleanups that keep Work fail-closed, named instead of
+ * counted: an administrator can see which container is stuck, what the
+ * runtime said, and force the next attempt without waiting out the backoff.
+ */
+const WorkRecoverySection: React.FC = () => {
+  const { t, i18n } = useTranslation();
+  const queryClient = useQueryClient();
+  const [retrying, setRetrying] = React.useState(false);
+  const { data: items, error } = useQuery({
+    queryKey: ['work-admin-recovery'],
+    queryFn: async () => {
+      const response = await workApi.adminRecovery();
+      if (!response.success || !response.data) {
+        throw new Error(
+          response.error || t('systemPage.work.recovery.loadFailed')
+        );
+      }
+      return response.data;
+    },
+    refetchInterval: 15_000,
+    refetchIntervalInBackground: false,
+  });
+
+  const reasonLabel = (reason: WorkRecoveryItem['reason']): string => {
+    switch (reason) {
+      case 'stop-failed':
+        return t('systemPage.work.recovery.reasonStopFailed');
+      case 'runtime-unreachable':
+        return t('systemPage.work.recovery.reasonRuntimeUnreachable');
+      case 'orphan':
+        return t('systemPage.work.recovery.reasonOrphan');
+      default:
+        return t('systemPage.work.recovery.reasonStartup');
+    }
+  };
+
+  const handleRetry = async () => {
+    setRetrying(true);
+    try {
+      const response = await workApi.retryAdminRecovery();
+      if (!response.success || !response.data) {
+        toast.error(
+          response.error || t('systemPage.work.recovery.retryFailed')
+        );
+        return;
+      }
+      const { attempted, cleared } = response.data;
+      if (cleared > 0) {
+        toast.success(
+          t('systemPage.work.recovery.retrySucceeded', { attempted, cleared })
+        );
+      } else {
+        toast.error(t('systemPage.work.recovery.retryPending', { attempted }));
+      }
+    } catch (retryError) {
+      toast.error(
+        retryError instanceof Error && retryError.message
+          ? retryError.message
+          : t('systemPage.work.recovery.retryFailed')
+      );
+    } finally {
+      setRetrying(false);
+      await queryClient.invalidateQueries({
+        queryKey: ['work-admin-recovery'],
+      });
+      await queryClient.invalidateQueries({
+        queryKey: ['work-admin-overview'],
+      });
+    }
+  };
+
+  return (
+    <div
+      data-testid='work-recovery-panel'
+      className='mx-4 mt-4 rounded-xl border border-amber-500/30 bg-amber-500/5 sm:mx-5'
+    >
+      <div className='flex flex-wrap items-start justify-between gap-3 px-4 py-3'>
+        <div className='flex items-start gap-3'>
+          <TriangleAlert className='mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400' />
+          <div>
+            <div className='text-sm font-medium text-gray-900 dark:text-dark-900'>
+              {t('systemPage.work.recovery.title')}
+            </div>
+            <p className='mt-0.5 text-xs text-gray-600 dark:text-dark-600'>
+              {t('systemPage.work.recovery.description')}
+            </p>
+          </div>
+        </div>
+        <Button
+          variant='outline'
+          size='sm'
+          data-testid='work-recovery-retry'
+          onClick={() => void handleRetry()}
+          disabled={retrying}
+        >
+          {retrying
+            ? t('systemPage.work.recovery.retrying')
+            : t('systemPage.work.recovery.retry')}
+        </Button>
+      </div>
+
+      {error && !items ? (
+        <p className='px-4 pb-3 text-xs text-red-700 dark:text-red-300'>
+          {error instanceof Error && error.message
+            ? error.message
+            : t('systemPage.work.recovery.loadFailed')}
+        </p>
+      ) : (
+        <div className='overflow-x-auto'>
+          <table className='w-full min-w-[720px] text-sm'>
+            <thead className='text-[11px] uppercase tracking-[0.1em] text-gray-400 dark:text-dark-500'>
+              <tr>
+                <th className='px-4 py-2 text-start font-medium'>
+                  {t('systemPage.work.recovery.container')}
+                </th>
+                <th className='px-4 py-2 text-start font-medium'>
+                  {t('systemPage.work.recovery.task')}
+                </th>
+                <th className='px-4 py-2 text-start font-medium'>
+                  {t('systemPage.work.recovery.reason')}
+                </th>
+                <th className='px-4 py-2 text-start font-medium'>
+                  {t('systemPage.work.recovery.attempts')}
+                </th>
+                <th className='px-4 py-2 text-start font-medium'>
+                  {t('systemPage.work.recovery.lastError')}
+                </th>
+                <th className='px-4 py-2 text-end font-medium'>
+                  {t('systemPage.work.recovery.nextAttempt')}
+                </th>
+              </tr>
+            </thead>
+            <tbody className='divide-y divide-amber-500/20'>
+              {(items ?? []).map(item => (
+                <tr key={`${item.kind}:${item.containerName}`}>
+                  <td className='px-4 py-2.5 font-mono text-[11px] text-gray-800 dark:text-dark-800'>
+                    {item.containerName}
+                  </td>
+                  <td className='px-4 py-2.5 text-xs text-gray-700 dark:text-dark-700'>
+                    {item.title ? (
+                      <>
+                        <div className='font-medium text-gray-900 dark:text-dark-900'>
+                          {item.title}
+                        </div>
+                        {item.ownerUsername && (
+                          <div className='mt-0.5 text-[11px] text-gray-500 dark:text-dark-500'>
+                            {item.ownerUsername}
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                      t('systemPage.work.recovery.reasonOrphan')
+                    )}
+                  </td>
+                  <td className='px-4 py-2.5 text-xs text-gray-700 dark:text-dark-700'>
+                    {reasonLabel(item.reason)}
+                  </td>
+                  <td className='px-4 py-2.5 text-xs text-gray-700 dark:text-dark-700'>
+                    {item.attempts}
+                  </td>
+                  <td className='max-w-xs px-4 py-2.5 text-xs text-gray-600 dark:text-dark-600'>
+                    <span className='line-clamp-2'>
+                      {item.lastError || '—'}
+                    </span>
+                  </td>
+                  <td className='px-4 py-2.5 text-end text-xs text-gray-600 dark:text-dark-600'>
+                    {item.nextAttemptAt
+                      ? formatRelativeTime(item.nextAttemptAt, i18n.language)
+                      : t('systemPage.work.recovery.notScheduled')}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+};
+
 const WorkPanel: React.FC = () => {
   const { t } = useTranslation();
   const {
@@ -289,6 +472,8 @@ const WorkPanel: React.FC = () => {
           </div>
         ))}
       </div>
+
+      {overview.recoveryPending > 0 && <WorkRecoverySection />}
 
       {!overview.runtimeAvailable && overview.runtimeReason && (
         <div className='mx-4 mt-4 flex items-start gap-3 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-600 dark:border-white/[0.07] dark:bg-dark-200/60 dark:text-dark-600 sm:mx-5'>

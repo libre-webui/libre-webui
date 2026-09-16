@@ -317,11 +317,54 @@ type MockChatStream = {
   duplicateCompletion?: boolean;
 };
 
+type MockWorkRecoveryItem = {
+  kind: 'task' | 'orphan';
+  taskId?: string;
+  containerName: string;
+  reason: 'startup' | 'stop-failed' | 'runtime-unreachable' | 'orphan';
+  attempts: number;
+  firstSeenAt: number;
+  lastAttemptAt: number | null;
+  lastError: string | null;
+  nextAttemptAt: number | null;
+  title?: string | null;
+  ownerUsername?: string | null;
+};
+
+/** Work fail-closed on pending sandbox cleanups, as both surfaces see it. */
+type MockWorkRecovery = {
+  pending: number;
+  since?: number | null;
+  nextAttemptAt?: number | null;
+  items?: MockWorkRecoveryItem[];
+  retryResult?: { attempted: number; cleared: number };
+};
+
+type MockWorkAdminOverview = {
+  generatedAt?: number;
+  accessMode?: 'admins' | 'all-users';
+  runtimeAvailable?: boolean;
+  runtimeReason?: string;
+  recoveryPending?: number;
+  admission?: { activeGlobal: number; maxGlobal: number; maxPerUser: number };
+  tasks?: Array<Record<string, unknown>>;
+  orphanContainers?: Array<{
+    name: string;
+    taskId: string;
+    running: boolean;
+  }>;
+};
+
 type MockWorkCapabilities = {
   available: boolean;
   runtime: 'docker' | 'kubernetes';
   image: string;
   reason?: string;
+  recovery?: {
+    pending: number;
+    since: number | null;
+    nextAttemptAt: number | null;
+  };
   runtimeAvailable?: boolean;
   ollamaAvailable?: boolean;
   pluginAvailable?: boolean;
@@ -497,6 +540,10 @@ type MockOptions = {
   };
   chatStream?: MockChatStream;
   workCapabilities?: MockWorkCapabilities;
+  /** Work access mode; defaults to the admin-only shipping default. */
+  workAccess?: { mode: 'admins' | 'all-users'; allowed: boolean };
+  workAdminOverview?: MockWorkAdminOverview;
+  workRecovery?: MockWorkRecovery;
   workTasks?: MockWorkTask[];
   workTaskListDelaysMs?: number[];
   workTaskListFailures?: Array<string | undefined>;
@@ -707,7 +754,25 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
   const imageGenPlugins = options.imageGenPlugins ?? [];
   const mediaModels = options.mediaModels ?? { video: [], audio: [] };
   let mediaVideoJobs = structuredClone(options.mediaVideoJobs ?? []);
-  const workCapabilities = options.workCapabilities ?? defaultWorkCapabilities;
+  const workRecovery = options.workRecovery;
+  // Recovery is server state: the capabilities payload and the admin routes
+  // must agree, so one option drives both instead of two hand-synced mocks.
+  const workCapabilities: MockWorkCapabilities = {
+    ...(options.workCapabilities ?? defaultWorkCapabilities),
+    ...(workRecovery
+      ? {
+          available: false,
+          reason: `Work is safely retrying ${workRecovery.pending} sandbox cleanup(s). New operations remain blocked until the configured runtime proves they are stopped.`,
+          recovery: {
+            pending: workRecovery.pending,
+            since: workRecovery.since ?? null,
+            nextAttemptAt: workRecovery.nextAttemptAt ?? null,
+          },
+        }
+      : {}),
+  };
+  let workRecoveryItems = structuredClone(workRecovery?.items ?? []);
+  const workRecoveryRetryRequests: number[] = [];
   const workTaskTransition = options.workTaskTransition;
   const workTasks = structuredClone(options.workTasks ?? []);
   const workFiles = structuredClone(options.workFiles ?? {});
@@ -1670,8 +1735,47 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
         return;
       }
 
+      if (path === '/work/access' && method === 'GET') {
+        await fulfillJson(
+          route,
+          options.workAccess ?? { mode: 'admins', allowed: false }
+        );
+        return;
+      }
+
       if (path === '/work/capabilities' && method === 'GET') {
         await fulfillJson(route, workCapabilities);
+        return;
+      }
+
+      if (path === '/work/admin/overview' && method === 'GET') {
+        const overview = options.workAdminOverview;
+        await fulfillJson(route, {
+          generatedAt: Date.now(),
+          accessMode: 'admins',
+          runtimeAvailable: workCapabilities.runtimeAvailable ?? true,
+          recoveryPending: workRecovery?.pending ?? 0,
+          admission: { activeGlobal: 0, maxGlobal: 3, maxPerUser: 2 },
+          tasks: [],
+          orphanContainers: [],
+          ...overview,
+        });
+        return;
+      }
+
+      if (path === '/work/admin/recovery' && method === 'GET') {
+        await fulfillJson(route, workRecoveryItems);
+        return;
+      }
+
+      if (path === '/work/admin/recovery/retry' && method === 'POST') {
+        workRecoveryRetryRequests.push(Date.now());
+        const result = workRecovery?.retryResult ?? {
+          attempted: workRecoveryItems.length,
+          cleared: workRecoveryItems.length,
+        };
+        if (result.cleared >= workRecoveryItems.length) workRecoveryItems = [];
+        await fulfillJson(route, result);
         return;
       }
 
@@ -2899,5 +3003,6 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
     },
     workPreviewRequests,
     workGitRequests,
+    workRecoveryRetryRequests,
   };
 }
