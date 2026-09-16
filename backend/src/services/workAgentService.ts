@@ -76,6 +76,7 @@ import {
 } from '../types/work.js';
 import { createLogger } from '../utils/logger.js';
 import { getDurableJobRuntime } from '../platform/jobs/durableJobRuntime.js';
+import { WORK_RUN_CHANGED_FILES_MAX } from '../platform/workPersistence/types.js';
 import {
   boundedOpenAIResponsesOutputItems,
   OPENAI_RESPONSES_OUTPUT_ITEMS_METADATA_KEY,
@@ -590,6 +591,7 @@ export class WorkAgentService {
       await workTaskService.updateRun(run.id, 'cancelled', {
         error: 'Cancelled by user.',
         finished: true,
+        exitState: workRunExitState('cancelled', 'user'),
       });
       await workTaskService.updateTaskStatus(taskId, 'cancelled');
       await workTaskService.updatePreview(taskId, 'stopped');
@@ -764,6 +766,7 @@ export class WorkAgentService {
             await workTaskService.updateRun(run.id, 'cancelled', {
               error: 'Administrator access was revoked.',
               finished: true,
+              exitState: workRunExitState('cancelled', 'access-revoked'),
             });
             await workTaskService.updateTaskStatus(task.id, 'cancelled');
             await workEventService.publish(
@@ -863,6 +866,15 @@ export class WorkAgentService {
     let runDelegation: WorkDelegationSource | undefined;
     let releaseExecutionLease: (() => void) | undefined;
     let executionContainerSettled = false;
+    // Files this run created, moved, or deleted, in first-touch order. They
+    // are persisted with the run so the workspace chips survive a reload.
+    const changedFiles: string[] = [];
+    const recordChangedFiles = (call: WorkToolCall): void => {
+      for (const path of changedPathsForToolCall(call)) {
+        if (changedFiles.length >= WORK_RUN_CHANGED_FILES_MAX) return;
+        if (!changedFiles.includes(path)) changedFiles.push(path);
+      }
+    };
     const settleExecutionContainer = async (): Promise<void> => {
       if (!task || executionContainerSettled) return;
       await this.cleanupExecutionContainer(task);
@@ -1363,6 +1375,9 @@ export class WorkAgentService {
           );
           await workTaskService.updateRun(runId, 'completed', {
             finished: true,
+            summary: finalContent,
+            changedFiles,
+            exitState: workRunExitState('completed'),
           });
           await workTaskService.updateTaskStatus(
             taskId,
@@ -1558,6 +1573,7 @@ export class WorkAgentService {
           }
           toolMetadata.durationMs = Date.now() - toolStartedAt;
           loopStats.toolCalls += 1;
+          if (toolMetadata.error !== true) recordChangedFiles(call);
           if (toolMetadata.screenshot === true) loopStats.screenshots += 1;
           if (toolMetadata.fence) loopStats.fences += 1;
           const expectOutcome = (
@@ -1830,7 +1846,12 @@ export class WorkAgentService {
         handoffContent,
         controller.signal
       );
-      await workTaskService.updateRun(runId, 'needs_input', { finished: true });
+      await workTaskService.updateRun(runId, 'needs_input', {
+        finished: true,
+        summary: handoffContent,
+        changedFiles,
+        exitState: workRunExitState('needs_input', budgetReason),
+      });
       await workTaskService.updateTaskStatus(
         taskId,
         'needs_input',
@@ -1874,6 +1895,9 @@ export class WorkAgentService {
               await workTaskService.updateRun(runId, 'cancelled', {
                 error: 'Cancelled by user.',
                 finished: true,
+                summary: null,
+                changedFiles,
+                exitState: workRunExitState('cancelled', 'user'),
               });
               await workTaskService.updateTaskStatus(taskId, 'cancelled');
               await workTaskService.updatePreview(taskId, 'stopped');
@@ -1913,6 +1937,9 @@ export class WorkAgentService {
           await workTaskService.updateRun(runId, 'cancelled', {
             error: 'Cancelled by user.',
             finished: true,
+            summary: null,
+            changedFiles,
+            exitState: workRunExitState('cancelled', 'user'),
           });
           await workTaskService.updateTaskStatus(taskId, 'cancelled');
           await workTaskService.updatePreview(taskId, 'stopped');
@@ -1949,6 +1976,12 @@ export class WorkAgentService {
       await workTaskService.updateRun(runId, 'failed', {
         error: message,
         finished: true,
+        summary: message,
+        changedFiles,
+        exitState: workRunExitState(
+          'failed',
+          error instanceof WorkAgentHttpError ? error.code : 'error'
+        ),
       });
       await workTaskService.updateTaskStatus(
         taskId,
@@ -3576,6 +3609,44 @@ function summarizeApprovalBody(
         ? `Call ${toolName} on ${summary.server}`
         : toolName;
   }
+}
+
+/**
+ * Workspace paths a tool call changes on disk. Reads never count: a run that
+ * opened twenty files and wrote one should report exactly that one artifact.
+ */
+function changedPathsForToolCall(call: WorkToolCall): string[] {
+  const args = call.function.arguments;
+  const path = (candidate: unknown): string[] =>
+    typeof candidate === 'string' && candidate.trim()
+      ? [candidate.trim().slice(0, 1_024)]
+      : [];
+  switch (call.function.name) {
+    case 'write_file':
+    case 'delete_file':
+      return path(args.path);
+    case 'move_file':
+      return path(args.to);
+    default:
+      return [];
+  }
+}
+
+/**
+ * A run's persisted exit reason: the terminal state, plus a slugged detail
+ * when one is known (`failed:work-tool-timeout`). Bounded by the column
+ * helper, readable by a human reading the row.
+ */
+function workRunExitState(
+  state: 'completed' | 'needs_input' | 'failed' | 'cancelled',
+  detail?: string | null
+): string {
+  const slug = (detail ?? '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 60);
+  return slug ? `${state}:${slug}` : state;
 }
 
 function summarizeToolCall(call: WorkToolCall): Record<string, unknown> {

@@ -84,6 +84,12 @@ export interface WorkRun {
   providerId?: string;
   status: WorkRunStatus;
   error?: string;
+  /** What the run ended on: the final assistant text, or the error. */
+  summary?: string;
+  /** Workspace paths the run created, moved, or deleted, first-touch order. */
+  changedFiles?: string[];
+  /** Short machine reason for the terminal transition. */
+  exitState?: string;
   createdAt: number;
   startedAt?: number;
   finishedAt?: number;

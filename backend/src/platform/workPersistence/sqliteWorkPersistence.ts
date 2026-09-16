@@ -9,6 +9,7 @@ import { createSQLiteSyncExecutor } from '../../persistence/sqliteSyncExecutor.j
 import type { WorkPreviewStatus, WorkTaskStatus } from '../../types/work.js';
 import {
   WorkPersistenceError,
+  workRunResultColumns,
   type CreateWorkRunBundle,
   type CreateWorkTaskBundle,
   type WorkAdmissionLimits,
@@ -439,6 +440,15 @@ export class SQLiteWorkPersistence implements WorkPersistenceRepository {
     return this.findActiveRunSync(taskId);
   }
 
+  async listRuns(taskId: string, limit: number): Promise<WorkRunRow[]> {
+    return this.database
+      .prepare(
+        `SELECT * FROM work_runs WHERE task_id = ?
+          ORDER BY created_at DESC, id DESC LIMIT ?`
+      )
+      .all(taskId, limit) as WorkRunRow[];
+  }
+
   async updateRun(input: {
     runId: string;
     status: WorkRunRow['status'];
@@ -446,10 +456,17 @@ export class SQLiteWorkPersistence implements WorkPersistenceRepository {
     started: boolean;
     finished: boolean;
     now: number;
+    summary?: string | null;
+    changedFiles?: string[] | null;
+    exitState?: string | null;
   }): Promise<void> {
+    const results = workRunResultColumns(input);
     this.database
       .prepare(
         `UPDATE work_runs SET status = ?, error = ?,
+          summary = CASE WHEN ? = 1 THEN ? ELSE summary END,
+          changed_files = CASE WHEN ? = 1 THEN ? ELSE changed_files END,
+          exit_state = CASE WHEN ? = 1 THEN ? ELSE exit_state END,
           started_at = CASE WHEN ? = 1 THEN COALESCE(started_at, ?) ELSE started_at END,
           finished_at = CASE WHEN ? = 1 THEN ? ELSE finished_at END
           WHERE id = ?`
@@ -457,6 +474,12 @@ export class SQLiteWorkPersistence implements WorkPersistenceRepository {
       .run(
         input.status,
         input.error,
+        results.writeSummary ? 1 : 0,
+        results.summary,
+        results.writeChangedFiles ? 1 : 0,
+        results.changedFiles,
+        results.writeExitState ? 1 : 0,
+        results.exitState,
         input.started ? 1 : 0,
         input.now,
         input.finished ? 1 : 0,

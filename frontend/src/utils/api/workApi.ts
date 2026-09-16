@@ -34,6 +34,7 @@ import type {
   WorkApprovalsState,
   WorkPolicy,
   WorkPolicyInput,
+  WorkRun,
   WorkTask,
   WorkTaskSummary,
 } from '@/types/work';
@@ -95,6 +96,19 @@ export const workApi = {
 
   capabilities: (): Promise<ApiResponse<WorkCapabilities>> =>
     api.get('/work/capabilities').then(response => response.data),
+
+  /** Past runs for a task, newest first. */
+  listRuns: (taskId: string, limit?: number): Promise<ApiResponse<WorkRun[]>> =>
+    api
+      .get(
+        `${taskPath(taskId)}/runs${limit ? `?limit=${encodeURIComponent(limit)}` : ''}`
+      )
+      .then(res => res.data),
+
+  getRun: (taskId: string, runId: string): Promise<ApiResponse<WorkRun>> =>
+    api
+      .get(`${taskPath(taskId)}/runs/${encodeURIComponent(runId)}`)
+      .then(res => res.data),
 
   markTaskSeen: (taskId: string): Promise<ApiResponse<{ seen: true }>> =>
     api

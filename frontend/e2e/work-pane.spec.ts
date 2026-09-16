@@ -3625,3 +3625,123 @@ test('a finished task is reopened on purpose before its preview or screen starts
     .poll(() => mock.workComputerRequests)
     .toEqual([{ taskId: 'finished-screen', reopen: true }]);
 });
+
+const historyRuns = (taskId: string) => [
+  {
+    id: `${taskId}-run-2`,
+    taskId,
+    model: 'llama3.2:3b',
+    providerType: 'ollama' as const,
+    status: 'completed' as const,
+    summary: 'Rebuilt the ledger page.\nRemoved the stale draft.',
+    changedFiles: ['src/ledger.html'],
+    exitState: 'completed',
+    createdAt: createdAt + 10,
+    startedAt: createdAt + 10,
+    finishedAt: createdAt + 20,
+  },
+  {
+    id: `${taskId}-run-1`,
+    taskId,
+    model: 'llama3.2:3b',
+    providerType: 'ollama' as const,
+    status: 'failed' as const,
+    error: 'The provider went away.',
+    summary: 'The provider went away.',
+    exitState: 'failed:work-provider-error',
+    createdAt,
+    startedAt: createdAt,
+    finishedAt: createdAt + 5,
+  },
+];
+
+const historyWorkspace = (taskId: string) => ({
+  workFiles: {
+    [taskId]: [
+      {
+        path: 'src/ledger.html',
+        name: 'ledger.html',
+        type: 'file' as const,
+        size: 20,
+        modifiedAt: createdAt,
+      },
+    ],
+  },
+  workFileContents: { [`${taskId}:src/ledger.html`]: '<main>ledger</main>' },
+});
+
+test('run history keeps past results and reopens the files a run changed', async ({
+  page,
+}) => {
+  const historyTask = task('history-task', 'Ledger page', 'Ledger rebuilt.');
+  await mockLibreWebUiApi(page, {
+    workTasks: [historyTask],
+    workRuns: { 'history-task': historyRuns('history-task') },
+    ...historyWorkspace('history-task'),
+  });
+
+  await page.goto('/work/history-task');
+
+  // The conversation carries no tool activity at all, yet the latest run's
+  // artifacts are still one click away: the chips come from the persisted
+  // run, so they survive a reload.
+  const chips = page.getByTestId('work-file-chip');
+  await expect(chips).toHaveCount(1);
+  await expect(chips.first()).toHaveAttribute('data-path', 'src/ledger.html');
+  await expect(chips.first()).toContainText('ledger.html');
+
+  await page.getByTestId('work-activity-tab').click();
+  const history = page.getByTestId('work-run-history');
+  await expect(history).toBeVisible();
+  const items = history.getByTestId('work-run-item');
+  await expect(items).toHaveCount(2);
+
+  // Newest first, each with its exit state and the first line of what it
+  // produced.
+  await expect(items.first()).toHaveAttribute('data-exit-state', 'completed');
+  await expect(items.first()).toContainText('Completed');
+  await expect(items.first()).toContainText('Rebuilt the ledger page.');
+  await expect(items.nth(1)).toHaveAttribute(
+    'data-exit-state',
+    'failed:work-provider-error'
+  );
+  await expect(items.nth(1)).toContainText('Failed');
+  await expect(items.nth(1)).toContainText('The provider went away.');
+
+  // A run's file chip opens the file, exactly like a conversation chip.
+  await history.getByTestId('work-run-file-chip').first().click();
+  await expect(page.getByTestId('work-files-tab')).toHaveAttribute(
+    'aria-selected',
+    'true'
+  );
+  await expect(page.getByTestId('work-file-editor')).toHaveValue(
+    '<main>ledger</main>'
+  );
+});
+
+test('an agent keeps its run history on the Agent tab', async ({ page }) => {
+  const agentTask = {
+    ...task('history-agent', 'Ledger agent', 'Ledger rebuilt.'),
+    isAgent: true,
+    statusBlurb: 'Ledger rebuilt.',
+  };
+  await mockLibreWebUiApi(page, {
+    workTasks: [agentTask],
+    workRuns: { 'history-agent': historyRuns('history-agent') },
+    ...historyWorkspace('history-agent'),
+  });
+
+  await page.goto('/work/history-agent');
+
+  const panel = page.getByTestId('work-agent-panel');
+  await expect(panel).toBeVisible();
+  const items = panel
+    .getByTestId('work-run-history')
+    .getByTestId('work-run-item');
+  await expect(items).toHaveCount(2);
+  await expect(items.first()).toContainText('Rebuilt the ledger page.');
+
+  // The Activity tab does not repeat it for an agent.
+  await page.getByTestId('work-activity-tab').click();
+  await expect(page.getByTestId('work-run-history')).toHaveCount(0);
+});

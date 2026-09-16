@@ -363,6 +363,39 @@ agent works joins the conversation immediately and reaches the model at
 its next round, so you can steer, correct, or add context without stopping
 the run — the stop button remains available beside send.
 
+### Run history
+
+Every run keeps what it produced after it finishes, so the work survives a
+page reload, a restart, and a new browser:
+
+- a **summary** — the final assistant text, the handoff question when the run
+  ended in **Needs input**, or the error when it failed (bounded to 4,000
+  characters; a cancelled run keeps no summary);
+- the **files it changed** — the paths it wrote, moved into, or deleted, in
+  first-touch order, de-duplicated and bounded to 200 entries; and
+- an **exit state** — `completed`, `needs_input`, `failed`, or `cancelled`,
+  with a short machine reason appended when one is known
+  (`needs_input:round`, `failed:work-provider-error`, `cancelled:user`).
+
+Reads are never recorded: a run that opened twenty files and wrote one lists
+exactly that one artifact.
+
+The **Runs** list shows this history newest first, on the Agent tab for a
+hired agent and at the top of the Activity tab for an ad-hoc task. Each row
+carries the exit state, when the run finished, the first line of its summary,
+and a chip per changed file that opens the file in the Files tab. The same
+chips appear under a finished conversation, so the artifacts of the most
+recent run stay one click away after a reload.
+
+Administrators see the same result on the System page: the Work table's
+**Last run** column shows each task's most recent finished run.
+
+The history is available over the API as `GET /api/work/tasks/:id/runs`
+(newest first, `?limit=` defaults to 20 and caps at 100) and
+`GET /api/work/tasks/:id/runs/:runId`. Both are owner-scoped and readable
+while Work is blocked on startup recovery, exactly like the task and message
+reads.
+
 ### Resize the workspace
 
 At the `xl` desktop breakpoint, Conversation and Workspace share a draggable

@@ -58,7 +58,11 @@ a queued run never started within 30 minutes.
 Work-target runs behave the same way with the Work lifecycle in place of the
 chat job: the run records the task it created (the Runs tab links straight
 to it), succeeds when the agent completes — or stops to ask for input — and
-fails when the task fails or is cancelled. Work access is enforced when the
+fails when the task fails or is cancelled. An outcome email for a Work-target
+run carries the summary the Work run itself persisted — what the agent ended
+on, the same text the task's [run history](./33-WORKSPACES.md) shows — and
+falls back to the task's one-line status when a run predates persisted
+summaries. Work access is enforced when the
 schedule fires, so revoking a user's Work access also silences their
 Work-target automations; the run then fails as `work-access-denied` rather
 than silently skipping. A selected policy is validated when the automation

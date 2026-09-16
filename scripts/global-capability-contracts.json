@@ -2358,6 +2358,18 @@
           "file": "backend/src/routes/work.ts",
           "mount": "/api/work",
           "method": "GET",
+          "path": "/tasks/:id/runs"
+        },
+        {
+          "file": "backend/src/routes/work.ts",
+          "mount": "/api/work",
+          "method": "GET",
+          "path": "/tasks/:id/runs/:runId"
+        },
+        {
+          "file": "backend/src/routes/work.ts",
+          "mount": "/api/work",
+          "method": "GET",
           "path": "/tasks/:taskId/runs/:runId/events"
         },
         {

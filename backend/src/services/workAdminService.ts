@@ -27,7 +27,7 @@ import { getWorkAccessMode, type WorkAccessMode } from './workAccessService.js';
 import workRuntimeService from './workRuntimeService.js';
 import workTaskService from './workTaskService.js';
 import workTerminalService from './workTerminalService.js';
-import type { WorkTaskRecord, WorkTaskUsage } from '../types/work.js';
+import type { WorkRun, WorkTaskRecord, WorkTaskUsage } from '../types/work.js';
 import workUsageService from './workUsageService.js';
 
 export interface WorkAdminTask {
@@ -45,6 +45,13 @@ export interface WorkAdminTask {
   terminalSessions: number;
   /** Live holds recorded by the usage registry: who is on this task now. */
   usage: WorkTaskUsage[];
+  /** What the task's most recent finished run ended on, when it has one. */
+  lastRun?: {
+    exitState?: string;
+    finishedAt?: number;
+    /** First 160 characters of the run summary; the table shows one line. */
+    summary?: string;
+  };
   updatedAt: number;
 }
 
@@ -82,6 +89,8 @@ interface WorkAdminDeps {
   recoveryPending: () => number;
   accessMode: () => Promise<WorkAccessMode> | WorkAccessMode;
   usage: (taskIds: readonly string[]) => Promise<Map<string, WorkTaskUsage[]>>;
+  /** The task's newest finished run, or undefined when it never finished one. */
+  lastRun: (taskId: string) => Promise<WorkRun | undefined>;
 }
 
 const defaultDeps: WorkAdminDeps = {
@@ -98,7 +107,32 @@ const defaultDeps: WorkAdminDeps = {
   recoveryPending: () => workRuntimeService.recoveryPendingCount,
   accessMode: () => getWorkAccessMode(),
   usage: taskIds => workUsageService.listMany(taskIds),
+  lastRun: async taskId =>
+    (await workTaskService.listRuns(taskId, WORK_ADMIN_RUN_LOOKBACK)).find(
+      run => run.finishedAt !== undefined
+    ),
 };
+
+const lastRunSummary = (
+  run: WorkRun | undefined
+): Pick<WorkAdminTask, 'lastRun'> => {
+  if (!run) return {};
+  const summary = run.summary?.trim();
+  return {
+    lastRun: {
+      ...(run.exitState ? { exitState: run.exitState } : {}),
+      ...(run.finishedAt !== undefined ? { finishedAt: run.finishedAt } : {}),
+      ...(summary
+        ? { summary: summary.slice(0, WORK_ADMIN_SUMMARY_MAX_CHARS) }
+        : {}),
+    },
+  };
+};
+
+/** How far back the overview looks for a finished run per task. */
+const WORK_ADMIN_RUN_LOOKBACK = 5;
+/** The overview shows one line of a run summary, never the whole reply. */
+const WORK_ADMIN_SUMMARY_MAX_CHARS = 160;
 
 export async function buildWorkAdminOverview(
   deps: WorkAdminDeps = defaultDeps
@@ -126,6 +160,19 @@ export async function buildWorkAdminOverview(
 
   const limits = deps.limits();
   const usageByTask = await deps.usage(tasks.map(task => task.record.id));
+  // Last-run results, resolved per task: an overview row should say what the
+  // task last produced, not only whether something is running right now.
+  const lastRunByTask = new Map<string, WorkRun>();
+  await Promise.all(
+    tasks.map(async ({ record }) => {
+      try {
+        const run = await deps.lastRun(record.id);
+        if (run) lastRunByTask.set(record.id, run);
+      } catch {
+        // A single unreadable run must not cost the whole overview.
+      }
+    })
+  );
   return {
     generatedAt: Date.now(),
     accessMode: await deps.accessMode(),
@@ -152,6 +199,7 @@ export async function buildWorkAdminOverview(
       running: managedKnown ? (runningByTask.get(record.id) ?? false) : null,
       terminalSessions: deps.sessionCount(record.id),
       usage: usageByTask.get(record.id) ?? [],
+      ...lastRunSummary(lastRunByTask.get(record.id)),
       updatedAt: record.updatedAt,
     })),
     orphanContainers: managed.filter(entry => !taskIds.has(entry.taskId)),

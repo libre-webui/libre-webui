@@ -48,6 +48,7 @@ import { Button } from '@/components/ui';
 import { isFinishedWorkStatus } from '@/utils/workStatus';
 import { WorkAgentPanel } from '@/components/work/WorkAgentPanel';
 import { WorkLiveRunSurface } from '@/components/work/WorkLiveRunSurface';
+import { WorkRunHistory } from '@/components/work/WorkRunHistory';
 import { WorkspaceCodeEditor } from '@/components/work/WorkspaceCodeEditor';
 import { WorkspaceDiffView } from '@/components/work/WorkspaceDiffView';
 import { WorkspaceGitPanel } from '@/components/work/WorkspaceGitPanel';
@@ -372,6 +373,13 @@ export function WorkspacePane({
     // invocation per request.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [openFileRequest]);
+
+  // A run-history file chip lands on the Files tab through the same
+  // dirty-confirm/draft-restore path as a conversation chip.
+  const openRunFile = (path: string): void => {
+    setTab('files');
+    void openFile(path);
+  };
 
   const closeFile = () => {
     if (!confirmDiscard()) return;
@@ -1021,6 +1029,16 @@ export function WorkspacePane({
           aria-labelledby='work-workspace-tab-activity'
           className='min-h-0 flex-1 overflow-y-auto p-3'
         >
+          {/* Agent tasks keep their run history on the Agent tab. */}
+          {!task.isAgent && (
+            <WorkRunHistory
+              taskId={task.id}
+              active={tab === 'activity'}
+              refreshToken={task.status}
+              onOpenFile={openRunFile}
+              className='mb-4'
+            />
+          )}
           {liveRun && (
             <div className='mb-3'>
               <WorkLiveRunSurface run={liveRun} variant='activity' />
@@ -1134,6 +1152,7 @@ export function WorkspacePane({
             persona={persona}
             active={tab === 'agent'}
             onOpenScreen={() => setTab('screen')}
+            onOpenFile={openRunFile}
           />
         </div>
       )}
