@@ -33,7 +33,7 @@ import type {
 } from '@/utils/api/toolsApi';
 
 const KINDS: ToolServerKind[] = ['openapi', 'mcp'];
-const AUTH_MODES: ToolServerAuthMode[] = ['none', 'bearer', 'header'];
+const AUTH_MODES: ToolServerAuthMode[] = ['none', 'bearer', 'header', 'oauth'];
 const ACCESS_MODES: ToolServerAccessMode[] = [
   'admins-only',
   'all-users',
@@ -93,6 +93,8 @@ function ToolServerForm({
     seed?.authMode ?? 'none'
   );
   const [authHeader, setAuthHeader] = useState(seed?.authHeader ?? '');
+  const [oauthClientId, setOauthClientId] = useState('');
+  const [oauthClientSecret, setOauthClientSecret] = useState('');
   const [accessMode, setAccessMode] = useState<ToolServerAccessMode>(
     seed?.accessMode ?? 'admins-only'
   );
@@ -138,6 +140,14 @@ function ToolServerForm({
       baseUrl: baseUrl.trim(),
       specUrl:
         kind === 'openapi' && specUrl.trim() ? specUrl.trim() : undefined,
+      oauthClientId:
+        authMode === 'oauth' && oauthClientId.trim()
+          ? oauthClientId.trim()
+          : undefined,
+      oauthClientSecret:
+        authMode === 'oauth' && oauthClientSecret.trim()
+          ? oauthClientSecret.trim()
+          : undefined,
     });
   };
 
@@ -294,6 +304,48 @@ function ToolServerForm({
               maxLength={120}
             />
           </div>
+        )}
+        {authMode === 'oauth' && !editing && (
+          <>
+            <div>
+              <label
+                htmlFor='tool-server-oauth-client-id'
+                className={modalLabelClass}
+              >
+                {t('toolsPage.form.oauthClientId')}
+              </label>
+              <input
+                id='tool-server-oauth-client-id'
+                data-testid='tool-server-oauth-client-id'
+                type='text'
+                value={oauthClientId}
+                onChange={event => setOauthClientId(event.target.value)}
+                className={modalFieldClass}
+                maxLength={200}
+                autoComplete='off'
+              />
+              <p className='mt-1 text-[11px] text-gray-400 dark:text-dark-500'>
+                {t('toolsPage.form.oauthClientIdHint')}
+              </p>
+            </div>
+            <div>
+              <label
+                htmlFor='tool-server-oauth-client-secret'
+                className={modalLabelClass}
+              >
+                {t('toolsPage.form.oauthClientSecret')}
+              </label>
+              <input
+                id='tool-server-oauth-client-secret'
+                type='password'
+                value={oauthClientSecret}
+                onChange={event => setOauthClientSecret(event.target.value)}
+                className={modalFieldClass}
+                maxLength={400}
+                autoComplete='off'
+              />
+            </div>
+          </>
         )}
       </div>
 

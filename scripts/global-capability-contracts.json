@@ -2103,6 +2103,15 @@
             "nothing runs before the decision",
             "the POST reached the mock"
           ]
+        },
+        {
+          "file": "scripts/test-tool-oauth.mjs",
+          "runner": "test:package",
+          "name": "the callback exchanges the code and stores an encrypted envelope",
+          "behaviorPatterns": [
+            "mcpOAuth=connected",
+            "status\\.connected, true"
+          ]
         }
       ],
       "backendRoutes": [
@@ -2153,6 +2162,30 @@
           "mount": "/api/tools",
           "method": "POST",
           "path": "/servers/:id/refresh"
+        },
+        {
+          "file": "backend/src/routes/tools.ts",
+          "mount": "/api/tools",
+          "method": "GET",
+          "path": "/servers/:id/oauth/callback"
+        },
+        {
+          "file": "backend/src/routes/tools.ts",
+          "mount": "/api/tools",
+          "method": "GET",
+          "path": "/servers/:id/oauth/status"
+        },
+        {
+          "file": "backend/src/routes/tools.ts",
+          "mount": "/api/tools",
+          "method": "POST",
+          "path": "/servers/:id/oauth/start"
+        },
+        {
+          "file": "backend/src/routes/tools.ts",
+          "mount": "/api/tools",
+          "method": "DELETE",
+          "path": "/servers/:id/oauth"
         },
         {
           "file": "backend/src/routes/tools.ts",

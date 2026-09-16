@@ -105,6 +105,36 @@ or a named header). Each secret is encrypted with additional authenticated
 data binding it to the exact user and server, entered by each user under
 Settings → Tools, and never shared between accounts.
 
+### Interactive OAuth (MCP)
+
+An MCP server can also sign each person in for themselves. Register it with
+the **Interactive OAuth** authentication mode and Libre WebUI reads the
+`WWW-Authenticate` challenge the server answers with, follows it to the
+protected-resource metadata, then to the authorization server's metadata,
+and registers a client dynamically (RFC 7591) when the authorization server
+offers registration. Providers that do not register clients automatically
+take an administrator-supplied client id, and optional secret, on the
+registration form; the secret is encrypted alongside the discovered
+endpoints.
+
+Each person then presses **Connect** on the server's card and is redirected
+to the provider. The flow uses PKCE (S256) with CSRF state and the PKCE
+verifier held in an HttpOnly cookie scoped to that one server. The callback
+exchanges the code on the server, stores the tokens encrypted with the same
+user-and-server binding as a static secret, and sends the browser back to
+the app with a status flag — access and refresh tokens never reach the
+page. Access tokens refresh automatically a minute before expiry, once per
+person and server even when several tool calls race. When a refresh is
+impossible the tool call comes back asking to reconnect rather than failing
+anonymously. **Disconnect** removes that person's tokens and leaves the
+registration in place; deleting the server forgets the discovered
+configuration as well.
+
+A server that refuses an unauthenticated tool listing is still registered:
+its inventory is pinned on the first successful connection (and on any
+administrator refresh), so nothing is offered to a model before it is
+known.
+
 ### Egress policy
 
 Every tool request resolves its destination itself, refuses private,
@@ -241,5 +271,13 @@ Search queries and requested URLs are sent to Exa when these tools run.
   tools gated by Work approvals.
 - Gemini and agent CLI models do not receive tools; Ollama,
   OpenAI-compatible, Responses-API, and Anthropic providers do.
-- MCP servers authenticate with static per-user credentials; an MCP server
-  that only supports interactive OAuth cannot be registered yet.
+- Interactive OAuth is MCP-only: an OpenAPI server still uses a static
+  per-user credential. The flow is the authorization-code grant with PKCE;
+  device-code and client-credentials flows are not offered, and an
+  authorization server that publishes no metadata (or no registration
+  endpoint and no administrator-supplied client id) cannot be connected.
+- Discovered OAuth endpoints must be https; plain http is accepted only for
+  loopback, for a provider running on the same machine during development.
+- The redirect URI is derived from `BASE_URL` (or the first `CORS_ORIGIN`),
+  so that value must be the address the browser actually reaches and must
+  be registered with providers that pin redirect URIs.

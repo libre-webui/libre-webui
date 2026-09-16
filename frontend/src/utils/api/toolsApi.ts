@@ -20,7 +20,7 @@ import { isDemoMode } from '@/utils/demoMode';
 import { api, createDemoResponse } from './client';
 
 export type ToolServerKind = 'openapi' | 'mcp';
-export type ToolServerAuthMode = 'none' | 'bearer' | 'header';
+export type ToolServerAuthMode = 'none' | 'bearer' | 'header' | 'oauth';
 export type ToolServerAccessMode = 'admins-only' | 'all-users' | 'granted';
 export type ToolApprovalScope = 'once' | 'session' | 'always';
 
@@ -59,10 +59,21 @@ export interface ToolServerInput {
   specUrl?: string;
   authMode: ToolServerAuthMode;
   authHeader?: string;
+  /** OAuth only, and only when the provider registers no clients itself. */
+  oauthClientId?: string;
+  oauthClientSecret?: string;
   accessMode: ToolServerAccessMode;
   enabled?: boolean;
   timeoutMs?: number;
   maxResponseBytes?: number;
+}
+
+/** One person's OAuth connection to a tool server. */
+export interface ToolServerOAuthStatus {
+  connected: boolean;
+  configured: boolean;
+  expiresAt?: number;
+  scope?: string;
 }
 
 export interface ToolApprovalView {
@@ -144,6 +155,19 @@ export const toolsApi = {
 
   deleteCredential: (serverId: string): Promise<ApiResponse> =>
     api.delete(`/tools/servers/${serverId}/credential`).then(res => res.data),
+
+  getOAuthStatus: (
+    serverId: string
+  ): Promise<ApiResponse<ToolServerOAuthStatus>> =>
+    api.get(`/tools/servers/${serverId}/oauth/status`).then(res => res.data),
+
+  startOAuth: (
+    serverId: string
+  ): Promise<ApiResponse<{ authorizeUrl: string }>> =>
+    api.post(`/tools/servers/${serverId}/oauth/start`).then(res => res.data),
+
+  disconnectOAuth: (serverId: string): Promise<ApiResponse> =>
+    api.delete(`/tools/servers/${serverId}/oauth`).then(res => res.data),
 
   listApprovals: (): Promise<
     ApiResponse<{ pending: ToolApprovalView[]; standing: ToolApprovalView[] }>

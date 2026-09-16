@@ -29,11 +29,28 @@ import { secureToolRequest } from '../utils/toolEgress.js';
 const MCP_PROTOCOL_VERSION = '2025-06-18';
 
 export class McpClientError extends Error {
-  constructor(message: string) {
+  /** HTTP status when the failure came from the transport, not JSON-RPC. */
+  readonly status?: number;
+  /** Verbatim WWW-Authenticate challenge, the entry point to OAuth discovery. */
+  readonly wwwAuthenticate?: string;
+
+  constructor(
+    message: string,
+    details?: { status?: number; wwwAuthenticate?: string }
+  ) {
     super(message);
     this.name = 'McpClientError';
+    if (details?.status !== undefined) this.status = details.status;
+    if (details?.wwwAuthenticate !== undefined) {
+      this.wwwAuthenticate = details.wwwAuthenticate;
+    }
   }
 }
+
+/** True when the server refused the request for want of credentials. */
+export const isMcpAuthError = (error: unknown): error is McpClientError =>
+  error instanceof McpClientError &&
+  (error.status === 401 || error.status === 403);
 
 export interface McpEndpoint {
   url: string;
@@ -129,7 +146,11 @@ async function mcpRequest(
   });
 
   if (response.status === 401 || response.status === 403) {
-    throw new McpClientError('MCP server rejected the configured credentials');
+    const challenge = response.headers['www-authenticate'];
+    throw new McpClientError('MCP server rejected the configured credentials', {
+      status: response.status,
+      ...(challenge ? { wwwAuthenticate: challenge } : {}),
+    });
   }
   if (response.status >= 400) {
     throw new McpClientError(
