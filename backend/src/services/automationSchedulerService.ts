@@ -283,7 +283,12 @@ class AutomationSchedulerService {
             task.status === 'completed' ||
             task.status === 'needs_input'
           ) {
-            if (await automationService.finalizeRun(run.id, 'succeeded')) {
+            if (
+              await automationService.finalizeRun(run.id, 'succeeded', null, {
+                userId: run.user_id,
+                automationId: run.automation_id,
+              })
+            ) {
               settled += 1;
             }
           } else if (task.status === 'failed' || task.status === 'cancelled') {
@@ -307,7 +312,12 @@ class AutomationSchedulerService {
             run.assistant_message_id
           );
           if (chatJob?.state === 'succeeded') {
-            if (await automationService.finalizeRun(run.id, 'succeeded')) {
+            if (
+              await automationService.finalizeRun(run.id, 'succeeded', null, {
+                userId: run.user_id,
+                automationId: run.automation_id,
+              })
+            ) {
               settled += 1;
             }
             continue;

@@ -479,6 +479,80 @@ test('the scheduler fires due automations once and settles stalled runs', async 
   assert.equal(manualRun.status, 'queued');
 });
 
+test('a successful Work run is emailed to its owner when settled', async () => {
+  const { emailService } = await distModule('services/emailService.js');
+  const createResponse = await fetch(baseUrl, {
+    method: 'POST',
+    headers: headersFor(ownerToken),
+    body: JSON.stringify({
+      name: 'Morning digest',
+      instructions: 'Summarize the news.',
+      triggers: [{ kind: 'daily', hour: 7, minute: 0 }],
+      target: 'work',
+    }),
+  });
+  const automation = (await createResponse.json()).data;
+  const runNowResponse = await fetch(`${baseUrl}/${automation.id}/run`, {
+    method: 'POST',
+    headers: headersFor(ownerToken),
+  });
+  const { runId } = (await runNowResponse.json()).data;
+
+  // The run started inside a Work task that has since completed.
+  const taskId = 'digest-task-0001';
+  database
+    .prepare(
+      `INSERT INTO work_tasks (
+        id, user_id, title, model, volume_name, container_name, status,
+        status_blurb, created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, 'completed', ?, ?, ?)`
+    )
+    .run(
+      taskId,
+      'automation-owner',
+      'Morning digest',
+      'test',
+      `libre-work-${taskId}`,
+      `libre-work-${taskId}`,
+      'Three items need your attention.',
+      Date.now(),
+      Date.now()
+    );
+  database
+    .prepare(
+      `UPDATE automation_runs SET work_task_id = ?, status = 'running',
+        started_at = ? WHERE id = ?`
+    )
+    .run(taskId, Date.now(), runId);
+
+  const emailed = [];
+  const originalRecipientFor = emailService.recipientFor;
+  const originalNotify = emailService.notifyAutomationRun;
+  emailService.recipientFor = async () => 'owner@example.test';
+  emailService.notifyAutomationRun = async input => {
+    emailed.push(input);
+    return true;
+  };
+  try {
+    const tick = await automationSchedulerService.tick(Date.now());
+    assert.ok(tick.settled >= 1, 'the finished Work run settles');
+    const settled = database
+      .prepare('SELECT status FROM automation_runs WHERE id = ?')
+      .get(runId);
+    assert.equal(settled.status, 'succeeded');
+    // Success is emailed with the owner's identity, not only failures.
+    assert.equal(emailed.length, 1);
+    assert.equal(emailed[0].userId, 'automation-owner');
+    assert.equal(emailed[0].runId, runId);
+    assert.equal(emailed[0].status, 'succeeded');
+    assert.equal(emailed[0].automationName, 'Morning digest');
+    assert.match(emailed[0].href, new RegExp(`/work/${taskId}$`));
+  } finally {
+    emailService.recipientFor = originalRecipientFor;
+    emailService.notifyAutomationRun = originalNotify;
+  }
+});
+
 test('webhook secrets gate inbound fires with constant-time checks', async () => {
   // A fresh automation starts with the webhook disabled.
   const createResponse = await fetch(baseUrl, {
