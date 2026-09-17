@@ -29,6 +29,7 @@ import {
 } from './openAIResponsesAdapter.js';
 import {
   fitThinkingBudget,
+  normalizeThinkingPreference,
   thinkingBudgetTokens,
   thinkingEffort,
 } from './thinkingOptions.js';
@@ -160,6 +161,25 @@ export function getOpenAICompatibleSamplingParameters(
   };
 }
 
+/**
+ * DeepSeek toggles reasoning with a `thinking` object on its OpenAI-compatible
+ * Chat Completions endpoint instead of relying on `reasoning_effort` alone.
+ * Reasoning is on by default there, so the toggle is sent only when the user
+ * actually chose a thinking preference; an unset preference keeps the
+ * provider's own default.
+ */
+export function getOpenAICompatibleThinkingParameters(
+  plugin: Pick<Plugin, 'id'>,
+  think: unknown
+): Record<string, unknown> {
+  if (plugin.id !== 'deepseek') return {};
+  const preference = normalizeThinkingPreference(think);
+  if (preference === undefined) return {};
+  return {
+    thinking: { type: preference === false ? 'disabled' : 'enabled' },
+  };
+}
+
 /** OpenAI Chat Completions-style tool definitions from provider-neutral specs. */
 export function toOpenAICompatibleTools(
   tools: readonly ProviderToolSpec[] | undefined
@@ -220,6 +240,8 @@ export function toOpenAICompatibleMessages(
   options: {
     preserveProviderMetadata?: boolean;
     includeReasoning?: boolean;
+    /** Wire field for replayed reasoning; DeepSeek names it reasoning_content. */
+    reasoningField?: 'reasoning' | 'reasoning_content';
   } = {}
 ): Array<{
   role: string;
@@ -231,6 +253,7 @@ export function toOpenAICompatibleMessages(
       >;
   providerMetadata?: Record<string, unknown>;
   reasoning?: string;
+  reasoning_content?: string;
   tool_calls?: ChatMessage['tool_calls'];
   tool_call_id?: string;
 }> {
@@ -238,6 +261,10 @@ export function toOpenAICompatibleMessages(
     const providerMetadata = options.preserveProviderMetadata
       ? message.providerMetadata
       : undefined;
+    const reasoningWire =
+      options.includeReasoning && message.thinking
+        ? { [options.reasoningField ?? 'reasoning']: message.thinking }
+        : {};
     const toolWire = {
       ...(message.tool_calls?.length ? { tool_calls: message.tool_calls } : {}),
       ...(message.tool_call_id ? { tool_call_id: message.tool_call_id } : {}),
@@ -262,9 +289,7 @@ export function toOpenAICompatibleMessages(
       return {
         role: message.role,
         content,
-        ...(options.includeReasoning && message.thinking
-          ? { reasoning: message.thinking }
-          : {}),
+        ...reasoningWire,
         ...(providerMetadata ? { providerMetadata } : {}),
         ...toolWire,
       };
@@ -273,9 +298,7 @@ export function toOpenAICompatibleMessages(
     return {
       role: message.role,
       content: message.content,
-      ...(options.includeReasoning && message.thinking
-        ? { reasoning: message.thinking }
-        : {}),
+      ...reasoningWire,
       ...(providerMetadata ? { providerMetadata } : {}),
       ...toolWire,
     };
@@ -523,20 +546,35 @@ function buildOpenAICompatibleChatPayload(
   // OpenAI and the providers that copy its shape name the levels instead of
   // budgeting tokens. Nothing is sent unless thinking was asked for: the field
   // is unknown to models that do not reason.
-  const effort = thinkingEffort(options.think);
+  const thinkingLevel = thinkingEffort(options.think);
+  // DeepSeek documents low, high and max only; its middle is the provider
+  // default, so a plain "thinking on" preference sends no effort at all.
+  const effort =
+    plugin.id === 'deepseek' && thinkingLevel === 'medium'
+      ? undefined
+      : thinkingLevel;
   const tools = toOpenAICompatibleTools(options.tools);
+  // Replayed reasoning has no single wire name: OpenRouter reads `reasoning`,
+  // while DeepSeek requires `reasoning_content` beside its tool calls. Both
+  // deliberately replay whatever thinking the session stored, even turns an
+  // earlier provider produced: the provider treats it as context.
+  const reasoningField: 'reasoning' | 'reasoning_content' =
+    plugin.id === 'deepseek' ? 'reasoning_content' : 'reasoning';
 
   return {
     payload: {
       model,
       messages: toOpenAICompatibleMessages(messages, {
-        includeReasoning: plugin.id === 'openrouter',
+        includeReasoning:
+          plugin.id === 'openrouter' || plugin.id === 'deepseek',
+        reasoningField,
       }),
       ...getOpenAICompatibleSamplingParameters(plugin, params),
       max_tokens: params.maxTokens,
       stop: options.stop,
       stream: params.shouldStream,
       ...(effort ? { reasoning_effort: effort } : {}),
+      ...getOpenAICompatibleThinkingParameters(plugin, options.think),
       ...(tools ? { tools } : {}),
     },
   };

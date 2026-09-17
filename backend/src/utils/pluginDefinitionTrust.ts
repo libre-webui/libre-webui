@@ -29,6 +29,7 @@ export const BUNDLED_PLUGIN_DEFINITION_FINGERPRINTS: Readonly<
   'codex-oauth':
     '7337c3dcfb5bc29d6dbd9f4ab2da2fc9a72b859d690ccd207ee0ebeb1e8f38cb',
   comfyui: 'eaefe81897b58bffdf92bae8f0d0b675a062af276d5379e43147d6a0adaf0f47',
+  deepseek: '32cc8662939e304869f9e02ef3b7c8ced6ffe14c333bea9230bfabe2f2350181',
   elevenlabs:
     'de6afcbd123600f484a078227618b5c9687bc56f6e2637b57514349fbcea63d6',
   gemini: '400de79b1d5b4b876c5ed14d177bd01b7eecbf9d6ce856ae031d98b1c7c8a5ce',

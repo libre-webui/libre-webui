@@ -59,6 +59,7 @@ const CLOUD_PROVIDERS = [
   { id: 'openrouter', name: 'OpenRouter' },
   { id: 'gemini', name: 'Google Gemini' },
   { id: 'mistral', name: 'Mistral' },
+  { id: 'deepseek', name: 'DeepSeek' },
 ] as const;
 
 type OllamaProbe = 'checking' | 'healthy' | 'offline' | 'disabled';

@@ -164,6 +164,7 @@ Supported integrations include:
 - Google Gemini
 - Groq
 - Mistral
+- DeepSeek
 - OpenRouter
 - Hugging Face
 - GitHub Models
