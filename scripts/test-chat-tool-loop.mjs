@@ -413,6 +413,37 @@ test('a read-only call runs between rounds and its result extends the turn', asy
   assert.equal(emitted[1].isError, false);
 });
 
+// === 2b. Reasoning replay for a reasoning-channel provider ===
+
+test('a reasoning accompaniment rides the assistant turn into the next round', async () => {
+  const loop = runLoop([
+    [
+      {
+        type: 'tool_call',
+        toolCall: {
+          id: 'c9',
+          name: GET_PETS,
+          arguments: JSON.stringify({ limit: 1 }),
+          providerMetadata: {
+            openAIReasoningContent: 'I should list the pets.',
+          },
+        },
+      },
+      doneChunk,
+    ],
+    [contentChunk('done'), doneChunk],
+  ]);
+  await drain(loop.chunks);
+
+  const extension = loop.provider.calls[1].extension;
+  assert.equal(extension[0].role, 'assistant');
+  assert.equal(
+    extension[0].thinking,
+    'I should list the pets.',
+    'DeepSeek rejects a tool round that drops the reasoning it produced'
+  );
+});
+
 // === 3. Approval: approved ===
 
 test('a side-effecting call waits for approval and then executes', async () => {

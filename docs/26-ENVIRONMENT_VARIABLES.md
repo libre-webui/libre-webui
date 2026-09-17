@@ -520,6 +520,7 @@ Provider plugins can use environment keys as deployment-wide defaults:
 | `GROQ_API_KEY`        | Groq                                        |
 | `GEMINI_API_KEY`      | Google Gemini                               |
 | `MISTRAL_API_KEY`     | Mistral                                     |
+| `DEEPSEEK_API_KEY`    | DeepSeek                                    |
 | `OPENROUTER_API_KEY`  | OpenRouter                                  |
 | `KIMI_API_KEY`        | Kimi Code by Moonshot AI                    |
 | `GITHUB_API_KEY`      | GitHub Models                               |

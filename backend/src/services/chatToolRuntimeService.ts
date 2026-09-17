@@ -408,6 +408,7 @@ export function runPluginToolLoop(options: PluginToolLoopOptions): {
       const roundTools = round < MAX_TOOL_ROUNDS ? tools : [];
       const roundCalls: RoundToolCall[] = [];
       let roundContent = '';
+      let roundReasoning: string | undefined;
       let roundMetadata: Record<string, unknown> | undefined;
       let doneChunk: PluginStreamChunk | undefined;
 
@@ -415,6 +416,14 @@ export function runPluginToolLoop(options: PluginToolLoopOptions): {
         throwIfChatGenerationCancelled(options.signal);
         if (chunk.type === 'tool_call' && chunk.toolCall) {
           roundCalls.push(chunk.toolCall);
+          // DeepSeek rejects a tool round whose previous assistant turn omits
+          // the chain-of-thought it produced. The stream adapter attaches that
+          // reasoning to the first call; keep it for the extension message.
+          const reasoning =
+            chunk.toolCall.providerMetadata?.openAIReasoningContent;
+          if (!roundReasoning && typeof reasoning === 'string') {
+            roundReasoning = reasoning;
+          }
           continue;
         }
         if (chunk.type === 'usage') {
@@ -484,6 +493,7 @@ export function runPluginToolLoop(options: PluginToolLoopOptions): {
           type: 'function',
           function: { name: call.name, arguments: call.arguments },
         })),
+        ...(roundReasoning ? { thinking: roundReasoning } : {}),
         ...(roundMetadata ? { providerMetadata: roundMetadata } : {}),
       });
       for (const entry of executed) {
