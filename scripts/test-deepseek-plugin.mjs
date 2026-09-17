@@ -82,12 +82,7 @@ test('the bundled DeepSeek manifest routes to the documented API', () => {
 
   assert.deepEqual(
     [...plugin.model_map].sort(),
-    [
-      'deepseek-flash',
-      'deepseek-v4-flash',
-      'deepseek-v4-flash-vision-exp',
-      'deepseek-v4-pro',
-    ],
+    ['deepseek-flash', 'deepseek-v4-pro'],
     'current models plus the legacy names DeepSeek still routes'
   );
   assert.equal(
@@ -137,8 +132,8 @@ test('DeepSeek reasoning defaults to the provider and the toggle is explicit', (
   assert.deepEqual(on.thinking, { type: 'enabled' });
   assert.equal(
     on.reasoning_effort,
-    'medium',
-    'an on/off preference maps to the middle reasoning level'
+    undefined,
+    'DeepSeek has no medium effort: a plain on preference keeps its default'
   );
 });
 

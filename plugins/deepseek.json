@@ -8,12 +8,7 @@
     "prefix": "Bearer ",
     "key_env": "DEEPSEEK_API_KEY"
   },
-  "model_map": [
-    "deepseek-flash",
-    "deepseek-v4-flash",
-    "deepseek-v4-flash-vision-exp",
-    "deepseek-v4-pro"
-  ],
+  "model_map": ["deepseek-flash", "deepseek-v4-pro"],
   "variables": [
     {
       "name": "endpoint",

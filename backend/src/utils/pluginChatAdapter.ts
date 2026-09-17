@@ -546,10 +546,18 @@ function buildOpenAICompatibleChatPayload(
   // OpenAI and the providers that copy its shape name the levels instead of
   // budgeting tokens. Nothing is sent unless thinking was asked for: the field
   // is unknown to models that do not reason.
-  const effort = thinkingEffort(options.think);
+  const thinkingLevel = thinkingEffort(options.think);
+  // DeepSeek documents low, high and max only; its middle is the provider
+  // default, so a plain "thinking on" preference sends no effort at all.
+  const effort =
+    plugin.id === 'deepseek' && thinkingLevel === 'medium'
+      ? undefined
+      : thinkingLevel;
   const tools = toOpenAICompatibleTools(options.tools);
   // Replayed reasoning has no single wire name: OpenRouter reads `reasoning`,
-  // while DeepSeek requires `reasoning_content` beside its tool calls.
+  // while DeepSeek requires `reasoning_content` beside its tool calls. Both
+  // deliberately replay whatever thinking the session stored, even turns an
+  // earlier provider produced: the provider treats it as context.
   const reasoningField: 'reasoning' | 'reasoning_content' =
     plugin.id === 'deepseek' ? 'reasoning_content' : 'reasoning';
 
