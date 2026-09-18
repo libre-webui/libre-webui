@@ -348,7 +348,7 @@ A [skill](./51-SKILLS.md) can declare that it always needs a decision before
 named tools run. When such a skill is loaded into a run — bound to the
 agent's persona, or a taught procedure the run picked up — those tools gate
 **even when approvals are off for the task**, and the decision card says
-_Required by skill <name>_.
+_Required by skill &lt;name&gt;_.
 
 This demand is stronger than the task-level setting in two ways. It reaches
 tools the setting leaves alone (`write_file` among them), and **Always
