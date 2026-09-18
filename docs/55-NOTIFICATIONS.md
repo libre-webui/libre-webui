@@ -130,8 +130,13 @@ sign-up or an administrator adds under Users. Messages leave through the
 same durable job runtime as Web Push, with bounded retries for transient
 relay failures, and the SMTP client is a small built-in implementation
 (EHLO, STARTTLS, AUTH PLAIN or LOGIN) that never sends credentials over an
-unencrypted connection unless the mode is explicitly `none`. Bodies are
-plain text with an HTML alternative; no tracking, no external images.
+unencrypted connection unless the mode is explicitly `none`. Every message
+has a plain-text part and an HTML alternative in the website's look: the
+Libre WebUI wordmark, one card with the content, a coral button to the
+target, and a footer pointing back to Settings → Notifications. An
+automation result is rendered from Markdown (headings, lists, emphasis,
+code, links to http(s) targets only); everything else is escaped, and the
+only external image is the logo served from librewebui.org. No tracking.
 
 ## Boundaries
 

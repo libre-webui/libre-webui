@@ -44,6 +44,11 @@ import {
   type SmtpSecurity,
 } from '../utils/smtpClient.js';
 import { createLogger } from '../utils/logger.js';
+import {
+  DEFAULT_EMAIL_MARKDOWN_THEME,
+  escapeHtml,
+  renderMarkdownForEmail,
+} from '../utils/emailMarkdown.js';
 import type { EmailNotificationPreferences } from '../types/index.js';
 import {
   EMAIL_DELIVER_IDEMPOTENCY_SCOPE,
@@ -490,6 +495,8 @@ class EmailService {
     subject: string;
     heading: string;
     lines: string[];
+    /** Rendered as Markdown below the plain lines. */
+    markdown?: string;
     href?: string;
     linkLabel?: string;
     dedupeKey: string;
@@ -501,6 +508,7 @@ class EmailService {
       const body = renderNotificationEmail({
         heading: input.heading,
         lines: input.lines,
+        ...(input.markdown ? { markdown: input.markdown } : {}),
         appUrl: view.appUrl,
         ...(input.href ? { href: input.href } : {}),
         ...(input.linkLabel ? { linkLabel: input.linkLabel } : {}),
@@ -564,13 +572,16 @@ class EmailService {
   }): Promise<boolean> {
     const succeeded = input.status === 'succeeded';
     const lines: string[] = [];
+    let markdown: string | undefined;
     if (succeeded) {
       const result = (input.result ?? '').trim();
-      lines.push(
-        result
-          ? truncate(result, MAX_TEXT_LENGTH)
-          : 'The run finished. Open Libre WebUI to see the full result.'
-      );
+      if (result) {
+        markdown = truncate(result, MAX_TEXT_LENGTH);
+      } else {
+        lines.push(
+          'The run finished. Open Libre WebUI to see the full result.'
+        );
+      }
     } else {
       lines.push(
         input.error?.trim()
@@ -584,6 +595,7 @@ class EmailService {
       subject: `${succeeded ? 'Automation finished' : 'Automation failed'}: ${input.automationName}`,
       heading: `"${input.automationName}" ${succeeded ? 'finished' : 'failed'}`,
       lines,
+      ...(markdown ? { markdown } : {}),
       ...(input.href ? { href: input.href, linkLabel: 'Open the result' } : {}),
       dedupeKey: `automation-run:${input.runId}`,
     });
@@ -592,13 +604,6 @@ class EmailService {
 
 const truncate = (value: string, max: number): string =>
   value.length > max ? `${value.slice(0, max - 1)}…` : value;
-
-const escapeHtml = (value: string): string =>
-  value
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
 
 /** Joins a stored app URL with an in-app path; null when no URL is set. */
 export const absoluteAppLink = (
@@ -610,32 +615,74 @@ export const absoluteAppLink = (
   return `${appUrl}${href.startsWith('/') ? '' : '/'}${href}`;
 };
 
-/** Plain text plus a restrained HTML alternative for the same content. */
+/** The website's light palette, inlined because mail clients drop stylesheets. */
+const BRAND = {
+  page: '#f3f0ea',
+  surface: '#fffdf9',
+  text: '#0a0a0b',
+  muted: '#67635d',
+  accent: '#ff7b52',
+  accentDeep: '#bd4225',
+  border: 'rgba(10, 10, 11, 0.14)',
+  logo: 'https://librewebui.org/logo-dark.png',
+  site: 'https://librewebui.org',
+} as const;
+
+/**
+ * Plain text plus an HTML alternative in the website's look: the wordmark
+ * on top, one card with the content, a coral call to action, and a quiet
+ * footer. `markdown` is rendered; `lines` stay plain paragraphs.
+ */
 export const renderNotificationEmail = (input: {
   heading: string;
   lines: string[];
+  markdown?: string;
   appUrl: string;
   href?: string;
   linkLabel?: string;
 }): { text: string; html: string } => {
   const link = input.href ? absoluteAppLink(input.appUrl, input.href) : null;
   const textParts = [input.heading, '', ...input.lines];
+  if (input.markdown) textParts.push(input.markdown.trim());
   if (link) textParts.push('', `${input.linkLabel ?? 'Open'}: ${link}`);
   textParts.push(
     '',
     'Sent by Libre WebUI. Change what you receive under Settings > Notifications.'
   );
 
+  const theme = DEFAULT_EMAIL_MARKDOWN_THEME;
   const paragraphs = input.lines
     .map(
       line =>
-        `<p style="margin:0 0 12px;white-space:pre-wrap">${escapeHtml(line)}</p>`
+        `<p style="margin:0 0 12px;line-height:1.55;white-space:pre-wrap;font-family:${theme.fontBody};color:${BRAND.text}">${escapeHtml(line)}</p>`
     )
     .join('');
-  const button = link
-    ? `<p style="margin:20px 0"><a href="${escapeHtml(link)}" style="display:inline-block;padding:10px 16px;border-radius:8px;background:#2563eb;color:#ffffff;text-decoration:none">${escapeHtml(input.linkLabel ?? 'Open')}</a></p>`
+  const body = input.markdown
+    ? renderMarkdownForEmail(input.markdown, theme)
     : '';
-  const html = `<!doctype html><html><body style="margin:0;padding:24px;background:#f5f5f7;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:#111827"><div style="max-width:560px;margin:0 auto;background:#ffffff;border-radius:12px;padding:24px"><h1 style="font-size:18px;margin:0 0 16px">${escapeHtml(input.heading)}</h1>${paragraphs}${button}<p style="margin:24px 0 0;font-size:12px;color:#6b7280">Sent by Libre WebUI. Change what you receive under Settings &gt; Notifications.</p></div></body></html>`;
+  const button = link
+    ? `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:22px 0 4px"><tr><td style="border-radius:999px;background:${BRAND.accentDeep}"><a href="${escapeHtml(link)}" style="display:inline-block;padding:11px 20px;border-radius:999px;font-family:${theme.fontBody};font-size:14px;font-weight:600;color:#ffffff;text-decoration:none">${escapeHtml(input.linkLabel ?? 'Open')}</a></td></tr></table>`
+    : '';
+  const settingsLink = input.appUrl
+    ? `<a href="${escapeHtml(input.appUrl)}" style="color:${BRAND.muted};text-decoration:underline">Settings &gt; Notifications</a>`
+    : 'Settings &gt; Notifications';
+  const html = [
+    '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">',
+    '<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">',
+    `<title>${escapeHtml(input.heading)}</title></head>`,
+    `<body style="margin:0;padding:0;background:${BRAND.page};color:${BRAND.text};font-family:${theme.fontBody}">`,
+    `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${BRAND.page}"><tr><td align="center" style="padding:32px 16px">`,
+    `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px">`,
+    `<tr><td style="padding:0 4px 18px"><a href="${BRAND.site}" style="text-decoration:none;color:${BRAND.text}"><img src="${BRAND.logo}" width="28" height="28" alt="" style="vertical-align:middle;border:0;border-radius:6px"> <span style="vertical-align:middle;margin-left:8px;font-family:'Space Grotesk', ${theme.fontBody};font-size:17px;font-weight:700;letter-spacing:-0.01em">Libre WebUI</span></a></td></tr>`,
+    `<tr><td style="background:${BRAND.surface};border:1px solid ${BRAND.border};border-radius:12px;padding:28px 28px 22px">`,
+    `<h1 style="margin:0 0 16px;font-family:'Space Grotesk', ${theme.fontBody};font-size:22px;line-height:1.25;font-weight:700;letter-spacing:-0.01em;color:${BRAND.text}">${escapeHtml(input.heading)}</h1>`,
+    paragraphs,
+    body,
+    button,
+    '</td></tr>',
+    `<tr><td style="padding:18px 4px 0;font-size:12px;line-height:1.6;color:${BRAND.muted}">Sent by Libre WebUI. Change what you receive under ${settingsLink}.<br><a href="${BRAND.site}" style="color:${BRAND.muted};text-decoration:none">librewebui.org</a></td></tr>`,
+    '</table></td></tr></table></body></html>',
+  ].join('');
   return { text: textParts.join('\n'), html };
 };
 
