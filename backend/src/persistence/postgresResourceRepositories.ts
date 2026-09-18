@@ -3682,9 +3682,18 @@ class PostgresSystemSettingRepository implements SystemSettingRepository {
 
   async upsertMany(
     values: Readonly<Record<string, string>>,
-    updatedAt: number
+    updatedAt: number,
+    defaults: Readonly<Record<string, string>> = {}
   ): Promise<void> {
     await this.database.transaction(async client => {
+      for (const [key, value] of Object.entries(defaults)) {
+        await client.query(
+          `INSERT INTO system_settings (key, value, updated_at)
+           VALUES ($1, $2, $3)
+           ON CONFLICT (key) DO NOTHING`,
+          [key, value, updatedAt]
+        );
+      }
       for (const [key, value] of Object.entries(values)) {
         await client.query(
           `INSERT INTO system_settings (key, value, updated_at)

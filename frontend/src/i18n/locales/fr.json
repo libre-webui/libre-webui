@@ -1,5 +1,7 @@
 {
   "common": {
+    "provider": "Fournisseur",
+    "agent": "Agent",
     "loading": "Chargement...",
     "save": "Enregistrer",
     "saving": "Enregistrement...",
@@ -540,7 +542,8 @@
       "prompts": "Prompts",
       "skills": "Compétences",
       "tools": "Outils",
-      "channels": "Canaux"
+      "channels": "Canaux",
+      "cordis": "Moteur Cordis"
     },
     "toggleSize": "Basculer la taille de la barre latérale",
     "expandSidebar": "Agrandir la barre latérale"
@@ -1828,11 +1831,11 @@
       "saveFailed": "Impossible de mettre à jour le thème par défaut"
     },
     "agentAccess": {
-      "title": "Agents",
-      "description": "Proposer la section Agents (Libre Claw) aux administrateurs. Les CLI d'agents s'exécutent sur l'hôte avec l'utilisateur du serveur, hors du bac à sable Work.",
+      "title": "Libre Claw",
+      "description": "Afficher l’espace de travail Libre Claw aux administrateurs.",
       "saved": "Accès aux agents mis à jour",
       "saveFailed": "Impossible de mettre à jour l'accès aux agents",
-      "lockedByEnv": "Fixé par la variable d'environnement AGENT_CLI_MODELS_ENABLED."
+      "lockedByEnv": "Fixé par la variable d'environnement LIBRE_CLAW_ENABLED."
     },
     "groups": {
       "title": "Groupes",
@@ -1969,12 +1972,25 @@
       "saving": "Enregistrement…",
       "saved": "Paramètres de messagerie enregistrés.",
       "saveFailed": "Les paramètres de messagerie n'ont pas pu être enregistrés."
+    },
+    "cordisAccess": {
+      "title": "Moteur Cordis",
+      "description": "Proposer le moteur Cordis aux administrateurs. Il exécute des outils avec un accès réel au système de fichiers, hors du flux d'approbation des outils de Libre WebUI.",
+      "saved": "Accès à Cordis mis à jour",
+      "saveFailed": "Impossible de mettre à jour l'accès à Cordis",
+      "lockedByEnv": "Fixé par la variable d'environnement LIBRE_CORDIS_ENABLED.",
+      "lockedByFile": "Fixé par features.enabled dans cordis.config.yml."
+    },
+    "agentCliAccess": {
+      "title": "Modèles d’agents CLI",
+      "description": "Les administrateurs peuvent utiliser Pi, OpenCode, Codex et Claude Code installés comme modèles de chat. Ils s’exécutent sur l’hôte, hors des environnements isolés de Work.",
+      "lockedByEnv": "Fixé par la variable d'environnement AGENT_CLI_MODELS_ENABLED."
     }
   },
   "usageAnalytics": {
     "eyebrow": "Administration",
     "title": "Utilisation des fournisseurs",
-    "description": "Suivez les appels API sortants et la consommation des modèles sur les plugins activés de cette instance.",
+    "description": "Suivez les requêtes aux modèles et leur utilisation chez les fournisseurs et agents de cette instance.",
     "days": "{{count}} jours",
     "refresh": "Actualiser l'utilisation",
     "loadFailed": "L'utilisation des fournisseurs n'a pas pu être chargée.",
@@ -2021,7 +2037,7 @@
       "notCharted": "Sélectionnez ce modèle pour le charger dans le graphique"
     },
     "providers": {
-      "title": "Trafic des plugins activés",
+      "title": "Trafic des fournisseurs et agents",
       "description": "Volume de requêtes, fiabilité et temps de réponse par fournisseur.",
       "share": "{{percent}} % des appels",
       "failures": "{{count}} en échec ou annulés",
@@ -2039,9 +2055,9 @@
     },
     "empty": {
       "title": "Aucun appel fournisseur pour le moment",
-      "description": "Les appels apparaîtront ici une fois qu'un plugin activé aura traité des requêtes de chat, Work, d'embedding, d'image, de parole, de son ou de vidéo."
+      "description": "Les requêtes apparaissent ici après le traitement des discussions, tâches Work, embeddings, images, paroles, sons ou vidéos par un fournisseur ou un agent."
     },
-    "privacyNote": "L'utilisation est mesurée sur le serveur à la limite du plugin sortant. Libre WebUI stocke le fournisseur, le modèle, le minutage, le statut et les compteurs signalés — jamais les prompts, les réponses, les points de terminaison, les identifiants ou les corps d'erreur du fournisseur. Les totaux de jetons incluent uniquement les appels où le fournisseur a renvoyé des métadonnées d'utilisation.",
+    "privacyNote": "L’utilisation des requêtes aux fournisseurs et agents est enregistrée sur le serveur. Libre WebUI stocke le fournisseur, le modèle, le minutage, le statut et les compteurs signalés — jamais les prompts, les réponses, les points de terminaison, les identifiants ou les corps d'erreur du fournisseur. Les totaux de jetons incluent uniquement les appels où le fournisseur a renvoyé des métadonnées d'utilisation.",
     "heatmap": {
       "title": "Une année d'activité",
       "description": "Appels quotidiens aux fournisseurs sur l'année écoulée, colorés selon le modèle le plus utilisé chaque jour.",
@@ -2051,6 +2067,14 @@
       "less": "Moins",
       "more": "Plus",
       "yearTotal": "{{formatted}} appels sur la dernière année"
+    },
+    "agents": {
+      "title": "Agents",
+      "description": "Appels des agents CLI et requêtes DSH natives. DSH utilisant des modèles Libre WebUI est comptabilisé chez le fournisseur du modèle.",
+      "noCalls": "Aucun appel enregistré sur cette période",
+      "unreported": "Jetons non signalés",
+      "topModels": "Modèles les plus utilisés",
+      "legacy": "Ce serveur ne fournit pas de répartition complète des agents. Les enregistrements disponibles sont affichés ci-dessous."
     }
   },
   "systemPage": {
@@ -2732,7 +2756,11 @@
       "remoteDismissLabel": "Masquer l'avis sur le fournisseur distant",
       "remoteDismissFailed": "Impossible d'enregistrer la préférence du fournisseur distant.",
       "noModelSelected": "Aucun modèle compatible avec le mode Travail n'est sélectionné.",
-      "mentionAgents": "Mentionner un agent"
+      "mentionAgents": "Mentionner un agent",
+      "engine": "Moteur",
+      "nativeDshModels": "Modèles DSH natifs",
+      "libreModels": "Modèles Libre WebUI",
+      "nativeDshUnavailable": "Les modèles DSH natifs sont indisponibles. Actualisez la liste des modèles ou vérifiez la configuration du fournisseur."
     },
     "conversation": {
       "ready": "Espace de travail prêt",
@@ -2781,7 +2809,7 @@
       "readyOllama": "Docker prêt",
       "readyPlugin": "Docker + plugin prêts",
       "readyHybrid": "Docker + modèles prêts",
-      "reason": "Docker et un fournisseur de modèles disponible via Ollama ou une extension sont requis."
+      "reason": "Un environnement Work et un fournisseur de modèles disponible sont nécessaires."
     },
     "workspace": {
       "label": "Vues de l'espace de travail",
@@ -3911,5 +3939,42 @@
       "connected": "{{name}} connecté — ses modèles sont désormais disponibles",
       "saveFailed": "Impossible d'enregistrer la clé API"
     }
+  },
+  "cordis": {
+    "title": "Moteur Cordis",
+    "description": "Sessions, outils et discussion pour le moteur DeepSeek Harness intégré.",
+    "newSession": "Nouvelle session",
+    "createFailed": "Impossible de créer une session.",
+    "deleteFailed": "Impossible de supprimer la session.",
+    "sendFailed": "Le moteur n'a pas pu terminer le tour.",
+    "sessionsHeading": "Sessions",
+    "toolsHeading": "Outils",
+    "transcriptHeading": "Transcription",
+    "noSessions": "Aucune session. Créez-en une pour commencer.",
+    "noTools": "Le moteur n'a enregistré aucun outil.",
+    "selectSession": "Sélectionnez une session ou créez-en une pour commencer.",
+    "working": "L'agent travaille…",
+    "composerLabel": "Message au moteur",
+    "composerPlaceholder": "Demandez au moteur de faire quelque chose…",
+    "send": "Envoyer",
+    "stop": "Arrêter",
+    "deleteSession": "Supprimer la session",
+    "unknownTime": "Heure inconnue",
+    "disabledTitle": "Le moteur Cordis est désactivé",
+    "disabledHint": "Un administrateur peut l'activer dans Gestion des utilisateurs → Accès et politiques.",
+    "unavailableTitle": "Le moteur Cordis n'a pas pu démarrer",
+    "role": {
+      "user": "Vous",
+      "assistant": "Moteur",
+      "system": "Système",
+      "tool": "Outil",
+      "unknown": "Message"
+    },
+    "turnFailed": "Le moteur n'a pas pu terminer le tour",
+    "permissions": "Autorisations",
+    "readOnly": "Lecture seule",
+    "workspaceWrite": "Écriture dans l’espace de travail",
+    "context": "Contexte de la session",
+    "permissionHint": "La lecture seule permet de consulter les fichiers. L’écriture permet de les modifier dans l’espace de travail de cette session."
   }
 }

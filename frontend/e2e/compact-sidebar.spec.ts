@@ -75,6 +75,9 @@ async function prepareCompactSidebar(
     userCount: 2,
     version: '0.25.0-e2e',
     agentsEnabled: options.agentsEnabled ?? false,
+    // The Cordis destination is an opt-in too, and the fixture below lists it,
+    // so the deployment under test has opted in.
+    cordisEnabled: true,
     turnstile: { enabled: false },
   };
   await mockLibreWebUiApi(page, {
@@ -101,6 +104,7 @@ const destinations = [
   { name: 'Notes', path: '/notes' },
   { name: 'Calendar', path: '/calendar' },
   { name: 'Automations', path: '/automations' },
+  { name: 'Cordis Engine', path: '/cordis' },
   { name: 'Personas', path: '/personas' },
   { name: 'Imagine', path: '/gallery' },
 ] as const;
@@ -233,8 +237,14 @@ for (const { role, agentsEnabled, visible } of [
     await expect(
       navigation.getByRole('link', { name: 'Agents', exact: true })
     ).toHaveCount(visible ? 1 : 0);
+    await expect(
+      navigation.getByRole('link', { name: 'Cordis Engine', exact: true })
+    ).toHaveCount(role === 'admin' ? 1 : 0);
+    // Both opt-in destinations are administrator-only, so the expected total
+    // depends on the role as well as on the flags.
+    const cordis = destinations.filter(d => d.path !== '/cordis').length;
     await expect(navigation.getByRole('link')).toHaveCount(
-      destinations.length + (visible ? 1 : 0)
+      cordis + (role === 'admin' ? 1 : 0) + (visible ? 1 : 0)
     );
   });
 }

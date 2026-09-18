@@ -1,5 +1,7 @@
 {
   "common": {
+    "provider": "Provider",
+    "agent": "Agent",
     "loading": "Laden...",
     "save": "Opslaan",
     "saving": "Opslaan...",
@@ -540,7 +542,8 @@
       "prompts": "Prompts",
       "skills": "Vaardigheden",
       "tools": "Gereedschappen",
-      "channels": "Kanalen"
+      "channels": "Kanalen",
+      "cordis": "Cordis-engine"
     },
     "toggleSize": "Zijbalk grootte wijzigen",
     "expandSidebar": "Zijbalk uitvouwen"
@@ -1828,11 +1831,11 @@
       "saveFailed": "Kon het standaardthema niet bijwerken"
     },
     "agentAccess": {
-      "title": "Agents",
-      "description": "Bied de sectie Agents (Libre Claw) aan beheerders aan. Agent-CLI's draaien op de host als de servergebruiker, buiten de Work-sandbox.",
+      "title": "Libre Claw",
+      "description": "Toon de Libre Claw-werkruimte aan beheerders.",
       "saved": "Agent-toegang bijgewerkt",
       "saveFailed": "Kon agent-toegang niet bijwerken",
-      "lockedByEnv": "Vastgezet door de omgevingsvariabele AGENT_CLI_MODELS_ENABLED."
+      "lockedByEnv": "Vastgezet door de omgevingsvariabele LIBRE_CLAW_ENABLED."
     },
     "groups": {
       "title": "Groepen",
@@ -1969,12 +1972,25 @@
       "saving": "Opslaan…",
       "saved": "E-mailinstellingen opgeslagen.",
       "saveFailed": "De e-mailinstellingen konden niet worden opgeslagen."
+    },
+    "cordisAccess": {
+      "title": "Cordis-engine",
+      "description": "De Cordis-engine aan beheerders aanbieden. Deze voert hulpmiddelen uit met echte toegang tot het bestandssysteem, buiten de goedkeuringsstroom van Libre WebUI.",
+      "saved": "Cordis-toegang bijgewerkt",
+      "saveFailed": "Cordis-toegang kon niet worden bijgewerkt",
+      "lockedByEnv": "Vastgezet door de omgevingsvariabele LIBRE_CORDIS_ENABLED.",
+      "lockedByFile": "Vastgezet door features.enabled in cordis.config.yml."
+    },
+    "agentCliAccess": {
+      "title": "CLI-agentmodellen",
+      "description": "Beheerders kunnen geïnstalleerde Pi, OpenCode, Codex en Claude Code als chatmodellen gebruiken. Ze draaien op de host, buiten de Work-sandboxes.",
+      "lockedByEnv": "Vastgezet door de omgevingsvariabele AGENT_CLI_MODELS_ENABLED."
     }
   },
   "usageAnalytics": {
     "eyebrow": "Beheer",
     "title": "Providergebruik",
-    "description": "Volg uitgaande API-aanroepen en modelverbruik via de ingeschakelde plugins op deze instantie.",
+    "description": "Volg modelaanvragen en gebruik van de providers en agents op deze instantie.",
     "days": "{{count}} dagen",
     "refresh": "Gebruik vernieuwen",
     "loadFailed": "Providergebruik kon niet worden geladen.",
@@ -2021,7 +2037,7 @@
       "notCharted": "Selecteer om dit model in de grafiek te laden"
     },
     "providers": {
-      "title": "Verkeer van ingeschakelde plug-ins",
+      "title": "Provider- en agentverkeer",
       "description": "Aanvraagvolume, betrouwbaarheid en reactietijd per provider.",
       "share": "{{percent}}% van de aanroepen",
       "failures": "{{count}} mislukt of geannuleerd",
@@ -2039,9 +2055,9 @@
     },
     "empty": {
       "title": "Nog geen provider-aanroepen",
-      "description": "Aanroepen verschijnen hier nadat een ingeschakelde plug-in chat-, Work-, embedding-, afbeeldings-, spraak-, geluids- of videoverzoeken afhandelt."
+      "description": "Aanvragen verschijnen hier nadat een provider of agent chat, Work, embeddings, afbeeldingen, spraak, geluid of video heeft verwerkt."
     },
-    "privacyNote": "Gebruik wordt op de server gemeten op de grens van de uitgaande plug-in. Libre WebUI slaat provider, model, timing, status en gerapporteerde tellers op—nooit prompts, antwoorden, endpoints, inloggegevens of foutmeldingen van de provider. Token totalen bevatten alleen aanroepen waarbij de provider gebruiks-metadata retourneerde.",
+    "privacyNote": "Het gebruik van provider- en agentaanvragen wordt op de server vastgelegd. Libre WebUI slaat provider, model, timing, status en gerapporteerde tellers op—nooit prompts, antwoorden, endpoints, inloggegevens of foutmeldingen van de provider. Token totalen bevatten alleen aanroepen waarbij de provider gebruiks-metadata retourneerde.",
     "heatmap": {
       "title": "Een jaar activiteit",
       "description": "Dagelijkse provideraanroepen van het afgelopen jaar, gekleurd naar het meestgebruikte model van de dag.",
@@ -2051,6 +2067,14 @@
       "less": "Minder",
       "more": "Meer",
       "yearTotal": "{{formatted}} aanroepen in het afgelopen jaar"
+    },
+    "agents": {
+      "title": "Agents",
+      "description": "CLI-agentaanroepen en native DSH-aanvragen. DSH met Libre WebUI-modellen wordt bij de modelprovider geteld.",
+      "noCalls": "Geen geregistreerde aanroepen in deze periode",
+      "unreported": "Tokens niet gerapporteerd",
+      "topModels": "Meest gebruikte modellen",
+      "legacy": "Deze server biedt geen volledig agentoverzicht. Beschikbare agentregistraties staan hieronder."
     }
   },
   "systemPage": {
@@ -2732,7 +2756,11 @@
       "remoteDismissLabel": "Melding over externe aanbieder verbergen",
       "remoteDismissFailed": "De voorkeur voor de externe aanbieder kon niet worden opgeslagen.",
       "noModelSelected": "Er is geen model geselecteerd dat de Werk-modus ondersteunt.",
-      "mentionAgents": "Een agent vermelden"
+      "mentionAgents": "Een agent vermelden",
+      "engine": "Engine",
+      "nativeDshModels": "Native DSH-modellen",
+      "libreModels": "Libre WebUI-modellen",
+      "nativeDshUnavailable": "Native DSH-modellen zijn niet beschikbaar. Vernieuw de modellenlijst of controleer de providerconfiguratie."
     },
     "conversation": {
       "ready": "Werkruimte gereed",
@@ -2781,7 +2809,7 @@
       "readyOllama": "Docker gereed",
       "readyPlugin": "Docker + plugin gereed",
       "readyHybrid": "Docker + modellen gereed",
-      "reason": "Docker en een beschikbare modelprovider via Ollama of een plug-in zijn vereist."
+      "reason": "Een Work-runtime en een beschikbare modelprovider zijn vereist."
     },
     "workspace": {
       "label": "Werkruimteweergaven",
@@ -3911,5 +3939,42 @@
       "connected": "{{name}} verbonden — de modellen zijn nu beschikbaar",
       "saveFailed": "Kon de API-sleutel niet opslaan"
     }
+  },
+  "cordis": {
+    "title": "Cordis-engine",
+    "description": "Sessies, hulpmiddelen en chat voor de ingebouwde DeepSeek Harness-engine.",
+    "newSession": "Nieuwe sessie",
+    "createFailed": "Sessie kon niet worden aangemaakt.",
+    "deleteFailed": "Sessie kon niet worden verwijderd.",
+    "sendFailed": "De engine kon de beurt niet afronden.",
+    "sessionsHeading": "Sessies",
+    "toolsHeading": "Hulpmiddelen",
+    "transcriptHeading": "Transcript",
+    "noSessions": "Nog geen sessies. Maak er een om te beginnen.",
+    "noTools": "De engine heeft geen hulpmiddelen geregistreerd.",
+    "selectSession": "Kies een sessie of maak er een om te beginnen.",
+    "working": "De agent is bezig…",
+    "composerLabel": "Bericht aan de engine",
+    "composerPlaceholder": "Vraag de engine iets te doen…",
+    "send": "Verzenden",
+    "stop": "Stoppen",
+    "deleteSession": "Sessie verwijderen",
+    "unknownTime": "Onbekende tijd",
+    "disabledTitle": "De Cordis-engine staat uit",
+    "disabledHint": "Een beheerder kan dit inschakelen bij Gebruikersbeheer → Toegang en beleid.",
+    "unavailableTitle": "De Cordis-engine kon niet starten",
+    "role": {
+      "user": "Jij",
+      "assistant": "Engine",
+      "system": "Systeem",
+      "tool": "Hulpmiddel",
+      "unknown": "Bericht"
+    },
+    "turnFailed": "De engine kon de beurt niet afronden",
+    "permissions": "Rechten",
+    "readOnly": "Alleen lezen",
+    "workspaceWrite": "Schrijven in werkruimte",
+    "context": "Sessiecontext",
+    "permissionHint": "Alleen lezen staat bestandsinspectie toe. Schrijven staat wijzigingen binnen de werkruimte van deze sessie toe."
   }
 }

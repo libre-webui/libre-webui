@@ -58,7 +58,7 @@ router.put('/access', async (req: Request, res: Response): Promise<void> => {
     res.status(409).json({
       success: false,
       error:
-        'The Agents feature is pinned by AGENT_CLI_MODELS_ENABLED; unset the environment variable to manage it here.',
+        'Libre Claw is pinned by LIBRE_CLAW_ENABLED; unset the environment variable to manage it here.',
     } satisfies ApiResponse);
     return;
   }

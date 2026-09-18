@@ -1,5 +1,7 @@
 {
   "common": {
+    "provider": "Poskytovatel",
+    "agent": "Agent",
     "loading": "Načítání...",
     "save": "Uložit",
     "saving": "Ukládání...",
@@ -540,7 +542,8 @@
       "prompts": "Prompty",
       "skills": "Dovednosti",
       "tools": "Nástroje",
-      "channels": "Kanály"
+      "channels": "Kanály",
+      "cordis": "Modul Cordis"
     },
     "toggleSize": "Změnit velikost postranního panelu",
     "expandSidebar": "Rozbalit postranní panel"
@@ -1828,11 +1831,11 @@
       "saveFailed": "Výchozí motiv se nepodařilo aktualizovat"
     },
     "agentAccess": {
-      "title": "Agenti",
-      "description": "Zpřístupnit administrátorům sekci Agenti (Libre Claw). Agentní CLI běží na hostiteli pod uživatelem serveru, mimo sandbox Work.",
+      "title": "Libre Claw",
+      "description": "Zobrazit správcům pracovní prostor Libre Claw.",
       "saved": "Přístup k agentům byl aktualizován",
       "saveFailed": "Přístup k agentům se nepodařilo aktualizovat",
-      "lockedByEnv": "Určeno proměnnou prostředí AGENT_CLI_MODELS_ENABLED."
+      "lockedByEnv": "Určeno proměnnou prostředí LIBRE_CLAW_ENABLED."
     },
     "groups": {
       "title": "Skupiny",
@@ -1969,12 +1972,25 @@
       "saving": "Ukládání...",
       "saved": "Nastavení e-mailu bylo uloženo.",
       "saveFailed": "Nastavení e-mailu se nepodařilo uložit."
+    },
+    "cordisAccess": {
+      "title": "Modul Cordis",
+      "description": "Nabídněte modul Cordis správcům. Spouští nástroje se skutečným přístupem k souborovému systému mimo schvalovací tok nástrojů Libre WebUI.",
+      "saved": "Přístup k Cordis aktualizován",
+      "saveFailed": "Přístup k Cordis se nepodařilo aktualizovat",
+      "lockedByEnv": "Pevně nastaveno proměnnou prostředí LIBRE_CORDIS_ENABLED.",
+      "lockedByFile": "Pevně nastaveno přes features.enabled v cordis.config.yml."
+    },
+    "agentCliAccess": {
+      "title": "Modely agentů CLI",
+      "description": "Správci mohou používat nainstalované Pi, OpenCode, Codex a Claude Code jako chatové modely. Běží na hostiteli mimo sandboxy Work.",
+      "lockedByEnv": "Určeno proměnnou prostředí AGENT_CLI_MODELS_ENABLED."
     }
   },
   "usageAnalytics": {
     "eyebrow": "Správa",
     "title": "Využití poskytovatelů",
-    "description": "Sledujte odchozí API volání a spotřebu modelů napříč povolenými zásuvnými moduly v této instanci.",
+    "description": "Sledujte požadavky na modely a využití poskytovatelů a agentů v této instanci.",
     "days": "{{count}} dní",
     "refresh": "Obnovit využití",
     "loadFailed": "Využití poskytovatelů nelze načíst.",
@@ -2021,7 +2037,7 @@
       "notCharted": "Vyberte pro načtení tohoto modelu do grafu"
     },
     "providers": {
-      "title": "Provoz povolených zásuvných modulů",
+      "title": "Provoz poskytovatelů a agentů",
       "description": "Objem požadavků, spolehlivost a doba odezvy podle poskytovatele.",
       "share": "{{percent}} % volání",
       "failures": "Neúspěšná nebo zrušená: {{count}}",
@@ -2039,9 +2055,9 @@
     },
     "empty": {
       "title": "Zatím žádná volání poskytovatelů",
-      "description": "Volání se zde zobrazí, jakmile povolený zásuvný modul zpracuje požadavky na chat, práci, embedding, obrázek, řeč, zvuk nebo video."
+      "description": "Požadavky se zde zobrazí, jakmile poskytovatel nebo agent zpracuje chat, Work, vektory, obrázky, řeč, zvuk nebo video."
     },
-    "privacyNote": "Využití se měří na serveru na hranici odchozího zásuvného modulu. Libre WebUI ukládá poskytovatele, model, časování, stav a nahlášené čítače — nikdy výzvy, odpovědi, endpointy, přihlašovací údaje ani těla chyb poskytovatele. Součty tokenů zahrnují pouze volání, kde poskytovatel vrátil metadata o využití.",
+    "privacyNote": "Využití požadavků poskytovatelů a agentů se zaznamenává na serveru. Libre WebUI ukládá poskytovatele, model, časování, stav a nahlášené čítače — nikdy výzvy, odpovědi, endpointy, přihlašovací údaje ani těla chyb poskytovatele. Součty tokenů zahrnují pouze volání, kde poskytovatel vrátil metadata o využití.",
     "heatmap": {
       "title": "Rok aktivity",
       "description": "Denní volání poskytovatelů za poslední rok, obarvená podle nejpoužívanějšího modelu daného dne.",
@@ -2051,6 +2067,14 @@
       "less": "Méně",
       "more": "Více",
       "yearTotal": "{{formatted}} volání za poslední rok"
+    },
+    "agents": {
+      "title": "Agenti",
+      "description": "Volání agentů CLI a nativní požadavky DSH. DSH s modely Libre WebUI se započítává pod poskytovatele modelu.",
+      "noCalls": "V tomto období nejsou zaznamenána žádná volání",
+      "unreported": "Tokeny nebyly nahlášeny",
+      "topModels": "Nejpoužívanější modely",
+      "legacy": "Tento server neposkytuje úplný přehled agentů. Dostupné záznamy agentů jsou uvedeny níže."
     }
   },
   "systemPage": {
@@ -2732,7 +2756,11 @@
       "remoteDismissLabel": "Skrýt upozornění na vzdáleného poskytovatele",
       "remoteDismissFailed": "Předvolbu vzdáleného poskytovatele se nepodařilo uložit.",
       "noModelSelected": "Není vybrán žádný model kompatibilní s režimem Práce.",
-      "mentionAgents": "Zmínit agenta"
+      "mentionAgents": "Zmínit agenta",
+      "engine": "Engine",
+      "nativeDshModels": "Nativní modely DSH",
+      "libreModels": "Modely Libre WebUI",
+      "nativeDshUnavailable": "Nativní modely DSH nejsou dostupné. Obnovte seznam modelů nebo zkontrolujte konfiguraci poskytovatele."
     },
     "conversation": {
       "ready": "Pracovní prostor je připraven",
@@ -2781,7 +2809,7 @@
       "readyOllama": "Docker je připraven",
       "readyPlugin": "Docker + plugin jsou připraveny",
       "readyHybrid": "Docker + modely jsou připraveny",
-      "reason": "Je vyžadován Docker a dostupný poskytovatel modelu Ollama nebo pluginu."
+      "reason": "Je vyžadováno běhové prostředí Work a dostupný poskytovatel modelů."
     },
     "workspace": {
       "label": "Zobrazení pracovního prostoru",
@@ -3911,5 +3939,42 @@
       "connected": "{{name}} připojen — jeho modely jsou nyní dostupné",
       "saveFailed": "Nepodařilo se uložit API klíč"
     }
+  },
+  "cordis": {
+    "title": "Modul Cordis",
+    "description": "Relace, nástroje a chat pro vestavěný modul DeepSeek Harness.",
+    "newSession": "Nová relace",
+    "createFailed": "Relaci se nepodařilo vytvořit.",
+    "deleteFailed": "Relaci se nepodařilo odstranit.",
+    "sendFailed": "Modul nedokázal dokončit tah.",
+    "sessionsHeading": "Relace",
+    "toolsHeading": "Nástroje",
+    "transcriptHeading": "Přepis",
+    "noSessions": "Zatím žádné relace. Vytvořte jednu a začněte.",
+    "noTools": "Modul nezaregistroval žádné nástroje.",
+    "selectSession": "Vyberte relaci nebo si jednu vytvořte.",
+    "working": "Agent pracuje…",
+    "composerLabel": "Zpráva modulu",
+    "composerPlaceholder": "Požádejte modul, aby něco udělal…",
+    "send": "Odeslat",
+    "stop": "Zastavit",
+    "deleteSession": "Odstranit relaci",
+    "unknownTime": "Neznámý čas",
+    "disabledTitle": "Modul Cordis je vypnutý",
+    "disabledHint": "Správce jej může zapnout ve Správě uživatelů → Přístup a zásady.",
+    "unavailableTitle": "Modul Cordis se nepodařilo spustit",
+    "role": {
+      "user": "Vy",
+      "assistant": "Modul",
+      "system": "Systém",
+      "tool": "Nástroj",
+      "unknown": "Zpráva"
+    },
+    "turnFailed": "Modul nedokázal dokončit tah",
+    "permissions": "Oprávnění",
+    "readOnly": "Pouze čtení",
+    "workspaceWrite": "Zápis v pracovním prostoru",
+    "context": "Kontext relace",
+    "permissionHint": "Režim pouze čtení umožňuje prohlížet soubory. Zápis povoluje úpravy v pracovním prostoru této relace."
   }
 }

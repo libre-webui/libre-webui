@@ -16,11 +16,55 @@
  */
 
 import express, { Response } from 'express';
-import { authenticate, AuthenticatedRequest } from '../middleware/auth.js';
+import {
+  authenticate,
+  AuthenticatedRequest,
+  requireAdmin,
+} from '../middleware/auth.js';
 import agentCliService from '../services/agentCliService.js';
+import {
+  agentCliModelsEnabledLockedByEnv,
+  getAgentCliModelsEnabled,
+  setAgentCliModelsEnabled,
+} from '../services/agentAccessService.js';
+import type { ApiResponse } from '../types/index.js';
 
 const router = express.Router();
 router.use(authenticate);
+
+router.get('/access', requireAdmin, async (_req, res): Promise<void> => {
+  res.json({
+    success: true,
+    data: {
+      enabled: await getAgentCliModelsEnabled(),
+      lockedByEnv: agentCliModelsEnabledLockedByEnv(),
+    },
+  } satisfies ApiResponse);
+});
+
+router.put('/access', requireAdmin, async (req, res): Promise<void> => {
+  const enabled = req.body?.enabled;
+  if (typeof enabled !== 'boolean') {
+    res.status(400).json({
+      success: false,
+      error: 'enabled must be a boolean.',
+    } satisfies ApiResponse);
+    return;
+  }
+  if (agentCliModelsEnabledLockedByEnv()) {
+    res.status(409).json({
+      success: false,
+      error:
+        'Agent CLI models are pinned by AGENT_CLI_MODELS_ENABLED; unset the environment variable to manage them here.',
+    } satisfies ApiResponse);
+    return;
+  }
+  await setAgentCliModelsEnabled(enabled);
+  res.json({
+    success: true,
+    data: { enabled: await getAgentCliModelsEnabled(), lockedByEnv: false },
+  } satisfies ApiResponse);
+});
 
 /**
  * Installed agent CLIs usable as chat models. Non-admin users get an empty
@@ -31,7 +75,7 @@ router.get('/models', async (req: AuthenticatedRequest, res: Response) => {
   const isAdmin = userId ? await agentCliService.isAdminUser(userId) : false;
   res.json({
     success: true,
-    data: isAdmin ? await agentCliService.listAgentModels() : [],
+    data: isAdmin ? await agentCliService.listAgentModels(userId) : [],
   });
 });
 

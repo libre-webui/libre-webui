@@ -45,7 +45,7 @@ export type WorkRunStatus =
 
 export type WorkPreviewStatus = 'stopped' | 'starting' | 'running' | 'failed';
 
-export type WorkProviderType = 'ollama' | 'plugin';
+export type WorkProviderType = 'ollama' | 'plugin' | 'dsh';
 
 export interface WorkProviderSelection {
   providerType: WorkProviderType;
@@ -362,6 +362,17 @@ export interface WorkCapabilities {
   ollamaAvailable: boolean;
   pluginAvailable: boolean;
   runtimeImage: string;
+  nativeDsh?: {
+    status: 'disabled' | 'unavailable' | 'ready';
+    models: Array<{
+      model: string;
+      providerType: 'dsh';
+      providerId: string;
+      key: string;
+      label: string;
+      remote: true;
+    }>;
+  };
   reason?: string;
   limits: {
     maxRounds: number;

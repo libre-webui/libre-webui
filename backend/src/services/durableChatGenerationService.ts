@@ -268,6 +268,8 @@ const streamGeneratedAssistant = async (
   };
 
   if (prepared.target.providerType === 'agent' && prepared.target.providerId) {
+    let usage: { promptTokens?: number; completionTokens?: number } | undefined;
+    let timings: { promptMs?: number; predictedMs?: number } | undefined;
     try {
       for await (const chunk of agentCliService.executeAgentStreamRequest(
         prepared.target.providerId,
@@ -281,6 +283,9 @@ const streamGeneratedAssistant = async (
         } else if (chunk.type === 'reasoning' && chunk.content) {
           thinking += chunk.content;
           queuePublish('', chunk.content);
+        } else if (chunk.type === 'usage') {
+          if (chunk.usage) usage = { ...usage, ...chunk.usage };
+          if (chunk.timings) timings = { ...timings, ...chunk.timings };
         } else if (chunk.type === 'done' && chunk.providerMetadata) {
           providerMetadata = chunk.providerMetadata;
         }
@@ -289,11 +294,13 @@ const streamGeneratedAssistant = async (
       await streamPublisher.drain();
     }
     return {
-      response: chatGenerationService.createPluginChatResponse(
+      response: chatGenerationService.createStreamedChatResponse(
         prepared.target.actualModelName,
         content,
         thinking || undefined,
-        providerMetadata
+        providerMetadata,
+        usage,
+        timings
       ),
       content,
       ...(thinking ? { thinking } : {}),

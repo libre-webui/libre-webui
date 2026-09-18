@@ -19,6 +19,7 @@ import React, { useId, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { UserManager } from '@/components/UserManager';
 import { AgentAccessSettings } from '@/components/AgentAccessSettings';
+import { CordisAccessSettings } from '@/components/CordisAccessSettings';
 import { DefaultThemeSettings } from '@/components/DefaultThemeSettings';
 import { ToolAccessSettings } from '@/components/ToolAccessSettings';
 import { VoiceAccessSettings } from '@/components/VoiceAccessSettings';
@@ -58,6 +59,8 @@ const renderSection = (section: SectionId) => {
           <ModelDownloadSettings />
           <WebSearchAccessSettings />
           <AgentAccessSettings />
+          <AgentAccessSettings kind='cli' />
+          <CordisAccessSettings />
           <ToolAccessSettings />
           <VoiceAccessSettings />
           <EmailNotificationSettings />

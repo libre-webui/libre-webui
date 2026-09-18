@@ -45,6 +45,34 @@ const model = (
   ...extra,
 });
 
+test('an explicit Ollama selection cannot resolve to a same-named agent or legacy entry', () => {
+  const agent = model('codex', undefined, {
+    isAgent: true,
+    agentId: 'codex',
+    agentName: 'Codex',
+  });
+  const legacy = model('codex', undefined, { isLegacySelection: true });
+  const selection = {
+    model: 'codex',
+    providerType: 'ollama' as const,
+    providerId: null,
+  };
+  const models = [agent, legacy, model('codex', 'remote')];
+  assert.equal(findChatModelForSelection(models, selection), undefined);
+  assert.equal(isChatModelSelectionAvailable(models, selection), false);
+  assert.equal(
+    chatModelSelectionKeyForModels(models, selection),
+    'ollama:codex'
+  );
+  const retained = withUnavailableChatModel(models, selection);
+  const unavailable = findChatModelForSelection(retained, selection);
+  assert.equal(unavailable?.isUnavailable, true);
+  assert.equal(unavailable?.isAgent, false);
+  assert.equal(chatModelOptionKey(unavailable!), 'ollama:codex');
+  const local = model('codex');
+  assert.equal(findChatModelForSelection([...models, local], selection), local);
+});
+
 test('uses unique provider-qualified keys for duplicate raw model IDs', () => {
   const options = [
     model('shared/model:latest'),

@@ -1457,14 +1457,12 @@ function positiveInteger(value: string | undefined, fallback: number): number {
 const normalizeProvider = (
   provider: WorkProviderSelection
 ): WorkProviderSelection => {
-  if (provider.providerType === 'ollama') {
-    return { providerType: 'ollama' };
-  }
+  if (provider.providerType === 'ollama') return { providerType: 'ollama' };
+  if (provider.providerType !== 'plugin' && provider.providerType !== 'dsh')
+    throw new Error('Unknown Work model provider type.');
   const providerId = provider.providerId?.trim();
-  if (!providerId) {
-    throw new Error('Plugin provider ID cannot be empty.');
-  }
-  return { providerType: 'plugin', providerId };
+  if (!providerId) throw new Error('The model provider ID cannot be empty.');
+  return { providerType: provider.providerType, providerId };
 };
 
 const boundUtf8 = (value: string, maxBytes: number): string => {

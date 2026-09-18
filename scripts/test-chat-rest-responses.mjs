@@ -1715,3 +1715,221 @@ test('natural-key Stop bypasses only ordinary chat admission and still reaches S
     coordinator.consumeRateLimit = originalConsumeRateLimit;
   }
 });
+
+async function configureAgentUsageFixture(t, metered) {
+  const { default: agents } = await distModule('services/agentCliService.js');
+  t.mock.method(
+    chatGenerationService,
+    'prepareGenerationTarget',
+    async model => ({
+      actualModelName: model,
+      mergedOptions: {},
+      activePlugin: null,
+      providerType: 'agent',
+      providerId: 'codex',
+    })
+  );
+  t.mock.method(
+    chatGenerationService,
+    'executeNonStreaming',
+    originalExecuteNonStreaming
+  );
+  let calls = 0;
+  t.mock.method(
+    agents,
+    'executeAgentStreamRequest',
+    async function* (agentId, _messages, actor, options) {
+      assert.equal(agentId, 'codex');
+      assert.equal(actor, 'chat-rest-user');
+      assert.ok(options.signal instanceof AbortSignal);
+      calls++;
+      yield { type: 'reasoning', content: 'Fixture thinking' };
+      yield { type: 'content', content: 'Fixture agent reply' };
+      if (metered) {
+        yield { type: 'usage', usage: { promptTokens: 41 } };
+        yield { type: 'usage', usage: { completionTokens: 7 } };
+        yield {
+          type: 'usage',
+          usage: { promptTokens: 41, completionTokens: 7 },
+        };
+      }
+      yield { type: 'done', providerMetadata: { agentCli: 'codex' } };
+    }
+  );
+  return () => calls;
+}
+
+function assertAgentStatistics(statistics, metered) {
+  assert.equal(statistics?.prompt_eval_count, metered ? 41 : undefined);
+  assert.equal(statistics?.eval_count, metered ? 7 : undefined);
+  assert.equal(
+    statistics?.eval_duration,
+    undefined,
+    'do not invent provider timings'
+  );
+  assert.equal(statistics?.tokens_per_second, undefined);
+}
+
+for (const route of ['generate', 'generate/stream']) {
+  for (const metered of [true, false]) {
+    test(`agent ${route} persists and returns ${metered ? 'reported' : 'unreported'} token statistics`, async t => {
+      const calls = await configureAgentUsageFixture(t, metered);
+      const session = await createPluginSession(
+        `agent-${route.replace('/', '-')}-${metered}`
+      );
+      const response = await postGeneration(
+        session.id,
+        route,
+        'Fixture request'
+      );
+      assert.equal(response.status, 200);
+      const result =
+        route === 'generate'
+          ? (await response.json()).data
+          : parseSse(await response.text()).find(
+              event => event.type === 'done'
+            );
+      assert.ok(result);
+      assertAgentStatistics(result.statistics, metered);
+      const saved = await storageService.getSession(
+        session.id,
+        'chat-rest-user'
+      );
+      const assistant = saved.messages.at(-1);
+      assert.equal(assistant.content, 'Fixture agent reply');
+      assert.equal(assistant.thinking, 'Fixture thinking');
+      assert.deepEqual(assistant.providerMetadata, { agentCli: 'codex' });
+      assertAgentStatistics(assistant.statistics, metered);
+      assert.equal(calls(), 1);
+    });
+  }
+}
+
+for (const metered of [true, false]) {
+  test(`durable agent completion persists and publishes ${metered ? 'reported' : 'unreported'} token statistics`, async t => {
+    const calls = await configureAgentUsageFixture(t, metered);
+    const session = await createPluginSession(`agent-durable-${metered}`);
+    const assistantMessageId = `agent-durable-assistant-${metered}`;
+    const queued = await chatService.queueDurableGeneration({
+      sessionId: session.id,
+      userId: 'chat-rest-user',
+      userMessageId: `agent-durable-user-${metered}`,
+      assistantMessageId,
+      message: 'Fixture request',
+    });
+    // Earlier cancellation tests intentionally leave other jobs queued.
+    // Reserve and restore them so this fixture executes only its own job.
+    const parked = [];
+    t.after(async () => {
+      for (const other of parked) await durableRuntime.service.abandon(other);
+    });
+    let lease;
+    for (let attempt = 0; attempt < 100; attempt++) {
+      lease = await durableRuntime.service.claim('agent-usage-worker', 30_000);
+      if (!lease || lease.id === queued.jobId) break;
+      parked.push(lease);
+    }
+    assert.equal(lease.id, queued.jobId);
+    await durableChatGenerationService.execute(
+      durableRuntime.service.readPayload(lease),
+      {
+        signal: new AbortController().signal,
+        attemptCount: lease.attemptCount,
+        sideEffectLease: {
+          jobId: lease.id,
+          workerId: lease.workerId,
+          leaseToken: lease.leaseToken,
+        },
+        assertSideEffectAllowed: async () => {},
+      }
+    );
+    const saved = await storageService.getSession(session.id, 'chat-rest-user');
+    const assistant = saved.messages.find(
+      message => message.id === assistantMessageId
+    );
+    assertAgentStatistics(assistant.statistics, metered);
+    const done = await durableRuntime.service.getEvent(
+      chatDoneEventId(session.id, assistantMessageId)
+    );
+    assert.deepEqual(done.payload.statistics, assistant.statistics);
+    assert.equal(calls(), 1);
+  });
+}
+
+for (const isPrivate of [false, true]) {
+  test(`agent WebSocket completion returns reported statistics for ${isPrivate ? 'private' : 'saved'} Chat`, async t => {
+    const calls = await configureAgentUsageFixture(t, true);
+    const { registerWebSocketServer } = await distModule('websocketServer.js');
+    const { websocketTicketService } = await distModule(
+      'services/websocketTicketService.js'
+    );
+    const { WebSocket } = await import('ws');
+    const wsServer = createServer(express());
+    const registration = registerWebSocketServer(wsServer);
+    await new Promise(resolve => wsServer.listen(0, '127.0.0.1', resolve));
+    t.after(async () => {
+      await registration.close();
+      await new Promise(resolve => wsServer.close(resolve));
+    });
+    const session = await createPluginSession(`agent-websocket-${isPrivate}`);
+    const issued = await websocketTicketService.issue(
+      'chat-rest-user',
+      Date.now() + 60_000,
+      'chat'
+    );
+    const socket = new WebSocket(
+      `ws://127.0.0.1:${wsServer.address().port}/ws?ticket=${issued.ticket}`
+    );
+    t.after(() => socket.terminate());
+    await new Promise((resolve, reject) => {
+      socket.once('open', resolve);
+      socket.once('error', reject);
+    });
+    const completed = new Promise((resolve, reject) => {
+      const timeout = setTimeout(
+        () => reject(new Error('Fixture WebSocket completion timed out')),
+        5000
+      );
+      socket.on('message', data => {
+        const message = JSON.parse(String(data));
+        if (message.type === 'assistant_complete') {
+          clearTimeout(timeout);
+          resolve(message.data);
+        }
+        if (message.type === 'error') {
+          clearTimeout(timeout);
+          reject(new Error(JSON.stringify(message.data)));
+        }
+      });
+    });
+    const assistantMessageId = `agent-websocket-assistant-${isPrivate}`;
+    socket.send(
+      JSON.stringify({
+        type: 'chat_stream',
+        data: {
+          sessionId: session.id,
+          assistantMessageId,
+          content: 'Fixture request',
+          isPrivate,
+          model: session.model,
+          providerType: 'agent',
+          providerId: 'codex',
+        },
+      })
+    );
+    const message = await completed;
+    assertAgentStatistics(message.statistics, true);
+    if (!isPrivate) {
+      const saved = await storageService.getSession(
+        session.id,
+        'chat-rest-user'
+      );
+      assert.deepEqual(
+        saved.messages.find(item => item.id === assistantMessageId).statistics,
+        message.statistics
+      );
+    }
+    assert.equal(calls(), 1);
+    socket.close();
+  });
+}

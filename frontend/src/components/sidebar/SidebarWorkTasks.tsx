@@ -40,6 +40,7 @@ import {
   setPersonaAvatarFallback,
 } from '@/utils/personaAvatar';
 import { workStatusPresentation } from '@/utils/workStatus';
+import { baseWorkModel } from '@/utils/workModels';
 
 interface SidebarWorkTasksProps {
   tasks: WorkTaskSummary[];
@@ -110,7 +111,7 @@ function WorkTaskHoverPreview({ preview }: { preview: HoverPreviewState }) {
         </p>
       )}
       <p className='mt-1.5 truncate font-mono text-[10px] text-gray-400 dark:text-dark-500'>
-        {task.model}
+        {baseWorkModel(task.model, task.providerType)}
       </p>
       {task.hostPath && (
         <p

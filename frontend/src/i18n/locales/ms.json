@@ -1,5 +1,7 @@
 {
   "common": {
+    "provider": "Pembekal",
+    "agent": "Ejen",
     "loading": "Memuatkan...",
     "save": "Simpan",
     "saving": "Menyimpan...",
@@ -540,7 +542,8 @@
       "prompts": "Prompt",
       "skills": "Kemahiran",
       "tools": "Alat",
-      "channels": "Saluran"
+      "channels": "Saluran",
+      "cordis": "Enjin Cordis"
     },
     "toggleSize": "Togol saiz bar sisi",
     "expandSidebar": "Kembangkan bar sisi"
@@ -1828,11 +1831,11 @@
       "saveFailed": "Tidak dapat mengemas kini tema lalai"
     },
     "agentAccess": {
-      "title": "Ejen",
-      "description": "Tawarkan bahagian Ejen (Libre Claw) kepada pentadbir. CLI ejen berjalan pada hos sebagai pengguna pelayan, di luar kotak pasir Work.",
+      "title": "Libre Claw",
+      "description": "Paparkan ruang kerja Libre Claw kepada pentadbir.",
       "saved": "Akses ejen dikemas kini",
       "saveFailed": "Tidak dapat mengemas kini akses ejen",
-      "lockedByEnv": "Ditetapkan oleh pemboleh ubah persekitaran AGENT_CLI_MODELS_ENABLED."
+      "lockedByEnv": "Ditetapkan oleh pemboleh ubah persekitaran LIBRE_CLAW_ENABLED."
     },
     "groups": {
       "title": "Kumpulan",
@@ -1969,12 +1972,25 @@
       "saving": "Menyimpan…",
       "saved": "Tetapan e-mel disimpan.",
       "saveFailed": "Tetapan e-mel tidak dapat disimpan."
+    },
+    "cordisAccess": {
+      "title": "Enjin Cordis",
+      "description": "Tawarkan enjin Cordis kepada pentadbir. Ia menjalankan alat dengan akses sistem fail sebenar di luar aliran kelulusan alat Libre WebUI.",
+      "saved": "Akses Cordis dikemas kini",
+      "saveFailed": "Akses Cordis tidak dapat dikemas kini",
+      "lockedByEnv": "Ditetapkan oleh pemboleh ubah persekitaran LIBRE_CORDIS_ENABLED.",
+      "lockedByFile": "Ditetapkan oleh features.enabled dalam cordis.config.yml."
+    },
+    "agentCliAccess": {
+      "title": "Model ejen CLI",
+      "description": "Pentadbir boleh menggunakan Pi, OpenCode, Codex dan Claude Code yang dipasang sebagai model sembang. Semuanya berjalan pada hos, di luar kotak pasir Work.",
+      "lockedByEnv": "Ditetapkan oleh pemboleh ubah persekitaran AGENT_CLI_MODELS_ENABLED."
     }
   },
   "usageAnalytics": {
     "eyebrow": "Pentadbiran",
     "title": "Penggunaan Penyedia",
-    "description": "Ikut panggilan API keluar dan penggunaan model merentasi plugin yang didayakan pada instance ini.",
+    "description": "Jejaki permintaan model dan penggunaan penyedia serta ejen dalam tika ini.",
     "days": "{{count}} hari",
     "refresh": "Muat semula penggunaan",
     "loadFailed": "Penggunaan penyedia tidak dapat dimuatkan.",
@@ -2021,7 +2037,7 @@
       "notCharted": "Pilih untuk memuatkan model ini dalam carta"
     },
     "providers": {
-      "title": "Trafik pemalam didayakan",
+      "title": "Trafik penyedia dan ejen",
       "description": "Jumlah permintaan, kebolehpercayaan dan masa respons mengikut penyedia.",
       "share": "{{percent}}% daripada panggilan",
       "failures": "{{count}} gagal atau dibatalkan",
@@ -2039,9 +2055,9 @@
     },
     "empty": {
       "title": "Tiada panggilan pembekal lagi",
-      "description": "Panggilan akan dipaparkan di sini selepas pemalam yang didayakan mengendalikan permintaan sembang, Work, pembenaman, imej, pertuturan, bunyi, atau video."
+      "description": "Permintaan muncul di sini selepas penyedia atau ejen mengendalikan sembang, Work, pembenaman, imej, pertuturan, bunyi atau video."
     },
-    "privacyNote": "Penggunaan diukur pada pelayan di sempadan pemalam keluar. Libre WebUI menyimpan pembekal, model, masa, status, dan pembilang dilaporkan—tidak pernah gesaan, respons, titik akhir, kelayakan, atau badan ralat pembekal. Jumlah token hanya termasuk panggilan di mana pembekal memulangkan metadata penggunaan.",
+    "privacyNote": "Penggunaan permintaan penyedia dan ejen direkodkan pada pelayan. Libre WebUI menyimpan pembekal, model, masa, status, dan pembilang dilaporkan—tidak pernah gesaan, respons, titik akhir, kelayakan, atau badan ralat pembekal. Jumlah token hanya termasuk panggilan di mana pembekal memulangkan metadata penggunaan.",
     "heatmap": {
       "title": "Setahun aktiviti",
       "description": "Panggilan penyedia harian sepanjang tahun lalu, diwarnakan mengikut model paling banyak digunakan setiap hari.",
@@ -2051,6 +2067,14 @@
       "less": "Kurang",
       "more": "Lebih",
       "yearTotal": "{{formatted}} panggilan dalam setahun lalu"
+    },
+    "agents": {
+      "title": "Ejen",
+      "description": "Panggilan ejen CLI dan permintaan DSH natif. DSH yang menggunakan model Libre WebUI dikira di bawah penyedia modelnya.",
+      "noCalls": "Tiada panggilan direkodkan dalam tempoh ini",
+      "unreported": "Token tidak dilaporkan",
+      "topModels": "Model teratas",
+      "legacy": "Pelayan ini tidak menyediakan pecahan ejen yang lengkap. Rekod ejen yang tersedia dipaparkan di bawah."
     }
   },
   "systemPage": {
@@ -2732,7 +2756,11 @@
       "remoteDismissLabel": "Tutup notis penyedia jauh",
       "remoteDismissFailed": "Tidak dapat menyimpan pilihan penyedia jauh.",
       "noModelSelected": "Tiada model serasi Kerja yang dipilih.",
-      "mentionAgents": "Sebut ejen"
+      "mentionAgents": "Sebut ejen",
+      "engine": "Enjin",
+      "nativeDshModels": "Model DSH asli",
+      "libreModels": "Model Libre WebUI",
+      "nativeDshUnavailable": "Model DSH asli tidak tersedia. Muat semula senarai model atau semak konfigurasi penyedia."
     },
     "conversation": {
       "ready": "Ruang kerja sedia",
@@ -2781,7 +2809,7 @@
       "readyOllama": "Docker sedia",
       "readyPlugin": "Docker + pemalam sedia",
       "readyHybrid": "Docker + model sedia",
-      "reason": "Docker dan penyedia model Ollama atau pemalam yang tersedia diperlukan."
+      "reason": "Runtime Work dan penyedia model yang tersedia diperlukan."
     },
     "workspace": {
       "label": "Paparan ruang kerja",
@@ -3911,5 +3939,42 @@
       "connected": "{{name}} disambungkan — modelnya kini tersedia",
       "saveFailed": "Tidak dapat menyimpan kunci API"
     }
+  },
+  "cordis": {
+    "title": "Enjin Cordis",
+    "description": "Sesi, alat dan sembang untuk enjin DeepSeek Harness terbenam.",
+    "newSession": "Sesi baharu",
+    "createFailed": "Sesi tidak dapat dicipta.",
+    "deleteFailed": "Sesi tidak dapat dipadam.",
+    "sendFailed": "Enjin tidak dapat melengkapkan giliran.",
+    "sessionsHeading": "Sesi",
+    "toolsHeading": "Alat",
+    "transcriptHeading": "Transkrip",
+    "noSessions": "Belum ada sesi. Cipta satu untuk bermula.",
+    "noTools": "Enjin tidak mendaftarkan sebarang alat.",
+    "selectSession": "Pilih sesi, atau cipta satu untuk bermula.",
+    "working": "Ejen sedang berfungsi…",
+    "composerLabel": "Mesej kepada enjin",
+    "composerPlaceholder": "Minta enjin melakukan sesuatu…",
+    "send": "Hantar",
+    "stop": "Henti",
+    "deleteSession": "Padam sesi",
+    "unknownTime": "Masa tidak diketahui",
+    "disabledTitle": "Enjin Cordis dimatikan",
+    "disabledHint": "Pentadbir boleh mendayakannya dalam Pengurusan Pengguna → Akses & dasar.",
+    "unavailableTitle": "Enjin Cordis tidak dapat dimulakan",
+    "role": {
+      "user": "Anda",
+      "assistant": "Enjin",
+      "system": "Sistem",
+      "tool": "Alat",
+      "unknown": "Mesej"
+    },
+    "turnFailed": "Enjin tidak dapat melengkapkan giliran",
+    "permissions": "Kebenaran",
+    "readOnly": "Baca sahaja",
+    "workspaceWrite": "Tulis dalam ruang kerja",
+    "context": "Konteks sesi",
+    "permissionHint": "Baca sahaja membolehkan pemeriksaan fail. Tulis dalam ruang kerja membenarkan suntingan dalam ruang kerja sesi ini."
   }
 }

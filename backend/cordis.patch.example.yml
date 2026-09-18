@@ -1,0 +1,111 @@
+# Example Cordis composition for Libre WebUI's embedded DSH engine.
+#
+# Copy this file to the backend package root as `cordis.patch.yml` (or point
+# LIBRE_CORDIS_CONFIG at it) and pair it with `cordis.config.yml` (see
+# cordis.config.example.yml), then set LIBRE_CORDIS_ENABLED=true.
+#
+# This file is a top-level YAML ARRAY of Cordis loader entries. The shape is not
+# arbitrary: the Cordis `Include` tree carrier reads this file directly and
+# rejects anything that is not a top-level array, which is also why Libre
+# WebUI's own settings live in `cordis.config.yml` instead of here.
+#
+# Two field rules, both from the Cordis loader:
+#   * `name` must be a literal string. The loader imports it directly, so it is
+#     never evaluated as an expression.
+#   * `config` values may use `!!js` expressions. They are evaluated later, in
+#     the owning entry's fiber, with the loader context in scope — so
+#     `process.env` and `ctx.get(...)` work but `import.meta` does not.
+#
+# Relative specifiers resolve against the backend package root; bare specifiers
+# resolve through it as well, so `@deepseek-ai/dsh-tools` finds the copy in
+# `backend/node_modules`.
+#
+# Row order carries no load semantics: Cordis activates a row once the services
+# it declares are available, so `tools` starts when `systemPrompt` exists no
+# matter where it appears. The grouping below is for readers only.
+#
+# This file is the ONLY place the DSH engine is wired up. Libre WebUI's backend
+# never imports an engine module directly, so an operator can retarget the whole
+# composition here without touching application code.
+
+- id: llm
+  name: '@deepseek-ai/dsh-llm'
+
+# Serves the engine's model calls through Libre WebUI's own provider layer, so
+# the engine uses the models and credentials already configured in the UI
+# instead of a second provider setup in this file. It registers the
+# `libre-webui` route that the settings document points `model.route` at.
+- id: libre-webui-llm-adapter
+  name: './dist/cordis/dsh/librewebui-llm-adapter.js'
+
+# ── Session layer ─────────────────────────────────────────────────────────────
+
+- id: session
+  name: '@deepseek-ai/dsh-session'
+
+- id: session-projection
+  name: '@deepseek-ai/dsh-session-projection'
+
+# The host supplies the resolved sessionStorePath and disables this row when
+# persistence is off. The operator's settings remain the authoritative paths.
+- id: session-persistence
+  name: '@deepseek-ai/dsh-session-persistence-jsonl'
+
+# ── Tool layer ────────────────────────────────────────────────────────────────
+
+# The system-prompt service owns the assembled prompt that every tool schema is
+# injected into; the tool runtime cannot start without it.
+- id: system-prompt
+  name: '@deepseek-ai/dsh-system-prompt'
+  config:
+    personaPrefix: ''
+
+- id: tools
+  name: '@deepseek-ai/dsh-tools'
+
+# Interactive, single-action approval requests are answered by the Engine page.
+- id: approval
+  name: '@deepseek-ai/dsh-user-approval'
+
+# ── Agent layer ───────────────────────────────────────────────────────────────
+
+- id: agent
+  name: '@deepseek-ai/dsh-agent'
+
+# The driver that turns the agent registry into live agents. `agents: []` keeps
+# the composition from creating agents at startup; Libre WebUI creates them on
+# demand when a chat turn arrives.
+- id: agent-loop
+  name: '@deepseek-ai/dsh-agent-loop'
+  config:
+    agents: []
+
+# ── Libre WebUI bridge ────────────────────────────────────────────────────────
+#
+# Publishes the `libreDshEngine` Cordis service that Libre WebUI's routes
+# consume. The row waits for `sessions`, `agents`, and `tools` (declared by the
+# plugin itself), so it may appear anywhere in this list.
+
+- id: libre-webui-bridge
+  name: './dist/cordis/dsh/engine-plugin.js'
+
+# ── Filesystem tools ──────────────────────────────────────────────────────────
+#
+# A coding agent needs to read and change files. `fs-sandbox` provides the
+# sandboxed filesystem service that the tools dispatch through; `tool-fs`
+# registers the read/write/edit tools. Without a tool stack the engine starts
+# fine but exposes an empty tool registry.
+
+- id: sandbox
+  name: '@deepseek-ai/dsh-sandbox'
+
+- id: sandbox-policy
+  name: '@deepseek-ai/dsh-sandbox-policy'
+
+# The sandboxed filesystem the tools dispatch through. It extends the local
+# provider, so mounting `dsh-fs-local` as well would register `fs` twice.
+- id: fs-sandbox
+  name: '@deepseek-ai/dsh-fs-sandbox'
+
+- id: tool-fs
+  name: '@deepseek-ai/dsh-tool-fs'

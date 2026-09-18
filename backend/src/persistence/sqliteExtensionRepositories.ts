@@ -670,6 +670,50 @@ class SQLitePluginUsageRepository implements PluginUsageRepository {
       .all(from, to) as Array<Record<string, unknown>>;
   }
 
+  async agentUsage(from: number, to: number, agentIds: readonly string[]) {
+    if (agentIds.length === 0) return [];
+    return this.database
+      .prepare(
+        `WITH agent_events AS (
+         SELECT CASE WHEN substr(plugin_id, 1, 11) = 'dsh-native:'
+                     THEN 'dsh' ELSE substr(plugin_id, 11) END AS agent_id,
+                model, total_tokens, status, duration_ms
+           FROM plugin_usage_events
+          WHERE created_at >= ? AND created_at <= ?
+            AND (plugin_id IN (${agentIds.map(() => '?').join(',')})
+                 OR (substr(plugin_id, 1, 11) = 'dsh-native:' AND length(plugin_id) > 11))
+       ), agent_totals AS (
+         SELECT agent_id, NULL AS model, COUNT(*) AS calls,
+                COALESCE(SUM(total_tokens), 0) AS tokens,
+                SUM(CASE WHEN status <> 'success' THEN 1 ELSE 0 END) AS errors,
+                COUNT(total_tokens) AS metered_calls,
+                ROUND(AVG(duration_ms)) AS average_latency_ms
+           FROM agent_events GROUP BY agent_id
+       ), model_totals AS (
+         SELECT agent_id, model, COUNT(*) AS calls,
+                COALESCE(SUM(total_tokens), 0) AS tokens,
+                SUM(CASE WHEN status <> 'success' THEN 1 ELSE 0 END) AS errors,
+                COUNT(total_tokens) AS metered_calls,
+                ROUND(AVG(duration_ms)) AS average_latency_ms
+           FROM agent_events GROUP BY agent_id, model
+       ), ranked_models AS (
+         SELECT *, ROW_NUMBER() OVER (
+           PARTITION BY agent_id ORDER BY calls DESC, tokens DESC, model ASC
+         ) AS model_rank FROM model_totals
+       ), summaries AS (
+         SELECT * FROM agent_totals
+         UNION ALL
+         SELECT agent_id, model, calls, tokens, errors, metered_calls, average_latency_ms
+           FROM ranked_models WHERE model_rank <= 20
+       )
+       SELECT * FROM summaries
+        ORDER BY agent_id ASC, model IS NOT NULL ASC, calls DESC, tokens DESC, model ASC`
+      )
+      .all(from, to, ...agentIds.map(id => `agent-cli:${id}`)) as Array<
+      Record<string, unknown>
+    >;
+  }
+
   async heatmap(from: number, to: number, bucketMs: number) {
     return this.database
       .prepare(

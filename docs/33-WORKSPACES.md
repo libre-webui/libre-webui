@@ -42,6 +42,50 @@ operator, not merely as a chat user.
 
 :::
 
+## DeepSeek Harness engine
+
+After an administrator enables **Cordis Engine**, select **DeepSeek Harness**
+in Work's **Engine** control. Choose the local or remote provider model in the
+separate model picker; model names and provider identity remain unchanged.
+The default engine remains **Libre WebUI**. Both choices preserve the provider's
+credentials and remote-use disclosure.
+
+For example, **Engine: DeepSeek Harness** with **Model: gpt-6-astra** runs that
+model through DSH's native agent loop. Work supplies the prompt, conversation,
+tool definitions, and sandbox. The model picker separates **Libre WebUI models**
+from **Native DSH models**. The first group uses LWUI's provider connections;
+the second uses the providers already configured in a connected DSH instance.
+For example, selecting **DeepSeek-V41-Flash** or **DeepSeek-V4-Pro** in the native
+group sends inference to that exact DSH provider and model. Credentials remain
+inside DSH. This does not launch another DSH agent or grant its host tools access
+to the task.
+
+Native models require the opt-in [local DSH provider connection](./65-CORDIS_CONFIGURATION.md#connect-models-from-a-running-dsh-instance).
+They are available to active administrators only because they use the local
+DSH owner's credentials. A connection outage keeps saved native choices visible
+and prevents execution until the connection returns or a replacement is chosen.
+Ollama can remain disabled. Choosing the DSH engine also works when no LWUI
+provider is configured.
+
+A specific DSH model selected in Chat carries into a new Work task as the same
+engine, provider, and model. Work shows these as separate Engine and Model
+controls instead of repeating Chat's combined DSH entry. If that provider or
+model becomes unavailable, Work preserves the choice and requires a replacement
+before starting a run.
+
+DSH runs in an isolated in-memory runtime. Work validates every tool
+call, enforces approvals and policy, executes in the configured workspace
+container, and records the results in its existing SQL-backed run history. The
+DSH runtime has no host filesystem or shell tools. Stop cancels the model and
+engine before Work cleans up its container. Restored runs use the saved Work
+context without repeating completed tool effects.
+
+This is separate from Chat's administrator-only host agent and the shared Engine
+page. It requires the usual Work access and runtime prerequisites, but no
+`cordis.patch.yml` host composition or JSONL session store. Disabling Cordis
+prevents further DSH model steps; existing tasks remain readable and can select
+a normal model again.
+
 ## Release Highlights
 
 This release introduces Work as a complete task workflow:

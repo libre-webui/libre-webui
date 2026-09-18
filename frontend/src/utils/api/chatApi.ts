@@ -224,7 +224,7 @@ export const chatApi = {
   ): Promise<
     ApiResponse<{
       title: string;
-      source: 'plugin' | 'ollama' | 'fallback';
+      source: 'plugin' | 'ollama' | 'dsh' | 'fallback';
       updatedAt: number;
     }>
   > => {

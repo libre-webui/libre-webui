@@ -164,7 +164,10 @@ test('tariff resolution prefers exact models and the newest effective row', asyn
     pluginWide.id,
     'plugin-wide rows back-fill unknown models'
   );
-  assert.equal(resolveTariff(tariffs, 'unknown', 'gpt-test', base + 5000), null);
+  assert.equal(
+    resolveTariff(tariffs, 'unknown', 'gpt-test', base + 5000),
+    null
+  );
 
   const priced = costForEvent(
     {
@@ -343,4 +346,99 @@ test('budget alert sweeps notify once per threshold and period', async () => {
     .get().count;
   assert.equal(secondCount, firstCount, 'source keys dedupe repeated sweeps');
   void notificationService;
+});
+
+test('native DSH usage stays unpriced until a tariff exists and obeys hard budgets', async () => {
+  const {
+    recordNativeDshUsage,
+    nativeDshUsageProviderId,
+    assertNativeDshUsageAllowed,
+  } = await distModule('services/pluginUsageService.js');
+  const userId = 'cost-native-user';
+  upsertUser(userId);
+  const now = Date.now();
+  const providerId = 'deepseek/native';
+  const pluginId = nativeDshUsageProviderId(providerId);
+  const before = await costGovernanceService.getCostAnalytics(7, now);
+  await recordNativeDshUsage({
+    userId,
+    providerId,
+    providerName: 'Native DeepSeek',
+    model: 'pro',
+    status: 'success',
+    durationMs: 100,
+    createdAt: now - 1,
+    usage: {
+      inputTokens: 120,
+      cacheReadTokens: 60,
+      cacheWriteTokens: 20,
+      outputTokens: 100,
+    },
+  });
+  const unpriced = await costGovernanceService.getCostAnalytics(7, now);
+  assert.equal(unpriced.unmeteredEvents, before.unmeteredEvents + 1);
+  assert.equal(
+    unpriced.totalUsd,
+    before.totalUsd,
+    'no cost is guessed for native providers'
+  );
+  assert.ok(!unpriced.byPlugin.some(row => row.pluginId === pluginId));
+
+  await costGovernanceService.createTariff(
+    {
+      pluginId,
+      model: 'pro',
+      inputPerMillion: 3,
+      outputPerMillion: 9,
+      effectiveFrom: now - 1000,
+    },
+    'cost-admin'
+  );
+  const priced = await costGovernanceService.getCostAnalytics(7, now);
+  const model = priced.byModel.find(
+    row => row.pluginId === pluginId && row.model === 'pro'
+  );
+  assert.equal(model?.events, 1);
+  assert.ok(Math.abs(model.usd - 0.0015) < 1e-12);
+  assert.ok(
+    Math.abs(priced.byUser.find(row => row.userId === userId).usd - 0.0015) <
+      1e-12
+  );
+  assert.equal(priced.unmeteredEvents, before.unmeteredEvents);
+  assert.match(
+    await costGovernanceService.exportCostsCsv(7, now),
+    /dsh-native:deepseek%2Fnative,pro/
+  );
+
+  await costGovernanceService.saveBudget(
+    {
+      name: 'Native DSH hard cap',
+      principalType: 'user',
+      principalId: userId,
+      period: 'monthly',
+      amountUsd: 0.001,
+      mode: 'hard',
+    },
+    'cost-admin'
+  );
+  const countEvents = () =>
+    getDatabase()
+      .prepare('SELECT COUNT(*) AS count FROM plugin_usage_events')
+      .get().count;
+  const countBeforeAdmission = countEvents();
+  await assert.rejects(
+    assertNativeDshUsageAllowed({ userId, providerId, model: 'pro' }),
+    error =>
+      error instanceof BudgetExceededError &&
+      /Native DSH hard cap/.test(error.message)
+  );
+  assert.equal(
+    countEvents(),
+    countBeforeAdmission,
+    'admission does not record an undispatched request'
+  );
+  await assert.rejects(
+    assertNativeDshUsageAllowed({ userId: '', providerId, model: 'pro' }),
+    /requires an actor/
+  );
 });

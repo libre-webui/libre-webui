@@ -17,20 +17,50 @@
 
 import assert from 'node:assert/strict';
 import { EventEmitter } from 'node:events';
-import test from 'node:test';
+import { mkdtemp, rm } from 'node:fs/promises';
+import os from 'node:os';
+import path from 'node:path';
+import test, { after } from 'node:test';
 
-import {
-  abortChatGenerationOnResponseClose,
-  ChatGenerationCancelledError,
-  ChatGenerationRegistry,
-  isChatGenerationCancelled,
-  UserChatGenerationRegistry,
-} from '../backend/dist/utils/chatCancellation.js';
-import { streamOllamaChatResponse } from '../backend/dist/utils/ollamaStreaming.js';
-import ollamaService from '../backend/dist/services/ollamaService.js';
-import { streamPluginResponse } from '../backend/dist/utils/pluginStreaming.js';
-import { streamAssistantFakeChunks } from '../backend/dist/utils/websocketMessages.js';
-import { createChatStreamCoalescer } from '../backend/dist/utils/chatStreamCoalescer.js';
+const fixtureDirectory = await mkdtemp(
+  path.join(os.tmpdir(), 'libre-chat-cancellation-')
+);
+const previousEnvironment = {
+  DATA_DIR: process.env.DATA_DIR,
+  ENCRYPTION_KEY: process.env.ENCRYPTION_KEY,
+};
+// Stateful imports must never load or generate a developer's persistent key.
+process.env.DATA_DIR = fixtureDirectory;
+process.env.ENCRYPTION_KEY = '1'.repeat(64);
+after(async () => {
+  await rm(fixtureDirectory, { recursive: true, force: true });
+  for (const [name, value] of Object.entries(previousEnvironment)) {
+    if (value === undefined) delete process.env[name];
+    else process.env[name] = value;
+  }
+});
+
+const [
+  {
+    abortChatGenerationOnResponseClose,
+    ChatGenerationCancelledError,
+    ChatGenerationRegistry,
+    isChatGenerationCancelled,
+    UserChatGenerationRegistry,
+  },
+  { streamOllamaChatResponse },
+  { default: ollamaService },
+  { streamPluginResponse },
+  { streamAssistantFakeChunks },
+  { createChatStreamCoalescer },
+] = await Promise.all([
+  import('../backend/dist/utils/chatCancellation.js'),
+  import('../backend/dist/utils/ollamaStreaming.js'),
+  import('../backend/dist/services/ollamaService.js'),
+  import('../backend/dist/utils/pluginStreaming.js'),
+  import('../backend/dist/utils/websocketMessages.js'),
+  import('../backend/dist/utils/chatStreamCoalescer.js'),
+]);
 
 const socket = () => {
   const messages = [];

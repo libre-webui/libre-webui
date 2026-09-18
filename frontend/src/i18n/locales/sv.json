@@ -1,5 +1,7 @@
 {
   "common": {
+    "provider": "Leverantör",
+    "agent": "Agent",
     "loading": "Laddar...",
     "save": "Spara",
     "saving": "Sparar...",
@@ -540,7 +542,8 @@
       "prompts": "Prompter",
       "skills": "Färdigheter",
       "tools": "Verktyg",
-      "channels": "Kanaler"
+      "channels": "Kanaler",
+      "cordis": "Cordis-motor"
     },
     "toggleSize": "Växla sidofältets storlek",
     "expandSidebar": "Expandera sidofältet"
@@ -1828,11 +1831,11 @@
       "saveFailed": "Det gick inte att uppdatera standardtemat"
     },
     "agentAccess": {
-      "title": "Agenter",
-      "description": "Erbjud sektionen Agenter (Libre Claw) för administratörer. Agent-CLI:er körs på värden som serveranvändaren, utanför Work-sandlådan.",
+      "title": "Libre Claw",
+      "description": "Visa Libre Claw-arbetsytan för administratörer.",
       "saved": "Agentåtkomst uppdaterad",
       "saveFailed": "Kunde inte uppdatera agentåtkomst",
-      "lockedByEnv": "Låst av miljövariabeln AGENT_CLI_MODELS_ENABLED."
+      "lockedByEnv": "Låst av miljövariabeln LIBRE_CLAW_ENABLED."
     },
     "groups": {
       "title": "Grupper",
@@ -1969,12 +1972,25 @@
       "saving": "Sparar…",
       "saved": "E-postinställningarna har sparats.",
       "saveFailed": "E-postinställningarna kunde inte sparas."
+    },
+    "cordisAccess": {
+      "title": "Cordis-motor",
+      "description": "Erbjud Cordis-motorn till administratörer. Den kör verktyg med riktig filsystemsåtkomst utanför Libre WebUIs godkännandeflöde.",
+      "saved": "Cordis-åtkomst uppdaterad",
+      "saveFailed": "Cordis-åtkomsten kunde inte uppdateras",
+      "lockedByEnv": "Låst av miljövariabeln LIBRE_CORDIS_ENABLED.",
+      "lockedByFile": "Låst av features.enabled i cordis.config.yml."
+    },
+    "agentCliAccess": {
+      "title": "CLI-agentmodeller",
+      "description": "Administratörer kan använda installerade Pi, OpenCode, Codex och Claude Code som chattmodeller. De körs på värddatorn utanför Work-sandlådor.",
+      "lockedByEnv": "Låst av miljövariabeln AGENT_CLI_MODELS_ENABLED."
     }
   },
   "usageAnalytics": {
     "eyebrow": "Administration",
     "title": "Leverantörsanvändning",
-    "description": "Följ utgående API-anrop och modellförbrukning över de aktiverade pluginsen i denna instans.",
+    "description": "Följ modellförfrågningar och användning hos den här instansens leverantörer och agenter.",
     "days": "{{count}} dagar",
     "refresh": "Uppdatera användning",
     "loadFailed": "Leverantörsanvändning kunde inte laddas.",
@@ -2021,7 +2037,7 @@
       "notCharted": "Välj för att läsa in den här modellen i diagrammet"
     },
     "providers": {
-      "title": "Trafik för aktiverade plugins",
+      "title": "Leverantörs- och agenttrafik",
       "description": "Antal förfrågningar, tillförlitlighet och svarstid per leverantör.",
       "share": "{{percent}} % av anropen",
       "failures": "{{count}} misslyckade eller avbrutna",
@@ -2039,9 +2055,9 @@
     },
     "empty": {
       "title": "Inga leverantörsanrop ännu",
-      "description": "Anrop visas här efter att en aktiverad plugin hanterar chatt-, Work-, inbäddnings-, bild-, tal-, ljud- eller videoförfrågningar."
+      "description": "Förfrågningar visas här när en leverantör eller agent behandlar chatt, Work, inbäddningar, bilder, tal, ljud eller video."
     },
-    "privacyNote": "Användning mäts på servern vid den utgående plugin-gränsen. Libre WebUI lagrar leverantör, modell, tidsmätning, status och rapporterade räknare—aldrig prompts, svar, ändpunkter, autentiseringsuppgifter eller leverantörsfelkroppar. Token-totaler inkluderar endast anrop där leverantören returnerade användningsmetadata.",
+    "privacyNote": "Användning för leverantörs- och agentförfrågningar registreras på servern. Libre WebUI lagrar leverantör, modell, tidsmätning, status och rapporterade räknare—aldrig prompts, svar, ändpunkter, autentiseringsuppgifter eller leverantörsfelkroppar. Token-totaler inkluderar endast anrop där leverantören returnerade användningsmetadata.",
     "heatmap": {
       "title": "Ett år av aktivitet",
       "description": "Dagliga leverantörsanrop under det senaste året, färgade efter dagens mest använda modell.",
@@ -2051,6 +2067,14 @@
       "less": "Mindre",
       "more": "Mer",
       "yearTotal": "{{formatted}} anrop under det senaste året"
+    },
+    "agents": {
+      "title": "Agenter",
+      "description": "CLI-agentanrop och inbyggda DSH-förfrågningar. DSH med Libre WebUI-modeller räknas hos modellleverantören.",
+      "noCalls": "Inga registrerade anrop under perioden",
+      "unreported": "Tokens inte rapporterade",
+      "topModels": "Mest använda modeller",
+      "legacy": "Den här servern ger ingen fullständig agentöversikt. Tillgängliga agentposter visas nedan."
     }
   },
   "systemPage": {
@@ -2732,7 +2756,11 @@
       "remoteDismissLabel": "Dölj meddelandet om fjärrleverantören",
       "remoteDismissFailed": "Det gick inte att spara inställningen för fjärrleverantören.",
       "noModelSelected": "Ingen modell som är kompatibel med Arbete har valts.",
-      "mentionAgents": "Nämn en agent"
+      "mentionAgents": "Nämn en agent",
+      "engine": "Motor",
+      "nativeDshModels": "Inbyggda DSH-modeller",
+      "libreModels": "Libre WebUI-modeller",
+      "nativeDshUnavailable": "Inbyggda DSH-modeller är inte tillgängliga. Uppdatera modellistan eller kontrollera leverantörens konfiguration."
     },
     "conversation": {
       "ready": "Arbetsytan är klar",
@@ -2781,7 +2809,7 @@
       "readyOllama": "Docker redo",
       "readyPlugin": "Docker + tillägg redo",
       "readyHybrid": "Docker + modeller redo",
-      "reason": "Docker och en tillgänglig modellleverantör via Ollama eller ett tillägg krävs."
+      "reason": "En Work-körmiljö och en tillgänglig modellleverantör krävs."
     },
     "workspace": {
       "label": "Arbetsytevyer",
@@ -3911,5 +3939,42 @@
       "connected": "{{name}} ansluten — dess modeller är nu tillgängliga",
       "saveFailed": "Det gick inte att spara API-nyckeln"
     }
+  },
+  "cordis": {
+    "title": "Cordis-motor",
+    "description": "Sessioner, verktyg och chatt för den inbäddade DeepSeek Harness-motorn.",
+    "newSession": "Ny session",
+    "createFailed": "Sessionen kunde inte skapas.",
+    "deleteFailed": "Sessionen kunde inte tas bort.",
+    "sendFailed": "Motorn kunde inte slutföra turen.",
+    "sessionsHeading": "Sessioner",
+    "toolsHeading": "Verktyg",
+    "transcriptHeading": "Transkript",
+    "noSessions": "Inga sessioner ännu. Skapa en för att börja.",
+    "noTools": "Motorn registrerade inga verktyg.",
+    "selectSession": "Välj en session eller skapa en för att börja.",
+    "working": "Agenten arbetar…",
+    "composerLabel": "Meddelande till motorn",
+    "composerPlaceholder": "Be motorn göra något…",
+    "send": "Skicka",
+    "stop": "Stoppa",
+    "deleteSession": "Ta bort session",
+    "unknownTime": "Okänd tid",
+    "disabledTitle": "Cordis-motorn är avstängd",
+    "disabledHint": "En administratör kan aktivera det under Användarhantering → Åtkomst och policyer.",
+    "unavailableTitle": "Cordis-motorn kunde inte starta",
+    "role": {
+      "user": "Du",
+      "assistant": "Motor",
+      "system": "System",
+      "tool": "Verktyg",
+      "unknown": "Meddelande"
+    },
+    "turnFailed": "Motorn kunde inte slutföra turen",
+    "permissions": "Behörigheter",
+    "readOnly": "Endast läsning",
+    "workspaceWrite": "Skrivning i arbetsytan",
+    "context": "Sessionskontext",
+    "permissionHint": "Endast läsning tillåter granskning av filer. Skrivning tillåter ändringar i den här sessionens arbetsyta."
   }
 }
