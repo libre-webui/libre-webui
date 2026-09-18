@@ -4,7 +4,7 @@ import path from 'path';
 import { readFileSync, existsSync } from 'fs';
 import { loadEnvFile } from 'node:process';
 import { execSync } from 'child_process';
-import { backendReadyProxy } from './dev/backendReady';
+import { backendReadyProxy } from './dev/backendReady.ts';
 
 // Operator variables win; a missing .env is simply skipped.
 if (existsSync('.env')) loadEnvFile('.env');
