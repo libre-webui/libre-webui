@@ -15,6 +15,100 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 📚 Documentation
 
+## [0.36.0] - 2026-09-18
+
+Notifications reach your inbox by email, routines fire on events and carry
+their payload, MCP servers connect through OAuth, channel mentions use tools,
+and Work keeps what every run produced, shows who is on each task, recovers in
+the open, and stops idle sandboxes on its own.
+
+### ✨ New Features
+
+- **Email notifications.** Administrators configure one outgoing SMTP server
+  under **Settings > User Management > Access & policies** (host, port,
+  STARTTLS or TLS, credentials, sender, application URL, with a **Send test**
+  button); the `SMTP_*` environment variables seed the same fields and a
+  value saved in the UI wins. Each user then chooses what reaches their inbox
+  under **Settings > Notifications**: channel mentions, and the result of
+  their automation runs, success or failure, with the reply itself. Messages
+  use the website's look, render the run's Markdown, and leave through a
+  built-in SMTP client with bounded retries; the password is stored
+  encrypted and never returned to the browser.
+- **Routines that run on events.** An automation can now use an **On an
+  event** trigger: a channel mention, a direct message, a share, a calendar
+  reminder, a finished or waiting agent run, and every other notification
+  kind, with an optional title filter and a one-minute cooldown. Inbound
+  webhook calls forward their JSON body into the run as a trigger payload.
+- **Interactive OAuth for MCP servers.** A tool server can be registered
+  with **Interactive OAuth**: Libre WebUI discovers the authorization server
+  from the 401 challenge, registers a client where the provider allows it,
+  signs each user in with PKCE, keeps their tokens encrypted, refreshes them
+  before they expire, and asks to reconnect when a call is refused. The
+  server card gains Connect, Reconnect and Disconnect.
+- **Tools in channel mentions.** An @model reply in a channel now runs the
+  mentioning member's tool catalog like a chat turn: read-only tools run,
+  tools that change things are declined unless a standing approval exists,
+  and the reply shows which tools it used.
+- **Skills that demand approval.** A skill can declare tools that always
+  pause for the user while it is loaded, even when approvals are otherwise
+  off, and no saved "Always allow" rule can wave them through. Taught Work
+  Computer skills set this automatically when a demonstration contained
+  redacted input.
+- **DeepSeek provider.** DeepSeek ships as a bundled chat provider with model
+  discovery, the thinking toggle, and reasoning replayed beside tool calls as
+  the API requires.
+- **Work run history.** Every run keeps its summary, the files it changed and
+  how it ended. The Runs list on the Agent tab and the Activity tab shows
+  past runs, file chips survive a reload, automation emails carry the
+  summary, and the administrator's overview shows each task's last run.
+
+### 🔧 Improvements
+
+- **Who is using a task.** Commands, previews, terminals and screens register
+  themselves outside process memory, so the idle and preview sweeps respect
+  holds from any replica and **System > Work** shows who is on each task.
+- **Idle-stop by default.** Previews and screens nobody touches stop after
+  thirty minutes; the panes say so, a policy can set its own value, and
+  `WORK_RUNTIME_IDLE_TIMEOUT_MS=0` keeps the old behavior. A finished task is
+  not given a preview or a screen by accident: the panes offer **Reopen task
+  and start preview** or **Reopen task and open the screen**.
+- **Recovery in the open.** While Work is cleaning up sandboxes it now says
+  how many, since when, and when it retries next; administrators see each
+  pending container with its reason, attempt count and last error under
+  **System > Work**, and can retry immediately.
+- **Stale previews reconcile themselves.** A preview whose container or
+  process is gone is marked stopped within a minute instead of blocking
+  backups, recovery snapshots and host updaters that wait for an idle
+  platform.
+- **Dependencies refreshed.** Mermaid 12 (pinned to the classic dagre layout
+  so diagrams keep their look, with the unused ELK engine left out of the
+  artifact bundle), Vite 8.3, KaTeX, plotly, three, lucide-react, the AWS S3
+  client, TypeScript ESLint, and a set of minor and patch bumps; lodash-es
+  moves to 4.18 to clear two advisories.
+
+### 🐛 Bug Fixes
+
+- A successful automation run now emails its owner; only failures did before.
+- Client-side identifiers are minted with Web Crypto.
+- The Vite dev configuration imports its proxy with an extension, so the
+  build and dev server start without a warning.
+
+### 📚 Documentation
+
+- Environment variables gain the `SMTP_*` section; Notifications describes
+  email delivery and the branded messages; Automations covers event
+  triggers and payloads; Chat tools documents interactive MCP OAuth and the
+  channel mention rules; Skills documents approval demands; Workspaces
+  documents run history, task usage, idle-stop defaults, reopening finished
+  tasks, and recovery; Provider connections and the quick start list
+  DeepSeek. The capability inventories are regenerated.
+
+### ⚠️ Upgrade note
+
+This release adds database columns (SQLite schema v30, PostgreSQL v29).
+Existing rows keep their meaning; the first start after the update runs the
+migration and takes a little longer than usual.
+
 ## [0.35.0] - 2026-09-13
 
 Chats name themselves while the reply runs and show what the model is thinking
