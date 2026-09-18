@@ -25,6 +25,7 @@ interface ProtectedRouteProps {
   requireAdmin?: boolean;
   requireWork?: boolean;
   requireAgents?: boolean;
+  requireCordis?: boolean;
 }
 
 export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
@@ -33,9 +34,16 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   requireAdmin = false,
   requireWork = false,
   requireAgents = false,
+  requireCordis = false,
 }) => {
-  const { isAuthenticated, user, systemInfo, isLoading, canUseWork } =
-    useAuthStore();
+  const {
+    isAuthenticated,
+    user,
+    systemInfo,
+    isLoading,
+    canUseWork,
+    canUseCordis,
+  } = useAuthStore();
   const _location = useLocation();
 
   // Show loading spinner while checking auth
@@ -50,6 +58,12 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   // The Agents feature is an explicit administrator opt-in; the flag gates
   // every mode, including no-auth single-user deployments.
   if (requireAgents && systemInfo?.agentsEnabled !== true) {
+    return <Navigate to='/' replace />;
+  }
+
+  // The Cordis engine is an explicit administrator opt-in whose sessions are
+  // deployment-wide rather than per-user, so the flag gates every mode.
+  if (requireCordis && !canUseCordis()) {
     return <Navigate to='/' replace />;
   }
 

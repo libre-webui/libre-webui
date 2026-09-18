@@ -36,6 +36,7 @@ import { cn } from '@/utils';
 import { UsageChart, type ChartMetric } from '@/components/usage/UsageChart';
 import {
   getUsageChartSeries,
+  getUsageAgentSummaries,
   getUsageModelColors,
   getProviderModelSegments,
   matchesUsageSnapshot,
@@ -364,6 +365,155 @@ const UsageHeatmap: React.FC<{
   );
 };
 
+const AgentUsageSection: React.FC<{ analytics: PluginUsageAnalytics }> = ({
+  analytics,
+}) => {
+  const { t } = useTranslation();
+  const agents = getUsageAgentSummaries(analytics);
+  const reportedTokens = (entry: { tokens: number; meteredCalls?: number }) =>
+    (entry.meteredCalls ?? 0) > 0 || entry.tokens > 0;
+
+  return (
+    <section
+      data-testid='usage-agent-breakdown'
+      aria-labelledby='usage-agent-heading'
+      className='rounded-2xl border border-gray-200/80 bg-white/80 p-4 shadow-subtle dark:border-white/[0.08] dark:bg-dark-100/75 sm:p-5'
+    >
+      <h2
+        id='usage-agent-heading'
+        className='flex items-center gap-2 text-sm font-medium text-gray-950 dark:text-dark-950'
+      >
+        <Bot className='h-4 w-4' aria-hidden='true' />
+        {t('usageAnalytics.agents.title')}
+      </h2>
+      <p className='mt-1 text-xs leading-5 text-gray-500 dark:text-dark-500'>
+        {t('usageAnalytics.agents.description')}
+      </p>
+      {analytics.agents === undefined && (
+        <p className='mt-2 text-xs text-gray-500 dark:text-dark-500'>
+          {t('usageAnalytics.agents.legacy')}
+        </p>
+      )}
+      <div className='mt-4 grid min-w-0 gap-3 sm:grid-cols-2 xl:grid-cols-3'>
+        {agents.map(agent => (
+          <article
+            key={agent.agentId}
+            data-agent={agent.agentId}
+            className='min-w-0 rounded-xl border border-gray-200/70 p-3 dark:border-white/[0.07]'
+          >
+            <h3 className='text-sm font-medium text-gray-950 dark:text-dark-950'>
+              {agent.agentName}
+            </h3>
+            <dl className='mt-3 grid grid-cols-2 gap-3'>
+              <div>
+                <dt className='text-[11px] text-gray-500 dark:text-dark-500'>
+                  {t('usageAnalytics.metrics.calls')}
+                </dt>
+                <dd
+                  data-agent-metric='calls'
+                  className='mt-1 text-lg tabular-nums text-gray-950 dark:text-dark-950'
+                >
+                  {formatCount(agent.calls)}
+                </dd>
+              </div>
+              <div>
+                <dt className='text-[11px] text-gray-500 dark:text-dark-500'>
+                  {t('usageAnalytics.cards.tokens')}
+                </dt>
+                <dd
+                  data-agent-metric='tokens'
+                  className='mt-1 text-sm tabular-nums text-gray-950 dark:text-dark-950'
+                >
+                  {reportedTokens(agent)
+                    ? formatCount(agent.tokens)
+                    : agent.calls === 0
+                      ? '—'
+                      : agent.meteredCalls === 0
+                        ? t('usageAnalytics.agents.unreported')
+                        : '—'}
+                </dd>
+              </div>
+            </dl>
+            {agent.calls === 0 ? (
+              <p className='mt-2 text-xs text-gray-500 dark:text-dark-500'>
+                {t('usageAnalytics.agents.noCalls')}
+              </p>
+            ) : (
+              <>
+                <p className='mt-2 text-xs text-gray-500 dark:text-dark-500'>
+                  {t('usageAnalytics.cards.latency')}:{' '}
+                  <span className='tabular-nums' dir='ltr'>
+                    {formatLatency(agent.averageLatencyMs)}
+                  </span>
+                </p>
+                {agent.meteredCalls !== undefined && agent.meteredCalls > 0 && (
+                  <p className='mt-2 text-xs text-gray-500 dark:text-dark-500'>
+                    {t('usageAnalytics.cards.tokensDetail', {
+                      count: agent.meteredCalls,
+                    })}
+                  </p>
+                )}
+                {agent.errors > 0 && (
+                  <p className='mt-2 flex items-center gap-1 text-xs text-gray-600 dark:text-dark-600'>
+                    <TriangleAlert className='h-3.5 w-3.5' aria-hidden='true' />
+                    {t('usageAnalytics.providers.failures', {
+                      count: agent.errors,
+                    })}
+                  </p>
+                )}
+                {agent.models.length > 0 && (
+                  <div className='mt-3'>
+                    <h4 className='text-xs font-medium text-gray-700 dark:text-dark-700'>
+                      {t('usageAnalytics.agents.topModels')}
+                    </h4>
+                    <div className='mt-1 max-h-48 overflow-y-auto'>
+                      <table className='w-full table-fixed text-start text-xs'>
+                        <thead className='text-gray-500 dark:text-dark-500'>
+                          <tr>
+                            <th className='w-1/2 py-1 text-start font-normal'>
+                              {t('usageAnalytics.models.model')}
+                            </th>
+                            <th className='px-1 py-1 text-end font-normal'>
+                              {t('usageAnalytics.metrics.calls')}
+                            </th>
+                            <th className='py-1 text-end font-normal'>
+                              {t('usageAnalytics.metrics.tokens')}
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody className='divide-y divide-gray-100 dark:divide-white/[0.06]'>
+                          {agent.models.map(model => (
+                            <tr
+                              key={model.model}
+                              data-agent-model={model.model}
+                            >
+                              <td className='break-words py-1.5 pe-2 text-gray-700 dark:text-dark-700'>
+                                <span dir='auto'>{model.model}</span>
+                              </td>
+                              <td className='px-1 py-1.5 text-end tabular-nums'>
+                                {formatCount(model.calls)}
+                              </td>
+                              <td className='py-1.5 text-end tabular-nums'>
+                                {reportedTokens(model)
+                                  ? formatCount(model.tokens)
+                                  : '—'}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+          </article>
+        ))}
+      </div>
+    </section>
+  );
+};
+
 const PluginUsagePage: React.FC = () => {
   const { t } = useTranslation();
   const [days, setDays] = useState(30);
@@ -378,6 +528,8 @@ const PluginUsagePage: React.FC = () => {
     refetch,
   } = useQuery({
     queryKey: ['plugin-usage', days],
+    refetchInterval: 20_000,
+    refetchIntervalInBackground: false,
     queryFn: async () => {
       const response = await pluginApi.getUsage(days);
       if (!response.success || !response.data) {
@@ -565,7 +717,7 @@ const PluginUsagePage: React.FC = () => {
         title={t('usageAnalytics.title')}
         description={t('usageAnalytics.description')}
         actions={
-          <div className='flex items-center gap-2'>
+          <div className='flex flex-wrap items-center gap-2'>
             <div className='inline-flex rounded-xl border border-gray-200 bg-white/70 p-1 dark:border-white/[0.08] dark:bg-dark-100/70'>
               {[7, 30, 90].map(option => (
                 <button
@@ -605,7 +757,7 @@ const PluginUsagePage: React.FC = () => {
                   isFetching && 'motion-safe:animate-spin'
                 )}
               />
-              <span className='sr-only'>{t('usageAnalytics.refresh')}</span>
+              <span>{t('usageAnalytics.refresh')}</span>
             </Button>
           </div>
         }
@@ -618,9 +770,7 @@ const PluginUsagePage: React.FC = () => {
         </div>
       )}
 
-      <div className='mb-6'>
-        <CostGovernancePanel days={days} />
-      </div>
+      {!analytics && <CostGovernancePanel days={days} />}
 
       {analytics && (
         <div className='min-w-0 space-y-4'>
@@ -648,6 +798,9 @@ const PluginUsagePage: React.FC = () => {
               );
             })}
           </div>
+
+          <AgentUsageSection analytics={analytics} />
+          <CostGovernancePanel days={days} />
 
           {analytics.heatmap && analytics.heatmap.cells.length > 0 && (
             <UsageHeatmap

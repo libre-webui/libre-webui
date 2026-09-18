@@ -91,6 +91,7 @@ const GalleryPage = React.lazy(() => import('@/pages/GalleryPage'));
 const NotesPage = React.lazy(() => import('@/pages/NotesPage'));
 const CalendarPage = React.lazy(() => import('@/pages/CalendarPage'));
 const AutomationsPage = React.lazy(() => import('@/pages/AutomationsPage'));
+const CordisPage = React.lazy(() => import('@/pages/CordisPage'));
 const LibreClawPage = React.lazy(() => import('@/pages/LibreClawPage'));
 const ChannelsPage = React.lazy(() => import('@/pages/ChannelsPage'));
 const WorkPage = React.lazy(() => import('@/pages/WorkPage'));
@@ -558,6 +559,14 @@ const AppContent: React.FC = () => {
             <Route path='/notes' element={<NotesPage />} />
             <Route path='/calendar' element={<CalendarPage />} />
             <Route path='/automations' element={<AutomationsPage />} />
+            <Route
+              path='/cordis'
+              element={
+                <ProtectedRoute requireCordis={true}>
+                  <CordisPage />
+                </ProtectedRoute>
+              }
+            />
             <Route path='/channels' element={<ChannelsPage />} />
             <Route
               path='/work'
@@ -627,6 +636,14 @@ const AppContent: React.FC = () => {
                     <Route path='/notes' element={<NotesPage />} />
                     <Route path='/calendar' element={<CalendarPage />} />
                     <Route path='/automations' element={<AutomationsPage />} />
+                    <Route
+                      path='/cordis'
+                      element={
+                        <ProtectedRoute requireCordis={true}>
+                          <CordisPage />
+                        </ProtectedRoute>
+                      }
+                    />
                     <Route path='/channels' element={<ChannelsPage />} />
                     <Route
                       path='/work'

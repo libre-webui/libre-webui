@@ -1229,9 +1229,18 @@ test('on desktop the panel splits the screen and the chat stays usable', async (
   await expect(panel).toBeVisible();
 
   // The shell content shrinks beside the panel instead of sliding under it.
-  const shellBox = await page.getByTestId('app-shell-content').boundingBox();
-  const panelBox = await panel.boundingBox();
-  expect(shellBox!.x + shellBox!.width).toBeLessThanOrEqual(panelBox!.x + 2);
+  // Visibility precedes the spacer's width transition reaching its target.
+  await expect
+    .poll(async () => {
+      const shellBox = await page
+        .getByTestId('app-shell-content')
+        .boundingBox();
+      const panelBox = await panel.boundingBox();
+      return shellBox && panelBox
+        ? shellBox.x + shellBox.width - panelBox.x
+        : Infinity;
+    })
+    .toBeLessThanOrEqual(2);
 
   // Interacting with the chat no longer dismisses the panel.
   const input = page.locator('textarea').first();

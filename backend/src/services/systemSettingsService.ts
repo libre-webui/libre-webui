@@ -32,5 +32,6 @@ export const setSystemSetting = (key: string, value: string): Promise<void> =>
   repository().upsert(key, value, Date.now());
 
 export const setSystemSettings = (
-  values: Readonly<Record<string, string>>
-): Promise<void> => repository().upsertMany(values, Date.now());
+  values: Readonly<Record<string, string>>,
+  defaults?: Readonly<Record<string, string>>
+): Promise<void> => repository().upsertMany(values, Date.now(), defaults);

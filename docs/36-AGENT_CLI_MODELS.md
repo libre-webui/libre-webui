@@ -40,6 +40,12 @@ Anything found appears under an **Agents** group in the model selector. Nothing
 is installed for you, and no configuration file is required — if the command
 runs in your server's shell, it shows up.
 
+Settings → Chat → Defaults also identifies these entries as **Agent**, including
+DeepSeek Harness when enabled. Plugin models keep their provider name, and only
+Ollama models carry the Ollama label. Disabling Ollama does not hide configured
+agents or plugins. The model information card shows the selected entry's display
+name and provider, with size, family, and format only when supplied by its catalog.
+
 ## Choosing a model, not just a CLI
 
 Each CLI can expose several entries in the Agents group:
@@ -53,6 +59,21 @@ Each CLI can expose several entries in the Agents group:
   (from `opencode models`), and always requires an explicit choice — its
   CLI-level default can point at a local server that is not reachable from the
   Libre WebUI host.
+
+With the standard Libre WebUI provider adapter, **DeepSeek Harness** also offers
+one entry per available provider model, such as **DeepSeek Harness · gpt-5.6-sol
+(Codex (ChatGPT))**. The plain **DeepSeek Harness** entry uses the engine's
+configured default. A specific entry pins both the model and its provider for
+that conversation; another available provider cannot replace it during an outage.
+Only the authenticated administrator's available providers are listed, and
+listing choices does not start the engine.
+
+The same DSH entries work as the task model under **Settings → Chat → Defaults**
+for automatic titles and thinking summaries. **Use current running model** uses
+the conversation's saved DSH selection. These short text requests call its
+underlying provider model directly; they do not run the agent's tools or
+create an agent session. Other CLI profiles require an Ollama, plugin, or DSH
+task model for these auxiliary requests.
 
 Pi runs each turn stateless (`--no-session`), with local tools disabled and a
 neutral system prompt, so replies are not colored by — and chats never touch —
@@ -79,8 +100,19 @@ and run commands on the server if it decides to.
 
 Treat enabling this as equivalent to granting the agent shell access to the
 machine. Because of that, the feature ships **disabled**: an administrator must
-turn it on under **Settings → User Management → Access & policies → Agents**. The setting is persisted and
+turn it on under **Settings → User Management → Access & policies → Agent CLI models**. The setting is persisted and
 takes effect immediately, without a restart.
+
+The **Libre Claw** switch is separate. It can remain off while installed CLI
+models are enabled. Changing either control refreshes the model catalogue
+immediately; the **Agents** category contains direct CLI entries, while
+**Plugin Models** contains provider API integrations such as Codex (ChatGPT).
+DSH is an additional direct agent entry when both Agent CLI models and Cordis
+are enabled; its startup cannot block discovery of installed CLI agents.
+
+Existing installations inherit their previous saved Agents decision until an
+independent CLI setting is saved. Changing Libre Claw preserves that inherited
+CLI decision, so toggling one feature does not silently change the other.
 
 To pin the decision at the deployment level regardless of the runtime toggle,
 set the environment variable either way (this also locks the toggle in the
@@ -94,6 +126,23 @@ For a model that can act on files but stays inside a sandbox, use
 [Work](./WORKSPACES) instead: it runs tool-capable models in a locked-down
 container with an isolated workspace.
 
+## Usage tracking
+
+Open **Provider Usage** (`/usage`) and find **Agents** near the top. Claude Code,
+Codex, OpenCode, Pi, and native DSH activity have explicit entries, including a
+clear message when the selected period has no recorded calls.
+
+CLI calls made through LWUI record their outcome, duration, and reported token
+usage. Each invocation creates one usage event; repeated usage snapshots and
+per-step reports do not create duplicate events or token counts. Missing token
+counters remain unreported. Stopping a response records cancellation, and an
+unsuccessful CLI exit does not become a success merely because it produced
+partial text. Usage from CLI calls outside LWUI is not imported.
+
+Native DSH provider requests appear in this section. DSH calls through LWUI's
+model providers keep those providers' existing records. See
+[Agent usage](./SYSTEM_MONITORING#agent-usage) for the breakdown and limits.
+
 ## Configuration
 
 | Variable                   | Default  | Purpose                                                                           |
@@ -104,7 +153,7 @@ container with an isolated workspace.
 ## Troubleshooting
 
 **No Agents group appears.** Confirm the feature is enabled under
-**Settings → User Management → Access & policies → Agents** (it is off by default) and that you are signed in
+**Settings → User Management → Access & policies → Agent CLI models** (it is off by default) and that you are signed in
 as an administrator, then
 check that the command is on the `PATH` of the process running the backend — not
 just your interactive shell. A service manager, Docker container, or desktop

@@ -447,11 +447,11 @@ On Kubernetes, enable the native Pod/PVC runtime with Helm value
 deployment still reports **Runtime unavailable**, the Work page names which of
 these applies:
 
-| Message                                        | Cause and fix                                                                                                         |
-| ---------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
-| `The "docker" CLI is not installed…`           | A custom image without `docker-cli`. Use the official image, or point `WORK_DOCKER_COMMAND` at a CLI.                 |
-| `No Docker daemon is reachable…`               | The socket mount was removed, or the host daemon is stopped. Restore the mount in your Compose file and start Docker. |
-| `The Docker socket is mounted but…cannot open` | The socket's group differs from the container's. Set `DOCKER_GID` in `.env` (see below) and recreate the container.   |
+| Message                                                                         | Cause and fix                                                                                                                                                                                                                                                        |
+| ------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `The "docker" CLI is not installed…`                                            | A custom image without `docker-cli`. Use the official image, or point `WORK_DOCKER_COMMAND` at a CLI.                                                                                                                                                                |
+| `No Docker daemon is reachable…`                                                | The socket mount was removed, or the host daemon is stopped. Restore the mount in your Compose file and start Docker.                                                                                                                                                |
+| `The Docker socket is mounted but…cannot open`                                  | The socket's group differs from the container's. Set `DOCKER_GID` in `.env` (see below) and recreate the container.                                                                                                                                                  |
 | Work screen/audio closes with WebSocket `1006` and logs `screen is unreachable` | The containerized backend is dialing its own loopback. On Docker Desktop use the shipped `WORK_DOCKER_PUBLISHED_HOST=host.docker.internal`; on native Docker Engine also set `WORK_PREVIEW_BIND` to the non-public Docker bridge gateway, then recreate Libre WebUI. |
 
 Read the socket group through a container, because a macOS host reports a
@@ -621,6 +621,186 @@ rm -rf backend/data
 ```
 
 Restart the backend and create a fresh account.
+
+## Cordis Bridge Problems
+
+The embedded Cordis/DSH engine is opt-in and reports its own state. Start with:
+
+```bash
+curl -s http://127.0.0.1:3001/api/cordis/health | jq
+```
+
+### Every route returns 503 with `CORDIS_DISABLED`
+
+The engine is off. An administrator turns it on in **Settings → User
+Management → Access & policies → Cordis Engine**; it takes effect immediately.
+The engine starts lazily on the first request, so no separate start step is
+needed.
+
+### The Cordis Engine toggle is greyed out
+
+A deployment-level source pins the value, and the card says which one:
+
+- **`LIBRE_CORDIS_ENABLED`** — unset the environment variable to manage the
+  feature from the UI.
+- **`features.enabled` in `cordis.config.yml`** — remove that key to hand the
+  decision back to the administrator.
+
+### `DeepSeek Harness` is missing from the model selector
+
+The agent surface is a second administrator opt-in on top of the engine's own.
+Turn on **Access & policies -> Agent CLI models** as well as **Cordis Engine**; the entry
+appears only when both are on, because a deployment that has not enabled the
+engine has nothing to serve a turn with.
+
+### The Cordis Engine page is missing from the sidebar
+
+The destination is an administrator opt-in, so it is hidden until an
+administrator enables the engine, and it is hidden from non-administrators even
+when the engine is on. Its sessions are deployment-wide rather than per-user,
+which is why it is not offered to every account.
+
+### Every route returns 503 with `CORDIS_UNAVAILABLE`
+
+The composition did not mount. The `error` field names the reason, and
+`LIBRE_CORDIS_TRACE=true` adds the Cordis activation log. The usual causes:
+
+- `cordis.patch.yml` is missing, or is a mapping instead of a top-level array.
+  The Cordis `Include` carrier rejects any file that is not an array, which is
+  why host settings live in `cordis.config.yml` instead.
+- A row's `name` is a `!!js` expression. `name` is imported directly and must be
+  a literal string.
+- A relative specifier points outside the composition file's directory.
+  Relative specifiers resolve against the composition, not against the backend.
+- A package named by a row is not installed in `backend/node_modules`.
+
+### The engine starts but a service stays `pending`
+
+`/api/cordis/health` reports each service's state. A service that is `pending`
+means its providing row never activated. Read the dependencies:
+
+- `dsh-tools` needs `systemPrompt`. Without it there is a session store and an
+  empty tool registry.
+- `dsh-agent-loop` needs `agents`, `sessions`, `llm`, `tools`, `systemPrompt`,
+  and `sessionProjections`. Without any of them, sessions work but no message is
+  ever answered.
+
+`GET /api/cordis/tools` returning an empty array has a different cause: no tool
+plugin row is mounted. `dsh-tools` provides the registry; a plugin such as
+`@deepseek-ai/dsh-tool-fs` provides the tools.
+
+### The backend refuses to start when the bridge is enabled
+
+Startup fails when a required service is missing, by design: a half-mounted
+engine that answers with empty lists is worse than a clear failure. The error
+names the missing services. Either add their rows to `cordis.patch.yml` or turn
+off the requirement that needs them, for example
+`features.persistence: false` when no persistence row is mounted.
+
+### A message is accepted but the reply is empty
+
+The turn ran and produced no assistant message. This almost always means the
+agent had no model pinned, so the engine resolved no route. Set `model.route`
+and `model.model` in `cordis.config.yml` — the host passes both to the bridge
+row. A turn that produces no text and no error is the symptom.
+
+If `model.provider` is `none`, this is expected: no adapter is mounted and no
+request can be served.
+
+### Swapping the model adapter fails with "already registered"
+
+`an adapter for provider "<name>" is already registered` means the previous
+adapter's routes were still registered when the replacement mounted. The
+controller awaits `Loader.remove()` before creating the replacement precisely to
+prevent this, so seeing it means two rows claim the same route: check that
+`cordis.patch.yml` does not mount a provider adapter while the host also mounts
+one through `model.provider`. Set `model.provider: none` if the composition owns
+the adapter rows.
+
+### Sessions vanish after a restart
+
+Set `features.persistence: true` and mount the
+`@deepseek-ai/dsh-session-persistence-jsonl` row. Without it the engine keeps
+sessions in memory only. The host passes the resolved `sessionStorePath` to the shipped JSONL row.
+`LIBRE_CORDIS_SESSION_STORE` overrides that path. Keep the same store across restarts.
+
+### The engine reports a persona model was not found
+
+Persona IDs belong to Chat's execution choices, not provider model catalogs.
+The Engine model picker uses actual models and keeps its selection per session.
+Persona/agent defaults are ignored when choosing an Engine default, and older
+failed persona headers no longer pin a resumed session to that invalid model.
+Choose the desired provider model in the Engine composer; Chat's persona and
+instructions remain unchanged.
+
+### The engine cannot write a file
+
+New Engine sessions start read-only. Choose **Workspace write** to allow writes
+inside the displayed configured workspace, or review a native **Allow once**
+request for an individual operation. Neither choice permits paths outside the
+workspace, including symlink escapes. A mode change is unavailable while a turn
+is running; Stop the turn before changing its standing permissions.
+
+### Saved session fails with an identified-message error
+
+Earlier bridge revisions passed anonymous user messages to DSH and wrote invalid
+cancellation metadata. Affected logs may report `lacks an identified message`
+and the API returns `CORDIS_SESSION_INVALID`. Updated code prevents new malformed
+messages; it does not silently rewrite existing conversations.
+
+Stop the host Engine before repairing saved sessions. Preserve its configured
+session store and run the repair tool in dry-run mode with explicit session IDs:
+
+```bash
+node scripts/repair-cordis-sessions.mjs --store /absolute/path/to/cordis-sessions --session SESSION_ID
+```
+
+The tool accepts only the known legacy defects, validates the entire repaired
+log with DSH's strict event validator, and refuses unsupported or unrelated
+corruption. Review its output before using `--apply`; application creates a
+private backup and replaces the log atomically while holding the same exclusive
+session lock as DSH. Both plaintext and checksummed compressed v3 logs are
+supported. Never delete the store to work around a validation error.
+
+Older sessions may also retain a working directory outside the newly enforced
+workspace boundary. Their transcripts remain readable, but resuming them is
+refused. Start a new session inside the configured workspace, or explicitly
+configure an authorized workspace root; repairing message identities does not
+expand filesystem access.
+
+### DeepSeek Harness in Work
+
+Enable **Cordis Engine**, choose **DeepSeek Harness** in Work's **Engine**
+control, and select a model separately. This is different from Chat's
+**DeepSeek Harness** agent entry.
+Work retains the selected model/provider, validates tool support, and sends every
+tool through its existing approval and sandbox runtime. Disabling Cordis prevents
+new model steps and saved DSH tasks can be switched back to a normal model.
+The host Engine composition is not required for Work.
+
+### Sessions collide or a session cannot be created
+
+Session ids carry a per-engine random prefix. Two engines in one process that
+both minted `session-1` would collide, because `dsh-session-persistence-jsonl`
+indexes live sessions process-wide. If you see `session "<id>" already exists`,
+a session file from an earlier run is present in the store directory or two
+engines share one store. Use a distinct `sessionStorePath` per engine.
+
+### The engine changed files it should not have
+
+The engine runs tools with real filesystem access, and tool execution is not
+mediated by Libre WebUI's tool-approval flow. Check `workspacePath`: it defaults
+to a directory under Libre WebUI's data directory, and an operator who points it
+at a source tree has granted the engine access to that tree. Turning the bridge
+off or removing the bridge row stops the engine; it does not undo file changes.
+
+### Rolling back the engine
+
+Removing the bridge row from `cordis.patch.yml` and restarting, or setting
+`features.enabled: false`, withdraws the `libreDshEngine` service, releases its
+session-event listener, and disposes every agent it created. Session files on
+disk remain, because they are data rather than a side effect; delete the
+`sessionStorePath` directory to remove them.
 
 ## Still Stuck
 

@@ -334,7 +334,7 @@ test('creates a persistent Work task without exposing network controls', async (
 
   await expect(page.getByTestId('work-page')).toBeVisible();
   await expect(
-    page.getByRole('heading', { name: 'Start a new Work task' })
+    page.getByRole('heading', { name: 'What would you like to work on?' })
   ).toBeVisible();
   const landing = page.getByTestId('work-landing');
   await expect(landing).toBeVisible();
@@ -1747,7 +1747,7 @@ test('deletes the selected sidebar task directly without a second dirty prompt',
 
   await expect(page).toHaveURL(/\/work$/);
   await expect(
-    page.getByRole('heading', { name: 'Start a new Work task' })
+    page.getByRole('heading', { name: 'What would you like to work on?' })
   ).toBeVisible();
   expect(dialogs).toHaveLength(1);
   expect(dialogs[0]).toContain(

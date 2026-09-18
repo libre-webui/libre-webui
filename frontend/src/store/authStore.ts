@@ -47,6 +47,7 @@ interface AuthState {
   requiresAuth: () => boolean;
   canUseWork: () => boolean;
   canUseAgents: () => boolean;
+  canUseCordis: () => boolean;
   refreshWorkAccess: () => Promise<void>;
 }
 
@@ -210,6 +211,13 @@ export const useAuthStore = create<AuthState>()(
       canUseAgents: () => {
         const { systemInfo, user } = get();
         if (systemInfo?.agentsEnabled !== true) return false;
+        if (systemInfo?.requiresAuth === false) return true;
+        return user?.role === 'admin';
+      },
+
+      canUseCordis: () => {
+        const { systemInfo, user } = get();
+        if (systemInfo?.cordisEnabled !== true) return false;
         if (systemInfo?.requiresAuth === false) return true;
         return user?.role === 'admin';
       },

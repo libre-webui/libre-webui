@@ -36,7 +36,25 @@ export interface PluginModelDiscoveryResult {
   reason?: string;
 }
 
+export interface AgentUsageSummary {
+  agentId: string;
+  agentName: string;
+  calls: number;
+  tokens: number;
+  errors: number;
+  averageLatencyMs: number;
+  meteredCalls: number;
+  models: Array<{
+    model: string;
+    calls: number;
+    tokens: number;
+    errors: number;
+    meteredCalls: number;
+  }>;
+}
+
 export interface PluginUsageAnalytics {
+  agents?: AgentUsageSummary[];
   range: { from: number; to: number; days: number };
   totals: {
     calls: number;

@@ -16,6 +16,9 @@
  */
 
 import { createHash } from 'crypto';
+import { isWorkDshModel, workProviderModel } from '../cordis/work-model.js';
+import { getCordisEnabled } from './cordisAccessService.js';
+import { nativeDshProviderService } from '../cordis/dsh/native-provider-client.js';
 import type {
   GenerationOptions,
   OllamaChatMessage,
@@ -124,6 +127,10 @@ interface WorkModelProviderDependencies {
   >;
   post: ProviderPost;
   recordPluginUsage?: (usage: PluginUsageEventInput) => void;
+  nativeDsh?: Pick<
+    typeof nativeDshProviderService,
+    'assertModel' | 'generate' | 'routingFingerprint'
+  >;
 }
 
 export interface WorkModelStreamObserver {
@@ -167,13 +174,21 @@ export class WorkModelProviderService {
     provider: WorkProviderSelection,
     userId: string
   ): Promise<void> {
-    const cleaned = model.trim();
+    const cleaned = await this.providerModel(model, provider);
     if (!cleaned) {
       throw new WorkModelProviderError(
         'A Work model is required.',
         422,
         'WORK_MODEL_TOOLS_UNSUPPORTED'
       );
+    }
+    if (provider.providerType === 'dsh') {
+      await this.nativeDsh.assertModel(
+        nativeProviderId(provider),
+        cleaned,
+        userId
+      );
+      return;
     }
     if (provider.providerType === 'plugin') {
       await this.requireExactPlugin(provider.providerId, cleaned, userId);
@@ -220,6 +235,7 @@ export class WorkModelProviderService {
     provider: WorkProviderSelection,
     userId: string
   ): Promise<string | undefined> {
+    model = await this.providerModel(model, provider);
     if (provider.providerType !== 'plugin') return undefined;
     const providerId = provider.providerId?.trim();
     if (!providerId) return undefined;
@@ -252,6 +268,13 @@ export class WorkModelProviderService {
     provider: WorkProviderSelection,
     userId: string
   ): Promise<string> {
+    model = await this.providerModel(model, provider);
+    if (provider.providerType === 'dsh')
+      return this.nativeDsh.routingFingerprint(
+        nativeProviderId(provider),
+        model,
+        userId
+      );
     if (provider.providerType === 'ollama') {
       assertOllamaProvider(provider);
       return createHash('sha256')
@@ -299,6 +322,18 @@ export class WorkModelProviderService {
     userId: string,
     signal?: AbortSignal
   ): Promise<OllamaChatResponse> {
+    request = {
+      ...request,
+      model: await this.providerModel(request.model, provider),
+    };
+    if (provider.providerType === 'dsh')
+      return this.nativeDsh.generate(
+        request,
+        nativeProviderId(provider),
+        userId,
+        {},
+        signal
+      );
     if (provider.providerType === 'ollama') {
       assertOllamaProvider(provider);
       return this.dependencies.ollama.generateChatResponse(request, signal, {
@@ -320,14 +355,26 @@ export class WorkModelProviderService {
     observer: WorkModelStreamObserver,
     signal?: AbortSignal
   ): Promise<OllamaChatResponse> {
-    const streamRequest = { ...request, stream: true };
+    const streamRequest = {
+      ...request,
+      model: await this.providerModel(request.model, provider),
+      stream: true,
+    };
+    if (provider.providerType === 'dsh')
+      return this.nativeDsh.generate(
+        streamRequest,
+        nativeProviderId(provider),
+        userId,
+        observer,
+        signal
+      );
     if (provider.providerType === 'ollama') {
       assertOllamaProvider(provider);
       return this.generateOllamaStream(streamRequest, userId, observer, signal);
     }
     const plugin = await this.requireExactPlugin(
       provider.providerId,
-      request.model,
+      streamRequest.model,
       userId
     );
     return this.generatePluginStream(
@@ -337,6 +384,38 @@ export class WorkModelProviderService {
       observer,
       signal
     );
+  }
+
+  /** Resolve the engine wrapper only after checking the live administrator opt-in. */
+  private get nativeDsh() {
+    return this.dependencies.nativeDsh ?? nativeDshProviderService;
+  }
+
+  private async providerModel(
+    model: string,
+    provider: WorkProviderSelection
+  ): Promise<string> {
+    // Native model IDs belong to that server, including any literal dsh: prefix.
+    if (provider.providerType === 'dsh') return model.trim();
+    if (isWorkDshModel(model)) {
+      if (!(await getCordisEnabled())) {
+        throw new WorkModelProviderError(
+          'The DeepSeek Harness engine is disabled.',
+          403,
+          'WORK_DSH_DISABLED'
+        );
+      }
+      const underlying = workProviderModel(model);
+      if (!underlying || isWorkDshModel(underlying)) {
+        throw new WorkModelProviderError(
+          'Choose a provider model for the DeepSeek Harness engine.',
+          422,
+          'WORK_MODEL_TOOLS_UNSUPPORTED'
+        );
+      }
+      return underlying;
+    }
+    return model.trim();
   }
 
   private async hasConfiguredPlugin(userId: string): Promise<boolean> {
@@ -1882,3 +1961,14 @@ function assertOllamaProvider(provider: WorkProviderSelection): void {
 
 export const workModelProviderService = new WorkModelProviderService();
 export default workModelProviderService;
+
+function nativeProviderId(provider: WorkProviderSelection): string {
+  const id = provider.providerId?.trim();
+  if (!id || id.length > 200)
+    throw new WorkModelProviderError(
+      'A native DeepSeek provider ID is required.',
+      422,
+      'WORK_PROVIDER_REQUIRED'
+    );
+  return id;
+}

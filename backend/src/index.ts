@@ -101,6 +101,8 @@ import artifactsRoutes from './routes/artifacts.js';
 import searchRoutes from './routes/search.js';
 import openaiCompatRoutes from './routes/openaiCompat.js';
 import healthRoutes from './routes/health.js';
+import cordisRoutes from './routes/cordis.js';
+import { stopCordisHost } from './cordis/runtime.js';
 import jobsRoutes from './routes/jobs.js';
 import groupsRoutes from './routes/groups.js';
 import accessRoutes from './routes/access.js';
@@ -676,6 +678,10 @@ app.use('/api/artifacts', artifactsRoutes);
 app.use('/api/search', chatRateLimiter, searchRoutes);
 // The OpenAI-compatible public API answers on the canonical /v1 base.
 app.use('/v1', chatRateLimiter, openaiCompatRoutes);
+// The embedded Cordis/DSH engine. Every route answers 503 until an
+// operator enables the bridge, so mounting it unconditionally keeps the
+// feature behind configuration rather than behind a build variant.
+app.use('/api/cordis', chatRateLimiter, cordisRoutes);
 app.use('/api/jobs', jobsRoutes);
 app.use('/api/groups', groupsRoutes);
 app.use('/api/access', accessRoutes);
@@ -986,6 +992,9 @@ const shutdown = async (signal: 'SIGTERM' | 'SIGINT'): Promise<void> => {
       : Promise.resolve();
   const cleanup = Promise.allSettled([
     registeredWebSockets.close(),
+    // Disposing the Cordis root releases every engine effect, listener, and
+    // open session store handle instead of relying on process exit.
+    stopCordisHost(),
     stopWork,
     closeDurableJobRuntime(),
     httpClosed,

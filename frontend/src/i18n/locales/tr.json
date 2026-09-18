@@ -1,5 +1,7 @@
 {
   "common": {
+    "provider": "Sağlayıcı",
+    "agent": "Ajan",
     "loading": "Yükleniyor...",
     "save": "Kaydet",
     "saving": "Kaydediliyor...",
@@ -540,7 +542,8 @@
       "prompts": "İstemler",
       "skills": "Beceriler",
       "tools": "Araçlar",
-      "channels": "Kanallar"
+      "channels": "Kanallar",
+      "cordis": "Cordis Motoru"
     },
     "toggleSize": "Kenar çubuğu boyutunu değiştir",
     "expandSidebar": "Kenar çubuğunu genişlet"
@@ -1828,11 +1831,11 @@
       "saveFailed": "Varsayılan tema güncellenemedi"
     },
     "agentAccess": {
-      "title": "Ajanlar",
-      "description": "Ajanlar bölümünü (Libre Claw) yöneticilere sunun. Ajan CLI'ları ana makinede sunucu kullanıcısı olarak, Work korumalı alanının dışında çalışır.",
+      "title": "Libre Claw",
+      "description": "Libre Claw çalışma alanını yöneticilere göster.",
       "saved": "Ajan erişimi güncellendi",
       "saveFailed": "Ajan erişimi güncellenemedi",
-      "lockedByEnv": "AGENT_CLI_MODELS_ENABLED ortam değişkeniyle sabitlendi."
+      "lockedByEnv": "LIBRE_CLAW_ENABLED ortam değişkeniyle sabitlendi."
     },
     "groups": {
       "title": "Gruplar",
@@ -1969,12 +1972,25 @@
       "saving": "Kaydediliyor…",
       "saved": "E-posta ayarları kaydedildi.",
       "saveFailed": "E-posta ayarları kaydedilemedi."
+    },
+    "cordisAccess": {
+      "title": "Cordis Motoru",
+      "description": "Cordis motorunu yöneticilere sunun. Araçları, Libre WebUI araç onay akışının dışında gerçek dosya sistemi erişimiyle çalıştırır.",
+      "saved": "Cordis erişimi güncellendi",
+      "saveFailed": "Cordis erişimi güncellenemedi",
+      "lockedByEnv": "LIBRE_CORDIS_ENABLED ortam değişkeniyle sabitlendi.",
+      "lockedByFile": "cordis.config.yml içindeki features.enabled ile sabitlendi."
+    },
+    "agentCliAccess": {
+      "title": "CLI ajan modelleri",
+      "description": "Yöneticiler kurulu Pi, OpenCode, Codex ve Claude Code araçlarını sohbet modelleri olarak kullanabilir. Bunlar Work korumalı alanlarının dışında, ana makinede çalışır.",
+      "lockedByEnv": "AGENT_CLI_MODELS_ENABLED ortam değişkeniyle sabitlendi."
     }
   },
   "usageAnalytics": {
     "eyebrow": "Yönetim",
     "title": "Sağlayıcı Kullanımı",
-    "description": "Bu örnekteki etkin eklentiler genelinde giden API çağrılarını ve model tüketimini takip edin.",
+    "description": "Bu örnekteki sağlayıcıların ve ajanların model isteklerini ve kullanımını izleyin.",
     "days": "{{count}} gün",
     "refresh": "Kullanımı yenile",
     "loadFailed": "Sağlayıcı kullanımı yüklenemedi.",
@@ -2021,7 +2037,7 @@
       "notCharted": "Bu modeli grafiğe yüklemek için seçin"
     },
     "providers": {
-      "title": "Etkin eklenti trafiği",
+      "title": "Sağlayıcı ve ajan trafiği",
       "description": "Sağlayıcıya göre istek hacmi, güvenilirlik ve yanıt süresi.",
       "share": "Çağrıların %{{percent}} kadarı",
       "failures": "{{count}} başarısız veya iptal edilmiş",
@@ -2039,9 +2055,9 @@
     },
     "empty": {
       "title": "Henüz sağlayıcı çağrısı yok",
-      "description": "Etkin bir eklenti sohbet, Work, gömme, görüntü, konuşma, ses veya video isteklerini işledikten sonra çağrılar burada görünecektir."
+      "description": "Bir sağlayıcı veya ajan sohbet, Work, gömme, görüntü, konuşma, ses veya video isteklerini işledikten sonra istekler burada görünür."
     },
-    "privacyNote": "Kullanım, sunucuda giden eklenti sınırında ölçülür. Libre WebUI; sağlayıcı, model, zamanlama, durum ve bildirilen sayaçları saklar—asla istemleri, yanıtları, uç noktaları, kimlik bilgilerini veya sağlayıcı hata gövdelerini saklamaz. Token toplamları yalnızca sağlayıcının kullanım meta verilerini döndürdüğü çağrıları içerir.",
+    "privacyNote": "Sağlayıcı ve ajan isteklerinin kullanımı sunucuda kaydedilir. Libre WebUI; sağlayıcı, model, zamanlama, durum ve bildirilen sayaçları saklar—asla istemleri, yanıtları, uç noktaları, kimlik bilgilerini veya sağlayıcı hata gövdelerini saklamaz. Token toplamları yalnızca sağlayıcının kullanım meta verilerini döndürdüğü çağrıları içerir.",
     "heatmap": {
       "title": "Bir yıllık etkinlik",
       "description": "Son bir yıldaki günlük sağlayıcı çağrıları, her günün en çok kullanılan modeline göre renklendirilmiştir.",
@@ -2051,6 +2067,14 @@
       "less": "Az",
       "more": "Çok",
       "yearTotal": "Son bir yılda {{formatted}} çağrı"
+    },
+    "agents": {
+      "title": "Ajanlar",
+      "description": "CLI ajan çağrıları ve yerel DSH istekleri. Libre WebUI modellerini kullanan DSH, model sağlayıcısı altında sayılır.",
+      "noCalls": "Bu dönemde kayıtlı çağrı yok",
+      "unreported": "Token bildirilmedi",
+      "topModels": "En çok kullanılan modeller",
+      "legacy": "Bu sunucu tam bir ajan dökümü sağlamıyor. Mevcut ajan kayıtları aşağıda gösteriliyor."
     }
   },
   "systemPage": {
@@ -2710,8 +2734,8 @@
       "status": "Durum: {{status}}"
     },
     "landing": {
-      "title": "Yeni çalışma görevi başlat",
-      "description": "Yerel bir modele veya yapılandırılmış bir sağlayıcının modeline kalıcı ve yalıtılmış bir çalışma alanı verin. Model dosyaları inceleyebilir, araçları çalıştırabilir ve geri döndüğünüzde kaldığı yerden devam edebilir.",
+      "title": "Ne üzerinde çalışmak istersiniz?",
+      "description": "Bir görev tanımlayın. Modeliniz kendi çalışma alanına sahip olur.",
       "isolated": "Yalıtılmış",
       "isolatedBody": "Her görevin kendine ait kapsayıcısı ve dosyaları vardır.",
       "durable": "Kalıcı",
@@ -2732,7 +2756,12 @@
       "remoteDismissLabel": "Uzak sağlayıcı bildirimini kapat",
       "remoteDismissFailed": "Uzak sağlayıcı tercihi kaydedilemedi.",
       "noModelSelected": "Çalışma ile uyumlu bir model seçilmedi.",
-      "mentionAgents": "Bir ajandan bahset"
+      "mentionAgents": "Bir ajandan bahset",
+      "engine": "Motor",
+      "nativeDshModels": "Yerel DSH modelleri",
+      "libreModels": "Libre WebUI modelleri",
+      "nativeDshUnavailable": "Yerel DSH modelleri kullanılamıyor. Model listesini yenileyin veya sağlayıcı yapılandırmasını kontrol edin.",
+      "modelLabel": "Model"
     },
     "conversation": {
       "ready": "Çalışma alanı hazır",
@@ -2781,7 +2810,7 @@
       "readyOllama": "Docker hazır",
       "readyPlugin": "Docker + eklenti hazır",
       "readyHybrid": "Docker + modeller hazır",
-      "reason": "Docker ve kullanılabilir bir Ollama ya da eklenti model sağlayıcısı gereklidir."
+      "reason": "Bir Work çalışma ortamı ve kullanılabilir model sağlayıcısı gereklidir."
     },
     "workspace": {
       "label": "Çalışma alanı görünümleri",
@@ -2951,7 +2980,7 @@
       "label": "Ajan olarak işe al (isteğe bağlı)",
       "none": "Persona yok (tek seferlik görev)",
       "hint": "Bu görev adlandırılmış bir ajana dönüşür: personayı korur, kenar çubuğunda sabit kalır ve her çalıştırmadan sonra tek satırlık durum bildirir.",
-      "description": "Bu görevi kendi kimliğine sahip kalıcı bir ajana dönüştürmek için bir persona seçin."
+      "description": "Bu görevi adlandırılmış bir ajan olarak tutmak için bir persona seçin."
     },
     "agent": {
       "openScreen": "Tam ekran görünümünü aç",
@@ -3911,5 +3940,42 @@
       "connected": "{{name}} bağlandı — modelleri artık kullanılabilir",
       "saveFailed": "API anahtarı kaydedilemedi"
     }
+  },
+  "cordis": {
+    "title": "Cordis Motoru",
+    "description": "Gömülü DeepSeek Harness motoru için oturumlar, araçlar ve sohbet.",
+    "newSession": "Yeni oturum",
+    "createFailed": "Oturum oluşturulamadı.",
+    "deleteFailed": "Oturum silinemedi.",
+    "sendFailed": "Motor turu tamamlayamadı.",
+    "sessionsHeading": "Oturumlar",
+    "toolsHeading": "Araçlar",
+    "transcriptHeading": "Döküm",
+    "noSessions": "Henüz oturum yok. Başlamak için bir tane oluşturun.",
+    "noTools": "Motor hiçbir araç kaydetmedi.",
+    "selectSession": "Bir oturum seçin veya başlamak için oluşturun.",
+    "working": "Ajan çalışıyor…",
+    "composerLabel": "Motora mesaj",
+    "composerPlaceholder": "Motordan bir şey yapmasını isteyin…",
+    "send": "Gönder",
+    "stop": "Durdur",
+    "deleteSession": "Oturumu sil",
+    "unknownTime": "Bilinmeyen zaman",
+    "disabledTitle": "Cordis motoru kapalı",
+    "disabledHint": "Bir yönetici bunu Kullanıcı Yönetimi → Erişim ve ilkeler altında açabilir.",
+    "unavailableTitle": "Cordis motoru başlatılamadı",
+    "role": {
+      "user": "Siz",
+      "assistant": "Motor",
+      "system": "Sistem",
+      "tool": "Araç",
+      "unknown": "Mesaj"
+    },
+    "turnFailed": "Motor turu tamamlayamadı",
+    "permissions": "İzinler",
+    "readOnly": "Salt okunur",
+    "workspaceWrite": "Çalışma alanına yazma",
+    "context": "Oturum bağlamı",
+    "permissionHint": "Salt okunur modu dosyaları incelemeye izin verir. Yazma modu bu oturumun çalışma alanında düzenlemelere izin verir."
   }
 }

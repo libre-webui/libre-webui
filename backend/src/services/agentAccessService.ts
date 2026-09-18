@@ -16,30 +16,40 @@
  */
 
 /**
- * Whether the Agents section (Libre Claw and agent CLI models) is offered.
- * Agent CLIs run on the host as the server user — outside the Work sandbox —
- * so the feature ships disabled and an administrator must opt in. The
- * decision is a persisted system setting read on every check, mirroring the
- * Work access mode. The AGENT_CLI_MODELS_ENABLED environment variable, when
- * set, pins the value either way and locks the runtime toggle.
+ * Independent administrator opt-ins for Libre Claw and host agent CLI models.
+ * Existing installations retain their former shared decision until an admin
+ * changes either setting. New environment pins apply only to their own feature.
  */
 
-import { getSystemSetting, setSystemSetting } from './systemSettingsService.js';
+import {
+  getSystemSetting,
+  getSystemSettings,
+  setSystemSetting,
+  setSystemSettings,
+} from './systemSettingsService.js';
 
 export const AGENTS_ENABLED_KEY = 'agents_enabled';
+export const AGENT_CLI_MODELS_ENABLED_KEY = 'agent_cli_models_enabled';
+
+function environmentDecision(name: string): boolean | undefined {
+  const value = process.env[name];
+  return value === 'true' ? true : value === 'false' ? false : undefined;
+}
 
 /** Whether the environment pins the setting, locking the admin toggle. */
 export function agentsEnabledLockedByEnv(): boolean {
-  const env = process.env.AGENT_CLI_MODELS_ENABLED;
-  return env === 'true' || env === 'false';
+  return environmentDecision('LIBRE_CLAW_ENABLED') !== undefined;
 }
 
 export async function getAgentsEnabled(): Promise<boolean> {
-  const env = process.env.AGENT_CLI_MODELS_ENABLED;
-  if (env === 'false') return false;
-  if (env === 'true') return true;
+  const env = environmentDecision('LIBRE_CLAW_ENABLED');
+  if (env !== undefined) return env;
   try {
-    return (await getSystemSetting(AGENTS_ENABLED_KEY)) === 'true';
+    const saved = await getSystemSetting(AGENTS_ENABLED_KEY);
+    if (saved !== null) return saved === 'true';
+    // An untouched pre-split deployment may have enabled both features with
+    // this legacy variable. A saved Claw choice takes precedence from now on.
+    return environmentDecision('AGENT_CLI_MODELS_ENABLED') ?? false;
   } catch {
     // No database means no persisted opt-in; stay disabled.
     return false;
@@ -47,5 +57,45 @@ export async function getAgentsEnabled(): Promise<boolean> {
 }
 
 export async function setAgentsEnabled(enabled: boolean): Promise<void> {
-  await setSystemSetting(AGENTS_ENABLED_KEY, enabled ? 'true' : 'false');
+  const legacyCliEnabled =
+    environmentDecision('AGENT_CLI_MODELS_ENABLED') ??
+    (await getSystemSetting(AGENTS_ENABLED_KEY)) === 'true';
+  // Snapshot the old CLI decision in the same repository transaction as the
+  // Claw edit, so that changing Claw cannot silently enable or disable CLIs.
+  await setSystemSettings(
+    { [AGENTS_ENABLED_KEY]: enabled ? 'true' : 'false' },
+    { [AGENT_CLI_MODELS_ENABLED_KEY]: legacyCliEnabled ? 'true' : 'false' }
+  );
+}
+
+export function agentCliModelsEnabledLockedByEnv(): boolean {
+  return environmentDecision('AGENT_CLI_MODELS_ENABLED') !== undefined;
+}
+
+export async function getAgentCliModelsEnabled(): Promise<boolean> {
+  const env = environmentDecision('AGENT_CLI_MODELS_ENABLED');
+  if (env !== undefined) return env;
+  try {
+    const saved = await getSystemSettings([
+      AGENT_CLI_MODELS_ENABLED_KEY,
+      AGENTS_ENABLED_KEY,
+    ]);
+    if (
+      Object.prototype.hasOwnProperty.call(saved, AGENT_CLI_MODELS_ENABLED_KEY)
+    ) {
+      return saved[AGENT_CLI_MODELS_ENABLED_KEY] === 'true';
+    }
+    return saved[AGENTS_ENABLED_KEY] === 'true';
+  } catch {
+    return false;
+  }
+}
+
+export async function setAgentCliModelsEnabled(
+  enabled: boolean
+): Promise<void> {
+  await setSystemSetting(
+    AGENT_CLI_MODELS_ENABLED_KEY,
+    enabled ? 'true' : 'false'
+  );
 }

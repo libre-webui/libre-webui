@@ -22,7 +22,11 @@ import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import { randomBytes } from 'crypto';
 import { turnstileService, TurnstilePublicConfig } from './turnstileService.js';
-import { getAgentsEnabled } from './agentAccessService.js';
+import {
+  getAgentCliModelsEnabled,
+  getAgentsEnabled,
+} from './agentAccessService.js';
+import { getCordisEnabled } from './cordisAccessService.js';
 import {
   getDefaultTheme,
   type ThemePreference,
@@ -157,6 +161,9 @@ export interface SystemInfo {
   userCount: number;
   signupEnabled: boolean;
   agentsEnabled: boolean;
+  agentCliModelsEnabled: boolean;
+  /** Administrator opt-in for the embedded Cordis engine. */
+  cordisEnabled: boolean;
   /** True when at least one passkey is registered system-wide. */
   passkeysInUse: boolean;
   /** False when the admin disabled the Ollama provider entirely. */
@@ -275,6 +282,8 @@ export class AuthService {
       userCount,
       signupEnabled: canCreateLocalAccount(userCount),
       agentsEnabled: await getAgentsEnabled(),
+      agentCliModelsEnabled: await getAgentCliModelsEnabled(),
+      cordisEnabled: await getCordisEnabled(),
       passkeysInUse: await anyPasskeysRegistered(),
       ollamaEnabled: (await getOllamaRuntimeSettings()).enabled,
       version: packageVersion,

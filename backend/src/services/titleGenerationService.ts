@@ -26,11 +26,46 @@ import type {
   PluginResponse,
 } from '../types/index.js';
 import {
+  ChatProviderSelectionError,
   normalizeChatProviderSelection,
   type QualifiedChatProviderSelection,
 } from '../utils/chatProviderSelection.js';
 
 export const AUTO_TITLE_CURRENT_MODEL = '__current_running_model__';
+
+export type DshAuxiliaryTargetResolver = (
+  model: string,
+  userId: string
+) => Promise<{
+  model: string;
+  providerType: 'ollama' | 'plugin' | 'dsh';
+  providerId: string | null;
+}>;
+
+export type DshTextGenerator = (input: {
+  model: string;
+  providerId: string;
+  userId: string;
+  prompt: string;
+  purpose?: 'session-title';
+  signal?: AbortSignal;
+}) => Promise<string>;
+
+export const generateNativeDshText: DshTextGenerator = async input => {
+  const { nativeDshProviderService } =
+    await import('../cordis/dsh/native-provider-client.js');
+  return nativeDshProviderService.text(input);
+};
+
+/** Resolve text calls without creating an agent session or invoking tools. */
+export const resolveDshAuxiliaryTarget: DshAuxiliaryTargetResolver = async (
+  model,
+  userId
+) => {
+  const { resolveDshProviderTarget } =
+    await import('../cordis/dsh/chat-model.js');
+  return resolveDshProviderTarget(model, userId);
+};
 
 const TITLE_GENERATION_OPTIONS: GenerationOptions = {
   temperature: 0.3,
@@ -68,7 +103,7 @@ export interface GenerateTitleForSessionResult {
   title: string;
   session: ChatSession;
   model: string;
-  source: 'plugin' | 'ollama' | 'fallback';
+  source: 'plugin' | 'ollama' | 'dsh' | 'fallback';
 }
 
 export interface SanitizedGeneratedTitle {
@@ -125,6 +160,8 @@ export interface TitleGenerationServiceDependencies {
   ollamaService: OllamaServiceDependency;
   now?: () => number;
   logger?: Pick<Console, 'error'>;
+  resolveDshProviderTarget?: DshAuxiliaryTargetResolver;
+  generateDshText?: DshTextGenerator;
 }
 
 export function buildTitlePrompt(message: string): string {
@@ -209,6 +246,8 @@ export class TitleGenerationService {
   private ollamaService: OllamaServiceDependency;
   private now: () => number;
   private logger: Pick<Console, 'error'>;
+  private resolveDshProviderTarget: DshAuxiliaryTargetResolver;
+  private generateDshText: DshTextGenerator;
 
   constructor({
     chatService,
@@ -217,6 +256,8 @@ export class TitleGenerationService {
     ollamaService,
     now = Date.now,
     logger = console,
+    resolveDshProviderTarget = resolveDshAuxiliaryTarget,
+    generateDshText = generateNativeDshText,
   }: TitleGenerationServiceDependencies) {
     this.chatService = chatService;
     this.chatGenerationService = chatGenerationService;
@@ -224,6 +265,8 @@ export class TitleGenerationService {
     this.ollamaService = ollamaService;
     this.now = now;
     this.logger = logger;
+    this.resolveDshProviderTarget = resolveDshProviderTarget;
+    this.generateDshText = generateDshText;
   }
 
   async resolveTitleGenerationModel(
@@ -232,6 +275,7 @@ export class TitleGenerationService {
     userId: string
   ): Promise<string> {
     if (requestedModel === AUTO_TITLE_CURRENT_MODEL) {
+      if (session.providerType === 'agent') return session.model;
       return this.chatGenerationService.resolveActualModelName(
         session.model,
         userId
@@ -254,31 +298,69 @@ export class TitleGenerationService {
       return null;
     }
 
-    const model = await this.resolveTitleGenerationModel(
+    let providerSelection =
+      requestedModel === AUTO_TITLE_CURRENT_MODEL
+        ? // A persona session's binding points at the pseudo-model; the
+          // resolved backing model finds its own provider by name.
+          session.model.startsWith('persona:') &&
+          session.providerType !== 'agent'
+          ? undefined
+          : normalizeChatProviderSelection(session)
+        : normalizeChatProviderSelection({ providerType, providerId });
+    if (
+      requestedModel.startsWith('persona:') &&
+      providerSelection?.providerType !== 'agent'
+    ) {
+      // Task personas carry the same synthetic binding as Chat personas.
+      // Their backing model owns provider resolution, including plugin routes.
+      providerSelection = undefined;
+    }
+    const usesDsh =
+      providerSelection?.providerType === 'agent' &&
+      providerSelection.providerId === 'dsh';
+    if (providerSelection?.providerType === 'agent' && !usesDsh) {
+      throw new ChatProviderSelectionError(
+        'Title generation requires an Ollama, plugin, or DeepSeek Harness model.'
+      );
+    }
+    let model = await this.resolveTitleGenerationModel(
       requestedModel,
       session,
       userId
     );
-    const providerSelection =
-      requestedModel === AUTO_TITLE_CURRENT_MODEL
-        ? // A persona session's binding points at the pseudo-model; the
-          // resolved backing model finds its own provider by name.
-          session.model.startsWith('persona:')
-          ? undefined
-          : normalizeChatProviderSelection(session)
-        : normalizeChatProviderSelection({ providerType, providerId });
 
     let title = buildFallbackTitle(message);
     let source: GenerateTitleForSessionResult['source'] = 'fallback';
 
     try {
-      const generation = await this.generateTitleWithModel(
-        sessionId,
-        model,
-        message,
-        userId,
-        providerSelection
-      );
+      let nativeProviderId: string | undefined;
+      if (usesDsh) {
+        const resolved = await this.resolveDshProviderTarget(model, userId);
+        model = resolved.model;
+        if (resolved.providerType === 'dsh') {
+          if (!resolved.providerId)
+            throw new Error('Native DSH provider identity is missing.');
+          nativeProviderId = resolved.providerId;
+        } else providerSelection = normalizeChatProviderSelection(resolved);
+      }
+      const generation = nativeProviderId
+        ? {
+            title: await this.generateDshText({
+              model,
+              providerId: nativeProviderId,
+              userId,
+              prompt: buildTitlePrompt(message),
+              purpose: 'session-title',
+            }),
+            source: 'dsh' as const,
+          }
+        : await this.generateTitleWithModel(
+            sessionId,
+            model,
+            message,
+            userId,
+            providerSelection
+          );
       const sanitizedTitle = sanitizeGeneratedTitleResult(
         generation.title,
         message
@@ -320,6 +402,15 @@ export class TitleGenerationService {
       TITLE_GENERATION_OPTIONS,
       providerSelection
     );
+    if (
+      target.providerType === 'agent' ||
+      (providerSelection?.providerType === 'plugin' &&
+        target.activePlugin?.id !== providerSelection.providerId) ||
+      (providerSelection?.providerType === 'ollama' && target.activePlugin)
+    ) {
+      throw new Error('The selected title provider is unavailable.');
+    }
+    const { tools: _tools, ...textOptions } = target.mergedOptions;
     const prompt = buildTitlePrompt(message);
 
     if (target.activePlugin) {
@@ -333,7 +424,7 @@ export class TitleGenerationService {
             timestamp: this.now(),
           },
         ],
-        { ...target.mergedOptions, ...PLUGIN_TITLE_GENERATION_OPTIONS },
+        { ...textOptions, ...PLUGIN_TITLE_GENERATION_OPTIONS },
         userId,
         target.activePlugin.id
       );
@@ -349,7 +440,7 @@ export class TitleGenerationService {
 
     // Ollama takes the thinking setting beside the options, never inside
     // them, and this call answers it for itself below.
-    const { think: _think, ...ollamaOptions } = target.mergedOptions;
+    const { think: _think, ...ollamaOptions } = textOptions;
 
     const response = await this.ollamaService.generateResponse({
       model: target.actualModelName,

@@ -1,5 +1,7 @@
 {
   "common": {
+    "provider": "Veitandi",
+    "agent": "Fulltrúi",
     "loading": "Hleður...",
     "save": "Vista",
     "saving": "Vistar...",
@@ -540,7 +542,8 @@
       "prompts": "Leiðbeiningar",
       "skills": "Færni",
       "tools": "Tól",
-      "channels": "Rásir"
+      "channels": "Rásir",
+      "cordis": "Cordis-vél"
     },
     "toggleSize": "Skipta um stærð hliðarspjalds",
     "expandSidebar": "Stækka hliðarspjald"
@@ -1828,11 +1831,11 @@
       "saveFailed": "Ekki tókst að uppfæra sjálfgefið þema"
     },
     "agentAccess": {
-      "title": "Fulltrúar",
-      "description": "Bjóða stjórnendum upp á Fulltrúa-hlutann (Libre Claw). Fulltrúa-skipanalínur keyra á hýslinum sem netþjónsnotandinn, utan Work-sandkassans.",
+      "title": "Libre Claw",
+      "description": "Sýna stjórnendum Libre Claw-vinnusvæðið.",
       "saved": "Aðgangur að fulltrúum uppfærður",
       "saveFailed": "Ekki tókst að uppfæra aðgang að fulltrúum",
-      "lockedByEnv": "Fest með umhverfisbreytunni AGENT_CLI_MODELS_ENABLED."
+      "lockedByEnv": "Fest með umhverfisbreytunni LIBRE_CLAW_ENABLED."
     },
     "groups": {
       "title": "Hópar",
@@ -1969,12 +1972,25 @@
       "saving": "Vistar…",
       "saved": "Tölvupóststillingar vistaðar.",
       "saveFailed": "Ekki tókst að vista tölvupóststillingarnar."
+    },
+    "cordisAccess": {
+      "title": "Cordis-vél",
+      "description": "Bjóða stjórnendum Cordis-vélina. Hún keyrir verkfæri með raunverulegum aðgangi að skráarkerfinu utan samþykktarflæðis Libre WebUI.",
+      "saved": "Cordis-aðgangur uppfærður",
+      "saveFailed": "Ekki tókst að uppfæra Cordis-aðgang",
+      "lockedByEnv": "Fest af umhverfisbreytunni LIBRE_CORDIS_ENABLED.",
+      "lockedByFile": "Fest af features.enabled í cordis.config.yml."
+    },
+    "agentCliAccess": {
+      "title": "Líkön CLI-agenta",
+      "description": "Stjórnendur geta notað uppsett Pi, OpenCode, Codex og Claude Code sem spjalllíkön. Þau keyra á hýsivélinni utan Work-sandkassa.",
+      "lockedByEnv": "Fest með umhverfisbreytunni AGENT_CLI_MODELS_ENABLED."
     }
   },
   "usageAnalytics": {
     "eyebrow": "Stjórnun",
     "title": "Notkun veitu",
-    "description": "Fylgstu með útbundnum API köllum og líkananotkun yfir virkar viðbætur á þessu tilviki.",
+    "description": "Fylgstu með líkanabeiðnum og notkun þjónustuveitenda og umboðsaðila á þessu tilviki.",
     "days": "{{count}} dagar",
     "refresh": "Uppfæra notkun",
     "loadFailed": "Ekki tókst að hlaða notkun veitu.",
@@ -2021,7 +2037,7 @@
       "notCharted": "Veldu til að hlaða þessu líkani í grafið"
     },
     "providers": {
-      "title": "Umferð virkra viðbóta",
+      "title": "Umferð þjónustuveitenda og umboðsaðila",
       "description": "Fjöldi beiðna, áreiðanleiki og svartími eftir þjónustuveitanda.",
       "share": "{{percent}}% kalla",
       "failures": "{{count}} mistókust eða var hætt við",
@@ -2039,9 +2055,9 @@
     },
     "empty": {
       "title": "Engar beiningar til þjónustu enn",
-      "description": "Beiningar birtast hér eftir að virk viðbót sér um spjall, vinnu, ígræðslu, mynd, tal, hljóð eða myndbandabeiningar."
+      "description": "Beiðnir birtast hér eftir að þjónustuveitandi eða umboðsaðili afgreiðir spjall, Work, innfellingar, myndir, tal, hljóð eða myndskeið."
     },
-    "privacyNote": "Notkun er mæld á netþjóninum við jaðar útleiðarviðbótar. Libre WebUI geymir þjónustu, líkan, tímasetningu, stöðu og skráða teljara—aldrei kvaðningu, svör, endapunkta, skilríki eða villumeldingar þjónustu. Heildarfjöldi táknanna inniheldur aðeins beiningar þar sem þjónustan skilaði notkunarmetögögnum.",
+    "privacyNote": "Notkun vegna beiðna til þjónustuveitenda og umboðsaðila er skráð á netþjóninum. Libre WebUI geymir þjónustu, líkan, tímasetningu, stöðu og skráða teljara—aldrei kvaðningu, svör, endapunkta, skilríki eða villumeldingar þjónustu. Heildarfjöldi táknanna inniheldur aðeins beiningar þar sem þjónustan skilaði notkunarmetögögnum.",
     "heatmap": {
       "title": "Ár af virkni",
       "description": "Dagleg köll til veitna síðastliðið ár, lituð eftir mest notaða líkani hvers dags.",
@@ -2051,6 +2067,14 @@
       "less": "Minna",
       "more": "Meira",
       "yearTotal": "{{formatted}} köll síðastliðið ár"
+    },
+    "agents": {
+      "title": "Fulltrúar",
+      "description": "Köll til CLI-umboðsaðila og innbyggðar DSH-beiðnir. DSH sem notar Libre WebUI-líkön er talið undir þjónustuveitu líkansins.",
+      "noCalls": "Engin skráð köll á þessu tímabili",
+      "unreported": "Tákn ekki tilkynnt",
+      "topModels": "Mest notuðu líkön",
+      "legacy": "Þessi þjónn veitir ekki fulla sundurliðun umboðsaðila. Tiltækar færslur umboðsaðila birtast hér að neðan."
     }
   },
   "systemPage": {
@@ -2710,8 +2734,8 @@
       "status": "Staða: {{status}}"
     },
     "landing": {
-      "title": "Hefja nýtt vinnuverkefni",
-      "description": "Gefðu staðbundnu líkani eða líkani frá stilltum þjónustuaðila varanlegt, einangrað vinnusvæði. Það getur skoðað skrár, keyrt verkfæri og haldið áfram þar sem frá var horfið þegar þú kemur aftur.",
+      "title": "Hvað viltu vinna að?",
+      "description": "Lýstu verkefni. Líkanið þitt fær eigið vinnusvæði.",
       "isolated": "Einangrað",
       "isolatedBody": "Hvert verkefni fær eigin gám og skrár.",
       "durable": "Varanlegt",
@@ -2732,7 +2756,12 @@
       "remoteDismissLabel": "Loka tilkynningu um fjartengdan þjónustuaðila",
       "remoteDismissFailed": "Ekki tókst að vista val fyrir fjartengdan þjónustuaðila.",
       "noModelSelected": "Ekkert líkan sem styður Vinnu er valið.",
-      "mentionAgents": "Nefna fulltrúa"
+      "mentionAgents": "Nefna fulltrúa",
+      "engine": "Vél",
+      "nativeDshModels": "Innbyggð DSH-líkön",
+      "libreModels": "Libre WebUI-líkön",
+      "nativeDshUnavailable": "Innbyggð DSH-líkön eru ekki tiltæk. Endurnýjaðu líkanalistann eða athugaðu stillingar þjónustuveitunnar.",
+      "modelLabel": "Líkan"
     },
     "conversation": {
       "ready": "Vinnusvæði tilbúið",
@@ -2781,7 +2810,7 @@
       "readyOllama": "Docker tilbúið",
       "readyPlugin": "Docker + viðbót tilbúin",
       "readyHybrid": "Docker + líkön tilbúin",
-      "reason": "Docker og tiltækur Ollama- eða viðbótarþjónustuaðili fyrir líkan eru nauðsynleg."
+      "reason": "Work-keyrsluumhverfi og tiltækur líkanaveitandi eru nauðsynleg."
     },
     "workspace": {
       "label": "Yfirlit vinnusvæðis",
@@ -2951,7 +2980,7 @@
       "label": "Ráða sem fulltrúa (valfrjálst)",
       "none": "Engin persóna (einskiptisverk)",
       "hint": "Þetta verk verður nefndur fulltrúi: það heldur persónunni, er fest í hliðarstikunni og birtir eina stöðulínu eftir hverja keyrslu.",
-      "description": "Veldu persónu til að breyta þessu verki í varanlegan fulltrúa með eigin auðkenni."
+      "description": "Veldu persónu til að halda þessu verkefni sem nafngreindum fulltrúa."
     },
     "agent": {
       "openScreen": "Opna fulla skjásýn",
@@ -3911,5 +3940,42 @@
       "connected": "{{name}} tengt — líkön þess eru nú tiltæk",
       "saveFailed": "Ekki tókst að vista API lykilinn"
     }
+  },
+  "cordis": {
+    "title": "Cordis-vél",
+    "description": "Lotur, verkfæri og spjall fyrir innbyggðu DeepSeek Harness-vélina.",
+    "newSession": "Ný lota",
+    "createFailed": "Ekki tókst að búa til lotu.",
+    "deleteFailed": "Ekki tókst að eyða lotunni.",
+    "sendFailed": "Vélin gat ekki klárað umferðina.",
+    "sessionsHeading": "Lotur",
+    "toolsHeading": "Verkfæri",
+    "transcriptHeading": "Uppskrift",
+    "noSessions": "Engar lotur enn. Búðu til eina til að byrja.",
+    "noTools": "Vélin skráði engin verkfæri.",
+    "selectSession": "Veldu lotu eða búðu til eina til að byrja.",
+    "working": "Agentinn er að vinna…",
+    "composerLabel": "Skilaboð til vélarinnar",
+    "composerPlaceholder": "Biddu vélina um að gera eitthvað…",
+    "send": "Senda",
+    "stop": "Stöðva",
+    "deleteSession": "Eyða lotu",
+    "unknownTime": "Óþekktur tími",
+    "disabledTitle": "Cordis-vélin er slökkt",
+    "disabledHint": "Stjórnandi getur kveikt á því í Notendastjórnun → Aðgangur og stefnur.",
+    "unavailableTitle": "Cordis-vélin gat ekki ræst",
+    "role": {
+      "user": "Þú",
+      "assistant": "Vél",
+      "system": "Kerfi",
+      "tool": "Verkfæri",
+      "unknown": "Skilaboð"
+    },
+    "turnFailed": "Vélin gat ekki klárað umferðina",
+    "permissions": "Heimildir",
+    "readOnly": "Aðeins lestur",
+    "workspaceWrite": "Skrifa á vinnusvæði",
+    "context": "Samhengi lotu",
+    "permissionHint": "Aðeins lestur leyfir skoðun skráa. Skrifheimild leyfir breytingar innan vinnusvæðis þessarar lotu."
   }
 }

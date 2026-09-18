@@ -62,10 +62,6 @@ import {
   applyPluginDefinitionPolicy,
   buildPluginChatPayload,
   convertProviderResponse,
-  getOpenAICompatibleSamplingParameters,
-  resolvePluginChatParameters,
-  toOpenAICompatibleMessages,
-  toOpenAICompatibleTools,
 } from '../utils/pluginChatAdapter.js';
 import {
   inferReasoningFromModelId,
@@ -2705,40 +2701,21 @@ export class PluginService {
       apiKey,
       processedEndpoint
     );
-    let payload: Record<string, unknown>;
-
-    if (activePlugin.id === 'anthropic' || apiMode === 'responses') {
-      const pluginRequest = buildPluginChatPayload(
-        activePlugin,
-        model,
-        messages,
-        options,
-        pluginVars,
-        true,
-        apiMode,
-        providerStateScope
-      );
-      payload = pluginRequest.payload;
-      Object.assign(headers, pluginRequest.headers);
-    } else {
-      const params = resolvePluginChatParameters(options, pluginVars);
-      payload = {
-        model,
-        messages: toOpenAICompatibleMessages(messages, {
-          includeReasoning: activePlugin.id === 'openrouter',
-        }),
-        ...getOpenAICompatibleSamplingParameters(activePlugin, params),
-        max_tokens: params.maxTokens,
-        stop: options.stop,
-        stream: true,
-        // OpenAI-compatible servers omit token counts from a stream unless
-        // they are asked for, which is why provider-backed replies used to
-        // report zero tokens.
-        stream_options: { include_usage: true },
-        ...(options.tools?.length
-          ? { tools: toOpenAICompatibleTools(options.tools) }
-          : {}),
-      };
+    const pluginRequest = buildPluginChatPayload(
+      activePlugin,
+      model,
+      messages,
+      options,
+      pluginVars,
+      true,
+      apiMode,
+      providerStateScope
+    );
+    const payload = pluginRequest.payload;
+    Object.assign(headers, pluginRequest.headers);
+    if (activePlugin.id !== 'anthropic' && apiMode !== 'responses') {
+      // Completion streams otherwise omit usage on OpenAI-compatible servers.
+      payload.stream_options = { include_usage: true };
     }
 
     const startedAt = Date.now();

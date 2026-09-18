@@ -4,7 +4,88 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  */
 
-import type { PluginUsageAnalytics } from './api/pluginApi';
+import type { AgentUsageSummary, PluginUsageAnalytics } from './api/pluginApi';
+
+export interface UsageAgentSummary extends Omit<
+  AgentUsageSummary,
+  'meteredCalls' | 'models'
+> {
+  meteredCalls?: number;
+  models: Array<
+    Omit<AgentUsageSummary['models'][number], 'meteredCalls'> & {
+      meteredCalls?: number;
+    }
+  >;
+}
+
+const agentNames: Record<string, string> = {
+  dsh: 'DeepSeek Harness',
+  'claude-code': 'Claude Code',
+  codex: 'Codex',
+  opencode: 'OpenCode',
+  pi: 'Pi',
+};
+
+const usageAgentId = (providerId: string): string | undefined => {
+  if (providerId.startsWith('dsh-native:')) return 'dsh';
+  if (providerId.startsWith('agent-cli:')) {
+    return providerId.slice('agent-cli:'.length) || undefined;
+  }
+  return undefined;
+};
+
+export function getUsageAgentSummaries(
+  analytics: PluginUsageAnalytics
+): UsageAgentSummary[] {
+  if (analytics.agents !== undefined) return analytics.agents;
+
+  // Older servers have capped provider lists and no token-reporting counts.
+  // Show only returned agent records, without inferring absent agents or
+  // attributing ordinary provider traffic to a particular harness.
+  const agents = new Map<string, UsageAgentSummary>();
+  for (const provider of analytics.plugins) {
+    const agentId = usageAgentId(provider.pluginId);
+    if (!agentId) continue;
+    const agent = agents.get(agentId) ?? {
+      agentId,
+      agentName: agentNames[agentId] ?? provider.pluginName,
+      calls: 0,
+      tokens: 0,
+      errors: 0,
+      averageLatencyMs: 0,
+      models: [],
+    };
+    const calls = agent.calls + provider.calls;
+    agent.averageLatencyMs = calls
+      ? (agent.averageLatencyMs * agent.calls +
+          provider.averageLatencyMs * provider.calls) /
+        calls
+      : 0;
+    agent.calls = calls;
+    agent.tokens += provider.tokens;
+    agent.errors += provider.errors;
+    agents.set(agentId, agent);
+  }
+  for (const model of analytics.models) {
+    const agentId = usageAgentId(model.pluginId);
+    const agent = agentId ? agents.get(agentId) : undefined;
+    if (!agent) continue;
+    const previous = agent.models.find(entry => entry.model === model.model);
+    if (previous) {
+      previous.calls += model.calls;
+      previous.tokens += model.tokens;
+      previous.errors += model.errors;
+    } else {
+      agent.models.push({
+        model: model.model,
+        calls: model.calls,
+        tokens: model.tokens,
+        errors: model.errors,
+      });
+    }
+  }
+  return [...agents.values()];
+}
 
 // Categorical chart marks use the same colors on both themes. Labels and
 // selection indicators also identify each model, independently of color.

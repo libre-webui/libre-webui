@@ -88,6 +88,7 @@ import {
 import { normalizeTheme } from '@/utils/theme';
 import { triggerHapticFeedback } from '@/utils/haptics';
 import { resolveAppVersion } from '@/utils/appVersion';
+import { modelOptionLabel } from '@/utils/modelPresentation';
 import {
   chatModelOptionKey,
   chatModelSelectionFromKey,
@@ -223,7 +224,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     providerType: preferences.titleSettings?.taskProviderType,
     providerId: preferences.titleSettings?.taskProviderId,
   };
-  const taskSelectorModels = withUnavailableChatModel(models, taskSelection);
+  const taskSelectorModels =
+    taskSelection.model === AUTO_TITLE_CURRENT_MODEL
+      ? models
+      : withUnavailableChatModel(models, taskSelection);
   const currentTaskModel =
     taskSelection.model === AUTO_TITLE_CURRENT_MODEL
       ? AUTO_TITLE_CURRENT_MODEL
@@ -251,23 +255,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     },
     ...visionSelectorModels.map(model => ({
       value: chatModelOptionKey(model),
-      label: model.isLegacySelection
-        ? `${model.name} · provider not recorded${
-            model.isUnavailable ? ' (unavailable)' : ''
-          }`
-        : model.isPersona
-          ? `${model.personaName || model.name} (persona)`
-          : model.isPlugin
-            ? `${model.name} · ${model.pluginName || model.pluginId}${
-                model.isUnavailable ? ' (unavailable)' : ''
-              }`
-            : model.isAgent
-              ? `${model.agentName || model.name} · Agent CLI${
-                  model.isUnavailable ? ' (unavailable)' : ''
-                }`
-              : `${model.name} · Ollama${
-                  model.isUnavailable ? ' (unavailable)' : ''
-                }`,
+      label: modelOptionLabel(model, t, 'separator'),
     })),
   ];
   const autoTitleTaskModelOptions = [
@@ -281,19 +269,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     },
     ...taskSelectorModels.map(model => ({
       value: chatModelOptionKey(model),
-      label: model.isLegacySelection
-        ? `${model.name} · provider not recorded${
-            model.isUnavailable ? ' (unavailable)' : ''
-          }`
-        : model.isPersona
-          ? `${model.personaName || model.name} (persona)`
-          : model.isPlugin
-            ? `${model.name} · ${model.pluginName || model.pluginId}${
-                model.isUnavailable ? ' (unavailable)' : ''
-              }`
-            : `${model.name} · Ollama${
-                model.isUnavailable ? ' (unavailable)' : ''
-              }`,
+      label: modelOptionLabel(model, t, 'separator'),
     })),
   ];
 
@@ -1538,7 +1514,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       taskModel: selection?.model || taskModel,
       taskProviderType: selection?.providerType || null,
       taskProviderId:
-        selection?.providerType === 'plugin'
+        selection?.providerType === 'plugin' ||
+        selection?.providerType === 'agent'
           ? selection.providerId || null
           : null,
     };
