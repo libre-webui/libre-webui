@@ -104,11 +104,35 @@ export interface SmtpVerifyResult {
 
 const DEFAULT_TIMEOUT_MS = 15_000;
 const MAX_REPLY_BYTES = 64 * 1024;
-const EMAIL_ADDRESS_PATTERN = /^[^\s@<>"',;]+@[^\s@<>"',;]+\.[^\s@<>"',;]+$/;
+const ADDRESS_FORBIDDEN = new Set([...'<>"\',;']);
 
-/** True when `value` looks like a bare mailbox address (no display name). */
-export const isEmailAddress = (value: string): boolean =>
-  EMAIL_ADDRESS_PATTERN.test(value.trim());
+const isAddressPart = (part: string): boolean => {
+  if (!part) return false;
+  for (const character of part) {
+    if (ADDRESS_FORBIDDEN.has(character) || /\s/.test(character)) return false;
+  }
+  return true;
+};
+
+/**
+ * True when `value` looks like a bare mailbox address (no display name):
+ * one `@`, a non-empty local part, and a domain with a dot that has text on
+ * both sides. Written without a backtracking regex on purpose.
+ */
+export const isEmailAddress = (value: string): boolean => {
+  const trimmed = value.trim();
+  const at = trimmed.indexOf('@');
+  if (at <= 0 || at !== trimmed.lastIndexOf('@')) return false;
+  const local = trimmed.slice(0, at);
+  const domain = trimmed.slice(at + 1);
+  const dot = domain.lastIndexOf('.');
+  if (dot <= 0 || dot === domain.length - 1) return false;
+  return (
+    isAddressPart(local) &&
+    isAddressPart(domain.slice(0, dot)) &&
+    isAddressPart(domain.slice(dot + 1))
+  );
+};
 
 /** Pulls the bare address out of `Display Name <user@host>` or a plain address. */
 export const extractEmailAddress = (value: string): string | null => {

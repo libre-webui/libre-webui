@@ -165,7 +165,14 @@ const defaultPortFor = (security: SmtpSecurity): number =>
   security === 'tls' ? 465 : 587;
 
 const normalizeAppUrl = (value: string): string => {
-  const trimmed = value.trim().replace(/\/+$/, '');
+  // Strip trailing slashes without a regex: an end-anchored /\/+$/ backtracks
+  // polynomially on a long run of slashes (CodeQL js/polynomial-redos).
+  let trimmed = value.trim();
+  let end = trimmed.length;
+  while (end > 0 && trimmed.charCodeAt(end - 1) === 0x2f) {
+    end -= 1;
+  }
+  trimmed = trimmed.slice(0, end);
   if (!trimmed) return '';
   let parsed: URL;
   try {

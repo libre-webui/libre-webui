@@ -1158,8 +1158,11 @@ export class WorkRuntimeService {
   }
 
   private releasePreviewLease(taskId: string): void {
-    this.previewUsageReleases.get(taskId)?.();
+    const releaseUsage = this.previewUsageReleases.get(taskId);
     this.previewUsageReleases.delete(taskId);
+    if (typeof releaseUsage === 'function') {
+      releaseUsage();
+    }
     if (!this.previewLeaseReleases.has(taskId)) return;
     const release = this.previewLeaseReleases.get(taskId);
     this.previewLeaseReleases.delete(taskId);
