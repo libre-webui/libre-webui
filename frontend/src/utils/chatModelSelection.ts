@@ -193,7 +193,11 @@ export function findChatModelForSelection(
 
     return models.find(
       model =>
-        !model.isPlugin && !model.isPersona && model.name === selection.model
+        !model.isPlugin &&
+        !model.isPersona &&
+        !model.isAgent &&
+        !model.isLegacySelection &&
+        model.name === selection.model
     );
   }
 

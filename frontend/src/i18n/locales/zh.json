@@ -1,5 +1,7 @@
 {
   "common": {
+    "provider": "提供商",
+    "agent": "智能体",
     "loading": "加载中...",
     "save": "保存",
     "saving": "保存中...",
@@ -540,7 +542,8 @@
       "prompts": "提示词",
       "skills": "技能",
       "tools": "工具",
-      "channels": "频道"
+      "channels": "频道",
+      "cordis": "Cordis 引擎"
     },
     "toggleSize": "切换侧边栏大小",
     "expandSidebar": "展开侧边栏"
@@ -1828,11 +1831,11 @@
       "saveFailed": "无法更新默认主题"
     },
     "agentAccess": {
-      "title": "智能体",
-      "description": "向管理员提供智能体板块（Libre Claw）。智能体 CLI 在 Work 沙箱之外，以服务器用户身份在主机上运行。",
+      "title": "Libre Claw",
+      "description": "向管理员显示Libre Claw工作区。",
       "saved": "智能体访问权限已更新",
       "saveFailed": "无法更新智能体访问权限",
-      "lockedByEnv": "已由环境变量 AGENT_CLI_MODELS_ENABLED 固定。"
+      "lockedByEnv": "已由环境变量 LIBRE_CLAW_ENABLED 固定。"
     },
     "groups": {
       "title": "用户组",
@@ -1969,12 +1972,25 @@
       "saving": "保存中…",
       "saved": "邮件设置已保存。",
       "saveFailed": "无法保存邮件设置。"
+    },
+    "cordisAccess": {
+      "title": "Cordis 引擎",
+      "description": "向管理员提供 Cordis 引擎。它在 Libre WebUI 的工具审批流程之外，以真实的文件系统访问权限运行工具。",
+      "saved": "Cordis 访问权限已更新",
+      "saveFailed": "无法更新 Cordis 访问权限",
+      "lockedByEnv": "由环境变量 LIBRE_CORDIS_ENABLED 固定。",
+      "lockedByFile": "由 cordis.config.yml 中的 features.enabled 固定。"
+    },
+    "agentCliAccess": {
+      "title": "CLI代理模型",
+      "description": "管理员可以将已安装的Pi、OpenCode、Codex和Claude Code用作聊天模型。它们在宿主机上运行，位于Work沙盒之外。",
+      "lockedByEnv": "已由环境变量 AGENT_CLI_MODELS_ENABLED 固定。"
     }
   },
   "usageAnalytics": {
     "eyebrow": "管理",
     "title": "提供商使用情况",
-    "description": "跟踪此实例上已启用插件的出站 API 调用和模型消耗。",
+    "description": "跟踪此实例中各提供商和代理的模型请求及使用量。",
     "days": "{{count}} 天",
     "refresh": "刷新使用情况",
     "loadFailed": "无法加载提供商使用情况。",
@@ -2021,7 +2037,7 @@
       "notCharted": "选择以在图表中加载此模型"
     },
     "providers": {
-      "title": "已启用插件的流量",
+      "title": "提供商和代理流量",
       "description": "按提供商查看请求量、可靠性和响应时间。",
       "share": "占调用总数的 {{percent}}%",
       "failures": "{{count}} 次失败或已取消",
@@ -2039,9 +2055,9 @@
     },
     "empty": {
       "title": "暂无提供商调用",
-      "description": "当已启用的插件处理聊天、工作、嵌入、图像、语音、声音或视频请求后，调用将显示在此处。"
+      "description": "提供商或代理处理聊天、Work、嵌入、图像、语音、声音或视频请求后，请求将显示在此处。"
     },
-    "privacyNote": "使用量在服务器的出站插件边界处进行计量。Libre WebUI 存储提供商、模型、计时、状态和已报告的计数器——绝不存储提示词、响应、端点、凭据或提供商错误正文。Token 总量仅包含提供商返回使用元数据的调用。",
+    "privacyNote": "提供商和代理请求的使用量在服务器上记录。Libre WebUI 存储提供商、模型、计时、状态和已报告的计数器——绝不存储提示词、响应、端点、凭据或提供商错误正文。Token 总量仅包含提供商返回使用元数据的调用。",
     "heatmap": {
       "title": "一年的活动",
       "description": "过去一年每日的提供商调用量，按当天使用最多的模型着色。",
@@ -2051,6 +2067,14 @@
       "less": "少",
       "more": "多",
       "yearTotal": "过去一年共 {{formatted}} 次调用"
+    },
+    "agents": {
+      "title": "智能体",
+      "description": "CLI 代理调用和原生 DSH 请求。使用 Libre WebUI 模型的 DSH 计入其模型提供商。",
+      "noCalls": "此期间没有记录的调用",
+      "unreported": "未报告令牌数",
+      "topModels": "最常用模型",
+      "legacy": "此服务器不提供完整的代理明细。下方显示可用的代理记录。"
     }
   },
   "systemPage": {
@@ -2732,7 +2756,11 @@
       "remoteDismissLabel": "关闭远程提供商提示",
       "remoteDismissFailed": "无法保存远程提供商偏好设置。",
       "noModelSelected": "尚未选择兼容工作模式的模型。",
-      "mentionAgents": "提及智能体"
+      "mentionAgents": "提及智能体",
+      "engine": "引擎",
+      "nativeDshModels": "原生DSH模型",
+      "libreModels": "Libre WebUI模型",
+      "nativeDshUnavailable": "原生DSH模型不可用。请刷新模型列表或检查提供商配置。"
     },
     "conversation": {
       "ready": "工作区已就绪",
@@ -2781,7 +2809,7 @@
       "readyOllama": "Docker 已就绪",
       "readyPlugin": "Docker + 插件已就绪",
       "readyHybrid": "Docker + 模型已就绪",
-      "reason": "需要 Docker 以及可用的 Ollama 或插件模型提供商。"
+      "reason": "需要Work运行环境和可用的模型提供商。"
     },
     "workspace": {
       "label": "工作区视图",
@@ -3911,5 +3939,42 @@
       "connected": "{{name}} 已连接 — 其模型现已可用",
       "saveFailed": "无法保存 API 密钥"
     }
+  },
+  "cordis": {
+    "title": "Cordis 引擎",
+    "description": "内嵌 DeepSeek Harness 引擎的会话、工具与对话。",
+    "newSession": "新建会话",
+    "createFailed": "无法创建会话。",
+    "deleteFailed": "无法删除会话。",
+    "sendFailed": "引擎无法完成本轮对话。",
+    "sessionsHeading": "会话",
+    "toolsHeading": "工具",
+    "transcriptHeading": "对话记录",
+    "noSessions": "还没有会话。新建一个即可开始。",
+    "noTools": "引擎未注册任何工具。",
+    "selectSession": "选择一个会话，或新建一个开始。",
+    "working": "智能体正在处理…",
+    "composerLabel": "向引擎发送消息",
+    "composerPlaceholder": "让引擎做点什么…",
+    "send": "发送",
+    "stop": "停止",
+    "deleteSession": "删除会话",
+    "unknownTime": "时间未知",
+    "disabledTitle": "Cordis 引擎已关闭",
+    "disabledHint": "管理员可在“用户管理”→“访问与策略”中启用。",
+    "unavailableTitle": "Cordis 引擎无法启动",
+    "role": {
+      "user": "你",
+      "assistant": "引擎",
+      "system": "系统",
+      "tool": "工具",
+      "unknown": "消息"
+    },
+    "turnFailed": "引擎无法完成本轮对话",
+    "permissions": "权限",
+    "readOnly": "只读",
+    "workspaceWrite": "工作区写入",
+    "context": "会话上下文",
+    "permissionHint": "只读模式允许查看文件。工作区写入允许在此会话的工作区内进行编辑。"
   }
 }

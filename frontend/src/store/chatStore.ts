@@ -922,13 +922,16 @@ export const useChatStore = create<ChatState>((set, get) => ({
       );
       const hasExplicitProvider =
         currentState.selectedProviderType === 'ollama' ||
-        currentState.selectedProviderType === 'plugin';
+        currentState.selectedProviderType === 'plugin' ||
+        currentState.selectedProviderType === 'agent';
 
       if (currentSelectedModel && !modelExists && hasExplicitProvider) {
         const providerLabel =
           currentState.selectedProviderType === 'plugin'
             ? currentState.selectedProviderId || 'plugin'
-            : 'Ollama';
+            : currentState.selectedProviderType === 'agent'
+              ? currentState.selectedProviderId || i18n.t('common.agent')
+              : 'Ollama';
         const unavailableError = i18n.t('chat.toasts.modelUnavailable', {
           model: currentSelectedModel,
           provider: providerLabel,
@@ -1030,7 +1033,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
             selectedModel: defaultModel,
             selectedProviderType: defaultProviderType || null,
             selectedProviderId:
-              defaultProviderType === 'plugin'
+              defaultProviderType === 'plugin' ||
+              defaultProviderType === 'agent'
                 ? defaultProviderId || null
                 : null,
           });

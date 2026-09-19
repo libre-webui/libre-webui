@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 
+import { nativeDshProviderService } from '../cordis/dsh/native-provider-client.js';
 import express, { NextFunction, Response } from 'express';
 import {
   authenticate,
@@ -180,12 +181,15 @@ router.get(
     res: Response<ApiResponse<WorkCapabilities>>
   ): Promise<void> => {
     const userId = requireUserId(req);
-    const [runtimeAvailable, providers] = await Promise.all([
+    const [runtimeAvailable, providers, nativeDsh] = await Promise.all([
       workRuntimeService.isRuntimeAvailable(),
       workModelProviderService.availability(userId),
+      nativeDshProviderService.catalog(userId),
     ]);
     const providerAvailable =
-      providers.ollamaAvailable || providers.pluginAvailable;
+      providers.ollamaAvailable ||
+      providers.pluginAvailable ||
+      (nativeDsh.status === 'ready' && nativeDsh.models.length > 0);
     const recoveryPending = workRuntimeService.recoveryPending;
     const recoveryPendingCount = workRuntimeService.recoveryPendingCount;
     const available = runtimeAvailable && !recoveryPending && providerAvailable;
@@ -195,7 +199,7 @@ router.get(
         ? workRuntimeService.runtimeUnavailableReason ||
           `The ${workRuntimeService.runtimeKind} runtime is not available to the Libre WebUI backend.`
         : !providerAvailable
-          ? 'No Ollama or configured plugin model provider is available.'
+          ? 'No configured Work model provider is available.'
           : undefined;
     sendSuccess(res, {
       available,
@@ -204,6 +208,17 @@ router.get(
       runtimeAvailable,
       ollamaAvailable: providers.ollamaAvailable,
       pluginAvailable: providers.pluginAvailable,
+      nativeDsh: {
+        status: nativeDsh.status,
+        models: nativeDsh.models.map(model => ({
+          model: model.model,
+          providerType: 'dsh' as const,
+          providerId: model.providerId,
+          key: `dsh:${encodeURIComponent(model.providerId)}:${encodeURIComponent(model.model)}`,
+          label: `${model.name} · ${model.providerName}`,
+          remote: true as const,
+        })),
+      },
       runtimeImage: workRuntimeService.image,
       reason,
       // Structured alongside `reason` so the interface can say how many
@@ -1828,9 +1843,9 @@ function readProviderSelection(
   const record =
     body && typeof body === 'object' ? (body as Record<string, unknown>) : {};
   const rawType = record.providerType ?? fallback?.providerType ?? 'ollama';
-  if (rawType !== 'ollama' && rawType !== 'plugin') {
+  if (rawType !== 'ollama' && rawType !== 'plugin' && rawType !== 'dsh') {
     throw new WorkRouteError(
-      'Field "providerType" must be "ollama" or "plugin".',
+      'Field "providerType" must be "ollama", "plugin", or "dsh".',
       400
     );
   }
@@ -1841,7 +1856,7 @@ function readProviderSelection(
       String(record.providerId).trim()
     ) {
       throw new WorkRouteError(
-        'Field "providerId" is only valid for plugin providers.',
+        'Field "providerId" is only valid for plugin or native DSH providers.',
         400
       );
     }
@@ -1851,7 +1866,7 @@ function readProviderSelection(
   const rawProviderId = record.providerId ?? fallback?.providerId;
   if (typeof rawProviderId !== 'string' || !rawProviderId.trim()) {
     throw new WorkRouteError(
-      'Field "providerId" is required for plugin providers.',
+      'Field "providerId" is required for plugin or native DSH providers.',
       400
     );
   }
@@ -1861,7 +1876,7 @@ function readProviderSelection(
       413
     );
   }
-  return { providerType: 'plugin', providerId: rawProviderId.trim() };
+  return { providerType: rawType, providerId: rawProviderId.trim() };
 }
 
 function requireBodyString(

@@ -100,3 +100,18 @@ frontend/public/artifact-runtime/
 # The iOS and desktop apps live in their own repositories; nothing app-shell
 # related belongs here.
 /ios/
+
+# Runtime state written by the embedded Cordis engine when a
+# composition resolves its session store relative to the working directory.
+/cordis-sessions/
+
+# Operator-owned engine configuration. The shipped examples are the committed
+# reference; a real deployment's copies stay local so a machine's provider
+# routes and pins are never published by a broad `git add`.
+/backend/cordis.patch.yml
+/backend/cordis.config.yml
+
+# The local runtime data directory. It holds the database, the encryption key,
+# and engine session stores, so a broad `git add` must not publish a
+# deployment state or its key.
+/backend/data/

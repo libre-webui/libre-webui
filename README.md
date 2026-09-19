@@ -310,6 +310,56 @@ HTTP, web search, MCP, memory, approvals, and schedules.
 - [Installed agent CLIs](https://docs.librewebui.org/AGENT_CLI_MODELS)
 - [Libre Claw integration](https://docs.librewebui.org/LIBRE_CLAW_INTEGRATION)
 
+## Cordis bridge
+
+The optional Cordis bridge embeds the
+[DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) engine inside
+Libre WebUI's backend. The engine runs as a plugin tree in a
+[Cordis](https://github.com/cordiverse/cordis) runtime that Libre WebUI hosts, so
+its sessions, agents, and tools arrive as Cordis services rather than as
+imported modules.
+
+The engine is off by default. An administrator enables it in **Settings → User
+Management → Access & policies → Cordis Engine**; the change takes effect
+immediately, with no restart.
+
+The engine still needs a composition, so configure one once:
+
+```bash
+cd backend
+cp cordis.patch.example.yml cordis.patch.yml
+cp cordis.config.example.yml cordis.config.yml
+```
+
+Because the engine is a plugin tree rather than an import, operators can:
+
+- **Retarget the model provider** by editing YAML — Ollama, an
+  OpenAI-compatible gateway, or the first-party DeepSeek adapter.
+- **Swap the model adapter at runtime** by reloading one plugin row, without
+  restarting Libre WebUI or losing the session store, tool registry, or agents.
+- **Remove the engine cleanly** by disposing the tree, which withdraws its
+  services, releases its listeners, and disposes the agents it created.
+
+Once enabled, administrators can use the **Cordis Engine** page for persistent
+engine sessions and select **DeepSeek Harness** in Chat (with Agent CLI models also
+enabled). In Work, select **DeepSeek Harness** in the **Engine** control to run its agent loop
+through Work's existing container runtime, approval gates, and durable records.
+Normal provider models remain available.
+
+The host Engine is a shared administrator console for single-replica solo
+installations. Its shipped filesystem tools are confined to the configured
+workspace and use DSH's mutation policies. Work uses a separate in-memory DSH
+composition with no host filesystem tools. Review the security notes before
+enabling either surface.
+
+```bash
+curl -s http://127.0.0.1:3001/api/cordis/health | jq
+```
+
+- [Cordis bridge architecture](https://docs.librewebui.org/CORDIS_BRIDGE)
+- [Cordis configuration reference](https://docs.librewebui.org/CORDIS_CONFIGURATION)
+- [Writing Cordis plugins](https://docs.librewebui.org/CORDIS_PLUGIN_AUTHORING)
+
 ## Deployment options
 
 | Deployment          | Command or link                                                         | Use case                                 |
@@ -349,6 +399,9 @@ See the [deployment documentation](https://docs.librewebui.org) for details.
 - [Calendar](https://docs.librewebui.org/CALENDAR)
 - [Public API](https://docs.librewebui.org/PUBLIC_API)
 - [Plugin architecture](https://docs.librewebui.org/PLUGIN_ARCHITECTURE)
+- [Cordis bridge](https://docs.librewebui.org/CORDIS_BRIDGE)
+- [Cordis configuration](https://docs.librewebui.org/CORDIS_CONFIGURATION)
+- [Writing Cordis plugins](https://docs.librewebui.org/CORDIS_PLUGIN_AUTHORING)
 - [Capability contracts](https://docs.librewebui.org/CAPABILITY_CONTRACTS)
 - [Authentication](https://docs.librewebui.org/AUTHENTICATION)
 - [Data portability](https://docs.librewebui.org/DATA_PORTABILITY)

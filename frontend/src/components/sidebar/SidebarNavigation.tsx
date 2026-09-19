@@ -19,6 +19,7 @@ import { Link } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import {
   Bot,
+  Boxes,
   CalendarDays,
   NotebookPen,
   Sparkles,
@@ -33,6 +34,8 @@ interface SidebarNavigationProps {
   sidebarCompact: boolean;
   activePath: string;
   showAgents: boolean;
+  /** Administrator opt-in for the embedded Cordis engine. */
+  showCordis: boolean;
   /** Finished automation runs not yet acknowledged; badges the Zap icon. */
   unseenRunCount?: number;
   onMobileNavigate: () => void;
@@ -56,6 +59,11 @@ const DESTINATIONS = [
     labelKey: 'sidebar.navigation.automations',
   },
   {
+    path: '/cordis',
+    icon: Boxes,
+    labelKey: 'sidebar.navigation.cordis',
+  },
+  {
     path: '/personas',
     icon: UserIcon,
     labelKey: 'sidebar.navigation.personas',
@@ -73,6 +81,7 @@ export function SidebarNavigation({
   sidebarCompact,
   activePath,
   showAgents,
+  showCordis,
   unseenRunCount = 0,
   onMobileNavigate,
 }: SidebarNavigationProps) {
@@ -90,9 +99,13 @@ export function SidebarNavigation({
             : 'items-center gap-1'
         )}
       >
-        {DESTINATIONS.filter(
-          destination => destination.path !== '/agents' || showAgents
-        ).map(({ path, icon: Icon, labelKey }) => {
+        {DESTINATIONS.filter(destination => {
+          if (destination.path === '/agents') return showAgents;
+          // The engine ships disabled, so its destination must not advertise a
+          // page the deployment has not opted into.
+          if (destination.path === '/cordis') return showCordis;
+          return true;
+        }).map(({ path, icon: Icon, labelKey }) => {
           const active =
             activePath === path || activePath.startsWith(`${path}/`);
           const label = t(labelKey);

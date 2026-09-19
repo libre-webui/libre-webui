@@ -20,6 +20,7 @@ import test from 'node:test';
 import type { PluginUsageAnalytics } from './api/pluginApi';
 import {
   getProviderModelSegments,
+  getUsageAgentSummaries,
   getUsageChartSeries,
   getUsageModelColors,
   matchesUsageSnapshot,
@@ -107,6 +108,108 @@ const fixture = (): PluginUsageAnalytics => ({
       },
     ],
   },
+});
+
+test('agent summaries preserve authoritative totals and reported zero tokens', () => {
+  const analytics = fixture();
+  analytics.agents = [
+    {
+      agentId: 'dsh',
+      agentName: 'DeepSeek Harness',
+      calls: 20,
+      tokens: 0,
+      errors: 1,
+      averageLatencyMs: 120,
+      meteredCalls: 3,
+      models: [
+        {
+          model: 'rare-native-model',
+          calls: 5,
+          tokens: 0,
+          errors: 1,
+          meteredCalls: 3,
+        },
+      ],
+    },
+    {
+      agentId: 'pi',
+      agentName: 'Pi',
+      calls: 0,
+      tokens: 0,
+      errors: 0,
+      averageLatencyMs: 0,
+      meteredCalls: 0,
+      models: [],
+    },
+  ];
+  const before = structuredClone(analytics);
+  assert.equal(getUsageAgentSummaries(analytics), analytics.agents);
+  assert.deepEqual(analytics, before);
+  analytics.agents = [];
+  assert.deepEqual(getUsageAgentSummaries(analytics), []);
+});
+
+test('older agent records use reserved identities without inventing token coverage or harness attribution', () => {
+  const analytics = fixture();
+  analytics.plugins = [
+    {
+      pluginId: 'dsh-native:first',
+      pluginName: 'First native',
+      calls: 2,
+      tokens: 10,
+      errors: 1,
+      averageLatencyMs: 100,
+    },
+    {
+      pluginId: 'dsh-native:second',
+      pluginName: 'Second native',
+      calls: 3,
+      tokens: 20,
+      errors: 0,
+      averageLatencyMs: 200,
+    },
+    {
+      pluginId: 'agent-cli:codex',
+      pluginName: 'Codex',
+      calls: 1,
+      tokens: 0,
+      errors: 0,
+      averageLatencyMs: 400,
+    },
+    {
+      pluginId: 'regular-provider',
+      pluginName: 'DeepSeek Harness',
+      calls: 50,
+      tokens: 900,
+      errors: 0,
+      averageLatencyMs: 100,
+    },
+  ];
+  analytics.models = [
+    model('same-model', 'dsh-native:first', 2),
+    model('same-model', 'dsh-native:second', 3),
+    { ...model('codex:chosen', 'agent-cli:codex', 1), tokens: 0 },
+    model('do-not-attribute', 'regular-provider', 50),
+  ];
+  const before = structuredClone(analytics);
+  const agents = getUsageAgentSummaries(analytics);
+  assert.deepEqual(
+    agents.map(agent => agent.agentId),
+    ['dsh', 'codex']
+  );
+  assert.equal(agents[0].calls, 5);
+  assert.equal(agents[0].tokens, 30);
+  assert.equal(agents[0].averageLatencyMs, 160);
+  assert.equal(agents[0].meteredCalls, undefined);
+  assert.equal(agents[0].models.length, 1);
+  assert.equal(agents[0].models[0].calls, 5);
+  assert.equal(agents[0].models[0].meteredCalls, undefined);
+  assert.equal(agents[1].meteredCalls, undefined);
+  assert.deepEqual(analytics, before);
+});
+
+test('older responses without agent records do not imply five unused agents', () => {
+  assert.deepEqual(getUsageAgentSummaries(fixture()), []);
 });
 
 test('only overlays focused history with matching time boundaries and daily totals', () => {

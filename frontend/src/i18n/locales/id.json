@@ -1,5 +1,7 @@
 {
   "common": {
+    "provider": "Penyedia",
+    "agent": "Agen",
     "loading": "Memuat...",
     "save": "Simpan",
     "saving": "Menyimpan...",
@@ -540,7 +542,8 @@
       "prompts": "Prompt",
       "skills": "Keterampilan",
       "tools": "Alat",
-      "channels": "Kanal"
+      "channels": "Kanal",
+      "cordis": "Mesin Cordis"
     },
     "toggleSize": "Ubah ukuran sidebar",
     "expandSidebar": "Perluas sidebar"
@@ -1828,11 +1831,11 @@
       "saveFailed": "Tidak dapat memperbarui tema bawaan"
     },
     "agentAccess": {
-      "title": "Agen",
-      "description": "Tawarkan bagian Agen (Libre Claw) kepada administrator. CLI agen berjalan di host sebagai pengguna server, di luar sandbox Work.",
+      "title": "Libre Claw",
+      "description": "Tampilkan ruang kerja Libre Claw kepada administrator.",
       "saved": "Akses agen diperbarui",
       "saveFailed": "Tidak dapat memperbarui akses agen",
-      "lockedByEnv": "Dikunci oleh variabel lingkungan AGENT_CLI_MODELS_ENABLED."
+      "lockedByEnv": "Dikunci oleh variabel lingkungan LIBRE_CLAW_ENABLED."
     },
     "groups": {
       "title": "Grup",
@@ -1969,12 +1972,25 @@
       "saving": "Menyimpan…",
       "saved": "Pengaturan email tersimpan.",
       "saveFailed": "Pengaturan email tidak dapat disimpan."
+    },
+    "cordisAccess": {
+      "title": "Mesin Cordis",
+      "description": "Tawarkan mesin Cordis kepada administrator. Mesin ini menjalankan alat dengan akses sistem berkas nyata di luar alur persetujuan alat Libre WebUI.",
+      "saved": "Akses Cordis diperbarui",
+      "saveFailed": "Tidak dapat memperbarui akses Cordis",
+      "lockedByEnv": "Dikunci oleh variabel lingkungan LIBRE_CORDIS_ENABLED.",
+      "lockedByFile": "Dikunci oleh features.enabled di cordis.config.yml."
+    },
+    "agentCliAccess": {
+      "title": "Model agen CLI",
+      "description": "Administrator dapat menggunakan Pi, OpenCode, Codex, dan Claude Code yang terpasang sebagai model chat. Semuanya berjalan di host, di luar sandbox Work.",
+      "lockedByEnv": "Dikunci oleh variabel lingkungan AGENT_CLI_MODELS_ENABLED."
     }
   },
   "usageAnalytics": {
     "eyebrow": "Administrasi",
     "title": "Penggunaan Penyedia",
-    "description": "Pantau panggilan API keluar dan konsumsi model di seluruh plugin yang diaktifkan pada instance ini.",
+    "description": "Pantau permintaan model dan penggunaan penyedia serta agen pada instans ini.",
     "days": "{{count}} hari",
     "refresh": "Segarkan penggunaan",
     "loadFailed": "Penggunaan penyedia tidak dapat dimuat.",
@@ -2021,7 +2037,7 @@
       "notCharted": "Pilih untuk memuat model ini dalam grafik"
     },
     "providers": {
-      "title": "Traffic plugin aktif",
+      "title": "Lalu lintas penyedia dan agen",
       "description": "Volume permintaan, keandalan, dan waktu respons per penyedia.",
       "share": "{{percent}}% dari panggilan",
       "failures": "{{count}} gagal atau dibatalkan",
@@ -2039,9 +2055,9 @@
     },
     "empty": {
       "title": "Belum ada panggilan provider",
-      "description": "Panggilan akan muncul di sini setelah plugin aktif menangani permintaan chat, Work, embedding, gambar, ucapan, suara, atau video."
+      "description": "Permintaan muncul di sini setelah penyedia atau agen menangani chat, Work, embedding, gambar, ucapan, suara, atau video."
     },
-    "privacyNote": "Penggunaan diukur di server pada batas plugin keluar. Libre WebUI menyimpan provider, model, waktu, status, dan penghitung yang dilaporkan—tidak pernah menyimpan prompt, respons, endpoint, kredensial, atau isi error provider. Total token hanya mencakup panggilan di mana provider mengembalikan metadata penggunaan.",
+    "privacyNote": "Penggunaan permintaan penyedia dan agen dicatat di server. Libre WebUI menyimpan provider, model, waktu, status, dan penghitung yang dilaporkan—tidak pernah menyimpan prompt, respons, endpoint, kredensial, atau isi error provider. Total token hanya mencakup panggilan di mana provider mengembalikan metadata penggunaan.",
     "heatmap": {
       "title": "Setahun aktivitas",
       "description": "Panggilan penyedia harian selama setahun terakhir, diwarnai berdasarkan model yang paling banyak digunakan setiap hari.",
@@ -2051,6 +2067,14 @@
       "less": "Sedikit",
       "more": "Banyak",
       "yearTotal": "{{formatted}} panggilan dalam setahun terakhir"
+    },
+    "agents": {
+      "title": "Agen",
+      "description": "Panggilan agen CLI dan permintaan DSH native. DSH yang memakai model Libre WebUI dihitung di bawah penyedia modelnya.",
+      "noCalls": "Tidak ada panggilan tercatat dalam periode ini",
+      "unreported": "Token tidak dilaporkan",
+      "topModels": "Model teratas",
+      "legacy": "Server ini tidak menyediakan rincian agen lengkap. Catatan agen yang tersedia ditampilkan di bawah."
     }
   },
   "systemPage": {
@@ -2732,7 +2756,11 @@
       "remoteDismissLabel": "Tutup pemberitahuan penyedia jarak jauh",
       "remoteDismissFailed": "Tidak dapat menyimpan preferensi penyedia jarak jauh.",
       "noModelSelected": "Tidak ada model kompatibel Kerja yang dipilih.",
-      "mentionAgents": "Sebut agen"
+      "mentionAgents": "Sebut agen",
+      "engine": "Mesin",
+      "nativeDshModels": "Model DSH native",
+      "libreModels": "Model Libre WebUI",
+      "nativeDshUnavailable": "Model DSH native tidak tersedia. Segarkan daftar model atau periksa konfigurasi penyedia."
     },
     "conversation": {
       "ready": "Ruang kerja siap",
@@ -2781,7 +2809,7 @@
       "readyOllama": "Docker siap",
       "readyPlugin": "Docker + plugin siap",
       "readyHybrid": "Docker + model siap",
-      "reason": "Docker dan penyedia model Ollama atau plugin yang tersedia diperlukan."
+      "reason": "Runtime Work dan penyedia model yang tersedia diperlukan."
     },
     "workspace": {
       "label": "Tampilan ruang kerja",
@@ -3911,5 +3939,42 @@
       "connected": "{{name}} terhubung — modelnya kini tersedia",
       "saveFailed": "Tidak dapat menyimpan API key"
     }
+  },
+  "cordis": {
+    "title": "Mesin Cordis",
+    "description": "Sesi, alat, dan obrolan untuk mesin DeepSeek Harness yang tertanam.",
+    "newSession": "Sesi baru",
+    "createFailed": "Tidak dapat membuat sesi.",
+    "deleteFailed": "Tidak dapat menghapus sesi.",
+    "sendFailed": "Mesin tidak dapat menyelesaikan giliran.",
+    "sessionsHeading": "Sesi",
+    "toolsHeading": "Alat",
+    "transcriptHeading": "Transkrip",
+    "noSessions": "Belum ada sesi. Buat satu untuk memulai.",
+    "noTools": "Mesin tidak mendaftarkan alat apa pun.",
+    "selectSession": "Pilih sesi, atau buat satu untuk memulai.",
+    "working": "Agen sedang bekerja…",
+    "composerLabel": "Pesan ke mesin",
+    "composerPlaceholder": "Minta mesin melakukan sesuatu…",
+    "send": "Kirim",
+    "stop": "Hentikan",
+    "deleteSession": "Hapus sesi",
+    "unknownTime": "Waktu tidak diketahui",
+    "disabledTitle": "Mesin Cordis dimatikan",
+    "disabledHint": "Administrator dapat mengaktifkannya di Manajemen Pengguna → Akses & kebijakan.",
+    "unavailableTitle": "Mesin Cordis tidak dapat dimulai",
+    "role": {
+      "user": "Anda",
+      "assistant": "Mesin",
+      "system": "Sistem",
+      "tool": "Alat",
+      "unknown": "Pesan"
+    },
+    "turnFailed": "Mesin tidak dapat menyelesaikan giliran",
+    "permissions": "Izin",
+    "readOnly": "Hanya baca",
+    "workspaceWrite": "Tulis di ruang kerja",
+    "context": "Konteks sesi",
+    "permissionHint": "Hanya baca memungkinkan pemeriksaan berkas. Tulis di ruang kerja mengizinkan perubahan di dalam ruang kerja sesi ini."
   }
 }

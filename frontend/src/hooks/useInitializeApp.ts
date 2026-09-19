@@ -148,7 +148,8 @@ export const useInitializeApp = () => {
         if (
           !availableSelection &&
           selectedProviderType !== 'ollama' &&
-          selectedProviderType !== 'plugin'
+          selectedProviderType !== 'plugin' &&
+          selectedProviderType !== 'agent'
         ) {
           // Only legacy name-only preferences retain the automatic fallback.
           const fallbackSelection = chatModelSelectionFromModel(fallback);

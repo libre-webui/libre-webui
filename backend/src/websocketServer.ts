@@ -754,6 +754,7 @@ export function registerWebSocketServer(
             // ---------------------------------------------------------------
 
             try {
+              let providerStatistics: GenerationStatistics | undefined;
               // Agent CLI targets run with --no-tools; the loop applies to
               // plugin providers only.
               const pluginToolLoop =
@@ -803,6 +804,16 @@ export function registerWebSocketServer(
                 assistantContent = streamResult.content;
                 assistantThinking = streamResult.thinking || '';
                 assistantProviderMetadata = streamResult.providerMetadata;
+                providerStatistics = extractStatistics(
+                  chatGenerationService.createStreamedChatResponse(
+                    session.model,
+                    streamResult.content,
+                    streamResult.thinking,
+                    streamResult.providerMetadata,
+                    streamResult.usage,
+                    streamResult.timings
+                  )
+                );
                 if (
                   pluginToolLoop &&
                   pluginToolLoop.state.toolCalls.length > 0
@@ -827,6 +838,9 @@ export function registerWebSocketServer(
                 assistantThinking = generationResult.assistantThinking || '';
                 assistantProviderMetadata =
                   generationResult.response.message.providerMetadata;
+                providerStatistics = extractStatistics(
+                  generationResult.response
+                );
 
                 if (assistantThinking) {
                   sendAssistantChunk(ws, {
@@ -869,6 +883,7 @@ export function registerWebSocketServer(
                     isPrivate,
                     regenerate,
                     originalMessageId,
+                    statistics: providerStatistics,
                     providerMetadata: withContextSources(
                       assistantProviderMetadata
                     ),

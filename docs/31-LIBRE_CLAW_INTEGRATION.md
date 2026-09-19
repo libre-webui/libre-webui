@@ -32,6 +32,13 @@ the `/agents` route, and the command palette entry all use that name. Libre Claw
 is the runtime behind it, so the daemon, its command, and its environment
 variables keep their own name throughout this guide.
 
+Libre Claw has its own switch under **Settings → User Management → Access &
+policies → Libre Claw**. Installed Pi, OpenCode, Codex, and Claude Code models
+use the separate **Agent CLI models** switch. `LIBRE_CLAW_ENABLED=true` or
+`false` pins Libre Claw; `AGENT_CLI_MODELS_ENABLED` pins only the CLI models.
+Legacy settings retain their prior effective values until a separate choice is
+saved.
+
 ## Libre Claw And Work Are Different
 
 Libre Claw remains an optional external runtime. It is not required for

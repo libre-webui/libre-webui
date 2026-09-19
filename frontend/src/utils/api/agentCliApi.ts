@@ -28,7 +28,24 @@ export interface AgentCliModel {
   agentId: string;
 }
 
+export interface AgentCliAccess {
+  enabled: boolean;
+  lockedByEnv: boolean;
+}
+
 export const agentCliApi = {
+  getAccess: (): Promise<ApiResponse<AgentCliAccess>> => {
+    if (isDemoMode())
+      return createDemoResponse({ enabled: false, lockedByEnv: false });
+    return api.get('/agent-clis/access').then(res => res.data);
+  },
+
+  setAccess: (enabled: boolean): Promise<ApiResponse<AgentCliAccess>> => {
+    if (isDemoMode())
+      return createDemoResponse({ enabled, lockedByEnv: false });
+    return api.put('/agent-clis/access', { enabled }).then(res => res.data);
+  },
+
   getModels: (): Promise<ApiResponse<AgentCliModel[]>> => {
     if (isDemoMode()) {
       return createDemoResponse([] as AgentCliModel[]);

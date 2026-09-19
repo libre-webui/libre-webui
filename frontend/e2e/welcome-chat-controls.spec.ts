@@ -58,6 +58,14 @@ test('chat controls are available before a chat exists', async ({ page }) => {
   await page.getByRole('button', { name: /^save$/i }).click();
   await expect(panel).toBeHidden();
 
+  const savedNotification = page
+    .getByRole('status')
+    .filter({ hasText: 'Chat controls saved' });
+  await expect(savedNotification).toBeVisible();
+  // Hovering the toast over the controls pauses its normal dismissal timer.
+  await page.mouse.move(0, 0);
+  await expect(savedNotification).toBeHidden({ timeout: 6000 });
+
   await controls.click();
   await expect(page.getByPlaceholder(/instructions that apply/i)).toHaveValue(
     'Answer only in haiku.'

@@ -15,9 +15,12 @@
  * limitations under the License.
  */
 
+import { isWorkDshModel } from '../cordis/work-model.js';
+import type { WorkDshDriver } from '../cordis/dsh/work-driver.js';
 import workModelProviderService, {
   WORK_TOOL_ARGUMENTS_ERROR_METADATA_KEY,
   WORK_TOOL_ARGUMENTS_ERROR_MESSAGE,
+  type WorkModelStreamObserver,
 } from './workModelProviderService.js';
 import workEventService from './workEventService.js';
 import {
@@ -67,7 +70,11 @@ import workTaskService, {
   WorkNotFoundError,
   deriveStatusBlurb,
 } from './workTaskService.js';
-import { OllamaChatMessage, OllamaChatResponse } from '../types/index.js';
+import {
+  OllamaChatMessage,
+  OllamaChatRequest,
+  OllamaChatResponse,
+} from '../types/index.js';
 import {
   WorkMessage,
   WorkRun,
@@ -867,6 +874,7 @@ export class WorkAgentService {
     let runDelegation: WorkDelegationSource | undefined;
     let releaseExecutionLease: (() => void) | undefined;
     let executionContainerSettled = false;
+    let dshDriver: WorkDshDriver | undefined;
     // Files this run created, moved, or deleted, in first-touch order. They
     // are persisted with the run so the workspace chips survive a reload.
     const changedFiles: string[] = [];
@@ -1034,6 +1042,13 @@ export class WorkAgentService {
           durableAttemptIdentity
         );
       }
+      if (run.providerType === 'dsh') {
+        await workModelProviderService.assertModelSupportsTools(
+          run.model,
+          { providerType: run.providerType, providerId: run.providerId },
+          userId
+        );
+      }
       releaseExecutionLease = await workRuntimeService.prepare(
         task,
         controller.signal
@@ -1059,6 +1074,20 @@ export class WorkAgentService {
           providerSelection,
           userId
         );
+      if (run.providerType === 'dsh' || isWorkDshModel(run.model)) {
+        const { createWorkDshDriver } =
+          await import('../cordis/dsh/work-driver.js');
+        dshDriver = await createWorkDshDriver({
+          generate: (request, observer, signal) =>
+            workModelProviderService.generateChatStreamResponse(
+              request,
+              providerSelection,
+              userId,
+              observer,
+              signal
+            ),
+        });
+      }
       // A5 approvals: whether side-effecting tool calls pause for review.
       // Resolved once per run — the policy force-flag or the task opt-in;
       // per-call rules are re-read at gate time so an Always-allow decision
@@ -1201,7 +1230,22 @@ export class WorkAgentService {
             userId,
             providerRoutingFingerprint
           );
-          response = await workModelProviderService.generateChatStreamResponse(
+          response = await (
+            dshDriver
+              ? dshDriver.generate.bind(dshDriver)
+              : (
+                  request: OllamaChatRequest,
+                  observer: WorkModelStreamObserver,
+                  signal?: AbortSignal
+                ) =>
+                  workModelProviderService.generateChatStreamResponse(
+                    request,
+                    providerSelection,
+                    userId,
+                    observer,
+                    signal
+                  )
+          )(
             {
               model: run.model,
               messages,
@@ -1213,8 +1257,6 @@ export class WorkAgentService {
               ],
               stream: true,
             },
-            providerSelection,
-            userId,
             {
               onContent: delta => contentStream.push(delta),
               onReasoning: delta => reasoningStream.push(delta),
@@ -1295,10 +1337,28 @@ export class WorkAgentService {
             undefined ||
           providerMetadata?.[OPENAI_RESPONSES_STATE_SCOPE_METADATA_KEY] !==
             undefined;
-        const providerStateMetadata = toPersistedWorkProviderState(
-          run,
-          providerMetadata
-        );
+        const nativeStateMetadata =
+          run.providerType === 'dsh'
+            ? toPersistedWorkChatToolCalls(
+                run,
+                toolCalls,
+                boundUtf8(response.message.thinking?.trim() ?? '', 100_000),
+                { userId, metadata: objectValue(providerMetadata?.nativeDsh) }
+              )
+            : undefined;
+        if (
+          run.providerType === 'dsh' &&
+          providerMetadata?.nativeDsh &&
+          !nativeStateMetadata
+        )
+          throw new WorkAgentHttpError(
+            'The native provider replay state exceeds the durable Work context limit.',
+            502,
+            'WORK_PROVIDER_INVALID_TOOL_CALLS'
+          );
+        const providerStateMetadata =
+          toPersistedWorkProviderState(run, providerMetadata) ??
+          nativeStateMetadata;
         if (
           toolCalls.length > 0 &&
           (providerStateScope || hasResponsesStateMetadata) &&
@@ -1353,6 +1413,9 @@ export class WorkAgentService {
               messages.push({
                 role: 'assistant',
                 content: '',
+                ...(run.providerType === 'dsh' && reasoningContent
+                  ? { thinking: reasoningContent }
+                  : {}),
                 providerMetadata: response.message.providerMetadata,
               });
             } else if (reasoningContent) {
@@ -1474,6 +1537,9 @@ export class WorkAgentService {
           role: 'assistant',
           content: assistantContent,
           tool_calls: toolCalls as unknown as Record<string, unknown>[],
+          ...(run.providerType === 'dsh' && reasoningContent
+            ? { thinking: reasoningContent }
+            : {}),
           ...(response.message.providerMetadata
             ? { providerMetadata: response.message.providerMetadata }
             : {}),
@@ -1804,7 +1870,7 @@ export class WorkAgentService {
                 ],
                 tools: [],
                 options:
-                  run.providerType === 'plugin'
+                  run.providerType !== 'ollama'
                     ? { num_predict: 2048 }
                     : undefined,
                 stream: true,
@@ -2082,9 +2148,13 @@ export class WorkAgentService {
     } finally {
       this.controllers.delete(runId);
       try {
-        await settleExecutionContainer();
+        await dshDriver?.dispose();
       } finally {
-        releaseExecutionLease?.();
+        try {
+          await settleExecutionContainer();
+        } finally {
+          releaseExecutionLease?.();
+        }
       }
     }
   }
@@ -2160,7 +2230,8 @@ export class WorkAgentService {
     const persisted = restorePersistedWorkContext(
       await workTaskService.getRecentModelContextMessages(task.id, 30),
       provider,
-      providerStateScope
+      providerStateScope,
+      task.userId
     );
     return [
       {
@@ -2923,7 +2994,7 @@ export class WorkAgentService {
             ],
             tools: [],
             options:
-              run.providerType === 'plugin' ? { num_predict: 64 } : undefined,
+              run.providerType !== 'ollama' ? { num_predict: 64 } : undefined,
             stream: true,
           },
           {
@@ -3017,6 +3088,8 @@ interface PersistedWorkProviderState {
   model: string;
   providerMetadata?: Record<string, unknown>;
   toolCalls?: PersistedWorkChatToolCall[];
+  thinking?: string;
+  userId?: string;
 }
 
 interface PersistedWorkChatToolCall {
@@ -3072,14 +3145,25 @@ function toPersistedWorkProviderState(
  */
 function toPersistedWorkChatToolCalls(
   run: Pick<WorkRun, 'providerType' | 'providerId' | 'model'>,
-  toolCalls: WorkToolCall[]
+  toolCalls: WorkToolCall[],
+  thinking?: string,
+  native?: { userId: string; metadata?: Record<string, unknown> }
 ): Record<string, unknown> | undefined {
-  if (toolCalls.length === 0) return undefined;
+  if (toolCalls.length === 0 && !native) return undefined;
   const persisted = {
     [WORK_PROVIDER_STATE_METADATA_KEY]: {
       providerType: run.providerType,
       ...(run.providerId ? { providerId: run.providerId } : {}),
       model: run.model,
+      ...(thinking ? { thinking } : {}),
+      ...(native
+        ? {
+            userId: native.userId,
+            ...(native.metadata
+              ? { providerMetadata: { nativeDsh: native.metadata } }
+              : {}),
+          }
+        : {}),
       toolCalls: toolCalls.map(call => ({
         id: call.id,
         name: call.function.name,
@@ -3162,7 +3246,8 @@ function persistedChatToolCalls(
 export function restorePersistedWorkContext(
   messages: WorkMessage[],
   provider: Pick<WorkRun, 'providerType' | 'providerId' | 'model'>,
-  expectedStateScope?: string
+  expectedStateScope?: string,
+  expectedUserId?: string
 ): OllamaChatMessage[] {
   const restored: OllamaChatMessage[] = [];
   let pendingGroup:
@@ -3209,6 +3294,27 @@ export function restorePersistedWorkContext(
         provider,
         expectedStateScope
       );
+      const nativeState = objectValue(
+        message.metadata?.[WORK_PROVIDER_STATE_METADATA_KEY]
+      );
+      const sameNativeRoute =
+        provider.providerType === 'dsh' &&
+        nativeState?.providerType === 'dsh' &&
+        nativeState.providerId === provider.providerId &&
+        nativeState.model === provider.model;
+      const sameNativeActor =
+        sameNativeRoute &&
+        typeof expectedUserId === 'string' &&
+        nativeState?.userId === expectedUserId;
+      const nativeThinking =
+        sameNativeRoute &&
+        (nativeState?.userId === undefined || sameNativeActor) &&
+        typeof nativeState?.thinking === 'string'
+          ? nativeState.thinking
+          : undefined;
+      const nativeMetadata = sameNativeActor
+        ? objectValue(objectValue(nativeState?.providerMetadata)?.nativeDsh)
+        : undefined;
       // Chat-mode rounds persist their tool calls directly (no Responses
       // replay state exists for them). Restore those only when the current
       // provider requires no such state either — the strict Responses
@@ -3235,6 +3341,7 @@ export function restorePersistedWorkContext(
 
       if (
         !providerMetadata &&
+        !nativeMetadata &&
         message.metadata?.[WORK_EMPTY_MODEL_RESPONSE_METADATA_KEY] === true
       ) {
         // The empty-response placeholder informs the user; it is not
@@ -3244,6 +3351,7 @@ export function restorePersistedWorkContext(
       if (
         message.kind === 'provider_state' &&
         !providerMetadata &&
+        !nativeMetadata &&
         !chatCalls
       ) {
         continue;
@@ -3264,6 +3372,7 @@ export function restorePersistedWorkContext(
       const assistant: OllamaChatMessage = {
         role: 'assistant',
         content: message.content,
+        ...(nativeThinking ? { thinking: nativeThinking } : {}),
         ...(responseCalls.length > 0
           ? {
               tool_calls: responseCalls.map(call => ({
@@ -3276,7 +3385,11 @@ export function restorePersistedWorkContext(
               })),
             }
           : {}),
-        ...(providerMetadata ? { providerMetadata } : {}),
+        ...(providerMetadata
+          ? { providerMetadata }
+          : nativeMetadata
+            ? { providerMetadata: { nativeDsh: nativeMetadata } }
+            : {}),
       };
       if (responseCalls.length === 0) {
         restored.push(assistant);

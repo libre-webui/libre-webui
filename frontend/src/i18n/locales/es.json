@@ -1,5 +1,7 @@
 {
   "common": {
+    "provider": "Proveedor",
+    "agent": "Agente",
     "loading": "Cargando...",
     "save": "Guardar",
     "saving": "Guardando...",
@@ -540,7 +542,8 @@
       "prompts": "Prompts",
       "skills": "Habilidades",
       "tools": "Herramientas",
-      "channels": "Canales"
+      "channels": "Canales",
+      "cordis": "Motor Cordis"
     },
     "toggleSize": "Cambiar tamaño de barra lateral",
     "expandSidebar": "Expandir barra lateral"
@@ -1828,11 +1831,11 @@
       "saveFailed": "No se pudo actualizar el tema predeterminado"
     },
     "agentAccess": {
-      "title": "Agentes",
-      "description": "Ofrecer la sección Agentes (Libre Claw) a los administradores. Las CLI de agentes se ejecutan en el host como el usuario del servidor, fuera del sandbox de Work.",
+      "title": "Libre Claw",
+      "description": "Mostrar el espacio de trabajo de Libre Claw a los administradores.",
       "saved": "Acceso a agentes actualizado",
       "saveFailed": "No se pudo actualizar el acceso a agentes",
-      "lockedByEnv": "Fijado por la variable de entorno AGENT_CLI_MODELS_ENABLED."
+      "lockedByEnv": "Fijado por la variable de entorno LIBRE_CLAW_ENABLED."
     },
     "groups": {
       "title": "Grupos",
@@ -1969,12 +1972,25 @@
       "saving": "Guardando…",
       "saved": "Configuración de correo guardada.",
       "saveFailed": "No se pudo guardar la configuración de correo."
+    },
+    "cordisAccess": {
+      "title": "Motor Cordis",
+      "description": "Ofrecer el motor Cordis a los administradores. Ejecuta herramientas con acceso real al sistema de archivos, fuera del flujo de aprobación de herramientas de Libre WebUI.",
+      "saved": "Acceso a Cordis actualizado",
+      "saveFailed": "No se pudo actualizar el acceso a Cordis",
+      "lockedByEnv": "Fijado por la variable de entorno LIBRE_CORDIS_ENABLED.",
+      "lockedByFile": "Fijado por features.enabled en cordis.config.yml."
+    },
+    "agentCliAccess": {
+      "title": "Modelos de agentes CLI",
+      "description": "Los administradores pueden usar Pi, OpenCode, Codex y Claude Code instalados como modelos de chat. Se ejecutan en el equipo anfitrión, fuera de los entornos aislados de Work.",
+      "lockedByEnv": "Fijado por la variable de entorno AGENT_CLI_MODELS_ENABLED."
     }
   },
   "usageAnalytics": {
     "eyebrow": "Administración",
     "title": "Uso del proveedor",
-    "description": "Sigue las llamadas de API salientes y el consumo de modelos en los plugins habilitados en esta instancia.",
+    "description": "Sigue las solicitudes de modelos y el uso de los proveedores y agentes de esta instancia.",
     "days": "{{count}} días",
     "refresh": "Actualizar uso",
     "loadFailed": "No se pudo cargar el uso del proveedor.",
@@ -2021,7 +2037,7 @@
       "notCharted": "Selecciona para cargar este modelo en el gráfico"
     },
     "providers": {
-      "title": "Tráfico de complementos habilitados",
+      "title": "Tráfico de proveedores y agentes",
       "description": "Volumen de solicitudes, fiabilidad y tiempo de respuesta por proveedor.",
       "share": "{{percent}} % de las llamadas",
       "failures": "{{count}} fallidas o canceladas",
@@ -2039,9 +2055,9 @@
     },
     "empty": {
       "title": "Aún no hay llamadas al proveedor",
-      "description": "Las llamadas aparecerán aquí después de que un complemento habilitado gestione solicitudes de chat, Work, incrustación, imagen, voz, sonido o video."
+      "description": "Las solicitudes aparecen aquí cuando un proveedor o agente procesa chat, Work, embeddings, imágenes, voz, sonido o vídeo."
     },
-    "privacyNote": "El uso se mide en el servidor en el límite del complemento saliente. Libre WebUI almacena proveedor, modelo, tiempo, estado y contadores reportados, nunca prompts, respuestas, endpoints, credenciales ni cuerpos de error del proveedor. Los totales de tokens incluyen solo las llamadas en las que el proveedor devolvió metadatos de uso.",
+    "privacyNote": "El uso de las solicitudes a proveedores y agentes se registra en el servidor. Libre WebUI almacena proveedor, modelo, tiempo, estado y contadores reportados, nunca prompts, respuestas, endpoints, credenciales ni cuerpos de error del proveedor. Los totales de tokens incluyen solo las llamadas en las que el proveedor devolvió metadatos de uso.",
     "heatmap": {
       "title": "Un año de actividad",
       "description": "Llamadas diarias a proveedores durante el último año, coloreadas según el modelo más usado cada día.",
@@ -2051,6 +2067,14 @@
       "less": "Menos",
       "more": "Más",
       "yearTotal": "{{formatted}} llamadas en el último año"
+    },
+    "agents": {
+      "title": "Agentes",
+      "description": "Llamadas de agentes CLI y solicitudes nativas de DSH. DSH con modelos de Libre WebUI se contabiliza en su proveedor de modelos.",
+      "noCalls": "No hay llamadas registradas en este período",
+      "unreported": "Tokens no reportados",
+      "topModels": "Modelos más usados",
+      "legacy": "Este servidor no proporciona un desglose completo de agentes. Los registros disponibles se muestran a continuación."
     }
   },
   "systemPage": {
@@ -2732,7 +2756,11 @@
       "remoteDismissLabel": "Ocultar aviso del proveedor remoto",
       "remoteDismissFailed": "No se pudo guardar la preferencia del proveedor remoto.",
       "noModelSelected": "No hay ningún modelo compatible con el modo Trabajo seleccionado.",
-      "mentionAgents": "Mencionar un agente"
+      "mentionAgents": "Mencionar un agente",
+      "engine": "Motor",
+      "nativeDshModels": "Modelos nativos de DSH",
+      "libreModels": "Modelos de Libre WebUI",
+      "nativeDshUnavailable": "Los modelos nativos de DSH no están disponibles. Actualiza la lista de modelos o revisa la configuración del proveedor."
     },
     "conversation": {
       "ready": "Espacio de trabajo listo",
@@ -2781,7 +2809,7 @@
       "readyOllama": "Docker listo",
       "readyPlugin": "Docker + plugin listos",
       "readyHybrid": "Docker + modelos listos",
-      "reason": "Se requieren Docker y un proveedor de modelos disponible mediante Ollama o un plugin."
+      "reason": "Se requiere un entorno de ejecución Work y un proveedor de modelos disponible."
     },
     "workspace": {
       "label": "Vistas del espacio de trabajo",
@@ -3911,5 +3939,42 @@
       "connected": "{{name}} conectado — sus modelos ya están disponibles",
       "saveFailed": "No se pudo guardar la clave de API"
     }
+  },
+  "cordis": {
+    "title": "Motor Cordis",
+    "description": "Sesiones, herramientas y chat para el motor DeepSeek Harness integrado.",
+    "newSession": "Nueva sesión",
+    "createFailed": "No se pudo crear la sesión.",
+    "deleteFailed": "No se pudo eliminar la sesión.",
+    "sendFailed": "El motor no pudo completar el turno.",
+    "sessionsHeading": "Sesiones",
+    "toolsHeading": "Herramientas",
+    "transcriptHeading": "Transcripción",
+    "noSessions": "Aún no hay sesiones. Crea una para empezar.",
+    "noTools": "El motor no registró ninguna herramienta.",
+    "selectSession": "Selecciona una sesión o crea una para empezar.",
+    "working": "El agente está trabajando…",
+    "composerLabel": "Mensaje al motor",
+    "composerPlaceholder": "Pide al motor que haga algo…",
+    "send": "Enviar",
+    "stop": "Detener",
+    "deleteSession": "Eliminar sesión",
+    "unknownTime": "Hora desconocida",
+    "disabledTitle": "El motor Cordis está desactivado",
+    "disabledHint": "Un administrador puede activarlo en Gestión de usuarios → Acceso y políticas.",
+    "unavailableTitle": "El motor Cordis no pudo iniciarse",
+    "role": {
+      "user": "Tú",
+      "assistant": "Motor",
+      "system": "Sistema",
+      "tool": "Herramienta",
+      "unknown": "Mensaje"
+    },
+    "turnFailed": "El motor no pudo completar el turno",
+    "permissions": "Permisos",
+    "readOnly": "Solo lectura",
+    "workspaceWrite": "Escritura en el espacio de trabajo",
+    "context": "Contexto de la sesión",
+    "permissionHint": "Solo lectura permite inspeccionar archivos. La escritura permite editar dentro del espacio de trabajo de esta sesión."
   }
 }

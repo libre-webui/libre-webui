@@ -363,6 +363,10 @@ for (const width of [1280, 390]) {
     const viewport = page.getByTestId('chat-scroll-viewport');
     const jump = page.getByTestId('chat-new-messages');
     await expect(viewport).toBeVisible();
+    // Render the last lazy row before using scrollHeight to set up the fades.
+    const finalResponse = page.getByText(longResponse(6), { exact: true });
+    await finalResponse.scrollIntoViewIfNeeded();
+    await expect(finalResponse).toBeInViewport();
     await viewport.evaluate(element => {
       element.scrollTop = element.scrollHeight;
     });

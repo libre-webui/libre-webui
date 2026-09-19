@@ -21,6 +21,7 @@ import { useLocation, useNavigate } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import {
   Bot,
+  Boxes,
   Briefcase,
   ChartNoAxesCombined,
   Ghost,
@@ -65,6 +66,7 @@ const PAGE_META: Record<string, { icon: IconComponent; labelKey: string }> = {
   '/personas': { icon: UserIcon, labelKey: 'sidebar.navigation.personas' },
   '/gallery': { icon: Sparkles, labelKey: 'sidebar.navigation.imagine' },
   '/agents': { icon: Bot, labelKey: 'sidebar.navigation.agents' },
+  '/cordis': { icon: Boxes, labelKey: 'sidebar.navigation.cordis' },
   '/usage': { icon: ChartNoAxesCombined, labelKey: 'usageAnalytics.title' },
   '/system': { icon: Server, labelKey: 'systemPage.title' },
   '/artifacts': { icon: Package, labelKey: 'tabs.artifacts' },
@@ -119,7 +121,8 @@ export const AppTabBar: React.FC = () => {
   const sessions = useChatStore(state => state.sessions);
   const currentSession = useChatStore(state => state.currentSession);
   const workTasks = useWorkStore(state => state.tasks);
-  const { systemInfo, isAdmin, canUseWork, canUseAgents } = useAuthStore();
+  const { systemInfo, isAdmin, canUseWork, canUseAgents, canUseCordis } =
+    useAuthStore();
   const [menuOpen, setMenuOpen] = useState(false);
   const [menuPosition, setMenuPosition] = useState<NewTabMenuPosition | null>(
     null
@@ -428,6 +431,16 @@ export const AppTabBar: React.FC = () => {
             icon: PAGE_META['/agents'].icon,
             separatorBefore: true,
             action: () => navigate('/agents'),
+          },
+        ]
+      : []),
+    ...(canUseCordis()
+      ? [
+          {
+            key: '/cordis',
+            label: t(PAGE_META['/cordis'].labelKey, 'Cordis Engine'),
+            icon: PAGE_META['/cordis'].icon,
+            action: () => navigate('/cordis'),
           },
         ]
       : []),

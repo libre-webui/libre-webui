@@ -248,6 +248,44 @@ class ChatGenerationService {
     } as OllamaChatResponse;
   }
 
+  createStreamedChatResponse(
+    model: string,
+    content: string,
+    thinking?: string,
+    providerMetadata?: Record<string, unknown>,
+    usage?: { promptTokens?: number; completionTokens?: number },
+    timings?: { promptMs?: number; predictedMs?: number }
+  ): OllamaChatResponse {
+    return this.createPluginChatResponse(
+      model,
+      content,
+      thinking,
+      providerMetadata,
+      {
+        ...(usage?.promptTokens !== undefined
+          ? { prompt_tokens: usage.promptTokens }
+          : {}),
+        ...(usage?.completionTokens !== undefined
+          ? { completion_tokens: usage.completionTokens }
+          : {}),
+      },
+      timings
+        ? {
+            ...(timings.promptMs !== undefined
+              ? { firstTokenNs: timings.promptMs * 1e6 }
+              : {}),
+            ...(timings.predictedMs !== undefined
+              ? { generationNs: timings.predictedMs * 1e6 }
+              : {}),
+            ...(timings.promptMs !== undefined &&
+            timings.predictedMs !== undefined
+              ? { totalNs: (timings.promptMs + timings.predictedMs) * 1e6 }
+              : {}),
+          }
+        : undefined
+    );
+  }
+
   async executeNonStreaming({
     target,
     ollamaMessages,
@@ -268,6 +306,9 @@ class ChatGenerationService {
       let assistantContent = '';
       let assistantThinking = '';
       let providerMetadata: Record<string, unknown> | undefined;
+      let usage:
+        { promptTokens?: number; completionTokens?: number } | undefined;
+      let timings: { promptMs?: number; predictedMs?: number } | undefined;
       for await (const chunk of agentCliService.executeAgentStreamRequest(
         target.providerId,
         pluginMessages,
@@ -278,16 +319,21 @@ class ChatGenerationService {
           assistantContent += chunk.content;
         } else if (chunk.type === 'reasoning' && chunk.content) {
           assistantThinking += chunk.content;
+        } else if (chunk.type === 'usage') {
+          if (chunk.usage) usage = { ...usage, ...chunk.usage };
+          if (chunk.timings) timings = { ...timings, ...chunk.timings };
         } else if (chunk.type === 'done' && chunk.providerMetadata) {
           providerMetadata = chunk.providerMetadata;
         }
       }
       return {
-        response: this.createPluginChatResponse(
+        response: this.createStreamedChatResponse(
           target.actualModelName,
           assistantContent,
           assistantThinking || undefined,
-          providerMetadata
+          providerMetadata,
+          usage,
+          timings
         ),
         assistantContent,
         ...(assistantThinking ? { assistantThinking } : {}),
