@@ -15,6 +15,79 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 📚 Documentation
 
+## [0.37.0] - 2026-09-19
+
+DeepSeek Harness joins Chat and Work, with a live engine console and access to
+the models already configured in a native DSH instance. Agent usage is easier
+to find, and Work starts with a clearer prompt, engine selector, and model picker.
+
+### ✨ New Features
+
+- **DeepSeek Harness in Chat and Work.** Administrators can enable the optional
+  Cordis Engine, select DSH in Chat's Agents group, or choose it as a Work
+  engine. Work keeps its existing containers, permissions, tool approvals,
+  conversation history, and recovery behavior while DSH runs the agent loop.
+- **Native DSH models.** Connect the providers already configured in DSH and
+  choose each model independently, including Flash and Pro. Install the
+  standalone provider plugin directly from its GitHub URL in DSH's Add plugin
+  dialog. The connection uses a private Unix socket on the same host and OS
+  account, and provider credentials stay in DSH.
+- **Cordis Engine console.** The administrator-only Engine page streams text,
+  reasoning, and tool activity, renders Markdown and highlighted code, and
+  supports saved conversations, Stop, and deletion. Each session retains its
+  model and Read only or Workspace write permission; individual tool requests
+  offer Allow once and Deny within the configured workspace.
+
+### 🔧 Improvements
+
+- **Agent usage in Provider Usage.** Claude Code, Codex, OpenCode, Pi, and DSH
+  have an explicit Agents section showing calls, reported tokens, outcomes,
+  and latency. Native DSH calls are recorded across Chat, Work, titles, and
+  thinking summaries, with existing tariffs and budget limits. Missing token
+  counts stay unreported, and calls through LWUI providers keep their existing
+  records without a second charge.
+- **A clearer Work start screen.** A shorter introduction leaves more room for
+  the task. Labeled Engine and Model controls sit beside dictation and a visible
+  Run button, wrap on narrow screens, and retain keyboard focus, touch targets,
+  and the draft when selections change.
+- **Independent Agent CLI access.** Installed Pi, OpenCode, Codex, and Claude
+  Code models have their own Agent CLI models switch. Libre Claw can remain
+  disabled without hiding those models from Chat's Agents category.
+
+### 🐛 Bug Fixes
+
+- **Exact model selection and labels.** DSH selections retain the chosen
+  provider and model across reloads and Chat-to-Work handoff. Settings identify
+  agents, plugins, personas, and Ollama correctly; disabling Ollama does not
+  relabel or hide other providers. Persona IDs no longer reach provider calls.
+- **Titles and thinking summaries with DSH.** Auxiliary text requests use the
+  selected underlying model directly, without launching an agent session or
+  offering tools. Native model validation no longer waits for unrelated
+  providers, and metadata lookups receive cancellation.
+- **Reliable sessions and usage counters.** Stopping and resuming an Engine
+  session preserves its history, and saved sessions can be deleted. An explicit
+  repair utility backs up supported malformed legacy logs before changing them.
+  CLI token reports survive streaming and durable transports, avoid duplicate
+  cache or cumulative counts, and retain failed or cancelled outcomes.
+
+### 🔒 Security
+
+- **Bounded email validation.** Application URL normalization and mailbox
+  validation no longer use backtracking regular expressions, resolving the
+  corresponding CodeQL findings from 0.36.0.
+- **Safe preview lease cleanup.** Work verifies that a stored usage-release
+  callback is callable before invoking it.
+
+### 📚 Documentation
+
+- **DSH setup and plugin guides.** New Cordis Bridge, Cordis Configuration, and
+  Cordis Plugin Authoring pages cover the engine, public plugin installation,
+  model routing, permissions, lifecycle, and troubleshooting.
+- **Updated operator references.** Work, Agent CLI models, Provider Usage,
+  environment variables, platform boundaries, and capability contracts describe
+  the new integration. The Work skill placeholder renders correctly in MDX,
+  and troubleshooting uses the correct `model.provider` setting.
+
 ## [0.36.0] - 2026-09-18
 
 Notifications reach your inbox by email, routines fire on events and carry
