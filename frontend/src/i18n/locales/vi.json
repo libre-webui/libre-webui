@@ -1,5 +1,7 @@
 {
   "common": {
+    "provider": "Nhà cung cấp",
+    "agent": "Tác nhân",
     "loading": "Đang tải...",
     "save": "Lưu",
     "saving": "Đang lưu...",
@@ -540,7 +542,8 @@
       "prompts": "Prompt",
       "skills": "Kỹ năng",
       "tools": "Công cụ",
-      "channels": "Kênh"
+      "channels": "Kênh",
+      "cordis": "Công cụ Cordis"
     },
     "toggleSize": "Chuyển đổi kích thước thanh bên",
     "expandSidebar": "Mở rộng thanh bên"
@@ -1828,11 +1831,11 @@
       "saveFailed": "Không thể cập nhật chủ đề mặc định"
     },
     "agentAccess": {
-      "title": "Tác nhân",
-      "description": "Cung cấp mục Tác nhân (Libre Claw) cho quản trị viên. CLI tác nhân chạy trên máy chủ với tư cách người dùng máy chủ, bên ngoài sandbox Work.",
+      "title": "Libre Claw",
+      "description": "Hiển thị không gian làm việc Libre Claw cho quản trị viên.",
       "saved": "Đã cập nhật quyền truy cập tác nhân",
       "saveFailed": "Không thể cập nhật quyền truy cập tác nhân",
-      "lockedByEnv": "Bị khóa bởi biến môi trường AGENT_CLI_MODELS_ENABLED."
+      "lockedByEnv": "Bị khóa bởi biến môi trường LIBRE_CLAW_ENABLED."
     },
     "groups": {
       "title": "Nhóm",
@@ -1969,12 +1972,25 @@
       "saving": "Đang lưu…",
       "saved": "Đã lưu cài đặt email.",
       "saveFailed": "Không thể lưu cài đặt email."
+    },
+    "cordisAccess": {
+      "title": "Công cụ Cordis",
+      "description": "Cung cấp công cụ Cordis cho quản trị viên. Nó chạy công cụ với quyền truy cập hệ thống tệp thực, nằm ngoài luồng phê duyệt công cụ của Libre WebUI.",
+      "saved": "Đã cập nhật quyền truy cập Cordis",
+      "saveFailed": "Không thể cập nhật quyền truy cập Cordis",
+      "lockedByEnv": "Được ghim bởi biến môi trường LIBRE_CORDIS_ENABLED.",
+      "lockedByFile": "Được ghim bởi features.enabled trong cordis.config.yml."
+    },
+    "agentCliAccess": {
+      "title": "Mô hình tác tử CLI",
+      "description": "Quản trị viên có thể dùng Pi, OpenCode, Codex và Claude Code đã cài đặt làm mô hình trò chuyện. Chúng chạy trên máy chủ, bên ngoài môi trường cách ly Work.",
+      "lockedByEnv": "Bị khóa bởi biến môi trường AGENT_CLI_MODELS_ENABLED."
     }
   },
   "usageAnalytics": {
     "eyebrow": "Quản trị",
     "title": "Mức sử dụng nhà cung cấp",
-    "description": "Theo dõi các cuộc gọi API gửi đi và mức tiêu thụ mô hình trên các plugin đã bật trong phiên bản này.",
+    "description": "Theo dõi yêu cầu mô hình và mức sử dụng của các nhà cung cấp và tác nhân trên phiên bản này.",
     "days": "{{count}} ngày",
     "refresh": "Làm mới mức sử dụng",
     "loadFailed": "Không thể tải mức sử dụng của nhà cung cấp.",
@@ -2021,7 +2037,7 @@
       "notCharted": "Chọn để tải mô hình này vào biểu đồ"
     },
     "providers": {
-      "title": "Lưu lượng plugin đã bật",
+      "title": "Lưu lượng nhà cung cấp và tác nhân",
       "description": "Số lượng yêu cầu, độ tin cậy và thời gian phản hồi theo nhà cung cấp.",
       "share": "{{percent}}% số lệnh gọi",
       "failures": "{{count}} thất bại hoặc bị hủy",
@@ -2039,9 +2055,9 @@
     },
     "empty": {
       "title": "Chưa có lệnh gọi nhà cung cấp",
-      "description": "Các lệnh gọi sẽ hiển thị tại đây sau khi một plugin đã bật xử lý yêu cầu trò chuyện, Work, nhúng, hình ảnh, giọng nói, âm thanh hoặc video."
+      "description": "Yêu cầu xuất hiện ở đây sau khi nhà cung cấp hoặc tác nhân xử lý trò chuyện, Work, embedding, hình ảnh, giọng nói, âm thanh hoặc video."
     },
-    "privacyNote": "Mức sử dụng được đo trên máy chủ tại ranh giới plugin gửi đi. Libre WebUI lưu trữ nhà cung cấp, mô hình, thời gian, trạng thái và bộ đếm đã báo cáo—không bao gồm lời nhắc, phản hồi, điểm cuối, thông tin xác thực hoặc nội dung lỗi của nhà cung cấp. Tổng token chỉ bao gồm các lệnh gọi mà nhà cung cấp trả về siêu dữ liệu sử dụng.",
+    "privacyNote": "Mức sử dụng của yêu cầu đến nhà cung cấp và tác nhân được ghi lại trên máy chủ. Libre WebUI lưu trữ nhà cung cấp, mô hình, thời gian, trạng thái và bộ đếm đã báo cáo—không bao gồm lời nhắc, phản hồi, điểm cuối, thông tin xác thực hoặc nội dung lỗi của nhà cung cấp. Tổng token chỉ bao gồm các lệnh gọi mà nhà cung cấp trả về siêu dữ liệu sử dụng.",
     "heatmap": {
       "title": "Một năm hoạt động",
       "description": "Lượt gọi nhà cung cấp hằng ngày trong năm qua, tô màu theo mô hình được dùng nhiều nhất mỗi ngày.",
@@ -2051,6 +2067,14 @@
       "less": "Ít",
       "more": "Nhiều",
       "yearTotal": "{{formatted}} lượt gọi trong năm qua"
+    },
+    "agents": {
+      "title": "Tác nhân",
+      "description": "Lượt gọi tác nhân CLI và yêu cầu DSH gốc. DSH dùng mô hình Libre WebUI được tính cho nhà cung cấp mô hình đó.",
+      "noCalls": "Không có lượt gọi được ghi nhận trong khoảng thời gian này",
+      "unreported": "Token chưa được báo cáo",
+      "topModels": "Mô hình được dùng nhiều nhất",
+      "legacy": "Máy chủ này không cung cấp thống kê tác nhân đầy đủ. Các bản ghi tác nhân hiện có được hiển thị bên dưới."
     }
   },
   "systemPage": {
@@ -2710,8 +2734,8 @@
       "status": "Trạng thái: {{status}}"
     },
     "landing": {
-      "title": "Bắt đầu tác vụ công việc mới",
-      "description": "Cung cấp cho mô hình cục bộ hoặc mô hình của nhà cung cấp đã cấu hình một không gian làm việc lâu dài và biệt lập. Mô hình có thể kiểm tra tệp, chạy công cụ và tiếp tục từ vị trí cũ khi bạn quay lại.",
+      "title": "Bạn muốn làm việc gì?",
+      "description": "Mô tả một tác vụ. Mô hình của bạn sẽ có không gian làm việc riêng.",
       "isolated": "Biệt lập",
       "isolatedBody": "Mỗi tác vụ có vùng chứa và tệp riêng.",
       "durable": "Lâu dài",
@@ -2732,7 +2756,12 @@
       "remoteDismissLabel": "Đóng thông báo về nhà cung cấp từ xa",
       "remoteDismissFailed": "Không thể lưu tùy chọn nhà cung cấp từ xa.",
       "noModelSelected": "Chưa chọn mô hình tương thích với chế độ Công việc.",
-      "mentionAgents": "Nhắc đến một agent"
+      "mentionAgents": "Nhắc đến một agent",
+      "engine": "Bộ máy",
+      "nativeDshModels": "Mô hình DSH gốc",
+      "libreModels": "Mô hình Libre WebUI",
+      "nativeDshUnavailable": "Mô hình DSH gốc hiện không khả dụng. Làm mới danh sách mô hình hoặc kiểm tra cấu hình nhà cung cấp.",
+      "modelLabel": "Mô hình"
     },
     "conversation": {
       "ready": "Không gian làm việc đã sẵn sàng",
@@ -2781,7 +2810,7 @@
       "readyOllama": "Docker đã sẵn sàng",
       "readyPlugin": "Docker + plugin đã sẵn sàng",
       "readyHybrid": "Docker + mô hình đã sẵn sàng",
-      "reason": "Cần có Docker và nhà cung cấp mô hình Ollama hoặc plugin khả dụng."
+      "reason": "Cần có môi trường thực thi Work và nhà cung cấp mô hình khả dụng."
     },
     "workspace": {
       "label": "Chế độ xem không gian làm việc",
@@ -2951,7 +2980,7 @@
       "label": "Thuê làm tác nhân (không bắt buộc)",
       "none": "Không có persona (tác vụ một lần)",
       "hint": "Tác vụ này trở thành một tác nhân có tên: giữ persona, được ghim trong thanh bên và báo cáo một dòng trạng thái sau mỗi lần chạy.",
-      "description": "Chọn một persona để biến tác vụ này thành tác nhân lâu dài với danh tính riêng."
+      "description": "Chọn một persona để giữ tác vụ này dưới dạng tác nhân có tên."
     },
     "agent": {
       "openScreen": "Mở chế độ xem toàn màn hình",
@@ -3911,5 +3940,42 @@
       "connected": "{{name}} đã kết nối — các mô hình của nó hiện đã khả dụng",
       "saveFailed": "Không thể lưu khóa API"
     }
+  },
+  "cordis": {
+    "title": "Công cụ Cordis",
+    "description": "Phiên, công cụ và trò chuyện cho công cụ DeepSeek Harness nhúng.",
+    "newSession": "Phiên mới",
+    "createFailed": "Không thể tạo phiên.",
+    "deleteFailed": "Không thể xóa phiên.",
+    "sendFailed": "Công cụ không thể hoàn tất lượt.",
+    "sessionsHeading": "Phiên",
+    "toolsHeading": "Công cụ",
+    "transcriptHeading": "Bản ghi",
+    "noSessions": "Chưa có phiên nào. Hãy tạo một phiên để bắt đầu.",
+    "noTools": "Công cụ không đăng ký công cụ nào.",
+    "selectSession": "Chọn một phiên hoặc tạo mới để bắt đầu.",
+    "working": "Tác nhân đang làm việc…",
+    "composerLabel": "Tin nhắn tới công cụ",
+    "composerPlaceholder": "Yêu cầu công cụ làm điều gì đó…",
+    "send": "Gửi",
+    "stop": "Dừng",
+    "deleteSession": "Xóa phiên",
+    "unknownTime": "Không rõ thời gian",
+    "disabledTitle": "Công cụ Cordis đang tắt",
+    "disabledHint": "Quản trị viên có thể bật trong Quản lý người dùng → Quyền truy cập và chính sách.",
+    "unavailableTitle": "Không thể khởi động công cụ Cordis",
+    "role": {
+      "user": "Bạn",
+      "assistant": "Công cụ",
+      "system": "Hệ thống",
+      "tool": "Công cụ",
+      "unknown": "Tin nhắn"
+    },
+    "turnFailed": "Công cụ không thể hoàn tất lượt",
+    "permissions": "Quyền",
+    "readOnly": "Chỉ đọc",
+    "workspaceWrite": "Ghi trong không gian làm việc",
+    "context": "Ngữ cảnh phiên",
+    "permissionHint": "Chỉ đọc cho phép kiểm tra tệp. Quyền ghi cho phép chỉnh sửa trong không gian làm việc của phiên này."
   }
 }

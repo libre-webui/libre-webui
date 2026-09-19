@@ -67,6 +67,7 @@ const canonicalCapabilityIds = [
   'durable-jobs',
   'deployment-profiles',
   'recovery-backup',
+  'cordis-bridge',
 ];
 
 function sorted(values) {

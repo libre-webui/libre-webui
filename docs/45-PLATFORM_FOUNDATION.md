@@ -157,6 +157,13 @@ For managed dependencies, use the Helm team profile and retain verified TLS;
 the Compose file disables PostgreSQL TLS only on its private project network.
 Readiness remains failed until an external worker is present.
 
+The optional host Cordis Engine uses local JSONL sessions and is restricted to
+single-replica solo deployments. Its separate sandboxed Work driver creates no
+local durable store: Work's existing SQL task/run/message/approval records and
+durable jobs remain authoritative, including recovery on an external worker.
+An engine choice is stored with the selected model as `dsh:<model>`; it retains
+the existing provider identity and runtime authorization.
+
 ## Persistence and migration boundary
 
 Identity and authorization now use asynchronous repositories. The repository

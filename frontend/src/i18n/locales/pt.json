@@ -1,5 +1,7 @@
 {
   "common": {
+    "provider": "Provedor",
+    "agent": "Agente",
     "loading": "Carregando...",
     "save": "Salvar",
     "saving": "Salvando...",
@@ -540,7 +542,8 @@
       "prompts": "Prompts",
       "skills": "Habilidades",
       "tools": "Ferramentas",
-      "channels": "Canais"
+      "channels": "Canais",
+      "cordis": "Motor Cordis"
     },
     "toggleSize": "Alternar tamanho da barra lateral",
     "expandSidebar": "Expandir barra lateral"
@@ -1828,11 +1831,11 @@
       "saveFailed": "Não foi possível atualizar o tema padrão"
     },
     "agentAccess": {
-      "title": "Agentes",
-      "description": "Oferecer a seção Agentes (Libre Claw) aos administradores. As CLIs de agentes são executadas no host como o usuário do servidor, fora do sandbox do Work.",
+      "title": "Libre Claw",
+      "description": "Mostrar o espaço de trabalho Libre Claw aos administradores.",
       "saved": "Acesso a agentes atualizado",
       "saveFailed": "Não foi possível atualizar o acesso a agentes",
-      "lockedByEnv": "Fixado pela variável de ambiente AGENT_CLI_MODELS_ENABLED."
+      "lockedByEnv": "Fixado pela variável de ambiente LIBRE_CLAW_ENABLED."
     },
     "groups": {
       "title": "Grupos",
@@ -1969,12 +1972,25 @@
       "saving": "Salvando…",
       "saved": "Configurações de e-mail salvas.",
       "saveFailed": "Não foi possível salvar as configurações de e-mail."
+    },
+    "cordisAccess": {
+      "title": "Motor Cordis",
+      "description": "Oferecer o motor Cordis aos administradores. Ele executa ferramentas com acesso real ao sistema de arquivos, fora do fluxo de aprovação de ferramentas do Libre WebUI.",
+      "saved": "Acesso ao Cordis atualizado",
+      "saveFailed": "Não foi possível atualizar o acesso ao Cordis",
+      "lockedByEnv": "Fixado pela variável de ambiente LIBRE_CORDIS_ENABLED.",
+      "lockedByFile": "Fixado por features.enabled em cordis.config.yml."
+    },
+    "agentCliAccess": {
+      "title": "Modelos de agentes CLI",
+      "description": "Os administradores podem usar Pi, OpenCode, Codex e Claude Code instalados como modelos de chat. São executados no anfitrião, fora dos ambientes isolados do Work.",
+      "lockedByEnv": "Fixado pela variável de ambiente AGENT_CLI_MODELS_ENABLED."
     }
   },
   "usageAnalytics": {
     "eyebrow": "Administração",
     "title": "Uso do provedor",
-    "description": "Acompanhe as chamadas de API de saída e o consumo de modelos nos plugins habilitados nesta instância.",
+    "description": "Acompanhe as solicitações aos modelos e o uso dos provedores e agentes desta instância.",
     "days": "{{count}} dias",
     "refresh": "Atualizar uso",
     "loadFailed": "O uso do provedor não pôde ser carregado.",
@@ -2021,7 +2037,7 @@
       "notCharted": "Selecione para carregar este modelo no gráfico"
     },
     "providers": {
-      "title": "Tráfego de plugins ativados",
+      "title": "Tráfego de provedores e agentes",
       "description": "Volume de pedidos, fiabilidade e tempo de resposta por fornecedor.",
       "share": "{{percent}}% das chamadas",
       "failures": "{{count}} falhadas ou canceladas",
@@ -2039,9 +2055,9 @@
     },
     "empty": {
       "title": "Nenhuma chamada de provedor ainda",
-      "description": "As chamadas aparecerão aqui após um plugin ativado processar solicitações de chat, trabalho, incorporação, imagem, fala, som ou vídeo."
+      "description": "As solicitações aparecem aqui após um provedor ou agente processar chat, Work, embeddings, imagens, fala, som ou vídeo."
     },
-    "privacyNote": "O uso é medido no servidor no limite do plugin de saída. O Libre WebUI armazena provedor, modelo, tempo, status e contadores reportados — nunca prompts, respostas, endpoints, credenciais ou corpos de erro do provedor. Os totais de tokens incluem apenas chamadas em que o provedor retornou metadados de uso.",
+    "privacyNote": "O uso das solicitações a provedores e agentes é registrado no servidor. Libre WebUI armazena provedor, modelo, tempo, status e contadores reportados — nunca prompts, respostas, endpoints, credenciais ou corpos de erro do provedor. Os totais de tokens incluem apenas chamadas em que o provedor retornou metadados de uso.",
     "heatmap": {
       "title": "Um ano de atividade",
       "description": "Chamadas diárias a provedores no último ano, coloridas pelo modelo mais usado de cada dia.",
@@ -2051,6 +2067,14 @@
       "less": "Menos",
       "more": "Mais",
       "yearTotal": "{{formatted}} chamadas no último ano"
+    },
+    "agents": {
+      "title": "Agentes",
+      "description": "Chamadas de agentes CLI e solicitações nativas do DSH. O DSH com modelos do Libre WebUI é contabilizado no provedor do modelo.",
+      "noCalls": "Nenhuma chamada registrada neste período",
+      "unreported": "Tokens não reportados",
+      "topModels": "Modelos mais usados",
+      "legacy": "Este servidor não fornece uma visão completa dos agentes. Os registros disponíveis são exibidos abaixo."
     }
   },
   "systemPage": {
@@ -2710,8 +2734,8 @@
       "status": "Status: {{status}}"
     },
     "landing": {
-      "title": "Iniciar uma nova tarefa de trabalho",
-      "description": "Dê a um modelo local ou de um provedor configurado um espaço de trabalho isolado e persistente. Ele pode inspecionar arquivos, executar ferramentas e continuar de onde parou quando você voltar.",
+      "title": "No que você gostaria de trabalhar?",
+      "description": "Descreva uma tarefa. Seu modelo terá seu próprio espaço de trabalho.",
       "isolated": "Isolado",
       "isolatedBody": "Cada tarefa tem seu próprio contêiner e arquivos.",
       "durable": "Persistente",
@@ -2732,7 +2756,12 @@
       "remoteDismissLabel": "Ocultar aviso do provedor remoto",
       "remoteDismissFailed": "Não foi possível salvar a preferência do provedor remoto.",
       "noModelSelected": "Nenhum modelo compatível com o modo Trabalho está selecionado.",
-      "mentionAgents": "Mencionar um agente"
+      "mentionAgents": "Mencionar um agente",
+      "engine": "Motor",
+      "nativeDshModels": "Modelos DSH nativos",
+      "libreModels": "Modelos Libre WebUI",
+      "nativeDshUnavailable": "Os modelos DSH nativos estão indisponíveis. Atualize a lista de modelos ou verifique a configuração do fornecedor.",
+      "modelLabel": "Modelo"
     },
     "conversation": {
       "ready": "Espaço de trabalho pronto",
@@ -2781,7 +2810,7 @@
       "readyOllama": "Docker pronto",
       "readyPlugin": "Docker + plugin prontos",
       "readyHybrid": "Docker + modelos prontos",
-      "reason": "São necessários o Docker e um provedor de modelos disponível via Ollama ou um plugin."
+      "reason": "São necessários um ambiente Work e um fornecedor de modelos disponível."
     },
     "workspace": {
       "label": "Visualizações do espaço de trabalho",
@@ -2951,7 +2980,7 @@
       "label": "Contratar como agente (opcional)",
       "none": "Sem persona (tarefa única)",
       "hint": "Esta tarefa torna-se um agente nomeado: mantém a persona, fica fixada na barra lateral e informa uma linha de status após cada execução.",
-      "description": "Escolha uma persona para transformar esta tarefa em um agente persistente com identidade própria."
+      "description": "Escolha uma persona para manter esta tarefa como um agente com nome."
     },
     "agent": {
       "openScreen": "Abrir a visualização em tela cheia",
@@ -3911,5 +3940,42 @@
       "connected": "{{name}} conectado — seus modelos já estão disponíveis",
       "saveFailed": "Não foi possível salvar a chave de API"
     }
+  },
+  "cordis": {
+    "title": "Motor Cordis",
+    "description": "Sessões, ferramentas e chat para o motor DeepSeek Harness incorporado.",
+    "newSession": "Nova sessão",
+    "createFailed": "Não foi possível criar a sessão.",
+    "deleteFailed": "Não foi possível excluir a sessão.",
+    "sendFailed": "O motor não conseguiu concluir o turno.",
+    "sessionsHeading": "Sessões",
+    "toolsHeading": "Ferramentas",
+    "transcriptHeading": "Transcrição",
+    "noSessions": "Ainda não há sessões. Crie uma para começar.",
+    "noTools": "O motor não registrou ferramentas.",
+    "selectSession": "Selecione uma sessão ou crie uma para começar.",
+    "working": "O agente está trabalhando…",
+    "composerLabel": "Mensagem para o motor",
+    "composerPlaceholder": "Peça ao motor para fazer algo…",
+    "send": "Enviar",
+    "stop": "Parar",
+    "deleteSession": "Excluir sessão",
+    "unknownTime": "Hora desconhecida",
+    "disabledTitle": "O motor Cordis está desativado",
+    "disabledHint": "Um administrador pode ativá-lo em Gerenciamento de usuários → Acesso e políticas.",
+    "unavailableTitle": "O motor Cordis não pôde ser iniciado",
+    "role": {
+      "user": "Você",
+      "assistant": "Motor",
+      "system": "Sistema",
+      "tool": "Ferramenta",
+      "unknown": "Mensagem"
+    },
+    "turnFailed": "O motor não conseguiu concluir o turno",
+    "permissions": "Permissões",
+    "readOnly": "Apenas leitura",
+    "workspaceWrite": "Escrita no espaço de trabalho",
+    "context": "Contexto da sessão",
+    "permissionHint": "Apenas leitura permite inspecionar ficheiros. A escrita permite alterações no espaço de trabalho desta sessão."
   }
 }

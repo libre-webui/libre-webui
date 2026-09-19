@@ -16,7 +16,13 @@
  */
 
 import type { GenerationTarget } from './chatGenerationService.js';
-import { AUTO_TITLE_CURRENT_MODEL } from './titleGenerationService.js';
+import {
+  AUTO_TITLE_CURRENT_MODEL,
+  resolveDshAuxiliaryTarget,
+  generateNativeDshText,
+  type DshAuxiliaryTargetResolver,
+  type DshTextGenerator,
+} from './titleGenerationService.js';
 import type {
   ChatMessage,
   ChatProviderSelection,
@@ -59,11 +65,6 @@ export function parseThinkingSummaryRequest(
     string,
     unknown
   >;
-  if (typeof model !== 'string' || !model.trim() || model.length > 256) {
-    throw new ThinkingSummaryInputError(
-      'model must contain 1 to 256 characters.'
-    );
-  }
   if (
     typeof thinking !== 'string' ||
     !thinking.trim() ||
@@ -84,9 +85,26 @@ export function parseThinkingSummaryRequest(
     throw new ThinkingSummaryInputError('Provider fields must be strings.');
   }
   const provider = normalizeChatProviderSelection({ providerType, providerId });
-  if (provider?.providerType === 'agent') {
+  const usesDsh =
+    provider?.providerType === 'agent' && provider.providerId === 'dsh';
+  if (provider?.providerType === 'agent' && !usesDsh) {
     throw new ChatProviderSelectionError(
-      'Thinking summaries require an Ollama or plugin model.'
+      'Thinking summaries require an Ollama, plugin, or DeepSeek Harness model.'
+    );
+  }
+  const maxModelLength =
+    usesDsh &&
+    typeof model === 'string' &&
+    (model === 'dsh' || model.startsWith('dsh:'))
+      ? 2048
+      : 256;
+  if (
+    typeof model !== 'string' ||
+    !model.trim() ||
+    model.length > maxModelLength
+  ) {
+    throw new ThinkingSummaryInputError(
+      `model must contain 1 to ${maxModelLength} characters.`
     );
   }
   return { model: model.trim(), thinking: thinking.trim(), ...provider };
@@ -153,6 +171,8 @@ interface ThinkingSummaryDependencies {
     ): Promise<OllamaChatResponse>;
   };
   timeoutMs?: number;
+  resolveDshProviderTarget?: DshAuxiliaryTargetResolver;
+  generateDshText?: DshTextGenerator;
 }
 
 interface SummarizeThinkingOptions extends ChatProviderSelection {
@@ -222,20 +242,60 @@ export class ThinkingSummaryService {
       if (!session) return null;
 
       const usesCurrentModel = request.model === AUTO_TITLE_CURRENT_MODEL;
-      const model = usesCurrentModel
-        ? await wait(() =>
-            chatGenerationService.resolveActualModelName(session.model, userId)
-          )
-        : request.model;
-      const provider = usesCurrentModel
-        ? session.model.startsWith('persona:')
+      let provider = usesCurrentModel
+        ? session.model.startsWith('persona:') &&
+          session.providerType !== 'agent'
           ? undefined
           : normalizeChatProviderSelection(session)
         : normalizeChatProviderSelection(request);
-      if (provider?.providerType === 'agent') {
+      if (
+        request.model.startsWith('persona:') &&
+        provider?.providerType !== 'agent'
+      ) {
+        provider = undefined;
+      }
+      const usesDsh =
+        provider?.providerType === 'agent' && provider.providerId === 'dsh';
+      if (provider?.providerType === 'agent' && !usesDsh) {
         throw new ChatProviderSelectionError(
-          'Thinking summaries require an Ollama or plugin model.'
+          'Thinking summaries require an Ollama, plugin, or DeepSeek Harness model.'
         );
+      }
+      let model = usesCurrentModel
+        ? usesDsh
+          ? session.model
+          : await wait(() =>
+              chatGenerationService.resolveActualModelName(
+                session.model,
+                userId
+              )
+            )
+        : request.model;
+      if (usesDsh) {
+        const resolved = await wait(() =>
+          (
+            this.dependencies.resolveDshProviderTarget ??
+            resolveDshAuxiliaryTarget
+          )(model, userId)
+        );
+        model = resolved.model;
+        if (resolved.providerType === 'dsh') {
+          if (!resolved.providerId)
+            throw new Error('Native DSH provider identity is missing.');
+          const raw = await wait(() =>
+            (this.dependencies.generateDshText ?? generateNativeDshText)({
+              model,
+              providerId: resolved.providerId!,
+              userId,
+              prompt: buildThinkingSummaryPrompt(request.thinking),
+              purpose: 'session-title',
+              signal,
+            })
+          );
+          signal.throwIfAborted();
+          return { summary: sanitizeSummary(raw) };
+        }
+        provider = normalizeChatProviderSelection(resolved);
       }
       const options: GenerationOptions = {
         temperature: 0.2,
@@ -252,12 +312,15 @@ export class ThinkingSummaryService {
         )
       );
       if (
-        provider?.providerType === 'plugin' &&
-        target.activePlugin?.id !== provider.providerId
+        target.providerType === 'agent' ||
+        (provider?.providerType === 'plugin' &&
+          target.activePlugin?.id !== provider.providerId) ||
+        (provider?.providerType === 'ollama' && target.activePlugin)
       ) {
         throw new Error('The selected summary provider is unavailable.');
       }
       const prompt = buildThinkingSummaryPrompt(request.thinking);
+      const { tools: _tools, ...textOptions } = target.mergedOptions;
       let raw: string;
       if (target.activePlugin) {
         const response = await wait(() =>
@@ -271,7 +334,7 @@ export class ThinkingSummaryService {
                 timestamp: Date.now(),
               },
             ],
-            { ...target.mergedOptions, ...options, num_predict: 256 },
+            { ...textOptions, ...options, num_predict: 256 },
             userId,
             target.activePlugin!.id,
             signal
@@ -279,7 +342,7 @@ export class ThinkingSummaryService {
         );
         raw = chatGenerationService.extractPluginAssistantContent(response);
       } else {
-        const { think: _think, ...ollamaOptions } = target.mergedOptions;
+        const { think: _think, ...ollamaOptions } = textOptions;
         const response = await wait(() =>
           ollamaService.generateChatResponse(
             {

@@ -1,5 +1,7 @@
 {
   "common": {
+    "provider": "Provider",
+    "agent": "Agent",
     "loading": "Loading...",
     "save": "Save",
     "saving": "Saving...",
@@ -540,7 +542,8 @@
       "prompts": "Prompts",
       "skills": "Skills",
       "tools": "Tools",
-      "channels": "Channels"
+      "channels": "Channels",
+      "cordis": "Cordis Engine"
     },
     "toggleSize": "Toggle sidebar size",
     "expandSidebar": "Expand sidebar"
@@ -1828,11 +1831,11 @@
       "saveFailed": "Could not update the default theme"
     },
     "agentAccess": {
-      "title": "Agents",
-      "description": "Offer the Agents section (Libre Claw) to administrators. Agent CLIs run on the host as the server user, outside the Work sandbox.",
+      "title": "Libre Claw",
+      "description": "Show the Libre Claw workspace to administrators.",
       "saved": "Agent access updated",
       "saveFailed": "Could not update agent access",
-      "lockedByEnv": "Pinned by the AGENT_CLI_MODELS_ENABLED environment variable."
+      "lockedByEnv": "Pinned by the LIBRE_CLAW_ENABLED environment variable."
     },
     "groups": {
       "title": "Groups",
@@ -1969,12 +1972,25 @@
       "saving": "Saving…",
       "saved": "Email settings saved.",
       "saveFailed": "The email settings could not be saved."
+    },
+    "cordisAccess": {
+      "title": "Cordis Engine",
+      "description": "Offer the Cordis Engine section to administrators. It runs tools with real filesystem access, outside Libre WebUI's tool-approval flow.",
+      "saved": "Cordis access updated",
+      "saveFailed": "Could not update Cordis access",
+      "lockedByEnv": "Pinned by the LIBRE_CORDIS_ENABLED environment variable.",
+      "lockedByFile": "Pinned by features.enabled in cordis.config.yml."
+    },
+    "agentCliAccess": {
+      "title": "Agent CLI models",
+      "description": "Administrators can use installed Pi, OpenCode, Codex, and Claude Code as chat models. They run on the host, outside Work sandboxes.",
+      "lockedByEnv": "Pinned by the AGENT_CLI_MODELS_ENABLED environment variable."
     }
   },
   "usageAnalytics": {
     "eyebrow": "Administration",
     "title": "Provider Usage",
-    "description": "Follow outbound API calls and model consumption across the enabled plugins on this instance.",
+    "description": "Track model requests and usage across this instance's providers and agents.",
     "days": "{{count}} days",
     "refresh": "Refresh usage",
     "loadFailed": "Provider usage could not be loaded.",
@@ -2021,7 +2037,7 @@
       "notCharted": "Select to load this model in the chart"
     },
     "providers": {
-      "title": "Enabled plugin traffic",
+      "title": "Provider and agent traffic",
       "description": "Request volume, reliability, and response time by provider.",
       "share": "{{percent}}% of calls",
       "failures": "{{count}} failed or cancelled",
@@ -2039,9 +2055,9 @@
     },
     "empty": {
       "title": "No provider calls yet",
-      "description": "Calls will appear here after an enabled plugin handles chat, Work, embedding, image, speech, sound, or video requests."
+      "description": "Requests appear here after a provider or agent handles chat, Work, embedding, image, speech, sound, or video requests."
     },
-    "privacyNote": "Usage is metered on the server at the outbound plugin boundary. Libre WebUI stores provider, model, timing, status, and reported counters—never prompts, responses, endpoints, credentials, or provider error bodies. Token totals include only calls where the provider returned usage metadata.",
+    "privacyNote": "Usage is recorded on the server for provider and agent requests. Libre WebUI stores provider, model, timing, status, and reported counters—never prompts, responses, endpoints, credentials, or provider error bodies. Token totals include only calls where the provider returned usage metadata.",
     "heatmap": {
       "title": "A year of activity",
       "description": "Daily provider calls over the past year, colored by each day's most-used model.",
@@ -2051,6 +2067,14 @@
       "less": "Less",
       "more": "More",
       "yearTotal": "{{formatted}} calls in the last year"
+    },
+    "agents": {
+      "title": "Agents",
+      "description": "CLI agent calls and native DSH requests. DSH using Libre WebUI models is counted under its model provider.",
+      "noCalls": "No recorded calls in this period",
+      "unreported": "Tokens not reported",
+      "topModels": "Top models",
+      "legacy": "This server does not provide a complete agent breakdown. Available agent records are shown below."
     }
   },
   "systemPage": {
@@ -2710,8 +2734,8 @@
       "status": "Status: {{status}}"
     },
     "landing": {
-      "title": "Start a new Work task",
-      "description": "Give a local or configured provider model a durable, isolated workspace. It can inspect files, run tools, and continue where it left off when you return.",
+      "title": "What would you like to work on?",
+      "description": "Describe a task. Your model gets its own workspace.",
       "isolated": "Isolated",
       "isolatedBody": "Every task gets its own container and files.",
       "durable": "Durable",
@@ -2732,7 +2756,12 @@
       "remoteDismissLabel": "Dismiss remote provider notice",
       "remoteDismissFailed": "Could not save the remote provider preference.",
       "noModelSelected": "No Work-compatible model is selected.",
-      "mentionAgents": "Mention an agent"
+      "mentionAgents": "Mention an agent",
+      "engine": "Engine",
+      "nativeDshModels": "Native DSH models",
+      "libreModels": "Libre WebUI models",
+      "nativeDshUnavailable": "Native DSH models are unavailable. Refresh the model list or check the provider configuration.",
+      "modelLabel": "Model"
     },
     "conversation": {
       "ready": "Workspace ready",
@@ -2781,7 +2810,7 @@
       "readyOllama": "Docker ready",
       "readyPlugin": "Docker + plugin ready",
       "readyHybrid": "Docker + models ready",
-      "reason": "Docker and an available Ollama or plugin model provider are required."
+      "reason": "A Work runtime and an available model provider are required."
     },
     "workspace": {
       "label": "Workspace views",
@@ -2951,7 +2980,7 @@
       "label": "Hire as an agent (optional)",
       "none": "No persona (one-off task)",
       "hint": "This task becomes a named agent: it keeps the persona, stays pinned in the sidebar, and reports a one-line status after each run.",
-      "description": "Pick a persona to turn this task into a persistent agent with its own identity."
+      "description": "Choose a persona to keep this task as a named agent."
     },
     "agent": {
       "openScreen": "Open the full screen view",
@@ -3911,5 +3940,42 @@
       "connected": "{{name}} connected — its models are now available",
       "saveFailed": "Could not save the API key"
     }
+  },
+  "cordis": {
+    "title": "Cordis Engine",
+    "description": "Sessions, tools, and chat for the embedded DeepSeek Harness engine.",
+    "newSession": "New session",
+    "createFailed": "Could not create a session.",
+    "deleteFailed": "Could not delete the session.",
+    "sendFailed": "The engine could not complete the turn.",
+    "sessionsHeading": "Sessions",
+    "toolsHeading": "Tools",
+    "transcriptHeading": "Transcript",
+    "noSessions": "No sessions yet. Create one to start.",
+    "noTools": "The engine registered no tools.",
+    "selectSession": "Select a session, or create one to start.",
+    "working": "The agent is working…",
+    "composerLabel": "Message the engine",
+    "composerPlaceholder": "Ask the engine to do something…",
+    "send": "Send",
+    "stop": "Stop",
+    "deleteSession": "Delete session",
+    "unknownTime": "Unknown time",
+    "disabledTitle": "The Cordis engine is turned off",
+    "disabledHint": "An administrator can enable it in User Management → Access & policies.",
+    "unavailableTitle": "The Cordis engine could not start",
+    "role": {
+      "user": "You",
+      "assistant": "Engine",
+      "system": "System",
+      "tool": "Tool",
+      "unknown": "Message"
+    },
+    "turnFailed": "The engine could not complete the turn",
+    "permissions": "Permissions",
+    "readOnly": "Read only",
+    "workspaceWrite": "Workspace write",
+    "context": "Session context",
+    "permissionHint": "Read only can inspect files. Workspace write allows edits inside this session’s workspace."
   }
 }

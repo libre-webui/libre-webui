@@ -1,5 +1,7 @@
 {
   "common": {
+    "provider": "제공자",
+    "agent": "에이전트",
     "loading": "로딩 중...",
     "save": "저장",
     "saving": "저장 중...",
@@ -540,7 +542,8 @@
       "prompts": "프롬프트",
       "skills": "스킬",
       "tools": "도구",
-      "channels": "채널"
+      "channels": "채널",
+      "cordis": "Cordis 엔진"
     },
     "toggleSize": "사이드바 크기 전환",
     "expandSidebar": "사이드바 확장"
@@ -1828,11 +1831,11 @@
       "saveFailed": "기본 테마를 업데이트할 수 없습니다"
     },
     "agentAccess": {
-      "title": "에이전트",
-      "description": "관리자에게 에이전트 섹션(Libre Claw)을 제공합니다. 에이전트 CLI는 Work 샌드박스 밖에서 서버 사용자로 호스트에서 실행됩니다.",
+      "title": "Libre Claw",
+      "description": "관리자에게 Libre Claw 작업 공간을 표시합니다.",
       "saved": "에이전트 접근이 업데이트되었습니다",
       "saveFailed": "에이전트 접근을 업데이트할 수 없습니다",
-      "lockedByEnv": "AGENT_CLI_MODELS_ENABLED 환경 변수로 고정되어 있습니다."
+      "lockedByEnv": "LIBRE_CLAW_ENABLED 환경 변수로 고정되어 있습니다."
     },
     "groups": {
       "title": "그룹",
@@ -1969,12 +1972,25 @@
       "saving": "저장 중…",
       "saved": "이메일 설정이 저장되었습니다.",
       "saveFailed": "이메일 설정을 저장할 수 없습니다."
+    },
+    "cordisAccess": {
+      "title": "Cordis 엔진",
+      "description": "관리자에게 Cordis 엔진을 제공합니다. Libre WebUI의 도구 승인 흐름 밖에서 실제 파일 시스템 접근으로 도구를 실행합니다.",
+      "saved": "Cordis 접근이 업데이트되었습니다",
+      "saveFailed": "Cordis 접근을 업데이트하지 못했습니다",
+      "lockedByEnv": "LIBRE_CORDIS_ENABLED 환경 변수로 고정되었습니다.",
+      "lockedByFile": "cordis.config.yml의 features.enabled로 고정되었습니다."
+    },
+    "agentCliAccess": {
+      "title": "에이전트 CLI 모델",
+      "description": "관리자는 설치된 Pi, OpenCode, Codex, Claude Code를 채팅 모델로 사용할 수 있습니다. 이 도구들은 Work 샌드박스 밖의 호스트에서 실행됩니다.",
+      "lockedByEnv": "AGENT_CLI_MODELS_ENABLED 환경 변수로 고정되어 있습니다."
     }
   },
   "usageAnalytics": {
     "eyebrow": "관리",
     "title": "제공자 사용량",
-    "description": "이 인스턴스에서 활성화된 플러그인의 아웃바운드 API 호출 및 모델 소비를 추적하세요.",
+    "description": "이 인스턴스의 제공업체와 에이전트별 모델 요청 및 사용량을 추적합니다.",
     "days": "{{count}}일",
     "refresh": "사용량 새로고침",
     "loadFailed": "제공자 사용량을 불러올 수 없습니다.",
@@ -2021,7 +2037,7 @@
       "notCharted": "선택하여 이 모델을 차트에 불러오기"
     },
     "providers": {
-      "title": "활성화된 플러그인 트래픽",
+      "title": "제공업체 및 에이전트 트래픽",
       "description": "제공업체별 요청량, 안정성 및 응답 시간입니다.",
       "share": "전체 호출의 {{percent}}%",
       "failures": "실패 또는 취소 {{count}}건",
@@ -2039,9 +2055,9 @@
     },
     "empty": {
       "title": "아직 제공자 호출이 없습니다",
-      "description": "활성화된 플러그인이 채팅, Work, 임베딩, 이미지, 음성, 소리 또는 비디오 요청을 처리하면 호출이 여기에 표시됩니다."
+      "description": "제공업체나 에이전트가 채팅, Work, 임베딩, 이미지, 음성, 소리 또는 동영상 요청을 처리하면 여기에 표시됩니다."
     },
-    "privacyNote": "사용량은 아웃바운드 플러그인 경계에서 서버를 통해 측정됩니다. Libre WebUI는 제공자, 모델, 타이밍, 상태 및 보고된 카운터를 저장하며, 프롬프트, 응답, 엔드포인트, 자격 증명 또는 제공자 오류 본문은 절대 저장하지 않습니다. 토큰 총량에는 제공자가 사용 메타데이터를 반환한 호출만 포함됩니다.",
+    "privacyNote": "제공업체 및 에이전트 요청의 사용량은 서버에 기록됩니다. Libre WebUI는 제공자, 모델, 타이밍, 상태 및 보고된 카운터를 저장하며, 프롬프트, 응답, 엔드포인트, 자격 증명 또는 제공자 오류 본문은 절대 저장하지 않습니다. 토큰 총량에는 제공자가 사용 메타데이터를 반환한 호출만 포함됩니다.",
     "heatmap": {
       "title": "1년간의 활동",
       "description": "지난 1년간의 일별 프로바이더 호출을 그날 가장 많이 사용된 모델별 색상으로 표시합니다.",
@@ -2051,6 +2067,14 @@
       "less": "적음",
       "more": "많음",
       "yearTotal": "지난 1년간 {{formatted}}회 호출"
+    },
+    "agents": {
+      "title": "에이전트",
+      "description": "CLI 에이전트 호출과 네이티브 DSH 요청입니다. Libre WebUI 모델을 사용하는 DSH는 해당 모델 제공업체에 집계됩니다.",
+      "noCalls": "이 기간에 기록된 호출이 없습니다",
+      "unreported": "토큰이 보고되지 않음",
+      "topModels": "가장 많이 사용된 모델",
+      "legacy": "이 서버는 전체 에이전트 내역을 제공하지 않습니다. 사용 가능한 에이전트 기록이 아래에 표시됩니다."
     }
   },
   "systemPage": {
@@ -2710,8 +2734,8 @@
       "status": "상태: {{status}}"
     },
     "landing": {
-      "title": "새 작업 태스크 시작",
-      "description": "로컬 모델 또는 설정된 제공자 모델에 영구적이고 격리된 워크스페이스를 제공합니다. 모델은 파일을 확인하고 도구를 실행하며, 나중에 돌아와 이어서 작업할 수 있습니다.",
+      "title": "어떤 작업을 하고 싶으신가요?",
+      "description": "작업을 설명하세요. 모델에 전용 작업 공간이 제공됩니다.",
       "isolated": "격리",
       "isolatedBody": "각 태스크에는 전용 컨테이너와 파일이 있습니다.",
       "durable": "영구",
@@ -2732,7 +2756,12 @@
       "remoteDismissLabel": "원격 제공자 안내 닫기",
       "remoteDismissFailed": "원격 제공자 설정을 저장할 수 없습니다.",
       "noModelSelected": "선택된 작업 호환 모델이 없습니다.",
-      "mentionAgents": "에이전트 멘션"
+      "mentionAgents": "에이전트 멘션",
+      "engine": "엔진",
+      "nativeDshModels": "네이티브 DSH 모델",
+      "libreModels": "Libre WebUI 모델",
+      "nativeDshUnavailable": "네이티브 DSH 모델을 사용할 수 없습니다. 모델 목록을 새로 고치거나 공급자 설정을 확인하세요.",
+      "modelLabel": "모델"
     },
     "conversation": {
       "ready": "워크스페이스 준비 완료",
@@ -2781,7 +2810,7 @@
       "readyOllama": "Docker 준비 완료",
       "readyPlugin": "Docker + 플러그인 준비 완료",
       "readyHybrid": "Docker + 모델 준비 완료",
-      "reason": "Docker와 사용 가능한 Ollama 또는 플러그인 모델 제공자가 필요합니다."
+      "reason": "Work 런타임과 사용 가능한 모델 공급자가 필요합니다."
     },
     "workspace": {
       "label": "워크스페이스 보기",
@@ -2951,7 +2980,7 @@
       "label": "에이전트로 고용 (선택 사항)",
       "none": "페르소나 없음 (일회성 작업)",
       "hint": "이 작업은 이름 있는 에이전트가 됩니다. 페르소나를 유지하고 사이드바에 고정되며 실행이 끝날 때마다 한 줄 상태를 보고합니다.",
-      "description": "페르소나를 선택하면 이 작업이 고유한 정체성을 가진 지속적인 에이전트가 됩니다."
+      "description": "이 작업을 이름이 있는 에이전트로 유지하려면 페르소나를 선택하세요."
     },
     "agent": {
       "openScreen": "전체 화면 보기 열기",
@@ -3911,5 +3940,42 @@
       "connected": "{{name}}이(가) 연결되었습니다 — 이제 모델을 사용할 수 있습니다",
       "saveFailed": "API 키를 저장할 수 없습니다"
     }
+  },
+  "cordis": {
+    "title": "Cordis 엔진",
+    "description": "내장된 DeepSeek Harness 엔진의 세션, 도구 및 채팅입니다.",
+    "newSession": "새 세션",
+    "createFailed": "세션을 만들지 못했습니다.",
+    "deleteFailed": "세션을 삭제하지 못했습니다.",
+    "sendFailed": "엔진이 턴을 완료하지 못했습니다.",
+    "sessionsHeading": "세션",
+    "toolsHeading": "도구",
+    "transcriptHeading": "대화 기록",
+    "noSessions": "아직 세션이 없습니다. 하나 만들어 시작하세요.",
+    "noTools": "엔진이 등록한 도구가 없습니다.",
+    "selectSession": "세션을 선택하거나 새로 만들어 시작하세요.",
+    "working": "에이전트가 작업 중…",
+    "composerLabel": "엔진에 보낼 메시지",
+    "composerPlaceholder": "엔진에 요청할 작업을 입력…",
+    "send": "보내기",
+    "stop": "중지",
+    "deleteSession": "세션 삭제",
+    "unknownTime": "알 수 없는 시간",
+    "disabledTitle": "Cordis 엔진이 꺼져 있습니다",
+    "disabledHint": "관리자는 사용자 관리 → 접근 및 정책에서 활성화할 수 있습니다.",
+    "unavailableTitle": "Cordis 엔진을 시작하지 못했습니다",
+    "role": {
+      "user": "나",
+      "assistant": "엔진",
+      "system": "시스템",
+      "tool": "도구",
+      "unknown": "메시지"
+    },
+    "turnFailed": "엔진이 턴을 완료하지 못했습니다",
+    "permissions": "권한",
+    "readOnly": "읽기 전용",
+    "workspaceWrite": "작업 공간 쓰기",
+    "context": "세션 컨텍스트",
+    "permissionHint": "읽기 전용에서는 파일을 확인할 수 있습니다. 작업 공간 쓰기는 이 세션의 작업 공간 안에서 편집을 허용합니다."
   }
 }

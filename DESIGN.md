@@ -286,9 +286,12 @@ restrained. Composer controls keep a consistent height as options change, with
 available space while the full name remains accessible.
 
 The Work starting screen groups policy and agent choices into aligned columns
-when space permits, and stacks them on narrow screens. Optional folder access
-and its warning remain visible above the composer. The landing input gives a
-task brief more room than the compact follow-up input.
+when space permits, and stacks them on narrow screens. A short heading and
+introduction lead into the task brief; agent guidance spans the options row.
+Optional folder access and its warning remain visible above the composer.
+The landing input gives a task brief more room than the compact follow-up
+input. Its toolbar pairs labeled Engine and Model controls with dictation and
+a visible Run label, wrapping by available width while preserving 44px targets.
 
 ### Account Wallpaper
 

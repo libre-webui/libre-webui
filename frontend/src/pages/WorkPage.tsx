@@ -16,6 +16,7 @@
  */
 
 import {
+  Bot,
   Boxes,
   ChevronLeft,
   CircleAlert,
@@ -24,6 +25,7 @@ import {
   MessageSquare,
   Monitor,
   MoreHorizontal,
+  SlidersHorizontal,
   Trash2,
 } from 'lucide-react';
 import {
@@ -37,7 +39,6 @@ import {
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useBlocker, useLocation, useNavigate, useParams } from 'react-router';
-import { LogoMark } from '@/components/LogoMark';
 import { WorkComposer } from '@/components/work/WorkComposer';
 import { WorkConversation } from '@/components/work/WorkConversation';
 import { WorkSplitPane } from '@/components/work/WorkSplitPane';
@@ -59,6 +60,14 @@ import { cn, formatRelativeTime } from '@/utils';
 import { preferencesApi, workApi } from '@/utils/api';
 import { clearWorkDraft, clearWorkTaskDrafts } from '@/utils/workDrafts';
 import { workStatusPresentation } from '@/utils/workStatus';
+import {
+  baseWorkModel,
+  selectWorkEngine,
+  workModelEngine,
+  workModelSupportsEngine,
+  workModelFromChatDsh,
+  type WorkEngine,
+} from '@/utils/workModels';
 
 type MobileSurface = 'conversation' | 'workspace';
 
@@ -97,10 +106,18 @@ export default function WorkPage() {
   const preferences = useAppStore(state => state.preferences);
   const setPreferences = useAppStore(state => state.setPreferences);
   const authenticatedUser = useAuthStore(state => state.user);
+  const cordisEnabled = useAuthStore(
+    state => state.systemInfo?.cordisEnabled === true
+  );
+  const nativeDshAllowed = useAuthStore(
+    state =>
+      state.user?.role === 'admin' || state.systemInfo?.requiresAuth === false
+  );
   const authenticatedUserId = authenticatedUser?.id ?? null;
   const [remoteDisclosureSaving, setRemoteDisclosureSaving] = useState(false);
   const [retryingRecovery, setRetryingRecovery] = useState(false);
   const chatModels = useChatStore(state => state.models);
+  const loadingModels = useChatStore(state => state.loading);
   const chatSelectedModel = useChatStore(state => state.selectedModel);
   const chatSelectedProviderType = useChatStore(
     state => state.selectedProviderType
@@ -186,7 +203,34 @@ export default function WorkPage() {
       }),
     [models]
   );
-  const [draftModelKey, setDraftModelKey] = useState('');
+  const nativeModelOptions = useMemo<WorkModelOption[]>(
+    () =>
+      nativeDshAllowed && capabilities?.nativeDsh?.status === 'ready'
+        ? capabilities.nativeDsh.models
+            .filter(
+              option =>
+                option.providerType === 'dsh' &&
+                !!option.providerId &&
+                !!option.model
+            )
+            .map(option => ({ ...option, key: workModelSelectionKey(option) }))
+        : [],
+    [capabilities, nativeDshAllowed]
+  );
+  const allModelOptions = useMemo(
+    () => [...modelOptions, ...nativeModelOptions],
+    [modelOptions, nativeModelOptions]
+  );
+  const [draftModel, setDraftModel] = useState<WorkModelOption | null>(null);
+  const [engineChoice, setEngineChoice] = useState<{
+    owner: string;
+    engine: WorkEngine;
+  } | null>(null);
+  const engineChoiceRef = useRef<typeof engineChoice>(null);
+  const pendingModelSelection = useRef<{
+    taskId: string;
+    option: WorkModelOption;
+  } | null>(null);
   const [mobileSurfaceState, setMobileSurfaceState] = useState<{
     locationKey: string;
     value: MobileSurface;
@@ -440,17 +484,72 @@ export default function WorkPage() {
     void loadFiles(taskId, '').catch(() => undefined);
   }, [taskId, loadFiles, loadTask, selectTask]);
 
+  const draftBaseModel =
+    draftModel &&
+    allModelOptions.find(
+      model => model.key === selectWorkEngine(draftModel, 'libre').key
+    );
+  const chatDshModel = workModelFromChatDsh(
+    {
+      model: chatSelectedModel,
+      providerType: chatSelectedProviderType,
+      providerId: chatSelectedProviderId,
+    },
+    allModelOptions
+  );
+  const chatDshSelected =
+    chatSelectedProviderType === 'agent' && chatSelectedProviderId === 'dsh';
+  const chosenEngine =
+    engineChoice?.owner === (taskId ?? 'new') ? engineChoice.engine : undefined;
+  const inheritedModel = draftModel
+    ? (draftBaseModel ?? draftModel)
+    : chatDshSelected
+      ? chatDshModel?.option
+      : (modelOptions.find(
+          model =>
+            model.model === chatSelectedModel &&
+            (chatSelectedProviderType === 'plugin'
+              ? model.providerType === 'plugin' &&
+                model.providerId === chatSelectedProviderId
+              : model.providerType === 'ollama')
+        ) ?? modelOptions[0]);
+  const freshEngine =
+    chosenEngine ??
+    (draftModel
+      ? workModelEngine(draftModel.model, draftModel.providerType)
+      : inheritedModel
+        ? workModelEngine(inheritedModel.model, inheritedModel.providerType)
+        : chatDshSelected
+          ? 'dsh'
+          : 'libre');
   const freshModel =
-    modelOptions.find(model => model.key === draftModelKey) ||
-    modelOptions.find(
-      model =>
-        model.model === chatSelectedModel &&
-        (chatSelectedProviderType === 'plugin'
-          ? model.providerType === 'plugin' &&
-            model.providerId === chatSelectedProviderId
-          : model.providerType === 'ollama')
-    ) ||
-    modelOptions[0];
+    inheritedModel && workModelSupportsEngine(inheritedModel, freshEngine)
+      ? selectWorkEngine(inheritedModel, freshEngine)
+      : undefined;
+  const freshModelUnavailable =
+    !!freshModel &&
+    !allModelOptions.some(
+      model => model.key === selectWorkEngine(freshModel, 'libre').key
+    );
+  const freshEngineUnavailable = freshEngine === 'dsh' && !cordisEnabled;
+  const availableFreshModels =
+    freshEngine === 'dsh'
+      ? [...nativeModelOptions, ...modelOptions]
+      : modelOptions;
+  const freshModelOptions =
+    freshModel && freshModelUnavailable
+      ? [selectWorkEngine(freshModel, 'libre'), ...availableFreshModels]
+      : availableFreshModels;
+  const freshModelUnavailableMessage =
+    freshModelUnavailable && freshModel
+      ? t('chat.toasts.modelUnavailable', {
+          model: baseWorkModel(freshModel.model, freshModel.providerType),
+          provider:
+            freshModel.providerType !== 'ollama'
+              ? freshModel.providerId
+              : 'Ollama',
+        })
+      : undefined;
 
   const selectedTaskSummary = taskId
     ? tasks.find(task => task.id === taskId)
@@ -745,6 +844,9 @@ export default function WorkPage() {
             })
           );
         }
+        if (freshModelUnavailableMessage)
+          throw new Error(freshModelUnavailableMessage);
+        if (freshEngineUnavailable) throw new Error(t('cordis.disabledTitle'));
         const task = await createTask({
           message,
           model: freshModel.model,
@@ -773,18 +875,52 @@ export default function WorkPage() {
     }
   };
 
-  const changeModel = async (modelKey: string) => {
-    const model = effectiveModelOptions.find(option => option.key === modelKey);
-    if (!model) return;
+  const changeModel = async (
+    model: WorkModelOption,
+    requestedEngine?: WorkEngine
+  ) => {
     if (!selectedTask) {
-      setDraftModelKey(modelKey);
+      // ModelSelector can finish its unload request after a newer engine
+      // choice. Merge with current state instead of its captured render.
+      setDraftModel(current => {
+        const choice = engineChoiceRef.current;
+        const previous = current ?? freshModel ?? model;
+        const engine =
+          requestedEngine ??
+          (choice?.owner === 'new' ? choice.engine : undefined) ??
+          workModelEngine(previous.model, previous.providerType);
+        return (engine === 'dsh' && !cordisEnabled) ||
+          !workModelSupportsEngine(model, engine)
+          ? current
+          : selectWorkEngine(model, engine);
+      });
       return;
     }
+    const currentTask = useWorkStore.getState().selectedTask;
+    if (currentTask?.id !== selectedTask.id) return;
+    const pending = pendingModelSelection.current;
+    const currentModel =
+      pending?.taskId === currentTask.id ? pending.option : currentTask;
+    const choice = engineChoiceRef.current;
+    const engine =
+      requestedEngine ??
+      (choice?.owner === currentTask.id ? choice.engine : undefined) ??
+      workModelEngine(currentModel.model, currentModel.providerType);
+    if (
+      (engine === 'dsh' && !cordisEnabled) ||
+      !workModelSupportsEngine(model, engine)
+    )
+      return;
+    const selection = {
+      taskId: currentTask.id,
+      option: selectWorkEngine(model, engine),
+    };
+    pendingModelSelection.current = selection;
     try {
       await updateTask(selectedTask.id, {
-        model: model.model,
-        providerType: model.providerType,
-        providerId: model.providerId,
+        model: selection.option.model,
+        providerType: selection.option.providerType,
+        providerId: selection.option.providerId,
       });
     } catch (updateError) {
       toast.error(
@@ -795,7 +931,24 @@ export default function WorkPage() {
           })
         )
       );
+    } finally {
+      if (pendingModelSelection.current === selection) {
+        pendingModelSelection.current = null;
+      }
     }
+  };
+
+  const changeEngine = (engine: WorkEngine) => {
+    const choice = { owner: taskId ?? 'new', engine };
+    engineChoiceRef.current = choice;
+    setEngineChoice(choice);
+    const current = selectedTask ? selectedWorkModel : freshModel;
+    if (current && workModelSupportsEngine(current, engine))
+      void changeModel(current, engine);
+  };
+
+  const refreshModels = async () => {
+    await Promise.all([loadChatModels(), loadCapabilities()]);
   };
 
   const stopRun = async () => {
@@ -996,9 +1149,16 @@ export default function WorkPage() {
             defaultValue: 'Docker ready',
           });
   const activeTask = selectedTask ? isWorkTaskActive(selectedTask) : false;
+  const taskEngine =
+    chosenEngine ??
+    (selectedTask
+      ? workModelEngine(selectedTask.model, selectedTask.providerType)
+      : freshEngine);
+  const taskEngineUnavailable =
+    !!selectedTask && taskEngine === 'dsh' && !cordisEnabled;
   const taskModel = selectedTask
     ? {
-        model: selectedTask.model,
+        model: baseWorkModel(selectedTask.model, selectedTask.providerType),
         providerType: selectedTask.providerType,
         providerId: selectedTask.providerId || undefined,
       }
@@ -1007,24 +1167,52 @@ export default function WorkPage() {
     ? workModelSelectionKey(taskModel)
     : freshModel?.key || '';
   const persistedModelOption =
-    taskModel && !modelOptions.some(option => option.key === selectedModelKey)
+    taskModel &&
+    !allModelOptions.some(option => option.key === selectedModelKey)
       ? {
           ...taskModel,
           key: selectedModelKey,
           label: `${taskModel.model} · ${
-            taskModel.providerType === 'plugin'
-              ? taskModel.providerId || 'plugin'
-              : 'Ollama'
+            taskModel.providerType === 'ollama'
+              ? 'Ollama'
+              : taskModel.providerId ||
+                (taskModel.providerType === 'dsh'
+                  ? 'DeepSeek Harness'
+                  : 'plugin')
           }`,
           remote:
-            taskModel.providerType === 'plugin' ||
-            taskModel.model.toLowerCase().endsWith(':cloud') ||
-            taskModel.model.toLowerCase().endsWith('-cloud'),
+            taskModel.providerType !== 'ollama' ||
+            baseWorkModel(taskModel.model, taskModel.providerType)
+              .toLowerCase()
+              .endsWith(':cloud') ||
+            baseWorkModel(taskModel.model, taskModel.providerType)
+              .toLowerCase()
+              .endsWith('-cloud'),
         }
       : undefined;
-  const effectiveModelOptions = persistedModelOption
-    ? [persistedModelOption, ...modelOptions]
-    : modelOptions;
+  const selectedBaseModel =
+    persistedModelOption ??
+    allModelOptions.find(option => option.key === selectedModelKey);
+  const availableTaskModels =
+    taskEngine === 'dsh'
+      ? [...nativeModelOptions, ...modelOptions]
+      : modelOptions;
+  const effectiveModelOptions =
+    persistedModelOption &&
+    workModelSupportsEngine(persistedModelOption, taskEngine)
+      ? [persistedModelOption, ...availableTaskModels]
+      : availableTaskModels;
+  const selectedWorkModel = selectedTask
+    ? selectedBaseModel &&
+      workModelSupportsEngine(selectedBaseModel, taskEngine)
+      ? selectWorkEngine(selectedBaseModel, taskEngine)
+      : undefined
+    : freshModel;
+  const taskNativeUnavailable =
+    selectedWorkModel?.providerType === 'dsh' &&
+    !nativeModelOptions.some(option => option.key === selectedWorkModel.key);
+  const nativeCatalogUnavailable =
+    nativeDshAllowed && capabilities?.nativeDsh?.status === 'unavailable';
   const status = workStatusPresentation[selectedTask?.status ?? 'idle'];
   const statusLabel = t(status.labelKey, {
     defaultValue: status.label,
@@ -1264,7 +1452,7 @@ export default function WorkPage() {
               <span className='hidden h-7 max-w-44 items-center gap-1.5 truncate rounded-full border border-line bg-surface px-2.5 text-[11px] font-medium text-ink-muted md:inline-flex'>
                 <HardDrive className='h-3.5 w-3.5 shrink-0' />
                 <span dir='ltr' className='truncate'>
-                  {selectedTask.model}
+                  {baseWorkModel(selectedTask.model, selectedTask.providerType)}
                 </span>
               </span>
             )}
@@ -1405,7 +1593,7 @@ export default function WorkPage() {
                 ? capabilities?.reason ||
                   t('work.runtime.reason', {
                     defaultValue:
-                      'A Work runtime and an available Ollama or plugin model provider are required.',
+                      'A Work runtime and an available model provider are required.',
                   })
                 : error}
             </span>
@@ -1426,25 +1614,18 @@ export default function WorkPage() {
           <div className='relative min-h-0 flex-1 overflow-y-auto'>
             <section
               data-testid='work-landing'
-              className='mx-auto flex min-h-full w-full max-w-3xl flex-col items-center justify-center px-4 py-6 sm:px-8 sm:py-12'
+              className='mx-auto flex min-h-full w-full max-w-3xl flex-col items-center justify-center px-4 py-8 sm:px-8 sm:py-10'
             >
-              <div className='flex flex-col items-center text-center'>
-                <div className='mb-3 flex items-center justify-center gap-3'>
-                  <LogoMark
-                    size='sm'
-                    label={null}
-                    className='h-9 w-9 shrink-0 p-0 text-ink'
-                  />
-                  <h2 className='max-w-3xl text-balance text-[clamp(1.75rem,3.5vw,2.35rem)] font-medium leading-tight tracking-[-0.02em] text-ink rtl:tracking-normal'>
-                    {t('work.landing.title', {
-                      defaultValue: 'Start a new Work task',
-                    })}
-                  </h2>
-                </div>
-                <p className='max-w-xl text-balance text-[15px] leading-relaxed text-ink-subtle'>
+              <div className='flex max-w-xl flex-col items-center text-center'>
+                <h2 className='text-balance text-[clamp(1.5rem,2.8vw,2rem)] font-medium leading-tight tracking-[-0.025em] text-ink rtl:tracking-normal'>
+                  {t('work.landing.title', {
+                    defaultValue: 'What would you like to work on?',
+                  })}
+                </h2>
+                <p className='mt-2 max-w-md text-balance text-sm leading-relaxed text-ink-muted'>
                   {t('work.landing.description', {
                     defaultValue:
-                      'Give a local model a durable, isolated workspace. It can inspect files, run tools, and continue where it left off when you return.',
+                      'Describe a task. Your model gets its own workspace.',
                   })}
                 </p>
               </div>
@@ -1454,14 +1635,18 @@ export default function WorkPage() {
                 hostWorkspacesEnabled) && (
                 <div
                   data-testid='work-landing-options'
-                  className='mt-6 grid w-full min-w-0 grid-cols-1 gap-4 sm:grid-cols-2'
+                  className='mt-6 grid w-full min-w-0 grid-cols-1 gap-x-3 gap-y-3 sm:grid-cols-2'
                 >
                   {policies.length > 0 && (
                     <div className='min-w-0'>
                       <label
                         htmlFor='work-policy'
-                        className='mb-1.5 block text-xs font-medium text-ink-muted'
+                        className='mb-1.5 flex items-center gap-1.5 text-xs font-medium text-ink-muted'
                       >
+                        <SlidersHorizontal
+                          className='h-3.5 w-3.5'
+                          aria-hidden='true'
+                        />
                         {t('work.policy.label', {
                           defaultValue: 'Runtime policy',
                         })}
@@ -1471,7 +1656,7 @@ export default function WorkPage() {
                         data-testid='work-policy'
                         value={policyId}
                         onChange={event => setPolicyId(event.target.value)}
-                        className='w-full min-w-0 rounded-xl border border-line bg-surface px-3 py-2 text-[13px] text-ink outline-none transition-colors focus:border-line-strong focus-visible:ring-2 focus-visible:ring-primary-500/30'
+                        className='h-11 min-h-[44px] w-full min-w-0 rounded-xl border border-line/80 bg-surface/90 px-3 py-2 text-[13px] text-ink outline-none transition-colors focus:border-line-strong focus-visible:ring-2 focus-visible:ring-primary-500/30 motion-reduce:transition-none'
                       >
                         <option value=''>
                           {t('work.policy.default', {
@@ -1490,8 +1675,9 @@ export default function WorkPage() {
                     <div className='min-w-0'>
                       <label
                         htmlFor='work-persona'
-                        className='mb-1.5 block text-xs font-medium text-ink-muted'
+                        className='mb-1.5 flex items-center gap-1.5 text-xs font-medium text-ink-muted'
                       >
+                        <Bot className='h-3.5 w-3.5' aria-hidden='true' />
                         {t('work.persona.label', {
                           defaultValue: 'Hire as an agent (optional)',
                         })}
@@ -1499,9 +1685,10 @@ export default function WorkPage() {
                       <select
                         id='work-persona'
                         data-testid='work-persona'
+                        aria-describedby='work-persona-description'
                         value={personaId}
                         onChange={event => setPersonaId(event.target.value)}
-                        className='w-full min-w-0 rounded-xl border border-line bg-surface px-3 py-2 text-[13px] text-ink outline-none transition-colors focus:border-line-strong focus-visible:ring-2 focus-visible:ring-primary-500/30'
+                        className='h-11 min-h-[44px] w-full min-w-0 rounded-xl border border-line/80 bg-surface/90 px-3 py-2 text-[13px] text-ink outline-none transition-colors focus:border-line-strong focus-visible:ring-2 focus-visible:ring-primary-500/30 motion-reduce:transition-none'
                       >
                         <option value=''>
                           {t('work.persona.none', {
@@ -1514,23 +1701,28 @@ export default function WorkPage() {
                           </option>
                         ))}
                       </select>
-                      <p className='mt-1.5 text-xs leading-relaxed text-ink-muted'>
-                        {personaId
-                          ? t('work.persona.hint', {
-                              defaultValue:
-                                'This task becomes a named agent: it keeps the persona, stays pinned in the sidebar, and reports a one-line status after each run.',
-                            })
-                          : t('work.persona.description', {
-                              defaultValue:
-                                'Pick a persona to turn this task into a persistent agent with its own identity.',
-                            })}
-                      </p>
                     </div>
+                  )}
+                  {personaList.length > 0 && (
+                    <p
+                      id='work-persona-description'
+                      className='text-xs leading-relaxed text-ink-subtle sm:col-span-2'
+                    >
+                      {personaId
+                        ? t('work.persona.hint', {
+                            defaultValue:
+                              'This task becomes a named agent: it keeps the persona, stays pinned in the sidebar, and reports a one-line status after each run.',
+                          })
+                        : t('work.persona.description', {
+                            defaultValue:
+                              'Choose a persona to keep this task as a named agent.',
+                          })}
+                    </p>
                   )}
                   {!hasComputerPolicy &&
                     authenticatedUser?.role === 'admin' && (
                       <div
-                        className='flex min-w-0 flex-wrap items-center justify-between gap-3 rounded-xl border border-line bg-surface px-4 py-3 sm:col-span-2'
+                        className='flex min-w-0 flex-wrap items-center justify-between gap-3 rounded-xl border border-line/60 bg-surface/70 px-3 py-2.5 sm:col-span-2'
                         data-testid='work-policy-setup-hint'
                       >
                         <div className='min-w-0 flex-1 basis-48'>
@@ -1549,7 +1741,7 @@ export default function WorkPage() {
                           data-testid='work-computer-enable'
                           onClick={() => void enableComputer()}
                           disabled={computerSetupBusy}
-                          className='flex shrink-0 items-center gap-2 rounded-lg border border-line bg-surface-raised px-3 py-1.5 text-xs font-medium text-ink transition-colors hover:bg-surface-subtle disabled:opacity-60'
+                          className='flex min-h-[44px] shrink-0 items-center gap-2 rounded-lg border border-line bg-surface-raised px-3 py-1.5 text-xs font-medium text-ink transition-colors hover:bg-surface-subtle disabled:opacity-60 motion-reduce:transition-none'
                         >
                           {computerSetupBusy && (
                             <span className='h-3 w-3 animate-spin rounded-full border border-ink/20 border-t-ink' />
@@ -1582,7 +1774,7 @@ export default function WorkPage() {
                             ? `${hostWorkspaceRoots[0]}/my-project`
                             : '/path/to/folder'
                         }
-                        className='w-full min-w-0 rounded-xl border border-line bg-surface px-3 py-2 font-mono text-[13px] text-ink outline-none transition-colors placeholder:text-ink-subtle focus:border-line-strong focus-visible:ring-2 focus-visible:ring-primary-500/30'
+                        className='min-h-[44px] w-full min-w-0 rounded-xl border border-line bg-surface px-3 py-2 font-mono text-[13px] text-ink outline-none transition-colors placeholder:text-ink-subtle focus:border-line-strong focus-visible:ring-2 focus-visible:ring-primary-500/30 motion-reduce:transition-none'
                       />
                       <p className='mt-1.5 text-xs leading-relaxed text-ink-muted'>
                         {hostPath.trim()
@@ -1599,31 +1791,64 @@ export default function WorkPage() {
                   )}
                 </div>
               )}
+              {((freshModelUnavailableMessage && !loadingModels) ||
+                freshEngineUnavailable) && (
+                <p
+                  role='status'
+                  data-testid='work-model-unavailable'
+                  className='mt-4 text-sm text-ink-muted'
+                >
+                  {freshEngineUnavailable
+                    ? t('cordis.disabledTitle')
+                    : freshModelUnavailableMessage}
+                </p>
+              )}
+              {freshEngine === 'dsh' &&
+                nativeCatalogUnavailable &&
+                !freshModelUnavailable && (
+                  <p
+                    role='status'
+                    data-testid='work-native-models-unavailable'
+                    className='mt-4 text-sm text-ink-muted'
+                  >
+                    {t('work.composer.nativeDshUnavailable')}
+                  </p>
+                )}
               <WorkComposer
                 variant='landing'
                 dictationOwnerKey='landing'
-                models={modelOptions}
+                models={freshModelOptions}
                 selectorModels={models}
-                modelKey={freshModel?.key || ''}
+                selectedModel={freshModel}
+                engine={freshEngine}
+                dshEnabled={cordisEnabled}
                 running={false}
                 loading={actionLoading}
-                disabled={runtimeUnavailable}
+                disabled={
+                  runtimeUnavailable ||
+                  freshModelUnavailable ||
+                  freshEngineUnavailable
+                }
                 remoteDisclosureDismissed={
                   preferences.workRemoteProviderDisclosureDismissed
                 }
                 remoteDisclosureSaving={remoteDisclosureSaving}
                 onModelChange={changeModel}
+                onEngineChange={changeEngine}
                 onDismissRemoteDisclosure={dismissRemoteDisclosure}
-                onModelsRefresh={loadChatModels}
+                onModelsRefresh={refreshModels}
                 onSubmit={submitMessage}
                 onCancel={stopRun}
               />
               <div
                 data-testid='work-workspace-note'
                 role='note'
-                className='mt-4 flex max-w-2xl flex-wrap items-center justify-center gap-x-2 gap-y-1 text-center text-[10px] leading-relaxed text-ink-subtle'
+                className='mt-3 flex max-w-2xl items-start justify-center gap-2 text-center text-[11px] leading-relaxed text-ink-subtle'
               >
-                <Boxes aria-hidden='true' className='h-3.5 w-3.5' />
+                <Boxes
+                  aria-hidden='true'
+                  className='mt-0.5 h-3.5 w-3.5 shrink-0'
+                />
                 <span>
                   {t('work.composer.hint', {
                     defaultValue:
@@ -1648,6 +1873,34 @@ export default function WorkPage() {
                   onLoadOlder={() => loadOlderMessages(selectedTask.id)}
                   onOpenFile={openWorkspaceFile}
                 />
+                {taskEngineUnavailable && (
+                  <p role='status' className='px-5 py-2 text-sm text-ink-muted'>
+                    {t('cordis.disabledTitle')}
+                  </p>
+                )}
+                {taskNativeUnavailable && (
+                  <p
+                    role='status'
+                    data-testid='work-model-unavailable'
+                    className='px-5 py-2 text-sm text-ink-muted'
+                  >
+                    {t('chat.toasts.modelUnavailable', {
+                      model: selectedWorkModel?.model,
+                      provider: selectedWorkModel?.providerId,
+                    })}
+                  </p>
+                )}
+                {taskEngine === 'dsh' &&
+                  nativeCatalogUnavailable &&
+                  !taskNativeUnavailable && (
+                    <p
+                      role='status'
+                      data-testid='work-native-models-unavailable'
+                      className='px-5 py-2 text-sm text-ink-muted'
+                    >
+                      {t('work.composer.nativeDshUnavailable')}
+                    </p>
+                  )}
                 <WorkComposer
                   key={selectedTask.id}
                   dictationOwnerKey={selectedTask.id}
@@ -1659,17 +1912,25 @@ export default function WorkPage() {
                     .map(item => ({ id: item.id, name: item.title }))}
                   models={effectiveModelOptions}
                   selectorModels={models}
-                  modelKey={selectedModelKey}
+                  selectedModel={selectedWorkModel}
+                  engine={taskEngine}
+                  dshEnabled={cordisEnabled}
                   running={activeTask}
                   loading={actionLoading}
-                  disabled={runtimeUnavailable}
+                  disabled={
+                    runtimeUnavailable ||
+                    taskEngineUnavailable ||
+                    taskNativeUnavailable ||
+                    !selectedWorkModel
+                  }
                   remoteDisclosureDismissed={
                     preferences.workRemoteProviderDisclosureDismissed
                   }
                   remoteDisclosureSaving={remoteDisclosureSaving}
                   onModelChange={changeModel}
+                  onEngineChange={changeEngine}
                   onDismissRemoteDisclosure={dismissRemoteDisclosure}
-                  onModelsRefresh={loadChatModels}
+                  onModelsRefresh={refreshModels}
                   onSubmit={submitMessage}
                   onCancel={stopRun}
                 />

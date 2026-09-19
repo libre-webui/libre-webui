@@ -21,18 +21,21 @@ import { toast } from 'react-hot-toast';
 import { Button } from '@/components/ui';
 import { SettingsToggle } from '@/components/settings/SettingsToggle';
 import { useAuthStore } from '@/store/authStore';
+import { useChatStore } from '@/store/chatStore';
 import { libreClawApi } from '@/utils/api/libreClawApi';
+import { agentCliApi } from '@/utils/api/agentCliApi';
 
 /**
- * Administrator opt-in for the Agents section (Libre Claw and agent CLI
- * models). Disabled by default: agent CLIs run on the host as the server
- * user, outside the Work sandbox. The backend enforces the setting on
- * every request; this card only reads and writes it.
+ * Independent administrator opt-ins for Libre Claw and installed CLI chat
+ * models. Both decisions are enforced by the corresponding backend routes.
  */
-export const AgentAccessSettings: React.FC = () => {
+export const AgentAccessSettings: React.FC<{ kind?: 'claw' | 'cli' }> = ({
+  kind = 'claw',
+}) => {
   const { t } = useTranslation();
   const systemInfo = useAuthStore(state => state.systemInfo);
   const setSystemInfo = useAuthStore(state => state.setSystemInfo);
+  const loadModels = useChatStore(state => state.loadModels);
   const [enabled, setEnabled] = useState<boolean | null>(null);
   const [lockedByEnv, setLockedByEnv] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -40,11 +43,15 @@ export const AgentAccessSettings: React.FC = () => {
   // the rest of the session; offer a retry instead.
   const [loadFailed, setLoadFailed] = useState(false);
   const [loadAttempt, setLoadAttempt] = useState(0);
+  const cli = kind === 'cli';
+  const labelKey = cli
+    ? 'userManager.agentCliAccess'
+    : 'userManager.agentAccess';
 
   useEffect(() => {
     let cancelled = false;
-    libreClawApi
-      .access()
+    const request = cli ? agentCliApi.getAccess() : libreClawApi.access();
+    request
       .then(response => {
         if (cancelled) return;
         if (response.success && response.data) {
@@ -60,21 +67,28 @@ export const AgentAccessSettings: React.FC = () => {
     return () => {
       cancelled = true;
     };
-  }, [loadAttempt]);
+  }, [loadAttempt, cli]);
 
   const handleChange = async (checked: boolean) => {
     setSaving(true);
     try {
-      const response = await libreClawApi.setAccess(checked);
+      const response = await (cli
+        ? agentCliApi.setAccess(checked)
+        : libreClawApi.setAccess(checked));
       if (!response.success || !response.data) {
         throw new Error(response.error || 'Agent access update failed.');
       }
       setEnabled(response.data.enabled);
-      // The navigation reads the flag from system info; update it in place
-      // so the Agents section appears or disappears without a re-login.
+      // Update the relevant flag without coupling chat access to navigation.
       if (systemInfo) {
-        setSystemInfo({ ...systemInfo, agentsEnabled: response.data.enabled });
+        setSystemInfo({
+          ...systemInfo,
+          [cli ? 'agentCliModelsEnabled' : 'agentsEnabled']:
+            response.data.enabled,
+        });
       }
+      // The chat picker caches its catalogue independently of navigation.
+      await loadModels({ quiet: true });
       toast.success(t('userManager.agentAccess.saved'));
     } catch {
       toast.error(t('userManager.agentAccess.saveFailed'));
@@ -84,18 +98,21 @@ export const AgentAccessSettings: React.FC = () => {
   };
 
   return (
-    <div className='rounded-lg border border-gray-200 dark:border-dark-300 bg-white dark:bg-dark-100 p-4'>
+    <div
+      className='rounded-lg border border-gray-200 dark:border-dark-300 bg-white dark:bg-dark-100 p-4'
+      data-testid={cli ? 'agent-cli-access-settings' : 'agent-access-settings'}
+    >
       <div className='flex items-center justify-between gap-4'>
         <div>
           <h4 className='text-sm font-medium text-gray-900 dark:text-gray-100'>
-            {t('userManager.agentAccess.title')}
+            {t(`${labelKey}.title`)}
           </h4>
           <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
-            {t('userManager.agentAccess.description')}
+            {t(`${labelKey}.description`)}
           </p>
           {lockedByEnv && (
             <p className='text-xs text-amber-600 dark:text-amber-400 mt-1'>
-              {t('userManager.agentAccess.lockedByEnv')}
+              {t(`${labelKey}.lockedByEnv`)}
             </p>
           )}
         </div>

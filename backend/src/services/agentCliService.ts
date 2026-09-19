@@ -23,8 +23,13 @@ import { ChatMessage } from '../types/index.js';
 import { PluginStreamChunk } from '../utils/pluginStreaming.js';
 import { userModel } from '../models/userModel.js';
 import { createLogger } from '../utils/logger.js';
-import { getAgentsEnabled } from './agentAccessService.js';
+import { getAgentCliModelsEnabled } from './agentAccessService.js';
 import pluginUsageService from './pluginUsageService.js';
+import {
+  agentCliTokenUsage,
+  captureAgentCliUsage,
+  type AgentCliUsageState,
+} from './agentCliUsage.js';
 import {
   ChatGenerationCancelledError,
   throwIfChatGenerationCancelled,
@@ -57,6 +62,15 @@ export interface AgentCliDefinition {
    * depends on local user configuration that may be broken or absent.
    */
   requiresModel?: boolean;
+  /**
+   * Runs inside this server rather than as a child process.
+   *
+   * The embedded DSH engine is a library, not an executable, so it has no
+   * binary to resolve on PATH and no stdout to parse. Its turns arrive as
+   * Cordis streams instead, so availability is decided by whether the engine
+   * is enabled rather than by a filesystem lookup.
+   */
+  inProcess?: boolean;
 }
 
 export interface AgentCliModel {
@@ -91,6 +105,15 @@ export const AGENT_CLI_DEFINITIONS: AgentCliDefinition[] = [
       { id: 'opus', label: 'Opus' },
       { id: 'haiku', label: 'Haiku' },
     ],
+  },
+  {
+    id: 'dsh',
+    name: 'DeepSeek Harness',
+    // No binary: this agent runs in-process through the Cordis engine.
+    command: 'dsh',
+    parser: 'pi',
+    inProcess: true,
+    buildArgs: () => [],
   },
   {
     id: 'codex',
@@ -160,7 +183,7 @@ const MAX_OUTPUT_CHARS = 2_000_000;
 const MAX_STDERR_CHARS = 8_000;
 const MAX_CONTEXT_MESSAGES = 30;
 
-const agentsEnabled = (): Promise<boolean> => getAgentsEnabled();
+const agentsEnabled = (): Promise<boolean> => getAgentCliModelsEnabled();
 
 function resolveBinary(command: string): string | null {
   const pathValue = process.env.PATH || '';
@@ -298,6 +321,7 @@ export interface ParserState {
   itemErrors: string[];
   /** Per-part emitted text length for parsers that stream snapshots. */
   partTextLengths: Record<string, number>;
+  usage?: AgentCliUsageState;
 }
 
 export function parseClaudeLine(
@@ -306,6 +330,7 @@ export function parseClaudeLine(
   state: ParserState
 ): void {
   const event = JSON.parse(line) as Record<string, unknown>;
+  captureAgentCliUsage('claude', event, state);
   if (event.type === 'system' && event.subtype === 'init') {
     if (typeof event.session_id === 'string') {
       state.agentSessionId = event.session_id;
@@ -352,6 +377,7 @@ export function parseCodexLine(
   state: ParserState
 ): void {
   const event = JSON.parse(line) as Record<string, unknown>;
+  captureAgentCliUsage('codex', event, state);
   if (event.type === 'thread.started' && typeof event.thread_id === 'string') {
     state.agentSessionId = event.thread_id;
     return;
@@ -375,6 +401,11 @@ export function parseCodexLine(
     const error = event.error as { message?: string } | undefined;
     throw new Error(`Codex failed: ${error?.message || 'turn failed'}`);
   }
+  if (event.type === 'error') {
+    throw new Error(
+      `Codex failed: ${typeof event.message === 'string' ? event.message : 'agent error'}`
+    );
+  }
 }
 
 export function parseOpencodeLine(
@@ -383,6 +414,7 @@ export function parseOpencodeLine(
   state: ParserState
 ): void {
   const event = JSON.parse(line) as Record<string, unknown>;
+  captureAgentCliUsage('opencode', event, state);
   if (typeof event.sessionID === 'string' && !state.agentSessionId) {
     state.agentSessionId = event.sessionID;
   }
@@ -424,6 +456,7 @@ export function parsePiLine(
   state: ParserState
 ): void {
   const event = JSON.parse(line) as Record<string, unknown>;
+  captureAgentCliUsage('pi', event, state);
   if (event.type === 'session' && typeof event.id === 'string') {
     state.agentSessionId = event.id;
     return;
@@ -463,10 +496,51 @@ export function parsePiLine(
 }
 
 export class AgentCliService {
-  async listAgentModels(): Promise<AgentCliModel[]> {
+  async listAgentModels(userId?: string): Promise<AgentCliModel[]> {
     if (!(await agentsEnabled())) return [];
     const models: AgentCliModel[] = [];
     for (const definition of AGENT_CLI_DEFINITIONS) {
+      // An in-process agent exists when its engine is enabled, not when a
+      // binary is on PATH, so availability is asked of the engine itself.
+      if (definition.inProcess) {
+        try {
+          if (!(await this.inProcessAgentAvailable(definition.id))) continue;
+        } catch (error) {
+          // An optional embedded engine must never hide installed CLI agents.
+          logger.warn(`Embedded agent ${definition.id} is unavailable`, error);
+          continue;
+        }
+        models.push({
+          id: definition.id,
+          name: definition.name,
+          command: definition.command,
+          binaryPath: '',
+          agentId: definition.id,
+        });
+        if (definition.id === 'dsh' && userId) {
+          try {
+            const { dshChatModelChoices } =
+              await import('../cordis/dsh/chat-model.js');
+            for (const model of await dshChatModelChoices(userId)) {
+              models.push({
+                id: `dsh:${model.id}`,
+                name: `${definition.name} · ${model.name}${
+                  model.providerName ? ` (${model.providerName})` : ''
+                }`,
+                command: definition.command,
+                binaryPath: '',
+                agentId: definition.id,
+              });
+            }
+          } catch (error) {
+            logger.warn(
+              'DeepSeek Harness model discovery is unavailable',
+              error
+            );
+          }
+        }
+        continue;
+      }
       const binaryPath = resolveBinary(definition.command);
       if (!binaryPath) continue;
 
@@ -505,9 +579,160 @@ export class AgentCliService {
     return models;
   }
 
+  /**
+   * Whether an in-process agent can serve a turn right now.
+   *
+   * The engine is an administrator opt-in that mounts lazily, so this is the
+   * same decision the Cordis route layer makes.
+   * @param agentId - the in-process agent to check.
+   * @returns true when the agent is available.
+   */
+  async inProcessAgentAvailable(agentId: string): Promise<boolean> {
+    if (agentId !== 'dsh') return false;
+    // Discovery must not start or wait for an optional engine. A selected turn
+    // resolves its runtime and reports any startup error independently.
+    const { isCordisBridgeEnabled } = await import('../cordis/runtime.js');
+    return isCordisBridgeEnabled();
+  }
+
   async isAdminUser(userId: string): Promise<boolean> {
     const user = await userModel.getUserById(userId);
     return user?.role === 'admin';
+  }
+
+  /**
+   * Serve one turn from an in-process agent, in the pipeline's chunk shape.
+   *
+   * The embedded engine is not a process, so there is no prompt to pipe and no
+   * stdout to parse: the turn arrives as a Cordis stream, and this maps it onto
+   * the same chunk vocabulary the CLI parsers produce. Tool calls the engine
+   * makes are not surfaced as chunks because the engine executes them itself;
+   * a turn therefore reads as the assistant's text.
+   *
+   * @param definition - the in-process agent definition.
+   * @param messages - conversation so far, oldest first.
+   * @param userId - the requesting account, used to scope the engine session.
+   * @param options - working directory, model override, and cancellation.
+   */
+  private async *executeInProcessAgentStreamRequest(
+    definition: AgentCliDefinition,
+    messages: readonly ChatMessage[],
+    userId: string,
+    options: { cwd?: string; model?: string; signal?: AbortSignal }
+  ): AsyncGenerator<PluginStreamChunk, void, unknown> {
+    const { resolveDshSelectedModel, requireDshProviderRoute } =
+      await import('../cordis/dsh/chat-model.js');
+    const selectedModel = await resolveDshSelectedModel(
+      options.model ?? definition.id,
+      userId
+    );
+    throwIfChatGenerationCancelled(options.signal);
+    const { getCordisEngine } = await import('../cordis/runtime.js');
+    const result = await getCordisEngine();
+    if (!result.ok) {
+      throw new Error(
+        `The ${definition.name} engine is not available: ${result.reason}${
+          result.detail === undefined ? '' : ` (${result.detail})`
+        }`
+      );
+    }
+    const engine = result.engine;
+    if (selectedModel) requireDshProviderRoute(engine);
+    // Chat owns its durable transcript. A fresh engine session per request
+    // prevents unrelated chats, forks, and retries from sharing hidden history.
+    const session = await engine.createSession({
+      cwd: options.cwd ?? '',
+      transient: true,
+      userId,
+      ...(selectedModel ? { model: selectedModel } : {}),
+    });
+    const signal = AbortSignal.any([
+      ...(options.signal ? [options.signal] : []),
+      AbortSignal.timeout(AGENT_TIMEOUT_MS),
+    ]);
+    const cancel = () => {
+      void engine.cancel(session.id).catch(error => {
+        logger.warn('Could not cancel an embedded agent turn', error);
+      });
+    };
+    signal.addEventListener('abort', cancel, { once: true });
+    try {
+      throwIfChatGenerationCancelled(signal);
+      const handle = await engine.sendMessage(
+        session.id,
+        buildAgentPrompt(messages),
+        { userId }
+      );
+      throwIfChatGenerationCancelled(signal);
+      yield* this.engineChunks(handle, signal);
+    } finally {
+      signal.removeEventListener('abort', cancel);
+      // Disposal waits for the agent to stop before deleting its temporary log.
+      await engine.cancel(session.id);
+      await engine.deleteSession(session.id);
+    }
+  }
+
+  /**
+   * Translate an engine stream into the pipeline's chunk vocabulary.
+   * @param handle - the stream the engine returned.
+   * @param signal - cancellation for the request.
+   */
+  private async *engineChunks(
+    handle: {
+      subscribe(
+        listener: (chunk: {
+          type: string;
+          text?: string;
+          message?: string;
+          reason?: string;
+        }) => void
+      ): { unsubscribe(): void };
+    },
+    signal?: AbortSignal
+  ): AsyncGenerator<PluginStreamChunk, void, unknown> {
+    throwIfChatGenerationCancelled(signal);
+    const queue = new ChunkQueue();
+    let outputCharacters = 0;
+    const subscription = handle.subscribe(chunk => {
+      if ((chunk.type === 'text' || chunk.type === 'reasoning') && chunk.text) {
+        outputCharacters += chunk.text.length;
+        if (outputCharacters > MAX_OUTPUT_CHARS) {
+          queue.finish(new Error('Embedded agent output exceeded the limit.'));
+          return;
+        }
+        queue.push({
+          type: chunk.type === 'reasoning' ? 'reasoning' : 'content',
+          content: chunk.text,
+        });
+        return;
+      }
+      if (chunk.type === 'error' && chunk.message) {
+        queue.finish(new Error(chunk.message));
+        return;
+      }
+      if (chunk.type === 'done') {
+        queue.push({
+          type: 'done',
+          doneReason:
+            typeof chunk.reason === 'string' ? chunk.reason : undefined,
+        });
+        queue.finish();
+      }
+    });
+
+    const onAbort = () => {
+      subscription.unsubscribe();
+      queue.finish(new ChatGenerationCancelledError());
+    };
+    signal?.addEventListener('abort', onAbort, { once: true });
+    if (signal?.aborted) onAbort();
+    try {
+      yield* queue.drain();
+    } finally {
+      signal?.removeEventListener('abort', onAbort);
+      subscription.unsubscribe();
+    }
   }
 
   async assertAgentAccess(userId: string): Promise<AgentCliDefinition[]> {
@@ -533,6 +758,15 @@ export class AgentCliService {
     );
     if (!definition) {
       throw new Error(`Unknown agent CLI "${agentId}".`);
+    }
+    if (definition.inProcess) {
+      yield* this.executeInProcessAgentStreamRequest(
+        definition,
+        messages,
+        userId,
+        options
+      );
+      return;
     }
     const binaryPath = resolveBinary(definition.command);
     if (!binaryPath) {
@@ -594,6 +828,7 @@ export class AgentCliService {
         model: options.model || definition.id,
         status,
         durationMs: Date.now() - startedAt,
+        tokens: agentCliTokenUsage(state.usage),
       });
     };
 
@@ -621,6 +856,8 @@ export class AgentCliService {
       settled = true;
       cleanup();
       recordUsage('success');
+      const usage = agentCliTokenUsage(state.usage);
+      if (usage) queue.push({ type: 'usage', usage });
       const metadata: Record<string, unknown> = { agentCli: definition.id };
       if (state.agentSessionId) {
         metadata.agentSessionId = state.agentSessionId;
@@ -635,7 +872,7 @@ export class AgentCliService {
           ? options.signal.reason
           : new ChatGenerationCancelledError();
       fail(reason, 'cancelled');
-      if (!child.killed) {
+      if (child.exitCode === null && child.signalCode === null) {
         child.kill('SIGTERM');
         forceKillTimer = setTimeout(() => child.kill('SIGKILL'), 1_000);
         forceKillTimer.unref?.();
@@ -658,6 +895,7 @@ export class AgentCliService {
     };
 
     child.stdout.on('data', (data: Buffer) => {
+      if (settled) return;
       totalChars += data.length;
       if (totalChars > MAX_OUTPUT_CHARS) {
         fail(new Error('Agent CLI output exceeded the size limit.'));
@@ -685,10 +923,18 @@ export class AgentCliService {
       );
     });
 
-    child.on('close', code => {
-      if (stdoutBuffer) handleLine(stdoutBuffer);
+    child.on('close', (code, signal) => {
+      if (stdoutBuffer && !settled) handleLine(stdoutBuffer);
       if (settled) {
         if (forceKillTimer) clearTimeout(forceKillTimer);
+        return;
+      }
+      if (code !== 0) {
+        fail(
+          new Error(
+            `${definition.name} exited unsuccessfully (${signal || code}).`
+          )
+        );
         return;
       }
       if (state.emittedContent) {
@@ -708,7 +954,13 @@ export class AgentCliService {
       child.stdin.end();
     }
 
-    yield* queue.drain();
+    try {
+      yield* queue.drain();
+    } finally {
+      // Iterator return/throw is also cancellation, even if no external
+      // AbortSignal fired. Stop the process and finalize its one usage row.
+      if (!settled) cancel();
+    }
   }
 }
 

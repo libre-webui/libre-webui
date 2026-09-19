@@ -78,6 +78,8 @@ export interface PluginStreamResponseResult {
   content: string;
   thinking?: string;
   providerMetadata?: Record<string, unknown>;
+  usage?: Extract<PluginStreamChunk, { type: 'usage' }>['usage'];
+  timings?: Extract<PluginStreamChunk, { type: 'usage' }>['timings'];
 }
 
 const PAUSE_TOOL_ID = 'tool-activity';
@@ -110,6 +112,8 @@ export async function streamPluginResponse({
   let totalContent = '';
   let totalThinking = '';
   let providerMetadata: Record<string, unknown> | undefined;
+  let usage: PluginStreamResponseResult['usage'];
+  let timings: PluginStreamResponseResult['timings'];
   const toolCalls: PluginStreamToolCall[] = [];
   let pauseTimer: ReturnType<typeof setTimeout> | null = null;
   let toolActivitySent = false;
@@ -194,6 +198,9 @@ export async function streamPluginResponse({
           },
           { ignoreClosedSocket: true }
         );
+      } else if (chunk.type === 'usage') {
+        if (chunk.usage) usage = { ...usage, ...chunk.usage };
+        if (chunk.timings) timings = { ...timings, ...chunk.timings };
       } else if (chunk.type === 'done') {
         finishToolActivity();
         if (chunk.doneReason?.startsWith('incomplete:')) {
@@ -227,5 +234,7 @@ export async function streamPluginResponse({
     content: totalContent,
     ...(totalThinking ? { thinking: totalThinking } : {}),
     ...(providerMetadata ? { providerMetadata } : {}),
+    ...(usage ? { usage } : {}),
+    ...(timings ? { timings } : {}),
   };
 }

@@ -985,7 +985,9 @@ export interface SystemSettingRepository {
   upsert(key: string, value: string, updatedAt: number): Promise<void>;
   upsertMany(
     values: Readonly<Record<string, string>>,
-    updatedAt: number
+    updatedAt: number,
+    /** Insert these defaults only when absent, in the same transaction. */
+    defaults?: Readonly<Record<string, string>>
   ): Promise<void>;
 }
 

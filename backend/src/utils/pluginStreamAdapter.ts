@@ -173,6 +173,7 @@ export async function* streamOpenAICompatibleResponse(
   const toolCallsInProgress = new Map<number, PluginToolCall>();
   let reasoningContent = '';
   let completed = false;
+  let doneReason: string | undefined;
 
   const completedToolCalls = (): PluginToolCall[] => {
     const calls = [...toolCallsInProgress.values()];
@@ -203,7 +204,7 @@ export async function* streamOpenAICompatibleResponse(
             }
             toolCallsInProgress.clear();
             completed = true;
-            yield { type: 'done' };
+            yield { type: 'done', ...(doneReason ? { doneReason } : {}) };
           }
           continue;
         }
@@ -231,6 +232,12 @@ export async function* streamOpenAICompatibleResponse(
             ...(usage ? { usage } : {}),
             ...(timings ? { timings } : {}),
           };
+        }
+        const choice = Array.isArray(payload.choices)
+          ? payload.choices[0]
+          : undefined;
+        if (choice && typeof choice.finish_reason === 'string') {
+          doneReason = choice.finish_reason;
         }
         const delta = getChoiceDelta(payload);
         if (!delta) {
@@ -271,9 +278,10 @@ export async function* streamOpenAICompatibleResponse(
       for (const toolCall of completedToolCalls()) {
         yield { type: 'tool_call', toolCall };
       }
-      yield { type: 'done' };
+      yield { type: 'done', ...(doneReason ? { doneReason } : {}) };
     }
   } finally {
+    await reader.cancel().catch(() => undefined);
     reader.releaseLock();
   }
 }
@@ -889,6 +897,7 @@ export async function* streamOpenAIResponsesResponse(
       yield chunk;
     }
   } finally {
+    await reader.cancel().catch(() => undefined);
     reader.releaseLock();
   }
 }
@@ -922,6 +931,7 @@ export async function* streamAnthropicResponse(
   const thinkingBlocks = new Map<number, Record<string, unknown>>();
   let buffer = '';
   let completed = false;
+  let doneReason: string | undefined;
   let attachedThinking = false;
   let inputTokens: number | undefined;
   let outputTokens: number | undefined;
@@ -998,6 +1008,9 @@ export async function* streamAnthropicResponse(
         }
 
         if (eventType === 'message_delta') {
+          const delta = payload.delta as Record<string, unknown> | undefined;
+          if (typeof delta?.stop_reason === 'string')
+            doneReason = delta.stop_reason;
           const usage =
             payload.usage && typeof payload.usage === 'object'
               ? (payload.usage as Record<string, unknown>)
@@ -1117,7 +1130,7 @@ export async function* streamAnthropicResponse(
           }
           toolCallsInProgress.clear();
           completed = true;
-          yield { type: 'done' };
+          yield { type: 'done', ...(doneReason ? { doneReason } : {}) };
         }
       }
     }
@@ -1126,9 +1139,10 @@ export async function* streamAnthropicResponse(
       for (const toolCall of toolCallsInProgress.values()) {
         yield { type: 'tool_call', toolCall: attachThinking(toolCall) };
       }
-      yield { type: 'done' };
+      yield { type: 'done', ...(doneReason ? { doneReason } : {}) };
     }
   } finally {
+    await reader.cancel().catch(() => undefined);
     reader.releaseLock();
   }
 }

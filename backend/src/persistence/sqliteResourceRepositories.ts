@@ -3338,9 +3338,18 @@ class SQLiteSystemSettingRepository implements SystemSettingRepository {
 
   async upsertMany(
     values: Readonly<Record<string, string>>,
-    updatedAt: number
+    updatedAt: number,
+    defaults: Readonly<Record<string, string>> = {}
   ): Promise<void> {
     const save = this.database.transaction(() => {
+      const insertDefault = this.database.prepare(
+        `INSERT INTO system_settings (key, value, updated_at)
+         VALUES (?, ?, ?)
+         ON CONFLICT(key) DO NOTHING`
+      );
+      for (const [key, value] of Object.entries(defaults)) {
+        insertDefault.run(key, value, updatedAt);
+      }
       const statement = this.database.prepare(
         `INSERT INTO system_settings (key, value, updated_at)
          VALUES (?, ?, ?)

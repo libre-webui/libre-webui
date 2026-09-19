@@ -1,5 +1,7 @@
 {
   "common": {
+    "provider": "プロバイダー",
+    "agent": "エージェント",
     "loading": "読み込み中...",
     "save": "保存",
     "saving": "保存中...",
@@ -540,7 +542,8 @@
       "prompts": "プロンプト",
       "skills": "スキル",
       "tools": "ツール",
-      "channels": "チャンネル"
+      "channels": "チャンネル",
+      "cordis": "Cordis エンジン"
     },
     "toggleSize": "サイドバーのサイズを切り替え",
     "expandSidebar": "サイドバーを展開"
@@ -1828,11 +1831,11 @@
       "saveFailed": "デフォルトテーマを更新できませんでした"
     },
     "agentAccess": {
-      "title": "エージェント",
-      "description": "管理者向けにエージェントセクション（Libre Claw）を提供します。エージェント CLI は Work サンドボックスの外で、サーバーユーザーとしてホスト上で実行されます。",
+      "title": "Libre Claw",
+      "description": "管理者にLibre Clawワークスペースを表示します。",
       "saved": "エージェントへのアクセスを更新しました",
       "saveFailed": "エージェントへのアクセスを更新できませんでした",
-      "lockedByEnv": "環境変数 AGENT_CLI_MODELS_ENABLED によって固定されています。"
+      "lockedByEnv": "環境変数 LIBRE_CLAW_ENABLED によって固定されています。"
     },
     "groups": {
       "title": "グループ",
@@ -1969,12 +1972,25 @@
       "saving": "保存中…",
       "saved": "メール設定を保存しました。",
       "saveFailed": "メール設定を保存できませんでした。"
+    },
+    "cordisAccess": {
+      "title": "Cordis エンジン",
+      "description": "Cordis エンジンを管理者に提供します。Libre WebUI のツール承認フローの外で、実際のファイルシステムアクセスを伴うツールを実行します。",
+      "saved": "Cordis アクセスを更新しました",
+      "saveFailed": "Cordis アクセスを更新できませんでした",
+      "lockedByEnv": "環境変数 LIBRE_CORDIS_ENABLED によって固定されています。",
+      "lockedByFile": "cordis.config.yml の features.enabled によって固定されています。"
+    },
+    "agentCliAccess": {
+      "title": "エージェントCLIモデル",
+      "description": "管理者はインストール済みのPi、OpenCode、Codex、Claude Codeをチャットモデルとして使用できます。これらはWorkサンドボックスの外でホスト上で実行されます。",
+      "lockedByEnv": "環境変数 AGENT_CLI_MODELS_ENABLED によって固定されています。"
     }
   },
   "usageAnalytics": {
     "eyebrow": "管理",
     "title": "プロバイダーの使用状況",
-    "description": "このインスタンスで有効なプラグイン全体の送信API呼び出しとモデル消費量を追跡します。",
+    "description": "このインスタンスのプロバイダーとエージェントのモデルリクエストと使用量を確認できます。",
     "days": "{{count}}日間",
     "refresh": "使用状況を更新",
     "loadFailed": "プロバイダーの使用状況を読み込めませんでした。",
@@ -2021,7 +2037,7 @@
       "notCharted": "選択すると、このモデルをグラフに読み込みます"
     },
     "providers": {
-      "title": "有効なプラグインのトラフィック",
+      "title": "プロバイダーとエージェントのトラフィック",
       "description": "プロバイダー別のリクエスト数、信頼性、応答時間。",
       "share": "呼び出しの {{percent}}%",
       "failures": "失敗またはキャンセル：{{count}} 件",
@@ -2039,9 +2055,9 @@
     },
     "empty": {
       "title": "プロバイダ呼び出しはまだありません",
-      "description": "有効なプラグインがチャット、Work、埋め込み、画像、音声、サウンド、または動画のリクエストを処理すると、呼び出しがここに表示されます。"
+      "description": "プロバイダーやエージェントがチャット、Work、埋め込み、画像、音声、サウンド、動画のリクエストを処理すると、ここに表示されます。"
     },
-    "privacyNote": "使用量はサーバー上の送信プラグイン境界で計測されます。Libre WebUIはプロバイダ、モデル、タイミング、ステータス、および報告されたカウンターを保存しますが、プロンプト、レスポンス、エンドポイント、資格情報、またはプロバイダのエラー本文は保存しません。トークン合計には、プロバイダが使用量メタデータを返した呼び出しのみが含まれます。",
+    "privacyNote": "プロバイダーとエージェントへのリクエストの使用量はサーバー上で記録されます。Libre WebUIはプロバイダ、モデル、タイミング、ステータス、および報告されたカウンターを保存しますが、プロンプト、レスポンス、エンドポイント、資格情報、またはプロバイダのエラー本文は保存しません。トークン合計には、プロバイダが使用量メタデータを返した呼び出しのみが含まれます。",
     "heatmap": {
       "title": "1年間のアクティビティ",
       "description": "過去1年間の日次プロバイダー呼び出し。各日の最も使用されたモデルごとに色分けされています。",
@@ -2051,6 +2067,14 @@
       "less": "少",
       "more": "多",
       "yearTotal": "過去1年間で{{formatted}}回の呼び出し"
+    },
+    "agents": {
+      "title": "エージェント",
+      "description": "CLIエージェントの呼び出しとネイティブDSHリクエスト。Libre WebUIモデルを使用するDSHは、そのモデルのプロバイダーに計上されます。",
+      "noCalls": "この期間に記録された呼び出しはありません",
+      "unreported": "トークン数は未報告",
+      "topModels": "使用頻度の高いモデル",
+      "legacy": "このサーバーは完全なエージェント内訳を提供していません。利用可能なエージェント記録を以下に表示します。"
     }
   },
   "systemPage": {
@@ -2710,8 +2734,8 @@
       "status": "ステータス：{{status}}"
     },
     "landing": {
-      "title": "新しい作業タスクを開始",
-      "description": "ローカルモデルまたは設定済みプロバイダーのモデルに、永続的で隔離されたワークスペースを提供します。モデルはファイルの確認やツールの実行ができ、次回も続きから作業できます。",
+      "title": "何に取り組みたいですか？",
+      "description": "タスクを説明してください。モデルに専用のワークスペースが用意されます。",
       "isolated": "隔離",
       "isolatedBody": "各タスクには専用のコンテナとファイルがあります。",
       "durable": "永続的",
@@ -2732,7 +2756,12 @@
       "remoteDismissLabel": "リモートプロバイダーの通知を閉じる",
       "remoteDismissFailed": "リモートプロバイダーの設定を保存できませんでした。",
       "noModelSelected": "作業対応モデルが選択されていません。",
-      "mentionAgents": "エージェントをメンション"
+      "mentionAgents": "エージェントをメンション",
+      "engine": "エンジン",
+      "nativeDshModels": "ネイティブDSHモデル",
+      "libreModels": "Libre WebUIモデル",
+      "nativeDshUnavailable": "ネイティブDSHモデルを利用できません。モデル一覧を更新するか、プロバイダー設定を確認してください。",
+      "modelLabel": "モデル"
     },
     "conversation": {
       "ready": "ワークスペースの準備ができました",
@@ -2781,7 +2810,7 @@
       "readyOllama": "Docker 準備完了",
       "readyPlugin": "Docker + プラグイン準備完了",
       "readyHybrid": "Docker + モデル準備完了",
-      "reason": "Docker と、利用可能な Ollama またはプラグインのモデルプロバイダーが必要です。"
+      "reason": "Workランタイムと利用可能なモデルプロバイダーが必要です。"
     },
     "workspace": {
       "label": "ワークスペース表示",
@@ -2951,7 +2980,7 @@
       "label": "エージェントとして雇う（任意）",
       "none": "ペルソナなし（単発タスク）",
       "hint": "このタスクは名前付きエージェントになります。ペルソナを保持し、サイドバーに固定され、実行のたびに1行のステータスを報告します。",
-      "description": "ペルソナを選ぶと、このタスクは独自のアイデンティティを持つ永続的なエージェントになります。"
+      "description": "このタスクを名前付きのエージェントとして保持するには、ペルソナを選択してください。"
     },
     "agent": {
       "openScreen": "全画面ビューを開く",
@@ -3911,5 +3940,42 @@
       "connected": "{{name}}が接続されました — そのモデルが利用可能になりました",
       "saveFailed": "APIキーを保存できませんでした"
     }
+  },
+  "cordis": {
+    "title": "Cordis エンジン",
+    "description": "組み込みの DeepSeek Harness エンジンのセッション、ツール、チャット。",
+    "newSession": "新しいセッション",
+    "createFailed": "セッションを作成できませんでした。",
+    "deleteFailed": "セッションを削除できませんでした。",
+    "sendFailed": "エンジンがターンを完了できませんでした。",
+    "sessionsHeading": "セッション",
+    "toolsHeading": "ツール",
+    "transcriptHeading": "文字起こし",
+    "noSessions": "セッションはまだありません。作成して開始してください。",
+    "noTools": "エンジンはツールを登録していません。",
+    "selectSession": "セッションを選択するか、作成して開始してください。",
+    "working": "エージェントが作業中…",
+    "composerLabel": "エンジンへのメッセージ",
+    "composerPlaceholder": "エンジンに依頼を入力…",
+    "send": "送信",
+    "stop": "停止",
+    "deleteSession": "セッションを削除",
+    "unknownTime": "不明な時刻",
+    "disabledTitle": "Cordis エンジンは無効です",
+    "disabledHint": "管理者は「ユーザー管理」→「アクセスとポリシー」で有効にできます。",
+    "unavailableTitle": "Cordis エンジンを起動できませんでした",
+    "role": {
+      "user": "あなた",
+      "assistant": "エンジン",
+      "system": "システム",
+      "tool": "ツール",
+      "unknown": "メッセージ"
+    },
+    "turnFailed": "エンジンがターンを完了できませんでした",
+    "permissions": "権限",
+    "readOnly": "読み取り専用",
+    "workspaceWrite": "ワークスペースへの書き込み",
+    "context": "セッションのコンテキスト",
+    "permissionHint": "読み取り専用ではファイルを確認できます。書き込みでは、このセッションのワークスペース内で編集できます。"
   }
 }

@@ -28,6 +28,11 @@ import {
 } from '@/utils/chatModelSelection';
 import { SettingsModelCatalog } from '@/components/settings/SettingsModelCatalog';
 import { useAuthStore } from '@/store/authStore';
+import {
+  modelDisplayName,
+  modelOptionLabel,
+  modelProviderLabel,
+} from '@/utils/modelPresentation';
 
 interface SelectOption {
   value: string;
@@ -105,25 +110,15 @@ export function SettingsModelsTab({
               {t('settings.model.defaultModel')}
             </label>
             <Select
+              aria-label={t('settings.model.defaultModel')}
+              data-testid='default-model-select'
               value={selectedModelKey}
               onChange={onModelChange}
               options={[
                 { value: '', label: t('settings.model.selectModel') },
                 ...selectorModels.map(model => ({
                   value: chatModelOptionKey(model),
-                  label: model.isLegacySelection
-                    ? `${model.name} (provider not recorded${
-                        model.isUnavailable ? ', unavailable' : ''
-                      })`
-                    : model.isPersona
-                      ? `${model.personaName} (${t('settings.model.persona')})`
-                      : model.isPlugin
-                        ? `${model.name} (${model.pluginName || model.pluginId}${
-                            model.isUnavailable ? ', unavailable' : ''
-                          })`
-                        : `${model.name} (Ollama${
-                            model.isUnavailable ? ', unavailable' : ''
-                          })`,
+                  label: modelOptionLabel(model, t),
                 })),
               ]}
             />
@@ -133,7 +128,10 @@ export function SettingsModelsTab({
           </div>
 
           {selectedModel && (
-            <div className='bg-white dark:bg-dark-100 rounded-lg p-4 border border-gray-200 dark:border-dark-300'>
+            <div
+              className='bg-white dark:bg-dark-100 rounded-lg p-4 border border-gray-200 dark:border-dark-300'
+              data-testid='current-model-info'
+            >
               <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3'>
                 {t('settings.model.currentModelInfo')}
               </label>
@@ -141,24 +139,36 @@ export function SettingsModelsTab({
                 <div className='grid grid-cols-1 sm:grid-cols-2 gap-3'>
                   <ModelInfoItem
                     label={`${t('settings.model.name')}:`}
-                    value={selectedModel}
+                    value={
+                      selectedModelDetails
+                        ? modelDisplayName(selectedModelDetails)
+                        : selectedModel
+                    }
                     truncate
                   />
-                  {selectedModelDetails?.details && (
-                    <>
-                      <ModelInfoItem
-                        label={`${t('settings.model.size')}:`}
-                        value={selectedModelDetails.details.parameter_size}
-                      />
-                      <ModelInfoItem
-                        label={`${t('settings.model.family')}:`}
-                        value={selectedModelDetails.details.family}
-                      />
-                      <ModelInfoItem
-                        label={`${t('settings.model.format')}:`}
-                        value={selectedModelDetails.details.format}
-                      />
-                    </>
+                  {selectedModelDetails && (
+                    <ModelInfoItem
+                      label={`${t('common.provider')}:`}
+                      value={modelProviderLabel(selectedModelDetails, t)}
+                    />
+                  )}
+                  {selectedModelDetails?.details?.parameter_size && (
+                    <ModelInfoItem
+                      label={`${t('settings.model.size')}:`}
+                      value={selectedModelDetails.details.parameter_size}
+                    />
+                  )}
+                  {selectedModelDetails?.details?.family && (
+                    <ModelInfoItem
+                      label={`${t('settings.model.family')}:`}
+                      value={selectedModelDetails.details.family}
+                    />
+                  )}
+                  {selectedModelDetails?.details?.format && (
+                    <ModelInfoItem
+                      label={`${t('settings.model.format')}:`}
+                      value={selectedModelDetails.details.format}
+                    />
                   )}
                 </div>
               </div>
@@ -206,6 +216,7 @@ export function SettingsModelsTab({
                   })}
                 </label>
                 <Select
+                  aria-label={t('settings.model.visionModel')}
                   data-testid='vision-model-select'
                   value={currentVisionModel}
                   onChange={event => onVisionModelChange(event.target.value)}
@@ -241,6 +252,8 @@ export function SettingsModelsTab({
                       {t('settings.model.autoTitle.taskModel')}
                     </label>
                     <Select
+                      aria-label={t('settings.model.autoTitle.taskModel')}
+                      data-testid='task-model-select'
                       value={currentTaskModel}
                       onChange={event =>
                         onAutoTitleTaskModelChange(event.target.value)
