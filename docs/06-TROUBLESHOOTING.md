@@ -700,7 +700,7 @@ off the requirement that needs them, for example
 ### A message is accepted but the reply is empty
 
 The turn ran and produced no assistant message. This almost always means the
-agent had no model pinned, so the engine resolved no route. Set `model.route`
+agent had no model pinned, so the engine resolved no route. Set `model.provider`
 and `model.model` in `cordis.config.yml` — the host passes both to the bridge
 row. A turn that produces no text and no error is the symptom.
 
