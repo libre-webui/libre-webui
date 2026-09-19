@@ -264,8 +264,8 @@ document, which wins over the built-in default.
 | `LIBRE_CORDIS_TOOLS`          | `features.tools`            | `true`                          |
 | `LIBRE_CORDIS_PERSISTENCE`    | `features.persistence`      | `true`                          |
 | `LIBRE_CORDIS_TRACE`          | `trace`                     | `false`                         |
-| `LIBRE_CORDIS_MODEL_PROVIDER` | `model.provider`            | `pi-ai`                         |
-| `LIBRE_CORDIS_MODEL_ROUTE`    | `model.route`               | `openai-compatible`             |
+| `LIBRE_CORDIS_MODEL_PROVIDER` | `model.provider`            | `libre-webui`                   |
+| `LIBRE_CORDIS_MODEL_ROUTE`    | `model.route`               | `libre-webui`                   |
 | `LIBRE_CORDIS_MODEL`          | `model.model`               | `''`                            |
 | `LIBRE_CORDIS_API_KEY_ENV`    | `model.apiKeyEnv`           | `OPENAI_API_KEY`                |
 | `LIBRE_CORDIS_BASE_URL`       | `model.baseUrl`             | `''`                            |
