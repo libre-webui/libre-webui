@@ -319,6 +319,12 @@ Libre WebUI's backend. The engine runs as a plugin tree in a
 its sessions, agents, and tools arrive as Cordis services rather than as
 imported modules.
 
+> **Privacy warning for external DSH:** Upstream `dsh-base` profiles enable
+> session-log and plugin-inventory sharing by default, plus feedback-triggered
+> session exports that can include tool output and earlier context. LWUI's
+> embedded composition omits these uploaders. Before connecting a separate DSH
+> instance, follow the [complete opt-out instructions](docs/65-CORDIS_CONFIGURATION.md#privacy-and-telemetry).
+
 The engine is off by default. An administrator enables it in **Settings → User
 Management → Access & policies → Cordis Engine**; the change takes effect
 immediately, with no restart.

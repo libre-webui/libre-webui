@@ -58,8 +58,14 @@ features:
   # Keep sessions on disk so a restart resumes conversations.
   persistence: true
 
-# Where the engine may treat as its default workspace, and where it persists
-# sessions. Both default under Libre WebUI's data directory, which keeps engine
-# state inside the same private runtime directory as the rest of the app.
+# Packaged CLI defaults live in Libre WebUI's app home:
+#   workspace: ~/.libre-webui/cordis-workspace
+#   sessions:  ~/.libre-webui/cordis-sessions
+#   generated configuration: ~/.libre-webui/cordis-runtime
+# DATA_DIR relocates these defaults. Source development uses backend/data;
+# Docker uses the deployment's mounted DATA_DIR instead of the host home.
+# Nonblank LIBRE_CORDIS_WORKSPACE / LIBRE_CORDIS_SESSION_STORE override the
+# corresponding paths below. Absent or blank values use the defaults; use
+# absolute paths for explicit overrides. Changing paths does not move saved data.
 # workspacePath: ''
 # sessionStorePath: ''

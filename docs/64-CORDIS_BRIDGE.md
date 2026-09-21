@@ -25,6 +25,13 @@ its capabilities arrive as Cordis services rather than as imported modules.
 The bridge is **off by default**. Nothing on this page happens until an operator
 enables it (see [Cordis Configuration](./65-CORDIS_CONFIGURATION.md)).
 
+> **Privacy warning for external DSH:** Upstream `dsh-base` profiles enable
+> session-log and plugin-inventory sharing by default. Feedback can also trigger
+> exports containing session history, including when using a local model.
+> LWUI's embedded engine omits these uploaders. Read the
+> [privacy warning and complete opt-outs](./65-CORDIS_CONFIGURATION.md#privacy-and-telemetry)
+> before connecting an external DSH instance.
+
 ## Why a bridge instead of a direct integration
 
 Importing DSH's packages from Libre WebUI's services would be shorter and worse.

@@ -42,15 +42,18 @@ import {
   writeFile,
   symlink,
   readdir,
+  realpath,
 } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { EntryTree } from '@deepseek-ai/cordis-plugin-loader';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, '..');
 const backendDir = path.join(repoRoot, 'backend');
+const { resolveCliRuntimePaths } = await import('../bin/runtime-paths.js');
 
 /** Root for every temp directory this suite creates. */
 const tempRoot = await mkdtemp(path.join(os.tmpdir(), 'libre-cordis-'));
@@ -117,6 +120,11 @@ const ENGINE_PLUGIN = pathToFileURL(
 ).href;
 
 const FAKE_REPLY_TEXT = 'Hello from the fake model.';
+const UPLOAD_PACKAGES = [
+  '@deepseek-ai/dsh-session-telemetry-otel',
+  '@deepseek-ai/dsh-session-log-deepseek',
+  '@deepseek-ai/dsh-plugin-package-inventory-deepseek',
+];
 const PROBE_SERVICE = 'testLifecycleProbe';
 const PROBE_EVENT = 'test/probe-ping';
 
@@ -409,6 +417,136 @@ test('missing settings fall back to defaults with the host disabled', async () =
   assert.equal(config.settingsPath, paths.settingsPath);
 });
 
+test('default and blank engine paths follow the packaged home or configured data directory', async () => {
+  const paths = await scenario('engine-data-home');
+  const names = [
+    'DATA_DIR',
+    'LIBRE_CORDIS_WORKSPACE',
+    'LIBRE_CORDIS_SESSION_STORE',
+  ];
+  const previous = names.map(name => process.env[name]);
+  const fakeHome = path.join(paths.dir, 'home');
+  const packaged = resolveCliRuntimePaths({}, { homeDirectory: fakeHome });
+  assert.equal(packaged.dataDirectory, path.join(fakeHome, '.libre-webui'));
+  try {
+    delete process.env.LIBRE_CORDIS_WORKSPACE;
+    delete process.env.LIBRE_CORDIS_SESSION_STORE;
+    for (const dataDirectory of [
+      packaged.dataDirectory,
+      path.join(paths.dir, 'custom-data-mount'),
+    ]) {
+      process.env.DATA_DIR = dataDirectory;
+      for (const document of [
+        '',
+        "workspacePath: ''\nsessionStorePath: '   '\n",
+        'workspacePath: null\nsessionStorePath: null\n',
+      ]) {
+        await writeFile(paths.settingsPath, document);
+        const config = resolveCordisHostConfig({
+          configPath: paths.configPath,
+          settingsPath: paths.settingsPath,
+          workspacePath: '',
+          sessionStorePath: ' ',
+        });
+        assert.equal(
+          config.workspacePath,
+          path.join(dataDirectory, 'cordis-workspace')
+        );
+        assert.equal(
+          config.sessionStorePath,
+          path.join(dataDirectory, 'cordis-sessions')
+        );
+        assert.equal(
+          config.runtimePath,
+          path.join(dataDirectory, 'cordis-runtime')
+        );
+      }
+    }
+  } finally {
+    names.forEach((name, index) => restoreEnv(name, previous[index]));
+  }
+});
+
+test('explicit engine paths keep their precedence and invalid paths fail', async () => {
+  const paths = await scenario('engine-path-overrides');
+  const names = ['LIBRE_CORDIS_WORKSPACE', 'LIBRE_CORDIS_SESSION_STORE'];
+  const previous = names.map(name => process.env[name]);
+  const resolve = (options = {}) =>
+    resolveCordisHostConfig({
+      configPath: paths.configPath,
+      settingsPath: paths.settingsPath,
+      ...options,
+    });
+  try {
+    delete process.env.LIBRE_CORDIS_WORKSPACE;
+    delete process.env.LIBRE_CORDIS_SESSION_STORE;
+    await writeFile(
+      paths.settingsPath,
+      JSON.stringify({
+        workspacePath: paths.workspacePath,
+        sessionStorePath: paths.sessionStorePath,
+      })
+    );
+    assert.equal(resolve().workspacePath, paths.workspacePath);
+    assert.equal(resolve().sessionStorePath, paths.sessionStorePath);
+    process.env.LIBRE_CORDIS_WORKSPACE = path.join(paths.dir, 'env-workspace');
+    process.env.LIBRE_CORDIS_SESSION_STORE = path.join(
+      paths.dir,
+      'env-sessions'
+    );
+    assert.equal(resolve().workspacePath, process.env.LIBRE_CORDIS_WORKSPACE);
+    assert.equal(
+      resolve().sessionStorePath,
+      process.env.LIBRE_CORDIS_SESSION_STORE
+    );
+    const explicit = resolve({
+      workspacePath: paths.workspacePath,
+      sessionStorePath: paths.sessionStorePath,
+    });
+    assert.equal(explicit.workspacePath, paths.workspacePath);
+    assert.equal(explicit.sessionStorePath, paths.sessionStorePath);
+    process.env.LIBRE_CORDIS_WORKSPACE = '  ';
+    process.env.LIBRE_CORDIS_SESSION_STORE = '';
+    assert.equal(resolve().workspacePath, paths.workspacePath);
+    assert.equal(resolve().sessionStorePath, paths.sessionStorePath);
+    await writeFile(paths.settingsPath, JSON.stringify({ workspacePath: 42 }));
+    assert.throws(() => resolve(), /directory setting must be strings/);
+  } finally {
+    names.forEach((name, index) => restoreEnv(name, previous[index]));
+  }
+});
+
+test('a directly configured bridge defaults its workspace to LWUI data instead of cwd', async () => {
+  for (const workspacePath of [undefined, '', '   ']) {
+    const paths = await scenario('direct-bridge-workspace');
+    await writeSettings(paths);
+    const rows = parseComposition(await engineComposition());
+    const bridge = rows.find(row => row.id === BRIDGE_ENTRY_ID);
+    // A custom row does not receive the host's named-bridge defaults.
+    bridge.id = 'custom-bridge';
+    bridge.config = {
+      workspacePath,
+      defaultProvider: 'test-fake-route',
+      defaultModel: 'test-model',
+    };
+    const host = await startHost(paths, stringifyComposition(rows));
+    try {
+      const engine = host.context.get('libreDshEngine');
+      const session = await engine.createSession({ cwd: '' });
+      assert.equal(
+        session.workspacePath,
+        await realpath(path.join(paths.dataDir, 'cordis-workspace'))
+      );
+      await assert.rejects(
+        engine.createSession({ cwd: process.cwd() }),
+        /inside the configured Cordis workspace/
+      );
+    } finally {
+      await host.stop();
+    }
+  }
+});
+
 test('settings document supplies provider, route, and feature flags', async () => {
   const paths = await scenario('config-document');
   await writeFile(
@@ -560,6 +698,161 @@ function restoreEnv(name, value) {
 }
 
 // ── Host lifecycle ───────────────────────────────────────────────────────────
+
+test('shipped composition explicitly disables every DSH data uploader', async () => {
+  const rows = parseComposition(await shippedComposition());
+  for (const name of UPLOAD_PACKAGES) {
+    const matches = rows.filter(row => row.name === name);
+    assert.equal(matches.length, 1, name);
+    assert.equal(matches[0].disabled, true, name);
+  }
+});
+
+test('host blocks uploader imports, nested includes, and live reconfiguration', async t => {
+  const paths = await scenario('private-engine');
+  await writeSettings(paths);
+  const host = await startHost(paths, await engineComposition());
+  const loader = host.context.get('loader');
+  const importedUploaders = [];
+  const originalImport = EntryTree.prototype.import;
+  // Substitute harmless modules at the real import boundary. A regression
+  // records the attempted upload-module import without loading any uploader.
+  t.mock.method(EntryTree.prototype, 'import', function (name, ...args) {
+    if (UPLOAD_PACKAGES.some(pkg => name.includes(pkg))) {
+      importedUploaders.push(name);
+      return { apply() {} };
+    }
+    return originalImport.call(this, name, ...args);
+  });
+  try {
+    await loader.create({
+      id: 'disabled-invalid-module',
+      name: 'file://other-host/plugin.js',
+      disabled: true,
+    });
+    for (const name of UPLOAD_PACKAGES) {
+      const entry = [...loader.entries()].find(
+        row => row.options.name === name
+      );
+      assert.ok(entry, name);
+      assert.equal(entry.disabled, true);
+      assert.equal(entry.fiber, undefined);
+    }
+    for (const [index, name] of UPLOAD_PACKAGES.entries()) {
+      const id = `privacy-${index}`;
+      for (const specifier of [
+        name,
+        `${name}/lib/index.js`,
+        pathToFileURL(path.join(repoRoot, 'node_modules', name, 'lib/index.js'))
+          .href,
+      ]) {
+        await assert.rejects(
+          loader.create({ id, name: specifier }),
+          /Libre WebUI disables DSH data-upload plugin/
+        );
+      }
+      await loader.create({ id, name, disabled: true });
+      const entry = loader.resolve(id);
+      assert.equal(entry.fiber, undefined);
+      for (const disabled of [false, null, undefined]) {
+        await assert.rejects(
+          loader.update(id, { disabled }),
+          /Libre WebUI disables DSH data-upload plugin/
+        );
+        assert.equal(entry.options.disabled, true);
+      }
+      await assert.rejects(
+        loader.update(id, { group: true }),
+        /Libre WebUI disables DSH data-upload plugin/
+      );
+      // refresh() calls init() without going through update().
+      entry.options.disabled = false;
+      try {
+        await assert.rejects(
+          entry.refresh(),
+          /Libre WebUI disables DSH data-upload plugin/
+        );
+      } finally {
+        entry.options.disabled = true;
+      }
+    }
+
+    await loader.create({ id: 'safe-probe', name: FIXTURE_PROBE });
+    const probe = host.context.get(PROBE_SERVICE);
+    assert.ok(probe);
+    const probeUid = loader.resolve('safe-probe').fiber.uid;
+    for (const name of UPLOAD_PACKAGES) {
+      for (const options of [{ name }, { name, disabled: true, group: true }]) {
+        await assert.rejects(
+          loader.update('safe-probe', options),
+          /Libre WebUI disables DSH data-upload plugin/
+        );
+        assert.equal(loader.resolve('safe-probe').options.name, FIXTURE_PROBE);
+        assert.equal(loader.resolve('safe-probe').fiber.uid, probeUid);
+      }
+    }
+
+    const nestedPath = path.join(paths.dir, 'nested.yml');
+    await writeFile(
+      nestedPath,
+      stringifyComposition([
+        { id: 'nested-uploader', name: UPLOAD_PACKAGES[0] },
+      ])
+    );
+    await assert.rejects(
+      loader.create({
+        id: 'nested-privacy',
+        name: 'cordis:include',
+        config: { path: pathToFileURL(nestedPath).href },
+      }),
+      /Libre WebUI disables DSH data-upload plugin/
+    );
+    assert.deepEqual(importedUploaders, []);
+
+    const engine = host.context.get('libreDshEngine');
+    const session = await engine.createSession({ cwd: '' });
+    const chunks = await collectStream(
+      await engine.sendMessage(session.id, 'A private test message')
+    );
+    assert.ok(chunks.some(chunk => chunk.type === 'text'));
+    assert.equal(chunks.at(-1).type, 'done');
+    assert.deepEqual(importedUploaders, []);
+  } finally {
+    await host.stop();
+  }
+});
+
+test('provider capability initialization cannot import a data uploader', async () => {
+  const paths = await scenario('private-adapter-import');
+  await writeSettings(paths);
+  const rows = parseComposition(await engineComposition());
+  const adapter = rows.find(row => row.id === 'libre-webui-llm-adapter');
+  const config = resolveCordisHostConfig({
+    configPath: paths.configPath,
+    settingsPath: paths.settingsPath,
+    workspacePath: paths.workspacePath,
+    sessionStorePath: paths.sessionStorePath,
+    runtimePath: path.join(paths.dir, 'runtime'),
+  });
+  for (const name of UPLOAD_PACKAGES) {
+    adapter.name = name;
+    await writeFile(paths.configPath, stringifyComposition(rows));
+    await assert.rejects(
+      startCordisHost({ ...config, providerHandler: {} }),
+      /Libre WebUI disables DSH data-upload plugin/
+    );
+  }
+  // A disabled adapter must never be imported even to install its capability.
+  adapter.name = 'file://other-host/plugin.js';
+  adapter.disabled = true;
+  await writeFile(paths.configPath, stringifyComposition(rows));
+  const host = await startCordisHost({ ...config, providerHandler: {} });
+  try {
+    assert.deepEqual(host.status().missing, []);
+  } finally {
+    await host.stop();
+  }
+});
 
 test('host reports every engine service as ready once DONE', async () => {
   const paths = await scenario('lifecycle-ready');
@@ -1624,6 +1917,47 @@ test('stop during startup disposes the candidate instead of resurrecting the hos
     await runtime.stopCordisHost();
     runtime.configureCordisRuntime(undefined);
     setEngineDefaultModelResolver(undefined);
+  }
+});
+
+test('runtime overrides retain resolved workspace paths instead of restoring blank inputs', async () => {
+  const paths = await scenario('runtime-path-normalization');
+  const runtime = await distModule('cordis/runtime.js');
+  const names = ['LIBRE_CORDIS_WORKSPACE', 'LIBRE_CORDIS_SESSION_STORE'];
+  const previous = names.map(name => process.env[name]);
+  try {
+    names.forEach(name => delete process.env[name]);
+    runtime.configureCordisRuntime({
+      configPath: paths.configPath,
+      settingsPath: paths.settingsPath,
+      workspacePath: '',
+      sessionStorePath: ' ',
+      trace: true,
+    });
+    const defaults = runtime.cordisRuntimeConfig();
+    assert.equal(
+      defaults.workspacePath,
+      path.join(paths.dataDir, 'cordis-workspace')
+    );
+    assert.equal(
+      defaults.sessionStorePath,
+      path.join(paths.dataDir, 'cordis-sessions')
+    );
+    assert.equal(defaults.trace, true);
+    runtime.configureCordisRuntime({
+      configPath: path.relative(process.cwd(), paths.configPath),
+      settingsPath: path.relative(process.cwd(), paths.settingsPath),
+      workspacePath: './explicit-workspace',
+      sessionStorePath: './explicit-sessions',
+    });
+    const explicit = runtime.cordisRuntimeConfig();
+    assert.equal(explicit.configPath, paths.configPath);
+    assert.equal(explicit.settingsPath, paths.settingsPath);
+    assert.equal(explicit.workspacePath, path.resolve('explicit-workspace'));
+    assert.equal(explicit.sessionStorePath, path.resolve('explicit-sessions'));
+  } finally {
+    runtime.configureCordisRuntime(undefined);
+    names.forEach((name, index) => restoreEnv(name, previous[index]));
   }
 });
 

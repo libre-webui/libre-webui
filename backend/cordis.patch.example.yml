@@ -38,6 +38,20 @@
 - id: libre-webui-llm-adapter
   name: './dist/cordis/dsh/librewebui-llm-adapter.js'
 
+# DSH has independent telemetry, session-log, and plugin-inventory uploaders.
+# Keep them disabled explicitly; no uploader package needs to be installed.
+- id: session-telemetry-otel
+  name: '@deepseek-ai/dsh-session-telemetry-otel'
+  disabled: true
+
+- id: session-log-deepseek
+  name: '@deepseek-ai/dsh-session-log-deepseek'
+  disabled: true
+
+- id: plugin-package-inventory-deepseek
+  name: '@deepseek-ai/dsh-plugin-package-inventory-deepseek'
+  disabled: true
+
 # ── Session layer ─────────────────────────────────────────────────────────────
 
 - id: session

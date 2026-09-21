@@ -74,10 +74,27 @@ features:
   tools: true
   persistence: true
 
-# Optional absolute paths; defaults live under Libre WebUI's data directory.
+# Optional absolute paths; absent or blank values use the data-directory defaults.
 # workspacePath: /absolute/path/to/workspace
 # sessionStorePath: /absolute/path/to/sessions
 ```
+
+Packaged CLI installations use `~/.libre-webui` as the default app home:
+
+- Workspace files: `~/.libre-webui/cordis-workspace`.
+- Saved engine sessions: `~/.libre-webui/cordis-sessions`.
+- Generated engine configuration: `~/.libre-webui/cordis-runtime`.
+
+`DATA_DIR` relocates these defaults together. Source development keeps its
+default under `backend/data`; Docker uses the deployment's mounted `DATA_DIR`
+(the supplied Compose files use `/app/backend/data` inside the container).
+
+For individual directories, nonblank `LIBRE_CORDIS_WORKSPACE` and
+`LIBRE_CORDIS_SESSION_STORE` take precedence over `workspacePath` and
+`sessionStorePath` in this file. Blank values are ignored; when neither layer
+supplies a path, the corresponding `<DATA_DIR>/cordis-*` default is used.
+Changing these settings selects a directory but does not move existing workspace
+files or saved sessions automatically.
 
 ### Top-level keys
 
@@ -438,6 +455,148 @@ choice for a plugin-only deployment.
   [Troubleshooting](./06-TROUBLESHOOTING.md#saved-session-fails-with-an-identified-message-error).
 - **Titles are derived locally.** Session summaries use the first human message
   as a short title; empty sessions have no derived title.
+
+## Privacy and telemetry
+
+> **Privacy warning: upstream DSH base profiles enable data sharing by default.**
+> Profiles built on `dsh-base`, including the usual `web` and `headless` profiles,
+> include feedback-triggered session exports, automatic session-log contributions,
+> and automatic plugin-inventory contributions.
+> Exports can contain conversation text, tool arguments and results, file
+> contents that appeared in those results, and workspace paths. Using a local
+> model does not prevent the feedback-triggered export. Disable all three paths
+> before connecting an external DSH instance to Libre WebUI.
+
+The behavior below was checked on **2026-09-21** against upstream commit
+[`ddefc45f`](https://github.com/deepseek-ai/deepseek-harness/tree/ddefc45fbc7f8e46dd73185e68295696d1297887).
+Recheck the effective configuration when upgrading DSH or installing bundles.
+
+### What is enabled upstream
+
+| Mechanism                | Upstream default and trigger                                                                                                                        | Destination                                                                |
+| ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| OTel session export      | `FEEDBACK_ONLY`. New feedback or rating events can release the session history up to that event, including earlier context, for any model provider. | `https://harness-telemetry.deepseeksvc.com/v1/logs`, unless overridden.    |
+| Session-log contribution | `enabled: true`. Requests carrying a live native session can attach session-log records as `dsh_session_log`; feedback is not required.             | The configured DeepSeek inference endpoint, including configured gateways. |
+| Plugin inventory         | `enabled: true`. DeepSeek requests can attach active plugin package names and versions as `dsh_plugin_packages`, even without a session.            | The configured DeepSeek inference endpoint.                                |
+
+Sources: [shipped base configuration](https://github.com/deepseek-ai/deepseek-harness/blob/ddefc45fbc7f8e46dd73185e68295696d1297887/packages/bundle/base/cordis.patch.yml),
+[OTel export behavior and payload](https://github.com/deepseek-ai/deepseek-harness/blob/ddefc45fbc7f8e46dd73185e68295696d1297887/packages/session/session-telemetry-otel/README.md),
+[session-log contribution](https://github.com/deepseek-ai/deepseek-harness/blob/ddefc45fbc7f8e46dd73185e68295696d1297887/packages/session/session-log-deepseek/README.md),
+and [package inventory](https://github.com/deepseek-ai/deepseek-harness/blob/ddefc45fbc7f8e46dd73185e68295696d1297887/packages/llm/plugin-package-inventory-deepseek/README.md).
+
+These exports include session contents. Confidential information included in prompts
+or tool output can be part of the exported records; do not assume automatic
+redaction. Ordinary model activity alone does not trigger the OTel path, but it
+can trigger the separate DeepSeek request contributions.
+
+### Telemetry collector location
+
+A DNS lookup on **2026-09-21** returned:
+
+```text
+harness-telemetry.deepseeksvc.com
+  CNAME 1320056602.ap-beijing.tencentscf.com
+  CNAME ap-beijing.tencentscf.com
+  A     120.53.70.166
+  A     120.53.78.102
+  A     43.137.64.240
+```
+
+Tencent documents the [SCF hostname format](https://www.tencentcloud.com/document/product/583/64369)
+and identifies `ap-beijing` as its [North China (Beijing) region](https://www.tencentcloud.com/document/product/213/6091).
+The collector's DNS therefore points to Tencent Cloud's Beijing region. This
+lookup does not establish retention periods or where data is subsequently
+stored or processed. Addresses can change; the IPs above are a dated observation,
+not a permanent firewall rule set.
+
+### Libre WebUI's own engine
+
+Libre WebUI's embedded engine and sandboxed Work driver do not mount DSH's
+uploaders. The shipped composition explicitly sets all three rows to
+`disabled: true`, and the host rejects configured attempts to import them,
+including nested compositions and live configuration changes. Existing custom
+compositions must disable or remove these rows. Restart a running host after
+upgrading to apply this protection. LWUI's local usage accounting is unchanged.
+
+An independently running DSH instance, including the web app on port 3080,
+keeps its own configuration when connected through `dsh-native-provider`.
+The native bridge omits DSH's `sessionId`, so its direct model calls do not attach
+a native DSH session log. The external instance can still attach plugin inventory
+or export its other native sessions. LWUI's opt-outs do not configure that
+external process.
+
+### Disable all three upload mechanisms in external DSH
+
+An already-running exporter can finish previously authorized batches during
+shutdown. If no further delivery is acceptable, block its outbound collector
+traffic before stopping or reconfiguring the old process. These opt-outs do not
+retract records already delivered, and withdrawing feedback is not remote
+erasure. The [exporter's shutdown and delivery notes](https://github.com/deepseek-ai/deepseek-harness/blob/ddefc45fbc7f8e46dd73185e68295696d1297887/packages/session/session-telemetry-otel/README.md#failures-and-shutdown)
+describe those limits.
+
+Merge the following overrides into the DSH home-level `cordis.patch.yml`:
+`$DSH_HOME/cordis.patch.yml`, or `~/.dsh/cordis.patch.yml` when `DSH_HOME` is unset.
+Do not replace unrelated entries in an existing file.
+
+```yaml
+- id: session-telemetry-otel
+  disabled: true
+  config:
+    mode: DISABLED
+
+- id: session-log-deepseek
+  disabled: true
+  config:
+    enabled: false
+
+- id: plugin-package-inventory-deepseek
+  disabled: true
+  config:
+    enabled: false
+```
+
+`disabled: true` keeps each uploader unmounted. The corresponding `mode` and
+`enabled` values also state the opt-out explicitly. These are **standalone DSH
+patch entries**, not fields for LWUI's `cordis.config.yml`.
+
+The home-level patch applies across profiles. To scope the change to one
+profile, use `$DSH_HOME/profiles/<profile>/cordis.patch.yml` instead, and check
+that the higher-priority home patch does not re-enable a row. Each patch
+replaces the targeted row's complete `config`; later `--patch` overlays can
+change these values again.
+
+Inspect the final composition locally for every profile you use, with the same
+`--patch` arguments as its real launcher:
+
+```bash
+dsh --profile web --dump-config
+```
+
+Confirm all three rows are `disabled: true`, with `mode: DISABLED` or
+`enabled: false` as above. If a profile omits these plugins entirely, they are
+not mounted. Treat unmatched overrides or unexpected enabled copies as a reason
+to inspect that profile before starting it. A full configuration dump can
+contain operator secrets; do not post it publicly without reviewing it.
+
+Restart every affected external DSH profile and repeat this check after upgrades
+or bundle changes. `DSH_TELEMETRY_DISABLED=1` is an additional OTel-only switch;
+**it does not disable session-log or package-inventory contributions**. Set it
+on the external DSH process if used, not only on LWUI. See the
+[upstream launcher reference](https://github.com/deepseek-ai/deepseek-harness/blob/ddefc45fbc7f8e46dd73185e68295696d1297887/apps/cli/reference/README.md#shared-deployment-behavior).
+
+### What these opt-outs do not cover
+
+Blocking only `harness-telemetry.deepseeksvc.com` does not stop the two
+contributions attached to inference requests. Conversely, disabling those
+contributions does not stop normal model requests or the
+[DeepSeek adapter's request identification](https://github.com/deepseek-ai/deepseek-harness/blob/ddefc45fbc7f8e46dd73185e68295696d1297887/packages/llm/llm-deepseek/README.md#wire-flow),
+including its stable anonymous user ID. Resetting that ID does not disable
+uploads. Other installed plugins and network tools have their own behavior.
+
+For a deployment that must send **nothing to external services**, use local
+model providers and enforce outbound network restrictions for both LWUI and the
+external DSH process, allowing only the local services they need. A local Unix
+socket between the applications does not make a remote model provider local.
 
 ## Connect models from a running DSH instance
 
