@@ -101,7 +101,18 @@ export function cordisRuntimeConfig(): CordisHostConfig {
       ? { sessionStorePath: overrides.sessionStorePath }
       : {}),
   });
-  const effective = overrides ? { ...resolved, ...overrides } : resolved;
+  const effective = overrides
+    ? {
+        ...resolved,
+        ...overrides,
+        // These overrides were resolved above. Keep their canonical values so
+        // blank or relative inputs cannot restore a cwd-dependent directory.
+        configPath: resolved.configPath,
+        settingsPath: resolved.settingsPath,
+        workspacePath: resolved.workspacePath,
+        sessionStorePath: resolved.sessionStorePath,
+      }
+    : resolved;
   // Attach the runtime capability the host hands to the adapter row. It is not
   // configuration and never reaches the composed document, so it is added here
   // rather than resolved from a file.

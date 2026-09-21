@@ -74,10 +74,27 @@ features:
   tools: true
   persistence: true
 
-# Optional absolute paths; defaults live under Libre WebUI's data directory.
+# Optional absolute paths; absent or blank values use the data-directory defaults.
 # workspacePath: /absolute/path/to/workspace
 # sessionStorePath: /absolute/path/to/sessions
 ```
+
+Packaged CLI installations use `~/.libre-webui` as the default app home:
+
+- Workspace files: `~/.libre-webui/cordis-workspace`.
+- Saved engine sessions: `~/.libre-webui/cordis-sessions`.
+- Generated engine configuration: `~/.libre-webui/cordis-runtime`.
+
+`DATA_DIR` relocates these defaults together. Source development keeps its
+default under `backend/data`; Docker uses the deployment's mounted `DATA_DIR`
+(the supplied Compose files use `/app/backend/data` inside the container).
+
+For individual directories, nonblank `LIBRE_CORDIS_WORKSPACE` and
+`LIBRE_CORDIS_SESSION_STORE` take precedence over `workspacePath` and
+`sessionStorePath` in this file. Blank values are ignored; when neither layer
+supplies a path, the corresponding `<DATA_DIR>/cordis-*` default is used.
+Changing these settings selects a directory but does not move existing workspace
+files or saved sessions automatically.
 
 ### Top-level keys
 

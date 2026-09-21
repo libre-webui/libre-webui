@@ -68,6 +68,7 @@ import type {
 } from '../contracts.js';
 import { DSH_ENGINE_SERVICE } from '../contracts.js';
 import { createLogger } from '../../utils/logger.js';
+import { resolveDataDirectory } from '../../utils/dataDirectory.js';
 
 const logger = createLogger('cordis-dsh-engine');
 
@@ -620,7 +621,11 @@ export class LibreDshEngineService extends Service implements DshEngine {
 
   constructor(ctx: Context, config: Config = {}) {
     super(ctx, DSH_ENGINE_SERVICE);
-    this.workspacePath = config.workspacePath ?? process.cwd();
+    this.workspacePath = path.resolve(
+      config.workspacePath?.trim()
+        ? config.workspacePath
+        : path.join(resolveDataDirectory(), 'cordis-workspace')
+    );
     installWorkspaceToolPolicy(ctx, this.workspacePath);
     this.allowStreaming = config.streaming !== false;
     this.allowTools = config.tools !== false;

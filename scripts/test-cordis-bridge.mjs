@@ -42,6 +42,7 @@ import {
   writeFile,
   symlink,
   readdir,
+  realpath,
 } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
@@ -52,6 +53,7 @@ import { EntryTree } from '@deepseek-ai/cordis-plugin-loader';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, '..');
 const backendDir = path.join(repoRoot, 'backend');
+const { resolveCliRuntimePaths } = await import('../bin/runtime-paths.js');
 
 /** Root for every temp directory this suite creates. */
 const tempRoot = await mkdtemp(path.join(os.tmpdir(), 'libre-cordis-'));
@@ -413,6 +415,136 @@ test('missing settings fall back to defaults with the host disabled', async () =
   assert.equal(config.features.streaming, true);
   assert.equal(config.model.provider, 'libre-webui');
   assert.equal(config.settingsPath, paths.settingsPath);
+});
+
+test('default and blank engine paths follow the packaged home or configured data directory', async () => {
+  const paths = await scenario('engine-data-home');
+  const names = [
+    'DATA_DIR',
+    'LIBRE_CORDIS_WORKSPACE',
+    'LIBRE_CORDIS_SESSION_STORE',
+  ];
+  const previous = names.map(name => process.env[name]);
+  const fakeHome = path.join(paths.dir, 'home');
+  const packaged = resolveCliRuntimePaths({}, { homeDirectory: fakeHome });
+  assert.equal(packaged.dataDirectory, path.join(fakeHome, '.libre-webui'));
+  try {
+    delete process.env.LIBRE_CORDIS_WORKSPACE;
+    delete process.env.LIBRE_CORDIS_SESSION_STORE;
+    for (const dataDirectory of [
+      packaged.dataDirectory,
+      path.join(paths.dir, 'custom-data-mount'),
+    ]) {
+      process.env.DATA_DIR = dataDirectory;
+      for (const document of [
+        '',
+        "workspacePath: ''\nsessionStorePath: '   '\n",
+        'workspacePath: null\nsessionStorePath: null\n',
+      ]) {
+        await writeFile(paths.settingsPath, document);
+        const config = resolveCordisHostConfig({
+          configPath: paths.configPath,
+          settingsPath: paths.settingsPath,
+          workspacePath: '',
+          sessionStorePath: ' ',
+        });
+        assert.equal(
+          config.workspacePath,
+          path.join(dataDirectory, 'cordis-workspace')
+        );
+        assert.equal(
+          config.sessionStorePath,
+          path.join(dataDirectory, 'cordis-sessions')
+        );
+        assert.equal(
+          config.runtimePath,
+          path.join(dataDirectory, 'cordis-runtime')
+        );
+      }
+    }
+  } finally {
+    names.forEach((name, index) => restoreEnv(name, previous[index]));
+  }
+});
+
+test('explicit engine paths keep their precedence and invalid paths fail', async () => {
+  const paths = await scenario('engine-path-overrides');
+  const names = ['LIBRE_CORDIS_WORKSPACE', 'LIBRE_CORDIS_SESSION_STORE'];
+  const previous = names.map(name => process.env[name]);
+  const resolve = (options = {}) =>
+    resolveCordisHostConfig({
+      configPath: paths.configPath,
+      settingsPath: paths.settingsPath,
+      ...options,
+    });
+  try {
+    delete process.env.LIBRE_CORDIS_WORKSPACE;
+    delete process.env.LIBRE_CORDIS_SESSION_STORE;
+    await writeFile(
+      paths.settingsPath,
+      JSON.stringify({
+        workspacePath: paths.workspacePath,
+        sessionStorePath: paths.sessionStorePath,
+      })
+    );
+    assert.equal(resolve().workspacePath, paths.workspacePath);
+    assert.equal(resolve().sessionStorePath, paths.sessionStorePath);
+    process.env.LIBRE_CORDIS_WORKSPACE = path.join(paths.dir, 'env-workspace');
+    process.env.LIBRE_CORDIS_SESSION_STORE = path.join(
+      paths.dir,
+      'env-sessions'
+    );
+    assert.equal(resolve().workspacePath, process.env.LIBRE_CORDIS_WORKSPACE);
+    assert.equal(
+      resolve().sessionStorePath,
+      process.env.LIBRE_CORDIS_SESSION_STORE
+    );
+    const explicit = resolve({
+      workspacePath: paths.workspacePath,
+      sessionStorePath: paths.sessionStorePath,
+    });
+    assert.equal(explicit.workspacePath, paths.workspacePath);
+    assert.equal(explicit.sessionStorePath, paths.sessionStorePath);
+    process.env.LIBRE_CORDIS_WORKSPACE = '  ';
+    process.env.LIBRE_CORDIS_SESSION_STORE = '';
+    assert.equal(resolve().workspacePath, paths.workspacePath);
+    assert.equal(resolve().sessionStorePath, paths.sessionStorePath);
+    await writeFile(paths.settingsPath, JSON.stringify({ workspacePath: 42 }));
+    assert.throws(() => resolve(), /directory setting must be strings/);
+  } finally {
+    names.forEach((name, index) => restoreEnv(name, previous[index]));
+  }
+});
+
+test('a directly configured bridge defaults its workspace to LWUI data instead of cwd', async () => {
+  for (const workspacePath of [undefined, '', '   ']) {
+    const paths = await scenario('direct-bridge-workspace');
+    await writeSettings(paths);
+    const rows = parseComposition(await engineComposition());
+    const bridge = rows.find(row => row.id === BRIDGE_ENTRY_ID);
+    // A custom row does not receive the host's named-bridge defaults.
+    bridge.id = 'custom-bridge';
+    bridge.config = {
+      workspacePath,
+      defaultProvider: 'test-fake-route',
+      defaultModel: 'test-model',
+    };
+    const host = await startHost(paths, stringifyComposition(rows));
+    try {
+      const engine = host.context.get('libreDshEngine');
+      const session = await engine.createSession({ cwd: '' });
+      assert.equal(
+        session.workspacePath,
+        await realpath(path.join(paths.dataDir, 'cordis-workspace'))
+      );
+      await assert.rejects(
+        engine.createSession({ cwd: process.cwd() }),
+        /inside the configured Cordis workspace/
+      );
+    } finally {
+      await host.stop();
+    }
+  }
 });
 
 test('settings document supplies provider, route, and feature flags', async () => {
@@ -1785,6 +1917,47 @@ test('stop during startup disposes the candidate instead of resurrecting the hos
     await runtime.stopCordisHost();
     runtime.configureCordisRuntime(undefined);
     setEngineDefaultModelResolver(undefined);
+  }
+});
+
+test('runtime overrides retain resolved workspace paths instead of restoring blank inputs', async () => {
+  const paths = await scenario('runtime-path-normalization');
+  const runtime = await distModule('cordis/runtime.js');
+  const names = ['LIBRE_CORDIS_WORKSPACE', 'LIBRE_CORDIS_SESSION_STORE'];
+  const previous = names.map(name => process.env[name]);
+  try {
+    names.forEach(name => delete process.env[name]);
+    runtime.configureCordisRuntime({
+      configPath: paths.configPath,
+      settingsPath: paths.settingsPath,
+      workspacePath: '',
+      sessionStorePath: ' ',
+      trace: true,
+    });
+    const defaults = runtime.cordisRuntimeConfig();
+    assert.equal(
+      defaults.workspacePath,
+      path.join(paths.dataDir, 'cordis-workspace')
+    );
+    assert.equal(
+      defaults.sessionStorePath,
+      path.join(paths.dataDir, 'cordis-sessions')
+    );
+    assert.equal(defaults.trace, true);
+    runtime.configureCordisRuntime({
+      configPath: path.relative(process.cwd(), paths.configPath),
+      settingsPath: path.relative(process.cwd(), paths.settingsPath),
+      workspacePath: './explicit-workspace',
+      sessionStorePath: './explicit-sessions',
+    });
+    const explicit = runtime.cordisRuntimeConfig();
+    assert.equal(explicit.configPath, paths.configPath);
+    assert.equal(explicit.settingsPath, paths.settingsPath);
+    assert.equal(explicit.workspacePath, path.resolve('explicit-workspace'));
+    assert.equal(explicit.sessionStorePath, path.resolve('explicit-sessions'));
+  } finally {
+    runtime.configureCordisRuntime(undefined);
+    names.forEach((name, index) => restoreEnv(name, previous[index]));
   }
 });
 

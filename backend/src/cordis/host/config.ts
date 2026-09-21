@@ -169,6 +169,22 @@ function readStringEnv(name: string, fallback: string): string {
   return raw.trim();
 }
 
+/** Empty path settings mean the app-owned default, never the launch directory. */
+function resolveEngineDirectory(
+  explicit: string | undefined,
+  envName: string,
+  documented: unknown,
+  fallback: string
+): string {
+  for (const value of [explicit, process.env[envName]?.trim(), documented]) {
+    if (value === undefined || value === null) continue;
+    if (typeof value !== 'string')
+      throw new Error(`${envName} and its directory setting must be strings.`);
+    if (value.trim() !== '') return path.resolve(value);
+  }
+  return path.resolve(fallback);
+}
+
 /**
  * Read a value where an empty string is a decision rather than an absence.
  *
@@ -287,19 +303,17 @@ export function resolveCordisHostConfig(
   const documentModel = document.model ?? {};
   const dataDirectory = resolveDataDirectory();
 
-  const workspacePath = path.resolve(
-    options.workspacePath ??
-      readStringEnv(
-        'LIBRE_CORDIS_WORKSPACE',
-        document.workspacePath ?? path.join(dataDirectory, 'cordis-workspace')
-      )
+  const workspacePath = resolveEngineDirectory(
+    options.workspacePath,
+    'LIBRE_CORDIS_WORKSPACE',
+    document.workspacePath,
+    path.join(dataDirectory, 'cordis-workspace')
   );
-  const sessionStorePath = path.resolve(
-    options.sessionStorePath ??
-      readStringEnv(
-        'LIBRE_CORDIS_SESSION_STORE',
-        document.sessionStorePath ?? path.join(dataDirectory, 'cordis-sessions')
-      )
+  const sessionStorePath = resolveEngineDirectory(
+    options.sessionStorePath,
+    'LIBRE_CORDIS_SESSION_STORE',
+    document.sessionStorePath,
+    path.join(dataDirectory, 'cordis-sessions')
   );
 
   const providers = asRecord(documentModel.providers) ?? {};
