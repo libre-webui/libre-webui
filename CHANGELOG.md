@@ -15,6 +15,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 📚 Documentation
 
+## [0.37.1] - 2026-09-21
+
+This patch strengthens DeepSeek Harness privacy controls, keeps default engine workspaces in LWUI's data directory, and fixes the React dependency tree used by clean installations.
+
+### 🔧 Improvements
+
+- **Dependency refresh.** Update React, React DOM, and both type packages to 19.3.0, alongside React Router 8.4.0, Framer Motion 13.4.0, TanStack Query 5.103.1, Lucide 1.47.0, and AWS SDK 3.1135.0.
+
+### 🐛 Bug Fixes
+
+- **Workspaces stay in app data.** Blank or absent DSH workspace settings now use LWUI's data directory instead of the launch directory. Runtime overrides keep their resolved paths, with explicit locations and Docker data mounts preserved.
+- **Reliable React installs.** Align root and frontend overrides and regenerate the lockfile to remove incompatible React types and missing React peers. Regression coverage rejects split installations and dependencies resolved outside the checkout.
+
+### 🔒 Security
+
+- **DSH uploaders blocked.** Explicitly disable the known DSH telemetry, session-log, and plugin-inventory uploaders. The embedded host rejects their activation before import, including nested configurations, direct adapter imports, and live plugin changes.
+
+### 📚 Documentation
+
+- **DSH privacy guide.** Add prominent warnings about upstream data-sharing defaults, the verified telemetry collector DNS, all three opt-outs, queued uploads, and remaining provider traffic. Explain the separate configuration required for an external DSH instance.
+- **Workspace configuration.** Document the packaged `~/.libre-webui/cordis-*` defaults, blank-path behavior, custom data directories, and corrected model-provider defaults.
+
 ## [0.37.0] - 2026-09-19
 
 DeepSeek Harness joins Chat and Work, with a live engine console and access to
