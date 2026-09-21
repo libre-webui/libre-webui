@@ -50,6 +50,11 @@ import type { CompositionEntry } from './composition.js';
 import type { CordisHostConfig } from './config.js';
 import { createLoaderEntry } from './loader-entry.js';
 import {
+  assertDshModuleAllowed,
+  enforceDshPrivacy,
+  isDshUploadPackage,
+} from './privacy.js';
+import {
   isServedByProviderLayer,
   LIBRE_WEBUI_ROUTE,
   requiredProviderPackage,
@@ -91,8 +96,9 @@ async function installProviderCapability(
   const handler = config.providerHandler;
   if (!handler) return;
   const row = entries.find(entry => entry.id === MODEL_ADAPTER_ROW_ID);
-  if (!row) return;
+  if (!row || row.disabled === true) return;
   const specifier = row.name;
+  assertDshModuleAllowed(specifier);
   const url = specifier.startsWith('.')
     ? pathToFileURL(specifier).href
     : specifier;
@@ -299,6 +305,7 @@ export async function startCordisHost(
     );
   }
   const context = new Context();
+  enforceDshPrivacy(context);
   if (config.providerHandler)
     context.provide('libreCordisProvider', config.providerHandler);
   // Parse the document before creating any runtime state, so a malformed
@@ -453,7 +460,12 @@ export async function startCordisHost(
       // path, or a package that is not installed. Naming that cause here is the
       // difference between "the engine is broken" and "fix this one row".
       const inactive = [...loader.entries()]
-        .filter(entry => entry.fiber === undefined)
+        .filter(
+          entry =>
+            entry.fiber === undefined &&
+            // Disabled uploaders never provide a required engine service.
+            !isDshUploadPackage(entry.options.name)
+        )
         .map(entry => entry.options.id)
         .filter((id): id is string => typeof id === 'string');
       throw new Error(

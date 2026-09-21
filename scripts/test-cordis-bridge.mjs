@@ -47,6 +47,7 @@ import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { EntryTree } from '@deepseek-ai/cordis-plugin-loader';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, '..');
@@ -117,6 +118,11 @@ const ENGINE_PLUGIN = pathToFileURL(
 ).href;
 
 const FAKE_REPLY_TEXT = 'Hello from the fake model.';
+const UPLOAD_PACKAGES = [
+  '@deepseek-ai/dsh-session-telemetry-otel',
+  '@deepseek-ai/dsh-session-log-deepseek',
+  '@deepseek-ai/dsh-plugin-package-inventory-deepseek',
+];
 const PROBE_SERVICE = 'testLifecycleProbe';
 const PROBE_EVENT = 'test/probe-ping';
 
@@ -560,6 +566,161 @@ function restoreEnv(name, value) {
 }
 
 // ── Host lifecycle ───────────────────────────────────────────────────────────
+
+test('shipped composition explicitly disables every DSH data uploader', async () => {
+  const rows = parseComposition(await shippedComposition());
+  for (const name of UPLOAD_PACKAGES) {
+    const matches = rows.filter(row => row.name === name);
+    assert.equal(matches.length, 1, name);
+    assert.equal(matches[0].disabled, true, name);
+  }
+});
+
+test('host blocks uploader imports, nested includes, and live reconfiguration', async t => {
+  const paths = await scenario('private-engine');
+  await writeSettings(paths);
+  const host = await startHost(paths, await engineComposition());
+  const loader = host.context.get('loader');
+  const importedUploaders = [];
+  const originalImport = EntryTree.prototype.import;
+  // Substitute harmless modules at the real import boundary. A regression
+  // records the attempted upload-module import without loading any uploader.
+  t.mock.method(EntryTree.prototype, 'import', function (name, ...args) {
+    if (UPLOAD_PACKAGES.some(pkg => name.includes(pkg))) {
+      importedUploaders.push(name);
+      return { apply() {} };
+    }
+    return originalImport.call(this, name, ...args);
+  });
+  try {
+    await loader.create({
+      id: 'disabled-invalid-module',
+      name: 'file://other-host/plugin.js',
+      disabled: true,
+    });
+    for (const name of UPLOAD_PACKAGES) {
+      const entry = [...loader.entries()].find(
+        row => row.options.name === name
+      );
+      assert.ok(entry, name);
+      assert.equal(entry.disabled, true);
+      assert.equal(entry.fiber, undefined);
+    }
+    for (const [index, name] of UPLOAD_PACKAGES.entries()) {
+      const id = `privacy-${index}`;
+      for (const specifier of [
+        name,
+        `${name}/lib/index.js`,
+        pathToFileURL(path.join(repoRoot, 'node_modules', name, 'lib/index.js'))
+          .href,
+      ]) {
+        await assert.rejects(
+          loader.create({ id, name: specifier }),
+          /Libre WebUI disables DSH data-upload plugin/
+        );
+      }
+      await loader.create({ id, name, disabled: true });
+      const entry = loader.resolve(id);
+      assert.equal(entry.fiber, undefined);
+      for (const disabled of [false, null, undefined]) {
+        await assert.rejects(
+          loader.update(id, { disabled }),
+          /Libre WebUI disables DSH data-upload plugin/
+        );
+        assert.equal(entry.options.disabled, true);
+      }
+      await assert.rejects(
+        loader.update(id, { group: true }),
+        /Libre WebUI disables DSH data-upload plugin/
+      );
+      // refresh() calls init() without going through update().
+      entry.options.disabled = false;
+      try {
+        await assert.rejects(
+          entry.refresh(),
+          /Libre WebUI disables DSH data-upload plugin/
+        );
+      } finally {
+        entry.options.disabled = true;
+      }
+    }
+
+    await loader.create({ id: 'safe-probe', name: FIXTURE_PROBE });
+    const probe = host.context.get(PROBE_SERVICE);
+    assert.ok(probe);
+    const probeUid = loader.resolve('safe-probe').fiber.uid;
+    for (const name of UPLOAD_PACKAGES) {
+      for (const options of [{ name }, { name, disabled: true, group: true }]) {
+        await assert.rejects(
+          loader.update('safe-probe', options),
+          /Libre WebUI disables DSH data-upload plugin/
+        );
+        assert.equal(loader.resolve('safe-probe').options.name, FIXTURE_PROBE);
+        assert.equal(loader.resolve('safe-probe').fiber.uid, probeUid);
+      }
+    }
+
+    const nestedPath = path.join(paths.dir, 'nested.yml');
+    await writeFile(
+      nestedPath,
+      stringifyComposition([
+        { id: 'nested-uploader', name: UPLOAD_PACKAGES[0] },
+      ])
+    );
+    await assert.rejects(
+      loader.create({
+        id: 'nested-privacy',
+        name: 'cordis:include',
+        config: { path: pathToFileURL(nestedPath).href },
+      }),
+      /Libre WebUI disables DSH data-upload plugin/
+    );
+    assert.deepEqual(importedUploaders, []);
+
+    const engine = host.context.get('libreDshEngine');
+    const session = await engine.createSession({ cwd: '' });
+    const chunks = await collectStream(
+      await engine.sendMessage(session.id, 'A private test message')
+    );
+    assert.ok(chunks.some(chunk => chunk.type === 'text'));
+    assert.equal(chunks.at(-1).type, 'done');
+    assert.deepEqual(importedUploaders, []);
+  } finally {
+    await host.stop();
+  }
+});
+
+test('provider capability initialization cannot import a data uploader', async () => {
+  const paths = await scenario('private-adapter-import');
+  await writeSettings(paths);
+  const rows = parseComposition(await engineComposition());
+  const adapter = rows.find(row => row.id === 'libre-webui-llm-adapter');
+  const config = resolveCordisHostConfig({
+    configPath: paths.configPath,
+    settingsPath: paths.settingsPath,
+    workspacePath: paths.workspacePath,
+    sessionStorePath: paths.sessionStorePath,
+    runtimePath: path.join(paths.dir, 'runtime'),
+  });
+  for (const name of UPLOAD_PACKAGES) {
+    adapter.name = name;
+    await writeFile(paths.configPath, stringifyComposition(rows));
+    await assert.rejects(
+      startCordisHost({ ...config, providerHandler: {} }),
+      /Libre WebUI disables DSH data-upload plugin/
+    );
+  }
+  // A disabled adapter must never be imported even to install its capability.
+  adapter.name = 'file://other-host/plugin.js';
+  adapter.disabled = true;
+  await writeFile(paths.configPath, stringifyComposition(rows));
+  const host = await startCordisHost({ ...config, providerHandler: {} });
+  try {
+    assert.deepEqual(host.status().missing, []);
+  } finally {
+    await host.stop();
+  }
+});
 
 test('host reports every engine service as ready once DONE', async () => {
   const paths = await scenario('lifecycle-ready');
