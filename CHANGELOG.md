@@ -15,6 +15,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 📚 Documentation
 
+## [0.37.2] - 2026-09-22
+
+GPT-6 Sol, GPT-6 Luna, and Claude Opus 5.5 are now selectable through existing
+sign-ins, without adding an API key.
+
+### 🔧 Improvements
+
+- **GPT-6 Sol and Luna**: Select either model through the Codex (ChatGPT)
+  provider or the Codex agent. Existing models remain available, subject to
+  the signed-in account's access.
+- **Claude Opus 5.5**: Choose Opus 5.5 explicitly in Claude Code while keeping
+  the configured default and the Sonnet, Opus, and Haiku aliases.
+
+### 📚 Documentation
+
+- **Sign-in model setup**: Updated the provider and agent guides with the new
+  model choices and the Claude Code 2.1.280 minimum for Opus 5.5.
+
 ## [0.37.1] - 2026-09-21
 
 This patch strengthens DeepSeek Harness privacy controls, keeps default engine workspaces in LWUI's data directory, and fixes the React dependency tree used by clean installations.
