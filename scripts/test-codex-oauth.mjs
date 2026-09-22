@@ -177,7 +177,9 @@ test('the bundled codex plugin omits sampling parameters and adds ChatGPT header
   );
   assert.equal(plugin.id, CODEX_OAUTH_PLUGIN_ID);
   assert.equal(plugin.api_mode, 'responses');
-  assert.ok(plugin.model_map.includes('gpt-6-astra'));
+  for (const model of ['gpt-6-astra', 'gpt-6-sol', 'gpt-6-luna']) {
+    assert.ok(plugin.model_map.includes(model), `${model} must be selectable`);
+  }
 
   const trust = await import(
     pathToFileURL(
@@ -200,7 +202,12 @@ test('the bundled codex plugin omits sampling parameters and adds ChatGPT header
       path.join(repoRoot, 'backend', 'dist', 'utils', 'pluginChatAdapter.js')
     ).href
   );
-  for (const model of ['gpt-6-astra', 'gpt-5.6-luna']) {
+  for (const model of [
+    'gpt-6-astra',
+    'gpt-6-sol',
+    'gpt-6-luna',
+    'gpt-5.6-luna',
+  ]) {
     const { payload } = adapter.buildPluginChatPayload(
       plugin,
       model,

@@ -80,11 +80,11 @@ above.
 
 The bundled **Codex (ChatGPT)** provider needs no API key. When the server has
 a Codex CLI sign-in (`codex login` as the server's operating-system user), the
-provider appears to administrators, offering GPT-6 Astra, GPT-5.6 Sol, Terra,
-Luna, GPT-5.5, and GPT-5.3 Codex Spark through the ChatGPT session, subject to
-the signed-in account's model access. Access tokens are read from the CLI's own
-`auth.json`, refreshed through the same OAuth client the CLI uses, and written
-back so the CLI keeps working; token values never appear in logs.
+provider appears to administrators, offering GPT-6 Astra, GPT-6 Sol, GPT-6 Luna,
+GPT-5.6 Sol, Terra, Luna, GPT-5.5, and GPT-5.3 Codex Spark through the ChatGPT
+session, subject to the signed-in account's model access. Access tokens are read
+from the CLI's own `auth.json`, refreshed through the same OAuth client the CLI
+uses, and written back so the CLI keeps working; token values never appear in logs.
 
 Because the requests are made by the backend — never from inside a task
 container — these models also power Work with the normal sandboxed tool loop.

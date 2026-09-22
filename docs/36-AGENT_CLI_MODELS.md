@@ -50,9 +50,14 @@ name and provider, with size, family, and format only when supplied by its catal
 
 Each CLI can expose several entries in the Agents group:
 
-- **Claude Code** offers its signed-in default plus Sonnet, Opus, and Haiku.
+- **Claude Code** offers its signed-in default plus Sonnet, Opus, Haiku, and an
+  explicit **Opus 5.5** choice (`claude-opus-5-5`). Opus 5.5 requires
+  [Claude Code 2.1.280 or later](https://code.claude.com/docs/en/model-config)
+  and access through the signed-in account; run `claude update` to update the CLI.
+  The existing **Opus** alias continues to follow the CLI's current model mapping.
 - **Codex** offers its configured default plus the documented ChatGPT sign-in
-  family: GPT-6 Astra, GPT-5.6 Sol, Terra, Luna, GPT-5.5, and GPT-5.3 Codex Spark.
+  family: GPT-6 Astra, GPT-6 Sol, GPT-6 Luna, GPT-5.6 Sol, Terra, Luna, GPT-5.5,
+  and GPT-5.3 Codex Spark.
   Availability depends on the CLI's sign-in and account access.
 - **Pi** runs with the model configured in the CLI itself.
 - **OpenCode** lists the models of every provider it is authenticated with

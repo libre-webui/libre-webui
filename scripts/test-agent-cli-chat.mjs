@@ -99,7 +99,7 @@ test('every agent CLI passes an explicit model through to its argv', () => {
   ]);
 });
 
-test('Codex lists Astra and GPT-5.5 alongside the bundled ChatGPT model family', async () => {
+test('Codex lists the GPT-6 family alongside the bundled ChatGPT models', async () => {
   const binDir = fs.mkdtempSync(path.join(os.tmpdir(), 'codex-model-list-'));
   const binary = path.join(binDir, 'codex');
   // Listing fixed Codex choices only checks the binary; it must not run it.
@@ -119,19 +119,62 @@ test('Codex lists Astra and GPT-5.5 alongside the bundled ChatGPT model family',
       models.map(model => model.id),
       ['codex', ...plugin.model_map.map(model => `codex:${model}`)]
     );
-    assert.equal(
-      models.find(model => model.id === 'codex:gpt-6-astra')?.name,
-      'Codex · GPT-6 Astra'
-    );
+    for (const [model, label] of [
+      ['gpt-6-astra', 'GPT-6 Astra'],
+      ['gpt-6-sol', 'GPT-6 Sol'],
+      ['gpt-6-luna', 'GPT-6 Luna'],
+    ]) {
+      const listed = models.find(
+        candidate => candidate.id === `codex:${model}`
+      );
+      assert.equal(listed?.name, `Codex · ${label}`);
+      assert.equal(listed?.agentId, 'codex');
+      assert.deepEqual(definition('codex').buildArgs(model).slice(-3), [
+        '-m',
+        model,
+        '-',
+      ]);
+    }
     assert.equal(
       models.find(model => model.id === 'codex:gpt-5.5')?.name,
       'Codex · GPT-5.5'
     );
-    assert.deepEqual(definition('codex').buildArgs('gpt-6-astra').slice(-3), [
-      '-m',
-      'gpt-6-astra',
-      '-',
-    ]);
+  } finally {
+    if (previousPath === undefined) delete process.env.PATH;
+    else process.env.PATH = previousPath;
+    fs.rmSync(binDir, { recursive: true, force: true });
+  }
+});
+
+test('Claude Code lists explicit Opus 5.5 while preserving its default and aliases', async () => {
+  const binDir = fs.mkdtempSync(path.join(os.tmpdir(), 'claude-model-list-'));
+  const binary = path.join(binDir, 'claude');
+  fs.writeFileSync(binary, '');
+  fs.chmodSync(binary, 0o755);
+  const previousPath = process.env.PATH;
+  process.env.PATH = binDir;
+  try {
+    const models = await agentCliService.listAgentModels();
+    assert.deepEqual(
+      models.map(model => model.id),
+      [
+        'claude-code',
+        'claude-code:sonnet',
+        'claude-code:opus',
+        'claude-code:claude-opus-5-5',
+        'claude-code:haiku',
+      ]
+    );
+    const opus = models.find(
+      model => model.id === 'claude-code:claude-opus-5-5'
+    );
+    assert.equal(opus?.name, 'Claude Code · Opus 5.5');
+    assert.equal(opus?.agentId, 'claude-code');
+    assert.deepEqual(
+      definition('claude-code').buildArgs('claude-opus-5-5').slice(-2),
+      ['--model', 'claude-opus-5-5']
+    );
+    assert.ok(!definition('claude-code').buildArgs().includes('--model'));
   } finally {
     if (previousPath === undefined) delete process.env.PATH;
     else process.env.PATH = previousPath;
@@ -253,6 +296,7 @@ test('listAgentModels expands CLIs into per-model entries with a shared agentId'
       'claude-code',
       'claude-code:sonnet',
       'claude-code:opus',
+      'claude-code:claude-opus-5-5',
       'claude-code:haiku',
       'opencode:opencode/big-pickle',
       'opencode:openai/gpt-5.4',
@@ -624,10 +668,12 @@ async function cliProcessFixture(
     path.join(os.tmpdir(), 'agent-usage-process-')
   );
   const pidFile = path.join(directory, 'pid');
+  const argsFile = path.join(directory, 'args.json');
   const program = [
     `#!${process.execPath}`,
     "const fs = require('node:fs');",
     `fs.writeFileSync(${JSON.stringify(pidFile)}, String(process.pid));`,
+    `fs.writeFileSync(${JSON.stringify(argsFile)}, JSON.stringify(process.argv.slice(2)));`,
     ...(wait
       ? ["process.on('SIGTERM', () => {});", 'setInterval(() => {}, 1000);']
       : []),
@@ -653,7 +699,7 @@ async function cliProcessFixture(
     }
     fs.rmSync(directory, { recursive: true, force: true });
   });
-  return { directory, pidFile };
+  return { directory, pidFile, argsFile };
 }
 
 const cliFixtureEvents = {
@@ -752,8 +798,16 @@ async function cliUsageActor() {
   return cliUsageAdmin.id;
 }
 
-for (const agent of ['claude-code', 'codex', 'opencode', 'pi']) {
-  test(`${agent} records one metered successful process invocation`, async t => {
+for (const [agent, model] of [
+  ['claude-code', 'fixture/model'],
+  ['codex', 'fixture/model'],
+  ['opencode', 'fixture/model'],
+  ['pi', 'fixture/model'],
+  ['claude-code', 'claude-opus-5-5'],
+  ['codex', 'gpt-6-sol'],
+  ['codex', 'gpt-6-luna'],
+]) {
+  test(`${agent}:${model} records one metered successful process invocation`, async t => {
     const actor = await cliUsageActor();
     const definition = AGENT_CLI_DEFINITIONS.find(item => item.id === agent);
     const fixture = await cliProcessFixture(
@@ -773,11 +827,16 @@ for (const agent of ['claude-code', 'codex', 'opencode', 'pi']) {
       agent,
       [{ id: 'user', role: 'user', content: 'Fixture only', timestamp: 1 }],
       actor,
-      { model: `${agent}:fixture/model`, cwd: fixture.directory }
+      { model: `${agent}:${model}`, cwd: fixture.directory }
     ))
       chunks.push(chunk);
+    const args = JSON.parse(fs.readFileSync(fixture.argsFile, 'utf8'));
+    const modelFlag = ['codex', 'opencode'].includes(agent) ? '-m' : '--model';
+    assert.ok(args.includes(modelFlag));
+    assert.equal(args[args.indexOf(modelFlag) + 1], model);
     assert.equal(records.length, 1);
     assert.equal(records[0].pluginId, `agent-cli:${agent}`);
+    assert.equal(records[0].model, `${agent}:${model}`);
     assert.equal(records[0].userId, actor);
     assert.equal(records[0].status, 'success');
     assert.deepEqual(records[0].tokens, {
