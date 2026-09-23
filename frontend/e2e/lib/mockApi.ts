@@ -320,6 +320,7 @@ type MockChatStream = {
   finalChunk?: string;
   chunkDelayMs?: number;
   completionDelayMs?: number;
+  holdOpen?: boolean;
   duplicateCompletion?: boolean;
 };
 
@@ -895,6 +896,7 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
         finalChunk: options.chatStream.finalChunk,
         chunkDelayMs: options.chatStream.chunkDelayMs ?? 40,
         completionDelayMs: options.chatStream.completionDelayMs ?? 40,
+        holdOpen: options.chatStream.holdOpen ?? false,
         duplicateCompletion: options.chatStream.duplicateCompletion ?? false,
       }
     : null;
@@ -1196,11 +1198,14 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
     const durableGenerations = new Map<
       string,
       {
+        sessionId: string;
         assistantMessageId: string;
         jobId: string;
         cancelled: boolean;
+        completed: boolean;
       }
     >();
+    const cancelledIdentities = new Set<string>();
     const requestUrl = (input: RequestInfo | URL): URL =>
       new URL(
         typeof input === 'string'
@@ -1222,9 +1227,9 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
       init?: RequestInit
     ): AbortSignal | undefined =>
       init?.signal ?? (input instanceof Request ? input.signal : undefined);
-    const jsonResponse = (data: unknown): Response =>
+    const jsonResponse = (data: unknown, status = 200): Response =>
       new Response(JSON.stringify({ success: true, data }), {
-        status: 200,
+        status,
         headers: { 'content-type': 'application/json' },
       });
 
@@ -1248,10 +1253,14 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
         const sent = window as unknown as Record<string, unknown>;
         ((sent.__libreChatStreams ||= []) as unknown[]).push(body);
         const jobId = `e2e-chat-job-${nextDurableJobId++}`;
-        durableGenerations.set(body.assistantMessageId, {
+        const sessionId = decodeURIComponent(generationMatch[1]);
+        const identity = JSON.stringify([sessionId, body.assistantMessageId]);
+        durableGenerations.set(identity, {
+          sessionId,
           assistantMessageId: body.assistantMessageId,
           jobId,
-          cancelled: false,
+          cancelled: cancelledIdentities.has(identity),
+          completed: false,
         });
         return jsonResponse({
           jobId,
@@ -1264,7 +1273,12 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
       );
       if (eventsMatch && method === 'GET') {
         const assistantMessageId = url.searchParams.get('generation') || '';
-        const generation = durableGenerations.get(assistantMessageId);
+        const generation = durableGenerations.get(
+          JSON.stringify([
+            decodeURIComponent(eventsMatch[1]),
+            assistantMessageId,
+          ])
+        );
         if (!generation) {
           return new Response(
             JSON.stringify({ success: false, error: 'Generation not found' }),
@@ -1323,11 +1337,13 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
               );
               timers.push(timer);
             });
+            if (streamConfig?.holdOpen) return;
             const finalContent = total;
             const completionTimer = window.setTimeout(
               () => {
                 if (settled || generation.cancelled) return;
                 settled = true;
+                generation.completed = true;
                 signal?.removeEventListener('abort', abort);
                 const completion = {
                   type: 'done',
@@ -1362,13 +1378,39 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
         });
       }
 
+      const identityCancelMatch = url.pathname.match(
+        /^\/api\/chat\/sessions\/([^/]+)\/generations\/([^/]+)\/cancel$/
+      );
+      if (identityCancelMatch && method === 'POST') {
+        const sessionId = decodeURIComponent(identityCancelMatch[1]);
+        const assistantMessageId = decodeURIComponent(identityCancelMatch[2]);
+        const identity = JSON.stringify([sessionId, assistantMessageId]);
+        const generation = durableGenerations.get(identity);
+        if (!generation?.completed) {
+          cancelledIdentities.add(identity);
+          if (generation) generation.cancelled = true;
+        }
+        const decision = generation?.completed
+          ? { completed: true }
+          : generation
+            ? { jobId: generation.jobId, state: 'cancelled' }
+            : { pending: true };
+        const sent = window as unknown as Record<string, unknown>;
+        ((sent.__libreChatIdentityCancels ||= []) as unknown[]).push({
+          sessionId,
+          assistantMessageId,
+          decision,
+        });
+        return jsonResponse(decision, 202);
+      }
+
       const cancelMatch = url.pathname.match(/^\/api\/jobs\/([^/]+)\/cancel$/);
       if (cancelMatch && method === 'POST') {
         const jobId = decodeURIComponent(cancelMatch[1]);
         const generation = [...durableGenerations.values()].find(
           candidate => candidate.jobId === jobId
         );
-        if (generation) generation.cancelled = true;
+        if (generation && !generation.completed) generation.cancelled = true;
         const sent = window as unknown as Record<string, unknown>;
         ((sent.__libreChatCancels ||= []) as unknown[]).push({ jobId });
         return jsonResponse({ cancelled: true });
@@ -1481,6 +1523,7 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
           );
         });
 
+        if (streamConfig.holdOpen) return;
         window.setTimeout(
           () => {
             const completion = {

@@ -35,7 +35,7 @@ test('Stop cancels the exact stream and allows an immediate retry', async ({
     chatStream: {
       chunks: ['The first stream is still running.'],
       chunkDelayMs: 100,
-      completionDelayMs: 5_000,
+      holdOpen: true,
     },
   });
   await page.addInitScript(() => {
@@ -52,6 +52,12 @@ test('Stop cancels the exact stream and allows an immediate retry', async ({
   await expect(
     page.getByText('The first stream is still running.')
   ).toBeVisible();
+  const assistantMessageId = await page.evaluate(() => {
+    const sent = window as unknown as {
+      __libreChatStreams: Array<{ assistantMessageId: string }>;
+    };
+    return sent.__libreChatStreams[0].assistantMessageId;
+  });
 
   await page.getByTitle('Stop generation').click();
   await expect
@@ -64,6 +70,24 @@ test('Stop cancels the exact stream and allows an immediate retry', async ({
       })
     )
     .toBe(1);
+  await expect
+    .poll(() =>
+      page.evaluate(() => {
+        const sent = window as unknown as {
+          __libreChatIdentityCancels?: Array<{
+            sessionId: string;
+            assistantMessageId: string;
+            decision: { jobId: string; state: string };
+          }>;
+        };
+        return sent.__libreChatIdentityCancels?.[0];
+      })
+    )
+    .toEqual({
+      sessionId: 'cancel-session',
+      assistantMessageId,
+      decision: { jobId: 'e2e-chat-job-1', state: 'cancelled' },
+    });
   await expect(
     page.getByText('The first stream is still running.')
   ).toHaveCount(0);

@@ -2962,6 +2962,16 @@ test('preserves edits typed while the same workspace file is saving', async ({
   await expect(saveButton).toBeEnabled();
   await expect(editor).toHaveValue('export const value = 3;');
 
+  const savedNotice = page
+    .getByRole('status')
+    .filter({ hasText: 'File saved.' });
+  await expect(savedNotice).toBeVisible();
+  await savedNotice
+    .locator('..')
+    .getByRole('button', { name: 'Close', exact: true })
+    .click();
+  await expect(savedNotice).toHaveCount(0);
+
   await saveButton.click();
   await expect.poll(() => mock.workFileUpdateRequests.length).toBe(2);
   expect(mock.workFileUpdateRequests[1]).toMatchObject({
