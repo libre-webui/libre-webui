@@ -10,7 +10,6 @@ on:
   push:
     branches: [main, dev]
   pull_request:
-    branches: [main, dev]
   schedule:
     - cron: '26 4 * * 1'
 
@@ -28,7 +27,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        language: [javascript-typescript, actions]
+        language: [javascript-typescript, python, actions]
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7

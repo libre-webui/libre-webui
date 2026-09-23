@@ -53,6 +53,11 @@ npm run test:unit --workspace=frontend
 ```
 
 CI runs format check, lint, unit tests, e2e tests, and the backend test suites.
+A clean package-install matrix covers Linux, macOS, and Windows on Node 22.22
+and 24. Chromium runs the full UI suite; WebKit and Firefox cover the critical
+interactive flows. The Work Computer job provisions its GUI fixture and fails
+if that required regression cannot run. See [the development checks](docs/17-DEV_BRANCH.md#pull-request-checks)
+for the local commands and deployment boundaries.
 A few things that commonly trip first-time PRs:
 
 - **Translations:** the UI ships in 25 languages with a strict key-parity test.
