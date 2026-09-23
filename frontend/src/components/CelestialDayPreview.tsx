@@ -156,6 +156,7 @@ export const CelestialDayPreview = () => {
           <button
             key={key}
             type='button'
+            tabIndex={0}
             onClick={() => previewCelestialMinutes(wrapMinutes(eventMinutes))}
             data-testid={`celestial-preview-${key}`}
             className='flex min-w-0 items-center gap-2 rounded-xl border border-line px-3 py-2 text-start text-ink hover:bg-interactive-hover outline-none focus-visible:ring-2 focus-visible:ring-primary-500/60'
@@ -174,6 +175,7 @@ export const CelestialDayPreview = () => {
       </div>
       <button
         type='button'
+        tabIndex={0}
         onClick={() => previewCelestialMinutes(null)}
         disabled={!isPreviewing}
         data-testid='celestial-follow-clock'

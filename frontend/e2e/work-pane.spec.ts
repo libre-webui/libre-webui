@@ -3542,11 +3542,34 @@ test('manages local workspace Git without exposing remote credentials', async ({
 
   await page.getByRole('checkbox', { name: 'Select src/app.ts' }).check();
   await page.getByTestId('work-git-stage-button').click();
+  const stagedToast = page
+    .getByRole('status')
+    .filter({ hasText: 'Changes staged.' });
+  await expect(stagedToast).toBeVisible();
+  const dismissStaged = stagedToast
+    .locator('..')
+    .getByRole('button', { name: 'Close', exact: true });
+  await dismissStaged.focus();
+  await page.keyboard.press('Shift+Tab');
+  await expect(dismissStaged).not.toBeFocused();
+  await page.keyboard.press('Tab');
+  await expect(dismissStaged).toBeFocused();
+  await page.keyboard.press('Enter');
+  await expect(stagedToast).toHaveCount(0);
   await expect(page.getByTestId('work-git-commit-button')).toBeDisabled();
   await page.getByTestId('work-git-commit-input').fill('Save app changes');
   await expect(page.getByTestId('work-git-commit-button')).toBeEnabled();
   await page.getByTestId('work-git-commit-button').click();
   await expect(page.getByText('Save app changes')).toBeVisible();
+  const committedToast = page
+    .getByRole('status')
+    .filter({ hasText: 'Commit created.' });
+  await expect(committedToast).toBeVisible();
+  await committedToast
+    .locator('..')
+    .getByRole('button', { name: 'Close', exact: true })
+    .click();
+  await expect(committedToast).toHaveCount(0);
 
   await page.getByTestId('work-git-branch-input').fill('feature/local-ui');
   await page.getByTestId('work-git-create-branch-button').click();

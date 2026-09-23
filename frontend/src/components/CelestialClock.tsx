@@ -15,7 +15,14 @@
  * limitations under the License.
  */
 
-import { useCallback, useEffect, useId, useRef, useState } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useId,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from 'react';
 import { createPortal } from 'react-dom';
 import { useLocation } from 'react-router';
 import { useTranslation } from 'react-i18next';
@@ -31,7 +38,63 @@ type Placement = {
   left: number;
   width: number;
   maxHeight: number;
+  paddingBlock: number;
 };
+
+function placeClockPanel(rect: DOMRect, naturalHeight: number): Placement {
+  const viewport = window.visualViewport;
+  const viewportLeft = viewport?.offsetLeft ?? 0;
+  const viewportTop = viewport?.offsetTop ?? 0;
+  const viewportWidth = viewport?.width ?? window.innerWidth;
+  const viewportHeight = viewport?.height ?? window.innerHeight;
+  const margin = Math.min(8, Math.max(0, (viewportHeight - 44) / 2));
+  const gap = 8;
+  const width = Math.min(336, Math.max(0, viewportWidth - 24));
+  const alignLeft =
+    document.documentElement.dir === 'rtl' ? rect.left : rect.right - width;
+  const left = Math.max(
+    viewportLeft + 8,
+    Math.min(alignLeft, viewportLeft + viewportWidth - width - 8)
+  );
+  const availableHeight = Math.max(0, viewportHeight - 2 * margin);
+  const wantedHeight = Math.min(naturalHeight, availableHeight);
+  const spaceBelow = Math.max(
+    0,
+    Math.min(
+      availableHeight,
+      viewportTop + viewportHeight - margin - rect.bottom - gap
+    )
+  );
+  const spaceAbove = Math.max(
+    0,
+    Math.min(availableHeight, rect.top - gap - viewportTop - margin)
+  );
+  let top: number;
+  let maxHeight: number;
+  if (Math.max(spaceAbove, spaceBelow) < Math.min(wantedHeight, 160)) {
+    // When neither side has useful space, overlap the trigger rather than
+    // leaving only the panel's padding visible in a very short viewport.
+    top = viewportTop + margin;
+    maxHeight = availableHeight;
+  } else if (
+    spaceBelow >= wantedHeight ||
+    (spaceAbove < wantedHeight && spaceBelow >= spaceAbove)
+  ) {
+    top = rect.bottom + gap;
+    maxHeight = spaceBelow;
+  } else {
+    maxHeight = spaceAbove;
+    top = rect.top - gap - Math.min(naturalHeight, maxHeight);
+  }
+  return {
+    top,
+    left,
+    width,
+    maxHeight,
+    // Retain room for a focused control when the whole viewport is tiny.
+    paddingBlock: Math.max(0, Math.min(16, (maxHeight - 42) / 2)),
+  };
+}
 
 export function CelestialClock() {
   const { t } = useTranslation();
@@ -67,6 +130,40 @@ export function CelestialClock() {
     },
     []
   );
+
+  useLayoutEffect(() => {
+    if (!isOpen) return;
+    const panel = panelRef.current;
+    const trigger = triggerRef.current;
+    if (!panel || !trigger) return;
+    const position = () => {
+      if (!openedRef.current) return;
+      const style = getComputedStyle(panel);
+      const naturalHeight =
+        panel.scrollHeight +
+        parseFloat(style.borderTopWidth) +
+        parseFloat(style.borderBottomWidth);
+      const next = placeClockPanel(
+        trigger.getBoundingClientRect(),
+        naturalHeight
+      );
+      setPlacement(current =>
+        !current ||
+        (current.top === next.top &&
+          current.left === next.left &&
+          current.width === next.width &&
+          current.maxHeight === next.maxHeight &&
+          current.paddingBlock === next.paddingBlock)
+          ? current
+          : next
+      );
+    };
+    position();
+    const observer = new ResizeObserver(position);
+    observer.observe(panel);
+    if (panel.lastElementChild) observer.observe(panel.lastElementChild);
+    return () => observer.disconnect();
+  }, [isOpen]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -107,12 +204,16 @@ export function CelestialClock() {
     document.addEventListener('focusin', dismissOutside);
     document.addEventListener('keydown', onKeyDown, true);
     window.addEventListener('resize', onResize);
+    window.visualViewport?.addEventListener('resize', onResize);
+    window.visualViewport?.addEventListener('scroll', onResize);
     return () => {
       cancelAnimationFrame(focusFrame);
       document.removeEventListener('pointerdown', dismissOutside, true);
       document.removeEventListener('focusin', dismissOutside);
       document.removeEventListener('keydown', onKeyDown, true);
       window.removeEventListener('resize', onResize);
+      window.visualViewport?.removeEventListener('resize', onResize);
+      window.visualViewport?.removeEventListener('scroll', onResize);
     };
   }, [isOpen, close]);
 
@@ -133,21 +234,8 @@ export function CelestialClock() {
     }
     const rect = triggerRef.current?.getBoundingClientRect();
     if (!rect) return;
-    const width = Math.min(336, Math.max(0, window.innerWidth - 24));
-    const alignLeft =
-      document.documentElement.dir === 'rtl' ? rect.left : rect.right - width;
-    const left = Math.max(
-      8,
-      Math.min(alignLeft, window.innerWidth - width - 8)
-    );
-    const top = Math.min(rect.bottom + 8, window.innerHeight - 8);
     openedRef.current = true;
-    setPlacement({
-      top,
-      left,
-      width,
-      maxHeight: Math.max(0, window.innerHeight - top - 8),
-    });
+    setPlacement(placeClockPanel(rect, Infinity));
   };
 
   return (

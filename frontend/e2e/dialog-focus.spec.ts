@@ -72,6 +72,29 @@ test('a nested form preserves its requested autofocus', async ({ page }) => {
   await expect(page.getByTestId('prompt-slug')).toBeFocused();
 });
 
+test('dialogs respect controls that preserve focus on pointer activation', async ({
+  page,
+}) => {
+  const settings = await openSettingsTab(page, 'prompts');
+  const search = settings.getByRole('searchbox', { name: 'Search' });
+  const opener = settings.getByTestId('prompt-new');
+  for (const eventType of ['pointerdown', 'mousedown']) {
+    await search.focus();
+    // Editor toolbars can cancel pointer focus to retain their selection.
+    await opener.evaluate((element, type) => {
+      element.addEventListener(type, event => event.preventDefault(), {
+        once: true,
+      });
+    }, eventType);
+    await opener.click();
+    const dialog = page.getByTestId('prompt-modal');
+    await expect(dialog).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(dialog).toHaveCount(0);
+    await expect(search).toBeFocused();
+  }
+});
+
 test('nested dialogs wrap keyboard focus and skip disabled controls', async ({
   page,
 }) => {

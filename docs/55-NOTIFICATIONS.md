@@ -12,6 +12,14 @@ Libre WebUI keeps a durable, per-user notification inbox so team activity
 — mentions, direct messages, shares, automation failures, and calendar
 reminders — reaches people even when the relevant page is closed.
 
+## Status popups
+
+Short status messages, such as a saved change or a completed Git operation,
+appear near the top of the page. Use the **Close** button to clear a popup
+with a pointer or keyboard. Hovering keeps the message visible so you can read
+it; closing it dismisses the message while the underlying operation keeps its
+current state.
+
 ## The inbox
 
 Notifications are database rows first: encrypted title and body at rest,

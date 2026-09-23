@@ -43,7 +43,9 @@ const ElectronTitleBar: React.FC = () => {
     />
   );
 };
-import { Toaster } from 'react-hot-toast';
+import toast, { Toaster, ToastBar, resolveValue } from 'react-hot-toast';
+import { X } from 'lucide-react';
+import { Button } from '@/components/ui/Button';
 import { Sidebar } from '@/components/Sidebar';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { ErrorBoundary, RouteErrorScreen } from '@/components/ErrorBoundary';
@@ -71,7 +73,6 @@ import { cn } from '@/utils';
 import { createLogger } from '@/utils/logger';
 import websocketService from '@/utils/websocket';
 import { armTTSAudioPlaybackUnlock } from '@/utils/ttsBatching';
-import toast from 'react-hot-toast';
 
 const logger = createLogger('app');
 
@@ -742,7 +743,6 @@ const AppContent: React.FC = () => {
             borderRadius: '0.75rem',
             boxShadow:
               '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
-            cursor: 'pointer',
           },
           success: {
             iconTheme: {
@@ -761,7 +761,34 @@ const AppContent: React.FC = () => {
           top: 80, // Position below header (header height + some margin)
           insetInlineEnd: 20,
         }}
-      />
+      >
+        {notification =>
+          notification.type === 'custom' ? (
+            <>{resolveValue(notification.message, notification)}</>
+          ) : (
+            <ToastBar toast={notification}>
+              {({ icon, message }) => (
+                <>
+                  {icon}
+                  {message}
+                  <Button
+                    type='button'
+                    variant='ghost'
+                    tabIndex={0}
+                    className='h-11 w-11 shrink-0 p-0'
+                    aria-label={t('common.close')}
+                    title={t('common.close')}
+                    data-testid='toast-dismiss-button'
+                    onClick={() => toast.dismiss(notification.id)}
+                  >
+                    <X className='h-4 w-4' aria-hidden='true' />
+                  </Button>
+                </>
+              )}
+            </ToastBar>
+          )
+        }
+      </Toaster>
 
       {hasWorkspaceAccess && (
         <CommandPalette

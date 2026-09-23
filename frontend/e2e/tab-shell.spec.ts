@@ -220,8 +220,9 @@ test('home is the default tab and opening a chat adds a closable tab', async ({
   await expect(tabs.nth(1)).toHaveAttribute('aria-selected', 'true');
 
   // Home has no close affordance; the chat tab does.
-  await expect(tabs.first().getByTestId('app-tab-close')).toHaveCount(0);
-  await tabs.nth(1).getByTestId('app-tab-close').click();
+  const items = page.getByTestId('app-tab-item');
+  await expect(items.first().getByTestId('app-tab-close')).toHaveCount(0);
+  await items.nth(1).getByTestId('app-tab-close').click();
 
   await expect(tabs).toHaveCount(1);
   await expect(page).toHaveURL(/\/$/);
@@ -364,6 +365,100 @@ test('the tab context menu closes other, right-side, or all non-Home tabs', asyn
   await expect(page.getByTestId('app-tab-context-close')).toBeDisabled();
   await expect(page.getByTestId('app-tab-context-close-all')).toBeDisabled();
 });
+
+for (const { language, theme } of [
+  { language: 'en', theme: 'light' },
+  { language: 'ar', theme: 'dark' },
+] as const) {
+  test(`native tab close controls preserve keyboard focus and pointer actions in ${language}`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 390, height: 700 });
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await mockLibreWebUiApi(page, {
+      preferences: {
+        theme: {
+          mode: theme,
+          accent: 'blue',
+          adaptToAccent: false,
+          customAccent: '#2563eb',
+        },
+      },
+    });
+    await page.addInitScript(value => {
+      localStorage.setItem('i18nextLng', value);
+      localStorage.setItem(
+        'libre-webui-tabs',
+        JSON.stringify({
+          state: {
+            tabs: [
+              { id: 'home', kind: 'home', path: '/' },
+              ...[
+                'calendar',
+                'automations',
+                'personas',
+                'gallery',
+                'artifacts',
+              ].map(name => ({
+                id: `page:/${name}`,
+                kind: 'page',
+                path: `/${name}`,
+              })),
+            ],
+            activeTabId: 'home',
+          },
+          version: 0,
+        })
+      );
+    }, language);
+    await page.goto('/');
+    const tab = (id: string) => page.locator(`[data-tab-id="${id}"]`);
+    const item = (id: string) => page.locator(`[data-tab-item="${id}"]`);
+    const close = (id: string) => item(id).getByTestId('app-tab-close');
+    await expect(page.getByTestId('app-tab')).toHaveCount(6);
+    await page.getByTestId('sidebar-toggle-size').click();
+    expect(
+      await page
+        .locator('[role="tablist"]')
+        .evaluate(element => element.scrollWidth > element.clientWidth)
+    ).toBe(true);
+    await expect(tab('page:/calendar').locator('button')).toHaveCount(0);
+    await expect(close('page:/calendar')).toHaveJSProperty('tagName', 'BUTTON');
+    await tab('page:/calendar').focus();
+    await page.keyboard.press('Tab');
+    await expect(close('page:/calendar')).toBeFocused();
+    await expect(close('page:/calendar')).toHaveCSS('opacity', '1');
+    await expect(item('page:/calendar')).toBeInViewport({ ratio: 1 });
+    await page.keyboard.press('Enter');
+    await expect(tab('page:/calendar')).toHaveCount(0);
+    await expect(tab('page:/automations')).toBeFocused();
+    await expect(item('page:/automations')).toBeInViewport({ ratio: 1 });
+    await expect(page).toHaveURL(/\/$/);
+
+    await page.keyboard.press('Tab');
+    await expect(close('page:/automations')).toBeFocused();
+    await page.keyboard.press('Space');
+    await expect(tab('page:/automations')).toHaveCount(0);
+    await expect(tab('page:/personas')).toBeFocused();
+    await tab('page:/personas').press('Enter');
+    await expect(page).toHaveURL(/\/personas$/);
+    await page.keyboard.press('Tab');
+    await expect(close('page:/personas')).toBeFocused();
+    await page.keyboard.press('Enter');
+    await expect(tab('home')).toBeFocused();
+    await expect(page).toHaveURL(/\/$/);
+
+    await tab('page:/gallery').click({ button: 'middle' });
+    await expect(tab('page:/gallery')).toHaveCount(0);
+    await expect(page).toHaveURL(/\/$/);
+    await tab('page:/artifacts').focus();
+    await tab('page:/artifacts').press('Shift+F10');
+    await expect(page.getByTestId('app-tab-context-close')).toBeFocused();
+    await page.keyboard.press('Enter');
+    await expect(page.getByTestId('app-tab')).toHaveCount(1);
+    await expect(tab('home')).toBeFocused();
+  });
+}
 
 test('the command palette opens with the keyboard and jumps to a chat', async ({
   page,

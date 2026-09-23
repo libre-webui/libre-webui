@@ -321,6 +321,7 @@ export const NotesPage: React.FC = () => {
                 >
                   <button
                     type='button'
+                    tabIndex={0}
                     onClick={() => selectNote(note)}
                     aria-label={note.title || t('notes.untitled')}
                     aria-current={selectedId === note.id ? 'true' : undefined}
@@ -356,6 +357,7 @@ export const NotesPage: React.FC = () => {
                   {!note.shared && (
                     <button
                       type='button'
+                      tabIndex={0}
                       onClick={() => void handleDelete(note.id)}
                       className='me-1.5 shrink-0 rounded-md p-1.5 text-gray-500 opacity-100 transition-opacity hover:bg-red-50 hover:text-red-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100 dark:text-dark-500 dark:hover:bg-red-900/20 dark:hover:text-red-400'
                       title={t('common.delete')}
