@@ -14,6 +14,9 @@
 *.html text eol=lf
 *.sh text eol=lf
 
+# These are runnable provider servers and tests, not documentation snippets.
+examples/*-server/*.py -linguist-documentation
+
 # Keep these as binary
 *.png binary
 *.jpg binary

@@ -179,6 +179,69 @@ test('automations list their schedule and create from the modal', async ({
   ).toBeVisible();
 });
 
+for (const { language, theme } of [
+  { language: 'en', theme: 'light' },
+  { language: 'ar', theme: 'dark' },
+] as const) {
+  test(`automation keyboard focus preserves the draft and returns to its opener in ${language}`, async ({
+    page,
+  }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.setViewportSize({ width: 390, height: 700 });
+    await page.addInitScript(value => {
+      localStorage.setItem('i18nextLng', value);
+    }, language);
+    await mockLibreWebUiApi(page, {
+      preferences: {
+        theme: {
+          mode: theme,
+          accent: 'blue',
+          adaptToAccent: false,
+          customAccent: '#2563eb',
+        },
+      },
+    });
+    const api = await mockAutomationsApi(page);
+    await page.goto('/automations');
+    const opener = page.getByTestId('automation-new');
+    await opener.focus();
+    await opener.press('Enter');
+    const dialog = page.getByTestId('automation-modal');
+    const name = page.getByTestId('automation-name');
+    const save = page.getByTestId('automation-save');
+    const close = dialog.locator('button[aria-label]').first();
+    await expect(name).toBeFocused();
+    await name.fill('Unsaved keyboard draft');
+    await page
+      .getByTestId('automation-instructions')
+      .fill('Keep this draft rather than a background template.');
+    await name.focus();
+
+    // This sequence previously reached Monthly report behind the dialog.
+    await page.keyboard.press('Shift+Tab');
+    await expect(close).toBeFocused();
+    await page.keyboard.press('Shift+Tab');
+    await expect(save).toBeFocused();
+    await expect(name).toHaveValue('Unsaved keyboard draft');
+    await page.keyboard.press('Tab');
+    await expect(close).toBeFocused();
+    await page.keyboard.press('Tab');
+    await expect(name).toBeFocused();
+    await expect(name).toHaveValue('Unsaved keyboard draft');
+
+    await page.keyboard.press('Escape');
+    await expect(dialog).toHaveCount(0);
+    await expect(opener).toBeFocused();
+    await opener.press('Enter');
+    await expect(name).toBeFocused();
+    await page.getByTestId('automation-cancel').focus();
+    await page.keyboard.press('Enter');
+    await expect(dialog).toHaveCount(0);
+    await expect(opener).toBeFocused();
+    expect(api.written).toEqual([]);
+  });
+}
+
 test('the runs tab shows history and opens the produced chat', async ({
   page,
 }) => {

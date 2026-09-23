@@ -5,28 +5,46 @@
  * mid-batch context changes, and unverified outcomes — and asserts the
  * runtime guards that now close them.
  *
- * Requires Docker and a locally built libre-work-computer:latest image;
- * skips cleanly (never fails) when either is missing, so it is safe in the
- * package chain and exercised on GUI-capable machines.
+ * Requires Docker and a locally built Work Computer image. Local package
+ * tests may skip when it is missing; TEST_WORK_COMPUTER=1 makes the fixture
+ * mandatory. WORK_COMPUTER_TEST_IMAGE selects the image without retagging it.
  */
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
+import { randomUUID } from 'node:crypto';
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+} from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
+import { setTimeout as delay } from 'node:timers/promises';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const repoRoot = path.resolve(__dirname, '..');
-const FIXTURES = path.join(repoRoot, 'scripts', 'fixtures', 'computer-edge-lab');
-const IMAGE = 'libre-work-computer:latest';
-const NAME = 'lwui-edge-lab-test';
+const FIXTURES = path.join(
+  repoRoot,
+  'scripts',
+  'fixtures',
+  'computer-edge-lab'
+);
+const IMAGE =
+  process.env.WORK_COMPUTER_TEST_IMAGE?.trim() || 'libre-work-computer:latest';
+const REQUIRED = process.env.TEST_WORK_COMPUTER === '1';
+const NAME = `lwui-edge-lab-${randomUUID()}`;
 
 const docker = (args, options = {}) =>
   execFileSync('docker', args, {
     encoding: 'utf8',
     maxBuffer: 64 * 1024 * 1024,
     stdio: ['ignore', 'pipe', 'pipe'],
+    timeout: 30_000,
     ...options,
   });
 
@@ -43,7 +61,7 @@ const guiImageAvailable = (() => {
 // through the container-loopback DevTools endpoint. No page content beyond
 // the requested expression result ever leaves the container.
 const CDP_EVAL_SCRIPT = [
-  "const expression = process.argv[1];",
+  'const expression = process.argv[1];',
   'const main = async () => {',
   "  const targets = await (await fetch('http://127.0.0.1:9222/json/list')).json();",
   "  const page = targets.find(t => t.type === 'page' && String(t.url).includes('edge-lab')) ||",
@@ -70,16 +88,97 @@ const CDP_EVAL_SCRIPT = [
 
 test(
   'live GUI sandbox: focus assertions, batch fences, and outcome predicates hold on the edge-lab fixtures',
-  { skip: guiImageAvailable ? false : 'docker or libre-work-computer:latest unavailable' },
-  async () => {
-    const { COMPUTER_OBSERVE_SCRIPT, COMPUTER_ACT_SCRIPT, COMPUTER_ANCHOR_SCRIPT } = await import(
+  {
+    skip:
+      guiImageAvailable || REQUIRED
+        ? false
+        : `Docker or Work Computer fixture image ${IMAGE} unavailable`,
+  },
+  async t => {
+    assert.ok(
+      guiImageAvailable,
+      `Required Work Computer fixture unavailable: Docker must be running and image ${IMAGE} must be built locally.`
+    );
+    const stateRoot = mkdtempSync(
+      path.join(os.tmpdir(), 'lwui-computer-live-')
+    );
+    const containerIdPath = path.join(stateRoot, 'container-id');
+    const isolatedEnvironment = {
+      DATA_DIR: path.join(stateRoot, 'data'),
+      PLUGINS_DIR: path.join(stateRoot, 'plugins'),
+      PLATFORM_PREFLIGHT_TMP_DIR: path.join(stateRoot, 'scratch'),
+      LIBRE_PLATFORM_MODE: 'solo',
+      DATABASE_BACKEND: 'sqlite',
+      BLOB_STORE_BACKEND: 'local',
+      VECTOR_STORE_BACKEND: 'embedded',
+      COORDINATION_BACKEND: 'local',
+      JOB_WORKER_MODE: 'embedded',
+      WORK_RUNTIME_BACKEND: 'docker',
+      WORK_IDLE_TIMEOUT_MS: '0',
+      DATABASE_URL: undefined,
+      REDIS_URL: undefined,
+      ENCRYPTION_KEY: undefined,
+      STORAGE_ENCRYPTION_KEYS: undefined,
+      STORAGE_ENCRYPTION_ACTIVE_KEY_ID: undefined,
+    };
+    const previousEnvironment = new Map(
+      Object.keys(isolatedEnvironment).map(key => [key, process.env[key]])
+    );
+    for (const [key, value] of Object.entries(isolatedEnvironment)) {
+      if (value === undefined) delete process.env[key];
+      else process.env[key] = value;
+    }
+    let runtime;
+    t.after(async () => {
+      try {
+        runtime?.workRuntimeService.beginShutdown();
+        if (runtime) {
+          const { closeDatabase } = await import(
+            pathToFileURL(path.join(repoRoot, 'backend', 'dist', 'db.js')).href
+          );
+          closeDatabase();
+        }
+      } finally {
+        try {
+          if (existsSync(containerIdPath)) {
+            const id = readFileSync(containerIdPath, 'utf8').trim();
+            assert.match(id, /^[0-9a-f]{64}$/);
+            try {
+              docker(['rm', '-f', id]);
+            } catch (error) {
+              if (!/No such container/i.test(String(error.stderr))) throw error;
+            }
+          }
+        } finally {
+          rmSync(stateRoot, { recursive: true, force: true });
+          for (const [key, value] of previousEnvironment) {
+            if (value === undefined) delete process.env[key];
+            else process.env[key] = value;
+          }
+        }
+      }
+    });
+    mkdirSync(isolatedEnvironment.PLUGINS_DIR, { recursive: true });
+    runtime = await import(
       pathToFileURL(
-        path.join(repoRoot, 'backend', 'dist', 'services', 'workRuntimeService.js')
+        path.join(
+          repoRoot,
+          'backend',
+          'dist',
+          'services',
+          'workRuntimeService.js'
+        )
       ).href
     );
+    const {
+      COMPUTER_OBSERVE_SCRIPT,
+      COMPUTER_ACT_SCRIPT,
+      COMPUTER_ANCHOR_SCRIPT,
+    } = runtime;
     const exec = (args, timeout = 120_000) =>
       docker(['exec', '-u', '1000:1000', NAME, ...args], { timeout });
-    const observe = () => JSON.parse(exec(['node', '-e', COMPUTER_OBSERVE_SCRIPT]));
+    const observe = () =>
+      JSON.parse(exec(['node', '-e', COMPUTER_OBSERVE_SCRIPT]));
     const act = (actions, expect) =>
       JSON.parse(
         exec([
@@ -99,7 +198,9 @@ test(
       '(() => { const el = document.querySelector(' +
       JSON.stringify(selector) +
       '); ' +
-      (scroll ? "el.scrollIntoView({block: 'center', behavior: 'instant'}); " : '') +
+      (scroll
+        ? "el.scrollIntoView({block: 'center', behavior: 'instant'}); "
+        : '') +
       'const r = el.getBoundingClientRect(); ' +
       'const ox = window.screenX + (window.outerWidth - window.innerWidth) / 2; ' +
       'const oy = window.screenY + (window.outerHeight - window.innerHeight); return {' +
@@ -110,220 +211,234 @@ test(
     // scrolling keeps earlier measurements valid.
     const coordsNoScroll = selector =>
       cdpEval(coordsExpression(selector, false));
-    const settle = seconds => execFileSync('sleep', [String(seconds)]);
-
-    try {
-      docker(['rm', '-f', NAME]);
-    } catch {
-      /* not running */
-    }
-    docker(['run', '-d', '--name', NAME, '--memory', '2g', IMAGE, 'sleep', 'infinity']);
-    try {
-      docker(['exec', '-u', 'root', NAME, 'sh', '-c', 'mkdir -p /workspace/edge-lab && chown -R 1000:1000 /workspace']);
-      docker(['cp', path.join(FIXTURES, 'edge-lab.html'), `${NAME}:/workspace/edge-lab/edge-lab.html`]);
-      docker(['cp', path.join(FIXTURES, 'edge-lab.js'), `${NAME}:/workspace/edge-lab/edge-lab.js`]);
-      exec(['/usr/local/bin/start-computer'], 90_000);
-      const startReady = cdpEval(
-        [
-          '(async () => {',
-          'if (window.libreSceneReady) await window.libreSceneReady;',
-          'return {',
-          "interfaceReady: performance.getEntriesByName('libre-interface-ready')[0]?.startTime ?? null,",
-          "sceneReady: performance.getEntriesByName('libre-scene-ready')[0]?.startTime ?? null",
-          '};',
-          '})()',
-        ].join('')
-      );
-      assert.ok(
-        Number.isFinite(startReady.interfaceReady),
-        JSON.stringify(startReady)
-      );
-      assert.ok(
-        startReady.interfaceReady < 1_500,
-        `start-page interface took ${startReady.interfaceReady}ms`
-      );
-      assert.ok(
-        Number.isFinite(startReady.sceneReady),
-        JSON.stringify(startReady)
-      );
-      assert.ok(startReady.sceneReady >= startReady.interfaceReady);
-      assert.ok(
-        startReady.sceneReady < 8_000,
-        `start-page scene took ${startReady.sceneReady}ms`
-      );
-      cdpEval("location.href = 'file:///workspace/edge-lab/edge-lab.html'");
-      let loadedUrl = '';
-      const navigationDeadline = Date.now() + 15_000;
-      while (Date.now() < navigationDeadline) {
-        try {
-          loadedUrl = String(cdpEval('location.href'));
-        } catch {
-          // The old page target can close between navigation and discovery.
-        }
-        if (/edge-lab\.html$/.test(loadedUrl)) break;
-        settle(0.25);
-      }
-      assert.match(loadedUrl, /edge-lab\.html$/);
-
-      // Semantic observation reflects the loaded fixture.
-      const loaded = observe();
-      assert.match(loaded.url ?? '', /edge-lab\.html$/);
-      assert.match(loaded.screenshotSha256 ?? '', /^[0-9a-f]{64}$/);
-      assert.ok(Number.isFinite(loaded.windowId));
-
-      // Case D, honest path: click the page field, then type under a focus
-      // assertion the real context satisfies. The text must land in the page.
-      const field = coords('#focusInput');
-      const typed = act([
-        { type: 'click', x: field.x, y: field.y },
-        { type: 'wait', ms: 400 },
-        { type: 'type', text: 'loop check', focus: 'focusInput' },
-      ]);
-      assert.equal(typed.fence, undefined, JSON.stringify(typed.fence));
-      assert.match(
-        String(cdpEval("document.querySelector('#focusLog').textContent")),
-        /loop check/
-      );
-
-      // Case D, the omnibox trap: ctrl+l moves keyboard focus to browser
-      // chrome; the asserted type must fence instead of typing there.
-      const fencedFocus = act([
-        { type: 'key', keys: 'ctrl+l' },
-        { type: 'wait', ms: 400 },
-        { type: 'type', text: 'must-not-be-typed', focus: 'focusInput' },
-      ]);
-      assert.equal(fencedFocus.fence?.reason, 'focus_assertion_failed');
-      assert.equal(
-        cdpEval("document.querySelector('#focusInput').value"),
-        'loop check'
-      );
-      act([{ type: 'key', keys: 'Escape' }]);
-
-      // Case B: an in-page modal is invisible to window-level fences (a
-      // documented v1 boundary) but an outcome predicate proves it opened.
-      const openModal = coords('#openModal');
-      const modal = act(
-        [{ type: 'click', x: openModal.x, y: openModal.y }],
-        { regionChanged: { x: 440, y: 250, width: 400, height: 250 }, withinMs: 4000 }
-      );
-      assert.equal(modal.fence, undefined);
-      assert.equal(modal.expect?.outcome, 'passed', JSON.stringify(modal.expect));
-      const cancel = coords('#cancel');
-      act([{ type: 'click', x: cancel.x, y: cancel.y }]);
-
-      // Case G: a new browsing context mid-batch stops the batch before the
-      // stale trailing clicks run.
-      const newTab = coords('#newTab');
-      const fencedTab = act([
-        { type: 'click', x: newTab.x, y: newTab.y },
-        { type: 'wait', ms: 2000 },
-        { type: 'click', x: 10, y: 10 },
-        { type: 'click', x: 20, y: 20 },
-      ]);
-      assert.equal(fencedTab.fence?.reason, 'context_changed');
-      assert.ok(fencedTab.fence.afterAction <= 2);
-      act([{ type: 'key', keys: 'ctrl+w' }]);
-
-      // An impossible predicate stays honest: pending, never passed.
-      const pending = act(
-        [{ type: 'move', x: 640, y: 400 }],
-        { urlContains: 'no-such-destination.example', withinMs: 1500 }
-      );
-      assert.equal(pending.expect?.outcome, 'pending');
-      assert.deepEqual(pending.expect?.unmet, ['urlContains']);
-
-      // The teach recorder's anchor probe names the element under a screen
-      // coordinate — and the page URL — without injecting any input.
-      const modalButton = coords('#openModal');
-      const anchored = JSON.parse(
-        exec([
-          'node',
-          '-e',
-          COMPUTER_ANCHOR_SCRIPT,
-          '--',
-          String(modalButton.x),
-          String(modalButton.y),
-        ])
-      );
-      assert.match(anchored.anchor ?? '', /button#openModal \(OPEN REVIEW\)/);
-      assert.match(anchored.url ?? '', /edge-lab\.html$/);
-      // Outside the browser viewport the probe degrades to URL-only.
-      const offscreen = JSON.parse(
-        exec(['node', '-e', COMPUTER_ANCHOR_SCRIPT, '--', '5', '795'])
-      );
-      assert.equal(offscreen.anchor, undefined);
-
-      // Case F: goal-directed scrolling finds the below-the-fold target and
-      // reports a visibility receipt instead of a blind wheel count.
-      act([
-        {
-          type: 'scroll_until',
-          direction: 'up',
-          target: { edge: 'top' },
-          maxAmount: 30,
-          x: 640,
-          y: 400,
-        },
-      ]);
-      const deep = act([
-        {
-          type: 'scroll_until',
-          direction: 'down',
-          target: { text: 'FINALIZE REPORT' },
-          maxAmount: 30,
-          x: 640,
-          y: 400,
-        },
-      ]);
-      const deepReceipt = deep.scrollReceipts?.[0];
-      assert.equal(deepReceipt?.found, true, JSON.stringify(deep.scrollReceipts));
-      assert.equal(deepReceipt?.visible, true);
-      assert.ok(deepReceipt.scrolledUnits > 0);
-      const finalize = coords('#deep');
-      act([{ type: 'click', x: finalize.x, y: finalize.y }]);
-      assert.match(
-        String(cdpEval("document.querySelector('#deepLog').textContent")),
-        /FINALIZE ACTION FIRED/
-      );
-
-      // A click on inert background earns a receipt saying nothing changed.
-      const spacer = coords('.spacer');
-      const inert = act([{ type: 'click', x: spacer.x, y: spacer.y }]);
-      assert.equal(inert.clickReceipts?.[0]?.changed, false);
-
-      // Case E: the export completes 6s after the click. Batch one shows
-      // "working…"; batch two starts well before completion, so its region
-      // predicate only passes once the late change lands — proving the
-      // adaptive polling, not a lucky delay. Coordinates are captured before
-      // the click so no exec time is spent mid-window.
-      const delayButton = coords('#delay');
-      const delayLog = coordsNoScroll('#delayLog');
-      act([{ type: 'click', x: delayButton.x, y: delayButton.y }]);
-      // The log text is left-aligned in a wide element: anchor the region at
-      // its left edge, where the change actually renders.
-      const late = act(
-        [{ type: 'move', x: 12, y: 12 }],
-        {
-          regionChanged: {
-            x: Math.max(0, delayLog.left),
-            y: Math.max(0, delayLog.top),
-            width: 300,
-            height: 40,
-          },
-          withinMs: 8000,
-        }
-      );
-      assert.equal(late.expect?.outcome, 'passed', JSON.stringify(late.expect));
-      assert.match(
-        String(cdpEval("document.querySelector('#delayLog').textContent")),
-        /EXPORT COMPLETE/
-      );
-    } finally {
+    docker([
+      'run',
+      '--rm',
+      '-d',
+      '--name',
+      NAME,
+      '--cidfile',
+      containerIdPath,
+      '--memory',
+      '2g',
+      '--pull',
+      'never',
+      IMAGE,
+      'node',
+      '-e',
+      'setInterval(() => {}, 2147483647)',
+    ]);
+    docker([
+      'exec',
+      '-u',
+      'root',
+      NAME,
+      'sh',
+      '-c',
+      'mkdir -p /workspace/edge-lab && chown -R 1000:1000 /workspace',
+    ]);
+    docker([
+      'cp',
+      path.join(FIXTURES, 'edge-lab.html'),
+      `${NAME}:/workspace/edge-lab/edge-lab.html`,
+    ]);
+    docker([
+      'cp',
+      path.join(FIXTURES, 'edge-lab.js'),
+      `${NAME}:/workspace/edge-lab/edge-lab.js`,
+    ]);
+    exec(['/usr/local/bin/start-computer'], 90_000);
+    const startReady = cdpEval(
+      [
+        '(async () => {',
+        'if (window.libreSceneReady) await window.libreSceneReady;',
+        'return {',
+        "interfaceReady: performance.getEntriesByName('libre-interface-ready')[0]?.startTime ?? null,",
+        "sceneReady: performance.getEntriesByName('libre-scene-ready')[0]?.startTime ?? null",
+        '};',
+        '})()',
+      ].join('')
+    );
+    assert.ok(
+      Number.isFinite(startReady.interfaceReady),
+      JSON.stringify(startReady)
+    );
+    assert.ok(
+      startReady.interfaceReady < 1_500,
+      `start-page interface took ${startReady.interfaceReady}ms`
+    );
+    assert.ok(
+      Number.isFinite(startReady.sceneReady),
+      JSON.stringify(startReady)
+    );
+    assert.ok(startReady.sceneReady >= startReady.interfaceReady);
+    assert.ok(
+      startReady.sceneReady < 8_000,
+      `start-page scene took ${startReady.sceneReady}ms`
+    );
+    cdpEval("location.href = 'file:///workspace/edge-lab/edge-lab.html'");
+    let loadedUrl = '';
+    const navigationDeadline = Date.now() + 15_000;
+    while (Date.now() < navigationDeadline) {
       try {
-        docker(['rm', '-f', NAME]);
+        loadedUrl = String(cdpEval('location.href'));
       } catch {
-        /* already gone */
+        // The old page target can close between navigation and discovery.
       }
+      if (/edge-lab\.html$/.test(loadedUrl)) break;
+      await delay(250);
     }
+    assert.match(loadedUrl, /edge-lab\.html$/);
+
+    // Semantic observation reflects the loaded fixture.
+    const loaded = observe();
+    assert.match(loaded.url ?? '', /edge-lab\.html$/);
+    assert.match(loaded.screenshotSha256 ?? '', /^[0-9a-f]{64}$/);
+    assert.ok(Number.isFinite(loaded.windowId));
+
+    // Case D, honest path: click the page field, then type under a focus
+    // assertion the real context satisfies. The text must land in the page.
+    const field = coords('#focusInput');
+    const typed = act([
+      { type: 'click', x: field.x, y: field.y },
+      { type: 'wait', ms: 400 },
+      { type: 'type', text: 'loop check', focus: 'focusInput' },
+    ]);
+    assert.equal(typed.fence, undefined, JSON.stringify(typed.fence));
+    assert.match(
+      String(cdpEval("document.querySelector('#focusLog').textContent")),
+      /loop check/
+    );
+
+    // Case D, the omnibox trap: ctrl+l moves keyboard focus to browser
+    // chrome; the asserted type must fence instead of typing there.
+    const fencedFocus = act([
+      { type: 'key', keys: 'ctrl+l' },
+      { type: 'wait', ms: 400 },
+      { type: 'type', text: 'must-not-be-typed', focus: 'focusInput' },
+    ]);
+    assert.equal(fencedFocus.fence?.reason, 'focus_assertion_failed');
+    assert.equal(
+      cdpEval("document.querySelector('#focusInput').value"),
+      'loop check'
+    );
+    act([{ type: 'key', keys: 'Escape' }]);
+
+    // Case B: an in-page modal is invisible to window-level fences (a
+    // documented v1 boundary) but an outcome predicate proves it opened.
+    const openModal = coords('#openModal');
+    const modal = act([{ type: 'click', x: openModal.x, y: openModal.y }], {
+      regionChanged: { x: 440, y: 250, width: 400, height: 250 },
+      withinMs: 4000,
+    });
+    assert.equal(modal.fence, undefined);
+    assert.equal(modal.expect?.outcome, 'passed', JSON.stringify(modal.expect));
+    const cancel = coords('#cancel');
+    act([{ type: 'click', x: cancel.x, y: cancel.y }]);
+
+    // Case G: a new browsing context mid-batch stops the batch before the
+    // stale trailing clicks run.
+    const newTab = coords('#newTab');
+    const fencedTab = act([
+      { type: 'click', x: newTab.x, y: newTab.y },
+      { type: 'wait', ms: 2000 },
+      { type: 'click', x: 10, y: 10 },
+      { type: 'click', x: 20, y: 20 },
+    ]);
+    assert.equal(fencedTab.fence?.reason, 'context_changed');
+    assert.ok(fencedTab.fence.afterAction <= 2);
+    act([{ type: 'key', keys: 'ctrl+w' }]);
+
+    // An impossible predicate stays honest: pending, never passed.
+    const pending = act([{ type: 'move', x: 640, y: 400 }], {
+      urlContains: 'no-such-destination.example',
+      withinMs: 1500,
+    });
+    assert.equal(pending.expect?.outcome, 'pending');
+    assert.deepEqual(pending.expect?.unmet, ['urlContains']);
+
+    // The teach recorder's anchor probe names the element under a screen
+    // coordinate — and the page URL — without injecting any input.
+    const modalButton = coords('#openModal');
+    const anchored = JSON.parse(
+      exec([
+        'node',
+        '-e',
+        COMPUTER_ANCHOR_SCRIPT,
+        '--',
+        String(modalButton.x),
+        String(modalButton.y),
+      ])
+    );
+    assert.match(anchored.anchor ?? '', /button#openModal \(OPEN REVIEW\)/);
+    assert.match(anchored.url ?? '', /edge-lab\.html$/);
+    // Outside the browser viewport the probe degrades to URL-only.
+    const offscreen = JSON.parse(
+      exec(['node', '-e', COMPUTER_ANCHOR_SCRIPT, '--', '5', '795'])
+    );
+    assert.equal(offscreen.anchor, undefined);
+
+    // Case F: goal-directed scrolling finds the below-the-fold target and
+    // reports a visibility receipt instead of a blind wheel count.
+    act([
+      {
+        type: 'scroll_until',
+        direction: 'up',
+        target: { edge: 'top' },
+        maxAmount: 30,
+        x: 640,
+        y: 400,
+      },
+    ]);
+    const deep = act([
+      {
+        type: 'scroll_until',
+        direction: 'down',
+        target: { text: 'FINALIZE REPORT' },
+        maxAmount: 30,
+        x: 640,
+        y: 400,
+      },
+    ]);
+    const deepReceipt = deep.scrollReceipts?.[0];
+    assert.equal(deepReceipt?.found, true, JSON.stringify(deep.scrollReceipts));
+    assert.equal(deepReceipt?.visible, true);
+    assert.ok(deepReceipt.scrolledUnits > 0);
+    const finalize = coords('#deep');
+    act([{ type: 'click', x: finalize.x, y: finalize.y }]);
+    assert.match(
+      String(cdpEval("document.querySelector('#deepLog').textContent")),
+      /FINALIZE ACTION FIRED/
+    );
+
+    // A click on inert background earns a receipt saying nothing changed.
+    const spacer = coords('.spacer');
+    const inert = act([{ type: 'click', x: spacer.x, y: spacer.y }]);
+    assert.equal(inert.clickReceipts?.[0]?.changed, false);
+
+    // Case E: the export completes 6s after the click. Batch one shows
+    // "working…"; batch two starts well before completion, so its region
+    // predicate only passes once the late change lands — proving the
+    // adaptive polling, not a lucky delay. Coordinates are captured before
+    // the click so no exec time is spent mid-window.
+    const delayButton = coords('#delay');
+    const delayLog = coordsNoScroll('#delayLog');
+    act([{ type: 'click', x: delayButton.x, y: delayButton.y }]);
+    // The log text is left-aligned in a wide element: anchor the region at
+    // its left edge, where the change actually renders.
+    const late = act([{ type: 'move', x: 12, y: 12 }], {
+      regionChanged: {
+        x: Math.max(0, delayLog.left),
+        y: Math.max(0, delayLog.top),
+        width: 300,
+        height: 40,
+      },
+      withinMs: 8000,
+    });
+    assert.equal(late.expect?.outcome, 'passed', JSON.stringify(late.expect));
+    assert.match(
+      String(cdpEval("document.querySelector('#delayLog').textContent")),
+      /EXPORT COMPLETE/
+    );
   }
 );

@@ -84,20 +84,6 @@ test.after(async () => {
 });
 
 /** Point the runtime at a scenario composition with no override in force. */
-/**
- * Remove the Libre WebUI provider adapter row.
- *
- * That row delegates to the deployment's provider layer, which a test host does
- * not install; leaving it in place makes the row fail to register and the bridge
- * never activates. These scenarios supply their own fixture adapter instead.
- */
-function withoutProviderAdapter(composition) {
-  return composition.replace(
-    /\n *# Serves the engine's model calls[\s\S]*?- id: libre-webui-llm-adapter\n *name: '[^']*'\n/,
-    '\n'
-  );
-}
-
 async function configureScenario(label) {
   const dir = await mkdtemp(path.join(tempRoot, `${label}-`));
   const workspacePath = path.join(dir, 'workspace');

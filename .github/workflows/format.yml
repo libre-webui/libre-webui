@@ -119,8 +119,90 @@ jobs:
         env:
           TEST_TEAM_PLATFORM: '1'
 
+      - name: Pack the tested application for native installation checks
+        run: |
+          mkdir -p native-package
+          npm pack --ignore-scripts --pack-destination native-package
+
+      - name: Upload the native installation candidate
+        uses: actions/upload-artifact@v7
+        with:
+          name: native-package
+          path: native-package/*.tgz
+          if-no-files-found: error
+          retention-days: 1
+
+  native-package-install:
+    needs: package-tests
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        node: ['22.22', '24']
+    steps:
+      - name: Checkout installation smoke test
+        uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: ${{ matrix.node }}
+
+      - name: Download the tested application
+        uses: actions/download-artifact@v7
+        with:
+          name: native-package
+          path: native-package
+
+      - name: Install production dependencies and verify persistent startup
+        run: npm run test:package-install -- native-package
+
+  work-computer-live:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '22.22'
+          cache: 'npm'
+
+      - name: Install dependencies and build the backend
+        run: |
+          npm ci
+          npm run build:backend
+
+      - name: Build the Work Computer fixture from the runtime base
+        run: |
+          node --input-type=module <<'NODE'
+          import { spawnSync } from 'node:child_process';
+          import { WORK_RUNTIME_DEFAULTS } from './backend/dist/services/workRuntimeShared.js';
+          const result = spawnSync('docker', [
+            'build', '--build-arg', `WORK_BASE_IMAGE=${WORK_RUNTIME_DEFAULTS.image}`,
+            '-t', 'libre-work-computer:ci', 'deploy/work-computer',
+          ], { stdio: 'inherit' });
+          if (result.error) throw result.error;
+          process.exit(result.status ?? 1);
+          NODE
+
+      - name: Run the required live GUI regression
+        run: npm run test:work-computer
+        env:
+          TEST_WORK_COMPUTER: '1'
+          WORK_COMPUTER_TEST_IMAGE: libre-work-computer:ci
+
   browser-e2e:
     runs-on: ubuntu-latest
+    timeout-minutes: 35
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, webkit, firefox]
 
     steps:
       - name: Checkout code
@@ -139,16 +221,16 @@ jobs:
         run: npm run install:all
 
       - name: Install browser engines
-        run: cd frontend && npx playwright install --with-deps chromium webkit
+        run: cd frontend && npx playwright install --with-deps ${{ matrix.browser }}
 
       - name: Run browser end-to-end tests
-        run: npm run test:e2e
+        run: npm run test:e2e -- --project=${{ matrix.browser }}
 
       - name: Upload browser test results
         if: failure()
         uses: actions/upload-artifact@v7
         with:
-          name: playwright-test-results
+          name: playwright-test-results-${{ matrix.browser }}
           path: frontend/test-results/
           if-no-files-found: ignore
           retention-days: 7

@@ -15,10 +15,11 @@
  * limitations under the License.
  */
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { Plus, X } from 'lucide-react';
+import { useDialogFocus } from '@/hooks/useDialogFocus';
 import type {
   Automation,
   AutomationTarget,
@@ -100,6 +101,8 @@ function AutomationModalForm({
   onSave,
 }: Omit<AutomationModalProps, 'open'>) {
   const { t } = useTranslation();
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useDialogFocus(dialogRef, { onClose });
   const taskBound = Boolean(fixedWorkTaskId ?? automation?.workTaskId);
   const [name, setName] = useState(automation?.name ?? initial?.name ?? '');
   const [instructions, setInstructions] = useState(
@@ -223,9 +226,11 @@ function AutomationModalForm({
       onClick={onClose}
     >
       <div
+        ref={dialogRef}
         role='dialog'
         aria-modal='true'
         aria-labelledby='automation-modal-title'
+        tabIndex={-1}
         data-testid='automation-modal'
         className='flex max-h-[90vh] w-full max-w-lg flex-col overflow-hidden rounded-3xl border border-black/[0.07] bg-white shadow-[0_24px_80px_rgba(0,0,0,0.24)] animate-scale-in dark:border-white/[0.08] dark:bg-dark-25'
         onClick={e => e.stopPropagation()}
@@ -524,6 +529,7 @@ function AutomationModalForm({
             <div className='flex justify-end gap-3 border-t border-gray-200 pt-4 dark:border-dark-300'>
               <button
                 onClick={onClose}
+                data-testid='automation-cancel'
                 className='rounded-xl px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 dark:text-dark-700 dark:hover:bg-dark-200'
               >
                 {t('common.cancel')}

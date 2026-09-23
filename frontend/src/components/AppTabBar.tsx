@@ -135,6 +135,8 @@ export const AppTabBar: React.FC = () => {
   const newTabButtonRef = useRef<HTMLButtonElement>(null);
   const contextMenuRef = useRef<HTMLDivElement>(null);
   const stripRef = useRef<HTMLDivElement>(null);
+  const tabButtonsRef = useRef(new Map<string, HTMLButtonElement>());
+  const pendingFocusTabRef = useRef<string | null>(null);
 
   const admin = isAdmin();
   const showAdminWorkspace = systemInfo?.requiresAuth === false || admin;
@@ -188,11 +190,23 @@ export const AppTabBar: React.FC = () => {
     };
   }, [accessibleTabs.length, i18n.resolvedLanguage, tabs]);
 
-  // Keep the active tab visible when the strip overflows.
-  useEffect(() => {
+  // Keep the complete tab visible, including its sibling close control.
+  useLayoutEffect(() => {
     const strip = stripRef.current;
+    const focusId = pendingFocusTabRef.current;
+    const focusTarget = focusId ? tabButtonsRef.current.get(focusId) : null;
+    if (focusTarget) {
+      pendingFocusTabRef.current = null;
+      focusTarget.focus({ preventScroll: true });
+      focusTarget
+        .closest('[data-tab-item]')
+        ?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+      return;
+    }
     const active = strip?.querySelector<HTMLElement>('[data-active="true"]');
-    active?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+    active
+      ?.closest('[data-tab-item]')
+      ?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
   }, [accessibleTabs.length, activeTabId]);
 
   useEffect(() => {
@@ -302,11 +316,29 @@ export const AppTabBar: React.FC = () => {
     return meta ? t(meta.labelKey, tab.path.slice(1)) : tab.path.slice(1);
   };
 
+  const closeSingleTab = (tab: AppTab, restoreFocus: boolean) => {
+    const index = accessibleTabs.findIndex(item => item.id === tab.id);
+    if (restoreFocus) {
+      pendingFocusTabRef.current =
+        accessibleTabs[index + 1]?.id ??
+        accessibleTabs[index - 1]?.id ??
+        'home';
+    }
+    const fallback = closeTab(tab.id);
+    if (restoreFocus && fallback) pendingFocusTabRef.current = fallback.id;
+    if (fallback) navigate(fallback.path);
+  };
+
   const handleClose = (event: React.MouseEvent<HTMLElement>, tab: AppTab) => {
     event.stopPropagation();
     event.preventDefault();
-    const fallback = closeTab(tab.id);
-    if (fallback) navigate(fallback.path);
+    const item = event.currentTarget.closest('[data-tab-item]');
+    closeSingleTab(
+      tab,
+      tab.id === activeTabId ||
+        event.detail === 0 ||
+        Boolean(item?.contains(document.activeElement))
+    );
   };
 
   const openContextMenu = (tab: AppTab, x: number, y: number) => {
@@ -328,7 +360,7 @@ export const AppTabBar: React.FC = () => {
   };
 
   const handleTabContextMenu = (
-    event: React.MouseEvent<HTMLButtonElement>,
+    event: React.MouseEvent<HTMLElement>,
     tab: AppTab
   ) => {
     event.preventDefault();
@@ -380,7 +412,9 @@ export const AppTabBar: React.FC = () => {
   };
 
   const closeTabSet = (ids: string[], preferredTabId?: string) => {
+    pendingFocusTabRef.current = preferredTabId ?? activeTabId;
     const fallback = closeTabs(ids, preferredTabId);
+    if (fallback) pendingFocusTabRef.current = fallback.id;
     setContextMenu(null);
     if (fallback) navigate(fallback.path);
   };
@@ -495,51 +529,76 @@ export const AppTabBar: React.FC = () => {
               : tabIcon(tab);
           const isActive = tab.id === activeTabId;
           return (
-            <button
+            <div
               key={tab.id}
-              type='button'
-              role='tab'
-              aria-selected={isActive}
-              data-active={isActive || undefined}
-              data-tab-id={tab.id}
-              data-testid='app-tab'
-              title={tabTitle(tab)}
-              onClick={() => navigate(tab.path)}
+              data-tab-item={tab.id}
+              data-testid='app-tab-item'
               onContextMenu={event => handleTabContextMenu(event, tab)}
-              onKeyDown={event => handleTabContextKeyDown(event, tab)}
+              onMouseDown={event => {
+                // Firefox otherwise starts autoscroll inside the tab strip
+                // and consumes the auxiliary click used to close the tab.
+                if (event.button === 1) event.preventDefault();
+              }}
               onAuxClick={event => {
                 if (event.button === 1 && tab.id !== 'home') {
                   handleClose(event, tab);
                 }
               }}
               className={cn(
-                'group flex h-7 min-w-0 flex-none items-center gap-1.5 rounded-lg border text-[13px] transition-colors duration-150 outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40',
-                tab.id === 'home' ? 'px-2.5' : 'ps-2.5 pe-1',
+                'group flex h-7 min-w-0 flex-none items-center gap-1.5 rounded-lg border text-[13px] transition-colors duration-150',
+                tab.id !== 'home' && 'pe-1',
                 isActive
                   ? 'border-black/[0.06] bg-gray-50 text-gray-950 shadow-subtle dark:border-white/[0.07] dark:bg-dark-100 dark:text-dark-950'
                   : 'border-transparent text-gray-500 hover:bg-white/60 hover:text-gray-900 dark:text-dark-600 dark:hover:bg-dark-200/60 dark:hover:text-dark-900'
               )}
             >
-              <Icon className='h-3.5 w-3.5 shrink-0' />
-              <span className='max-w-[9rem] truncate'>{tabTitle(tab)}</span>
+              <button
+                ref={element => {
+                  if (element) tabButtonsRef.current.set(tab.id, element);
+                  else tabButtonsRef.current.delete(tab.id);
+                }}
+                type='button'
+                role='tab'
+                tabIndex={0}
+                aria-selected={isActive}
+                data-active={isActive || undefined}
+                data-tab-id={tab.id}
+                data-testid='app-tab'
+                title={tabTitle(tab)}
+                onClick={() => {
+                  // Route rendering may suspend. A quick close must already
+                  // treat this tab as active and navigate to its fallback.
+                  syncWithPath(tab.path);
+                  navigate(tab.path);
+                }}
+                onKeyDown={event => handleTabContextKeyDown(event, tab)}
+                className={cn(
+                  'flex h-full min-w-0 items-center gap-1.5 rounded-md ps-2.5 outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40',
+                  tab.id === 'home' && 'pe-2.5'
+                )}
+              >
+                <Icon className='h-3.5 w-3.5 shrink-0' />
+                <span className='max-w-[9rem] truncate'>{tabTitle(tab)}</span>
+              </button>
               {tab.id !== 'home' && (
-                <span
-                  role='button'
-                  tabIndex={-1}
+                <button
+                  type='button'
+                  tabIndex={0}
                   aria-label={t('tabs.close', 'Close tab')}
                   data-testid='app-tab-close'
                   onClick={event => handleClose(event, tab)}
+                  onKeyDown={event => handleTabContextKeyDown(event, tab)}
                   className={cn(
-                    'flex h-5 w-5 shrink-0 items-center justify-center rounded-md text-gray-400 transition-opacity hover:bg-black/[0.06] hover:text-gray-700 dark:text-dark-500 dark:hover:bg-white/[0.08] dark:hover:text-dark-800',
+                    'flex h-5 w-5 shrink-0 items-center justify-center rounded-md text-gray-400 transition-opacity hover:bg-black/[0.06] hover:text-gray-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 dark:text-dark-500 dark:hover:bg-white/[0.08] dark:hover:text-dark-800',
                     isActive
                       ? 'opacity-100'
-                      : 'sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-visible:opacity-100'
+                      : 'sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100'
                   )}
                 >
                   <X className='h-3 w-3' />
-                </span>
+                </button>
               )}
-            </button>
+            </div>
           );
         })}
       </div>
@@ -566,9 +625,8 @@ export const AppTabBar: React.FC = () => {
               data-testid='app-tab-context-close'
               disabled={contextTab.id === 'home'}
               onClick={() => {
-                const fallback = closeTab(contextTab.id);
+                closeSingleTab(contextTab, true);
                 setContextMenu(null);
-                if (fallback) navigate(fallback.path);
               }}
               className='flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-[13px] text-ink-muted transition-colors hover:bg-black/[0.05] hover:text-ink disabled:cursor-not-allowed disabled:opacity-40 dark:hover:bg-white/[0.06]'
             >

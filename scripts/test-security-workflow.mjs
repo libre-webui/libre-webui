@@ -2,6 +2,8 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import test from 'node:test';
+import { execFileSync } from 'node:child_process';
+import yaml from 'js-yaml';
 
 const repoRoot = path.resolve(import.meta.dirname, '..');
 const workflowPath = '.github/workflows/security.yml';
@@ -94,4 +96,30 @@ test('scanner reports are retained and tolerated scans are re-enforced', () => {
   assert.match(sast, /uses: github\/codeql-action\/upload-sarif@v4/);
   assert.match(secrets, /uses: github\/codeql-action\/upload-sarif@v4/);
   assert.match(container, /uses: github\/codeql-action\/upload-sarif@v4/);
+});
+
+test('executable Python integrations remain visible to language detection and CodeQL', () => {
+  const codeql = yaml.load(
+    fs.readFileSync(path.join(repoRoot, '.github/workflows/codeql.yml'), 'utf8')
+  );
+  assert.ok(codeql.jobs.analyze.strategy.matrix.language.includes('python'));
+  assert.equal(codeql.on.pull_request, null);
+  assert.equal(codeql.jobs.analyze.strategy['fail-fast'], false);
+  assert.notEqual(codeql.jobs.analyze['continue-on-error'], true);
+  const files = execFileSync('git', ['ls-files', '*.py'], {
+    cwd: repoRoot,
+    encoding: 'utf8',
+  })
+    .trim()
+    .split('\n')
+    .filter(file => /^examples\/[^/]+-server\/[^/]+\.py$/.test(file));
+  assert.ok(files.length > 0);
+  for (const file of files) {
+    const attributes = execFileSync(
+      'git',
+      ['check-attr', 'linguist-documentation', '--', file],
+      { cwd: repoRoot, encoding: 'utf8' }
+    ).trim();
+    assert.equal(attributes, `${file}: linguist-documentation: unset`);
+  }
 });

@@ -568,7 +568,7 @@ function assertFocusedTests(focusedTests, capabilityId) {
       assert.equal(focusedTest.runner, 'test:e2e');
       assert.equal(
         rootPackage.scripts['test:e2e'],
-        'npm run e2e --workspace=frontend'
+        'npm run e2e --workspace=frontend --'
       );
       assert.match(frontendPackage.scripts.e2e, /^playwright test(?: |$)/);
       assert.match(

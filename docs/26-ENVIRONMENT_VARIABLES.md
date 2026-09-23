@@ -27,7 +27,7 @@ test-only canaries are intentionally omitted.
 | `NODE_ENV`                         | `development`                                            | Runtime mode                                                                                  |
 | `PORT`                             | `3001` in dev, `8080` in production                      | Backend HTTP port                                                                             |
 | `TRUST_PROXY`                      | unset (`0` in Helm)                                      | Exact trusted reverse-proxy hop count used to derive the client address                       |
-| `CORS_ORIGIN`                      | local dev origins                                        | Comma-separated allowed browser origins                                                       |
+| `CORS_ORIGIN`                      | local dev origins                                        | Comma-separated exact browser origins; `*` allows any valid origin                            |
 | `SERVE_FRONTEND`                   | unset                                                    | Serve built frontend from backend when `true`                                                 |
 | `DOCKER_ENV`                       | unset                                                    | Enables Docker-oriented behavior when `true`                                                  |
 | `DATA_DIR`                         | `backend/data`; `~/.libre-webui` in the packaged CLI     | Persistent data directory                                                                     |
@@ -46,6 +46,21 @@ test-only canaries are intentionally omitted.
 | `GALLERY_RETENTION_DAYS`           | unset (keep forever)                                     | Delete gallery media older than this many days via the scheduler sweep                        |
 | `RECOVERY_DRILL_INTERVAL_HOURS`    | unset (drills off)                                       | Run a verified recovery drill automatically every N hours (solo profile)                      |
 | `RECOVERY_DRILL_HISTORY`           | `60`                                                     | Retained recovery-drill history entries                                                       |
+
+`CORS_ORIGIN` entries match serialized browser origins: scheme, hostname, and
+optional port, without a path, credentials, query, or fragment. Requests must
+carry one canonical origin; malformed values and lists of origins are rejected
+even with `CORS_ORIGIN=*`. Clients that omit `Origin` remain allowed. The opaque
+origin `null` requires an explicit `null` entry or `*`.
+
+In Docker (`DOCKER_ENV=true`) and non-production modes, exact `localhost` and
+literal IPv4 addresses in `127.0.0.0/8`, `10.0.0.0/8`, `172.16.0.0/12`,
+`192.168.0.0/16`, and `100.64.0.0/10` are also accepted for HTTP(S) origins.
+Hostnames merely beginning with those strings, such as
+`localhost.attacker.example`, are not local addresses. IPv6 origins require an
+explicit entry or `*`; they are not automatically included in the network
+exception. Native production deployments use only the explicit origin list or
+wildcard. CORS does not replace the API's bearer-token authentication.
 
 Source launches anchor relative `DATA_DIR`, `PLUGINS_DIR`, and
 `PLATFORM_PREFLIGHT_TMP_DIR` values at the backend directory, independent of

@@ -24,6 +24,11 @@ const { version: packageVersion } = JSON.parse(
   readFileSync(new URL('./package.json', import.meta.url), 'utf8')
 ) as { version: string };
 
+// Keep the full Chromium suite, with the critical interactive flows also
+// exercised by browsers whose focus, storage and media behavior differs.
+const crossBrowserTests =
+  /(?:auth|chat-cancellation|chat-tools|generation-scope|streaming-code|dialog-focus|model-dialog-focus|tab-shell|automations|celestial-preview-polish|celestial-location-polish|rtl-layout|notes|work-pane|work-approvals|tts-playback)\.spec\.ts$/;
+
 export default defineConfig({
   testDir: './e2e',
   fullyParallel: true,
@@ -50,9 +55,14 @@ export default defineConfig({
       use: { ...devices['Desktop Chrome'] },
     },
     {
-      name: 'webkit-tts',
-      testMatch: /tts-playback\.spec\.ts/,
+      name: 'webkit',
+      testMatch: crossBrowserTests,
       use: { ...devices['Desktop Safari'] },
+    },
+    {
+      name: 'firefox',
+      testMatch: crossBrowserTests,
+      use: { ...devices['Desktop Firefox'] },
     },
   ],
 });

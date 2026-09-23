@@ -217,8 +217,40 @@ See our [Contributing Guidelines](https://github.com/libre-webui/libre-webui/blo
 Every pull request, including a stacked pull request into an intermediate
 feature or fix branch, runs the `Format & Lint` workflow. Its independent jobs
 check formatting, frontend and backend linting, TypeScript types, package and
-regression tests, and the Playwright browser suite. Failed browser runs upload
-their Playwright results for debugging.
+regression tests, and the Playwright browser suite. Chromium runs the full
+browser suite. WebKit and Firefox also run the critical authentication,
+streaming, dialog, tab, automation, storage, Work, and speech-playback flows.
+Each engine runs in its own CI job, and failed runs upload separate test results.
+
+The tested npm tarball is installed into a new consumer directory on Linux,
+macOS, and Windows, using both Node 22.22 and Node 24. These checks install real
+production dependencies without borrowing the checkout's `node_modules`, then
+verify CLI startup, readiness, frontend serving, and data across a restart.
+Run the same check locally after `npm run build` with
+`npm run test:package-install`; pass a tarball or a directory containing one
+tarball to test a specific artifact. A clean installation needs registry access
+and the platform's normal native-module build prerequisites when a prebuilt
+dependency is unavailable.
+
+A separate Work Computer job builds the GUI image from the runtime's pinned
+base and runs the real interaction regression. `TEST_WORK_COMPUTER=1` makes a
+missing Docker daemon or image fail the check rather than skip it. To reproduce
+locally, set that flag and `WORK_COMPUTER_TEST_IMAGE` to a separately built test
+image, then run `npm run test:work-computer`. Without required mode, local runs
+still report a skip when the optional GUI fixture is absent.
+
+This matrix adds checks for the supported surfaces; it does not enable
+unsupported combinations. Node-local CLI credentials remain unavailable to
+external team workers, and native DSH sockets still require a shared Unix host.
+
+CodeQL covers JavaScript/TypeScript, Python, and workflow code on every pull
+request. The executable Python provider servers under `examples/` are explicitly
+classified as code in `.gitattributes`, so GitHub language detection includes
+them. The separate managed **Code Quality** setup should include both
+JavaScript/TypeScript and Python. If historical findings remain after a fix,
+verify the analyzed revision and language coverage and refresh the applicable
+analysis after publishing the change. Do not dismiss valid findings or change
+correct asynchronous behavior merely to improve a displayed grade.
 
 The `Electron Dev Build` workflow also packages macOS, Windows, and Linux
 artifacts. macOS pull-request builds retain the project's credential-free ad-hoc
