@@ -272,6 +272,7 @@ export async function stopCordisHost(): Promise<void> {
   try {
     await stopping;
   } finally {
-    if (stopPromise === stopping) stopPromise = undefined;
+    // Only this stop operation may clear the shared teardown promise.
+    if (Object.is(stopPromise, stopping)) stopPromise = undefined;
   }
 }

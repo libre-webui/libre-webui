@@ -18,7 +18,6 @@ import assert from 'node:assert/strict';
 import {
   chmod,
   lstat,
-  mkdir,
   mkdtemp,
   readFile,
   realpath,

@@ -55,9 +55,6 @@ const distModule = (relativePath) =>
 const { startCordisHost } = await distModule('cordis/host/host.js');
 const { resolveCordisHostConfig } = await distModule('cordis/host/config.js');
 
-const ENGINE_PLUGIN = pathToFileURL(
-  path.join(backendDir, 'dist', 'cordis', 'dsh', 'engine-plugin.js')
-).href;
 const FIXTURE_ADAPTER = pathToFileURL(
   path.join(repoRoot, 'scripts', 'fixtures', 'cordis', 'fake-adapter.mjs')
 ).href;
@@ -83,7 +80,6 @@ function snapshot(host) {
 
 const workspacePath = path.join(tempRoot, 'workspace');
 const sessionStorePath = path.join(tempRoot, 'sessions');
-const runtimePath = path.join(tempRoot, 'runtime');
 await mkdir(workspacePath, { recursive: true });
 await mkdir(sessionStorePath, { recursive: true });
 

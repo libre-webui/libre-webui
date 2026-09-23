@@ -123,7 +123,6 @@ export function ditherWallpaper(
     throw new RangeError('Wallpaper pixel dimensions do not match the buffer');
   }
   const output = new Uint8ClampedArray(pixels);
-  const levels = 1;
   for (let y = 0; y < height; y += 1) {
     for (let x = 0; x < width; x += 1) {
       const offset = (y * width + x) * 4;
@@ -134,10 +133,9 @@ export function ditherWallpaper(
         pixels[offset + 2]
       );
       if (peak === 0) continue;
-      // Quantize brightness together so shadow dots retain the source hue
-      // instead of splitting into unrelated white or primary-color pixels.
-      const step = Math.round((peak / 255) * levels + threshold);
-      const scale = (Math.max(0, Math.min(levels, step)) * 255) / levels / peak;
+      // Binary brightness creates distinct dots; scaling RGB together keeps
+      // their source hue instead of unrelated white or primary-color pixels.
+      const scale = peak / 255 + threshold >= 0.5 ? 255 / peak : 0;
       for (let channel = 0; channel < 3; channel += 1) {
         output[offset + channel] = pixels[offset + channel] * scale;
       }

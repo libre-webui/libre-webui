@@ -180,20 +180,6 @@ async function exampleComposition() {
     );
 }
 
-/**
- * Remove the Libre WebUI provider adapter row.
- *
- * That row delegates to the deployment's provider layer, which a test host does
- * not install; leaving it in place makes the row fail to register and the bridge
- * never activates. Scenarios supply their own fixture adapter instead.
- */
-function withoutProviderAdapter(composition) {
-  return composition.replace(
-    /\n *# Serves the engine's model calls[\s\S]*?- id: libre-webui-llm-adapter\n *name: '[^']*'\n/,
-    '\n'
-  );
-}
-
 /** Read the shipped example composition verbatim, relative specifier intact. */
 async function shippedComposition() {
   return readFile(path.join(backendDir, 'cordis.patch.example.yml'), 'utf8');

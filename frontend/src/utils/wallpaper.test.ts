@@ -16,6 +16,7 @@
  */
 
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import test from 'node:test';
 import {
   ditherWallpaper,
@@ -112,6 +113,36 @@ test('dithering is deterministic, preserves alpha and never mutates the source',
   }
   assert.equal(shades.size, 2);
   assert.ok(Math.abs(sum / 64 - 100) < 1);
+});
+
+test('binary dithering retains reference pixels across hues and matrix positions', () => {
+  const source = new Uint8ClampedArray(64 * 64 * 4);
+  for (let y = 0; y < 64; y += 1) {
+    for (let x = 0; x < 64; x += 1) {
+      source.set(
+        [
+          (x * 17 + y * 29) % 256,
+          (x * 43 + y * 7) % 256,
+          (x * 11 + y * 53) % 256,
+          (x * 3 + y * 5) % 256,
+        ],
+        (y * 64 + x) * 4
+      );
+    }
+  }
+  // References cover both raw pixels and fractional highlight preparation.
+  const digest = (pixels: Uint8ClampedArray | Float32Array) =>
+    createHash('sha256')
+      .update(ditherWallpaper(pixels, 64, 64))
+      .digest('hex');
+  assert.equal(
+    digest(source),
+    'cbe2b37778fc40aa71be71cbcdda9723d9cd8de1b2b54c0566f2538d59a92dbd'
+  );
+  assert.equal(
+    digest(prepareWallpaperDither(source)),
+    '961fe4eaf798855557433d74de234af7eb188fbc0b6bd3d81f1e1706cb519809'
+  );
 });
 
 test('dithering retains black and white and rejects mismatched buffers', () => {
