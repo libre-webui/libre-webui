@@ -69,7 +69,12 @@ export const createCorsMiddleware = (options: CorsOptions) => {
     options.rejection || (() => new Error('Not allowed by CORS'));
 
   return (req: Request, res: Response, next: NextFunction) => {
-    const requestOrigin = req.headers.origin;
+    const requestOrigin: unknown = req.headers.origin;
+    // Never choose one value from a malformed multi-origin request or reflect
+    // an unexpected runtime value as a response header.
+    if (requestOrigin !== undefined && typeof requestOrigin !== 'string') {
+      return next(rejection(undefined));
+    }
     if (options.isOriginAllowed(requestOrigin)) {
       // Echo the origin only once the policy accepted this exact value.
       if (requestOrigin !== undefined) {
