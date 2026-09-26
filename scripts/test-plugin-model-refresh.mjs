@@ -24,9 +24,8 @@ fs.mkdirSync(process.env.PLUGINS_DIR, { recursive: true });
 process.chdir(testDataDir);
 
 const coordinationModule = await import(
-  pathToFileURL(
-    path.join(distRoot, 'platform', 'coordination', 'service.js')
-  ).href
+  pathToFileURL(path.join(distRoot, 'platform', 'coordination', 'service.js'))
+    .href
 );
 await coordinationModule.initializeCoordinator();
 
@@ -551,6 +550,38 @@ test('a slow provider cannot stall the plugin list past the refresh deadline', a
   } finally {
     await service.deletePlugin(pluginId);
     provider.state.delayMs = 0;
+    await provider.close();
+  }
+});
+
+test('discovery drops models the provider marks unavailable', async () => {
+  const app = express();
+  app.get('/v1/models', (_req, res) => {
+    res.json({
+      data: [
+        { id: 'callable-model', status: 'available' },
+        {
+          id: 'retention-locked-model',
+          status: 'unavailable',
+          status_reason:
+            "This model is not available under data retention mode 'none'.",
+        },
+        { id: 'unmarked-model' },
+      ],
+    });
+  });
+  const provider = await listen(app);
+  const service = new PluginService();
+  const admin = upsertTestUser('model-refresh-status-admin', 'admin');
+  const pluginId = 'refresh-status-provider';
+  await installProvider(service, pluginId, provider.baseUrl, admin.id);
+  try {
+    assert.deepEqual(await service.discoverModels(pluginId, admin.id), [
+      'callable-model',
+      'unmarked-model',
+    ]);
+  } finally {
+    await service.deletePlugin(pluginId);
     await provider.close();
   }
 });

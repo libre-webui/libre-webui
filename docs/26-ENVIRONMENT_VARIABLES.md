@@ -527,20 +527,21 @@ ignores the interval.
 
 Provider plugins can use environment keys as deployment-wide defaults:
 
-| Variable              | Provider                                    |
-| --------------------- | ------------------------------------------- |
-| `OPENAI_API_KEY`      | OpenAI and OpenAI TTS                       |
-| `ANTHROPIC_API_KEY`   | Anthropic                                   |
-| `GROQ_API_KEY`        | Groq                                        |
-| `GEMINI_API_KEY`      | Google Gemini                               |
-| `MISTRAL_API_KEY`     | Mistral                                     |
-| `DEEPSEEK_API_KEY`    | DeepSeek                                    |
-| `OPENROUTER_API_KEY`  | OpenRouter                                  |
-| `KIMI_API_KEY`        | Kimi Code by Moonshot AI                    |
-| `GITHUB_API_KEY`      | GitHub Models                               |
-| `HUGGINGFACE_API_KEY` | Hugging Face APIs where configured          |
-| `ELEVENLABS_API_KEY`  | ElevenLabs TTS                              |
-| `COMFYUI_API_KEY`     | ComfyUI deployments that require an API key |
+| Variable                   | Provider                                    |
+| -------------------------- | ------------------------------------------- |
+| `OPENAI_API_KEY`           | OpenAI and OpenAI TTS                       |
+| `ANTHROPIC_API_KEY`        | Anthropic                                   |
+| `GROQ_API_KEY`             | Groq                                        |
+| `GEMINI_API_KEY`           | Google Gemini                               |
+| `MISTRAL_API_KEY`          | Mistral                                     |
+| `DEEPSEEK_API_KEY`         | DeepSeek                                    |
+| `AWS_BEARER_TOKEN_BEDROCK` | Amazon Bedrock API key                      |
+| `OPENROUTER_API_KEY`       | OpenRouter                                  |
+| `KIMI_API_KEY`             | Kimi Code by Moonshot AI                    |
+| `GITHUB_API_KEY`           | GitHub Models                               |
+| `HUGGINGFACE_API_KEY`      | Hugging Face APIs where configured          |
+| `ELEVENLABS_API_KEY`       | ElevenLabs TTS                              |
+| `COMFYUI_API_KEY`          | ComfyUI deployments that require an API key |
 
 Users can also store provider credentials in the UI when per-user keys are
 preferred. Environment keys are used only with the routing and authentication

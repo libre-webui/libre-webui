@@ -92,11 +92,32 @@ The provider is administrator-only since every call spends the server owner's
 ChatGPT subscription. Hide it entirely with `CODEX_OAUTH_MODELS_ENABLED=false`,
 or point at a different sign-in with `CODEX_HOME`.
 
+## Amazon Bedrock
+
+The bundled **Amazon Bedrock** provider takes a Bedrock API key, either
+short-term or long-term, from the Amazon Bedrock console. Save it in the
+provider's settings or set `AWS_BEARER_TOKEN_BEDROCK` on the server. It needs
+no AWS SDK, access key pair, or IAM signing.
+
+Libre WebUI talks to the Region's `bedrock-mantle.<region>.api.aws` endpoint and
+lists every model the account can call there, the same way OpenRouter lists its
+catalog. Models the account cannot use yet, for example because of its data
+retention mode, are left out of the list. Pick the Region with the **Region**
+setting. It only switches between Bedrock hosts, so the key can never be sent
+anywhere else, and changing it keeps the saved key.
+
+Claude models (`anthropic.*`) run through Bedrock's Anthropic Messages API, so
+thinking, tools, and token ceilings behave as they do with the Anthropic
+provider. Every other model uses Chat Completions. Bedrock serves some families
+on a second Chat Completions route; Libre WebUI tries that route when Bedrock
+says a model lives there and remembers it. Chat, Work, and the Strands engine
+can all use these models, and usage appears under the provider in analytics.
+
 ## Choose a Bundled or Imported Provider
 
 Libre WebUI includes definitions for OpenAI, Anthropic, Gemini, Groq, Mistral,
-DeepSeek, OpenRouter, Kimi Code by Moonshot AI, Hugging Face, GitHub Models,
-local MLX LM, and other model or media services. Start with a bundled entry when
+DeepSeek, Amazon Bedrock, OpenRouter, Kimi Code by Moonshot AI, Hugging Face,
+GitHub Models, local MLX LM, and other model or media services. Start with a bundled entry when
 its protocol and authentication contract match the service you want to use.
 
 For another compatible service, an administrator can import a plugin JSON

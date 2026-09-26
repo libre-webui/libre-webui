@@ -17,6 +17,7 @@
 
 import type { Plugin, PluginApiMode } from '../types/index.js';
 import codexOAuthService from '../services/codexOAuthService.js';
+import { applyBedrockRegion, isBedrockPlugin } from './bedrockMantle.js';
 import { createLogger } from './logger.js';
 
 const logger = createLogger('utils:plugin-validation');
@@ -263,6 +264,21 @@ function matchesDeclaredPluginBasePath(
 }
 
 export function resolvePluginApiConfig(
+  plugin: Pick<Plugin, 'endpoint' | 'api_mode' | 'base_url' | 'api_path'> &
+    Partial<Pick<Plugin, 'id'>>,
+  variables: Record<string, string | number | boolean> = {}
+): ResolvedPluginApiConfig {
+  const config = resolveDeclaredPluginApiConfig(plugin, variables);
+  if (plugin.id && isBedrockPlugin({ id: plugin.id })) {
+    return {
+      ...config,
+      endpoint: applyBedrockRegion(config.endpoint, variables.region),
+    };
+  }
+  return config;
+}
+
+function resolveDeclaredPluginApiConfig(
   plugin: Pick<Plugin, 'endpoint' | 'api_mode' | 'base_url' | 'api_path'>,
   variables: Record<string, string | number | boolean> = {}
 ): ResolvedPluginApiConfig {

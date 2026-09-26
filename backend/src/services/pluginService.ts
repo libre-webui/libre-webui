@@ -15,6 +15,11 @@
  * limitations under the License.
  */
 
+import {
+  fetchPluginChat,
+  pluginChatProtocol,
+  requestPluginChat,
+} from '../utils/bedrockMantle.js';
 import fs from 'fs';
 import path from 'path';
 import { createHash } from 'crypto';
@@ -1885,6 +1890,8 @@ export class PluginService {
       const entries = response.data?.data;
       if (entries && Array.isArray(entries)) {
         const models = entries
+          // Bedrock lists models the account cannot call, marked unavailable.
+          .filter((m: { status?: unknown }) => m?.status !== 'unavailable')
           .map((m: { id?: string }) => m.id)
           .filter((id: unknown): id is string => typeof id === 'string');
         // Providers that publish a context window are worth remembering: it is
@@ -2557,14 +2564,20 @@ export class PluginService {
 
     const startedAt = Date.now();
     try {
-      const response = await providerRequest<Record<string, unknown>>({
-        url: processedEndpoint,
-        method: 'POST',
-        json: payload,
-        headers,
-        timeoutMs: 60000, // 60 second timeout
-        signal,
-      });
+      const response = await requestPluginChat(
+        activePlugin,
+        processedEndpoint,
+        model,
+        url =>
+          providerRequest<Record<string, unknown>>({
+            url,
+            method: 'POST',
+            json: payload,
+            headers,
+            timeoutMs: 60000, // 60 second timeout
+            signal,
+          })
+      );
 
       const normalized = convertProviderResponse(
         activePlugin,
@@ -2713,7 +2726,10 @@ export class PluginService {
     );
     const payload = pluginRequest.payload;
     Object.assign(headers, pluginRequest.headers);
-    if (activePlugin.id !== 'anthropic' && apiMode !== 'responses') {
+    if (
+      pluginChatProtocol(activePlugin, model) !== 'anthropic' &&
+      apiMode !== 'responses'
+    ) {
       // Completion streams otherwise omit usage on OpenAI-compatible servers.
       payload.stream_options = { include_usage: true };
     }
@@ -2749,15 +2765,20 @@ export class PluginService {
     };
 
     try {
-      const response = await fetch(processedEndpoint, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify(payload),
-        redirect: 'error',
-        signal,
-      });
+      const response = await fetchPluginChat(
+        activePlugin,
+        processedEndpoint,
+        model,
+        {
+          method: 'POST',
+          headers,
+          body: JSON.stringify(payload),
+          redirect: 'error',
+          signal,
+        }
+      );
 
-      if (activePlugin.id === 'anthropic') {
+      if (pluginChatProtocol(activePlugin, model) === 'anthropic') {
         yield* forward(streamAnthropicResponse(response));
       } else if (apiMode === 'responses') {
         const contentType = response.headers.get('content-type') || '';

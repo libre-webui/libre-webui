@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### ✨ New Features
 
+- **Amazon Bedrock provider**: Paste a Bedrock API key (or set
+  `AWS_BEARER_TOKEN_BEDROCK`) and every model the account can call in the chosen
+  Region shows up, the same way OpenRouter lists its catalog. Claude runs through
+  Bedrock's Anthropic Messages API with tools and thinking; the other families
+  (DeepSeek, Qwen, Mistral, Kimi, GLM, gpt-oss, Gemma, Grok and more) use Chat
+  Completions. Models the account cannot use yet are left out, and a Region
+  setting switches between Bedrock hosts without exposing the key elsewhere.
+
 ### 🔧 Improvements
 
 ### 🐛 Bug Fixes

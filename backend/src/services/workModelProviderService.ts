@@ -15,6 +15,11 @@
  * limitations under the License.
  */
 
+import {
+  fetchPluginChat,
+  pluginChatProtocol,
+  requestPluginChat,
+} from '../utils/bedrockMantle.js';
 import { createHash } from 'crypto';
 import {
   isWorkStrandsModel,
@@ -506,11 +511,17 @@ export class WorkModelProviderService {
 
     const startedAt = Date.now();
     try {
-      const response = await this.dependencies.post(endpoint, payload, {
-        headers,
-        signal,
-        timeout: 300_000,
-      });
+      const response = await requestPluginChat(
+        plugin,
+        endpoint,
+        request.model,
+        url =>
+          this.dependencies.post(url, payload, {
+            headers,
+            signal,
+            timeout: 300_000,
+          })
+      );
       const normalized = normalizePluginWorkResponse(
         plugin,
         (response.data ?? {}) as JsonObject,
@@ -697,7 +708,7 @@ export class WorkModelProviderService {
 
     const startedAt = Date.now();
     try {
-      const response = await fetch(endpoint, {
+      const response = await fetchPluginChat(plugin, endpoint, request.model, {
         method: 'POST',
         headers,
         body: JSON.stringify(payload),
@@ -737,7 +748,7 @@ export class WorkModelProviderService {
         return normalized;
       }
       const chunks =
-        plugin.id === 'anthropic'
+        pluginChatProtocol(plugin, request.model) === 'anthropic'
           ? streamAnthropicResponse(response)
           : plugin.id === 'gemini'
             ? streamGeminiWorkResponse(response)
@@ -828,7 +839,7 @@ export function buildPluginWorkPayload(
 ): { payload: JsonObject; extraHeaders: Record<string, string> } {
   const options = (request.options || {}) as GenerationOptions;
   const params = resolvePluginChatParameters(options, variables);
-  if (plugin.id === 'anthropic') {
+  if (pluginChatProtocol(plugin, request.model) === 'anthropic') {
     return {
       payload: buildAnthropicWorkPayload(
         request.model,
@@ -897,7 +908,7 @@ export function normalizePluginWorkResponse(
     inferPluginApiMode(plugin.endpoint),
   providerStateScope?: string
 ): OllamaChatResponse {
-  if (plugin.id === 'anthropic') {
+  if (pluginChatProtocol(plugin, model) === 'anthropic') {
     return normalizeAnthropicWorkResponse(response, model);
   }
   if (plugin.id === 'gemini') {

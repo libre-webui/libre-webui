@@ -1682,7 +1682,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     tts: 'voice speech audio speak read aloud',
     'image-gen': 'image generation size quality style',
     plugins:
-      'api key provider connection openai anthropic groq gemini deepseek',
+      'api key provider connection openai anthropic groq gemini deepseek bedrock aws amazon',
     search: 'web search searxng internet browse sources',
     shortcuts: 'keyboard keys hotkeys shortcut command palette',
     sessions: 'sessions devices sign out logout revoke security login',

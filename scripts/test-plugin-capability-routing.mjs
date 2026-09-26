@@ -469,14 +469,25 @@ test('chat, Work, discovery, and generated media clients disable redirects', () 
   );
   assert.match(
     pluginServiceSource,
-    /fetch\(processedEndpoint,[\s\S]*?redirect: 'error'/
+    /fetchPluginChat\(\s*activePlugin,\s*processedEndpoint,[\s\S]*?redirect: 'error'/
   );
   assert.match(
     workServiceSource,
     /const defaultProviderPost[\s\S]*?providerRequest\(\{[\s\S]*?redirect: 'error',/,
     'the Work provider post seam must refuse redirects'
   );
-  assert.match(workServiceSource, /fetch\(endpoint,[\s\S]*?redirect: 'error'/);
+  assert.match(
+    workServiceSource,
+    /fetchPluginChat\(\s*plugin,\s*endpoint,[\s\S]*?redirect: 'error'/
+  );
+  assert.match(
+    fs.readFileSync(
+      path.join(repoRoot, 'backend', 'src', 'utils', 'bedrockMantle.ts'),
+      'utf8'
+    ),
+    /url => fetchImpl\(url, init\)/,
+    'every chat route attempt must reuse the caller init and its redirect policy'
+  );
   assertProviderRequestsRefuseRedirects(
     workServiceSource,
     'workModelProviderService.ts'

@@ -15,6 +15,10 @@
  * limitations under the License.
  */
 
+import {
+  bedrockAnthropicModelName,
+  pluginChatProtocol,
+} from './bedrockMantle.js';
 import type {
   ChatMessage,
   GenerationOptions,
@@ -97,7 +101,7 @@ const ANTHROPIC_MAX_OUTPUT_TOKENS: ReadonlyArray<[string, number]> = [
 ];
 
 export function anthropicMaxOutputTokens(model: string): number | undefined {
-  const name = model.toLowerCase();
+  const name = bedrockAnthropicModelName(model).toLowerCase();
   for (const [prefix, ceiling] of ANTHROPIC_MAX_OUTPUT_TOKENS) {
     if (name.startsWith(prefix)) return ceiling;
   }
@@ -454,7 +458,7 @@ function buildAnthropicChatPayload(
   // parameter itself is unknown to the models that never reasoned.
   if (
     budgetTokens === undefined &&
-    ANTHROPIC_LEGACY_SAMPLING_MODELS.has(model)
+    ANTHROPIC_LEGACY_SAMPLING_MODELS.has(bedrockAnthropicModelName(model))
   ) {
     if (params.topP !== undefined && params.topP < 1) {
       payload.top_p = params.topP;
@@ -595,7 +599,7 @@ export function buildPluginChatPayload(
     params.shouldStream = streamOverride;
   }
 
-  if (plugin.id === 'anthropic') {
+  if (pluginChatProtocol(plugin, model) === 'anthropic') {
     return buildAnthropicChatPayload(model, messages, options, params);
   }
 
@@ -815,7 +819,7 @@ export function convertProviderResponse(
   apiMode: PluginApiMode = 'chat_completions',
   providerStateScope?: string
 ): PluginResponse {
-  if (plugin.id === 'anthropic') {
+  if (pluginChatProtocol(plugin, model) === 'anthropic') {
     return convertAnthropicResponse(response, model);
   }
 
