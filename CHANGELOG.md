@@ -9,22 +9,48 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### ✨ New Features
 
+### 🔧 Improvements
+
+### 🐛 Bug Fixes
+
+### 📚 Documentation
+
+## [0.38.0] - 2026-09-26
+
+Strands, an embedded agent engine built on the open-source Strands Agents
+harness, replaces Libre Claw and the Cordis bridge. It runs on the models Libre
+WebUI already serves, in Chat, Work, and its own page, and stays off until an
+administrator turns it on.
+
+### ✨ New Features
+
 - **Strands engine**: An embedded agent engine built on the open-source
   Strands Agents harness. It runs inside the backend on the models Libre WebUI
   already serves (Ollama and active chat provider plugins), with no separate
   provider setup. Use it from the new **Strands** page with persistent
-  sessions, from Chat as the **Strands** agent, or in Work through the
-  **Strands** engine option.
+  sessions and a per-session model picker, from Chat as the **Strands** agent,
+  or in Work through the **Strands** engine option.
 - **Strands access**: Administrators choose who can use the engine under
-  **User Management → Access & policies → Strands engine** (off, administrators,
-  or all users). It is off by default, `LIBRE_STRANDS_ACCESS` pins the mode,
-  and the server enforces it on REST, WebSocket, and Work requests.
+  **User Management → Access & policies → Strands engine** (off,
+  administrators, or all users). It is off by default, `LIBRE_STRANDS_ACCESS`
+  pins the mode, and the server enforces it on REST, WebSocket, and Work
+  requests.
 
 ### 🔧 Improvements
 
 - **Contained agent tools**: On the Strands page the agent gets only `read`,
   `write`, and `edit`, jailed to a private per-session workspace. It has no
   shell, no web access, and no memory or skills from the host.
+- **Keyboard controls**: Focus stays inside the automation dialog, so a
+  background action can no longer replace an unsaved draft. Tabs, notes, and
+  clock controls are reachable from the keyboard in every browser engine, and
+  the clock panel stays usable in short windows.
+- **Closable status popups**: Short status messages now have a **Close**
+  button that works with a pointer or keyboard, so a popup can no longer sit on
+  top of Work actions.
+- **Wider release checks**: Every change now has to install cleanly on Linux,
+  macOS, and Windows with Node 22 and 24, pass critical flows in Chromium,
+  WebKit, and Firefox, and pass the real Work Computer check.
 
 ### ⚠️ Breaking Changes
 
@@ -44,10 +70,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   server and client builds from `cgr.dev`, pinned by digest. The server keeps
   running as root so existing MinIO volumes stay writable.
 
+### 🔒 Security
+
+- **Stricter CORS origins**: Hostnames that only begin with a local or private
+  address, such as `localhost.attacker.example`, are no longer treated as local
+  origins. Requests must carry one well-formed origin, and malformed values or
+  lists of origins are rejected even with `CORS_ORIGIN=*`. Configured origins
+  and literal LAN addresses keep working.
+
 ### 📚 Documentation
 
-- Added the [Strands engine guide](docs/67-STRANDS_ENGINE.md) and replaced the
+- Added the [Strands engine guide](docs/67-STRANDS_ENGINE.md) and removed the
   Libre Claw and Cordis guides.
+- The environment variables guide explains exactly how `CORS_ORIGIN` entries
+  are matched, and the notifications guide covers closing status popups.
 
 ## [0.37.2] - 2026-09-22
 
