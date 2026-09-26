@@ -15,8 +15,9 @@
  * limitations under the License.
  */
 
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Locator, type Page } from '@playwright/test';
 import { defaultSystemInfo, mockLibreWebUiApi } from './lib/mockApi';
+import { chatModelSelectionKey } from '../src/utils/chatModelSelection';
 
 const legacy = [
   { id: 'pi', name: 'Pi' },
@@ -52,6 +53,19 @@ async function openPicker(page: Page) {
   const picker = page.getByRole('dialog', { name: 'Select a model' });
   await expect(picker).toBeVisible();
   return picker;
+}
+
+// Grouped by source, a name can appear on a chip, a header and a row, so
+// availability is checked on the option rows themselves.
+function option(picker: Locator, agent: { id: string; agentId: string }) {
+  const value = chatModelSelectionKey({
+    model: agent.id,
+    providerType: 'agent',
+    providerId: agent.agentId,
+  });
+  return picker.locator(
+    `[data-testid="model-selector-option"][data-model-value="${value}"]`
+  );
 }
 
 async function openAccess(page: Page) {
@@ -135,11 +149,9 @@ for (const toggle of ['cli', 'strands'] as const) {
     await page.goto('/chat');
     let picker = await openPicker(page);
     for (const agent of legacy) {
-      await expect(picker.getByText(agent.name, { exact: true })).toHaveCount(
-        toggle === 'cli' ? 0 : 1
-      );
+      await expect(option(picker, agent)).toHaveCount(toggle === 'cli' ? 0 : 1);
     }
-    await expect(picker.getByText('Strands', { exact: true })).toHaveCount(
+    await expect(option(picker, strandsAgent)).toHaveCount(
       toggle === 'strands' ? 0 : 1
     );
     await expect(
@@ -193,13 +205,10 @@ for (const toggle of ['cli', 'strands'] as const) {
     await enable();
     await page.keyboard.press('Escape');
     picker = await openPicker(page);
-    await expect(picker.getByText('Agents (4)', { exact: true })).toBeVisible();
     for (const agent of legacy) {
-      await expect(picker.getByText(agent.name, { exact: true })).toHaveCount(
-        1
-      );
+      await expect(option(picker, agent)).toHaveCount(1);
     }
-    await expect(picker.getByText('Strands', { exact: true })).toBeVisible();
+    await expect(option(picker, strandsAgent)).toBeVisible();
     await expect(
       picker.getByText('plugin-chat-model', { exact: true })
     ).toBeVisible();
@@ -209,13 +218,11 @@ for (const toggle of ['cli', 'strands'] as const) {
     await disable();
     await page.keyboard.press('Escape');
     picker = await openPicker(page);
-    await expect(picker.getByText('Strands', { exact: true })).toHaveCount(
+    await expect(option(picker, strandsAgent)).toHaveCount(
       toggle === 'strands' ? 0 : 1
     );
     for (const agent of legacy) {
-      await expect(picker.getByText(agent.name, { exact: true })).toHaveCount(
-        toggle === 'cli' ? 0 : 1
-      );
+      await expect(option(picker, agent)).toHaveCount(toggle === 'cli' ? 0 : 1);
     }
     await expect(
       picker.getByText('plugin-chat-model', { exact: true })
