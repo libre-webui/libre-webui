@@ -2914,6 +2914,7 @@
     "searchInstalled": "ค้นหาโมเดลที่ติดตั้ง...",
     "searchOllama": "ค้นหาในไลบรารี Ollama...",
     "searchHuggingFace": "ค้นหาใน HuggingFace...",
+    "searchModels": "ค้นหาโมเดล...",
     "selectModel": "เลือกโมเดล",
     "personas": "บุคลิก",
     "ollamaModels": "โมเดล Ollama",
@@ -2930,7 +2931,10 @@
     "reselectProvider": "เลือกผู้ให้บริการใหม่เพื่อปักหมุดโมเดลนี้",
     "unavailable": "ไม่พร้อมใช้งาน",
     "unavailableSelections": "ตัวเลือกที่ไม่พร้อมใช้งาน",
-    "agentModels": "เอเจนต์"
+    "agentModels": "เอเจนต์",
+    "showAll": "แสดงทั้งหมด ({{total}})",
+    "sources": "แหล่งที่มาของโมเดล",
+    "defaultModel": "โมเดลเริ่มต้น"
   },
   "whatsNew": {
     "title": "มีอะไรใหม่",

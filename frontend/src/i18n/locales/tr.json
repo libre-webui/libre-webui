@@ -2914,6 +2914,7 @@
     "searchInstalled": "Yüklü modelleri ara...",
     "searchOllama": "Ollama kütüphanesinde ara...",
     "searchHuggingFace": "HuggingFace'ta ara...",
+    "searchModels": "Modellerde ara...",
     "selectModel": "Model seç",
     "personas": "Personalar",
     "ollamaModels": "Ollama Modelleri",
@@ -2930,7 +2931,10 @@
     "reselectProvider": "bu modeli sabitlemek için sağlayıcıyı yeniden seçin",
     "unavailable": "kullanılamıyor",
     "unavailableSelections": "Kullanılamayan seçimler",
-    "agentModels": "Ajanlar"
+    "agentModels": "Ajanlar",
+    "showAll": "Tümünü göster ({{total}})",
+    "sources": "Model kaynakları",
+    "defaultModel": "Varsayılan model"
   },
   "whatsNew": {
     "title": "Yenilikler",

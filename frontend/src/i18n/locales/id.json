@@ -2914,6 +2914,7 @@
     "searchInstalled": "Cari model yang terinstal...",
     "searchOllama": "Cari di perpustakaan Ollama...",
     "searchHuggingFace": "Cari di HuggingFace...",
+    "searchModels": "Cari model...",
     "selectModel": "Pilih model",
     "personas": "Persona",
     "ollamaModels": "Model Ollama",
@@ -2930,7 +2931,10 @@
     "reselectProvider": "pilih ulang penyedia untuk menyematkan model ini",
     "unavailable": "tidak tersedia",
     "unavailableSelections": "Pilihan tidak tersedia",
-    "agentModels": "Agen"
+    "agentModels": "Agen",
+    "showAll": "Tampilkan semua ({{total}})",
+    "sources": "Sumber model",
+    "defaultModel": "Model default"
   },
   "whatsNew": {
     "title": "Yang baru",

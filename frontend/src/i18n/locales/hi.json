@@ -2914,6 +2914,7 @@
     "searchInstalled": "स्थापित मॉडल खोजें...",
     "searchOllama": "Ollama लाइब्रेरी में खोजें...",
     "searchHuggingFace": "HuggingFace में खोजें...",
+    "searchModels": "मॉडल खोजें...",
     "selectModel": "मॉडल चुनें",
     "personas": "व्यक्तित्व",
     "ollamaModels": "Ollama मॉडल",
@@ -2930,7 +2931,10 @@
     "reselectProvider": "इस मॉडल को पिन करने के लिए प्रोवाइडर फिर चुनें",
     "unavailable": "अनुपलब्ध",
     "unavailableSelections": "अनुपलब्ध चयन",
-    "agentModels": "एजेंट"
+    "agentModels": "एजेंट",
+    "showAll": "सभी दिखाएँ ({{total}})",
+    "sources": "मॉडल स्रोत",
+    "defaultModel": "डिफ़ॉल्ट मॉडल"
   },
   "whatsNew": {
     "title": "नया क्या है",

@@ -2914,6 +2914,7 @@
     "searchInstalled": "Tìm kiếm mô hình đã cài...",
     "searchOllama": "Tìm trong thư viện Ollama...",
     "searchHuggingFace": "Tìm trên HuggingFace...",
+    "searchModels": "Tìm kiếm mô hình...",
     "selectModel": "Chọn mô hình",
     "personas": "Nhân vật",
     "ollamaModels": "Mô hình Ollama",
@@ -2930,7 +2931,10 @@
     "reselectProvider": "chọn lại nhà cung cấp để ghim mô hình này",
     "unavailable": "không khả dụng",
     "unavailableSelections": "Lựa chọn không khả dụng",
-    "agentModels": "Tác nhân"
+    "agentModels": "Tác nhân",
+    "showAll": "Hiện tất cả ({{total}})",
+    "sources": "Nguồn mô hình",
+    "defaultModel": "Mô hình mặc định"
   },
   "whatsNew": {
     "title": "Có gì mới",

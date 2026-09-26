@@ -2914,6 +2914,7 @@
     "searchInstalled": "Pesquisar modelos instalados...",
     "searchOllama": "Pesquisar na biblioteca Ollama...",
     "searchHuggingFace": "Pesquisar no HuggingFace...",
+    "searchModels": "Pesquisar modelos...",
     "selectModel": "Selecionar modelo",
     "personas": "Personas",
     "ollamaModels": "Modelos Ollama",
@@ -2930,7 +2931,10 @@
     "reselectProvider": "selecione novamente um provedor para fixar este modelo",
     "unavailable": "indisponível",
     "unavailableSelections": "Seleções indisponíveis",
-    "agentModels": "Agentes"
+    "agentModels": "Agentes",
+    "showAll": "Mostrar todos ({{total}})",
+    "sources": "Origens dos modelos",
+    "defaultModel": "Modelo padrão"
   },
   "whatsNew": {
     "title": "Novidades",

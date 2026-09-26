@@ -2914,6 +2914,7 @@
     "searchInstalled": "Поиск установленных моделей...",
     "searchOllama": "Поиск в библиотеке Ollama...",
     "searchHuggingFace": "Поиск на HuggingFace...",
+    "searchModels": "Поиск моделей...",
     "selectModel": "Выбрать модель",
     "personas": "Персоны",
     "ollamaModels": "Модели Ollama",
@@ -2930,7 +2931,10 @@
     "reselectProvider": "заново выберите провайдера, чтобы закрепить модель",
     "unavailable": "недоступно",
     "unavailableSelections": "Недоступные варианты",
-    "agentModels": "Агенты"
+    "agentModels": "Агенты",
+    "showAll": "Показать все ({{total}})",
+    "sources": "Источники моделей",
+    "defaultModel": "Модель по умолчанию"
   },
   "whatsNew": {
     "title": "Что нового",

@@ -2914,6 +2914,7 @@
     "searchInstalled": "Search installed models...",
     "searchOllama": "Search Ollama library...",
     "searchHuggingFace": "Search HuggingFace...",
+    "searchModels": "Leita í líkönum...",
     "selectModel": "Select Model",
     "personas": "Personas",
     "ollamaModels": "Ollama Models",
@@ -2930,7 +2931,10 @@
     "reselectProvider": "veldu veitanda aftur til að festa þetta líkan",
     "unavailable": "ófáanlegt",
     "unavailableSelections": "Ófáanlegar valkostir",
-    "agentModels": "Fulltrúar"
+    "agentModels": "Fulltrúar",
+    "showAll": "Sýna allt ({{total}})",
+    "sources": "Uppruni líkana",
+    "defaultModel": "Sjálfgefið líkan"
   },
   "whatsNew": {
     "title": "Nýjungar",

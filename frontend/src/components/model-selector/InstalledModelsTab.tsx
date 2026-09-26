@@ -17,25 +17,26 @@
 
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Check, Cpu, ImageIcon, Plus } from 'lucide-react';
+import { Check, ChevronRight, Cpu, ImageIcon, Plus } from 'lucide-react';
 import type { OllamaModel } from '@/types';
 import { cn } from '@/utils';
 import type { ModelGroup } from './types';
 
 interface InstalledModelsTabProps {
-  filteredGroups: ModelGroup[];
+  groups: ModelGroup[];
   selectedModel: string;
   showImageGen: boolean;
   getModelValue: (model: OllamaModel) => string;
   getModelIcon: (model: OllamaModel) => ReactNode;
-  getModelLabel: (model: OllamaModel) => string;
-  getModelSubLabel: (model: OllamaModel) => string | null;
+  getModelLabel: (model: OllamaModel, group: ModelGroup) => string;
+  getModelSubLabel: (model: OllamaModel, group: ModelGroup) => string | null;
   onModelSelect: (modelName: string) => void;
+  onShowAll: (groupKey: string) => void;
   onOpenGallery: () => void;
 }
 
 export function InstalledModelsTab({
-  filteredGroups,
+  groups,
   selectedModel,
   showImageGen,
   getModelValue,
@@ -43,23 +44,28 @@ export function InstalledModelsTab({
   getModelLabel,
   getModelSubLabel,
   onModelSelect,
+  onShowAll,
   onOpenGallery,
 }: InstalledModelsTabProps) {
   const { t } = useTranslation();
 
   return (
     <div className='scroll-region min-h-0 flex-1 scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-dark-400'>
-      {filteredGroups.length > 0 ? (
-        filteredGroups.map(group => (
-          <div key={group.type}>
-            <div className='px-3 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-dark-300 border-b border-gray-200 dark:border-dark-400 sticky top-0'>
-              <div className='flex items-center gap-2'>
+      {groups.length > 0 ? (
+        groups.map(group => (
+          <div key={group.key} data-testid='model-selector-group'>
+            {group.showHeader && (
+              <div className='sticky top-0 z-[1] flex items-center gap-2 border-b border-gray-200 bg-gray-100 px-3 py-2 text-xs font-semibold text-gray-500 dark:border-dark-400 dark:bg-dark-300 dark:text-gray-400'>
                 {group.icon}
-                {group.label} ({group.models.length})
+                <span className='min-w-0 truncate'>{group.label}</span>
+                <span className='font-normal tabular-nums text-gray-400 dark:text-dark-500'>
+                  {group.total}
+                </span>
               </div>
-            </div>
+            )}
             {group.models.map(model => {
               const modelValue = getModelValue(model);
+              const subLabel = getModelSubLabel(model, group);
               return (
                 <button
                   type='button'
@@ -69,7 +75,7 @@ export function InstalledModelsTab({
                   aria-pressed={selectedModel === modelValue}
                   onClick={() => onModelSelect(modelValue)}
                   className={cn(
-                    'block w-full cursor-pointer border-b border-gray-100 px-3 py-3 text-start last:border-b-0 dark:border-dark-200',
+                    'block w-full cursor-pointer border-b border-gray-100 px-3 py-2.5 text-start last:border-b-0 dark:border-dark-200',
                     'hover:bg-gray-50 dark:hover:bg-dark-200',
                     'bg-white dark:bg-dark-100 transition-colors',
                     'focus-visible:relative focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary-500/50',
@@ -84,14 +90,14 @@ export function InstalledModelsTab({
                         dir={model.isPersona ? 'auto' : 'ltr'}
                         className='text-sm font-medium text-gray-900 dark:text-gray-100 truncate'
                       >
-                        {getModelLabel(model)}
+                        {getModelLabel(model, group)}
                       </div>
-                      {getModelSubLabel(model) && (
+                      {subLabel && (
                         <div
                           dir='auto'
                           className='text-xs text-gray-500 dark:text-gray-400 truncate'
                         >
-                          {getModelSubLabel(model)}
+                          {subLabel}
                         </div>
                       )}
                     </div>
@@ -102,6 +108,23 @@ export function InstalledModelsTab({
                 </button>
               );
             })}
+            {group.hidden > 0 && (
+              <button
+                type='button'
+                data-testid='model-selector-show-all'
+                onClick={() => onShowAll(group.key)}
+                className={cn(
+                  'flex w-full items-center justify-between gap-2 border-b border-gray-100 bg-white px-3 py-2 text-start text-xs font-medium text-primary-600 dark:border-dark-200 dark:bg-dark-100 dark:text-primary-400',
+                  'hover:bg-gray-50 dark:hover:bg-dark-200',
+                  'focus-visible:relative focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary-500/50'
+                )}
+              >
+                <span className='truncate'>
+                  {t('modelSelector.showAll', { total: group.total })}
+                </span>
+                <ChevronRight className='h-3.5 w-3.5 shrink-0 rtl:rotate-180' />
+              </button>
+            )}
           </div>
         ))
       ) : (

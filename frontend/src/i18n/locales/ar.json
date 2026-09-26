@@ -2914,6 +2914,7 @@
     "searchInstalled": "البحث في النماذج المثبتة...",
     "searchOllama": "البحث في مكتبة Ollama...",
     "searchHuggingFace": "البحث في HuggingFace...",
+    "searchModels": "ابحث في النماذج...",
     "selectModel": "اختر نموذجًا",
     "personas": "الشخصيات",
     "ollamaModels": "نماذج Ollama",
@@ -2930,7 +2931,10 @@
     "reselectProvider": "أعد اختيار مزود لتثبيت هذا النموذج",
     "unavailable": "غير متاح",
     "unavailableSelections": "اختيارات غير متاحة",
-    "agentModels": "الوكلاء"
+    "agentModels": "الوكلاء",
+    "showAll": "عرض الكل ({{total}})",
+    "sources": "مصادر النماذج",
+    "defaultModel": "النموذج الافتراضي"
   },
   "whatsNew": {
     "title": "ما الجديد",

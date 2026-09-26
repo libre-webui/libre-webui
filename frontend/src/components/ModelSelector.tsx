@@ -21,6 +21,7 @@ import React, {
   useEffect,
   useCallback,
   useImperativeHandle,
+  useMemo,
 } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
@@ -52,10 +53,21 @@ import { useAuthStore } from '@/store/authStore';
 import toast from 'react-hot-toast';
 import { createLogger } from '@/utils/logger';
 import { isAvailableOllamaModel } from '@/utils/chatModelSelection';
+import {
+  agentRowParts,
+  buildModelSources,
+  modelMatchesSearch,
+  previewSourceModels,
+  type ModelSource,
+} from '@/utils/modelSelectorGroups';
 import { modelVisibilityKey } from '@/utils/modelVisibility';
 import { useChatStore } from '@/store/chatStore';
 import { HuggingFaceModelsTab } from '@/components/model-selector/HuggingFaceModelsTab';
 import { InstalledModelsTab } from '@/components/model-selector/InstalledModelsTab';
+import {
+  ALL_SOURCES,
+  ModelSourceFilter,
+} from '@/components/model-selector/ModelSourceFilter';
 import { OllamaLibraryTab } from '@/components/model-selector/OllamaLibraryTab';
 import type {
   LibraryModel,
@@ -88,6 +100,7 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState<TabType>('installed');
+  const [activeSource, setActiveSource] = useState<string>(ALL_SOURCES);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
   const internalTriggerRef = useRef<HTMLButtonElement>(null);
@@ -96,6 +109,10 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
   const { user, systemInfo } = useAuthStore();
   const canInstallModels =
     user?.role === 'admin' || systemInfo?.requiresAuth === false;
+  // With Ollama off there is nothing to browse or pull, so its library and
+  // the Hugging Face GGUF tab go away and the list is the only view.
+  const ollamaEnabled = systemInfo?.ollamaEnabled !== false;
+  const tab: TabType = ollamaEnabled ? activeTab : 'installed';
 
   const [libraryCategory, setLibraryCategory] = useState('all');
   const [libraryDebouncedSearch, setLibraryDebouncedSearch] = useState('');
@@ -126,70 +143,39 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
     'cloud',
   ];
 
-  const groupedModels: ModelGroup[] = [
-    {
-      type: 'legacy' as const,
-      label: t('modelSelector.providerNotRecorded', 'Provider not recorded'),
-      icon: <Brain className='h-4 w-4 text-gray-500 dark:text-dark-600' />,
-      models: models.filter(model => model.isLegacySelection),
-      color: 'gray',
-    },
-    {
-      type: 'unavailable' as const,
-      label: t('modelSelector.unavailableSelections', 'Unavailable selections'),
-      icon: <X className='h-4 w-4 text-gray-500 dark:text-dark-600' />,
-      models: models.filter(
-        model => model.isUnavailable && !model.isLegacySelection
-      ),
-      color: 'gray',
-    },
-    {
-      type: 'personas' as const,
-      label: t('modelSelector.personas'),
-      icon: <User className='h-4 w-4 text-gray-500 dark:text-dark-600' />,
-      models: models.filter(model => model.isPersona && !model.isUnavailable),
-      color: 'purple',
-    },
-    {
-      type: 'agents' as const,
-      label: t('modelSelector.agentModels', 'Agents'),
-      icon: <Terminal className='h-4 w-4 text-gray-500 dark:text-dark-600' />,
-      models: models.filter(model => model.isAgent && !model.isUnavailable),
-      color: 'green',
-    },
-    {
-      type: 'ollama' as const,
-      label: t('modelSelector.ollamaModels'),
-      icon: <Bot className='h-4 w-4 text-gray-500 dark:text-dark-600' />,
-      models: models.filter(
-        model => isAvailableOllamaModel(model) && !model.name.includes('embed')
-      ),
-      color: 'green',
-    },
-    {
-      type: 'plugins' as const,
-      label: t('modelSelector.pluginModels'),
-      icon: <Zap className='h-4 w-4 text-gray-500 dark:text-dark-600' />,
-      models: models.filter(model => model.isPlugin && !model.isUnavailable),
-      color: 'green',
-    },
-  ].filter(group => group.models.length > 0);
+  const sources = useMemo(
+    () =>
+      buildModelSources(models, {
+        legacy: t('modelSelector.providerNotRecorded', 'Provider not recorded'),
+        unavailable: t(
+          'modelSelector.unavailableSelections',
+          'Unavailable selections'
+        ),
+        personas: t('modelSelector.personas'),
+        ollama: t('modelSelector.ollamaModels'),
+        plugins: t('modelSelector.pluginModels'),
+        agents: t('modelSelector.agentModels', 'Agents'),
+      }),
+    [models, t]
+  );
 
-  const filteredGroups = groupedModels
-    .map(group => ({
-      ...group,
-      models: group.models.filter(
-        model =>
-          model.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          (model.personaName &&
-            model.personaName
-              .toLowerCase()
-              .includes(searchTerm.toLowerCase())) ||
-          (model.pluginName &&
-            model.pluginName.toLowerCase().includes(searchTerm.toLowerCase()))
-      ),
-    }))
-    .filter(group => group.models.length > 0);
+  const sourceIcon = (kind: ModelSource['kind']) => {
+    const className = 'h-4 w-4 shrink-0 text-gray-500 dark:text-dark-600';
+    switch (kind) {
+      case 'legacy':
+        return <Brain className={className} />;
+      case 'unavailable':
+        return <X className={className} />;
+      case 'personas':
+        return <User className={className} />;
+      case 'agent':
+        return <Terminal className={className} />;
+      case 'plugin':
+        return <Zap className={className} />;
+      default:
+        return <Bot className={className} />;
+    }
+  };
 
   const getModelValue = (model: OllamaModel): string =>
     getModelValueOverride?.(model) ?? model.name;
@@ -269,7 +255,7 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
       });
       return response.success && response.data ? response.data : [];
     },
-    enabled: isOpen && activeTab === 'ollama',
+    enabled: isOpen && tab === 'ollama',
   });
 
   const {
@@ -292,7 +278,7 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
       });
       return response.success && response.data ? response.data : [];
     },
-    enabled: isOpen && activeTab === 'huggingface',
+    enabled: isOpen && tab === 'huggingface',
   });
 
   const filteredLibraryModels = libraryModels.filter(model => {
@@ -379,14 +365,14 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      if (activeTab === 'huggingface') {
+      if (tab === 'huggingface') {
         setHfDebouncedSearch(searchTerm);
-      } else if (activeTab === 'ollama') {
+      } else if (tab === 'ollama') {
         setLibraryDebouncedSearch(searchTerm);
       }
     }, 300);
     return () => clearTimeout(timer);
-  }, [searchTerm, activeTab]);
+  }, [searchTerm, tab]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -440,6 +426,13 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
       : modelValue;
     const runtimeModelName = selectedOption?.name ?? modelValue;
     closeSelector();
+
+    if (!ollamaEnabled) {
+      onModelChange({
+        target: { value: selectedValue },
+      } as React.ChangeEvent<HTMLSelectElement>);
+      return;
+    }
 
     try {
       const runningModelsResponse = await ollamaApi.listRunningModels();
@@ -622,6 +615,72 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
     return null;
   };
 
+  /**
+   * Inside a harness group the header already names the harness, so agent
+   * rows show just the model, with its provider underneath.
+   */
+  const getRowLabel = (model: OllamaModel, group: ModelGroup): string => {
+    if (group.kind !== 'agent' || getModelLabelOverride) {
+      return getModelLabel(model);
+    }
+    const named = modelMetadata[modelVisibilityKey(model)]?.label;
+    return named || agentRowParts(model, group.label).title;
+  };
+
+  const getRowSubLabel = (
+    model: OllamaModel,
+    group: ModelGroup
+  ): string | null => {
+    if (group.kind !== 'agent') return getModelSubLabel(model);
+    const parts = agentRowParts(model, group.label);
+    if (parts.isDefault) return t('modelSelector.defaultModel');
+    return parts.provider ? `via ${parts.provider}` : null;
+  };
+
+  const isSelectedModel = (model: OllamaModel) =>
+    getModelValue(model) === selectedModel;
+  const matchingSources = sources.map(source => ({
+    source,
+    matches: source.models.filter(model =>
+      modelMatchesSearch(model, source, searchTerm, getModelLabel(model))
+    ),
+  }));
+  const showSourceFilter = sources.length > 1;
+  const currentSource =
+    showSourceFilter && sources.some(source => source.key === activeSource)
+      ? activeSource
+      : ALL_SOURCES;
+  const combinedView = currentSource === ALL_SOURCES;
+  const visibleGroups: ModelGroup[] = matchingSources
+    .filter(({ source }) => combinedView || source.key === currentSource)
+    .map(({ source, matches }) => {
+      const preview =
+        combinedView && showSourceFilter
+          ? previewSourceModels(matches, isSelectedModel)
+          : { visible: matches, hidden: 0 };
+      return {
+        key: source.key,
+        kind: source.kind,
+        label: source.label,
+        icon: sourceIcon(source.kind),
+        models: preview.visible,
+        total: matches.length,
+        hidden: preview.hidden,
+        showHeader: combinedView,
+      };
+    })
+    .filter(group => group.models.length > 0);
+  const sourceChips = matchingSources.map(({ source, matches }) => ({
+    key: source.key,
+    label: source.label,
+    count: matches.length,
+  }));
+
+  const showAllInSource = (key: string) => {
+    setActiveSource(key);
+    searchInputRef.current?.focus();
+  };
+
   const getCurrentModelDisplay = () => {
     if (!currentModel) {
       return compact ? (
@@ -774,9 +833,11 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
                       ref={searchInputRef}
                       type='text'
                       placeholder={
-                        activeTab === 'installed'
-                          ? t('modelSelector.searchInstalled')
-                          : activeTab === 'ollama'
+                        tab === 'installed'
+                          ? ollamaEnabled
+                            ? t('modelSelector.searchInstalled')
+                            : t('modelSelector.searchModels')
+                          : tab === 'ollama'
                             ? t('modelSelector.searchOllama')
                             : t('modelSelector.searchHuggingFace')
                       }
@@ -791,69 +852,81 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
                   </div>
                 </div>
 
-                <div className='mx-4 mb-3 flex rounded-xl bg-gray-100/70 p-1 dark:bg-dark-200/70 sm:mx-5'>
-                  <button
-                    onClick={() => {
-                      setActiveTab('installed');
-                    }}
-                    className={cn(
-                      'flex-1 rounded-lg px-2 py-2 text-xs font-medium transition-colors sm:px-4',
-                      activeTab === 'installed'
-                        ? 'bg-white text-gray-950 shadow-sm dark:bg-dark-300 dark:text-dark-950'
-                        : 'text-gray-500 hover:text-gray-800 dark:text-dark-500 dark:hover:text-dark-800'
-                    )}
-                    aria-pressed={activeTab === 'installed'}
-                  >
-                    <HardDrive className='h-4 w-4 inline me-1.5' />
-                    {t('modelSelector.installed')}
-                  </button>
-                  <button
-                    onClick={() => {
-                      setActiveTab('ollama');
-                    }}
-                    className={cn(
-                      'flex-1 rounded-lg px-2 py-2 text-xs font-medium transition-colors sm:px-4',
-                      activeTab === 'ollama'
-                        ? 'bg-white text-gray-950 shadow-sm dark:bg-dark-300 dark:text-dark-950'
-                        : 'text-gray-500 hover:text-gray-800 dark:text-dark-500 dark:hover:text-dark-800'
-                    )}
-                    aria-pressed={activeTab === 'ollama'}
-                  >
-                    <Cloud className='h-4 w-4 inline me-1.5' />
-                    Ollama
-                  </button>
-                  <button
-                    onClick={() => {
-                      setActiveTab('huggingface');
-                    }}
-                    className={cn(
-                      'flex-1 rounded-lg px-2 py-2 text-xs font-medium transition-colors sm:px-4',
-                      activeTab === 'huggingface'
-                        ? 'bg-white text-gray-950 shadow-sm dark:bg-dark-300 dark:text-dark-950'
-                        : 'text-gray-500 hover:text-gray-800 dark:text-dark-500 dark:hover:text-dark-800'
-                    )}
-                    aria-pressed={activeTab === 'huggingface'}
-                  >
-                    <Zap className='h-4 w-4 inline me-1.5' />
-                    HuggingFace
-                  </button>
-                </div>
+                {ollamaEnabled && (
+                  <div className='mx-4 mb-3 flex rounded-xl bg-gray-100/70 p-1 dark:bg-dark-200/70 sm:mx-5'>
+                    <button
+                      onClick={() => {
+                        setActiveTab('installed');
+                      }}
+                      className={cn(
+                        'flex-1 rounded-lg px-2 py-2 text-xs font-medium transition-colors sm:px-4',
+                        tab === 'installed'
+                          ? 'bg-white text-gray-950 shadow-sm dark:bg-dark-300 dark:text-dark-950'
+                          : 'text-gray-500 hover:text-gray-800 dark:text-dark-500 dark:hover:text-dark-800'
+                      )}
+                      aria-pressed={tab === 'installed'}
+                    >
+                      <HardDrive className='h-4 w-4 inline me-1.5' />
+                      {t('modelSelector.installed')}
+                    </button>
+                    <button
+                      onClick={() => {
+                        setActiveTab('ollama');
+                      }}
+                      className={cn(
+                        'flex-1 rounded-lg px-2 py-2 text-xs font-medium transition-colors sm:px-4',
+                        tab === 'ollama'
+                          ? 'bg-white text-gray-950 shadow-sm dark:bg-dark-300 dark:text-dark-950'
+                          : 'text-gray-500 hover:text-gray-800 dark:text-dark-500 dark:hover:text-dark-800'
+                      )}
+                      aria-pressed={tab === 'ollama'}
+                    >
+                      <Cloud className='h-4 w-4 inline me-1.5' />
+                      Ollama
+                    </button>
+                    <button
+                      onClick={() => {
+                        setActiveTab('huggingface');
+                      }}
+                      className={cn(
+                        'flex-1 rounded-lg px-2 py-2 text-xs font-medium transition-colors sm:px-4',
+                        tab === 'huggingface'
+                          ? 'bg-white text-gray-950 shadow-sm dark:bg-dark-300 dark:text-dark-950'
+                          : 'text-gray-500 hover:text-gray-800 dark:text-dark-500 dark:hover:text-dark-800'
+                      )}
+                      aria-pressed={tab === 'huggingface'}
+                    >
+                      <Zap className='h-4 w-4 inline me-1.5' />
+                      HuggingFace
+                    </button>
+                  </div>
+                )}
+
+                {tab === 'installed' && showSourceFilter && (
+                  <ModelSourceFilter
+                    sources={sourceChips}
+                    active={currentSource}
+                    onChange={setActiveSource}
+                  />
+                )}
               </div>
 
-              {activeTab === 'installed' && (
+              {tab === 'installed' && (
                 <InstalledModelsTab
-                  filteredGroups={filteredGroups}
+                  key={currentSource}
+                  groups={visibleGroups}
                   selectedModel={selectedModel}
-                  showImageGen={showImageGen}
+                  showImageGen={showImageGen && combinedView}
                   getModelValue={getModelValue}
                   getModelIcon={getModelIcon}
-                  getModelLabel={getModelLabel}
-                  getModelSubLabel={getModelSubLabel}
+                  getModelLabel={getRowLabel}
+                  getModelSubLabel={getRowSubLabel}
                   onModelSelect={handleModelSelect}
+                  onShowAll={showAllInSource}
                   onOpenGallery={openGallery}
                 />
               )}
-              {activeTab === 'ollama' && (
+              {tab === 'ollama' && (
                 <OllamaLibraryTab
                   libraryCategories={libraryCategories}
                   libraryCategory={libraryCategory}
@@ -872,7 +945,7 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
                   }}
                 />
               )}
-              {activeTab === 'huggingface' && (
+              {tab === 'huggingface' && (
                 <HuggingFaceModelsTab
                   hfTask={hfTask}
                   hfSort={hfSort}

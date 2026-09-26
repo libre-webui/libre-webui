@@ -2914,6 +2914,7 @@
     "searchInstalled": "Search installed models...",
     "searchOllama": "Search Ollama library...",
     "searchHuggingFace": "Search HuggingFace...",
+    "searchModels": "Search models...",
     "selectModel": "Select a model",
     "personas": "Personas",
     "ollamaModels": "Ollama Models",
@@ -2930,7 +2931,10 @@
     "reselectProvider": "reselect a provider to pin this model",
     "unavailable": "unavailable",
     "unavailableSelections": "Unavailable selections",
-    "agentModels": "Agents"
+    "agentModels": "Agents",
+    "showAll": "Show all ({{total}})",
+    "sources": "Model sources",
+    "defaultModel": "Default model"
   },
   "whatsNew": {
     "title": "What's new",

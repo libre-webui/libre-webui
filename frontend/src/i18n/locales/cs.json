@@ -2914,6 +2914,7 @@
     "searchInstalled": "Hledat nainstalované modely...",
     "searchOllama": "Hledat v knihovně Ollama...",
     "searchHuggingFace": "Hledat na HuggingFace...",
+    "searchModels": "Hledat modely...",
     "selectModel": "Vybrat model",
     "personas": "Persony",
     "ollamaModels": "Modely Ollama",
@@ -2930,7 +2931,10 @@
     "reselectProvider": "znovu vyberte poskytovatele pro připnutí modelu",
     "unavailable": "nedostupné",
     "unavailableSelections": "Nedostupné volby",
-    "agentModels": "Agenti"
+    "agentModels": "Agenti",
+    "showAll": "Zobrazit vše ({{total}})",
+    "sources": "Zdroje modelů",
+    "defaultModel": "Výchozí model"
   },
   "whatsNew": {
     "title": "Co je nového",

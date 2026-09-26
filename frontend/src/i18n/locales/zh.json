@@ -2914,6 +2914,7 @@
     "searchInstalled": "搜索已安装的模型...",
     "searchOllama": "搜索Ollama库...",
     "searchHuggingFace": "搜索HuggingFace...",
+    "searchModels": "搜索模型...",
     "selectModel": "选择模型",
     "personas": "角色",
     "ollamaModels": "Ollama模型",
@@ -2930,7 +2931,10 @@
     "reselectProvider": "重新选择提供方以固定此模型",
     "unavailable": "不可用",
     "unavailableSelections": "不可用的选择",
-    "agentModels": "智能体"
+    "agentModels": "智能体",
+    "showAll": "显示全部 ({{total}})",
+    "sources": "模型来源",
+    "defaultModel": "默认模型"
   },
   "whatsNew": {
     "title": "新功能",

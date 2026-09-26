@@ -2914,6 +2914,7 @@
     "searchInstalled": "Søg installerede modeller...",
     "searchOllama": "Søg i Ollama-biblioteket...",
     "searchHuggingFace": "Søg på HuggingFace...",
+    "searchModels": "Søg i modeller...",
     "selectModel": "Vælg model",
     "personas": "Personas",
     "ollamaModels": "Ollama-modeller",
@@ -2930,7 +2931,10 @@
     "reselectProvider": "genvælg en udbyder for at fastgøre denne model",
     "unavailable": "utilgængelig",
     "unavailableSelections": "Utilgængelige valg",
-    "agentModels": "Agenter"
+    "agentModels": "Agenter",
+    "showAll": "Vis alle ({{total}})",
+    "sources": "Modelkilder",
+    "defaultModel": "Standardmodel"
   },
   "whatsNew": {
     "title": "Nyheder",

@@ -17,13 +17,21 @@
 
 import type { ChangeEvent, ReactNode, Ref } from 'react';
 import type { OllamaModel, Persona } from '@/types';
+import type { ModelSourceKind } from '@/utils/modelSelectorGroups';
 
+/** One source as the list renders it, after search and any preview cut. */
 export interface ModelGroup {
-  type: 'legacy' | 'unavailable' | 'personas' | 'agents' | 'ollama' | 'plugins';
+  key: string;
+  kind: ModelSourceKind;
   label: string;
   icon: ReactNode;
   models: OllamaModel[];
-  color: string;
+  /** Matching models in the source, including any the preview hides. */
+  total: number;
+  /** Matching models left out of a combined-view preview. */
+  hidden: number;
+  /** False when a single source is shown and its chip already names it. */
+  showHeader: boolean;
 }
 
 export interface LibraryModel {

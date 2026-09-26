@@ -2914,6 +2914,7 @@
     "searchInstalled": "インストール済みモデルを検索...",
     "searchOllama": "Ollamaライブラリを検索...",
     "searchHuggingFace": "HuggingFaceを検索...",
+    "searchModels": "モデルを検索...",
     "selectModel": "モデルを選択",
     "personas": "ペルソナ",
     "ollamaModels": "Ollamaモデル",
@@ -2930,7 +2931,10 @@
     "reselectProvider": "このモデルを固定するにはプロバイダーを再選択してください",
     "unavailable": "利用不可",
     "unavailableSelections": "利用できない選択",
-    "agentModels": "エージェント"
+    "agentModels": "エージェント",
+    "showAll": "すべて表示 ({{total}})",
+    "sources": "モデルの提供元",
+    "defaultModel": "デフォルトモデル"
   },
   "whatsNew": {
     "title": "新機能",

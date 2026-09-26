@@ -2914,6 +2914,7 @@
     "searchInstalled": "Geïnstalleerde modellen zoeken...",
     "searchOllama": "Ollama bibliotheek doorzoeken...",
     "searchHuggingFace": "HuggingFace doorzoeken...",
+    "searchModels": "Modellen zoeken...",
     "selectModel": "Model selecteren",
     "personas": "Personas",
     "ollamaModels": "Ollama-modellen",
@@ -2930,7 +2931,10 @@
     "reselectProvider": "selecteer opnieuw een provider om dit model vast te zetten",
     "unavailable": "niet beschikbaar",
     "unavailableSelections": "Niet-beschikbare selecties",
-    "agentModels": "Agents"
+    "agentModels": "Agents",
+    "showAll": "Alles tonen ({{total}})",
+    "sources": "Modelbronnen",
+    "defaultModel": "Standaardmodel"
   },
   "whatsNew": {
     "title": "Wat is nieuw",
