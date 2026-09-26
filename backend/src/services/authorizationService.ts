@@ -43,7 +43,7 @@ import type {
 import { encryptionService } from './encryptionService.js';
 import { getWorkAccessMode } from './workAccessService.js';
 import { getModelDownloadMode } from './modelAccessService.js';
-import { getAgentsEnabled } from './agentAccessService.js';
+import { getStrandsAccessMode } from './strandsAccessService.js';
 import { getWebSearchAccessMode } from './webSearchService.js';
 import { getToolAccessMode } from './toolAccessService.js';
 import { getVoiceAccessMode, isVoiceFeatureKey } from './voiceAccessService.js';
@@ -54,7 +54,7 @@ export type FeatureId =
   | 'work'
   | 'model-download'
   | 'web-search'
-  | 'agents'
+  | 'strands'
   | 'tools'
   | 'stt'
   | 'tts'
@@ -132,6 +132,18 @@ const featureDecision = async (
   actor: AuthzActor,
   featureId: FeatureId
 ): Promise<AuthzDecision> => {
+  if (featureId === 'strands') {
+    // Strands is the one feature an administrator can switch off for
+    // everyone, admins included, because it runs model-driven tool loops.
+    const mode = await getStrandsAccessMode();
+    if (mode === 'disabled') {
+      return { allowed: false, reason: 'feature-disabled' };
+    }
+    if (actor.role === 'admin') return { allowed: true, reason: 'admin-role' };
+    return mode === 'all-users'
+      ? { allowed: true, reason: 'feature-open-to-all-users' }
+      : { allowed: false, reason: 'feature-restricted-to-admins' };
+  }
   if (actor.role === 'admin') return { allowed: true, reason: 'admin-role' };
   switch (featureId) {
     case 'work':
@@ -146,10 +158,6 @@ const featureDecision = async (
       return (await getWebSearchAccessMode()) === 'all-users'
         ? { allowed: true, reason: 'feature-open-to-all-users' }
         : { allowed: false, reason: 'feature-restricted-to-admins' };
-    case 'agents':
-      return (await getAgentsEnabled())
-        ? { allowed: true, reason: 'feature-enabled' }
-        : { allowed: false, reason: 'feature-disabled' };
     case 'tools':
       return (await getToolAccessMode()) === 'all-users'
         ? { allowed: true, reason: 'feature-open-to-all-users' }
@@ -272,7 +280,7 @@ export const explainEffectiveAccess = async (user: {
     work,
     modelDownload,
     webSearch,
-    agents,
+    strands,
     tools,
     stt,
     tts,
@@ -282,7 +290,7 @@ export const explainEffectiveAccess = async (user: {
     authorize(actor, 'use', { type: 'feature', id: 'work' }),
     authorize(actor, 'use', { type: 'feature', id: 'model-download' }),
     authorize(actor, 'use', { type: 'feature', id: 'web-search' }),
-    authorize(actor, 'use', { type: 'feature', id: 'agents' }),
+    authorize(actor, 'use', { type: 'feature', id: 'strands' }),
     authorize(actor, 'use', { type: 'feature', id: 'tools' }),
     authorize(actor, 'use', { type: 'feature', id: 'stt' }),
     authorize(actor, 'use', { type: 'feature', id: 'tts' }),
@@ -308,7 +316,7 @@ export const explainEffectiveAccess = async (user: {
       work: work.allowed,
       'model-download': modelDownload.allowed,
       'web-search': webSearch.allowed,
-      agents: agents.allowed,
+      strands: strands.allowed,
       tools: tools.allowed,
       stt: stt.allowed,
       tts: tts.allowed,

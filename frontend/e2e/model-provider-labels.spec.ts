@@ -20,7 +20,7 @@ import { defaultSystemInfo, mockLibreWebUiApi } from './lib/mockApi';
 import { openSettingsTab } from './lib/settingsTab';
 
 const agents = [
-  { id: 'dsh', agentId: 'dsh', name: 'DeepSeek Harness', command: '' },
+  { id: 'strands', agentId: 'strands', name: 'Strands', command: '' },
   { id: 'claude', agentId: 'claude', name: 'Claude Code', command: 'claude' },
   {
     id: 'codex:gpt-5.6-sol',
@@ -99,9 +99,8 @@ async function setup(
   const systemInfo = {
     ...defaultSystemInfo,
     requiresAuth: true,
-    agentsEnabled: false,
     agentCliModelsEnabled: true,
-    cordisEnabled: true,
+    strandsAccess: 'admins' as const,
     ollamaEnabled,
   };
   await mockLibreWebUiApi(page, {
@@ -193,7 +192,7 @@ async function setup(
   await expect(
     panel
       .getByTestId('default-model-select')
-      .locator('option', { hasText: 'DeepSeek Harness' })
+      .locator('option', { hasText: 'Strands' })
   ).toHaveCount(1);
   return { panel, defaultWrites };
 }
@@ -234,13 +233,15 @@ for (const theme of ['light', 'dark'] as const) {
     await defaults.selectOption(agentKey(agents[0]));
     await expect
       .poll(() => defaultWrites.at(-1))
-      .toEqual({ model: 'dsh', providerType: 'agent', providerId: 'dsh' });
+      .toEqual({
+        model: 'strands',
+        providerType: 'agent',
+        providerId: 'strands',
+      });
     const info = panel.getByTestId('current-model-info');
     await expect(info.getByText('Provider:', { exact: true })).toBeVisible();
     await expect(info).not.toContainText('common.provider');
-    await expect(
-      info.getByText('DeepSeek Harness', { exact: true })
-    ).toBeVisible();
+    await expect(info.getByText('Strands', { exact: true })).toBeVisible();
     await expect(info.getByText('Agent', { exact: true })).toBeVisible();
     await expect(info).not.toContainText('Ollama');
     for (const label of ['Size:', 'Family:', 'Format:'])
@@ -254,7 +255,7 @@ for (const theme of ['light', 'dark'] as const) {
     await expect(
       reloaded
         .getByTestId('current-model-info')
-        .getByText('DeepSeek Harness', { exact: true })
+        .getByText('Strands', { exact: true })
     ).toBeVisible();
   });
 }
@@ -274,9 +275,9 @@ test('an actual enabled Ollama model retains its provider label and concrete met
   await expect(info.getByText('3B', { exact: true })).toBeVisible();
   await expect(info.getByText('llama', { exact: true })).toBeVisible();
   await expect(info.getByText('gguf', { exact: true })).toBeVisible();
-  await expect(defaults.locator('option[value="agent:dsh:dsh"]')).toHaveText(
-    'DeepSeek Harness (Agent)'
-  );
+  await expect(
+    defaults.locator('option[value="agent:strands:strands"]')
+  ).toHaveText('Strands (Agent)');
 });
 
 test('agent provider labels remain translated and correctly grouped in Arabic', async ({
@@ -285,19 +286,19 @@ test('agent provider labels remain translated and correctly grouped in Arabic', 
   const { panel } = await setup(page, { language: 'ar', theme: 'dark' });
   await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
   const defaults = panel.getByTestId('default-model-select');
-  await expect(defaults.locator('option[value="agent:dsh:dsh"]')).toHaveText(
-    'DeepSeek Harness (الوكيل)'
-  );
+  await expect(
+    defaults.locator('option[value="agent:strands:strands"]')
+  ).toHaveText('Strands (الوكيل)');
   await expect(
     panel
       .getByTestId('vision-model-select')
-      .locator('option[value="agent:dsh:dsh"]')
-  ).toHaveText('DeepSeek Harness · الوكيل');
+      .locator('option[value="agent:strands:strands"]')
+  ).toHaveText('Strands · الوكيل');
   await expect(
     panel
       .getByTestId('task-model-select')
-      .locator('option[value="agent:dsh:dsh"]')
-  ).toHaveText('DeepSeek Harness · الوكيل');
+      .locator('option[value="agent:strands:strands"]')
+  ).toHaveText('Strands · الوكيل');
   await expect(defaults.locator('option', { hasText: 'Ollama' })).toHaveCount(
     0
   );

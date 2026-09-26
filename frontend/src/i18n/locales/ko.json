@@ -40,7 +40,8 @@
     "custom": "사용자 정의",
     "remove": "제거",
     "home": "홈",
-    "more": "많음"
+    "more": "많음",
+    "reasoning": "추론"
   },
   "brand": {
     "name": "Libre WebUI",
@@ -528,7 +529,6 @@
       "models": "모델",
       "personas": "페르소나",
       "imagine": "이미지 생성",
-      "agents": "에이전트",
       "work": "작업",
       "settings": "설정",
       "usageAnalytics": "프로바이더 사용량",
@@ -543,7 +543,7 @@
       "skills": "스킬",
       "tools": "도구",
       "channels": "채널",
-      "cordis": "Cordis 엔진"
+      "strands": "Strands"
     },
     "toggleSize": "사이드바 크기 전환",
     "expandSidebar": "사이드바 확장"
@@ -1830,13 +1830,6 @@
       "saved": "기본 테마가 업데이트되었습니다",
       "saveFailed": "기본 테마를 업데이트할 수 없습니다"
     },
-    "agentAccess": {
-      "title": "Libre Claw",
-      "description": "관리자에게 Libre Claw 작업 공간을 표시합니다.",
-      "saved": "에이전트 접근이 업데이트되었습니다",
-      "saveFailed": "에이전트 접근을 업데이트할 수 없습니다",
-      "lockedByEnv": "LIBRE_CLAW_ENABLED 환경 변수로 고정되어 있습니다."
-    },
     "groups": {
       "title": "그룹",
       "description": "계정을 그룹으로 묶어 공유 액세스를 관리하고, 각 계정이 실제로 무엇을 할 수 있는지 확인하세요.",
@@ -1973,13 +1966,17 @@
       "saved": "이메일 설정이 저장되었습니다.",
       "saveFailed": "이메일 설정을 저장할 수 없습니다."
     },
-    "cordisAccess": {
-      "title": "Cordis 엔진",
-      "description": "관리자에게 Cordis 엔진을 제공합니다. Libre WebUI의 도구 승인 흐름 밖에서 실제 파일 시스템 접근으로 도구를 실행합니다.",
-      "saved": "Cordis 접근이 업데이트되었습니다",
-      "saveFailed": "Cordis 접근을 업데이트하지 못했습니다",
-      "lockedByEnv": "LIBRE_CORDIS_ENABLED 환경 변수로 고정되었습니다.",
-      "lockedByFile": "cordis.config.yml의 features.enabled로 고정되었습니다."
+    "strandsAccess": {
+      "title": "Strands 엔진",
+      "description": "내장 Strands 에이전트를 사용할 수 있는 사람을 선택하세요. 각 세션의 개인 작업 공간에서 파일을 읽고 편집할 수 있지만 셸 명령은 실행할 수 없습니다.",
+      "saved": "Strands 액세스가 업데이트되었습니다",
+      "saveFailed": "Strands 액세스를 업데이트할 수 없습니다",
+      "lockedByEnv": "LIBRE_STRANDS_ACCESS 환경 변수로 고정되어 있습니다.",
+      "modes": {
+        "disabled": "꺼짐",
+        "admins": "관리자",
+        "all-users": "모든 사용자"
+      }
     },
     "agentCliAccess": {
       "title": "에이전트 CLI 모델",
@@ -2070,7 +2067,7 @@
     },
     "agents": {
       "title": "에이전트",
-      "description": "CLI 에이전트 호출과 네이티브 DSH 요청입니다. Libre WebUI 모델을 사용하는 DSH는 해당 모델 제공업체에 집계됩니다.",
+      "description": "CLI 에이전트 및 Strands 엔진 호출.",
       "noCalls": "이 기간에 기록된 호출이 없습니다",
       "unreported": "토큰이 보고되지 않음",
       "topModels": "가장 많이 사용된 모델",
@@ -2573,144 +2570,6 @@
     "title": "데모 모드",
     "github": "GitHub"
   },
-  "libreClaw": {
-    "title": "에이전트",
-    "subtitle": "로컬 에이전트 실행, 승인, 일정, 메모리, 도구 및 사용량입니다.",
-    "dashboard": "대시보드",
-    "connection": {
-      "disconnectedTitle": "Libre Claw 데몬이 연결되지 않았습니다",
-      "disconnectedDescription": "<command>libre-claw start</command>로 로컬에서 시작하거나 백엔드 환경에서 <env>LIBRE_CLAW_BASE_URL</env>을 설정하세요."
-    },
-    "status": {
-      "connected": "연결됨",
-      "disconnected": "연결이 끊김",
-      "activeRuns": "{{count}} 활성",
-      "activeRuns_plural": "{{count}} 활성"
-    },
-    "states": {
-      "queued": "대기 중",
-      "running": "실행 중",
-      "blocked": "차단됨",
-      "done": "완료",
-      "failed": "실패",
-      "cancelled": "취소됨"
-    },
-    "startRun": {
-      "title": "에이전트 실행 시작",
-      "placeholder": "저장소 검사, 버그 수정, 검토 실행, 보고서 예약 등을 Libre Claw에 요청하세요.",
-      "chatRun": "채팅 실행",
-      "goalMode": "목표 모드",
-      "providerOverride": "공급자 재정의",
-      "modelOverride": "모델 재정의",
-      "run": "실행"
-    },
-    "modelRoute": {
-      "title": "모델 루트",
-      "providerPlaceholder": "공급자",
-      "modelPlaceholder": "모델",
-      "persistGlobal": "Libre Claw 전역 구성 유지",
-      "saveModel": "모델 저장",
-      "theme": "Libre Claw 테마",
-      "saveTheme": "테마 저장"
-    },
-    "runs": {
-      "title": "실행",
-      "empty": "아직 Libre Claw 실행이 없습니다."
-    },
-    "timeline": {
-      "title": "실행 타임라인",
-      "empty": "이벤트를 검사하려면 실행을 선택하세요.",
-      "streaming": "스트리밍 중...",
-      "assistantResponse": "어시스턴트 응답",
-      "resultOk": "알았어",
-      "resultError": "오류",
-      "labels": {
-        "userMessage": "사용자 메시지",
-        "toolCall": "도구 호출",
-        "toolResult": "도구 결과",
-        "approvalRequest": "승인 요청",
-        "approvalResponse": "승인 응답",
-        "runStarted": "실행 시작됨",
-        "runFinished": "실행 완료됨",
-        "usage": "사용법",
-        "error": "오류"
-      }
-    },
-    "approvals": {
-      "needed": "승인 필요",
-      "allowOnce": "한 번만 허용",
-      "alwaysAllowTool": "항상 도구 허용",
-      "deny": "거부",
-      "toolApprovalRequested": "도구 승인이 요청되었습니다."
-    },
-    "automations": {
-      "title": "자동화",
-      "namePlaceholder": "이름",
-      "schedulePlaceholder": "daily 09:00",
-      "promptPlaceholder": "자동화 프롬프트",
-      "create": "만들기",
-      "empty": "예정된 Libre Claw 자동화가 없습니다.",
-      "runNow": "지금 실행",
-      "pause": "일시중지",
-      "resume": "재개",
-      "routes": {
-        "report": "신고",
-        "telegram": "Telegram"
-      },
-      "status": {
-        "active": "활성",
-        "paused": "일시중지됨"
-      }
-    },
-    "usageFallback": {
-      "title": "사용법 및 대체",
-      "usage": "사용법",
-      "fallbackRoute": "대체 경로",
-      "noUsage": "아직 이용기록이 없습니다."
-    },
-    "metrics": {
-      "provider": "공급자",
-      "model": "모델",
-      "input": "입력",
-      "output": "출력",
-      "cached": "캐시됨",
-      "reasoning": "추론",
-      "cost": "비용",
-      "tool": "도구",
-      "resolution": "해상도",
-      "state": "상태",
-      "stopReason": "중지 이유",
-      "tokens": "{{formatted}} 토큰",
-      "tokens_plural": "{{formatted}} 토큰"
-    },
-    "fallbacks": {
-      "tool": "도구",
-      "unknown": "알 수 없음",
-      "resolved": "해결됨",
-      "unknownError": "알 수 없는 오류"
-    },
-    "toasts": {
-      "loadStatusFailed": "Libre Claw 상태를 로드할 수 없습니다.",
-      "enterTask": "Libre Claw에 대한 작업을 입력하세요.",
-      "runStarted": "Libre Claw 실행이 시작되었습니다",
-      "startRunFailed": "Libre Claw 실행을 시작할 수 없습니다",
-      "runCancelled": "실행이 취소되었습니다",
-      "cancelRunFailed": "실행을 취소할 수 없습니다",
-      "approved": "승인됨",
-      "denied": "거부됨",
-      "resolvePermissionFailed": "권한을 확인할 수 없습니다.",
-      "providerModelRequired": "제공업체 및 모델이 필요합니다.",
-      "modelUpdated": "Libre Claw 모델이 업데이트되었습니다",
-      "updateModelFailed": "모델을 업데이트할 수 없습니다.",
-      "themeUpdated": "Libre Claw 테마가 업데이트되었습니다",
-      "updateThemeFailed": "테마를 업데이트할 수 없습니다.",
-      "automationRequired": "자동화 이름, 일정, 프롬프트가 필요합니다.",
-      "automationCreated": "자동화가 생성되었습니다.",
-      "createAutomationFailed": "자동화를 생성할 수 없습니다.",
-      "automationUpdated": "자동화 업데이트됨",
-      "updateAutomationFailed": "자동화를 업데이트할 수 없습니다."
-    }
-  },
   "work": {
     "title": "작업",
     "subtitle": "격리된 모델 워크스페이스",
@@ -2758,9 +2617,8 @@
       "noModelSelected": "선택된 작업 호환 모델이 없습니다.",
       "mentionAgents": "에이전트 멘션",
       "engine": "엔진",
-      "nativeDshModels": "네이티브 DSH 모델",
       "libreModels": "Libre WebUI 모델",
-      "nativeDshUnavailable": "네이티브 DSH 모델을 사용할 수 없습니다. 모델 목록을 새로 고치거나 공급자 설정을 확인하세요.",
+      "strandsDisabled": "이 계정에서는 Strands 엔진을 사용할 수 없습니다.",
       "modelLabel": "모델"
     },
     "conversation": {
@@ -3941,41 +3799,34 @@
       "saveFailed": "API 키를 저장할 수 없습니다"
     }
   },
-  "cordis": {
-    "title": "Cordis 엔진",
-    "description": "내장된 DeepSeek Harness 엔진의 세션, 도구 및 채팅입니다.",
+  "strands": {
+    "title": "Strands",
+    "subtitle": "Libre WebUI 모델에서 실행되는 내장 에이전트 엔진입니다.",
+    "subtitleVersion": "내장 에이전트 엔진, harness {{version}}.",
     "newSession": "새 세션",
-    "createFailed": "세션을 만들지 못했습니다.",
-    "deleteFailed": "세션을 삭제하지 못했습니다.",
-    "sendFailed": "엔진이 턴을 완료하지 못했습니다.",
-    "sessionsHeading": "세션",
-    "toolsHeading": "도구",
-    "transcriptHeading": "대화 기록",
+    "sessions": "세션",
     "noSessions": "아직 세션이 없습니다. 하나 만들어 시작하세요.",
-    "noTools": "엔진이 등록한 도구가 없습니다.",
-    "selectSession": "세션을 선택하거나 새로 만들어 시작하세요.",
-    "working": "에이전트가 작업 중…",
-    "composerLabel": "엔진에 보낼 메시지",
-    "composerPlaceholder": "엔진에 요청할 작업을 입력…",
+    "empty": "에이전트에게 작업 공간의 파일을 읽거나 편집하도록 요청하세요.",
+    "placeholder": "엔진에 요청할 작업을 입력…",
+    "model": "모델",
+    "defaultModel": "기본 모델",
     "send": "보내기",
     "stop": "중지",
-    "deleteSession": "세션 삭제",
-    "unknownTime": "알 수 없는 시간",
-    "disabledTitle": "Cordis 엔진이 꺼져 있습니다",
-    "disabledHint": "관리자는 사용자 관리 → 접근 및 정책에서 활성화할 수 있습니다.",
-    "unavailableTitle": "Cordis 엔진을 시작하지 못했습니다",
-    "role": {
-      "user": "나",
-      "assistant": "엔진",
-      "system": "시스템",
-      "tool": "도구",
-      "unknown": "메시지"
+    "reasoning": "추론",
+    "tool": {
+      "running": "실행 중",
+      "done": "완료",
+      "failed": "실패"
     },
-    "turnFailed": "엔진이 턴을 완료하지 못했습니다",
-    "permissions": "권한",
-    "readOnly": "읽기 전용",
-    "workspaceWrite": "작업 공간 쓰기",
-    "context": "세션 컨텍스트",
-    "permissionHint": "읽기 전용에서는 파일을 확인할 수 있습니다. 작업 공간 쓰기는 이 세션의 작업 공간 안에서 편집을 허용합니다."
+    "cancelled": "취소됨",
+    "turnLimit": "턴 한도에서 중지되었습니다.",
+    "messageCount": "메시지: {{count}}",
+    "deleteSession": "세션 삭제",
+    "deleteConfirm": "\"{{title}}\"과(와) 기록을 삭제할까요?",
+    "loadFailed": "Strands를 불러올 수 없습니다.",
+    "createFailed": "세션을 만들지 못했습니다.",
+    "deleteFailed": "세션을 삭제하지 못했습니다.",
+    "saveFailed": "세션을 저장할 수 없습니다.",
+    "turnFailed": "엔진이 턴을 완료하지 못했습니다"
   }
 }

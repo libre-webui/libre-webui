@@ -40,7 +40,8 @@
     "custom": "Sérsniðið",
     "remove": "Fjarlægja",
     "home": "Heim",
-    "more": "Meira"
+    "more": "Meira",
+    "reasoning": "Rökstuðningur"
   },
   "brand": {
     "name": "Libre WebUI",
@@ -528,7 +529,6 @@
       "models": "Líkön",
       "personas": "Persónur",
       "imagine": "Myndsköpun",
-      "agents": "Fulltrúar",
       "work": "Vinna",
       "settings": "Stillingar",
       "usageAnalytics": "Notkun þjónustuaðila",
@@ -543,7 +543,7 @@
       "skills": "Færni",
       "tools": "Tól",
       "channels": "Rásir",
-      "cordis": "Cordis-vél"
+      "strands": "Strands"
     },
     "toggleSize": "Skipta um stærð hliðarspjalds",
     "expandSidebar": "Stækka hliðarspjald"
@@ -1830,13 +1830,6 @@
       "saved": "Sjálfgefið þema uppfært",
       "saveFailed": "Ekki tókst að uppfæra sjálfgefið þema"
     },
-    "agentAccess": {
-      "title": "Libre Claw",
-      "description": "Sýna stjórnendum Libre Claw-vinnusvæðið.",
-      "saved": "Aðgangur að fulltrúum uppfærður",
-      "saveFailed": "Ekki tókst að uppfæra aðgang að fulltrúum",
-      "lockedByEnv": "Fest með umhverfisbreytunni LIBRE_CLAW_ENABLED."
-    },
     "groups": {
       "title": "Hópar",
       "description": "Settu aðganga í hópa til að stjórna sameiginlegum aðgangi og skoðaðu hvað hver aðgangur getur í raun gert.",
@@ -1973,13 +1966,17 @@
       "saved": "Tölvupóststillingar vistaðar.",
       "saveFailed": "Ekki tókst að vista tölvupóststillingarnar."
     },
-    "cordisAccess": {
-      "title": "Cordis-vél",
-      "description": "Bjóða stjórnendum Cordis-vélina. Hún keyrir verkfæri með raunverulegum aðgangi að skráarkerfinu utan samþykktarflæðis Libre WebUI.",
-      "saved": "Cordis-aðgangur uppfærður",
-      "saveFailed": "Ekki tókst að uppfæra Cordis-aðgang",
-      "lockedByEnv": "Fest af umhverfisbreytunni LIBRE_CORDIS_ENABLED.",
-      "lockedByFile": "Fest af features.enabled í cordis.config.yml."
+    "strandsAccess": {
+      "title": "Strands-vél",
+      "description": "Veldu hverjir mega nota innbyggða Strands-umboðsmanninn. Hann getur lesið og breytt skrám á einkavinnusvæði hverrar lotu, en getur ekki keyrt skeljarskipanir.",
+      "saved": "Aðgangur að Strands uppfærður",
+      "saveFailed": "Ekki tókst að uppfæra aðgang að Strands",
+      "lockedByEnv": "Fest með umhverfisbreytunni LIBRE_STRANDS_ACCESS.",
+      "modes": {
+        "disabled": "Slökkt",
+        "admins": "Stjórnendur",
+        "all-users": "Allir notendur"
+      }
     },
     "agentCliAccess": {
       "title": "Líkön CLI-agenta",
@@ -2070,7 +2067,7 @@
     },
     "agents": {
       "title": "Fulltrúar",
-      "description": "Köll til CLI-umboðsaðila og innbyggðar DSH-beiðnir. DSH sem notar Libre WebUI-líkön er talið undir þjónustuveitu líkansins.",
+      "description": "Köll í CLI-umboðsmenn og Strands-vélina.",
       "noCalls": "Engin skráð köll á þessu tímabili",
       "unreported": "Tákn ekki tilkynnt",
       "topModels": "Mest notuðu líkön",
@@ -2573,144 +2570,6 @@
     "title": "Kynningarhamur",
     "github": "GitHub"
   },
-  "libreClaw": {
-    "title": "Fulltrúar",
-    "subtitle": "Staðbundin umboðsmaður keyrir, samþykki, áætlanir, minni, verkfæri og notkun.",
-    "dashboard": "Stjórnborð",
-    "connection": {
-      "disconnectedTitle": "Libre Claw-daemoninn er ekki tengdur",
-      "disconnectedDescription": "Byrjaðu það á staðnum með <command>libre-claw start</command> eða stilltu <env>LIBRE_CLAW_BASE_URL</env> í bakendaumhverfinu."
-    },
-    "status": {
-      "connected": "Tengdur",
-      "disconnected": "Ótengdur",
-      "activeRuns": "{{count}} virkur",
-      "activeRuns_plural": "{{count}} virkur"
-    },
-    "states": {
-      "queued": "Í biðröð",
-      "running": "Í gangi",
-      "blocked": "Lokað",
-      "done": "Búið",
-      "failed": "Mistókst",
-      "cancelled": "Hætt við"
-    },
-    "startRun": {
-      "title": "Hefja keyrslu umboðsmanns",
-      "placeholder": "Biddu Libre Claw um að skoða endurhverfu, laga villu, keyra yfirferð, tímasetja skýrslu...",
-      "chatRun": "Spjallhlaup",
-      "goalMode": "Markmiðshamur",
-      "providerOverride": "Hnekkt þjónustuveitanda",
-      "modelOverride": "Hnekkt líkan",
-      "run": "Keyra"
-    },
-    "modelRoute": {
-      "title": "Fyrirmyndarleið",
-      "providerPlaceholder": "veitanda",
-      "modelPlaceholder": "fyrirmynd",
-      "persistGlobal": "Haltu áfram að Libre Claw alþjóðlegri stillingu",
-      "saveModel": "Vista líkan",
-      "theme": "Libre Claw-þema",
-      "saveTheme": "Vista þema"
-    },
-    "runs": {
-      "title": "Keyrslur",
-      "empty": "Engar Libre Claw-keyrslur enn."
-    },
-    "timeline": {
-      "title": "Tímalína keyrslu",
-      "empty": "Veldu hlaup til að skoða atburði þess.",
-      "streaming": "Straumur...",
-      "assistantResponse": "Viðbrögð aðstoðarmanns",
-      "resultOk": "allt í lagi",
-      "resultError": "villa",
-      "labels": {
-        "userMessage": "Skilaboð notenda",
-        "toolCall": "Verkfærakall",
-        "toolResult": "Verkfæraniðurstaða",
-        "approvalRequest": "Beiðni um samþykki",
-        "approvalResponse": "Samþykki svar",
-        "runStarted": "Keyrsla hafin",
-        "runFinished": "Keyrslu lokið",
-        "usage": "Notkun",
-        "error": "Villa"
-      }
-    },
-    "approvals": {
-      "needed": "Samþykki þarf",
-      "allowOnce": "Leyfðu einu sinni",
-      "alwaysAllowTool": "Leyfðu alltaf tól",
-      "deny": "Hafna",
-      "toolApprovalRequested": "Beðið um samþykki verkfæra"
-    },
-    "automations": {
-      "title": "Sjálfvirkni",
-      "namePlaceholder": "Nafn",
-      "schedulePlaceholder": "daily 09:00",
-      "promptPlaceholder": "Sjálfvirkni hvetja",
-      "create": "Búa til",
-      "empty": "Engar áætlaðar Libre Claw sjálfvirkni.",
-      "runNow": "Keyra núna",
-      "pause": "Gera hlé",
-      "resume": "Halda áfram",
-      "routes": {
-        "report": "Skýrsla",
-        "telegram": "Telegram"
-      },
-      "status": {
-        "active": "Virkur",
-        "paused": "Gert hlé"
-      }
-    },
-    "usageFallback": {
-      "title": "Notkun og fallback",
-      "usage": "Notkun",
-      "fallbackRoute": "Fallback leið",
-      "noUsage": "Engar notkunarskrár ennþá."
-    },
-    "metrics": {
-      "provider": "Veitandi",
-      "model": "Fyrirmynd",
-      "input": "Inntak",
-      "output": "Framleiðsla",
-      "cached": "Í skyndiminni",
-      "reasoning": "Rökstuðningur",
-      "cost": "Kostnaður",
-      "tool": "Verkfæri",
-      "resolution": "Upplausn",
-      "state": "Staða",
-      "stopReason": "Ástæða stöðvunar",
-      "tokens": "{{formatted}} tákn",
-      "tokens_plural": "{{formatted}} tákn"
-    },
-    "fallbacks": {
-      "tool": "verkfæri",
-      "unknown": "óþekkt",
-      "resolved": "leyst",
-      "unknownError": "Óþekkt villa"
-    },
-    "toasts": {
-      "loadStatusFailed": "Gat ekki hlaðið Libre Claw stöðu",
-      "enterTask": "Sláðu inn verkefni fyrir Libre Claw",
-      "runStarted": "Libre Claw-keyrsla hafin",
-      "startRunFailed": "Gat ekki hafið Libre Claw-keyrslu",
-      "runCancelled": "Hætt við keyrslu",
-      "cancelRunFailed": "Gat ekki hætt við keyrslu",
-      "approved": "Samþykkt",
-      "denied": "Neitað",
-      "resolvePermissionFailed": "Ekki tókst að leysa heimild",
-      "providerModelRequired": "Þjónustuaðili og líkan eru nauðsynleg",
-      "modelUpdated": "Libre Claw-líkan uppfært",
-      "updateModelFailed": "Ekki tókst að uppfæra gerð",
-      "themeUpdated": "Libre Claw-þema uppfært",
-      "updateThemeFailed": "Ekki tókst að uppfæra þema",
-      "automationRequired": "Nafn sjálfvirkni, áætlun og hvetja er krafist",
-      "automationCreated": "Sjálfvirkni búin til",
-      "createAutomationFailed": "Gat ekki búið til sjálfvirkni",
-      "automationUpdated": "Sjálfvirkni uppfærð",
-      "updateAutomationFailed": "Gat ekki uppfært sjálfvirkni"
-    }
-  },
   "work": {
     "title": "Vinna",
     "subtitle": "Einangruð vinnusvæði líkana",
@@ -2758,9 +2617,8 @@
       "noModelSelected": "Ekkert líkan sem styður Vinnu er valið.",
       "mentionAgents": "Nefna fulltrúa",
       "engine": "Vél",
-      "nativeDshModels": "Innbyggð DSH-líkön",
       "libreModels": "Libre WebUI-líkön",
-      "nativeDshUnavailable": "Innbyggð DSH-líkön eru ekki tiltæk. Endurnýjaðu líkanalistann eða athugaðu stillingar þjónustuveitunnar.",
+      "strandsDisabled": "Strands-vélin er ekki í boði fyrir aðganginn þinn.",
       "modelLabel": "Líkan"
     },
     "conversation": {
@@ -3941,41 +3799,34 @@
       "saveFailed": "Ekki tókst að vista API lykilinn"
     }
   },
-  "cordis": {
-    "title": "Cordis-vél",
-    "description": "Lotur, verkfæri og spjall fyrir innbyggðu DeepSeek Harness-vélina.",
+  "strands": {
+    "title": "Strands",
+    "subtitle": "Innbyggð umboðsvél sem keyrir á Libre WebUI-líkönunum þínum.",
+    "subtitleVersion": "Innbyggð umboðsvél, harness {{version}}.",
     "newSession": "Ný lota",
-    "createFailed": "Ekki tókst að búa til lotu.",
-    "deleteFailed": "Ekki tókst að eyða lotunni.",
-    "sendFailed": "Vélin gat ekki klárað umferðina.",
-    "sessionsHeading": "Lotur",
-    "toolsHeading": "Verkfæri",
-    "transcriptHeading": "Uppskrift",
+    "sessions": "Lotur",
     "noSessions": "Engar lotur enn. Búðu til eina til að byrja.",
-    "noTools": "Vélin skráði engin verkfæri.",
-    "selectSession": "Veldu lotu eða búðu til eina til að byrja.",
-    "working": "Agentinn er að vinna…",
-    "composerLabel": "Skilaboð til vélarinnar",
-    "composerPlaceholder": "Biddu vélina um að gera eitthvað…",
+    "empty": "Biddu umboðsmanninn að lesa eða breyta skrám á vinnusvæði sínu.",
+    "placeholder": "Biddu vélina um að gera eitthvað…",
+    "model": "Líkan",
+    "defaultModel": "Sjálfgefið líkan",
     "send": "Senda",
     "stop": "Stöðva",
-    "deleteSession": "Eyða lotu",
-    "unknownTime": "Óþekktur tími",
-    "disabledTitle": "Cordis-vélin er slökkt",
-    "disabledHint": "Stjórnandi getur kveikt á því í Notendastjórnun → Aðgangur og stefnur.",
-    "unavailableTitle": "Cordis-vélin gat ekki ræst",
-    "role": {
-      "user": "Þú",
-      "assistant": "Vél",
-      "system": "Kerfi",
-      "tool": "Verkfæri",
-      "unknown": "Skilaboð"
+    "reasoning": "Rökstuðningur",
+    "tool": {
+      "running": "Í gangi",
+      "done": "Búið",
+      "failed": "Mistókst"
     },
-    "turnFailed": "Vélin gat ekki klárað umferðina",
-    "permissions": "Heimildir",
-    "readOnly": "Aðeins lestur",
-    "workspaceWrite": "Skrifa á vinnusvæði",
-    "context": "Samhengi lotu",
-    "permissionHint": "Aðeins lestur leyfir skoðun skráa. Skrifheimild leyfir breytingar innan vinnusvæðis þessarar lotu."
+    "cancelled": "Hætt við",
+    "turnLimit": "Stöðvað við hámark umferða.",
+    "messageCount": "Skilaboð: {{count}}",
+    "deleteSession": "Eyða lotu",
+    "deleteConfirm": "Eyða „{{title}}“ og ferli hennar?",
+    "loadFailed": "Ekki tókst að hlaða Strands.",
+    "createFailed": "Ekki tókst að búa til lotu.",
+    "deleteFailed": "Ekki tókst að eyða lotunni.",
+    "saveFailed": "Ekki tókst að vista lotuna.",
+    "turnFailed": "Vélin gat ekki klárað umferðina"
   }
 }

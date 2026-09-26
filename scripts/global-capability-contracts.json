@@ -2691,7 +2691,7 @@
     {
       "id": "agent-cli",
       "title": "Agent CLI models",
-      "uiRoutes": ["/agents"],
+      "uiRoutes": [],
       "documentation": [
         {
           "file": "docs/36-AGENT_CLI_MODELS.md",
@@ -2711,29 +2711,11 @@
         {
           "file": "scripts/test-agent-cli-access.mjs",
           "runner": "test:package",
-          "name": "CLI changes never alter Claw and Claw changes preserve explicit CLI choices",
-          "behaviorPatterns": ["getAgentCliModelsEnabled", "getAgentsEnabled"]
-        },
-        {
-          "file": "scripts/test-cordis-agent-provider.mjs",
-          "runner": "test:package",
-          "name": "DSH provider choices include plugin-only catalogs without Ollama or CLI binaries",
-          "behaviorPatterns": ["listAgentModels", "PLUGIN_DSH_MODEL"]
-        },
-        {
-          "file": "scripts/test-title-generation.mjs",
-          "runner": "test:package",
-          "name": "DSH base and qualified titles resolve to exact direct providers without tools",
+          "name": "enabled CLI models are listed for administrators and never for regular users",
           "behaviorPatterns": [
-            "resolveDshProviderTarget",
-            "generateTitleForSession"
+            "listAgentModels\\(regular\\.id\\)",
+            "assertAgentAccess\\(regular\\.id\\)"
           ]
-        },
-        {
-          "file": "frontend/e2e/dsh-model-selection.spec.ts",
-          "runner": "test:e2e",
-          "name": "model-specific DSH choices keep opaque IDs in Chat, default, vision and task selectors",
-          "behaviorPatterns": ["taskProviderId", "default-model-select"]
         }
       ],
       "backendRoutes": [
@@ -2960,26 +2942,6 @@
           "runner": "test:package",
           "name": "hard budgets block exhausted principals and fail open otherwise",
           "behaviorPatterns": ["BudgetExceededError", "Team hard cap"]
-        },
-        {
-          "file": "frontend/e2e/plugin-usage.spec.ts",
-          "runner": "test:e2e",
-          "name": "native DSH calls appear alongside existing providers without Ollama labels",
-          "behaviorPatterns": [
-            "dsh-native:deepseek-official",
-            "deepseek-flash",
-            "usage-provider-breakdown"
-          ]
-        },
-        {
-          "file": "scripts/test-plugin-usage-analytics.mjs",
-          "runner": "test:package",
-          "name": "native DSH inference is actor-attributed and visible through the usage API without plugin manifests",
-          "behaviorPatterns": [
-            "recordNativeDshUsage",
-            "dsh-native:",
-            "router\\.stack"
-          ]
         },
         {
           "file": "frontend/e2e/plugin-usage.spec.ts",
@@ -4888,213 +4850,155 @@
       }
     },
     {
-      "id": "libre-claw",
-      "title": "Libre Claw",
-      "uiRoutes": [],
+      "id": "strands-engine",
+      "title": "Strands engine",
+      "uiRoutes": ["/strands"],
       "sourceEvidence": [
         {
-          "file": "backend/src/routes/libreClaw.ts",
+          "file": "backend/src/routes/strands.ts",
           "patterns": [
-            "router.use\\(authenticate, requireAdmin\\)",
-            "router.post\\('/runs'"
+            "router.use\\(requireStrandsAccess\\)",
+            "router.put\\('/access', requireAdmin"
           ]
+        },
+        {
+          "file": "backend/src/strands/harness.ts",
+          "patterns": ["WATCHED_EVENTS", "process.removeListener"]
+        },
+        {
+          "file": "backend/src/strands/sandbox.ts",
+          "patterns": ["export class WorkspaceSandbox"]
         }
       ],
       "documentation": [
         {
-          "file": "docs/31-LIBRE_CLAW_INTEGRATION.md",
-          "patterns": [
-            "# Libre Claw Integration",
-            "All Libre Claw routes require an authenticated admin user"
-          ]
+          "file": "docs/67-STRANDS_ENGINE.md",
+          "patterns": ["# Strands Engine", "LIBRE_STRANDS_ACCESS"]
+        },
+        {
+          "file": "docs/06-TROUBLESHOOTING.md",
+          "patterns": ["## Strands Engine Problems"]
+        },
+        {
+          "file": "docs/33-WORKSPACES.md",
+          "patterns": ["## Strands engine"]
         }
       ],
       "focusedTests": [
         {
-          "file": "frontend/e2e/sidebar-create-actions.spec.ts",
+          "file": "scripts/test-strands-engine.mjs",
+          "runner": "test:package",
+          "name": "Strands access fails closed and follows the admin setting and environment pin",
+          "behaviorPatterns": ["LIBRE_STRANDS_ACCESS", "regularToken"]
+        },
+        {
+          "file": "scripts/test-strands-engine.mjs",
+          "runner": "test:package",
+          "name": "a Strands turn streams NDJSON, runs a jailed file tool, and persists the transcript",
+          "behaviorPatterns": ["tool-result", "web_fetch"]
+        },
+        {
+          "file": "scripts/test-strands-engine.mjs",
+          "runner": "test:package",
+          "name": "the workspace jail rejects paths that leave the session root",
+          "behaviorPatterns": ["escaped\\.txt", "regularToken"]
+        },
+        {
+          "file": "frontend/e2e/strands-engine.spec.ts",
           "runner": "test:e2e",
-          "name": "Work and Agents are hidden and route-protected for non-admin users",
-          "behaviorPatterns": ["/api/libre-claw", "libreClawRequests"]
+          "name": "an admin creates a Strands session and streams a turn with a tool call",
+          "behaviorPatterns": ["strands-new-session", "strands-tool-trace"]
         }
       ],
       "backendRoutes": [
         {
-          "file": "backend/src/routes/libreClaw.ts",
-          "mount": "/api/libre-claw",
+          "file": "backend/src/routes/strands.ts",
+          "mount": "/api/strands",
           "method": "GET",
           "path": "/access"
         },
         {
-          "file": "backend/src/routes/libreClaw.ts",
-          "mount": "/api/libre-claw",
+          "file": "backend/src/routes/strands.ts",
+          "mount": "/api/strands",
           "method": "PUT",
           "path": "/access"
         },
         {
-          "file": "backend/src/routes/libreClaw.ts",
-          "mount": "/api/libre-claw",
-          "method": "GET",
-          "path": "/status"
-        },
-        {
-          "file": "backend/src/routes/libreClaw.ts",
-          "mount": "/api/libre-claw",
+          "file": "backend/src/routes/strands.ts",
+          "mount": "/api/strands",
           "method": "GET",
           "path": "/health"
         },
         {
-          "file": "backend/src/routes/libreClaw.ts",
-          "mount": "/api/libre-claw",
+          "file": "backend/src/routes/strands.ts",
+          "mount": "/api/strands",
           "method": "GET",
-          "path": "/dashboard"
+          "path": "/models"
         },
         {
-          "file": "backend/src/routes/libreClaw.ts",
-          "mount": "/api/libre-claw",
+          "file": "backend/src/routes/strands.ts",
+          "mount": "/api/strands",
           "method": "GET",
-          "path": "/config/model"
+          "path": "/sessions"
         },
         {
-          "file": "backend/src/routes/libreClaw.ts",
-          "mount": "/api/libre-claw",
+          "file": "backend/src/routes/strands.ts",
+          "mount": "/api/strands",
+          "method": "POST",
+          "path": "/sessions"
+        },
+        {
+          "file": "backend/src/routes/strands.ts",
+          "mount": "/api/strands",
+          "method": "GET",
+          "path": "/sessions/:sessionId"
+        },
+        {
+          "file": "backend/src/routes/strands.ts",
+          "mount": "/api/strands",
           "method": "PATCH",
-          "path": "/config/model"
+          "path": "/sessions/:sessionId"
         },
         {
-          "file": "backend/src/routes/libreClaw.ts",
-          "mount": "/api/libre-claw",
-          "method": "GET",
-          "path": "/config/fallback"
-        },
-        {
-          "file": "backend/src/routes/libreClaw.ts",
-          "mount": "/api/libre-claw",
-          "method": "PATCH",
-          "path": "/config/fallback"
-        },
-        {
-          "file": "backend/src/routes/libreClaw.ts",
-          "mount": "/api/libre-claw",
-          "method": "PATCH",
-          "path": "/config/theme"
-        },
-        {
-          "file": "backend/src/routes/libreClaw.ts",
-          "mount": "/api/libre-claw",
-          "method": "GET",
-          "path": "/runs"
-        },
-        {
-          "file": "backend/src/routes/libreClaw.ts",
-          "mount": "/api/libre-claw",
-          "method": "POST",
-          "path": "/runs"
-        },
-        {
-          "file": "backend/src/routes/libreClaw.ts",
-          "mount": "/api/libre-claw",
-          "method": "GET",
-          "path": "/runs/:runId"
-        },
-        {
-          "file": "backend/src/routes/libreClaw.ts",
-          "mount": "/api/libre-claw",
-          "method": "GET",
-          "path": "/runs/:runId/events"
-        },
-        {
-          "file": "backend/src/routes/libreClaw.ts",
-          "mount": "/api/libre-claw",
-          "method": "POST",
-          "path": "/runs/:runId/cancel"
-        },
-        {
-          "file": "backend/src/routes/libreClaw.ts",
-          "mount": "/api/libre-claw",
-          "method": "POST",
-          "path": "/runs/:runId/permissions/:toolCallId"
-        },
-        {
-          "file": "backend/src/routes/libreClaw.ts",
-          "mount": "/api/libre-claw",
-          "method": "GET",
-          "path": "/usage"
-        },
-        {
-          "file": "backend/src/routes/libreClaw.ts",
-          "mount": "/api/libre-claw",
-          "method": "GET",
-          "path": "/automations"
-        },
-        {
-          "file": "backend/src/routes/libreClaw.ts",
-          "mount": "/api/libre-claw",
-          "method": "POST",
-          "path": "/automations"
-        },
-        {
-          "file": "backend/src/routes/libreClaw.ts",
-          "mount": "/api/libre-claw",
-          "method": "GET",
-          "path": "/automations/:automationId"
-        },
-        {
-          "file": "backend/src/routes/libreClaw.ts",
-          "mount": "/api/libre-claw",
-          "method": "PATCH",
-          "path": "/automations/:automationId"
-        },
-        {
-          "file": "backend/src/routes/libreClaw.ts",
-          "mount": "/api/libre-claw",
-          "method": "PUT",
-          "path": "/automations/:automationId"
-        },
-        {
-          "file": "backend/src/routes/libreClaw.ts",
-          "mount": "/api/libre-claw",
-          "method": "POST",
-          "path": "/automations/:automationId/pause"
-        },
-        {
-          "file": "backend/src/routes/libreClaw.ts",
-          "mount": "/api/libre-claw",
-          "method": "POST",
-          "path": "/automations/:automationId/resume"
-        },
-        {
-          "file": "backend/src/routes/libreClaw.ts",
-          "mount": "/api/libre-claw",
-          "method": "POST",
-          "path": "/automations/:automationId/run"
-        },
-        {
-          "file": "backend/src/routes/libreClaw.ts",
-          "mount": "/api/libre-claw",
+          "file": "backend/src/routes/strands.ts",
+          "mount": "/api/strands",
           "method": "DELETE",
-          "path": "/automations/:automationId"
+          "path": "/sessions/:sessionId"
+        },
+        {
+          "file": "backend/src/routes/strands.ts",
+          "mount": "/api/strands",
+          "method": "POST",
+          "path": "/sessions/:sessionId/cancel"
+        },
+        {
+          "file": "backend/src/routes/strands.ts",
+          "mount": "/api/strands",
+          "method": "POST",
+          "path": "/sessions/:sessionId/messages"
         }
       ],
       "contractSurfaces": {
         "schemas": {
           "evidence": [
             {
-              "file": "backend/src/services/libreClawService.ts",
-              "patterns": [
-                "export interface LibreClawRun",
-                "export interface LibreClawAutomation"
-              ]
+              "file": "backend/src/strands/engine.ts",
+              "patterns": ["export type StrandsTurnEvent", "STRANDS_MAX_TURNS"]
+            },
+            {
+              "file": "backend/src/strands/work-model.ts",
+              "patterns": ["WORK_STRANDS_MODEL_PREFIX", "workProviderModel"]
             }
           ]
         },
         "manifests": {
-          "notApplicable": "Libre Claw is an explicitly configured service integration and does not use a Libre provider manifest."
+          "notApplicable": "The Strands engine is built into the backend and drives existing Ollama and provider-plugin routes, so it has no manifest of its own."
         },
         "defaults": {
           "evidence": [
             {
-              "file": "backend/src/services/libreClawService.ts",
-              "patterns": ["DEFAULT_BASE_URL", "LIBRE_CLAW_TIMEOUT_MS"]
+              "file": "backend/src/services/strandsAccessService.ts",
+              "patterns": ["STRANDS_ACCESS_MODE_KEY", "LIBRE_STRANDS_ACCESS"]
             }
           ]
         }
@@ -5353,242 +5257,6 @@
               "patterns": [
                 "DEFAULT_MAX_DURABLE_PAYLOAD_RECORDS",
                 "DEFAULT_MAX_DURABLE_CIPHERTEXT_BYTES"
-              ]
-            }
-          ]
-        }
-      }
-    },
-    {
-      "id": "cordis-bridge",
-      "title": "Cordis bridge",
-      "uiRoutes": ["/cordis"],
-      "documentation": [
-        {
-          "file": "docs/64-CORDIS_BRIDGE.md",
-          "patterns": ["## HTTP surface", "libreDshEngine"]
-        },
-        {
-          "file": "docs/65-CORDIS_CONFIGURATION.md",
-          "patterns": ["## `cordis.patch.yml`", "LIBRE_CORDIS_ENABLED"]
-        },
-        {
-          "file": "docs/06-TROUBLESHOOTING.md",
-          "patterns": ["## Cordis Bridge Problems", "CORDIS_UNAVAILABLE"]
-        },
-        {
-          "file": "docs/33-WORKSPACES.md",
-          "patterns": ["## DeepSeek Harness engine", "approval"]
-        }
-      ],
-      "focusedTests": [
-        {
-          "file": "frontend/e2e/cordis-engine.spec.ts",
-          "runner": "test:e2e",
-          "name": "an operator can create a session and stream a turn",
-          "behaviorPatterns": ["cordis-create-session", "cordis-transcript"]
-        },
-        {
-          "file": "scripts/test-cordis-bridge-http.mjs",
-          "runner": "test:package",
-          "name": "a chat turn streams assistant text before the terminal chunk",
-          "behaviorPatterns": [
-            "/api/cordis/sessions/\\$\\{session\\.id\\}/messages",
-            "application\\\\/x-ndjson"
-          ]
-        },
-        {
-          "file": "scripts/test-cordis-bridge.mjs",
-          "runner": "test:package",
-          "name": "the engine keeps serving while its provider row is replaced",
-          "behaviorPatterns": ["replacement-route", "listProviders"]
-        },
-        {
-          "file": "scripts/test-cordis-access.mjs",
-          "runner": "test:package",
-          "name": "an administrator turns the engine on and it serves without a restart",
-          "behaviorPatterns": ["lockedByEnv", "api\\/cordis\\/access"]
-        },
-        {
-          "file": "scripts/test-cordis-work-driver.mjs",
-          "runner": "test:package",
-          "name": "DSH pauses at tool calls until Work supplies approved sandbox results",
-          "behaviorPatterns": ["tool_call_id", "createWorkDshDriver"]
-        },
-        {
-          "file": "scripts/test-cordis-work.mjs",
-          "runner": "test:package",
-          "name": "native DSH performs tool rounds through Work and persists one transcript",
-          "behaviorPatterns": ["nativeSessions", "workTaskService"]
-        },
-        {
-          "file": "frontend/e2e/work-dsh.spec.ts",
-          "runner": "test:e2e",
-          "name": "a Work engine choice preserves its provider and survives reload",
-          "behaviorPatterns": ["DeepSeek Harness", "providerId"]
-        },
-        {
-          "file": "scripts/test-cordis-bridge-http.mjs",
-          "runner": "test:package",
-          "name": "the engine model catalog and session settings preserve exact model and permission choices",
-          "behaviorPatterns": ["permissionMode", "/api/cordis/models"]
-        },
-        {
-          "file": "scripts/test-cordis-bridge.mjs",
-          "runner": "test:package",
-          "name": "native one-shot approval performs only the reviewed workspace operation and preserves read-only mode",
-          "behaviorPatterns": ["allowed-once", "read-only"]
-        },
-        {
-          "file": "frontend/e2e/cordis-engine.spec.ts",
-          "runner": "test:e2e",
-          "name": "the transcript renders safe Markdown and copyable code while context stays collapsed",
-          "behaviorPatterns": ["cordis-context", "clipboard"]
-        },
-        {
-          "file": "scripts/test-native-dsh-provider.mjs",
-          "runner": "test:package",
-          "name": "the real client preserves Work tools, reasoning, correlation and provider replay over the socket",
-          "behaviorPatterns": ["client.generate", "replayState"]
-        },
-        {
-          "file": "scripts/test-native-dsh-client.mjs",
-          "runner": "test:package",
-          "name": "native provider access is checked before any socket or catalog request",
-          "behaviorPatterns": ["service\\.catalog", "administrator"]
-        },
-        {
-          "file": "scripts/test-title-generation.mjs",
-          "runner": "test:package",
-          "name": "native DSH titles use the selected native provider without an LWUI provider or agent turn",
-          "behaviorPatterns": ["generateDshText", "deepseek-official"]
-        },
-        {
-          "file": "frontend/e2e/work-native-dsh.spec.ts",
-          "runner": "test:e2e",
-          "name": "a native Chat alias keeps its exact provider and raw model in Work",
-          "behaviorPatterns": ["providerType", "workTaskCreateRequests"]
-        }
-      ],
-      "backendRoutes": [
-        {
-          "file": "backend/src/routes/cordis.ts",
-          "mount": "/api/cordis",
-          "method": "GET",
-          "path": "/access"
-        },
-        {
-          "file": "backend/src/routes/cordis.ts",
-          "mount": "/api/cordis",
-          "method": "PUT",
-          "path": "/access"
-        },
-        {
-          "file": "backend/src/routes/cordis.ts",
-          "mount": "/api/cordis",
-          "method": "GET",
-          "path": "/agents"
-        },
-        {
-          "file": "backend/src/routes/cordis.ts",
-          "mount": "/api/cordis",
-          "method": "GET",
-          "path": "/health"
-        },
-        {
-          "file": "backend/src/routes/cordis.ts",
-          "mount": "/api/cordis",
-          "method": "GET",
-          "path": "/sessions"
-        },
-        {
-          "file": "backend/src/routes/cordis.ts",
-          "mount": "/api/cordis",
-          "method": "POST",
-          "path": "/sessions"
-        },
-        {
-          "file": "backend/src/routes/cordis.ts",
-          "mount": "/api/cordis",
-          "method": "DELETE",
-          "path": "/sessions/:id"
-        },
-        {
-          "file": "backend/src/routes/cordis.ts",
-          "mount": "/api/cordis",
-          "method": "GET",
-          "path": "/sessions/:id"
-        },
-        {
-          "file": "backend/src/routes/cordis.ts",
-          "mount": "/api/cordis",
-          "method": "POST",
-          "path": "/sessions/:id/cancel"
-        },
-        {
-          "file": "backend/src/routes/cordis.ts",
-          "mount": "/api/cordis",
-          "method": "POST",
-          "path": "/sessions/:id/messages"
-        },
-        {
-          "file": "backend/src/routes/cordis.ts",
-          "mount": "/api/cordis",
-          "method": "GET",
-          "path": "/tools"
-        },
-        {
-          "file": "backend/src/routes/cordis.ts",
-          "mount": "/api/cordis",
-          "method": "GET",
-          "path": "/models"
-        },
-        {
-          "file": "backend/src/routes/cordis.ts",
-          "mount": "/api/cordis",
-          "method": "PATCH",
-          "path": "/sessions/:id/settings"
-        },
-        {
-          "file": "backend/src/routes/cordis.ts",
-          "mount": "/api/cordis",
-          "method": "POST",
-          "path": "/sessions/:id/approvals/:approvalId"
-        }
-      ],
-      "contractSurfaces": {
-        "schemas": {
-          "evidence": [
-            {
-              "file": "backend/src/cordis/contracts.ts",
-              "patterns": [
-                "export interface DshEngine",
-                "export type EngineStreamChunk"
-              ]
-            },
-            {
-              "file": "backend/src/cordis/work-model.ts",
-              "patterns": ["WORK_DSH_MODEL_PREFIX", "workProviderModel"]
-            }
-          ]
-        },
-        "manifests": {
-          "notApplicable": "The Cordis bridge is enabled through a YAML composition document rather than an installed manifest, so no manifest surface exists for it to declare."
-        },
-        "defaults": {
-          "evidence": [
-            {
-              "file": "backend/src/cordis/host/config.ts",
-              "patterns": [
-                "export function resolveCordisHostConfig",
-                "CORDIS_PATCH_FILENAME"
-              ]
-            },
-            {
-              "file": "backend/src/services/cordisAccessService.ts",
-              "patterns": [
-                "CORDIS_ENABLED_KEY",
-                "export async function getCordisAccess"
               ]
             }
           ]

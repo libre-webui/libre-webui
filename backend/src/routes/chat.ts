@@ -1845,7 +1845,7 @@ router.post(
     res: Response<
       ApiResponse<{
         title: string;
-        source: 'plugin' | 'ollama' | 'dsh' | 'fallback';
+        source: 'plugin' | 'ollama' | 'fallback';
         updatedAt: number;
       }>
     >

@@ -849,14 +849,16 @@ export interface PendingApprovalSummary {
   latestCreatedAt: string | null;
 }
 
+/** Who may use the embedded Strands agent engine. */
+export type StrandsAccessMode = 'disabled' | 'admins' | 'all-users';
+
 export interface SystemInfo {
   requiresAuth: boolean;
   hasUsers: boolean;
   userCount: number;
   signupEnabled: boolean;
-  agentsEnabled?: boolean; // Admin opt-in for the Agents section (Libre Claw)
   agentCliModelsEnabled?: boolean; // Separate opt-in for installed agent chat models
-  cordisEnabled?: boolean; // Admin opt-in for the embedded Cordis engine
+  strandsAccess?: StrandsAccessMode; // Who may use the embedded Strands engine
   passkeysInUse?: boolean; // At least one passkey registered system-wide
   ollamaEnabled?: boolean; // False when the admin disabled the Ollama provider
   version?: string;

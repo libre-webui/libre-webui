@@ -15,8 +15,8 @@
  * limitations under the License.
  */
 
-import { nativeDshProviderService } from '../cordis/dsh/native-provider-client.js';
 import express, { NextFunction, Response } from 'express';
+import { userHasStrandsAccess } from '../services/strandsAccessService.js';
 import {
   authenticate,
   requireAdmin,
@@ -181,15 +181,13 @@ router.get(
     res: Response<ApiResponse<WorkCapabilities>>
   ): Promise<void> => {
     const userId = requireUserId(req);
-    const [runtimeAvailable, providers, nativeDsh] = await Promise.all([
+    const [runtimeAvailable, providers, strandsEnabled] = await Promise.all([
       workRuntimeService.isRuntimeAvailable(),
       workModelProviderService.availability(userId),
-      nativeDshProviderService.catalog(userId),
+      userHasStrandsAccess({ id: userId, role: req.user?.role }),
     ]);
     const providerAvailable =
-      providers.ollamaAvailable ||
-      providers.pluginAvailable ||
-      (nativeDsh.status === 'ready' && nativeDsh.models.length > 0);
+      providers.ollamaAvailable || providers.pluginAvailable;
     const recoveryPending = workRuntimeService.recoveryPending;
     const recoveryPendingCount = workRuntimeService.recoveryPendingCount;
     const available = runtimeAvailable && !recoveryPending && providerAvailable;
@@ -208,17 +206,7 @@ router.get(
       runtimeAvailable,
       ollamaAvailable: providers.ollamaAvailable,
       pluginAvailable: providers.pluginAvailable,
-      nativeDsh: {
-        status: nativeDsh.status,
-        models: nativeDsh.models.map(model => ({
-          model: model.model,
-          providerType: 'dsh' as const,
-          providerId: model.providerId,
-          key: `dsh:${encodeURIComponent(model.providerId)}:${encodeURIComponent(model.model)}`,
-          label: `${model.name} · ${model.providerName}`,
-          remote: true as const,
-        })),
-      },
+      strands: { enabled: strandsEnabled },
       runtimeImage: workRuntimeService.image,
       reason,
       // Structured alongside `reason` so the interface can say how many
@@ -1843,9 +1831,9 @@ function readProviderSelection(
   const record =
     body && typeof body === 'object' ? (body as Record<string, unknown>) : {};
   const rawType = record.providerType ?? fallback?.providerType ?? 'ollama';
-  if (rawType !== 'ollama' && rawType !== 'plugin' && rawType !== 'dsh') {
+  if (rawType !== 'ollama' && rawType !== 'plugin') {
     throw new WorkRouteError(
-      'Field "providerType" must be "ollama", "plugin", or "dsh".',
+      'Field "providerType" must be "ollama" or "plugin".',
       400
     );
   }
@@ -1856,7 +1844,7 @@ function readProviderSelection(
       String(record.providerId).trim()
     ) {
       throw new WorkRouteError(
-        'Field "providerId" is only valid for plugin or native DSH providers.',
+        'Field "providerId" is only valid for plugin providers.',
         400
       );
     }
@@ -1866,7 +1854,7 @@ function readProviderSelection(
   const rawProviderId = record.providerId ?? fallback?.providerId;
   if (typeof rawProviderId !== 'string' || !rawProviderId.trim()) {
     throw new WorkRouteError(
-      'Field "providerId" is required for plugin or native DSH providers.',
+      'Field "providerId" is required for plugin providers.',
       400
     );
   }

@@ -22,16 +22,13 @@ import { Button } from '@/components/ui';
 import { SettingsToggle } from '@/components/settings/SettingsToggle';
 import { useAuthStore } from '@/store/authStore';
 import { useChatStore } from '@/store/chatStore';
-import { libreClawApi } from '@/utils/api/libreClawApi';
 import { agentCliApi } from '@/utils/api/agentCliApi';
 
 /**
- * Independent administrator opt-ins for Libre Claw and installed CLI chat
- * models. Both decisions are enforced by the corresponding backend routes.
+ * Administrator opt-in for installed CLI chat models. The backend enforces
+ * the decision on every agent route.
  */
-export const AgentAccessSettings: React.FC<{ kind?: 'claw' | 'cli' }> = ({
-  kind = 'claw',
-}) => {
+export const AgentAccessSettings: React.FC = () => {
   const { t } = useTranslation();
   const systemInfo = useAuthStore(state => state.systemInfo);
   const setSystemInfo = useAuthStore(state => state.setSystemInfo);
@@ -43,15 +40,12 @@ export const AgentAccessSettings: React.FC<{ kind?: 'claw' | 'cli' }> = ({
   // the rest of the session; offer a retry instead.
   const [loadFailed, setLoadFailed] = useState(false);
   const [loadAttempt, setLoadAttempt] = useState(0);
-  const cli = kind === 'cli';
-  const labelKey = cli
-    ? 'userManager.agentCliAccess'
-    : 'userManager.agentAccess';
+  const labelKey = 'userManager.agentCliAccess';
 
   useEffect(() => {
     let cancelled = false;
-    const request = cli ? agentCliApi.getAccess() : libreClawApi.access();
-    request
+    agentCliApi
+      .getAccess()
       .then(response => {
         if (cancelled) return;
         if (response.success && response.data) {
@@ -67,14 +61,12 @@ export const AgentAccessSettings: React.FC<{ kind?: 'claw' | 'cli' }> = ({
     return () => {
       cancelled = true;
     };
-  }, [loadAttempt, cli]);
+  }, [loadAttempt]);
 
   const handleChange = async (checked: boolean) => {
     setSaving(true);
     try {
-      const response = await (cli
-        ? agentCliApi.setAccess(checked)
-        : libreClawApi.setAccess(checked));
+      const response = await agentCliApi.setAccess(checked);
       if (!response.success || !response.data) {
         throw new Error(response.error || 'Agent access update failed.');
       }
@@ -83,15 +75,14 @@ export const AgentAccessSettings: React.FC<{ kind?: 'claw' | 'cli' }> = ({
       if (systemInfo) {
         setSystemInfo({
           ...systemInfo,
-          [cli ? 'agentCliModelsEnabled' : 'agentsEnabled']:
-            response.data.enabled,
+          agentCliModelsEnabled: response.data.enabled,
         });
       }
       // The chat picker caches its catalogue independently of navigation.
       await loadModels({ quiet: true });
-      toast.success(t('userManager.agentAccess.saved'));
+      toast.success(t('userManager.agentCliAccess.saved'));
     } catch {
-      toast.error(t('userManager.agentAccess.saveFailed'));
+      toast.error(t('userManager.agentCliAccess.saveFailed'));
     } finally {
       setSaving(false);
     }
@@ -100,7 +91,7 @@ export const AgentAccessSettings: React.FC<{ kind?: 'claw' | 'cli' }> = ({
   return (
     <div
       className='rounded-lg border border-gray-200 dark:border-dark-300 bg-white dark:bg-dark-100 p-4'
-      data-testid={cli ? 'agent-cli-access-settings' : 'agent-access-settings'}
+      data-testid='agent-cli-access-settings'
     >
       <div className='flex items-center justify-between gap-4'>
         <div>

@@ -55,15 +55,6 @@ async function setPageLanguage(page: Page, language: string) {
   }, language);
 }
 
-const nativeModels = ['flash', 'pro'].map(name => ({
-  model: `deepseek-v4-${name}`,
-  providerType: 'dsh' as const,
-  providerId: 'deepseek',
-  key: `dsh:deepseek:deepseek-v4-${name}`,
-  label: `${name === 'flash' ? 'Flash' : 'Pro'} · DeepSeek`,
-  remote: true,
-}));
-
 async function openConfiguredLanding(
   page: Page,
   mode: 'light' | 'dark',
@@ -99,7 +90,7 @@ async function openConfiguredLanding(
       runtimeAvailable: true,
       ollamaAvailable: true,
       image: 'work-test',
-      nativeDsh: { status: 'ready', models: nativeModels },
+      strands: { enabled: true },
       hostWorkspaces: { enabled: true, roots: ['/projects'] },
     },
   });
@@ -146,16 +137,14 @@ for (const mode of ['light', 'dark'] as const) {
       localBox.y + localBox.height,
       0
     );
-    await engine.selectOption('dsh');
-    const nativeModel = page.getByTestId('work-model-select');
-    await nativeModel.selectOption(nativeModels[0].key);
-    await page.getByTestId('work-provider-disclosure-dismiss').click();
-    await expect(nativeModel).toBeFocused();
+    await engine.selectOption('strands');
+    const strandsModel = page.getByTestId('work-model-selector-trigger');
+    await expect(strandsModel).toBeVisible();
     const send = page.getByTestId('work-submit-button');
     await expect(send.getByText('Run', { exact: true })).toBeVisible();
     await expect(send).toBeEnabled();
     const surface = page.getByTestId('work-composer-surface');
-    const controls = [engine, nativeModel, send];
+    const controls = [engine, strandsModel, send];
     for (const control of controls) {
       await assertContained(control, surface);
       expect((await control.boundingBox())!.height).toBeGreaterThanOrEqual(44);
@@ -177,7 +166,7 @@ for (const variant of [
   { mode: 'light' as const, language: 'en' },
   { mode: 'dark' as const, language: 'ar' },
 ]) {
-  test(`native landing controls stack at 320px and preserve drafts and dismissal focus in ${variant.language}`, async ({
+  test(`Strands landing controls stack at 320px and preserve drafts in ${variant.language}`, async ({
     page,
   }, testInfo) => {
     await page.setViewportSize({ width: 320, height: 844 });
@@ -187,46 +176,27 @@ for (const variant of [
     const draft = 'Build a local research dashboard without losing this draft.';
     await input.fill(draft);
     const engine = page.getByTestId('work-engine-select');
-    await engine.selectOption('dsh');
-    const nativeModel = page.getByTestId('work-model-select');
-    await expect(
-      nativeModel.locator('optgroup').first().locator('option')
-    ).toHaveText(['Flash · DeepSeek', 'Pro · DeepSeek']);
-    await nativeModel.selectOption(nativeModels[0].key);
-    await expect(input).toHaveValue(draft);
-    await expect(
-      page.getByTestId('work-provider-disclosure-popover')
-    ).toBeVisible();
-    await page.getByTestId('work-provider-disclosure-dismiss').click();
-    await expect(
-      page.getByTestId('work-provider-disclosure-popover')
-    ).toHaveCount(0);
-    await expect(nativeModel).toBeFocused();
-    await nativeModel.selectOption(nativeModels[1].key);
+    await engine.selectOption('strands');
+    const strandsModel = page.getByTestId('work-model-selector-trigger-mobile');
+    await expect(strandsModel).toBeVisible();
     await expect(input).toHaveValue(draft);
     await engine.selectOption('libre');
     await expect(input).toHaveValue(draft);
-    await engine.selectOption('dsh');
-    await nativeModel.selectOption(nativeModels[1].key);
+    await engine.selectOption('strands');
+    await expect(engine).toHaveValue('strands');
     await expect(input).toHaveValue(draft);
-    await expect(nativeModel).toHaveValue(nativeModels[1].key);
     await page.getByTestId('work-host-path').fill('/projects/research');
     const surface = page.getByTestId('work-composer-surface');
     const send = page.getByTestId('work-submit-button');
     await expect(send).toBeEnabled();
-    for (const control of [
-      engine,
-      nativeModel,
-      send,
-      page.getByTestId('work-model-refresh'),
-    ]) {
+    for (const control of [engine, strandsModel, send]) {
       await control.scrollIntoViewIfNeeded();
       await expect(control).toBeInViewport({ ratio: 1 });
       await assertContained(control, surface);
       expect((await control.boundingBox())!.height).toBeGreaterThanOrEqual(44);
     }
     const engineBox = (await engine.boundingBox())!;
-    const modelBox = (await nativeModel.boundingBox())!;
+    const modelBox = (await strandsModel.boundingBox())!;
     expect(engineBox.y + engineBox.height).toBeLessThan(modelBox.y);
     await expect(page.locator('html')).toHaveAttribute(
       'dir',

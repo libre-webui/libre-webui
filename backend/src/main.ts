@@ -199,17 +199,4 @@ process.env.LIBRE_PROCESS_ROLE =
   platformConfig.jobs.workerMode === 'external'
     ? 'app-external'
     : 'app-embedded';
-// Install the provider handler before the app graph loads, so the Cordis
-// engine — which mounts lazily on its first request — always finds a provider
-// layer and never starts against a route that cannot serve a call.
-const { installLibreWebUiProvider, resolveEngineDefaultModel } =
-  await import('./cordis/dsh/provider-handler.js');
-const { setEngineDefaultModelResolver } = await import('./cordis/host/host.js');
-const { setCordisProviderCapability } = await import('./cordis/runtime.js');
-const providerHandler = await installLibreWebUiProvider();
-// The capability travels with the host configuration, because the adapter row
-// is imported by URL and would otherwise be a different module instance than
-// the one this registration reaches.
-setCordisProviderCapability(providerHandler);
-setEngineDefaultModelResolver(resolveEngineDefaultModel);
 await import('./index.js');

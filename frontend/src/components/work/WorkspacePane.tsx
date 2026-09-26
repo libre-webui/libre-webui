@@ -1077,7 +1077,7 @@ export function WorkspacePane({
                           message: t('work.activity.kinds.message', {
                             defaultValue: 'Message',
                           }),
-                          reasoning: t('libreClaw.metrics.reasoning', {
+                          reasoning: t('common.reasoning', {
                             defaultValue: 'Reasoning',
                           }),
                           tool_call: t('work.activity.kinds.toolCall', {

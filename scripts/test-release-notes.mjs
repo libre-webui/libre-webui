@@ -8,11 +8,10 @@ const { buildDeterministicReleaseNotes } = require('./lib/releaseNotes.js');
 test('release notes use changed-file evidence instead of duplicate commit dumps', () => {
   const notes = buildDeterministicReleaseNotes('0.12.0', {
     changedFiles: [
-      { status: 'A', to: 'backend/src/routes/libreClaw.ts' },
-      { status: 'A', to: 'frontend/src/pages/LibreClawPage.tsx' },
+      { status: 'A', to: 'backend/src/strands/engine.ts' },
+      { status: 'A', to: 'backend/src/routes/strands.ts' },
+      { status: 'D', to: 'backend/src/routes/libreClaw.ts' },
       { status: 'M', to: 'frontend/src/i18n/locales/fr.json' },
-      { status: 'A', to: 'docs/31-LIBRE_CLAW_INTEGRATION.md' },
-      { status: 'D', to: 'plugins/openclaw-agent.json' },
       { status: 'M', to: 'frontend/src/utils/artifactParser.ts' },
       { status: 'M', to: 'frontend/src/utils/api/authApi.ts' },
       { status: 'M', to: 'package-lock.json' },
@@ -23,7 +22,7 @@ test('release notes use changed-file evidence instead of duplicate commit dumps'
         date: '2026-06-30',
         hash: 'a'.repeat(40),
         shortHash: 'aaaaaaa',
-        subject: 'Add Libre Claw i18n keys',
+        subject: 'Add Strands i18n keys',
       },
       {
         body: '',
@@ -44,8 +43,9 @@ test('release notes use changed-file evidence instead of duplicate commit dumps'
     unreleasedNotes: '',
   });
 
-  assert.match(notes, /first-class Libre Claw agent surface/);
+  assert.match(notes, /embedded Strands agent engine/);
+  assert.match(notes, /Removed Libre Claw and the Cordis bridge/);
   assert.match(notes, /Refreshed 2 dependencies, including axios and vite\./);
-  assert.doesNotMatch(notes, /Add Libre Claw i18n keys/);
+  assert.doesNotMatch(notes, /Add Strands i18n keys/);
   assert.doesNotMatch(notes, /\b---\b/);
 });

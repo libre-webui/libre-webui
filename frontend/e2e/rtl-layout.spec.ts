@@ -157,8 +157,8 @@ test('Arabic mirrors the new Home and tab menus', async ({ page }) => {
       requiresAuth: true,
       hasUsers: true,
       userCount: 1,
-      // The Agents entry only exists when an administrator enabled the feature.
-      agentsEnabled: true,
+      // The Strands entry only exists when an administrator opened the engine.
+      strandsAccess: 'admins',
       version: '0.17.0-e2e',
       turnstile: { enabled: false },
     },
@@ -197,7 +197,7 @@ test('Arabic mirrors the new Home and tab menus', async ({ page }) => {
   const newTabMenu = page.getByTestId('app-tab-new-menu');
   await expect(newTabMenu).toHaveCSS('direction', 'rtl');
   await expect(
-    newTabMenu.getByRole('menuitem', { name: 'الوكلاء' })
+    newTabMenu.getByRole('menuitem', { name: 'Strands' })
   ).toBeVisible();
   // User Management moved into Settings; it is no longer a page tab.
   await expect(

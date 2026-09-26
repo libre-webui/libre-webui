@@ -232,58 +232,33 @@ function buildDeterministicReleaseNotes(version, evidence) {
     breaking: [],
   };
 
-  const hasLibreClaw = /libre[\s-]?claw|openclaw/i.test(allText);
-  if (hasLibreClaw) {
+  const hasStrands = files.some(file =>
+    file.startsWith('backend/src/strands/')
+  );
+  if (hasStrands) {
     add(
       sections.features,
-      'Added a first-class Libre Claw agent surface with daemon status, dashboard access, and a dedicated `/agents` route.'
+      'Added the embedded Strands agent engine, with persistent sessions on a dedicated `/strands` page, a Strands agent in Chat, and a Strands engine option in Work.'
     );
-    if (files.some(file => file.includes('backend/src/routes/libreClaw.ts'))) {
+    if (files.some(file => file.includes('backend/src/routes/strands.ts'))) {
       add(
         sections.features,
-        'Added admin-only `/api/libre-claw` backend routes for status, model/fallback configuration, runs, events, permissions, usage, and automations.'
-      );
-    }
-    if (
-      files.some(file => file.includes('frontend/src/pages/LibreClawPage.tsx'))
-    ) {
-      add(
-        sections.features,
-        'Added WebUI run management for Libre Claw chat and goal-mode runs, including event timelines, cancellation, provider/model overrides, and tool-call approvals.'
-      );
-      add(
-        sections.features,
-        'Added automation controls for Libre Claw schedules, including create, update, run now, pause, resume, and delete actions.'
-      );
-    }
-    if (files.some(file => file.includes('backend/.env.example'))) {
-      add(
-        sections.features,
-        'Added `LIBRE_CLAW_BASE_URL` and `LIBRE_CLAW_TIMEOUT_MS` backend environment settings for daemon connectivity.'
+        'Added `/api/strands` routes for access, health, models, sessions, streamed messages, and cancellation.'
       );
     }
     if (files.some(file => file.includes('frontend/src/i18n/locales'))) {
       add(
         sections.improvements,
-        'Completed Libre Claw translations across all supported locales instead of falling back to English.'
+        'Translated the Strands engine surfaces across all supported locales.'
       );
     }
     if (
-      files.some(file => file.includes('docs/31-LIBRE_CLAW_INTEGRATION.md'))
-    ) {
-      add(
-        sections.docs,
-        'Added Libre Claw integration documentation covering setup, route mapping, run modes, approvals, automations, and troubleshooting.'
-      );
-    }
-    if (
-      /docs\/31-OPENCLAW_INTEGRATION\.md|plugins\/openclaw-agent\.json/i.test(
-        allText
-      )
+      /backend\/src\/routes\/(libreClaw|cordis)\.ts/.test(allText) &&
+      files.some(file => file.includes('backend/src/strands/engine.ts'))
     ) {
       add(
         sections.breaking,
-        'Removed the old OpenClaw integration path and replaced it with Libre Claw. Run the Libre Claw daemon and configure `LIBRE_CLAW_BASE_URL` when it is not on `http://127.0.0.1:8766`.'
+        'Removed Libre Claw and the Cordis bridge with its DeepSeek Harness engine. The Strands engine replaces both; admins choose who can use it in User Management or pin it with `LIBRE_STRANDS_ACCESS`.'
       );
     }
   }
@@ -323,7 +298,7 @@ function buildDeterministicReleaseNotes(version, evidence) {
     demoVersion: files.some(file =>
       file.includes('frontend/src/utils/api/authApi.ts')
     ),
-    libreClaw: hasLibreClaw,
+    strands: hasStrands,
   });
   applyUnreleasedNotes(evidence.unreleasedNotes, sections);
 
@@ -387,8 +362,8 @@ function inferOverview(version, evidence, sections) {
     ...evidence.changedFiles.map(file => file.to || file.file),
   ].join('\n');
 
-  if (/libre[\s-]?claw|openclaw/i.test(text)) {
-    return `Libre WebUI ${version} is the agent integration release. It replaces the previous OpenClaw bridge with a first-class Libre Claw control surface, giving admins a local agent dashboard for durable runs, approvals, automations, usage, and daemon configuration.`;
+  if (/backend\/src\/strands\//.test(text)) {
+    return `Libre WebUI ${version} is the Strands engine release. It replaces Libre Claw and the Cordis bridge with an embedded Strands agent engine that runs on the models Libre WebUI already serves, in Chat, Work, and a dedicated sessions page.`;
   }
 
   if (sections.security.length > 0 && sections.features.length === 0) {
@@ -504,7 +479,7 @@ function isDependabotCommit(commit) {
 }
 
 function isCoveredByPathHeuristics(subject, coveredThemes) {
-  if (coveredThemes.libreClaw && /libre\s+claw/i.test(subject)) return true;
+  if (coveredThemes.strands && /\bstrands\b/i.test(subject)) return true;
   if (
     coveredThemes.artifactParser &&
     /artifact title sanitization/i.test(subject)

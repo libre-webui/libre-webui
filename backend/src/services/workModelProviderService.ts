@@ -16,9 +16,11 @@
  */
 
 import { createHash } from 'crypto';
-import { isWorkDshModel, workProviderModel } from '../cordis/work-model.js';
-import { getCordisEnabled } from './cordisAccessService.js';
-import { nativeDshProviderService } from '../cordis/dsh/native-provider-client.js';
+import {
+  isWorkStrandsModel,
+  workProviderModel,
+} from '../strands/work-model.js';
+import { userIdHasStrandsAccess } from './strandsAccessService.js';
 import type {
   GenerationOptions,
   OllamaChatMessage,
@@ -127,10 +129,7 @@ interface WorkModelProviderDependencies {
   >;
   post: ProviderPost;
   recordPluginUsage?: (usage: PluginUsageEventInput) => void;
-  nativeDsh?: Pick<
-    typeof nativeDshProviderService,
-    'assertModel' | 'generate' | 'routingFingerprint'
-  >;
+  strandsAccess?: (userId: string) => Promise<boolean>;
 }
 
 export interface WorkModelStreamObserver {
@@ -174,21 +173,13 @@ export class WorkModelProviderService {
     provider: WorkProviderSelection,
     userId: string
   ): Promise<void> {
-    const cleaned = await this.providerModel(model, provider);
+    const cleaned = await this.providerModel(model, provider, userId);
     if (!cleaned) {
       throw new WorkModelProviderError(
         'A Work model is required.',
         422,
         'WORK_MODEL_TOOLS_UNSUPPORTED'
       );
-    }
-    if (provider.providerType === 'dsh') {
-      await this.nativeDsh.assertModel(
-        nativeProviderId(provider),
-        cleaned,
-        userId
-      );
-      return;
     }
     if (provider.providerType === 'plugin') {
       await this.requireExactPlugin(provider.providerId, cleaned, userId);
@@ -235,7 +226,7 @@ export class WorkModelProviderService {
     provider: WorkProviderSelection,
     userId: string
   ): Promise<string | undefined> {
-    model = await this.providerModel(model, provider);
+    model = await this.providerModel(model, provider, userId);
     if (provider.providerType !== 'plugin') return undefined;
     const providerId = provider.providerId?.trim();
     if (!providerId) return undefined;
@@ -268,13 +259,7 @@ export class WorkModelProviderService {
     provider: WorkProviderSelection,
     userId: string
   ): Promise<string> {
-    model = await this.providerModel(model, provider);
-    if (provider.providerType === 'dsh')
-      return this.nativeDsh.routingFingerprint(
-        nativeProviderId(provider),
-        model,
-        userId
-      );
+    model = await this.providerModel(model, provider, userId);
     if (provider.providerType === 'ollama') {
       assertOllamaProvider(provider);
       return createHash('sha256')
@@ -324,16 +309,8 @@ export class WorkModelProviderService {
   ): Promise<OllamaChatResponse> {
     request = {
       ...request,
-      model: await this.providerModel(request.model, provider),
+      model: await this.providerModel(request.model, provider, userId),
     };
-    if (provider.providerType === 'dsh')
-      return this.nativeDsh.generate(
-        request,
-        nativeProviderId(provider),
-        userId,
-        {},
-        signal
-      );
     if (provider.providerType === 'ollama') {
       assertOllamaProvider(provider);
       return this.dependencies.ollama.generateChatResponse(request, signal, {
@@ -357,17 +334,9 @@ export class WorkModelProviderService {
   ): Promise<OllamaChatResponse> {
     const streamRequest = {
       ...request,
-      model: await this.providerModel(request.model, provider),
+      model: await this.providerModel(request.model, provider, userId),
       stream: true,
     };
-    if (provider.providerType === 'dsh')
-      return this.nativeDsh.generate(
-        streamRequest,
-        nativeProviderId(provider),
-        userId,
-        observer,
-        signal
-      );
     if (provider.providerType === 'ollama') {
       assertOllamaProvider(provider);
       return this.generateOllamaStream(streamRequest, userId, observer, signal);
@@ -386,29 +355,27 @@ export class WorkModelProviderService {
     );
   }
 
-  /** Resolve the engine wrapper only after checking the live administrator opt-in. */
-  private get nativeDsh() {
-    return this.dependencies.nativeDsh ?? nativeDshProviderService;
-  }
-
   private async providerModel(
     model: string,
-    provider: WorkProviderSelection
+    _provider: WorkProviderSelection,
+    userId: string
   ): Promise<string> {
-    // Native model IDs belong to that server, including any literal dsh: prefix.
-    if (provider.providerType === 'dsh') return model.trim();
-    if (isWorkDshModel(model)) {
-      if (!(await getCordisEnabled())) {
+    // The Strands engine prefix selects the Work driver, not a provider. Every
+    // provider call re-checks access, so revoking Strands stops live runs at
+    // their next model step. Only the underlying model reaches the provider.
+    if (isWorkStrandsModel(model)) {
+      const allowed = this.dependencies.strandsAccess ?? userIdHasStrandsAccess;
+      if (!(await allowed(userId))) {
         throw new WorkModelProviderError(
-          'The DeepSeek Harness engine is disabled.',
+          'The Strands engine is not enabled for this account.',
           403,
-          'WORK_DSH_DISABLED'
+          'WORK_STRANDS_DISABLED'
         );
       }
       const underlying = workProviderModel(model);
-      if (!underlying || isWorkDshModel(underlying)) {
+      if (!underlying || isWorkStrandsModel(underlying)) {
         throw new WorkModelProviderError(
-          'Choose a provider model for the DeepSeek Harness engine.',
+          'Choose a provider model for the Strands engine.',
           422,
           'WORK_MODEL_TOOLS_UNSUPPORTED'
         );
@@ -1961,14 +1928,3 @@ function assertOllamaProvider(provider: WorkProviderSelection): void {
 
 export const workModelProviderService = new WorkModelProviderService();
 export default workModelProviderService;
-
-function nativeProviderId(provider: WorkProviderSelection): string {
-  const id = provider.providerId?.trim();
-  if (!id || id.length > 200)
-    throw new WorkModelProviderError(
-      'A native DeepSeek provider ID is required.',
-      422,
-      'WORK_PROVIDER_REQUIRED'
-    );
-  return id;
-}

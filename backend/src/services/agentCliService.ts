@@ -21,6 +21,7 @@ import os from 'os';
 import path from 'path';
 import { ChatMessage } from '../types/index.js';
 import { PluginStreamChunk } from '../utils/pluginStreaming.js';
+import { userHasStrandsAccess } from './strandsAccessService.js';
 import { userModel } from '../models/userModel.js';
 import { createLogger } from '../utils/logger.js';
 import { getAgentCliModelsEnabled } from './agentAccessService.js';
@@ -65,10 +66,10 @@ export interface AgentCliDefinition {
   /**
    * Runs inside this server rather than as a child process.
    *
-   * The embedded DSH engine is a library, not an executable, so it has no
-   * binary to resolve on PATH and no stdout to parse. Its turns arrive as
-   * Cordis streams instead, so availability is decided by whether the engine
-   * is enabled rather than by a filesystem lookup.
+   * The embedded Strands engine is a library, not an executable, so it has
+   * no binary to resolve on PATH and no stdout to parse. Its turns arrive as
+   * engine events instead, so availability is decided by the account's
+   * Strands access rather than by a filesystem lookup.
    */
   inProcess?: boolean;
 }
@@ -108,10 +109,10 @@ export const AGENT_CLI_DEFINITIONS: AgentCliDefinition[] = [
     ],
   },
   {
-    id: 'dsh',
-    name: 'DeepSeek Harness',
-    // No binary: this agent runs in-process through the Cordis engine.
-    command: 'dsh',
+    id: 'strands',
+    name: 'Strands',
+    // No binary: this agent runs in-process through the Strands engine.
+    command: 'strands',
     parser: 'pi',
     inProcess: true,
     buildArgs: () => [],
@@ -500,14 +501,21 @@ export function parsePiLine(
 
 export class AgentCliService {
   async listAgentModels(userId?: string): Promise<AgentCliModel[]> {
-    if (!(await agentsEnabled())) return [];
+    // Installed CLIs need the server opt-in and, for an account, admin; the
+    // embedded Strands engine is listed on its own access mode. A call with
+    // no account is internal and sees only the server opt-in.
+    const cliAllowed =
+      (await agentsEnabled()) &&
+      (userId === undefined || (await this.isAdminUser(userId)));
     const models: AgentCliModel[] = [];
     for (const definition of AGENT_CLI_DEFINITIONS) {
+      if (!definition.inProcess && !cliAllowed) continue;
       // An in-process agent exists when its engine is enabled, not when a
       // binary is on PATH, so availability is asked of the engine itself.
       if (definition.inProcess) {
         try {
-          if (!(await this.inProcessAgentAvailable(definition.id))) continue;
+          if (!(await this.inProcessAgentAvailable(definition.id, userId)))
+            continue;
         } catch (error) {
           // An optional embedded engine must never hide installed CLI agents.
           logger.warn(`Embedded agent ${definition.id} is unavailable`, error);
@@ -520,26 +528,20 @@ export class AgentCliService {
           binaryPath: '',
           agentId: definition.id,
         });
-        if (definition.id === 'dsh' && userId) {
+        if (definition.id === 'strands' && userId) {
           try {
-            const { dshChatModelChoices } =
-              await import('../cordis/dsh/chat-model.js');
-            for (const model of await dshChatModelChoices(userId)) {
+            const { listStrandsModels } = await import('../strands/catalog.js');
+            for (const model of await listStrandsModels(userId)) {
               models.push({
-                id: `dsh:${model.id}`,
-                name: `${definition.name} · ${model.name}${
-                  model.providerName ? ` (${model.providerName})` : ''
-                }`,
+                id: `strands:${model.id}`,
+                name: `${definition.name} · ${model.name} (${model.providerName})`,
                 command: definition.command,
                 binaryPath: '',
                 agentId: definition.id,
               });
             }
           } catch (error) {
-            logger.warn(
-              'DeepSeek Harness model discovery is unavailable',
-              error
-            );
+            logger.warn('Strands model discovery is unavailable', error);
           }
         }
         continue;
@@ -583,19 +585,20 @@ export class AgentCliService {
   }
 
   /**
-   * Whether an in-process agent can serve a turn right now.
-   *
-   * The engine is an administrator opt-in that mounts lazily, so this is the
-   * same decision the Cordis route layer makes.
+   * Whether an in-process agent can serve a turn for this account right now.
+   * Strands follows its own access mode, read live on every call.
    * @param agentId - the in-process agent to check.
+   * @param userId - the requesting account.
    * @returns true when the agent is available.
    */
-  async inProcessAgentAvailable(agentId: string): Promise<boolean> {
-    if (agentId !== 'dsh') return false;
-    // Discovery must not start or wait for an optional engine. A selected turn
-    // resolves its runtime and reports any startup error independently.
-    const { isCordisBridgeEnabled } = await import('../cordis/runtime.js');
-    return isCordisBridgeEnabled();
+  async inProcessAgentAvailable(
+    agentId: string,
+    userId?: string
+  ): Promise<boolean> {
+    if (agentId !== 'strands' || !userId) return false;
+    const user = await userModel.getUserById(userId);
+    if (!user) return false;
+    return userHasStrandsAccess(user);
   }
 
   async isAdminUser(userId: string): Promise<boolean> {
@@ -606,16 +609,16 @@ export class AgentCliService {
   /**
    * Serve one turn from an in-process agent, in the pipeline's chunk shape.
    *
-   * The embedded engine is not a process, so there is no prompt to pipe and no
-   * stdout to parse: the turn arrives as a Cordis stream, and this maps it onto
-   * the same chunk vocabulary the CLI parsers produce. Tool calls the engine
-   * makes are not surfaced as chunks because the engine executes them itself;
-   * a turn therefore reads as the assistant's text.
+   * The engine is not a process, so there is no prompt to pipe and no stdout
+   * to parse: the turn arrives as engine events, and this maps them onto the
+   * same chunk vocabulary the CLI parsers produce. Tool calls the engine makes
+   * are not surfaced as chunks because the engine executes them itself; a
+   * turn therefore reads as the assistant's text.
    *
    * @param definition - the in-process agent definition.
    * @param messages - conversation so far, oldest first.
-   * @param userId - the requesting account, used to scope the engine session.
-   * @param options - working directory, model override, and cancellation.
+   * @param userId - the requesting account.
+   * @param options - model override and cancellation.
    */
   private async *executeInProcessAgentStreamRequest(
     definition: AgentCliDefinition,
@@ -623,122 +626,65 @@ export class AgentCliService {
     userId: string,
     options: { cwd?: string; model?: string; signal?: AbortSignal }
   ): AsyncGenerator<PluginStreamChunk, void, unknown> {
-    const { resolveDshSelectedModel, requireDshProviderRoute } =
-      await import('../cordis/dsh/chat-model.js');
-    const selectedModel = await resolveDshSelectedModel(
-      options.model ?? definition.id,
-      userId
-    );
-    throwIfChatGenerationCancelled(options.signal);
-    const { getCordisEngine } = await import('../cordis/runtime.js');
-    const result = await getCordisEngine();
-    if (!result.ok) {
-      throw new Error(
-        `The ${definition.name} engine is not available: ${result.reason}${
-          result.detail === undefined ? '' : ` (${result.detail})`
-        }`
-      );
+    if (!(await this.inProcessAgentAvailable(definition.id, userId))) {
+      throw new Error(`${definition.name} is not enabled for this account.`);
     }
-    const engine = result.engine;
-    if (selectedModel) requireDshProviderRoute(engine);
-    // Chat owns its durable transcript. A fresh engine session per request
-    // prevents unrelated chats, forks, and retries from sharing hidden history.
-    const session = await engine.createSession({
-      cwd: options.cwd ?? '',
-      transient: true,
-      userId,
-      ...(selectedModel ? { model: selectedModel } : {}),
-    });
+    throwIfChatGenerationCancelled(options.signal);
     const signal = AbortSignal.any([
       ...(options.signal ? [options.signal] : []),
       AbortSignal.timeout(AGENT_TIMEOUT_MS),
     ]);
-    const cancel = () => {
-      void engine.cancel(session.id).catch(error => {
-        logger.warn('Could not cancel an embedded agent turn', error);
-      });
-    };
-    signal.addEventListener('abort', cancel, { once: true });
-    try {
-      throwIfChatGenerationCancelled(signal);
-      const handle = await engine.sendMessage(
-        session.id,
-        buildAgentPrompt(messages),
-        { userId }
-      );
-      throwIfChatGenerationCancelled(signal);
-      yield* this.engineChunks(handle, signal);
-    } finally {
-      signal.removeEventListener('abort', cancel);
-      // Disposal waits for the agent to stop before deleting its temporary log.
-      await engine.cancel(session.id);
-      await engine.deleteSession(session.id);
-    }
-  }
-
-  /**
-   * Translate an engine stream into the pipeline's chunk vocabulary.
-   * @param handle - the stream the engine returned.
-   * @param signal - cancellation for the request.
-   */
-  private async *engineChunks(
-    handle: {
-      subscribe(
-        listener: (chunk: {
-          type: string;
-          text?: string;
-          message?: string;
-          reason?: string;
-        }) => void
-      ): { unsubscribe(): void };
-    },
-    signal?: AbortSignal
-  ): AsyncGenerator<PluginStreamChunk, void, unknown> {
-    throwIfChatGenerationCancelled(signal);
-    const queue = new ChunkQueue();
+    const { getStrandsEngine } = await import('../strands/runtime.js');
+    const engine = await getStrandsEngine();
     let outputCharacters = 0;
-    const subscription = handle.subscribe(chunk => {
-      if ((chunk.type === 'text' || chunk.type === 'reasoning') && chunk.text) {
-        outputCharacters += chunk.text.length;
-        if (outputCharacters > MAX_OUTPUT_CHARS) {
-          queue.finish(new Error('Embedded agent output exceeded the limit.'));
-          return;
-        }
-        queue.push({
-          type: chunk.type === 'reasoning' ? 'reasoning' : 'content',
-          content: chunk.text,
-        });
-        return;
-      }
-      if (chunk.type === 'error' && chunk.message) {
-        queue.finish(new Error(chunk.message));
-        return;
-      }
-      if (chunk.type === 'done') {
-        queue.push({
-          type: 'done',
-          doneReason:
-            typeof chunk.reason === 'string' ? chunk.reason : undefined,
-        });
-        queue.finish();
-      }
-    });
-
-    const onAbort = () => {
-      subscription.unsubscribe();
-      queue.finish(new ChatGenerationCancelledError());
-    };
-    signal?.addEventListener('abort', onAbort, { once: true });
-    if (signal?.aborted) onAbort();
     try {
-      yield* queue.drain();
-    } finally {
-      signal?.removeEventListener('abort', onAbort);
-      subscription.unsubscribe();
+      for await (const event of engine.chatTurn(userId, messages, {
+        model: options.model ?? definition.id,
+        signal,
+      })) {
+        throwIfChatGenerationCancelled(signal);
+        if (event.type === 'text' || event.type === 'reasoning') {
+          outputCharacters += event.text.length;
+          if (outputCharacters > MAX_OUTPUT_CHARS) {
+            throw new Error('Embedded agent output exceeded the limit.');
+          }
+          yield {
+            type: event.type === 'reasoning' ? 'reasoning' : 'content',
+            content: event.text,
+          };
+        } else if (event.type === 'error') {
+          throw new Error(event.message);
+        } else if (event.type === 'done') {
+          if (event.usage) {
+            yield {
+              type: 'usage',
+              usage: {
+                promptTokens: event.usage.inputTokens,
+                completionTokens: event.usage.outputTokens,
+                totalTokens: event.usage.inputTokens + event.usage.outputTokens,
+              },
+            };
+          }
+          yield { type: 'done', doneReason: event.stopReason };
+        }
+      }
+    } catch (error) {
+      if (options.signal?.aborted) throw new ChatGenerationCancelledError();
+      throw error;
     }
   }
 
-  async assertAgentAccess(userId: string): Promise<AgentCliDefinition[]> {
+  async assertAgentAccess(
+    userId: string,
+    agentId?: string
+  ): Promise<AgentCliDefinition[]> {
+    if (agentId === 'strands') {
+      // Strands is governed by its own access mode, not the CLI opt-in.
+      if (!(await this.inProcessAgentAvailable(agentId, userId))) {
+        throw new Error('Strands is not enabled for this account.');
+      }
+      return AGENT_CLI_DEFINITIONS;
+    }
     if (!(await agentsEnabled())) {
       throw new Error('Agent CLI models are disabled on this server.');
     }
@@ -755,7 +701,7 @@ export class AgentCliService {
     options: { cwd?: string; model?: string; signal?: AbortSignal } = {}
   ): AsyncGenerator<PluginStreamChunk, void, unknown> {
     throwIfChatGenerationCancelled(options.signal);
-    await this.assertAgentAccess(userId);
+    await this.assertAgentAccess(userId, agentId);
     const definition = AGENT_CLI_DEFINITIONS.find(
       candidate => candidate.id === agentId
     );

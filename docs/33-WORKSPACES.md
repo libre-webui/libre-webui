@@ -26,8 +26,8 @@ filesystem at `/workspace`. The selected model can inspect and edit files, run
 commands in a task-scoped Docker container or Kubernetes Pod, and start a
 browser preview.
 
-Work is implemented directly in Libre WebUI. It does not require Libre Claw or
-another agent daemon.
+Work is implemented directly in Libre WebUI. It does not require an external
+agent daemon.
 
 :::warning Trusted users only
 
@@ -42,49 +42,33 @@ operator, not merely as a chat user.
 
 :::
 
-## DeepSeek Harness engine
+## Strands engine
 
-After an administrator enables **Cordis Engine**, select **DeepSeek Harness**
-in Work's **Engine** control. Choose the local or remote provider model in the
-separate model picker; model names and provider identity remain unchanged.
-The default engine remains **Libre WebUI**. Both choices preserve the provider's
-credentials and remote-use disclosure.
+Work's **Engine** control offers **Libre WebUI** (the default) and **Strands**.
+**Strands** appears when your account may use the
+[Strands engine](./STRANDS_ENGINE). Choose the local or remote provider model
+in the separate model picker; model names, provider identity, credentials, and
+the remote-use disclosure stay the same on either engine.
 
-For example, **Engine: DeepSeek Harness** with **Model: gpt-6-astra** runs that
-model through DSH's native agent loop. Work supplies the prompt, conversation,
-tool definitions, and sandbox. The model picker separates **Libre WebUI models**
-from **Native DSH models**. The first group uses LWUI's provider connections;
-the second uses the providers already configured in a connected DSH instance.
-For example, selecting **DeepSeek-V41-Flash** or **DeepSeek-V4-Pro** in the native
-group sends inference to that exact DSH provider and model. Credentials remain
-inside DSH. This does not launch another DSH agent or grant its host tools access
-to the task.
+With **Engine: Strands**, a Strands agent plans each step and Work executes the
+tools it asks for. Work supplies the prompt, conversation, tool definitions,
+and sandbox, validates every tool call, enforces approvals and policy, runs the
+tools in the task's container, and records the results in its existing
+SQL-backed run history. The Strands agent has no host filesystem or shell tools
+of its own. The provider model must support tool calling; Work checks this
+before the run starts. Stop cancels the model and the agent before Work cleans
+up its container. Restored runs use the saved Work context without repeating
+completed tool effects.
 
-Native models require the opt-in [local DSH provider connection](./65-CORDIS_CONFIGURATION.md#connect-models-from-a-running-dsh-instance).
-They are available to active administrators only because they use the local
-DSH owner's credentials. A connection outage keeps saved native choices visible
-and prevents execution until the connection returns or a replacement is chosen.
-Ollama can remain disabled. Choosing the DSH engine also works when no LWUI
-provider is configured.
+A specific Strands model selected in Chat carries into a new Work task as the
+same engine, provider, and model. If that provider or model becomes
+unavailable, Work preserves the choice and requires a replacement before
+starting a run. Runs saved by earlier releases with a `dsh:` model prefix open
+as Strands runs.
 
-A specific DSH model selected in Chat carries into a new Work task as the same
-engine, provider, and model. Work shows these as separate Engine and Model
-controls instead of repeating Chat's combined DSH entry. If that provider or
-model becomes unavailable, Work preserves the choice and requires a replacement
-before starting a run.
-
-DSH runs in an isolated in-memory runtime. Work validates every tool
-call, enforces approvals and policy, executes in the configured workspace
-container, and records the results in its existing SQL-backed run history. The
-DSH runtime has no host filesystem or shell tools. Stop cancels the model and
-engine before Work cleans up its container. Restored runs use the saved Work
-context without repeating completed tool effects.
-
-This is separate from Chat's administrator-only host agent and the shared Engine
-page. It requires the usual Work access and runtime prerequisites, but no
-`cordis.patch.yml` host composition or JSONL session store. Disabling Cordis
-prevents further DSH model steps; existing tasks remain readable and can select
-a normal model again.
+The server re-checks Strands access on every model call of a Strands run, so
+turning the engine off for your account stops a live run at its next step.
+Existing tasks remain readable and can select the Libre WebUI engine again.
 
 ## Release Highlights
 

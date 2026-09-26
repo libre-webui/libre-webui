@@ -35,7 +35,7 @@ export type WorkRunStatus =
 
 export type WorkPreviewStatus = 'stopped' | 'starting' | 'running' | 'failed';
 
-export type WorkProviderType = 'ollama' | 'plugin' | 'dsh';
+export type WorkProviderType = 'ollama' | 'plugin';
 
 export type WorkRunEventType =
   | 'snapshot'
@@ -243,9 +243,9 @@ export interface WorkCapabilities {
   runtimeAvailable?: boolean;
   ollamaAvailable?: boolean;
   pluginAvailable?: boolean;
-  nativeDsh?: {
-    status: 'disabled' | 'unavailable' | 'ready';
-    models: WorkModelOption[];
+  /** Whether this account may run Work tasks on the Strands engine. */
+  strands?: {
+    enabled: boolean;
   };
   reason?: string;
   /** Present only while cleanups are pending; `reason` still carries prose. */
@@ -515,7 +515,5 @@ export const workModelSelectionKey = (
   const model = encodeURIComponent(selection.model);
   return selection.providerType === 'plugin'
     ? `plugin:${encodeURIComponent(selection.providerId || '')}:${model}`
-    : selection.providerType === 'dsh'
-      ? `dsh:${encodeURIComponent(selection.providerId || '')}:${model}`
-      : `ollama:${model}`;
+    : `ollama:${model}`;
 };

@@ -724,183 +724,7 @@ test('usage route rejects malformed model focus and preserves exact scalar names
   }
 });
 
-test('native DSH token counters include disjoint caches once without inventing usage', () => {
-  const normalize = usageModule.normalizeNativeDshTokenUsage;
-  assert.deepEqual(
-    normalize({
-      inputTokens: 100,
-      outputTokens: 25,
-      cacheReadTokens: 50,
-      cacheWriteTokens: 10,
-    }),
-    { promptTokens: 160, completionTokens: 25, totalTokens: 185 }
-  );
-  assert.deepEqual(
-    normalize({
-      inputTokens: 100,
-      outputTokens: 25,
-      cacheReadTokens: 50,
-      totalTokens: 180,
-    }),
-    { promptTokens: 150, completionTokens: 25, totalTokens: 180 }
-  );
-  assert.deepEqual(normalize({ inputTokens: 0, outputTokens: 0 }), {
-    promptTokens: 0,
-    completionTokens: 0,
-    totalTokens: 0,
-  });
-  for (const input of [
-    undefined,
-    {},
-    { inputTokens: NaN, outputTokens: -1 },
-    { inputTokens: 1.5 },
-    { inputTokens: Number.MAX_SAFE_INTEGER, cacheReadTokens: 1 },
-  ]) {
-    assert.equal(normalize(input), undefined);
-  }
-});
-
-test('native DSH inference is actor-attributed and visible through the usage API without plugin manifests', async () => {
-  const db = dbModule.getDatabase();
-  db.prepare('DELETE FROM plugin_usage_events').run();
-  const now = Date.now();
-  for (const id of ['native-user-one', 'native-user-two']) {
-    db.prepare(
-      `INSERT INTO users (id, username, email, password_hash, role, created_at, updated_at)
-      VALUES (?, ?, NULL, 'unused', 'admin', ?, ?)`
-    ).run(id, id, now, now);
-  }
-  const providerId = 'deepseek/provider:模型';
-  const ledgerId = usageModule.nativeDshUsageProviderId(providerId);
-  assert.equal(ledgerId, 'dsh-native:deepseek%2Fprovider%3A%E6%A8%A1%E5%9E%8B');
-  const common = {
-    providerId,
-    providerName: 'DeepSeek Native',
-    model: 'flash',
-    durationMs: 20,
-    createdAt: now - 1000,
-  };
-  await usageModule.recordNativeDshUsage({
-    ...common,
-    userId: 'native-user-one',
-    status: 'success',
-    usage: {
-      inputTokens: 100,
-      cacheReadTokens: 50,
-      cacheWriteTokens: 10,
-      outputTokens: 25,
-    },
-  });
-  await usageModule.recordNativeDshUsage({
-    ...common,
-    userId: 'native-user-two',
-    status: 'error',
-  });
-  await usageModule.recordNativeDshUsage({
-    ...common,
-    userId: 'native-user-one',
-    status: 'cancelled',
-    usage: { inputTokens: 3, outputTokens: 2 },
-  });
-  await usageModule.recordNativeDshUsage({
-    ...common,
-    userId: '',
-    status: 'success',
-  });
-  // An ordinary provider with the same raw model remains a separate source.
-  await usageModule.default.record({
-    userId: 'native-user-two',
-    pluginId: 'deepseek',
-    pluginName: 'DeepSeek plugin',
-    capability: 'chat',
-    model: 'flash',
-    status: 'success',
-    durationMs: 4,
-    tokens: { promptTokens: 7, completionTokens: 2, totalTokens: 9 },
-    createdAt: now - 1000,
-  });
-  const rows = db
-    .prepare(
-      'SELECT * FROM plugin_usage_events WHERE plugin_id = ? ORDER BY status'
-    )
-    .all(ledgerId);
-  assert.equal(rows.length, 3);
-  assert.deepEqual(
-    rows.map(row => [row.user_id, row.status]),
-    [
-      ['native-user-one', 'cancelled'],
-      ['native-user-two', 'error'],
-      ['native-user-one', 'success'],
-    ]
-  );
-  assert.deepEqual(
-    rows.map(row => [
-      row.prompt_tokens,
-      row.completion_tokens,
-      row.total_tokens,
-    ]),
-    [
-      [3, 2, 5],
-      [null, null, null],
-      [160, 25, 185],
-    ]
-  );
-  assert.ok(
-    rows.every(row => row.plugin_name === 'DeepSeek Harness · DeepSeek Native')
-  );
-
-  const { default: router } = await import('../backend/dist/routes/plugins.js');
-  const handler = router.stack
-    .find(layer => layer.route?.path === '/usage')
-    .route.stack.at(-1).handle;
-  let result;
-  const response = {
-    status() {
-      return this;
-    },
-    json(value) {
-      result = value;
-      return this;
-    },
-  };
-  await handler({ query: { days: '7' } }, response);
-  assert.equal(result.success, true);
-  assert.deepEqual(
-    result.data.plugins.map(row => [row.pluginId, row.calls, row.tokens]),
-    [
-      [ledgerId, 3, 190],
-      ['deepseek', 1, 9],
-    ]
-  );
-  assert.equal(
-    result.data.models.filter(row => row.model === 'flash').length,
-    2
-  );
-  assert.equal(result.data.totals.calls, 4);
-  assert.equal(result.data.totals.uniqueUsers, 2);
-  assert.equal(result.data.totals.failedCalls, 1);
-  assert.equal(result.data.totals.cancelledCalls, 1);
-  assert.equal(result.data.totals.meteredCalls, 3);
-  assert.equal(result.data.totals.reportedTokens, 199);
-  assertDailyModelReconciliation(result.data);
-});
-
-test('native usage recording stays best effort if metering fails', async t => {
-  t.mock.method(usageModule.default, 'record', async () => {
-    throw new Error('fixture ledger unavailable');
-  });
-  await assert.doesNotReject(
-    usageModule.recordNativeDshUsage({
-      userId: 'native-user-one',
-      providerId: 'deepseek',
-      model: 'flash',
-      status: 'success',
-      durationMs: 1,
-    })
-  );
-});
-
-const supportedAgentIds = ['claude-code', 'dsh', 'codex', 'opencode', 'pi'];
+const supportedAgentIds = ['claude-code', 'strands', 'codex', 'opencode', 'pi'];
 
 test('agent summaries include all supported agents with zero recorded usage and no CLI discovery', async t => {
   dbModule.getDatabase().prepare('DELETE FROM plugin_usage_events').run();
@@ -957,21 +781,20 @@ const agentUsageFixtures = now => [
     durationMs: 40,
   },
   { pluginId: 'agent-cli:pi', model: 'pi-real', durationMs: 30 },
-  { pluginId: 'agent-cli:dsh', model: 'shared', tokens: 10, durationMs: 10 },
   {
-    pluginId: 'dsh-native:deepseek',
+    pluginId: 'agent-cli:strands',
     model: 'shared',
     tokens: 20,
     durationMs: 30,
   },
   {
-    pluginId: 'dsh-native:other',
+    pluginId: 'agent-cli:strands',
     model: 'pro',
     status: 'cancelled',
     durationMs: 80,
   },
   { pluginId: 'agent-cli:unknown', model: 'ignored', tokens: 999 },
-  { pluginId: 'dsh-native:', model: 'ignored-empty-provider', tokens: 999 },
+  { pluginId: 'agent-cli:', model: 'ignored-empty-agent', tokens: 999 },
   {
     pluginId: 'agent-cli:codex',
     model: 'old',
@@ -1001,14 +824,14 @@ const assertAgentUsageFixtures = agents => {
     ]),
     [
       [1, 5, 0, 1, 10],
-      [3, 30, 1, 2, 40],
+      [2, 20, 1, 1, 55],
       [1, 0, 1, 0, 20],
       [1, 0, 1, 1, 40],
       [1, 0, 0, 0, 30],
     ]
   );
-  assert.deepEqual(agents.find(agent => agent.agentId === 'dsh').models, [
-    { model: 'shared', calls: 2, tokens: 30, errors: 0, meteredCalls: 2 },
+  assert.deepEqual(agents.find(agent => agent.agentId === 'strands').models, [
+    { model: 'shared', calls: 1, tokens: 20, errors: 0, meteredCalls: 1 },
     { model: 'pro', calls: 1, tokens: 0, errors: 1, meteredCalls: 0 },
   ]);
 };
@@ -1049,7 +872,7 @@ test('agent totals bypass provider/model top limits and never attribute ordinary
   assertAgentUsageFixtures(analytics.agents);
   assert.equal(
     analytics.totals.calls,
-    339,
+    338,
     'agent views must not add events to aggregate cards'
   );
   assertDailyModelReconciliation(analytics);

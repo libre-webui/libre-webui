@@ -40,7 +40,8 @@
     "custom": "Anpassad",
     "remove": "Ta bort",
     "home": "Hem",
-    "more": "Mer"
+    "more": "Mer",
+    "reasoning": "Resonemang"
   },
   "brand": {
     "name": "Libre WebUI",
@@ -528,7 +529,6 @@
       "models": "Modeller",
       "personas": "Personas",
       "imagine": "Skapa bild",
-      "agents": "Agenter",
       "work": "Arbete",
       "settings": "Inställningar",
       "usageAnalytics": "Leverantörsanvändning",
@@ -543,7 +543,7 @@
       "skills": "Färdigheter",
       "tools": "Verktyg",
       "channels": "Kanaler",
-      "cordis": "Cordis-motor"
+      "strands": "Strands"
     },
     "toggleSize": "Växla sidofältets storlek",
     "expandSidebar": "Expandera sidofältet"
@@ -1830,13 +1830,6 @@
       "saved": "Standardtema uppdaterat",
       "saveFailed": "Det gick inte att uppdatera standardtemat"
     },
-    "agentAccess": {
-      "title": "Libre Claw",
-      "description": "Visa Libre Claw-arbetsytan för administratörer.",
-      "saved": "Agentåtkomst uppdaterad",
-      "saveFailed": "Kunde inte uppdatera agentåtkomst",
-      "lockedByEnv": "Låst av miljövariabeln LIBRE_CLAW_ENABLED."
-    },
     "groups": {
       "title": "Grupper",
       "description": "Gruppera konton för att hantera delad åtkomst och se vad ett konto faktiskt kan göra.",
@@ -1973,13 +1966,17 @@
       "saved": "E-postinställningarna har sparats.",
       "saveFailed": "E-postinställningarna kunde inte sparas."
     },
-    "cordisAccess": {
-      "title": "Cordis-motor",
-      "description": "Erbjud Cordis-motorn till administratörer. Den kör verktyg med riktig filsystemsåtkomst utanför Libre WebUIs godkännandeflöde.",
-      "saved": "Cordis-åtkomst uppdaterad",
-      "saveFailed": "Cordis-åtkomsten kunde inte uppdateras",
-      "lockedByEnv": "Låst av miljövariabeln LIBRE_CORDIS_ENABLED.",
-      "lockedByFile": "Låst av features.enabled i cordis.config.yml."
+    "strandsAccess": {
+      "title": "Strands-motor",
+      "description": "Välj vem som får använda den inbyggda Strands-agenten. Den kan läsa och redigera filer i varje sessions privata arbetsyta, men kan inte köra skalkommandon.",
+      "saved": "Strands-åtkomst uppdaterad",
+      "saveFailed": "Det gick inte att uppdatera Strands-åtkomst",
+      "lockedByEnv": "Låst av miljövariabeln LIBRE_STRANDS_ACCESS.",
+      "modes": {
+        "disabled": "Av",
+        "admins": "Administratörer",
+        "all-users": "Alla användare"
+      }
     },
     "agentCliAccess": {
       "title": "CLI-agentmodeller",
@@ -2070,7 +2067,7 @@
     },
     "agents": {
       "title": "Agenter",
-      "description": "CLI-agentanrop och inbyggda DSH-förfrågningar. DSH med Libre WebUI-modeller räknas hos modellleverantören.",
+      "description": "Anrop till CLI-agenter och Strands-motorn.",
       "noCalls": "Inga registrerade anrop under perioden",
       "unreported": "Tokens inte rapporterade",
       "topModels": "Mest använda modeller",
@@ -2573,144 +2570,6 @@
     "title": "Demoläge",
     "github": "GitHub"
   },
-  "libreClaw": {
-    "title": "Agenter",
-    "subtitle": "Lokala agentkörningar, godkännanden, scheman, minne, verktyg och användning.",
-    "dashboard": "Översikt",
-    "connection": {
-      "disconnectedTitle": "Libre Claw-daemonen är inte ansluten",
-      "disconnectedDescription": "Starta den lokalt med <command>libre-claw start</command> eller ställ in <env>LIBRE_CLAW_BASE_URL</env> i backend-miljön."
-    },
-    "status": {
-      "connected": "Ansluten",
-      "disconnected": "Frånkopplad",
-      "activeRuns": "{{count}} aktiv",
-      "activeRuns_plural": "{{count}} aktiv"
-    },
-    "states": {
-      "queued": "I kö",
-      "running": "Körs",
-      "blocked": "Blockerad",
-      "done": "Klart",
-      "failed": "Misslyckades",
-      "cancelled": "Avbruten"
-    },
-    "startRun": {
-      "title": "Starta agentkörning",
-      "placeholder": "Be Libre Claw att inspektera en repo, fixa en bugg, köra en granskning, schemalägga en rapport...",
-      "chatRun": "Chattkörning",
-      "goalMode": "Målläge",
-      "providerOverride": "Åsidosättande av leverantör",
-      "modelOverride": "Modell åsidosättande",
-      "run": "Kör"
-    },
-    "modelRoute": {
-      "title": "Modellväg",
-      "providerPlaceholder": "leverantör",
-      "modelPlaceholder": "modell",
-      "persistGlobal": "Fortsätt till Libre Claw global konfiguration",
-      "saveModel": "Spara modell",
-      "theme": "Libre Claw-tema",
-      "saveTheme": "Spara tema"
-    },
-    "runs": {
-      "title": "Körningar",
-      "empty": "Inga Libre Claw-körningar ännu."
-    },
-    "timeline": {
-      "title": "Körningstidslinje",
-      "empty": "Välj en körning för att inspektera dess händelser.",
-      "streaming": "Streamar...",
-      "assistantResponse": "Assistentsvar",
-      "resultOk": "okej",
-      "resultError": "fel",
-      "labels": {
-        "userMessage": "Användarmeddelande",
-        "toolCall": "Verktygsanrop",
-        "toolResult": "Verktygsresultat",
-        "approvalRequest": "Begäran om godkännande",
-        "approvalResponse": "Godkännande svar",
-        "runStarted": "Körning startad",
-        "runFinished": "Körning avslutad",
-        "usage": "Användning",
-        "error": "Fel"
-      }
-    },
-    "approvals": {
-      "needed": "Godkännande behövs",
-      "allowOnce": "Tillåt en gång",
-      "alwaysAllowTool": "Tillåt alltid verktyg",
-      "deny": "Neka",
-      "toolApprovalRequested": "Verktygsgodkännande begärs"
-    },
-    "automations": {
-      "title": "Automatiseringar",
-      "namePlaceholder": "Namn",
-      "schedulePlaceholder": "daily 09:00",
-      "promptPlaceholder": "Automatiseringsprompt",
-      "create": "Skapa",
-      "empty": "Inga schemalagda Libre Claw-automatiseringar.",
-      "runNow": "Kör nu",
-      "pause": "Pausa",
-      "resume": "Återuppta",
-      "routes": {
-        "report": "Rapportera",
-        "telegram": "Telegram"
-      },
-      "status": {
-        "active": "Aktiv",
-        "paused": "Pausad"
-      }
-    },
-    "usageFallback": {
-      "title": "Användning och reserv",
-      "usage": "Användning",
-      "fallbackRoute": "Reservrutt",
-      "noUsage": "Inga användningsuppgifter ännu."
-    },
-    "metrics": {
-      "provider": "Leverantör",
-      "model": "Modell",
-      "input": "Ingång",
-      "output": "Utgång",
-      "cached": "Cachad",
-      "reasoning": "Resonemang",
-      "cost": "Kostnad",
-      "tool": "Verktyg",
-      "resolution": "Upplösning",
-      "state": "Status",
-      "stopReason": "Stopporsak",
-      "tokens": "{{formatted}} token",
-      "tokens_plural": "{{formatted}} polletter"
-    },
-    "fallbacks": {
-      "tool": "verktyg",
-      "unknown": "okänt",
-      "resolved": "löst",
-      "unknownError": "Okänt fel"
-    },
-    "toasts": {
-      "loadStatusFailed": "Kunde inte ladda Libre Claw status",
-      "enterTask": "Ange en uppgift för Libre Claw",
-      "runStarted": "Libre Claw-körning startad",
-      "startRunFailed": "Kunde inte starta Libre Claw-körning",
-      "runCancelled": "Körning avbruten",
-      "cancelRunFailed": "Det gick inte att avbryta körningen",
-      "approved": "Godkänd",
-      "denied": "Nekad",
-      "resolvePermissionFailed": "Det gick inte att lösa behörigheten",
-      "providerModelRequired": "Leverantör och modell krävs",
-      "modelUpdated": "Libre Claw-modellen uppdaterad",
-      "updateModelFailed": "Kunde inte uppdatera modellen",
-      "themeUpdated": "Libre Claw-tema uppdaterat",
-      "updateThemeFailed": "Det gick inte att uppdatera temat",
-      "automationRequired": "Automationsnamn, schema och uppmaning krävs",
-      "automationCreated": "Automatisering skapad",
-      "createAutomationFailed": "Det gick inte att skapa automatisering",
-      "automationUpdated": "Automatisering uppdaterad",
-      "updateAutomationFailed": "Det gick inte att uppdatera automatiseringen"
-    }
-  },
   "work": {
     "title": "Arbete",
     "subtitle": "Isolerade arbetsytor för modeller",
@@ -2758,9 +2617,8 @@
       "noModelSelected": "Ingen modell som är kompatibel med Arbete har valts.",
       "mentionAgents": "Nämn en agent",
       "engine": "Motor",
-      "nativeDshModels": "Inbyggda DSH-modeller",
       "libreModels": "Libre WebUI-modeller",
-      "nativeDshUnavailable": "Inbyggda DSH-modeller är inte tillgängliga. Uppdatera modellistan eller kontrollera leverantörens konfiguration.",
+      "strandsDisabled": "Strands-motorn är inte tillgänglig för ditt konto.",
       "modelLabel": "Modell"
     },
     "conversation": {
@@ -3941,41 +3799,34 @@
       "saveFailed": "Det gick inte att spara API-nyckeln"
     }
   },
-  "cordis": {
-    "title": "Cordis-motor",
-    "description": "Sessioner, verktyg och chatt för den inbäddade DeepSeek Harness-motorn.",
+  "strands": {
+    "title": "Strands",
+    "subtitle": "Inbyggd agentmotor som körs på dina Libre WebUI-modeller.",
+    "subtitleVersion": "Inbyggd agentmotor, harness {{version}}.",
     "newSession": "Ny session",
-    "createFailed": "Sessionen kunde inte skapas.",
-    "deleteFailed": "Sessionen kunde inte tas bort.",
-    "sendFailed": "Motorn kunde inte slutföra turen.",
-    "sessionsHeading": "Sessioner",
-    "toolsHeading": "Verktyg",
-    "transcriptHeading": "Transkript",
+    "sessions": "Sessioner",
     "noSessions": "Inga sessioner ännu. Skapa en för att börja.",
-    "noTools": "Motorn registrerade inga verktyg.",
-    "selectSession": "Välj en session eller skapa en för att börja.",
-    "working": "Agenten arbetar…",
-    "composerLabel": "Meddelande till motorn",
-    "composerPlaceholder": "Be motorn göra något…",
+    "empty": "Be agenten läsa eller redigera filer i sin arbetsyta.",
+    "placeholder": "Be motorn göra något…",
+    "model": "Modell",
+    "defaultModel": "Standardmodell",
     "send": "Skicka",
     "stop": "Stoppa",
-    "deleteSession": "Ta bort session",
-    "unknownTime": "Okänd tid",
-    "disabledTitle": "Cordis-motorn är avstängd",
-    "disabledHint": "En administratör kan aktivera det under Användarhantering → Åtkomst och policyer.",
-    "unavailableTitle": "Cordis-motorn kunde inte starta",
-    "role": {
-      "user": "Du",
-      "assistant": "Motor",
-      "system": "System",
-      "tool": "Verktyg",
-      "unknown": "Meddelande"
+    "reasoning": "Resonemang",
+    "tool": {
+      "running": "Körs",
+      "done": "Klart",
+      "failed": "Misslyckades"
     },
-    "turnFailed": "Motorn kunde inte slutföra turen",
-    "permissions": "Behörigheter",
-    "readOnly": "Endast läsning",
-    "workspaceWrite": "Skrivning i arbetsytan",
-    "context": "Sessionskontext",
-    "permissionHint": "Endast läsning tillåter granskning av filer. Skrivning tillåter ändringar i den här sessionens arbetsyta."
+    "cancelled": "Avbruten",
+    "turnLimit": "Stoppades vid gränsen för antal turer.",
+    "messageCount": "Meddelanden: {{count}}",
+    "deleteSession": "Ta bort session",
+    "deleteConfirm": "Ta bort ”{{title}}” och dess historik?",
+    "loadFailed": "Det gick inte att läsa in Strands.",
+    "createFailed": "Sessionen kunde inte skapas.",
+    "deleteFailed": "Sessionen kunde inte tas bort.",
+    "saveFailed": "Det gick inte att spara sessionen.",
+    "turnFailed": "Motorn kunde inte slutföra turen"
   }
 }

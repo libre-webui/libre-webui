@@ -157,12 +157,14 @@ For managed dependencies, use the Helm team profile and retain verified TLS;
 the Compose file disables PostgreSQL TLS only on its private project network.
 Readiness remains failed until an external worker is present.
 
-The optional host Cordis Engine uses local JSONL sessions and is restricted to
-single-replica solo deployments. Its separate sandboxed Work driver creates no
-local durable store: Work's existing SQL task/run/message/approval records and
-durable jobs remain authoritative, including recovery on an external worker.
-An engine choice is stored with the selected model as `dsh:<model>`; it retains
-the existing provider identity and runtime authorization.
+The embedded Strands engine keeps its page sessions as files under
+`<DATA_DIR>/strands/`, not in the application database. Its Work driver creates
+no local durable store: Work's existing SQL task/run/message/approval records
+and durable jobs remain authoritative, including recovery on an external
+worker. An engine choice is stored with the selected model as
+`strands:<model>` (runs saved with the older `dsh:<model>` prefix open as
+Strands runs); it retains the existing provider identity and runtime
+authorization.
 
 ## Persistence and migration boundary
 

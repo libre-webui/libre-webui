@@ -40,7 +40,8 @@
     "custom": "Пользовательский",
     "remove": "Удалить",
     "home": "Главная",
-    "more": "Больше"
+    "more": "Больше",
+    "reasoning": "Рассуждение"
   },
   "brand": {
     "name": "Libre WebUI",
@@ -528,7 +529,6 @@
       "models": "Модели",
       "personas": "Персоны",
       "imagine": "Изображения",
-      "agents": "Агенты",
       "work": "Работа",
       "settings": "Настройки",
       "usageAnalytics": "Использование провайдеров",
@@ -543,7 +543,7 @@
       "skills": "Навыки",
       "tools": "Инструменты",
       "channels": "Каналы",
-      "cordis": "Движок Cordis"
+      "strands": "Strands"
     },
     "toggleSize": "Переключить размер боковой панели",
     "expandSidebar": "Развернуть боковую панель"
@@ -1830,13 +1830,6 @@
       "saved": "Тема по умолчанию обновлена",
       "saveFailed": "Не удалось обновить тему по умолчанию"
     },
-    "agentAccess": {
-      "title": "Libre Claw",
-      "description": "Показывать администраторам рабочую область Libre Claw.",
-      "saved": "Доступ к агентам обновлён",
-      "saveFailed": "Не удалось обновить доступ к агентам",
-      "lockedByEnv": "Закреплено переменной окружения LIBRE_CLAW_ENABLED."
-    },
     "groups": {
       "title": "Группы",
       "description": "Объединяйте аккаунты в группы для управления общим доступом и проверяйте, что фактически может делать любой аккаунт.",
@@ -1973,13 +1966,17 @@
       "saved": "Настройки почты сохранены.",
       "saveFailed": "Не удалось сохранить настройки почты."
     },
-    "cordisAccess": {
-      "title": "Движок Cordis",
-      "description": "Предложить движок Cordis администраторам. Он выполняет инструменты с реальным доступом к файловой системе вне процесса утверждения инструментов Libre WebUI.",
-      "saved": "Доступ к Cordis обновлён",
-      "saveFailed": "Не удалось обновить доступ к Cordis",
-      "lockedByEnv": "Зафиксировано переменной среды LIBRE_CORDIS_ENABLED.",
-      "lockedByFile": "Зафиксировано features.enabled в cordis.config.yml."
+    "strandsAccess": {
+      "title": "Движок Strands",
+      "description": "Выберите, кто может пользоваться встроенным агентом Strands. Он может читать и изменять файлы в частной рабочей области каждого сеанса, но не может выполнять команды оболочки.",
+      "saved": "Доступ к Strands обновлён",
+      "saveFailed": "Не удалось обновить доступ к Strands",
+      "lockedByEnv": "Задано переменной окружения LIBRE_STRANDS_ACCESS.",
+      "modes": {
+        "disabled": "Выкл",
+        "admins": "Администраторы",
+        "all-users": "Все пользователи"
+      }
     },
     "agentCliAccess": {
       "title": "Модели агентов CLI",
@@ -2070,7 +2067,7 @@
     },
     "agents": {
       "title": "Агенты",
-      "description": "Вызовы CLI-агентов и нативные запросы DSH. DSH с моделями Libre WebUI учитывается у поставщика модели.",
+      "description": "Вызовы CLI-агентов и движка Strands.",
       "noCalls": "В этом периоде нет зарегистрированных вызовов",
       "unreported": "Токены не указаны",
       "topModels": "Самые используемые модели",
@@ -2573,144 +2570,6 @@
     "title": "Демо-режим",
     "github": "GitHub"
   },
-  "libreClaw": {
-    "title": "Агенты",
-    "subtitle": "Запуск локального агента, утверждения, расписания, память, инструменты и использование.",
-    "dashboard": "Панель управления",
-    "connection": {
-      "disconnectedTitle": "Демон Libre Claw не подключен",
-      "disconnectedDescription": "Запустите его локально с <command>libre-claw start</command> или установите <env>LIBRE_CLAW_BASE_URL</env> во внутренней среде."
-    },
-    "status": {
-      "connected": "Подключено",
-      "disconnected": "Отключено",
-      "activeRuns": "{{count}} активен",
-      "activeRuns_plural": "{{count}} активен"
-    },
-    "states": {
-      "queued": "В очереди",
-      "running": "Выполняется",
-      "blocked": "Заблокировано",
-      "done": "Готово",
-      "failed": "Не удалось",
-      "cancelled": "Отменено"
-    },
-    "startRun": {
-      "title": "Запустить выполнение агента",
-      "placeholder": "Попросите Libre Claw проверить репозиторий, исправить ошибку, выполнить проверку, запланировать отчет...",
-      "chatRun": "Бег в чате",
-      "goalMode": "Режим цели",
-      "providerOverride": "Переопределение поставщика",
-      "modelOverride": "Переопределение модели",
-      "run": "Запустить"
-    },
-    "modelRoute": {
-      "title": "Модельный маршрут",
-      "providerPlaceholder": "поставщик",
-      "modelPlaceholder": "модель",
-      "persistGlobal": "Сохранять глобальную конфигурацию Libre Claw",
-      "saveModel": "Сохранить модель",
-      "theme": "Тема Libre Claw",
-      "saveTheme": "Сохранить тему"
-    },
-    "runs": {
-      "title": "Запуски",
-      "empty": "Запусков Libre Claw пока нет."
-    },
-    "timeline": {
-      "title": "Хронология выполнения",
-      "empty": "Выберите запуск, чтобы просмотреть его события.",
-      "streaming": "Потоковая передача...",
-      "assistantResponse": "Ответ Ассистента",
-      "resultOk": "ок",
-      "resultError": "ошибка",
-      "labels": {
-        "userMessage": "Сообщение пользователя",
-        "toolCall": "Вызов инструмента",
-        "toolResult": "Результат инструмента",
-        "approvalRequest": "Запрос на одобрение",
-        "approvalResponse": "Ответ на одобрение",
-        "runStarted": "Запуск начат",
-        "runFinished": "Запуск завершен",
-        "usage": "Использование",
-        "error": "Ошибка"
-      }
-    },
-    "approvals": {
-      "needed": "Требуется одобрение",
-      "allowOnce": "Разрешить один раз",
-      "alwaysAllowTool": "Всегда разрешать инструмент",
-      "deny": "Отклонить",
-      "toolApprovalRequested": "Требуется одобрение инструмента"
-    },
-    "automations": {
-      "title": "Автоматизация",
-      "namePlaceholder": "Имя",
-      "schedulePlaceholder": "daily 09:00",
-      "promptPlaceholder": "Подсказка автоматизации",
-      "create": "Создать",
-      "empty": "Никакой запланированной автоматизации Libre Claw.",
-      "runNow": "Запустить сейчас",
-      "pause": "Пауза",
-      "resume": "Возобновить",
-      "routes": {
-        "report": "Отчет",
-        "telegram": "Telegram"
-      },
-      "status": {
-        "active": "Активный",
-        "paused": "Приостановлено"
-      }
-    },
-    "usageFallback": {
-      "title": "Использование и резервный вариант",
-      "usage": "Использование",
-      "fallbackRoute": "Резервный маршрут",
-      "noUsage": "Записей об использовании пока нет."
-    },
-    "metrics": {
-      "provider": "Поставщик",
-      "model": "Модель",
-      "input": "Ввод",
-      "output": "Выход",
-      "cached": "Кэшированный",
-      "reasoning": "Рассуждение",
-      "cost": "Стоимость",
-      "tool": "Инструмент",
-      "resolution": "Разрешение",
-      "state": "Состояние",
-      "stopReason": "Причина остановки",
-      "tokens": "{{formatted}} жетон",
-      "tokens_plural": "{{formatted}} жетоны"
-    },
-    "fallbacks": {
-      "tool": "инструмент",
-      "unknown": "неизвестно",
-      "resolved": "решено",
-      "unknownError": "Неизвестная ошибка"
-    },
-    "toasts": {
-      "loadStatusFailed": "Не удалось загрузить статус Libre Claw.",
-      "enterTask": "Введите задачу на Libre Claw",
-      "runStarted": "Запуск Libre Claw начат",
-      "startRunFailed": "Не удалось запустить Libre Claw",
-      "runCancelled": "Запуск отменен",
-      "cancelRunFailed": "Не удалось отменить запуск",
-      "approved": "Утверждено",
-      "denied": "Отказано",
-      "resolvePermissionFailed": "Не удалось разрешить разрешение",
-      "providerModelRequired": "Требуется поставщик и модель.",
-      "modelUpdated": "Модель Libre Claw обновлена",
-      "updateModelFailed": "Не удалось обновить модель",
-      "themeUpdated": "Тема Libre Claw обновлена",
-      "updateThemeFailed": "Не удалось обновить тему",
-      "automationRequired": "Укажите название автоматизации, расписание и подсказку.",
-      "automationCreated": "Автоматизация создана",
-      "createAutomationFailed": "Не удалось создать автоматизацию",
-      "automationUpdated": "Автоматизация обновлена",
-      "updateAutomationFailed": "Не удалось обновить автоматизацию"
-    }
-  },
   "work": {
     "title": "Работа",
     "subtitle": "Изолированные рабочие пространства моделей",
@@ -2758,9 +2617,8 @@
       "noModelSelected": "Не выбрана модель, совместимая с режимом «Работа».",
       "mentionAgents": "Упомянуть агента",
       "engine": "Движок",
-      "nativeDshModels": "Нативные модели DSH",
       "libreModels": "Модели Libre WebUI",
-      "nativeDshUnavailable": "Нативные модели DSH недоступны. Обновите список моделей или проверьте настройки провайдера.",
+      "strandsDisabled": "Движок Strands недоступен для вашей учётной записи.",
       "modelLabel": "Модель"
     },
     "conversation": {
@@ -3941,41 +3799,34 @@
       "saveFailed": "Не удалось сохранить API-ключ"
     }
   },
-  "cordis": {
-    "title": "Движок Cordis",
-    "description": "Сеансы, инструменты и чат для встроенного движка DeepSeek Harness.",
+  "strands": {
+    "title": "Strands",
+    "subtitle": "Встроенный движок агентов на ваших моделях Libre WebUI.",
+    "subtitleVersion": "Встроенный движок агентов, harness {{version}}.",
     "newSession": "Новый сеанс",
-    "createFailed": "Не удалось создать сеанс.",
-    "deleteFailed": "Не удалось удалить сеанс.",
-    "sendFailed": "Движок не смог завершить ход.",
-    "sessionsHeading": "Сеансы",
-    "toolsHeading": "Инструменты",
-    "transcriptHeading": "Расшифровка",
+    "sessions": "Сеансы",
     "noSessions": "Сеансов пока нет. Создайте один, чтобы начать.",
-    "noTools": "Движок не зарегистрировал инструменты.",
-    "selectSession": "Выберите сеанс или создайте новый, чтобы начать.",
-    "working": "Агент работает…",
-    "composerLabel": "Сообщение движку",
-    "composerPlaceholder": "Попросите движок что-нибудь сделать…",
+    "empty": "Попросите агента прочитать или изменить файлы в его рабочей области.",
+    "placeholder": "Попросите движок что-нибудь сделать…",
+    "model": "Модель",
+    "defaultModel": "Модель по умолчанию",
     "send": "Отправить",
     "stop": "Остановить",
-    "deleteSession": "Удалить сеанс",
-    "unknownTime": "Неизвестное время",
-    "disabledTitle": "Движок Cordis выключен",
-    "disabledHint": "Администратор может включить его в разделе «Управление пользователями» → «Доступ и политики».",
-    "unavailableTitle": "Движок Cordis не удалось запустить",
-    "role": {
-      "user": "Вы",
-      "assistant": "Движок",
-      "system": "Система",
-      "tool": "Инструмент",
-      "unknown": "Сообщение"
+    "reasoning": "Рассуждение",
+    "tool": {
+      "running": "Выполняется",
+      "done": "Готово",
+      "failed": "Не удалось"
     },
-    "turnFailed": "Движок не смог завершить ход",
-    "permissions": "Разрешения",
-    "readOnly": "Только чтение",
-    "workspaceWrite": "Запись в рабочей области",
-    "context": "Контекст сеанса",
-    "permissionHint": "Режим чтения позволяет просматривать файлы. Запись разрешает изменения в рабочей области этого сеанса."
+    "cancelled": "Отменено",
+    "turnLimit": "Остановлено на лимите ходов.",
+    "messageCount": "Сообщения: {{count}}",
+    "deleteSession": "Удалить сеанс",
+    "deleteConfirm": "Удалить «{{title}}» вместе с историей?",
+    "loadFailed": "Не удалось загрузить Strands.",
+    "createFailed": "Не удалось создать сеанс.",
+    "deleteFailed": "Не удалось удалить сеанс.",
+    "saveFailed": "Не удалось сохранить сеанс.",
+    "turnFailed": "Движок не смог завершить ход"
   }
 }

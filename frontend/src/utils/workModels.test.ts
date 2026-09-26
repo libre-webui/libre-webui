@@ -22,7 +22,7 @@ import {
   baseWorkModel,
   selectWorkEngine,
   workModelEngine,
-  workModelFromChatDsh,
+  workModelFromChatStrands,
   workModelSupportsEngine,
 } from './workModels';
 
@@ -49,245 +49,100 @@ const models: WorkModelOption[] = selections.map(selection => ({
 
 test('selecting an engine preserves the model catalogue, names and provider identity', () => {
   const original = structuredClone(models);
-  const options = models.map(model => selectWorkEngine(model, 'dsh'));
-  assert.deepEqual(
-    models,
-    original,
-    'engine selection never adds entries to the model catalogue'
-  );
+  const options = models.map(model => selectWorkEngine(model, 'strands'));
+  assert.deepEqual(models, original);
   for (const [index, engine] of options.entries()) {
     const model = models[index];
-    assert.equal(engine.model, `dsh:${model.model}`);
+    assert.equal(engine.model, `strands:${model.model}`);
     assert.equal(engine.providerType, model.providerType);
     assert.equal(engine.providerId, model.providerId);
     assert.equal(engine.remote, model.remote);
-    assert.equal(baseWorkModel(engine.model), model.model);
-    assert.equal(
-      engine.label,
-      model.label,
-      'display names never acquire an engine prefix'
-    );
+    assert.equal(engine.label, model.label);
+    assert.notEqual(engine.key, model.key);
+    assert.deepEqual(selectWorkEngine(engine, 'libre'), model);
+    assert.deepEqual(selectWorkEngine(engine, 'strands'), engine);
   }
   assert.equal(new Set(options.map(option => option.key)).size, options.length);
-  assert.equal(options[0].key, 'ollama:dsh%3Ahf.co%2Fteam%2Fmodel');
 });
 
-test('saved engine selections round-trip without stacking serialization prefixes', () => {
+test('engine detection reads the Strands prefix and the legacy DSH prefix', () => {
+  assert.equal(workModelEngine('llama3'), 'libre');
+  assert.equal(workModelEngine('strands:llama3'), 'strands');
+  assert.equal(workModelEngine('dsh:llama3'), 'strands');
+  assert.equal(baseWorkModel('strands:llama3'), 'llama3');
+  assert.equal(baseWorkModel('dsh:llama3'), 'llama3');
+  assert.equal(baseWorkModel('llama3'), 'llama3');
   for (const model of models) {
-    const engine = selectWorkEngine(model, 'dsh');
-    assert.equal(workModelEngine(engine.model), 'dsh');
-    assert.deepEqual(selectWorkEngine(engine, 'dsh'), engine);
-    assert.deepEqual(selectWorkEngine(engine, 'libre'), model);
-    assert.equal(workModelEngine(model.model), 'libre');
+    assert.equal(workModelSupportsEngine(model, 'strands'), true);
+    assert.equal(workModelSupportsEngine(model, 'libre'), true);
   }
 });
 
-test('a qualified Chat DSH plugin choice becomes the same Work engine/model/provider tuple', () => {
-  const raw = 'lab/model:latest';
-  const providerId = 'provider/team';
-  const options: WorkModelOption[] = [
-    { model: raw, providerType: 'ollama' as const, remote: false, label: raw },
+test('a Chat Strands selection maps to the same Work provider model', () => {
+  const ollama = workModelFromChatStrands(
     {
-      model: raw,
-      providerType: 'plugin' as const,
-      providerId: 'other-provider',
-      remote: true,
-      label: 'Other provider',
-    },
-    {
-      model: raw,
-      providerType: 'plugin' as const,
-      providerId,
-      remote: true,
-      label: 'Preferred gateway',
-    },
-  ].map(option => ({ ...option, key: workModelSelectionKey(option) }));
-  const selection = workModelFromChatDsh(
-    {
-      model: `dsh:lwui:plugin:${encodeURIComponent(providerId)}:${encodeURIComponent(raw)}`,
+      model: `strands:ollama:${encodeURIComponent('hf.co/team/model')}`,
       providerType: 'agent',
-      providerId: 'dsh',
+      providerId: 'strands',
     },
-    options
+    models
   );
-  assert.deepEqual(selection, {
-    option: selectWorkEngine(options[2], 'dsh'),
-    available: true,
-  });
-  assert.equal(selection?.option.model, 'dsh:lab/model:latest');
-  assert.equal(selection?.option.providerId, providerId);
-  assert.equal(selection?.option.label, 'Preferred gateway');
-  assert.equal(baseWorkModel(selection!.option.model), raw);
+  assert.equal(ollama?.available, true);
+  assert.deepEqual(ollama?.option, selectWorkEngine(models[0], 'strands'));
+
+  const plugin = workModelFromChatStrands(
+    {
+      model: 'strands:plugin:provider-b:same-model',
+      providerType: 'agent',
+      providerId: 'strands',
+    },
+    models
+  );
+  assert.equal(plugin?.available, true);
+  assert.equal(plugin?.option.providerId, 'provider-b');
+  assert.equal(plugin?.option.model, 'strands:same-model');
 });
 
-test('qualified local Chat DSH choices preserve their exact model and cloud disclosure', () => {
-  const local: WorkModelOption = {
-    model: 'local-model:cloud',
-    providerType: 'ollama',
-    remote: true,
-    label: 'Local model',
-    key: 'ollama:local-model%3Acloud',
-  };
-  assert.deepEqual(
-    workModelFromChatDsh(
-      {
-        model: 'dsh:lwui:ollama:local-model%3Acloud',
-        providerType: 'agent',
-        providerId: 'dsh',
-      },
-      [local]
-    ),
-    { option: selectWorkEngine(local, 'dsh'), available: true }
+test('an unknown Chat Strands model is reported unavailable, never swapped', () => {
+  const result = workModelFromChatStrands(
+    {
+      model: 'strands:plugin:provider-c:missing',
+      providerType: 'agent',
+      providerId: 'strands',
+    },
+    models
   );
-});
-
-test('an unavailable Chat DSH provider remains selected instead of falling back to a same-named provider', () => {
-  const chosen = {
-    model: 'dsh:lwui:plugin:offline-provider:same-model',
-    providerType: 'agent',
-    providerId: 'dsh',
-  };
-  const result = workModelFromChatDsh(chosen, models);
   assert.equal(result?.available, false);
-  assert.equal(result?.option.model, 'dsh:same-model');
-  assert.equal(result?.option.providerType, 'plugin');
-  assert.equal(result?.option.providerId, 'offline-provider');
+  assert.equal(result?.option.providerId, 'provider-c');
   assert.equal(result?.option.remote, true);
-  assert.equal(result?.option.key, 'plugin:offline-provider:dsh%3Asame-model');
-  assert.ok(!models.some(model => model.key === result?.option.key));
 });
 
-test('the handoff requires explicit agent identity and never interprets an ordinary model name as DSH', () => {
-  const qualified = 'dsh:lwui:plugin:provider-a:same-model';
-  for (const identity of [
-    { providerType: 'ollama', providerId: null },
-    { providerType: 'plugin', providerId: 'dsh' },
-    { providerType: 'agent', providerId: 'codex' },
-    { providerType: 'agent', providerId: null },
-    { providerType: null, providerId: null },
-  ])
-    assert.equal(
-      workModelFromChatDsh({ model: qualified, ...identity }, models),
-      undefined
-    );
-  assert.equal(
-    workModelFromChatDsh({ model: 'dsh', providerType: 'ollama' }, models),
-    undefined
-  );
-  assert.equal(
-    workModelFromChatDsh(
-      { model: 'dsh', providerType: 'agent', providerId: 'dsh' },
-      models
-    ),
-    undefined,
-    'the base profile keeps existing default-model behavior'
-  );
-});
-
-test('malformed qualified and pseudo Chat model identities never become Work provider model IDs', () => {
-  for (const model of [
-    'dsh:lwui:ollama:%',
-    'dsh:lwui:ollama:',
-    'dsh:lwui:ollama:unescaped:tag',
-    'dsh:lwui:plugin::same-model',
-    'dsh:lwui:plugin:provider-a:persona%3Aexample',
-    'dsh:lwui:ollama:agent%3Acodex',
-    'dsh:lwui:ollama:dsh',
-    'dsh:lwui:ollama:lwui%3Aollama%3Anested',
-    'dsh:lwui:ollama:%00model',
-  ])
-    assert.equal(
-      workModelFromChatDsh(
-        { model, providerType: 'agent', providerId: 'dsh' },
-        models
-      ),
-      undefined,
-      model
-    );
-});
-
-test('native DSH identity uses its provider and preserves the raw model verbatim', () => {
-  const native: WorkModelOption = {
-    model: 'dsh:lab/model:latest',
-    providerType: 'dsh',
-    providerId: 'team/provider',
-    key: 'dsh:team%2Fprovider:dsh%3Alab%2Fmodel%3Alatest',
-    label: 'Pro · Native provider',
-    remote: true,
-  };
-  assert.equal(workModelSelectionKey(native), native.key);
-  assert.equal(workModelEngine(native.model, native.providerType), 'dsh');
-  assert.equal(baseWorkModel(native.model, native.providerType), native.model);
-  assert.deepEqual(selectWorkEngine(native, 'dsh'), native);
-  assert.equal(workModelSupportsEngine(native, 'libre'), false);
-  assert.equal(workModelSupportsEngine(native, 'dsh'), true);
-});
-
-test('native Chat aliases match only their exact native Work provider and model', () => {
-  const native: WorkModelOption = {
-    model: 'deepseek-v4-flash',
-    providerType: 'dsh',
-    providerId: 'deepseek',
-    label: 'Flash · DeepSeek',
-    remote: true,
-    key: 'dsh:deepseek:deepseek-v4-flash',
-  };
-  const selection = {
-    model: 'dsh:native:deepseek:deepseek-v4-flash',
-    providerType: 'agent',
-    providerId: 'dsh',
-  };
-  const candidates = [
+test('only explicit Strands chat selections are translated', () => {
+  for (const selection of [
+    { model: 'strands', providerType: 'agent', providerId: 'strands' },
+    { model: 'strands:ollama:llama3', providerType: 'ollama' },
+    { model: 'strands:ollama:llama3', providerType: 'agent', providerId: 'pi' },
     {
-      ...native,
-      providerType: 'plugin' as const,
-      key: 'plugin:deepseek:deepseek-v4-flash',
+      model: 'strands:ollama:agent%3Api',
+      providerType: 'agent',
+      providerId: 'strands',
     },
     {
-      ...native,
-      providerId: 'other-native',
-      key: 'dsh:other-native:deepseek-v4-flash',
+      model: 'strands:ollama:%E0%A4%A',
+      providerType: 'agent',
+      providerId: 'strands',
     },
-    native,
-  ];
-  assert.deepEqual(workModelFromChatDsh(selection, candidates), {
-    option: native,
-    available: true,
-  });
-  const absent = workModelFromChatDsh(selection, candidates.slice(0, 2));
-  assert.equal(absent?.available, false);
-  assert.equal(absent?.option.providerType, 'dsh');
-  assert.equal(absent?.option.providerId, 'deepseek');
-  assert.equal(absent?.option.model, native.model);
-  assert.equal(absent?.option.remote, true);
-});
-
-test('native Chat aliases decode once and reject incomplete identities', () => {
-  const model = 'dsh:native-route/model:pro';
-  const provider = 'provider/team';
-  const selected = workModelFromChatDsh(
     {
-      model: `dsh:native:${encodeURIComponent(provider)}:${encodeURIComponent(model)}`,
+      model: 'strands:plugin::model',
+      providerType: 'agent',
+      providerId: 'strands',
+    },
+    {
+      model: 'dsh:lwui:ollama:llama3',
       providerType: 'agent',
       providerId: 'dsh',
     },
-    []
-  );
-  assert.equal(selected?.option.model, model);
-  assert.equal(selected?.option.providerId, provider);
-  for (const model of [
-    'dsh:native::flash',
-    'dsh:native:provider:',
-    'dsh:native:%:flash',
-    'dsh:native:provider:unescaped:tag',
-    'dsh:native:provider:%00flash',
   ]) {
-    assert.equal(
-      workModelFromChatDsh(
-        { model, providerType: 'agent', providerId: 'dsh' },
-        []
-      ),
-      undefined
-    );
+    assert.equal(workModelFromChatStrands(selection, models), undefined);
   }
 });

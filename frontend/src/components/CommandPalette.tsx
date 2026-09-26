@@ -167,10 +167,10 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
   const sessions = useChatStore(state => state.sessions);
   const workTasks = useWorkStore(state => state.tasks);
   const toggleTheme = useAppStore(state => state.toggleTheme);
-  const { canUseWork, canUseAgents } = useAuthStore();
+  const { canUseWork, canUseStrands } = useAuthStore();
 
   const showWork = canUseWork();
-  const showAgents = canUseAgents();
+  const showStrands = canUseStrands();
   const mod = isMac() ? '⌘' : 'Ctrl';
 
   // Own capture-phase listener so ⌘K works even while typing in the composer.
@@ -342,14 +342,14 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
         keywords: 'tools servers mcp openapi integrations approvals',
         run: () => onOpenSettingsTab('tools'),
       },
-      ...(showAgents
+      ...(showStrands
         ? [
             {
-              id: 'action:agents',
+              id: 'action:strands',
               section: actionSection,
-              label: t('sidebar.navigation.agents', 'Agents'),
+              label: t('sidebar.navigation.strands', 'Strands'),
               icon: Bot,
-              run: () => navigate('/agents'),
+              run: () => navigate('/strands'),
             },
           ]
         : []),
@@ -412,7 +412,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
     sessions,
     workTasks,
     showWork,
-    showAgents,
+    showStrands,
     i18n.language,
   ]);
 

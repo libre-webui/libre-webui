@@ -55,80 +55,6 @@ export interface PluginUsageEventInput {
   createdAt?: number;
 }
 
-/** Native DSH reports uncached input separately from both cache categories. */
-export interface NativeDshTokenUsage {
-  inputTokens?: number;
-  outputTokens?: number;
-  totalTokens?: number;
-  cacheReadTokens?: number;
-  cacheWriteTokens?: number;
-}
-
-export interface NativeDshUsageEventInput {
-  userId: string;
-  providerId: string;
-  providerName?: string;
-  model: string;
-  status: PluginUsageStatus;
-  durationMs: number;
-  usage?: NativeDshTokenUsage;
-  createdAt?: number;
-}
-
-/** Colons are outside installable plugin IDs, keeping this source namespace distinct. */
-export function nativeDshUsageProviderId(providerId: string): string {
-  return `dsh-native:${encodeURIComponent(providerId)}`;
-}
-
-/** Apply the same actor/group/instance admission policy as other inference. */
-export async function assertNativeDshUsageAllowed(input: {
-  userId: string;
-  providerId: string;
-  model: string;
-}): Promise<void> {
-  if (
-    !input.userId?.trim() ||
-    !input.providerId?.trim() ||
-    !input.model?.trim()
-  )
-    throw new Error('Native DSH usage admission requires an actor and model');
-  const { default: costGovernanceService } =
-    await import('./costGovernanceService.js');
-  await costGovernanceService.assertWithinBudget(input.userId);
-}
-
-/**
- * Map observed native counters to the existing aggregate token ledger.
- * That ledger has no cache breakdown or cache-specific pricing columns; each
- * disjoint cached-input category is included exactly once in prompt tokens.
- */
-export function normalizeNativeDshTokenUsage(
-  usage?: NativeDshTokenUsage
-): ProviderTokenUsage | undefined {
-  if (!usage) return undefined;
-  const count = (value: unknown): number | undefined =>
-    typeof value === 'number' && Number.isSafeInteger(value) && value >= 0
-      ? value
-      : undefined;
-  const input = count(usage.inputTokens);
-  const output = count(usage.outputTokens);
-  const cacheRead = count(usage.cacheReadTokens);
-  const cacheWrite = count(usage.cacheWriteTokens);
-  const reportedTotal = count(usage.totalTokens);
-  if (
-    [input, output, cacheRead, cacheWrite, reportedTotal].every(
-      value => value === undefined
-    )
-  )
-    return undefined;
-  const promptTokens = (input ?? 0) + (cacheRead ?? 0) + (cacheWrite ?? 0);
-  const completionTokens = output ?? 0;
-  const totalTokens = reportedTotal ?? promptTokens + completionTokens;
-  if (!Number.isSafeInteger(promptTokens) || !Number.isSafeInteger(totalTokens))
-    return undefined;
-  return { promptTokens, completionTokens, totalTokens };
-}
-
 export interface PluginUsageAnalytics {
   range: { from: number; to: number; days: number };
   totals: {
@@ -534,34 +460,6 @@ class PluginUsageService {
 }
 
 const pluginUsageService = new PluginUsageService();
-
-/** Record one native inference attempt; catalog and route lookups do not call this. */
-export async function recordNativeDshUsage(
-  input: NativeDshUsageEventInput
-): Promise<void> {
-  try {
-    if (
-      !input.userId?.trim() ||
-      !input.providerId?.trim() ||
-      !input.model?.trim()
-    )
-      return;
-    await pluginUsageService.record({
-      userId: input.userId,
-      pluginId: nativeDshUsageProviderId(input.providerId),
-      pluginName: `DeepSeek Harness · ${input.providerName?.trim() || input.providerId}`,
-      capability: 'chat',
-      model: input.model,
-      status: input.status,
-      durationMs: input.durationMs,
-      tokens: normalizeNativeDshTokenUsage(input.usage),
-      ...(input.createdAt === undefined ? {} : { createdAt: input.createdAt }),
-    });
-  } catch (error) {
-    // Metadata normalization must be as non-blocking as repository metering.
-    logger.warn('Failed to record native DSH usage:', error);
-  }
-}
 
 export { PluginUsageService };
 export default pluginUsageService;

@@ -48,11 +48,9 @@ type MockSystemInfo = {
   passkeysInUse?: boolean;
   version: string;
   turnstile?: { enabled: boolean; siteKey?: string };
-  /** Administrator opt-in for the Agents section (Libre Claw). */
-  agentsEnabled?: boolean;
   agentCliModelsEnabled?: boolean;
-  /** Administrator opt-in for the embedded Cordis engine. */
-  cordisEnabled?: boolean;
+  /** Who may use the embedded Strands engine. */
+  strandsAccess?: 'disabled' | 'admins' | 'all-users';
   defaultTheme?: {
     mode: 'light' | 'dark' | 'amoled' | 'celestial';
     accent?: string;
@@ -363,7 +361,7 @@ type MockWorkAdminOverview = {
 };
 
 type MockWorkCapabilities = {
-  nativeDsh?: WorkCapabilities['nativeDsh'];
+  strands?: WorkCapabilities['strands'];
   available: boolean;
   runtime: 'docker' | 'kubernetes';
   image: string;
@@ -406,7 +404,7 @@ type MockWorkRun = {
   id: string;
   taskId: string;
   model: string;
-  providerType: 'ollama' | 'plugin' | 'dsh';
+  providerType: 'ollama' | 'plugin';
   providerId?: string;
   status:
     'queued' | 'preparing' | 'running' | 'completed' | 'failed' | 'cancelled';
@@ -423,7 +421,7 @@ type MockWorkTask = {
   id: string;
   title: string;
   model: string;
-  providerType: 'ollama' | 'plugin' | 'dsh';
+  providerType: 'ollama' | 'plugin';
   providerId?: string;
   status:
     'idle' | 'preparing' | 'running' | 'completed' | 'failed' | 'cancelled';
@@ -621,11 +619,10 @@ export const defaultSystemInfo: MockSystemInfo = {
   userCount: 1,
   version: '0.10.0-e2e',
   turnstile: { enabled: false },
-  // Both features are administrator opt-ins in production. The mock opts in so
-  // that suites exercising the sections do not have to state it every time;
-  // suites asserting the disabled state override it.
-  agentsEnabled: true,
-  cordisEnabled: true,
+  // Strands is off by default in production. The mock opens it to admins so
+  // suites exercising the section do not have to state it every time; suites
+  // asserting the disabled state override it.
+  strandsAccess: 'admins',
 };
 
 const defaultModels: MockModel[] = [
@@ -931,7 +928,7 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
   const workTaskCreateRequests: Array<{
     message: string;
     model: string;
-    providerType: 'ollama' | 'plugin' | 'dsh';
+    providerType: 'ollama' | 'plugin';
     providerId?: string;
     networkEnabled: boolean;
     personaId?: string;
@@ -950,7 +947,7 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
     taskId: string;
     message: string;
     model?: string;
-    providerType?: 'ollama' | 'plugin' | 'dsh';
+    providerType?: 'ollama' | 'plugin';
     providerId?: string;
   }> = [];
   const workCancelRequests: string[] = [];
@@ -1082,7 +1079,7 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
     task: MockWorkTask,
     message: string,
     model?: string,
-    providerType?: 'ollama' | 'plugin' | 'dsh',
+    providerType?: 'ollama' | 'plugin',
     providerId?: string
   ) => {
     const now = Date.now();
@@ -1150,7 +1147,7 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
     task.model = model || task.model;
     task.providerType = providerType || task.providerType;
     task.providerId =
-      task.providerType === 'plugin' || task.providerType === 'dsh'
+      task.providerType === 'plugin'
         ? providerId || task.providerId
         : undefined;
     task.updatedAt = now;
@@ -1977,7 +1974,7 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
         const request = route.request().postDataJSON() as {
           message: string;
           model: string;
-          providerType: 'ollama' | 'plugin' | 'dsh';
+          providerType: 'ollama' | 'plugin';
           providerId?: string;
           networkEnabled: boolean;
           personaId?: string;
@@ -2126,7 +2123,7 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
         const request = route.request().postDataJSON() as {
           message: string;
           model?: string;
-          providerType?: 'ollama' | 'plugin' | 'dsh';
+          providerType?: 'ollama' | 'plugin';
           providerId?: string;
         };
         workRunRequests.push({ taskId, ...request });

@@ -118,6 +118,7 @@ const streamingService = remotePlugin =>
     post: async () => {
       throw new Error('Streaming should use fetch');
     },
+    strandsAccess: async () => true,
   });
 
 test('auth-free local plugins are available without a fake API key', async () => {
@@ -1256,8 +1257,8 @@ test('Work screenshots reach every provider payload as image parts', () => {
   });
 });
 
-test('DSH Work selections retain the exact underlying provider and require opt-in', async () => {
-  const previous = process.env.LIBRE_CORDIS_ENABLED;
+test('Strands Work selections retain the exact underlying provider and require access', async () => {
+  let strandsAllowed = true;
   const seen = [];
   const service = new WorkModelProviderService({
     ollama: {
@@ -1284,25 +1285,31 @@ test('DSH Work selections retain the exact underlying provider and require opt-i
     post: async () => {
       throw new Error('Unexpected remote request');
     },
+    strandsAccess: async () => strandsAllowed,
   });
   try {
-    process.env.LIBRE_CORDIS_ENABLED = 'false';
+    strandsAllowed = false;
     await assert.rejects(
       service.assertModelSupportsTools(
-        'dsh:fixture-model',
+        'strands:fixture-model',
         { providerType: 'ollama' },
         'user'
       ),
-      error => error.code === 'WORK_DSH_DISABLED'
+      error => error.code === 'WORK_STRANDS_DISABLED'
     );
-    process.env.LIBRE_CORDIS_ENABLED = 'true';
+    strandsAllowed = true;
     await service.assertModelSupportsTools(
-      'dsh:fixture-model',
+      'strands:fixture-model',
       { providerType: 'ollama' },
       'user'
     );
     await service.generateChatStreamResponse(
-      { model: 'dsh:fixture-model', messages: [], tools: [tool], stream: true },
+      {
+        model: 'strands:fixture-model',
+        messages: [],
+        tools: [tool],
+        stream: true,
+      },
       { providerType: 'ollama' },
       'user',
       {}
@@ -1311,7 +1318,7 @@ test('DSH Work selections retain the exact underlying provider and require opt-i
       ['inspect', 'fixture-model'],
       ['generate', 'fixture-model'],
     ]);
-    for (const model of ['dsh:', 'dsh:dsh:fixture-model', 'dsh:claude-code']) {
+    for (const model of ['strands:', 'dsh:', 'strands:strands:fixture-model']) {
       await assert.rejects(
         service.assertModelSupportsTools(
           model,
@@ -1322,18 +1329,17 @@ test('DSH Work selections retain the exact underlying provider and require opt-i
       );
     }
   } finally {
-    if (previous === undefined) delete process.env.LIBRE_CORDIS_ENABLED;
-    else process.env.LIBRE_CORDIS_ENABLED = previous;
+    strandsAllowed = true;
   }
 });
 
-test('DSH Work streams through the exact plugin using its unwrapped model id', async () => {
+test('Strands Work streams through the exact plugin using its unwrapped model id', async () => {
   const remotePlugin = { ...plugin('openai'), active: true };
   const service = streamingService(remotePlugin);
   const originalFetch = globalThis.fetch;
-  const previous = process.env.LIBRE_CORDIS_ENABLED;
+  let strandsAllowed = true;
   const payloads = [];
-  process.env.LIBRE_CORDIS_ENABLED = 'true';
+  strandsAllowed = true;
   globalThis.fetch = async (_url, init) => {
     payloads.push(JSON.parse(init.body));
     return new Response(
@@ -1344,13 +1350,13 @@ test('DSH Work streams through the exact plugin using its unwrapped model id', a
   try {
     const selection = { providerType: 'plugin', providerId: remotePlugin.id };
     await service.assertModelSupportsTools(
-      'dsh:test-model',
+      'strands:test-model',
       selection,
       'test-user'
     );
     assert.equal(
       await service.getRoutingFingerprint(
-        'dsh:test-model',
+        'strands:test-model',
         selection,
         'test-user'
       ),
@@ -1358,7 +1364,7 @@ test('DSH Work streams through the exact plugin using its unwrapped model id', a
     );
     const result = await service.generateChatStreamResponse(
       {
-        model: 'dsh:test-model',
+        model: 'strands:test-model',
         messages: messages.slice(0, 2),
         tools: [tool],
         stream: true,
@@ -1373,171 +1379,6 @@ test('DSH Work streams through the exact plugin using its unwrapped model id', a
     assert.deepEqual(payloads[0].tools, [tool]);
   } finally {
     globalThis.fetch = originalFetch;
-    if (previous === undefined) delete process.env.LIBRE_CORDIS_ENABLED;
-    else process.env.LIBRE_CORDIS_ENABLED = previous;
+    strandsAllowed = true;
   }
-});
-
-test('native DSH Work models use only the native transport with exact route, actor, usage and cancellation', async () => {
-  const selections = [];
-  const generations = [];
-  const fingerprintCalls = [];
-  const controller = new AbortController();
-  const nativeResponse = {
-    model: 'dsh:literal-native-name',
-    created_at: '',
-    done: true,
-    message: {
-      role: 'assistant',
-      content: 'native reply',
-      thinking: 'native reasoning',
-    },
-    prompt_eval_count: 12,
-    eval_count: 7,
-  };
-  const unexpected = () => {
-    throw new Error(
-      'Native DSH must not access an Ollama or plugin credential.'
-    );
-  };
-  const service = new WorkModelProviderService({
-    ollama: {
-      isHealthy: async () => false,
-      showModel: unexpected,
-      generateChatResponse: unexpected,
-    },
-    plugins: {
-      getActivePlugins: () => [],
-      getPlugin: unexpected,
-      getApiKey: unexpected,
-      getPluginVariables: unexpected,
-    },
-    post: unexpected,
-    nativeDsh: {
-      assertModel: async (providerId, model, userId) => {
-        selections.push({ providerId, model, userId });
-        return {
-          providerId,
-          model,
-          name: 'Flash',
-          providerName: 'Native DeepSeek',
-        };
-      },
-      routingFingerprint: async (providerId, model, userId) => {
-        fingerprintCalls.push({ providerId, model, userId });
-        return 'native-route-generation';
-      },
-      generate: async (request, providerId, userId, observer, signal) => {
-        generations.push({ request, providerId, userId, signal });
-        observer.onContent?.('native reply');
-        observer.onReasoning?.('native reasoning');
-        observer.onUsage?.({ promptTokens: 12, completionTokens: 7 });
-        return nativeResponse;
-      },
-    },
-  });
-  const selection = { providerType: 'dsh', providerId: 'native-deepseek' };
-  const model = 'dsh:literal-native-name';
-  await service.assertModelSupportsTools(model, selection, 'native-admin');
-  assert.deepEqual(selections, [
-    { providerId: selection.providerId, model, userId: 'native-admin' },
-  ]);
-  assert.equal(
-    await service.getRoutingFingerprint(model, selection, 'native-admin'),
-    'native-route-generation'
-  );
-  assert.deepEqual(fingerprintCalls, selections);
-  assert.equal(
-    await service.getResponsesStateScope(model, selection, 'native-admin'),
-    undefined
-  );
-  const content = [],
-    reasoning = [],
-    usage = [];
-  const request = {
-    model,
-    messages,
-    tools: [tool],
-    options: { num_predict: 128 },
-  };
-  const streamed = await service.generateChatStreamResponse(
-    request,
-    selection,
-    'native-admin',
-    {
-      onContent: value => content.push(value),
-      onReasoning: value => reasoning.push(value),
-      onUsage: value => usage.push(value),
-    },
-    controller.signal
-  );
-  assert.strictEqual(streamed, nativeResponse);
-  assert.deepEqual(generations[0], {
-    request: { ...request, stream: true },
-    providerId: selection.providerId,
-    userId: 'native-admin',
-    signal: controller.signal,
-  });
-  assert.deepEqual(content, ['native reply']);
-  assert.deepEqual(reasoning, ['native reasoning']);
-  assert.deepEqual(usage, [{ promptTokens: 12, completionTokens: 7 }]);
-  assert.strictEqual(
-    await service.generateChatResponse(
-      request,
-      selection,
-      'native-admin',
-      controller.signal
-    ),
-    nativeResponse
-  );
-  assert.equal(
-    generations[1].request.model,
-    model,
-    'a native model id is never stripped as an LWUI engine wrapper'
-  );
-  await assert.rejects(
-    service.assertModelSupportsTools(
-      model,
-      { providerType: 'dsh' },
-      'native-admin'
-    ),
-    /provider ID/
-  );
-});
-
-test('native DSH access or transport failures never fall back to another Work provider', async () => {
-  const denied = Object.assign(
-    new Error('Native provider is restricted to solo administrators.'),
-    { status: 403, code: 'NATIVE_DSH_FORBIDDEN' }
-  );
-  const fail = async () => {
-    throw denied;
-  };
-  const unexpected = () => {
-    throw new Error('Unexpected fallback');
-  };
-  const service = new WorkModelProviderService({
-    ollama: {
-      isHealthy: async () => true,
-      showModel: unexpected,
-      generateChatResponse: unexpected,
-    },
-    plugins: {
-      getActivePlugins: () => [],
-      getPlugin: unexpected,
-      getApiKey: unexpected,
-      getPluginVariables: unexpected,
-    },
-    post: unexpected,
-    nativeDsh: { assertModel: fail, routingFingerprint: fail, generate: fail },
-  });
-  const selection = { providerType: 'dsh', providerId: 'native-deepseek' };
-  const request = { model: 'flash', messages };
-  for (const call of [
-    () => service.assertModelSupportsTools('flash', selection, 'member'),
-    () => service.getRoutingFingerprint('flash', selection, 'member'),
-    () => service.generateChatResponse(request, selection, 'member'),
-    () => service.generateChatStreamResponse(request, selection, 'member', {}),
-  ])
-    await assert.rejects(call(), error => error === denied);
 });

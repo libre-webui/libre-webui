@@ -45,7 +45,7 @@ export type WorkRunStatus =
 
 export type WorkPreviewStatus = 'stopped' | 'starting' | 'running' | 'failed';
 
-export type WorkProviderType = 'ollama' | 'plugin' | 'dsh';
+export type WorkProviderType = 'ollama' | 'plugin';
 
 export interface WorkProviderSelection {
   providerType: WorkProviderType;
@@ -362,16 +362,9 @@ export interface WorkCapabilities {
   ollamaAvailable: boolean;
   pluginAvailable: boolean;
   runtimeImage: string;
-  nativeDsh?: {
-    status: 'disabled' | 'unavailable' | 'ready';
-    models: Array<{
-      model: string;
-      providerType: 'dsh';
-      providerId: string;
-      key: string;
-      label: string;
-      remote: true;
-    }>;
+  /** Whether this user may run Work tasks on the Strands agent engine. */
+  strands?: {
+    enabled: boolean;
   };
   reason?: string;
   limits: {

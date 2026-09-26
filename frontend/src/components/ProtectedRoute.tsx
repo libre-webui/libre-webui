@@ -24,8 +24,7 @@ interface ProtectedRouteProps {
   requireAuth?: boolean;
   requireAdmin?: boolean;
   requireWork?: boolean;
-  requireAgents?: boolean;
-  requireCordis?: boolean;
+  requireStrands?: boolean;
 }
 
 export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
@@ -33,8 +32,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   requireAuth = true,
   requireAdmin = false,
   requireWork = false,
-  requireAgents = false,
-  requireCordis = false,
+  requireStrands = false,
 }) => {
   const {
     isAuthenticated,
@@ -42,7 +40,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     systemInfo,
     isLoading,
     canUseWork,
-    canUseCordis,
+    canUseStrands,
   } = useAuthStore();
   const _location = useLocation();
 
@@ -55,15 +53,9 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     );
   }
 
-  // The Agents feature is an explicit administrator opt-in; the flag gates
-  // every mode, including no-auth single-user deployments.
-  if (requireAgents && systemInfo?.agentsEnabled !== true) {
-    return <Navigate to='/' replace />;
-  }
-
-  // The Cordis engine is an explicit administrator opt-in whose sessions are
-  // deployment-wide rather than per-user, so the flag gates every mode.
-  if (requireCordis && !canUseCordis()) {
+  // The Strands engine starts disabled; its access mode gates every
+  // deployment mode, including no-auth single-user installs.
+  if (requireStrands && !canUseStrands()) {
     return <Navigate to='/' replace />;
   }
 

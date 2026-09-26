@@ -31,7 +31,7 @@ const previousDataDir = process.env.DATA_DIR;
 process.env.DATA_DIR = dataDir;
 process.env.ENCRYPTION_KEY ||= '0'.repeat(64);
 // This suite tests CLI model lists independently of host engine settings.
-process.env.LIBRE_CORDIS_ENABLED = 'false';
+process.env.LIBRE_STRANDS_ACCESS = 'disabled';
 delete process.env.AGENT_CLI_MODELS_ENABLED;
 
 const distUrl = name =>

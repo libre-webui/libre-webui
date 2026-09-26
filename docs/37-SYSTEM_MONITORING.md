@@ -88,8 +88,7 @@ The Usage page (`/usage`) charts user-attributed model and provider work.
 Metering happens at each supported execution boundary and currently covers:
 
 - local Ollama chat calls, including native Chat and Ollama-backed Work calls;
-- installed agent CLI chat calls;
-- native DSH provider calls in Chat, Work, titles, and thinking summaries;
+- installed agent CLI chat calls and Strands engine calls;
 - plugin-backed chat, streaming and non-streaming;
 - plugin embeddings, image generation, speech to text, text to speech, sound,
   and video; and
@@ -101,8 +100,8 @@ it fails or is cancelled.
 
 Each event records:
 
-- provider/plugin id and a snapshot of its display name (`ollama`,
-  `agent-cli:*`, and `dsh-native:*` use the same ledger as plugin providers)
+- provider/plugin id and a snapshot of its display name (`ollama` and
+  `agent-cli:*` use the same ledger as plugin providers)
 - capability (`chat`, `embedding`, `image`, `stt`, `tts`, `audio`, `video`)
 - model
 - status: `success`, `error`, or `cancelled` (an aborted stream counts as
@@ -112,14 +111,6 @@ Each event records:
   embedding inputs, jobs for video, bytes for audio)
 - end-to-end duration and a timestamp
 - the requesting user id
-
-Native DSH entries are labeled **DeepSeek Harness · provider**, retain the exact
-native model, and count each inference once, including separate tool rounds.
-Input totals include the native adapter's disjoint cache-read/cache-write
-counters once. Catalog queries and rejected preflight checks are not inference
-events. DSH calls through an LWUI-configured provider keep that provider's
-existing record. Usage is not reconstructed for calls made before metering was
-installed. See [Native provider usage](./65-CORDIS_CONFIGURATION.md#native-provider-usage).
 
 Nothing else is stored. **Prompts, responses, provider endpoints, credentials,
 and provider error bodies are never written to the usage table** — a failed
@@ -137,8 +128,9 @@ existing usage ledger.
 
 ### Agent usage
 
-The **Agents** section near the top shows Claude Code, Codex, OpenCode, Pi, and
-DeepSeek Harness separately. It includes each agent's calls, reported tokens,
+The **Agents** section near the top (**Calls to CLI agents and the Strands
+engine**) shows Claude Code, Codex, OpenCode, Pi, and Strands separately. It
+includes each agent's calls, reported tokens,
 failed or cancelled calls, average duration, and up to 20 most-used models.
 Agent totals cover all matching calls in the selected period, independently of
 the larger provider and model tables' display limits. These are subsets of the
@@ -155,11 +147,10 @@ deduplicated. Cache and reasoning counters are combined according to each CLI's
 protocol, without counting subsets twice. Cancelled invocations and partial
 responses that exit unsuccessfully retain their actual outcome.
 
-DSH here includes native provider requests, including tool rounds and auxiliary
-text requests. DSH using LWUI providers remains under those providers because
-the historical ledger does not identify the engine on those records. Calls made
-outside LWUI are not imported. Older records without token counters remain
-unmetered.
+Strands calls are attributed to the **Strands** agent. The engine has no model
+provider of its own; every model call it makes goes through Libre WebUI's
+Ollama or plugin providers. Calls made outside LWUI are not imported. Older
+records without token counters remain unmetered.
 
 The endpoint exposes this bounded breakdown in `agents`, including all five
 supported names even when their counters are zero. Reading it does not discover

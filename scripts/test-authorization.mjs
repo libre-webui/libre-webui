@@ -245,14 +245,14 @@ test('explainEffectiveAccess returns groups, feature booleans, and grants', asyn
     work: false,
     'model-download': false,
     'web-search': false,
-    agents: view.features.agents,
+    strands: false,
     tools: false,
     stt: true,
     tts: true,
     'voice-mode': true,
     'voice-cloning': true,
   });
-  assert.equal(typeof view.features.agents, 'boolean');
+  assert.equal('agents' in view.features, false);
   const groupGrant = view.grants.find(
     entry => entry.via === 'group' && entry.resourceId === NOTE_ID
   );

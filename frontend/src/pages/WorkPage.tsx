@@ -65,7 +65,7 @@ import {
   selectWorkEngine,
   workModelEngine,
   workModelSupportsEngine,
-  workModelFromChatDsh,
+  workModelFromChatStrands,
   type WorkEngine,
 } from '@/utils/workModels';
 
@@ -106,13 +106,7 @@ export default function WorkPage() {
   const preferences = useAppStore(state => state.preferences);
   const setPreferences = useAppStore(state => state.setPreferences);
   const authenticatedUser = useAuthStore(state => state.user);
-  const cordisEnabled = useAuthStore(
-    state => state.systemInfo?.cordisEnabled === true
-  );
-  const nativeDshAllowed = useAuthStore(
-    state =>
-      state.user?.role === 'admin' || state.systemInfo?.requiresAuth === false
-  );
+  const strandsEnabled = useAuthStore(state => state.canUseStrands());
   const authenticatedUserId = authenticatedUser?.id ?? null;
   const [remoteDisclosureSaving, setRemoteDisclosureSaving] = useState(false);
   const [retryingRecovery, setRetryingRecovery] = useState(false);
@@ -203,24 +197,7 @@ export default function WorkPage() {
       }),
     [models]
   );
-  const nativeModelOptions = useMemo<WorkModelOption[]>(
-    () =>
-      nativeDshAllowed && capabilities?.nativeDsh?.status === 'ready'
-        ? capabilities.nativeDsh.models
-            .filter(
-              option =>
-                option.providerType === 'dsh' &&
-                !!option.providerId &&
-                !!option.model
-            )
-            .map(option => ({ ...option, key: workModelSelectionKey(option) }))
-        : [],
-    [capabilities, nativeDshAllowed]
-  );
-  const allModelOptions = useMemo(
-    () => [...modelOptions, ...nativeModelOptions],
-    [modelOptions, nativeModelOptions]
-  );
+  const allModelOptions = modelOptions;
   const [draftModel, setDraftModel] = useState<WorkModelOption | null>(null);
   const [engineChoice, setEngineChoice] = useState<{
     owner: string;
@@ -489,7 +466,7 @@ export default function WorkPage() {
     allModelOptions.find(
       model => model.key === selectWorkEngine(draftModel, 'libre').key
     );
-  const chatDshModel = workModelFromChatDsh(
+  const chatStrandsModel = workModelFromChatStrands(
     {
       model: chatSelectedModel,
       providerType: chatSelectedProviderType,
@@ -497,14 +474,15 @@ export default function WorkPage() {
     },
     allModelOptions
   );
-  const chatDshSelected =
-    chatSelectedProviderType === 'agent' && chatSelectedProviderId === 'dsh';
+  const chatStrandsSelected =
+    chatSelectedProviderType === 'agent' &&
+    chatSelectedProviderId === 'strands';
   const chosenEngine =
     engineChoice?.owner === (taskId ?? 'new') ? engineChoice.engine : undefined;
   const inheritedModel = draftModel
     ? (draftBaseModel ?? draftModel)
-    : chatDshSelected
-      ? chatDshModel?.option
+    : chatStrandsSelected
+      ? chatStrandsModel?.option
       : (modelOptions.find(
           model =>
             model.model === chatSelectedModel &&
@@ -519,8 +497,8 @@ export default function WorkPage() {
       ? workModelEngine(draftModel.model, draftModel.providerType)
       : inheritedModel
         ? workModelEngine(inheritedModel.model, inheritedModel.providerType)
-        : chatDshSelected
-          ? 'dsh'
+        : chatStrandsSelected
+          ? 'strands'
           : 'libre');
   const freshModel =
     inheritedModel && workModelSupportsEngine(inheritedModel, freshEngine)
@@ -531,11 +509,8 @@ export default function WorkPage() {
     !allModelOptions.some(
       model => model.key === selectWorkEngine(freshModel, 'libre').key
     );
-  const freshEngineUnavailable = freshEngine === 'dsh' && !cordisEnabled;
-  const availableFreshModels =
-    freshEngine === 'dsh'
-      ? [...nativeModelOptions, ...modelOptions]
-      : modelOptions;
+  const freshEngineUnavailable = freshEngine === 'strands' && !strandsEnabled;
+  const availableFreshModels = modelOptions;
   const freshModelOptions =
     freshModel && freshModelUnavailable
       ? [selectWorkEngine(freshModel, 'libre'), ...availableFreshModels]
@@ -846,7 +821,8 @@ export default function WorkPage() {
         }
         if (freshModelUnavailableMessage)
           throw new Error(freshModelUnavailableMessage);
-        if (freshEngineUnavailable) throw new Error(t('cordis.disabledTitle'));
+        if (freshEngineUnavailable)
+          throw new Error(t('work.composer.strandsDisabled'));
         const task = await createTask({
           message,
           model: freshModel.model,
@@ -889,7 +865,7 @@ export default function WorkPage() {
           requestedEngine ??
           (choice?.owner === 'new' ? choice.engine : undefined) ??
           workModelEngine(previous.model, previous.providerType);
-        return (engine === 'dsh' && !cordisEnabled) ||
+        return (engine === 'strands' && !strandsEnabled) ||
           !workModelSupportsEngine(model, engine)
           ? current
           : selectWorkEngine(model, engine);
@@ -907,7 +883,7 @@ export default function WorkPage() {
       (choice?.owner === currentTask.id ? choice.engine : undefined) ??
       workModelEngine(currentModel.model, currentModel.providerType);
     if (
-      (engine === 'dsh' && !cordisEnabled) ||
+      (engine === 'strands' && !strandsEnabled) ||
       !workModelSupportsEngine(model, engine)
     )
       return;
@@ -1155,7 +1131,7 @@ export default function WorkPage() {
       ? workModelEngine(selectedTask.model, selectedTask.providerType)
       : freshEngine);
   const taskEngineUnavailable =
-    !!selectedTask && taskEngine === 'dsh' && !cordisEnabled;
+    !!selectedTask && taskEngine === 'strands' && !strandsEnabled;
   const taskModel = selectedTask
     ? {
         model: baseWorkModel(selectedTask.model, selectedTask.providerType),
@@ -1175,10 +1151,7 @@ export default function WorkPage() {
           label: `${taskModel.model} · ${
             taskModel.providerType === 'ollama'
               ? 'Ollama'
-              : taskModel.providerId ||
-                (taskModel.providerType === 'dsh'
-                  ? 'DeepSeek Harness'
-                  : 'plugin')
+              : taskModel.providerId || 'plugin'
           }`,
           remote:
             taskModel.providerType !== 'ollama' ||
@@ -1193,10 +1166,7 @@ export default function WorkPage() {
   const selectedBaseModel =
     persistedModelOption ??
     allModelOptions.find(option => option.key === selectedModelKey);
-  const availableTaskModels =
-    taskEngine === 'dsh'
-      ? [...nativeModelOptions, ...modelOptions]
-      : modelOptions;
+  const availableTaskModels = modelOptions;
   const effectiveModelOptions =
     persistedModelOption &&
     workModelSupportsEngine(persistedModelOption, taskEngine)
@@ -1208,11 +1178,6 @@ export default function WorkPage() {
       ? selectWorkEngine(selectedBaseModel, taskEngine)
       : undefined
     : freshModel;
-  const taskNativeUnavailable =
-    selectedWorkModel?.providerType === 'dsh' &&
-    !nativeModelOptions.some(option => option.key === selectedWorkModel.key);
-  const nativeCatalogUnavailable =
-    nativeDshAllowed && capabilities?.nativeDsh?.status === 'unavailable';
   const status = workStatusPresentation[selectedTask?.status ?? 'idle'];
   const statusLabel = t(status.labelKey, {
     defaultValue: status.label,
@@ -1799,21 +1764,10 @@ export default function WorkPage() {
                   className='mt-4 text-sm text-ink-muted'
                 >
                   {freshEngineUnavailable
-                    ? t('cordis.disabledTitle')
+                    ? t('work.composer.strandsDisabled')
                     : freshModelUnavailableMessage}
                 </p>
               )}
-              {freshEngine === 'dsh' &&
-                nativeCatalogUnavailable &&
-                !freshModelUnavailable && (
-                  <p
-                    role='status'
-                    data-testid='work-native-models-unavailable'
-                    className='mt-4 text-sm text-ink-muted'
-                  >
-                    {t('work.composer.nativeDshUnavailable')}
-                  </p>
-                )}
               <WorkComposer
                 variant='landing'
                 dictationOwnerKey='landing'
@@ -1821,7 +1775,7 @@ export default function WorkPage() {
                 selectorModels={models}
                 selectedModel={freshModel}
                 engine={freshEngine}
-                dshEnabled={cordisEnabled}
+                strandsEnabled={strandsEnabled}
                 running={false}
                 loading={actionLoading}
                 disabled={
@@ -1875,32 +1829,9 @@ export default function WorkPage() {
                 />
                 {taskEngineUnavailable && (
                   <p role='status' className='px-5 py-2 text-sm text-ink-muted'>
-                    {t('cordis.disabledTitle')}
+                    {t('work.composer.strandsDisabled')}
                   </p>
                 )}
-                {taskNativeUnavailable && (
-                  <p
-                    role='status'
-                    data-testid='work-model-unavailable'
-                    className='px-5 py-2 text-sm text-ink-muted'
-                  >
-                    {t('chat.toasts.modelUnavailable', {
-                      model: selectedWorkModel?.model,
-                      provider: selectedWorkModel?.providerId,
-                    })}
-                  </p>
-                )}
-                {taskEngine === 'dsh' &&
-                  nativeCatalogUnavailable &&
-                  !taskNativeUnavailable && (
-                    <p
-                      role='status'
-                      data-testid='work-native-models-unavailable'
-                      className='px-5 py-2 text-sm text-ink-muted'
-                    >
-                      {t('work.composer.nativeDshUnavailable')}
-                    </p>
-                  )}
                 <WorkComposer
                   key={selectedTask.id}
                   dictationOwnerKey={selectedTask.id}
@@ -1914,13 +1845,12 @@ export default function WorkPage() {
                   selectorModels={models}
                   selectedModel={selectedWorkModel}
                   engine={taskEngine}
-                  dshEnabled={cordisEnabled}
+                  strandsEnabled={strandsEnabled}
                   running={activeTask}
                   loading={actionLoading}
                   disabled={
                     runtimeUnavailable ||
                     taskEngineUnavailable ||
-                    taskNativeUnavailable ||
                     !selectedWorkModel
                   }
                   remoteDisclosureDismissed={

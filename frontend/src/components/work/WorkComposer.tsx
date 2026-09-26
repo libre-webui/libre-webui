@@ -15,15 +15,7 @@
  * limitations under the License.
  */
 
-import {
-  ArrowUp,
-  CircleAlert,
-  Loader2,
-  Mic,
-  RefreshCw,
-  Square,
-  X,
-} from 'lucide-react';
+import { ArrowUp, CircleAlert, Loader2, Mic, Square, X } from 'lucide-react';
 import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ModelSelector } from '@/components/ModelSelector';
@@ -47,7 +39,8 @@ interface WorkComposerProps {
   selectorModels: OllamaModel[];
   selectedModel?: WorkModelOption;
   engine: WorkEngine;
-  dshEnabled: boolean;
+  /** Whether this account may run Work on the Strands engine. */
+  strandsEnabled: boolean;
   running: boolean;
   loading: boolean;
   variant?: 'landing' | 'task';
@@ -110,7 +103,7 @@ export function WorkComposer({
   selectorModels,
   selectedModel,
   engine,
-  dshEnabled,
+  strandsEnabled,
   running,
   loading,
   variant = 'task',
@@ -145,14 +138,11 @@ export function WorkComposer({
   const dictationActive = dictation.phase !== 'idle';
   const desktopModelTriggerRef = useRef<HTMLButtonElement>(null);
   const mobileModelTriggerRef = useRef<HTMLButtonElement>(null);
-  const nativeModelRef = useRef<HTMLSelectElement>(null);
   const modelKey = selectedModel
     ? selectWorkEngine(selectedModel, 'libre').key
     : '';
   const remoteProvider = selectedModel?.remote === true;
   const landing = variant === 'landing';
-  const [nativeChoiceEpoch, setNativeChoiceEpoch] = useState(0);
-  const nativeChoiceRef = useRef(0);
   const effectiveSelectorModels = useMemo(() => {
     const available = new Map(
       selectorModels.map(model => [workSelectorModelValue(model), model])
@@ -172,7 +162,6 @@ export function WorkComposer({
   const dismissRemoteDisclosure = async () => {
     if (await onDismissRemoteDisclosure()) {
       const triggers = [
-        nativeModelRef.current,
         desktopModelTriggerRef.current,
         mobileModelTriggerRef.current,
       ];
@@ -184,8 +173,7 @@ export function WorkComposer({
     }
   };
 
-  const changeModel = (value: string, epoch = nativeChoiceEpoch) => {
-    if (epoch !== nativeChoiceRef.current) return;
+  const changeModel = (value: string) => {
     const option =
       models.find(item => item.key === value) ||
       models.find(
@@ -195,17 +183,7 @@ export function WorkComposer({
   };
 
   const changeEngine = (next: WorkEngine) => {
-    if (next === 'libre' || dshEnabled) void onEngineChange(next);
-  };
-
-  const chooseDshModel = (value: string) => {
-    const option = models.find(item => item.key === value);
-    if (!option) return;
-    // A completed native selection supersedes an older shared picker's
-    // asynchronous Ollama unload callback.
-    nativeChoiceRef.current += 1;
-    setNativeChoiceEpoch(nativeChoiceRef.current);
-    void onModelChange(option);
+    if (next === 'libre' || strandsEnabled) void onEngineChange(next);
   };
 
   const submit = async () => {
@@ -263,7 +241,7 @@ export function WorkComposer({
     });
   };
 
-  const engineSelector = (dshEnabled || engine === 'dsh') && (
+  const engineSelector = (strandsEnabled || engine === 'strands') && (
     <div
       className={cn(
         landing
@@ -288,7 +266,7 @@ export function WorkComposer({
         disabled={running || loading}
         options={[
           { value: 'libre', label: 'Libre WebUI' },
-          { value: 'dsh', label: 'DeepSeek Harness' },
+          { value: 'strands', label: 'Strands' },
         ]}
         className={cn(
           'motion-reduce:transition-none',
@@ -508,122 +486,58 @@ export function WorkComposer({
                     {t('work.composer.modelLabel')}
                   </span>
                 )}
-                {engine === 'dsh' ? (
-                  <div
-                    className='flex min-w-0 flex-1 items-center gap-2'
-                    data-testid='work-model-selector-trigger'
-                  >
-                    <select
-                      ref={nativeModelRef}
-                      data-testid='work-model-select'
-                      aria-label={t('work.composer.model')}
-                      dir='ltr'
-                      value={modelKey}
-                      onChange={event => chooseDshModel(event.target.value)}
-                      disabled={running || loading || models.length === 0}
-                      className={cn(
-                        'w-full min-w-0 rounded-xl border border-line bg-surface-subtle px-3 text-[13px] text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40',
-                        landing
-                          ? 'h-11 min-h-[44px]'
-                          : 'h-10 min-h-[44px] sm:min-h-10'
-                      )}
-                    >
-                      <option value=''>{t('modelSelector.selectModel')}</option>
-                      {(['dsh', 'libre'] as const).map(group => {
-                        const options = models.filter(
-                          option =>
-                            (option.providerType === 'dsh') ===
-                            (group === 'dsh')
-                        );
-                        return options.length ? (
-                          <optgroup
-                            key={group}
-                            label={t(
-                              group === 'dsh'
-                                ? 'work.composer.nativeDshModels'
-                                : 'work.composer.libreModels'
-                            )}
-                          >
-                            {options.map(option => (
-                              <option key={option.key} value={option.key}>
-                                {option.label}
-                              </option>
-                            ))}
-                          </optgroup>
-                        ) : null;
+                <>
+                  <div className='hidden min-w-0 flex-1 sm:block'>
+                    <ModelSelector
+                      models={effectiveSelectorModels}
+                      selectedModel={modelKey}
+                      onModelChange={event => changeModel(event.target.value)}
+                      onModelsRefresh={() => void onModelsRefresh()}
+                      getModelValue={workSelectorModelValue}
+                      getModelLabel={workSelectorModelLabel}
+                      getModelTitle={model => model.name}
+                      triggerRef={desktopModelTriggerRef}
+                      triggerTestId='work-model-selector-trigger'
+                      selectTestId='work-model-select'
+                      ariaLabel={t('work.composer.model', {
+                        defaultValue: 'Work model',
                       })}
-                    </select>
-                    <Button
-                      type='button'
-                      variant='ghost'
-                      size='sm'
-                      aria-label={t('common.refresh')}
-                      data-testid='work-model-refresh'
-                      className={
+                      disabled={running || models.length === 0}
+                      className={cn(
+                        'min-w-0 w-full',
                         landing
-                          ? 'h-11 w-11 min-h-[44px] min-w-[44px] shrink-0 px-0'
-                          : undefined
-                      }
-                      disabled={running || loading}
-                      onClick={() => void onModelsRefresh()}
-                    >
-                      <RefreshCw className='h-4 w-4' aria-hidden='true' />
-                    </Button>
+                          ? '[&>button]:h-11 [&>button]:min-h-[44px] [&>button]:px-3'
+                          : 'max-w-[230px]'
+                      )}
+                      compact
+                    />
                   </div>
-                ) : (
-                  <>
-                    <div className='hidden min-w-0 flex-1 sm:block'>
-                      <ModelSelector
-                        models={effectiveSelectorModels}
-                        selectedModel={modelKey}
-                        onModelChange={event => changeModel(event.target.value)}
-                        onModelsRefresh={() => void onModelsRefresh()}
-                        getModelValue={workSelectorModelValue}
-                        getModelLabel={workSelectorModelLabel}
-                        getModelTitle={model => model.name}
-                        triggerRef={desktopModelTriggerRef}
-                        triggerTestId='work-model-selector-trigger'
-                        selectTestId='work-model-select'
-                        ariaLabel={t('work.composer.model', {
-                          defaultValue: 'Work model',
-                        })}
-                        disabled={running || models.length === 0}
-                        className={cn(
-                          'min-w-0 w-full',
-                          landing
-                            ? '[&>button]:h-11 [&>button]:min-h-[44px] [&>button]:px-3'
-                            : 'max-w-[230px]'
-                        )}
-                        compact
-                      />
-                    </div>
 
-                    <div className='min-w-0 flex-1 sm:hidden'>
-                      <ModelSelector
-                        models={effectiveSelectorModels}
-                        selectedModel={modelKey}
-                        onModelChange={event => changeModel(event.target.value)}
-                        onModelsRefresh={() => void onModelsRefresh()}
-                        getModelValue={workSelectorModelValue}
-                        getModelLabel={workSelectorModelLabel}
-                        getModelTitle={model => model.name}
-                        triggerRef={mobileModelTriggerRef}
-                        triggerTestId='work-model-selector-trigger-mobile'
-                        selectTestId='work-model-select-mobile'
-                        ariaLabel={t('work.composer.model', {
-                          defaultValue: 'Work model',
-                        })}
-                        disabled={running || models.length === 0}
-                        className={cn(
-                          'min-w-0 w-full',
-                          landing &&
-                            '[&>button]:h-11 [&>button]:min-h-[44px] [&>button]:px-3'
-                        )}
-                        compact
-                      />
-                    </div>
-                  </>
-                )}
+                  <div className='min-w-0 flex-1 sm:hidden'>
+                    <ModelSelector
+                      models={effectiveSelectorModels}
+                      selectedModel={modelKey}
+                      onModelChange={event => changeModel(event.target.value)}
+                      onModelsRefresh={() => void onModelsRefresh()}
+                      getModelValue={workSelectorModelValue}
+                      getModelLabel={workSelectorModelLabel}
+                      getModelTitle={model => model.name}
+                      triggerRef={mobileModelTriggerRef}
+                      triggerTestId='work-model-selector-trigger-mobile'
+                      selectTestId='work-model-select-mobile'
+                      ariaLabel={t('work.composer.model', {
+                        defaultValue: 'Work model',
+                      })}
+                      disabled={running || models.length === 0}
+                      className={cn(
+                        'min-w-0 w-full',
+                        landing &&
+                          '[&>button]:h-11 [&>button]:min-h-[44px] [&>button]:px-3'
+                      )}
+                      compact
+                    />
+                  </div>
+                </>
               </div>
             </div>
 

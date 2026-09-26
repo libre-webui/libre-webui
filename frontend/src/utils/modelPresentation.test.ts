@@ -53,8 +53,8 @@ test('settings labels distinguish agents, plugins, personas and real Ollama mode
     [model('codex'), 'codex', 'Ollama'],
     [model('codex', { isAgent: true, agentName: 'Codex' }), 'Codex', 'Agent'],
     [
-      model('dsh', { isAgent: true, agentName: 'DeepSeek Harness' }),
-      'DeepSeek Harness',
+      model('strands', { isAgent: true, agentName: 'Strands' }),
+      'Strands',
       'Agent',
     ],
     [
@@ -126,15 +126,15 @@ test('unavailable entries retain their recorded provider and translated status',
     'old (Anbieter nicht erfasst, nicht verfügbar)'
   );
   assert.equal(
-    modelOptionLabel(model('dsh', { isUnavailable: true }), t),
-    'dsh (Ollama, unavailable)'
+    modelOptionLabel(model('llama3', { isUnavailable: true }), t),
+    'llama3 (Ollama, unavailable)'
   );
 });
 
 test('missing display metadata does not turn an agent or plugin into Ollama', () => {
   assert.equal(
-    modelOptionLabel(model('dsh', { isAgent: true }), t),
-    'dsh (Agent)'
+    modelOptionLabel(model('pi', { isAgent: true }), t),
+    'pi (Agent)'
   );
   assert.equal(
     modelOptionLabel(

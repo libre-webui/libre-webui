@@ -1327,7 +1327,7 @@ function runMigrations(): void {
         `UPDATE ${table}
          SET provider_type = 'ollama', provider_id = NULL
          WHERE provider_type IS NULL
-            OR provider_type NOT IN ('ollama', 'plugin', 'dsh')
+            OR provider_type NOT IN ('ollama', 'plugin')
             OR (provider_type = 'ollama' AND provider_id IS NOT NULL)`
       ).run();
     }

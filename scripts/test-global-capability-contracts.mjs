@@ -63,11 +63,10 @@ const canonicalCapabilityIds = [
   'settings-preferences',
   'speech',
   'hugging-face-hub',
-  'libre-claw',
+  'strands-engine',
   'durable-jobs',
   'deployment-profiles',
   'recovery-backup',
-  'cordis-bridge',
 ];
 
 function sorted(values) {

@@ -98,13 +98,13 @@ test('Work stays available when no chat model is installed', async ({
   await expect(page.getByTestId('sidebar-chat-button')).toBeDisabled();
 });
 
-test('Work and Agents are hidden and route-protected for non-admin users', async ({
+test('Work and Strands are hidden and route-protected for non-admin users', async ({
   page,
 }) => {
-  let libreClawRequests = 0;
+  let strandsRequests = 0;
   page.on('request', request => {
-    if (new URL(request.url()).pathname.startsWith('/api/libre-claw')) {
-      libreClawRequests += 1;
+    if (new URL(request.url()).pathname.startsWith('/api/strands')) {
+      strandsRequests += 1;
     }
   });
   const mock = await mockLibreWebUiApi(page, {
@@ -116,6 +116,7 @@ test('Work and Agents are hidden and route-protected for non-admin users', async
       userCount: 2,
       version: '0.10.0-e2e',
       turnstile: { enabled: false },
+      strandsAccess: 'admins',
     },
   });
   await page.addInitScript(() => {
@@ -125,9 +126,9 @@ test('Work and Agents are hidden and route-protected for non-admin users', async
         state: {
           tabs: [
             { id: 'home', kind: 'home', path: '/' },
-            { id: 'page:/agents', kind: 'page', path: '/agents' },
+            { id: 'page:/strands', kind: 'page', path: '/strands' },
           ],
-          activeTabId: 'page:/agents',
+          activeTabId: 'page:/strands',
         },
         version: 0,
       })
@@ -142,28 +143,28 @@ test('Work and Agents are hidden and route-protected for non-admin users', async
   await expect(page).toHaveURL(/\/$/);
   await expect(page.getByTestId('sidebar-work-button')).toHaveCount(0);
   await expect(page.getByRole('link', { name: 'Work' })).toHaveCount(0);
-  await expect(page.getByRole('link', { name: 'Agents' })).toHaveCount(0);
+  await expect(page.getByRole('link', { name: 'Strands' })).toHaveCount(0);
   await expect(
-    page.getByRole('button', { name: 'Agents', exact: true })
+    page.getByRole('button', { name: 'Strands', exact: true })
   ).toHaveCount(0);
   await expect(
-    page.getByTestId('app-tab').filter({ hasText: 'Agents' })
+    page.getByTestId('app-tab').filter({ hasText: 'Strands' })
   ).toHaveCount(0);
 
   await page.getByTestId('app-tab-new').click();
   await expect(
     page
       .getByTestId('app-tab-new-menu')
-      .getByRole('menuitem', { name: 'Agents' })
+      .getByRole('menuitem', { name: 'Strands' })
   ).toHaveCount(0);
   await page.getByTestId('app-tab-new').click();
 
   await page.keyboard.press('ControlOrMeta+k');
-  await page.getByTestId('command-palette-input').fill('agents');
+  await page.getByTestId('command-palette-input').fill('strands');
   await expect(
     page
       .getByTestId('command-palette')
-      .getByRole('button', { name: 'Agents', exact: true })
+      .getByRole('button', { name: 'Strands', exact: true })
   ).toHaveCount(0);
   await page.keyboard.press('Escape');
 
@@ -173,10 +174,8 @@ test('Work and Agents are hidden and route-protected for non-admin users', async
   await expect(page.getByText(privateWorkTask.title)).toHaveCount(0);
   expect(mock.workTaskListRequests).toHaveLength(0);
 
-  await page.goto('/agents');
+  await page.goto('/strands');
   await expect(page).toHaveURL(/\/$/);
-  await expect(page.getByRole('heading', { name: 'Libre Claw' })).toHaveCount(
-    0
-  );
-  expect(libreClawRequests).toBe(0);
+  await expect(page.getByRole('heading', { name: 'Strands' })).toHaveCount(0);
+  expect(strandsRequests).toBe(0);
 });

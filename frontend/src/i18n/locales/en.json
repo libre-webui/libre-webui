@@ -40,7 +40,8 @@
     "custom": "Custom",
     "remove": "Remove",
     "home": "Home",
-    "more": "More"
+    "more": "More",
+    "reasoning": "Reasoning"
   },
   "brand": {
     "name": "Libre WebUI",
@@ -528,7 +529,6 @@
       "models": "Models",
       "personas": "Personas",
       "imagine": "Imagine",
-      "agents": "Agents",
       "work": "Work",
       "settings": "Settings",
       "usageAnalytics": "Provider Usage",
@@ -543,7 +543,7 @@
       "skills": "Skills",
       "tools": "Tools",
       "channels": "Channels",
-      "cordis": "Cordis Engine"
+      "strands": "Strands"
     },
     "toggleSize": "Toggle sidebar size",
     "expandSidebar": "Expand sidebar"
@@ -1830,13 +1830,6 @@
       "saved": "Default theme updated",
       "saveFailed": "Could not update the default theme"
     },
-    "agentAccess": {
-      "title": "Libre Claw",
-      "description": "Show the Libre Claw workspace to administrators.",
-      "saved": "Agent access updated",
-      "saveFailed": "Could not update agent access",
-      "lockedByEnv": "Pinned by the LIBRE_CLAW_ENABLED environment variable."
-    },
     "groups": {
       "title": "Groups",
       "description": "Group accounts to manage shared access, and inspect what any account can effectively do.",
@@ -1973,13 +1966,17 @@
       "saved": "Email settings saved.",
       "saveFailed": "The email settings could not be saved."
     },
-    "cordisAccess": {
-      "title": "Cordis Engine",
-      "description": "Offer the Cordis Engine section to administrators. It runs tools with real filesystem access, outside Libre WebUI's tool-approval flow.",
-      "saved": "Cordis access updated",
-      "saveFailed": "Could not update Cordis access",
-      "lockedByEnv": "Pinned by the LIBRE_CORDIS_ENABLED environment variable.",
-      "lockedByFile": "Pinned by features.enabled in cordis.config.yml."
+    "strandsAccess": {
+      "title": "Strands engine",
+      "description": "Choose who can use the embedded Strands agent. It can read and edit files in each session's private workspace, but it cannot run shell commands.",
+      "saved": "Strands access updated",
+      "saveFailed": "Could not update Strands access",
+      "lockedByEnv": "Pinned by the LIBRE_STRANDS_ACCESS environment variable.",
+      "modes": {
+        "disabled": "Off",
+        "admins": "Administrators",
+        "all-users": "All users"
+      }
     },
     "agentCliAccess": {
       "title": "Agent CLI models",
@@ -2070,7 +2067,7 @@
     },
     "agents": {
       "title": "Agents",
-      "description": "CLI agent calls and native DSH requests. DSH using Libre WebUI models is counted under its model provider.",
+      "description": "Calls to CLI agents and the Strands engine.",
       "noCalls": "No recorded calls in this period",
       "unreported": "Tokens not reported",
       "topModels": "Top models",
@@ -2573,144 +2570,6 @@
     "title": "Demo Mode",
     "github": "GitHub"
   },
-  "libreClaw": {
-    "title": "Agents",
-    "subtitle": "Local agent runs, approvals, schedules, memory, tools, and usage.",
-    "dashboard": "Dashboard",
-    "connection": {
-      "disconnectedTitle": "Libre Claw daemon is not connected",
-      "disconnectedDescription": "Start it locally with <command>libre-claw start</command> or set <env>LIBRE_CLAW_BASE_URL</env> in the backend environment."
-    },
-    "status": {
-      "connected": "Connected",
-      "disconnected": "Disconnected",
-      "activeRuns": "{{count}} active",
-      "activeRuns_plural": "{{count}} active"
-    },
-    "states": {
-      "queued": "Queued",
-      "running": "Running",
-      "blocked": "Blocked",
-      "done": "Done",
-      "failed": "Failed",
-      "cancelled": "Cancelled"
-    },
-    "startRun": {
-      "title": "Start Agent Run",
-      "placeholder": "Ask Libre Claw to inspect a repo, fix a bug, run a review, schedule a report...",
-      "chatRun": "Chat run",
-      "goalMode": "Goal mode",
-      "providerOverride": "Provider override",
-      "modelOverride": "Model override",
-      "run": "Run"
-    },
-    "modelRoute": {
-      "title": "Model Route",
-      "providerPlaceholder": "provider",
-      "modelPlaceholder": "model",
-      "persistGlobal": "Persist to Libre Claw global config",
-      "saveModel": "Save model",
-      "theme": "Libre Claw theme",
-      "saveTheme": "Save theme"
-    },
-    "runs": {
-      "title": "Runs",
-      "empty": "No Libre Claw runs yet."
-    },
-    "timeline": {
-      "title": "Run Timeline",
-      "empty": "Select a run to inspect its events.",
-      "streaming": "Streaming...",
-      "assistantResponse": "Assistant response",
-      "resultOk": "ok",
-      "resultError": "error",
-      "labels": {
-        "userMessage": "User message",
-        "toolCall": "Tool call",
-        "toolResult": "Tool result",
-        "approvalRequest": "Approval request",
-        "approvalResponse": "Approval response",
-        "runStarted": "Run started",
-        "runFinished": "Run finished",
-        "usage": "Usage",
-        "error": "Error"
-      }
-    },
-    "approvals": {
-      "needed": "Approval needed",
-      "allowOnce": "Allow once",
-      "alwaysAllowTool": "Always allow tool",
-      "deny": "Deny",
-      "toolApprovalRequested": "Tool approval requested"
-    },
-    "automations": {
-      "title": "Automations",
-      "namePlaceholder": "Name",
-      "schedulePlaceholder": "daily 09:00",
-      "promptPlaceholder": "Automation prompt",
-      "create": "Create",
-      "empty": "No scheduled Libre Claw automations.",
-      "runNow": "Run now",
-      "pause": "Pause",
-      "resume": "Resume",
-      "routes": {
-        "report": "Report",
-        "telegram": "Telegram"
-      },
-      "status": {
-        "active": "Active",
-        "paused": "Paused"
-      }
-    },
-    "usageFallback": {
-      "title": "Usage And Fallback",
-      "usage": "Usage",
-      "fallbackRoute": "Fallback Route",
-      "noUsage": "No usage records yet."
-    },
-    "metrics": {
-      "provider": "Provider",
-      "model": "Model",
-      "input": "Input",
-      "output": "Output",
-      "cached": "Cached",
-      "reasoning": "Reasoning",
-      "cost": "Cost",
-      "tool": "Tool",
-      "resolution": "Resolution",
-      "state": "State",
-      "stopReason": "Stop reason",
-      "tokens": "{{formatted}} token",
-      "tokens_plural": "{{formatted}} tokens"
-    },
-    "fallbacks": {
-      "tool": "tool",
-      "unknown": "unknown",
-      "resolved": "resolved",
-      "unknownError": "Unknown error"
-    },
-    "toasts": {
-      "loadStatusFailed": "Could not load Libre Claw status",
-      "enterTask": "Enter a task for Libre Claw",
-      "runStarted": "Libre Claw run started",
-      "startRunFailed": "Could not start Libre Claw run",
-      "runCancelled": "Run cancelled",
-      "cancelRunFailed": "Could not cancel run",
-      "approved": "Approved",
-      "denied": "Denied",
-      "resolvePermissionFailed": "Could not resolve permission",
-      "providerModelRequired": "Provider and model are required",
-      "modelUpdated": "Libre Claw model updated",
-      "updateModelFailed": "Could not update model",
-      "themeUpdated": "Libre Claw theme updated",
-      "updateThemeFailed": "Could not update theme",
-      "automationRequired": "Automation name, schedule, and prompt are required",
-      "automationCreated": "Automation created",
-      "createAutomationFailed": "Could not create automation",
-      "automationUpdated": "Automation updated",
-      "updateAutomationFailed": "Could not update automation"
-    }
-  },
   "work": {
     "title": "Work",
     "subtitle": "Isolated model workspaces",
@@ -2758,9 +2617,8 @@
       "noModelSelected": "No Work-compatible model is selected.",
       "mentionAgents": "Mention an agent",
       "engine": "Engine",
-      "nativeDshModels": "Native DSH models",
       "libreModels": "Libre WebUI models",
-      "nativeDshUnavailable": "Native DSH models are unavailable. Refresh the model list or check the provider configuration.",
+      "strandsDisabled": "The Strands engine is not available for your account.",
       "modelLabel": "Model"
     },
     "conversation": {
@@ -3941,41 +3799,34 @@
       "saveFailed": "Could not save the API key"
     }
   },
-  "cordis": {
-    "title": "Cordis Engine",
-    "description": "Sessions, tools, and chat for the embedded DeepSeek Harness engine.",
+  "strands": {
+    "title": "Strands",
+    "subtitle": "Embedded agent engine on your Libre WebUI models.",
+    "subtitleVersion": "Embedded agent engine, harness {{version}}.",
     "newSession": "New session",
-    "createFailed": "Could not create a session.",
-    "deleteFailed": "Could not delete the session.",
-    "sendFailed": "The engine could not complete the turn.",
-    "sessionsHeading": "Sessions",
-    "toolsHeading": "Tools",
-    "transcriptHeading": "Transcript",
+    "sessions": "Sessions",
     "noSessions": "No sessions yet. Create one to start.",
-    "noTools": "The engine registered no tools.",
-    "selectSession": "Select a session, or create one to start.",
-    "working": "The agent is working…",
-    "composerLabel": "Message the engine",
-    "composerPlaceholder": "Ask the engine to do something…",
+    "empty": "Ask the agent to read or edit files in its workspace.",
+    "placeholder": "Ask the engine to do something…",
+    "model": "Model",
+    "defaultModel": "Default model",
     "send": "Send",
     "stop": "Stop",
-    "deleteSession": "Delete session",
-    "unknownTime": "Unknown time",
-    "disabledTitle": "The Cordis engine is turned off",
-    "disabledHint": "An administrator can enable it in User Management → Access & policies.",
-    "unavailableTitle": "The Cordis engine could not start",
-    "role": {
-      "user": "You",
-      "assistant": "Engine",
-      "system": "System",
-      "tool": "Tool",
-      "unknown": "Message"
+    "reasoning": "Reasoning",
+    "tool": {
+      "running": "Running",
+      "done": "Done",
+      "failed": "Failed"
     },
-    "turnFailed": "The engine could not complete the turn",
-    "permissions": "Permissions",
-    "readOnly": "Read only",
-    "workspaceWrite": "Workspace write",
-    "context": "Session context",
-    "permissionHint": "Read only can inspect files. Workspace write allows edits inside this session’s workspace."
+    "cancelled": "Cancelled",
+    "turnLimit": "Stopped at the turn limit.",
+    "messageCount": "Messages: {{count}}",
+    "deleteSession": "Delete session",
+    "deleteConfirm": "Delete \"{{title}}\" and its history?",
+    "loadFailed": "Could not load Strands.",
+    "createFailed": "Could not create a session.",
+    "deleteFailed": "Could not delete the session.",
+    "saveFailed": "Could not save the session.",
+    "turnFailed": "The engine could not complete the turn"
   }
 }

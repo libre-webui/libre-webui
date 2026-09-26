@@ -40,7 +40,8 @@
     "custom": "Власний",
     "remove": "Видалити",
     "home": "Головна",
-    "more": "Більше"
+    "more": "Більше",
+    "reasoning": "Міркування"
   },
   "brand": {
     "name": "Libre WebUI",
@@ -528,7 +529,6 @@
       "models": "Моделі",
       "personas": "Персони",
       "imagine": "Генерація",
-      "agents": "Агенти",
       "work": "Робота",
       "settings": "Налаштування",
       "usageAnalytics": "Використання провайдерів",
@@ -543,7 +543,7 @@
       "skills": "Навички",
       "tools": "Інструменти",
       "channels": "Канали",
-      "cordis": "Рушій Cordis"
+      "strands": "Strands"
     },
     "toggleSize": "Змінити розмір бічної панелі",
     "expandSidebar": "Розгорнути бічну панель"
@@ -1830,13 +1830,6 @@
       "saved": "Тему за замовчуванням оновлено",
       "saveFailed": "Не вдалося оновити тему за замовчуванням"
     },
-    "agentAccess": {
-      "title": "Libre Claw",
-      "description": "Показувати адміністраторам робочий простір Libre Claw.",
-      "saved": "Доступ до агентів оновлено",
-      "saveFailed": "Не вдалося оновити доступ до агентів",
-      "lockedByEnv": "Закріплено змінною середовища LIBRE_CLAW_ENABLED."
-    },
     "groups": {
       "title": "Групи",
       "description": "Об'єднуйте облікові записи в групи для керування спільним доступом і переглядайте, що фактично може робити будь-який обліковий запис.",
@@ -1973,13 +1966,17 @@
       "saved": "Налаштування електронної пошти збережено.",
       "saveFailed": "Не вдалося зберегти налаштування електронної пошти."
     },
-    "cordisAccess": {
-      "title": "Рушій Cordis",
-      "description": "Запропонувати рушій Cordis адміністраторам. Він виконує інструменти з реальним доступом до файлової системи поза процесом затвердження інструментів Libre WebUI.",
-      "saved": "Доступ до Cordis оновлено",
-      "saveFailed": "Не вдалося оновити доступ до Cordis",
-      "lockedByEnv": "Зафіксовано змінною середовища LIBRE_CORDIS_ENABLED.",
-      "lockedByFile": "Зафіксовано features.enabled у cordis.config.yml."
+    "strandsAccess": {
+      "title": "Рушій Strands",
+      "description": "Виберіть, хто може користуватися вбудованим агентом Strands. Він може читати й змінювати файли в приватній робочій області кожного сеансу, але не може виконувати команди оболонки.",
+      "saved": "Доступ до Strands оновлено",
+      "saveFailed": "Не вдалося оновити доступ до Strands",
+      "lockedByEnv": "Задано змінною середовища LIBRE_STRANDS_ACCESS.",
+      "modes": {
+        "disabled": "Вимк.",
+        "admins": "Адміністратори",
+        "all-users": "Усі користувачі"
+      }
     },
     "agentCliAccess": {
       "title": "Моделі агентів CLI",
@@ -2070,7 +2067,7 @@
     },
     "agents": {
       "title": "Агенти",
-      "description": "Виклики CLI-агентів і нативні запити DSH. DSH із моделями Libre WebUI враховується в постачальника моделі.",
+      "description": "Виклики CLI-агентів і рушія Strands.",
       "noCalls": "У цьому періоді немає зареєстрованих викликів",
       "unreported": "Токени не повідомлено",
       "topModels": "Найуживаніші моделі",
@@ -2573,144 +2570,6 @@
     "title": "Демо-режим",
     "github": "GitHub"
   },
-  "libreClaw": {
-    "title": "Агенти",
-    "subtitle": "Запуски локального агента, затвердження, графіки, пам’ять, інструменти та використання.",
-    "dashboard": "Панель керування",
-    "connection": {
-      "disconnectedTitle": "Демон Libre Claw не підключено",
-      "disconnectedDescription": "Запустіть його локально за допомогою <command>libre-claw start</command> або встановіть <env>LIBRE_CLAW_BASE_URL</env> у серверному середовищі."
-    },
-    "status": {
-      "connected": "Підключено",
-      "disconnected": "Відключено",
-      "activeRuns": "{{count}} активний",
-      "activeRuns_plural": "{{count}} активний"
-    },
-    "states": {
-      "queued": "У черзі",
-      "running": "Виконується",
-      "blocked": "заблоковано",
-      "done": "Готово",
-      "failed": "Не вдалося",
-      "cancelled": "Скасовано"
-    },
-    "startRun": {
-      "title": "Запустити виконання агента",
-      "placeholder": "Попросіть Libre Claw перевірити репо, виправити помилку, запустити перевірку, запланувати звіт...",
-      "chatRun": "Запуск чату",
-      "goalMode": "Режим цілі",
-      "providerOverride": "Заміна постачальника",
-      "modelOverride": "Перевизначення моделі",
-      "run": "Запустити"
-    },
-    "modelRoute": {
-      "title": "Модельний маршрут",
-      "providerPlaceholder": "провайдер",
-      "modelPlaceholder": "модель",
-      "persistGlobal": "Зберігайте Libre Claw глобальну конфігурацію",
-      "saveModel": "Зберегти модель",
-      "theme": "Тема Libre Claw",
-      "saveTheme": "Зберегти тему"
-    },
-    "runs": {
-      "title": "Запуски",
-      "empty": "Запусків Libre Claw ще немає."
-    },
-    "timeline": {
-      "title": "Хронологія виконання",
-      "empty": "Виберіть запуск, щоб перевірити його події.",
-      "streaming": "Потокове передавання...",
-      "assistantResponse": "Відповідь помічника",
-      "resultOk": "добре",
-      "resultError": "помилка",
-      "labels": {
-        "userMessage": "Повідомлення користувача",
-        "toolCall": "Виклик інструменту",
-        "toolResult": "Результат інструменту",
-        "approvalRequest": "Запит на схвалення",
-        "approvalResponse": "Відповідь схвалення",
-        "runStarted": "Запуск розпочато",
-        "runFinished": "Запуск завершено",
-        "usage": "Використання",
-        "error": "Помилка"
-      }
-    },
-    "approvals": {
-      "needed": "Потрібне схвалення",
-      "allowOnce": "Дозвольте один раз",
-      "alwaysAllowTool": "Завжди дозволяти інструмент",
-      "deny": "Відхилити",
-      "toolApprovalRequested": "Запит на схвалення інструменту"
-    },
-    "automations": {
-      "title": "Автоматизації",
-      "namePlaceholder": "Ім'я",
-      "schedulePlaceholder": "daily 09:00",
-      "promptPlaceholder": "Підказка автоматизації",
-      "create": "Створити",
-      "empty": "Немає запланованих автоматизацій Libre Claw.",
-      "runNow": "Запустити зараз",
-      "pause": "Пауза",
-      "resume": "Відновити",
-      "routes": {
-        "report": "звіт",
-        "telegram": "Telegram"
-      },
-      "status": {
-        "active": "Активний",
-        "paused": "Призупинено"
-      }
-    },
-    "usageFallback": {
-      "title": "Використання та резервний варіант",
-      "usage": "Використання",
-      "fallbackRoute": "Запасний маршрут",
-      "noUsage": "Записів про використання ще немає."
-    },
-    "metrics": {
-      "provider": "Провайдер",
-      "model": "Модель",
-      "input": "Введення",
-      "output": "Вихід",
-      "cached": "Кешовано",
-      "reasoning": "Міркування",
-      "cost": "Вартість",
-      "tool": "Інструмент",
-      "resolution": "роздільна здатність",
-      "state": "Стан",
-      "stopReason": "Причина зупинки",
-      "tokens": "{{formatted}} лексема",
-      "tokens_plural": "{{formatted}} лексеми"
-    },
-    "fallbacks": {
-      "tool": "інструмент",
-      "unknown": "невідомий",
-      "resolved": "вирішено",
-      "unknownError": "Невідома помилка"
-    },
-    "toasts": {
-      "loadStatusFailed": "Не вдалося завантажити статус Libre Claw",
-      "enterTask": "Введіть завдання до Libre Claw",
-      "runStarted": "Запуск Libre Claw розпочато",
-      "startRunFailed": "Не вдалося запустити Libre Claw",
-      "runCancelled": "Запуск скасовано",
-      "cancelRunFailed": "Не вдалося скасувати запуск",
-      "approved": "Затверджено",
-      "denied": "Відмовлено",
-      "resolvePermissionFailed": "Не вдалося вирішити дозвіл",
-      "providerModelRequired": "Необхідні постачальник і модель",
-      "modelUpdated": "Модель Libre Claw оновлено",
-      "updateModelFailed": "Не вдалося оновити модель",
-      "themeUpdated": "Тему Libre Claw оновлено",
-      "updateThemeFailed": "Не вдалося оновити тему",
-      "automationRequired": "Потрібні ім’я автоматизації, розклад і підказка",
-      "automationCreated": "Автоматика створена",
-      "createAutomationFailed": "Не вдалося створити автоматизацію",
-      "automationUpdated": "Автоматика оновлена",
-      "updateAutomationFailed": "Не вдалося оновити автоматизацію"
-    }
-  },
   "work": {
     "title": "Робота",
     "subtitle": "Ізольовані робочі простори моделей",
@@ -2758,9 +2617,8 @@
       "noModelSelected": "Не вибрано модель, сумісну з режимом «Робота».",
       "mentionAgents": "Згадати агента",
       "engine": "Рушій",
-      "nativeDshModels": "Нативні моделі DSH",
       "libreModels": "Моделі Libre WebUI",
-      "nativeDshUnavailable": "Нативні моделі DSH недоступні. Оновіть список моделей або перевірте налаштування провайдера.",
+      "strandsDisabled": "Рушій Strands недоступний для вашого облікового запису.",
       "modelLabel": "Модель"
     },
     "conversation": {
@@ -3941,41 +3799,34 @@
       "saveFailed": "Не вдалося зберегти API-ключ"
     }
   },
-  "cordis": {
-    "title": "Рушій Cordis",
-    "description": "Сеанси, інструменти та чат для вбудованого рушія DeepSeek Harness.",
+  "strands": {
+    "title": "Strands",
+    "subtitle": "Вбудований рушій агентів на ваших моделях Libre WebUI.",
+    "subtitleVersion": "Вбудований рушій агентів, harness {{version}}.",
     "newSession": "Новий сеанс",
-    "createFailed": "Не вдалося створити сеанс.",
-    "deleteFailed": "Не вдалося видалити сеанс.",
-    "sendFailed": "Рушій не зміг завершити хід.",
-    "sessionsHeading": "Сеанси",
-    "toolsHeading": "Інструменти",
-    "transcriptHeading": "Розшифровка",
+    "sessions": "Сеанси",
     "noSessions": "Сеансів ще немає. Створіть один, щоб почати.",
-    "noTools": "Рушій не зареєстрував інструментів.",
-    "selectSession": "Виберіть сеанс або створіть новий, щоб почати.",
-    "working": "Агент працює…",
-    "composerLabel": "Повідомлення рушію",
-    "composerPlaceholder": "Попросіть рушій щось зробити…",
+    "empty": "Попросіть агента прочитати або змінити файли в його робочій області.",
+    "placeholder": "Попросіть рушій щось зробити…",
+    "model": "Модель",
+    "defaultModel": "Модель за замовчуванням",
     "send": "Надіслати",
     "stop": "Зупинити",
-    "deleteSession": "Видалити сеанс",
-    "unknownTime": "Невідомий час",
-    "disabledTitle": "Рушій Cordis вимкнено",
-    "disabledHint": "Адміністратор може увімкнути його в розділі «Керування користувачами» → «Доступ і політики».",
-    "unavailableTitle": "Рушій Cordis не вдалося запустити",
-    "role": {
-      "user": "Ви",
-      "assistant": "Рушій",
-      "system": "Система",
-      "tool": "Інструмент",
-      "unknown": "Повідомлення"
+    "reasoning": "Міркування",
+    "tool": {
+      "running": "Виконується",
+      "done": "Готово",
+      "failed": "Не вдалося"
     },
-    "turnFailed": "Рушій не зміг завершити хід",
-    "permissions": "Дозволи",
-    "readOnly": "Лише читання",
-    "workspaceWrite": "Запис у робочому просторі",
-    "context": "Контекст сеансу",
-    "permissionHint": "Режим читання дозволяє переглядати файли. Запис дозволяє зміни в робочому просторі цього сеансу."
+    "cancelled": "Скасовано",
+    "turnLimit": "Зупинено на ліміті ходів.",
+    "messageCount": "Повідомлення: {{count}}",
+    "deleteSession": "Видалити сеанс",
+    "deleteConfirm": "Видалити «{{title}}» разом з історією?",
+    "loadFailed": "Не вдалося завантажити Strands.",
+    "createFailed": "Не вдалося створити сеанс.",
+    "deleteFailed": "Не вдалося видалити сеанс.",
+    "saveFailed": "Не вдалося зберегти сеанс.",
+    "turnFailed": "Рушій не зміг завершити хід"
   }
 }

@@ -95,15 +95,14 @@ import imageGenRoutes from './routes/imageGen.js';
 import mediaRoutes from './routes/media.js';
 import embeddingsRoutes from './routes/embeddings.js';
 import huggingfaceHubRoutes from './routes/huggingfaceHub.js';
-import libreClawRoutes from './routes/libreClaw.js';
 import workRoutes from './routes/work.js';
 import systemDiagnosticsRoutes from './routes/systemDiagnostics.js';
 import artifactsRoutes from './routes/artifacts.js';
 import searchRoutes from './routes/search.js';
 import openaiCompatRoutes from './routes/openaiCompat.js';
 import healthRoutes from './routes/health.js';
-import cordisRoutes from './routes/cordis.js';
-import { stopCordisHost } from './cordis/runtime.js';
+import strandsRoutes from './routes/strands.js';
+import { stopStrandsEngine } from './strands/runtime.js';
 import jobsRoutes from './routes/jobs.js';
 import groupsRoutes from './routes/groups.js';
 import accessRoutes from './routes/access.js';
@@ -558,19 +557,6 @@ const imageGenRateLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-// Rate limiter for Libre Claw agent routes
-const libreClawRateLimiter = rateLimit({
-  keyPrefix: 'api-libre-claw',
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 500, // agent dashboards poll run/event state while active
-  message: {
-    success: false,
-    error: 'Too many Libre Claw requests from this IP, please try again later.',
-  },
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-
 // Rate limiter for isolated Work task APIs
 const workRateLimiter = rateLimit({
   keyPrefix: 'api-work',
@@ -662,17 +648,16 @@ app.use('/api/evaluations', evaluationsRoutes);
 app.use('/api/image-gen', imageGenRateLimiter, optionalAuth, imageGenRoutes);
 app.use('/api/media', mediaRoutes);
 app.use('/api/huggingface-hub', huggingfaceHubRoutes);
-app.use('/api/libre-claw', libreClawRateLimiter, libreClawRoutes);
 app.use('/api/work', workRateLimiter, workRoutes);
 app.use('/api/system', systemDiagnosticsRoutes);
 app.use('/api/artifacts', artifactsRoutes);
 app.use('/api/search', chatRateLimiter, searchRoutes);
 // The OpenAI-compatible public API answers on the canonical /v1 base.
 app.use('/v1', chatRateLimiter, openaiCompatRoutes);
-// The embedded Cordis/DSH engine. Every route answers 503 until an
-// operator enables the bridge, so mounting it unconditionally keeps the
+// The embedded Strands agent engine. Every route answers 403 until an
+// administrator grants access, so mounting it unconditionally keeps the
 // feature behind configuration rather than behind a build variant.
-app.use('/api/cordis', chatRateLimiter, cordisRoutes);
+app.use('/api/strands', chatRateLimiter, strandsRoutes);
 app.use('/api/jobs', jobsRoutes);
 app.use('/api/groups', groupsRoutes);
 app.use('/api/access', accessRoutes);
@@ -983,9 +968,9 @@ const shutdown = async (signal: 'SIGTERM' | 'SIGINT'): Promise<void> => {
       : Promise.resolve();
   const cleanup = Promise.allSettled([
     registeredWebSockets.close(),
-    // Disposing the Cordis root releases every engine effect, listener, and
-    // open session store handle instead of relying on process exit.
-    stopCordisHost(),
+    // Cancel live Strands turns and flush their session snapshots instead of
+    // relying on process exit.
+    stopStrandsEngine(),
     stopWork,
     closeDurableJobRuntime(),
     httpClosed,

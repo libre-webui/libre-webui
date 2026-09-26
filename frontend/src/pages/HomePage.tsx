@@ -57,7 +57,7 @@ const rowClass =
 export const HomePage: React.FC = () => {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
-  const { user, systemInfo, canUseWork, canUseAgents } = useAuthStore();
+  const { user, systemInfo, canUseWork, canUseStrands } = useAuthStore();
   const sessions = useChatStore(state => state.sessions);
   const chatModels = useChatStore(state => state.models);
   const workTasks = useWorkStore(state => state.tasks);
@@ -66,7 +66,7 @@ export const HomePage: React.FC = () => {
   const loadCapabilities = useWorkStore(state => state.loadCapabilities);
 
   const showWork = canUseWork();
-  const showAgents = canUseAgents();
+  const showStrands = canUseStrands();
 
   useEffect(() => {
     if (!showWork) return;
@@ -261,8 +261,14 @@ export const HomePage: React.FC = () => {
                   Sparkles,
                   t('sidebar.navigation.imagine', 'Imagine'),
                 ],
-                ...(showAgents
-                  ? [['/agents', Bot, t('sidebar.navigation.agents', 'Agents')]]
+                ...(showStrands
+                  ? [
+                      [
+                        '/strands',
+                        Bot,
+                        t('sidebar.navigation.strands', 'Strands'),
+                      ],
+                    ]
                   : []),
               ] as Array<
                 [string, React.ComponentType<{ className?: string }>, string]

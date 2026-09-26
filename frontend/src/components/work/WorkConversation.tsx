@@ -344,7 +344,7 @@ function ProviderReasoningMessage({ message }: { message: WorkMessage }) {
         <span className='flex min-w-0 items-center gap-2'>
           <Brain className='h-3.5 w-3.5 shrink-0 text-[rgb(48,121,255)]' />
           <span className='truncate'>
-            {t('libreClaw.metrics.reasoning', {
+            {t('common.reasoning', {
               defaultValue: 'Reasoning',
             })}
           </span>

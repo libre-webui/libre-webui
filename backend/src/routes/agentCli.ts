@@ -67,15 +67,20 @@ router.put('/access', requireAdmin, async (req, res): Promise<void> => {
 });
 
 /**
- * Installed agent CLIs usable as chat models. Non-admin users get an empty
- * list rather than an error so the model loader can call this unconditionally.
+ * Agent models usable in Chat. Installed CLIs are admin-only; the embedded
+ * Strands engine follows its own access mode. Accounts with neither get an
+ * empty list rather than an error so the model loader can call this
+ * unconditionally.
  */
 router.get('/models', async (req: AuthenticatedRequest, res: Response) => {
   const userId = req.user?.userId;
   const isAdmin = userId ? await agentCliService.isAdminUser(userId) : false;
+  const models = userId ? await agentCliService.listAgentModels(userId) : [];
   res.json({
     success: true,
-    data: isAdmin ? await agentCliService.listAgentModels(userId) : [],
+    data: isAdmin
+      ? models
+      : models.filter(model => model.agentId === 'strands'),
   });
 });
 

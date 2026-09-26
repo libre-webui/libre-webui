@@ -198,7 +198,7 @@ import CodeBlock from '@theme/CodeBlock';
           <li><a href="/ASSISTANT_PROFILES">Assistant Profiles</a></li>
           <li><a href="/PERSONA_DEVELOPMENT_FRAMEWORK">Personas and Memory</a></li>
           <li><a href="/AGENT_CLI_MODELS">Installed Coding Agents</a></li>
-          <li><a href="/LIBRE_CLAW_INTEGRATION">Libre Claw Integration</a></li>
+          <li><a href="/STRANDS_ENGINE">Strands Engine</a></li>
           <li><a href="/ARTIFACTS_FEATURE">Interactive Artifacts</a></li>
           <li><a href="/PRO_TIPS">Pro Tips</a></li>
           <li><a href="/KEYBOARD_SHORTCUTS">Keyboard Shortcuts</a></li>

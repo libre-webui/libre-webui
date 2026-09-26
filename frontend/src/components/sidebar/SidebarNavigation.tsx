@@ -19,7 +19,6 @@ import { Link } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import {
   Bot,
-  Boxes,
   CalendarDays,
   NotebookPen,
   Sparkles,
@@ -33,9 +32,8 @@ import { compactSidebarButtonClass } from './compactSidebarStyles';
 interface SidebarNavigationProps {
   sidebarCompact: boolean;
   activePath: string;
-  showAgents: boolean;
-  /** Administrator opt-in for the embedded Cordis engine. */
-  showCordis: boolean;
+  /** Whether this account may use the embedded Strands engine. */
+  showStrands: boolean;
   /** Finished automation runs not yet acknowledged; badges the Zap icon. */
   unseenRunCount?: number;
   onMobileNavigate: () => void;
@@ -59,17 +57,12 @@ const DESTINATIONS = [
     labelKey: 'sidebar.navigation.automations',
   },
   {
-    path: '/cordis',
-    icon: Boxes,
-    labelKey: 'sidebar.navigation.cordis',
-  },
-  {
     path: '/personas',
     icon: UserIcon,
     labelKey: 'sidebar.navigation.personas',
   },
   { path: '/gallery', icon: Sparkles, labelKey: 'sidebar.navigation.imagine' },
-  { path: '/agents', icon: Bot, labelKey: 'sidebar.navigation.agents' },
+  { path: '/strands', icon: Bot, labelKey: 'sidebar.navigation.strands' },
 ] as const;
 
 /**
@@ -80,8 +73,7 @@ const DESTINATIONS = [
 export function SidebarNavigation({
   sidebarCompact,
   activePath,
-  showAgents,
-  showCordis,
+  showStrands,
   unseenRunCount = 0,
   onMobileNavigate,
 }: SidebarNavigationProps) {
@@ -100,10 +92,9 @@ export function SidebarNavigation({
         )}
       >
         {DESTINATIONS.filter(destination => {
-          if (destination.path === '/agents') return showAgents;
           // The engine ships disabled, so its destination must not advertise a
           // page the deployment has not opted into.
-          if (destination.path === '/cordis') return showCordis;
+          if (destination.path === '/strands') return showStrands;
           return true;
         }).map(({ path, icon: Icon, labelKey }) => {
           const active =

@@ -40,7 +40,8 @@
     "custom": "Özel",
     "remove": "Kaldır",
     "home": "Ana sayfa",
-    "more": "Çok"
+    "more": "Çok",
+    "reasoning": "muhakeme"
   },
   "brand": {
     "name": "Libre WebUI",
@@ -528,7 +529,6 @@
       "models": "Modeller",
       "personas": "Personalar",
       "imagine": "Hayal Et",
-      "agents": "Ajanlar",
       "work": "Çalışma",
       "settings": "Ayarlar",
       "usageAnalytics": "Sağlayıcı Kullanımı",
@@ -543,7 +543,7 @@
       "skills": "Beceriler",
       "tools": "Araçlar",
       "channels": "Kanallar",
-      "cordis": "Cordis Motoru"
+      "strands": "Strands"
     },
     "toggleSize": "Kenar çubuğu boyutunu değiştir",
     "expandSidebar": "Kenar çubuğunu genişlet"
@@ -1830,13 +1830,6 @@
       "saved": "Varsayılan tema güncellendi",
       "saveFailed": "Varsayılan tema güncellenemedi"
     },
-    "agentAccess": {
-      "title": "Libre Claw",
-      "description": "Libre Claw çalışma alanını yöneticilere göster.",
-      "saved": "Ajan erişimi güncellendi",
-      "saveFailed": "Ajan erişimi güncellenemedi",
-      "lockedByEnv": "LIBRE_CLAW_ENABLED ortam değişkeniyle sabitlendi."
-    },
     "groups": {
       "title": "Gruplar",
       "description": "Paylaşılan erişimi yönetmek için hesapları gruplayın ve herhangi bir hesabın fiilen neler yapabildiğini inceleyin.",
@@ -1973,13 +1966,17 @@
       "saved": "E-posta ayarları kaydedildi.",
       "saveFailed": "E-posta ayarları kaydedilemedi."
     },
-    "cordisAccess": {
-      "title": "Cordis Motoru",
-      "description": "Cordis motorunu yöneticilere sunun. Araçları, Libre WebUI araç onay akışının dışında gerçek dosya sistemi erişimiyle çalıştırır.",
-      "saved": "Cordis erişimi güncellendi",
-      "saveFailed": "Cordis erişimi güncellenemedi",
-      "lockedByEnv": "LIBRE_CORDIS_ENABLED ortam değişkeniyle sabitlendi.",
-      "lockedByFile": "cordis.config.yml içindeki features.enabled ile sabitlendi."
+    "strandsAccess": {
+      "title": "Strands motoru",
+      "description": "Yerleşik Strands ajanını kimlerin kullanabileceğini seçin. Her oturumun özel çalışma alanındaki dosyaları okuyup düzenleyebilir, ancak kabuk komutları çalıştıramaz.",
+      "saved": "Strands erişimi güncellendi",
+      "saveFailed": "Strands erişimi güncellenemedi",
+      "lockedByEnv": "LIBRE_STRANDS_ACCESS ortam değişkeniyle sabitlendi.",
+      "modes": {
+        "disabled": "Kapalı",
+        "admins": "Yöneticiler",
+        "all-users": "Tüm kullanıcılar"
+      }
     },
     "agentCliAccess": {
       "title": "CLI ajan modelleri",
@@ -2070,7 +2067,7 @@
     },
     "agents": {
       "title": "Ajanlar",
-      "description": "CLI ajan çağrıları ve yerel DSH istekleri. Libre WebUI modellerini kullanan DSH, model sağlayıcısı altında sayılır.",
+      "description": "CLI ajanlarına ve Strands motoruna yapılan çağrılar.",
       "noCalls": "Bu dönemde kayıtlı çağrı yok",
       "unreported": "Token bildirilmedi",
       "topModels": "En çok kullanılan modeller",
@@ -2573,144 +2570,6 @@
     "title": "Demo modu",
     "github": "GitHub"
   },
-  "libreClaw": {
-    "title": "Ajanlar",
-    "subtitle": "Yerel aracı çalıştırmaları, onaylar, programlar, bellek, araçlar ve kullanım.",
-    "dashboard": "Kontrol paneli",
-    "connection": {
-      "disconnectedTitle": "Libre Claw arka plan servisi bağlı değil",
-      "disconnectedDescription": "Yerel olarak <command>libre-claw start</command> ile başlatın veya arka uç ortamında <env>LIBRE_CLAW_BASE_URL</env>'ı ayarlayın."
-    },
-    "status": {
-      "connected": "Bağlı",
-      "disconnected": "Bağlantı kesildi",
-      "activeRuns": "{{count}} aktif",
-      "activeRuns_plural": "{{count}} aktif"
-    },
-    "states": {
-      "queued": "Sıraya alındı",
-      "running": "Çalışıyor",
-      "blocked": "Engellendi",
-      "done": "Bitti",
-      "failed": "Başarısız",
-      "cancelled": "İptal edildi"
-    },
-    "startRun": {
-      "title": "Aracı çalıştırmayı başlat",
-      "placeholder": "Libre Claw'tan bir depoyu incelemesini, bir hatayı düzeltmesini, bir inceleme çalıştırmasını, bir rapor planlamasını isteyin...",
-      "chatRun": "Sohbet çalıştırması",
-      "goalMode": "Hedef modu",
-      "providerOverride": "Sağlayıcıyı geçersiz kılma",
-      "modelOverride": "Modeli geçersiz kılma",
-      "run": "Çalıştır"
-    },
-    "modelRoute": {
-      "title": "Model Rota",
-      "providerPlaceholder": "sağlayıcı",
-      "modelPlaceholder": "modeli",
-      "persistGlobal": "Libre Claw genel yapılandırmaya devam et",
-      "saveModel": "Modeli kaydet",
-      "theme": "Libre Claw teması",
-      "saveTheme": "Temayı kaydet"
-    },
-    "runs": {
-      "title": "Çalıştırmalar",
-      "empty": "Henüz Libre Claw çalıştırması yok."
-    },
-    "timeline": {
-      "title": "Çalıştırma zaman çizelgesi",
-      "empty": "Olaylarını incelemek için bir çalıştırma seçin.",
-      "streaming": "Akış...",
-      "assistantResponse": "Asistan yanıtı",
-      "resultOk": "tamam",
-      "resultError": "hata",
-      "labels": {
-        "userMessage": "Kullanıcı mesajı",
-        "toolCall": "Araç çağrısı",
-        "toolResult": "Araç sonucu",
-        "approvalRequest": "Onay talebi",
-        "approvalResponse": "Onay yanıtı",
-        "runStarted": "Çalıştırma başladı",
-        "runFinished": "Çalıştırma tamamlandı",
-        "usage": "Kullanım",
-        "error": "Hata"
-      }
-    },
-    "approvals": {
-      "needed": "Onay gerekiyor",
-      "allowOnce": "Bir kez izin ver",
-      "alwaysAllowTool": "Araca her zaman izin ver",
-      "deny": "Reddet",
-      "toolApprovalRequested": "Araç onayı istendi"
-    },
-    "automations": {
-      "title": "Otomasyonlar",
-      "namePlaceholder": "İsim",
-      "schedulePlaceholder": "daily 09:00",
-      "promptPlaceholder": "Otomasyon istemi",
-      "create": "Oluştur",
-      "empty": "Planlanmış Libre Claw otomasyonu yok.",
-      "runNow": "Şimdi çalıştır",
-      "pause": "Duraklat",
-      "resume": "Sürdür",
-      "routes": {
-        "report": "Rapor",
-        "telegram": "Telegram"
-      },
-      "status": {
-        "active": "Aktif",
-        "paused": "Duraklatıldı"
-      }
-    },
-    "usageFallback": {
-      "title": "Kullanım ve Geri Dönüş",
-      "usage": "Kullanım",
-      "fallbackRoute": "Geri Dönüş Rotası",
-      "noUsage": "Henüz kullanım kaydı yok."
-    },
-    "metrics": {
-      "provider": "sağlayıcı",
-      "model": "Modeli",
-      "input": "Giriş",
-      "output": "Çıkış",
-      "cached": "Önbelleğe alındı",
-      "reasoning": "muhakeme",
-      "cost": "Maliyet",
-      "tool": "Araç",
-      "resolution": "Çözünürlük",
-      "state": "Durum",
-      "stopReason": "Durdurma nedeni",
-      "tokens": "{{formatted}} jetonu",
-      "tokens_plural": "{{formatted}} belirteçleri"
-    },
-    "fallbacks": {
-      "tool": "aracı",
-      "unknown": "bilinmiyor",
-      "resolved": "çözüldü",
-      "unknownError": "Bilinmeyen hata"
-    },
-    "toasts": {
-      "loadStatusFailed": "Libre Claw durumu yüklenemedi",
-      "enterTask": "Libre Claw için bir görev girin",
-      "runStarted": "Libre Claw çalıştırması başladı",
-      "startRunFailed": "Libre Claw çalıştırması başlatılamadı",
-      "runCancelled": "Çalıştırma iptal edildi",
-      "cancelRunFailed": "Çalıştırma iptal edilemedi",
-      "approved": "Onaylandı",
-      "denied": "Reddedildi",
-      "resolvePermissionFailed": "İzin çözülemedi",
-      "providerModelRequired": "Sağlayıcı ve model gerekli",
-      "modelUpdated": "Libre Claw modeli güncellendi",
-      "updateModelFailed": "Model güncellenemedi",
-      "themeUpdated": "Libre Claw teması güncellendi",
-      "updateThemeFailed": "Tema güncellenemedi",
-      "automationRequired": "Otomasyon adı, program ve istem gerekli",
-      "automationCreated": "Otomasyon oluşturuldu",
-      "createAutomationFailed": "Otomasyon oluşturulamadı",
-      "automationUpdated": "Otomasyon güncellendi",
-      "updateAutomationFailed": "Otomasyon güncellenemedi"
-    }
-  },
   "work": {
     "title": "Çalışma",
     "subtitle": "Yalıtılmış model çalışma alanları",
@@ -2758,9 +2617,8 @@
       "noModelSelected": "Çalışma ile uyumlu bir model seçilmedi.",
       "mentionAgents": "Bir ajandan bahset",
       "engine": "Motor",
-      "nativeDshModels": "Yerel DSH modelleri",
       "libreModels": "Libre WebUI modelleri",
-      "nativeDshUnavailable": "Yerel DSH modelleri kullanılamıyor. Model listesini yenileyin veya sağlayıcı yapılandırmasını kontrol edin.",
+      "strandsDisabled": "Strands motoru hesabınız için kullanılamıyor.",
       "modelLabel": "Model"
     },
     "conversation": {
@@ -3941,41 +3799,34 @@
       "saveFailed": "API anahtarı kaydedilemedi"
     }
   },
-  "cordis": {
-    "title": "Cordis Motoru",
-    "description": "Gömülü DeepSeek Harness motoru için oturumlar, araçlar ve sohbet.",
+  "strands": {
+    "title": "Strands",
+    "subtitle": "Libre WebUI modellerinizde çalışan yerleşik ajan motoru.",
+    "subtitleVersion": "Yerleşik ajan motoru, harness {{version}}.",
     "newSession": "Yeni oturum",
-    "createFailed": "Oturum oluşturulamadı.",
-    "deleteFailed": "Oturum silinemedi.",
-    "sendFailed": "Motor turu tamamlayamadı.",
-    "sessionsHeading": "Oturumlar",
-    "toolsHeading": "Araçlar",
-    "transcriptHeading": "Döküm",
+    "sessions": "Oturumlar",
     "noSessions": "Henüz oturum yok. Başlamak için bir tane oluşturun.",
-    "noTools": "Motor hiçbir araç kaydetmedi.",
-    "selectSession": "Bir oturum seçin veya başlamak için oluşturun.",
-    "working": "Ajan çalışıyor…",
-    "composerLabel": "Motora mesaj",
-    "composerPlaceholder": "Motordan bir şey yapmasını isteyin…",
+    "empty": "Ajandan çalışma alanındaki dosyaları okumasını veya düzenlemesini isteyin.",
+    "placeholder": "Motordan bir şey yapmasını isteyin…",
+    "model": "Model",
+    "defaultModel": "Varsayılan model",
     "send": "Gönder",
     "stop": "Durdur",
-    "deleteSession": "Oturumu sil",
-    "unknownTime": "Bilinmeyen zaman",
-    "disabledTitle": "Cordis motoru kapalı",
-    "disabledHint": "Bir yönetici bunu Kullanıcı Yönetimi → Erişim ve ilkeler altında açabilir.",
-    "unavailableTitle": "Cordis motoru başlatılamadı",
-    "role": {
-      "user": "Siz",
-      "assistant": "Motor",
-      "system": "Sistem",
-      "tool": "Araç",
-      "unknown": "Mesaj"
+    "reasoning": "muhakeme",
+    "tool": {
+      "running": "Çalışıyor",
+      "done": "Bitti",
+      "failed": "Başarısız"
     },
-    "turnFailed": "Motor turu tamamlayamadı",
-    "permissions": "İzinler",
-    "readOnly": "Salt okunur",
-    "workspaceWrite": "Çalışma alanına yazma",
-    "context": "Oturum bağlamı",
-    "permissionHint": "Salt okunur modu dosyaları incelemeye izin verir. Yazma modu bu oturumun çalışma alanında düzenlemelere izin verir."
+    "cancelled": "İptal edildi",
+    "turnLimit": "Tur sınırında durduruldu.",
+    "messageCount": "Mesajlar: {{count}}",
+    "deleteSession": "Oturumu sil",
+    "deleteConfirm": "\"{{title}}\" ve geçmişi silinsin mi?",
+    "loadFailed": "Strands yüklenemedi.",
+    "createFailed": "Oturum oluşturulamadı.",
+    "deleteFailed": "Oturum silinemedi.",
+    "saveFailed": "Oturum kaydedilemedi.",
+    "turnFailed": "Motor turu tamamlayamadı"
   }
 }

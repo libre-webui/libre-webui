@@ -40,7 +40,8 @@
     "custom": "Tùy chỉnh",
     "remove": "Xóa",
     "home": "Trang chủ",
-    "more": "Nhiều"
+    "more": "Nhiều",
+    "reasoning": "Lý luận"
   },
   "brand": {
     "name": "Libre WebUI",
@@ -528,7 +529,6 @@
       "models": "Mô hình",
       "personas": "Personas",
       "imagine": "Tưởng tượng",
-      "agents": "Tác nhân",
       "work": "Công việc",
       "settings": "Cài đặt",
       "usageAnalytics": "Mức sử dụng nhà cung cấp",
@@ -543,7 +543,7 @@
       "skills": "Kỹ năng",
       "tools": "Công cụ",
       "channels": "Kênh",
-      "cordis": "Công cụ Cordis"
+      "strands": "Strands"
     },
     "toggleSize": "Chuyển đổi kích thước thanh bên",
     "expandSidebar": "Mở rộng thanh bên"
@@ -1830,13 +1830,6 @@
       "saved": "Đã cập nhật chủ đề mặc định",
       "saveFailed": "Không thể cập nhật chủ đề mặc định"
     },
-    "agentAccess": {
-      "title": "Libre Claw",
-      "description": "Hiển thị không gian làm việc Libre Claw cho quản trị viên.",
-      "saved": "Đã cập nhật quyền truy cập tác nhân",
-      "saveFailed": "Không thể cập nhật quyền truy cập tác nhân",
-      "lockedByEnv": "Bị khóa bởi biến môi trường LIBRE_CLAW_ENABLED."
-    },
     "groups": {
       "title": "Nhóm",
       "description": "Gom các tài khoản thành nhóm để quản lý quyền truy cập chung và kiểm tra những gì một tài khoản thực sự có thể làm.",
@@ -1973,13 +1966,17 @@
       "saved": "Đã lưu cài đặt email.",
       "saveFailed": "Không thể lưu cài đặt email."
     },
-    "cordisAccess": {
-      "title": "Công cụ Cordis",
-      "description": "Cung cấp công cụ Cordis cho quản trị viên. Nó chạy công cụ với quyền truy cập hệ thống tệp thực, nằm ngoài luồng phê duyệt công cụ của Libre WebUI.",
-      "saved": "Đã cập nhật quyền truy cập Cordis",
-      "saveFailed": "Không thể cập nhật quyền truy cập Cordis",
-      "lockedByEnv": "Được ghim bởi biến môi trường LIBRE_CORDIS_ENABLED.",
-      "lockedByFile": "Được ghim bởi features.enabled trong cordis.config.yml."
+    "strandsAccess": {
+      "title": "Công cụ Strands",
+      "description": "Chọn ai có thể dùng tác tử Strands tích hợp. Tác tử có thể đọc và chỉnh sửa tệp trong không gian làm việc riêng của mỗi phiên, nhưng không thể chạy lệnh shell.",
+      "saved": "Đã cập nhật quyền truy cập Strands",
+      "saveFailed": "Không thể cập nhật quyền truy cập Strands",
+      "lockedByEnv": "Được cố định bởi biến môi trường LIBRE_STRANDS_ACCESS.",
+      "modes": {
+        "disabled": "Tắt",
+        "admins": "Quản trị viên",
+        "all-users": "Tất cả người dùng"
+      }
     },
     "agentCliAccess": {
       "title": "Mô hình tác tử CLI",
@@ -2070,7 +2067,7 @@
     },
     "agents": {
       "title": "Tác nhân",
-      "description": "Lượt gọi tác nhân CLI và yêu cầu DSH gốc. DSH dùng mô hình Libre WebUI được tính cho nhà cung cấp mô hình đó.",
+      "description": "Lệnh gọi đến tác tử CLI và công cụ Strands.",
       "noCalls": "Không có lượt gọi được ghi nhận trong khoảng thời gian này",
       "unreported": "Token chưa được báo cáo",
       "topModels": "Mô hình được dùng nhiều nhất",
@@ -2573,144 +2570,6 @@
     "title": "Chế độ demo",
     "github": "GitHub"
   },
-  "libreClaw": {
-    "title": "Tác nhân",
-    "subtitle": "Tác nhân cục bộ chạy, phê duyệt, lịch trình, bộ nhớ, công cụ và cách sử dụng.",
-    "dashboard": "Bảng điều khiển",
-    "connection": {
-      "disconnectedTitle": "Daemon Libre Claw chưa được kết nối",
-      "disconnectedDescription": "Bắt đầu cục bộ với <command>libre-claw start</command> hoặc đặt <env>LIBRE_CLAW_BASE_URL</env> trong môi trường phụ trợ."
-    },
-    "status": {
-      "connected": "Đã kết nối",
-      "disconnected": "Đã ngắt kết nối",
-      "activeRuns": "{{count}} hoạt động",
-      "activeRuns_plural": "{{count}} hoạt động"
-    },
-    "states": {
-      "queued": "Đã xếp hàng",
-      "running": "Đang chạy",
-      "blocked": "Bị chặn",
-      "done": "Xong",
-      "failed": "thất bại",
-      "cancelled": "Đã hủy"
-    },
-    "startRun": {
-      "title": "Bắt đầu phiên chạy tác tử",
-      "placeholder": "Yêu cầu Libre Claw kiểm tra kho lưu trữ, sửa lỗi, chạy đánh giá, lên lịch báo cáo...",
-      "chatRun": "Chạy trò chuyện",
-      "goalMode": "Chế độ mục tiêu",
-      "providerOverride": "Ghi đè nhà cung cấp",
-      "modelOverride": "Ghi đè mô hình",
-      "run": "Chạy"
-    },
-    "modelRoute": {
-      "title": "Tuyến đường mẫu",
-      "providerPlaceholder": "nhà cung cấp",
-      "modelPlaceholder": "người mẫu",
-      "persistGlobal": "Kiên trì với cấu hình chung Libre Claw",
-      "saveModel": "Lưu mô hình",
-      "theme": "Chủ đề Libre Claw",
-      "saveTheme": "Lưu chủ đề"
-    },
-    "runs": {
-      "title": "Phiên chạy",
-      "empty": "Chưa có phiên chạy Libre Claw nào."
-    },
-    "timeline": {
-      "title": "Dòng thời gian phiên chạy",
-      "empty": "Chọn một lần chạy để kiểm tra các sự kiện của nó.",
-      "streaming": "Đang truyền phát...",
-      "assistantResponse": "Phản hồi của trợ lý",
-      "resultOk": "được",
-      "resultError": "lỗi",
-      "labels": {
-        "userMessage": "Tin nhắn người dùng",
-        "toolCall": "Cuộc gọi công cụ",
-        "toolResult": "Kết quả công cụ",
-        "approvalRequest": "Yêu cầu phê duyệt",
-        "approvalResponse": "Phản hồi phê duyệt",
-        "runStarted": "Phiên chạy đã bắt đầu",
-        "runFinished": "Phiên chạy đã hoàn tất",
-        "usage": "Cách sử dụng",
-        "error": "Lỗi"
-      }
-    },
-    "approvals": {
-      "needed": "Cần phê duyệt",
-      "allowOnce": "Cho phép một lần",
-      "alwaysAllowTool": "Luôn cho phép công cụ",
-      "deny": "Từ chối",
-      "toolApprovalRequested": "Đã yêu cầu phê duyệt công cụ"
-    },
-    "automations": {
-      "title": "Tự động hóa",
-      "namePlaceholder": "Tên",
-      "schedulePlaceholder": "daily 09:00",
-      "promptPlaceholder": "Lời nhắc tự động hóa",
-      "create": "Tạo",
-      "empty": "Không có tự động hóa Libre Claw theo lịch trình.",
-      "runNow": "Chạy ngay",
-      "pause": "Tạm dừng",
-      "resume": "Tiếp tục",
-      "routes": {
-        "report": "Báo cáo",
-        "telegram": "Telegram"
-      },
-      "status": {
-        "active": "Đang hoạt động",
-        "paused": "Đã tạm dừng"
-      }
-    },
-    "usageFallback": {
-      "title": "Cách sử dụng và dự phòng",
-      "usage": "Cách sử dụng",
-      "fallbackRoute": "Tuyến đường dự phòng",
-      "noUsage": "Chưa có hồ sơ sử dụng."
-    },
-    "metrics": {
-      "provider": "nhà cung cấp",
-      "model": "người mẫu",
-      "input": "đầu vào",
-      "output": "đầu ra",
-      "cached": "Đã lưu vào bộ nhớ đệm",
-      "reasoning": "Lý luận",
-      "cost": "Chi phí",
-      "tool": "Công cụ",
-      "resolution": "Độ phân giải",
-      "state": "Trạng thái",
-      "stopReason": "Lý do dừng",
-      "tokens": "{{formatted}} mã thông báo",
-      "tokens_plural": "{{formatted}} mã thông báo"
-    },
-    "fallbacks": {
-      "tool": "công cụ",
-      "unknown": "không rõ",
-      "resolved": "đã giải quyết",
-      "unknownError": "Lỗi không xác định"
-    },
-    "toasts": {
-      "loadStatusFailed": "Không thể tải trạng thái Libre Claw",
-      "enterTask": "Nhập nhiệm vụ cho Libre Claw",
-      "runStarted": "Phiên chạy Libre Claw đã bắt đầu",
-      "startRunFailed": "Không thể bắt đầu phiên chạy Libre Claw",
-      "runCancelled": "Phiên chạy đã bị hủy",
-      "cancelRunFailed": "Không thể hủy phiên chạy",
-      "approved": "Đã được phê duyệt",
-      "denied": "Bị từ chối",
-      "resolvePermissionFailed": "Không thể giải quyết quyền",
-      "providerModelRequired": "Nhà cung cấp và mô hình là bắt buộc",
-      "modelUpdated": "Đã cập nhật mô hình Libre Claw",
-      "updateModelFailed": "Không thể cập nhật mô hình",
-      "themeUpdated": "Đã cập nhật chủ đề Libre Claw",
-      "updateThemeFailed": "Không thể cập nhật chủ đề",
-      "automationRequired": "Bắt buộc phải có tên, lịch trình và lời nhắc tự động hóa",
-      "automationCreated": "Đã tạo tự động hóa",
-      "createAutomationFailed": "Không thể tạo tự động hóa",
-      "automationUpdated": "Đã cập nhật tự động hóa",
-      "updateAutomationFailed": "Không thể cập nhật tự động hóa"
-    }
-  },
   "work": {
     "title": "Công việc",
     "subtitle": "Không gian làm việc mô hình biệt lập",
@@ -2758,9 +2617,8 @@
       "noModelSelected": "Chưa chọn mô hình tương thích với chế độ Công việc.",
       "mentionAgents": "Nhắc đến một agent",
       "engine": "Bộ máy",
-      "nativeDshModels": "Mô hình DSH gốc",
       "libreModels": "Mô hình Libre WebUI",
-      "nativeDshUnavailable": "Mô hình DSH gốc hiện không khả dụng. Làm mới danh sách mô hình hoặc kiểm tra cấu hình nhà cung cấp.",
+      "strandsDisabled": "Công cụ Strands không khả dụng cho tài khoản của bạn.",
       "modelLabel": "Mô hình"
     },
     "conversation": {
@@ -3941,41 +3799,34 @@
       "saveFailed": "Không thể lưu khóa API"
     }
   },
-  "cordis": {
-    "title": "Công cụ Cordis",
-    "description": "Phiên, công cụ và trò chuyện cho công cụ DeepSeek Harness nhúng.",
+  "strands": {
+    "title": "Strands",
+    "subtitle": "Công cụ tác tử tích hợp chạy trên các mô hình Libre WebUI của bạn.",
+    "subtitleVersion": "Công cụ tác tử tích hợp, harness {{version}}.",
     "newSession": "Phiên mới",
-    "createFailed": "Không thể tạo phiên.",
-    "deleteFailed": "Không thể xóa phiên.",
-    "sendFailed": "Công cụ không thể hoàn tất lượt.",
-    "sessionsHeading": "Phiên",
-    "toolsHeading": "Công cụ",
-    "transcriptHeading": "Bản ghi",
+    "sessions": "Phiên",
     "noSessions": "Chưa có phiên nào. Hãy tạo một phiên để bắt đầu.",
-    "noTools": "Công cụ không đăng ký công cụ nào.",
-    "selectSession": "Chọn một phiên hoặc tạo mới để bắt đầu.",
-    "working": "Tác nhân đang làm việc…",
-    "composerLabel": "Tin nhắn tới công cụ",
-    "composerPlaceholder": "Yêu cầu công cụ làm điều gì đó…",
+    "empty": "Yêu cầu tác tử đọc hoặc chỉnh sửa tệp trong không gian làm việc của nó.",
+    "placeholder": "Yêu cầu công cụ làm điều gì đó…",
+    "model": "Mô hình",
+    "defaultModel": "Mô hình mặc định",
     "send": "Gửi",
     "stop": "Dừng",
-    "deleteSession": "Xóa phiên",
-    "unknownTime": "Không rõ thời gian",
-    "disabledTitle": "Công cụ Cordis đang tắt",
-    "disabledHint": "Quản trị viên có thể bật trong Quản lý người dùng → Quyền truy cập và chính sách.",
-    "unavailableTitle": "Không thể khởi động công cụ Cordis",
-    "role": {
-      "user": "Bạn",
-      "assistant": "Công cụ",
-      "system": "Hệ thống",
-      "tool": "Công cụ",
-      "unknown": "Tin nhắn"
+    "reasoning": "Lý luận",
+    "tool": {
+      "running": "Đang chạy",
+      "done": "Xong",
+      "failed": "thất bại"
     },
-    "turnFailed": "Công cụ không thể hoàn tất lượt",
-    "permissions": "Quyền",
-    "readOnly": "Chỉ đọc",
-    "workspaceWrite": "Ghi trong không gian làm việc",
-    "context": "Ngữ cảnh phiên",
-    "permissionHint": "Chỉ đọc cho phép kiểm tra tệp. Quyền ghi cho phép chỉnh sửa trong không gian làm việc của phiên này."
+    "cancelled": "Đã hủy",
+    "turnLimit": "Đã dừng khi đạt giới hạn lượt.",
+    "messageCount": "Tin nhắn: {{count}}",
+    "deleteSession": "Xóa phiên",
+    "deleteConfirm": "Xóa \"{{title}}\" và lịch sử của nó?",
+    "loadFailed": "Không thể tải Strands.",
+    "createFailed": "Không thể tạo phiên.",
+    "deleteFailed": "Không thể xóa phiên.",
+    "saveFailed": "Không thể lưu phiên.",
+    "turnFailed": "Công cụ không thể hoàn tất lượt"
   }
 }

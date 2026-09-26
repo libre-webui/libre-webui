@@ -40,7 +40,8 @@
     "custom": "Aangepast",
     "remove": "Verwijderen",
     "home": "Home",
-    "more": "Meer"
+    "more": "Meer",
+    "reasoning": "Redenering"
   },
   "brand": {
     "name": "Libre WebUI",
@@ -528,7 +529,6 @@
       "models": "Modellen",
       "personas": "Personas",
       "imagine": "Genereren",
-      "agents": "Agents",
       "work": "Werk",
       "settings": "Instellingen",
       "usageAnalytics": "Providergebruik",
@@ -543,7 +543,7 @@
       "skills": "Vaardigheden",
       "tools": "Gereedschappen",
       "channels": "Kanalen",
-      "cordis": "Cordis-engine"
+      "strands": "Strands"
     },
     "toggleSize": "Zijbalk grootte wijzigen",
     "expandSidebar": "Zijbalk uitvouwen"
@@ -1830,13 +1830,6 @@
       "saved": "Standaardthema bijgewerkt",
       "saveFailed": "Kon het standaardthema niet bijwerken"
     },
-    "agentAccess": {
-      "title": "Libre Claw",
-      "description": "Toon de Libre Claw-werkruimte aan beheerders.",
-      "saved": "Agent-toegang bijgewerkt",
-      "saveFailed": "Kon agent-toegang niet bijwerken",
-      "lockedByEnv": "Vastgezet door de omgevingsvariabele LIBRE_CLAW_ENABLED."
-    },
     "groups": {
       "title": "Groepen",
       "description": "Groepeer accounts om gedeelde toegang te beheren en bekijk wat een account effectief kan doen.",
@@ -1973,13 +1966,17 @@
       "saved": "E-mailinstellingen opgeslagen.",
       "saveFailed": "De e-mailinstellingen konden niet worden opgeslagen."
     },
-    "cordisAccess": {
-      "title": "Cordis-engine",
-      "description": "De Cordis-engine aan beheerders aanbieden. Deze voert hulpmiddelen uit met echte toegang tot het bestandssysteem, buiten de goedkeuringsstroom van Libre WebUI.",
-      "saved": "Cordis-toegang bijgewerkt",
-      "saveFailed": "Cordis-toegang kon niet worden bijgewerkt",
-      "lockedByEnv": "Vastgezet door de omgevingsvariabele LIBRE_CORDIS_ENABLED.",
-      "lockedByFile": "Vastgezet door features.enabled in cordis.config.yml."
+    "strandsAccess": {
+      "title": "Strands-engine",
+      "description": "Kies wie de ingebouwde Strands-agent mag gebruiken. Hij kan bestanden lezen en bewerken in de privéwerkruimte van elke sessie, maar kan geen shell-opdrachten uitvoeren.",
+      "saved": "Strands-toegang bijgewerkt",
+      "saveFailed": "Strands-toegang kon niet worden bijgewerkt",
+      "lockedByEnv": "Vastgelegd door de omgevingsvariabele LIBRE_STRANDS_ACCESS.",
+      "modes": {
+        "disabled": "Uit",
+        "admins": "Beheerders",
+        "all-users": "Alle gebruikers"
+      }
     },
     "agentCliAccess": {
       "title": "CLI-agentmodellen",
@@ -2070,7 +2067,7 @@
     },
     "agents": {
       "title": "Agents",
-      "description": "CLI-agentaanroepen en native DSH-aanvragen. DSH met Libre WebUI-modellen wordt bij de modelprovider geteld.",
+      "description": "Aanroepen van CLI-agents en de Strands-engine.",
       "noCalls": "Geen geregistreerde aanroepen in deze periode",
       "unreported": "Tokens niet gerapporteerd",
       "topModels": "Meest gebruikte modellen",
@@ -2573,144 +2570,6 @@
     "title": "Demomodus",
     "github": "GitHub"
   },
-  "libreClaw": {
-    "title": "Agents",
-    "subtitle": "Lokale agentuitvoeringen, goedkeuringen, planningen, geheugen, tools en gebruik.",
-    "dashboard": "Dashboard",
-    "connection": {
-      "disconnectedTitle": "Libre Claw-daemon is niet verbonden",
-      "disconnectedDescription": "Start het lokaal met <command>libre-claw start</command> of stel <env>LIBRE_CLAW_BASE_URL</env> in de backend-omgeving in."
-    },
-    "status": {
-      "connected": "Verbonden",
-      "disconnected": "Verbinding verbroken",
-      "activeRuns": "{{count}} actief",
-      "activeRuns_plural": "{{count}} actief"
-    },
-    "states": {
-      "queued": "In de wachtrij",
-      "running": "Wordt uitgevoerd",
-      "blocked": "Geblokkeerd",
-      "done": "Klaar",
-      "failed": "Mislukt",
-      "cancelled": "Geannuleerd"
-    },
-    "startRun": {
-      "title": "Agentrun starten",
-      "placeholder": "Vraag Libre Claw om een opslagplaats te inspecteren, een bug op te lossen, een beoordeling uit te voeren, een rapport in te plannen...",
-      "chatRun": "Chat uitvoeren",
-      "goalMode": "Doelmodus",
-      "providerOverride": "Provider overschrijven",
-      "modelOverride": "Modeloverschrijving",
-      "run": "Uitvoeren"
-    },
-    "modelRoute": {
-      "title": "Modelroute",
-      "providerPlaceholder": "aanbieder",
-      "modelPlaceholder": "model",
-      "persistGlobal": "Ga door met Libre Claw algemene configuratie",
-      "saveModel": "Model opslaan",
-      "theme": "Libre Claw-thema",
-      "saveTheme": "Thema opslaan"
-    },
-    "runs": {
-      "title": "Uitvoeringen",
-      "empty": "Nog geen Libre Claw-runs."
-    },
-    "timeline": {
-      "title": "Run-tijdlijn",
-      "empty": "Selecteer een run om de gebeurtenissen ervan te inspecteren.",
-      "streaming": "Streamen...",
-      "assistantResponse": "Reactie van de assistent",
-      "resultOk": "oké",
-      "resultError": "fout",
-      "labels": {
-        "userMessage": "Gebruikersbericht",
-        "toolCall": "Gereedschapsoproep",
-        "toolResult": "Gereedschap resultaat",
-        "approvalRequest": "Goedkeuringsverzoek",
-        "approvalResponse": "Goedkeuringsreactie",
-        "runStarted": "Run gestart",
-        "runFinished": "Run voltooid",
-        "usage": "Gebruik",
-        "error": "Fout"
-      }
-    },
-    "approvals": {
-      "needed": "Goedkeuring nodig",
-      "allowOnce": "Eén keer toestaan",
-      "alwaysAllowTool": "Gereedschap altijd toestaan",
-      "deny": "Weigeren",
-      "toolApprovalRequested": "Gereedschapsgoedkeuring aangevraagd"
-    },
-    "automations": {
-      "title": "Automatiseringen",
-      "namePlaceholder": "Naam",
-      "schedulePlaceholder": "daily 09:00",
-      "promptPlaceholder": "Automatiseringsprompt",
-      "create": "Creëer",
-      "empty": "Geen geplande Libre Claw-automatiseringen.",
-      "runNow": "Nu uitvoeren",
-      "pause": "Pauze",
-      "resume": "Hervatten",
-      "routes": {
-        "report": "Rapporteer",
-        "telegram": "Telegram"
-      },
-      "status": {
-        "active": "Actief",
-        "paused": "Gepauzeerd"
-      }
-    },
-    "usageFallback": {
-      "title": "Gebruik en terugval",
-      "usage": "Gebruik",
-      "fallbackRoute": "Terugvalroute",
-      "noUsage": "Nog geen gebruiksgegevens."
-    },
-    "metrics": {
-      "provider": "Aanbieder",
-      "model": "Model",
-      "input": "Invoer",
-      "output": "Uitvoer",
-      "cached": "In cache opgeslagen",
-      "reasoning": "Redenering",
-      "cost": "Kosten",
-      "tool": "Gereedschap",
-      "resolution": "Resolutie",
-      "state": "Status",
-      "stopReason": "Stopreden",
-      "tokens": "{{formatted}}-token",
-      "tokens_plural": "{{formatted}}-tokens"
-    },
-    "fallbacks": {
-      "tool": "gereedschap",
-      "unknown": "onbekend",
-      "resolved": "opgelost",
-      "unknownError": "Onbekende fout"
-    },
-    "toasts": {
-      "loadStatusFailed": "Kon de Libre Claw-status niet laden",
-      "enterTask": "Voer een taak in voor Libre Claw",
-      "runStarted": "Libre Claw-run gestart",
-      "startRunFailed": "Kon Libre Claw-run niet starten",
-      "runCancelled": "Run geannuleerd",
-      "cancelRunFailed": "Kon run niet annuleren",
-      "approved": "Goedgekeurd",
-      "denied": "Geweigerd",
-      "resolvePermissionFailed": "Kan toestemming niet oplossen",
-      "providerModelRequired": "Aanbieder en model zijn vereist",
-      "modelUpdated": "Libre Claw-model bijgewerkt",
-      "updateModelFailed": "Kan het model niet updaten",
-      "themeUpdated": "Libre Claw-thema bijgewerkt",
-      "updateThemeFailed": "Kan het thema niet updaten",
-      "automationRequired": "Naam, planning en prompt van de automatisering zijn vereist",
-      "automationCreated": "Automatisering gecreëerd",
-      "createAutomationFailed": "Kan automatisering niet creëren",
-      "automationUpdated": "Automatisering bijgewerkt",
-      "updateAutomationFailed": "Kan de automatisering niet updaten"
-    }
-  },
   "work": {
     "title": "Werk",
     "subtitle": "Geïsoleerde modelwerkruimten",
@@ -2758,9 +2617,8 @@
       "noModelSelected": "Er is geen model geselecteerd dat de Werk-modus ondersteunt.",
       "mentionAgents": "Een agent vermelden",
       "engine": "Engine",
-      "nativeDshModels": "Native DSH-modellen",
       "libreModels": "Libre WebUI-modellen",
-      "nativeDshUnavailable": "Native DSH-modellen zijn niet beschikbaar. Vernieuw de modellenlijst of controleer de providerconfiguratie.",
+      "strandsDisabled": "De Strands-engine is niet beschikbaar voor je account.",
       "modelLabel": "Model"
     },
     "conversation": {
@@ -3941,41 +3799,34 @@
       "saveFailed": "Kon de API-sleutel niet opslaan"
     }
   },
-  "cordis": {
-    "title": "Cordis-engine",
-    "description": "Sessies, hulpmiddelen en chat voor de ingebouwde DeepSeek Harness-engine.",
+  "strands": {
+    "title": "Strands",
+    "subtitle": "Ingebouwde agent-engine die op je Libre WebUI-modellen draait.",
+    "subtitleVersion": "Ingebouwde agent-engine, harness {{version}}.",
     "newSession": "Nieuwe sessie",
-    "createFailed": "Sessie kon niet worden aangemaakt.",
-    "deleteFailed": "Sessie kon niet worden verwijderd.",
-    "sendFailed": "De engine kon de beurt niet afronden.",
-    "sessionsHeading": "Sessies",
-    "toolsHeading": "Hulpmiddelen",
-    "transcriptHeading": "Transcript",
+    "sessions": "Sessies",
     "noSessions": "Nog geen sessies. Maak er een om te beginnen.",
-    "noTools": "De engine heeft geen hulpmiddelen geregistreerd.",
-    "selectSession": "Kies een sessie of maak er een om te beginnen.",
-    "working": "De agent is bezig…",
-    "composerLabel": "Bericht aan de engine",
-    "composerPlaceholder": "Vraag de engine iets te doen…",
+    "empty": "Vraag de agent om bestanden in zijn werkruimte te lezen of te bewerken.",
+    "placeholder": "Vraag de engine iets te doen…",
+    "model": "Model",
+    "defaultModel": "Standaardmodel",
     "send": "Verzenden",
     "stop": "Stoppen",
-    "deleteSession": "Sessie verwijderen",
-    "unknownTime": "Onbekende tijd",
-    "disabledTitle": "De Cordis-engine staat uit",
-    "disabledHint": "Een beheerder kan dit inschakelen bij Gebruikersbeheer → Toegang en beleid.",
-    "unavailableTitle": "De Cordis-engine kon niet starten",
-    "role": {
-      "user": "Jij",
-      "assistant": "Engine",
-      "system": "Systeem",
-      "tool": "Hulpmiddel",
-      "unknown": "Bericht"
+    "reasoning": "Redenering",
+    "tool": {
+      "running": "Wordt uitgevoerd",
+      "done": "Klaar",
+      "failed": "Mislukt"
     },
-    "turnFailed": "De engine kon de beurt niet afronden",
-    "permissions": "Rechten",
-    "readOnly": "Alleen lezen",
-    "workspaceWrite": "Schrijven in werkruimte",
-    "context": "Sessiecontext",
-    "permissionHint": "Alleen lezen staat bestandsinspectie toe. Schrijven staat wijzigingen binnen de werkruimte van deze sessie toe."
+    "cancelled": "Geannuleerd",
+    "turnLimit": "Gestopt bij de beurtlimiet.",
+    "messageCount": "Berichten: {{count}}",
+    "deleteSession": "Sessie verwijderen",
+    "deleteConfirm": "\"{{title}}\" en de geschiedenis verwijderen?",
+    "loadFailed": "Strands kon niet worden geladen.",
+    "createFailed": "Sessie kon niet worden aangemaakt.",
+    "deleteFailed": "Sessie kon niet worden verwijderd.",
+    "saveFailed": "De sessie kon niet worden opgeslagen.",
+    "turnFailed": "De engine kon de beurt niet afronden"
   }
 }

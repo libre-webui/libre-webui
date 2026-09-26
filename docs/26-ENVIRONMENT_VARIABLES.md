@@ -356,12 +356,11 @@ the switch on, and each user still opts in per notification kind under
 | `SMTP_TLS_REJECT_UNAUTHORIZED` | `true`                     | Set to `false` only for a relay with a self-signed certificate                               |
 | `BASE_URL`                     | unset                      | Public URL of the instance, used for the links inside messages                               |
 
-## Libre Claw
+## Strands Engine
 
-| Variable                | Default                 | Purpose                         |
-| ----------------------- | ----------------------- | ------------------------------- |
-| `LIBRE_CLAW_BASE_URL`   | `http://127.0.0.1:8766` | Optional Libre Claw daemon URL  |
-| `LIBRE_CLAW_TIMEOUT_MS` | `30000`                 | Libre Claw HTTP request timeout |
+| Variable               | Default                    | Purpose                                                                                                         |
+| ---------------------- | -------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| `LIBRE_STRANDS_ACCESS` | unset (admin setting, off) | Pin who can use the embedded Strands engine: `disabled`, `admins`, or `all-users`. Any other value locks it off |
 
 ## Work Runtime
 
@@ -411,7 +410,6 @@ selects Kubernetes when `work.enabled=true`.
 | `VOICE_MODE_ACCESS_MODE`              | unset (admin toggle, all-users)                                                               | Pin hands-free voice mode to `admins` or `all-users` and lock the admin toggle in User Management                                             |
 | `VOICE_CLONING_ACCESS_MODE`           | unset (admin toggle, all-users)                                                               | Pin voice cloning to `admins` or `all-users` and lock the admin toggle in User Management                                                     |
 | `TOOLS_PRIVATE_NETWORK_ALLOWLIST`     | unset                                                                                         | Exact hostnames tool servers and webhook targets may resolve to private addresses (comma-separated); pinned                                   |
-| `LIBRE_CLAW_ENABLED`                  | unset (admin toggle, off)                                                                     | Pin Libre Claw independently of direct CLI models                                                                                             |
 | `AGENT_CLI_TIMEOUT_MS`                | `600000`                                                                                      | Time an agent CLI may run before it is killed                                                                                                 |
 | `CODEX_OAUTH_MODELS_ENABLED`          | `true`                                                                                        | Offer the Codex (ChatGPT) provider to admins                                                                                                  |
 | `CODEX_HOME`                          | `~/.codex`                                                                                    | Where the Codex CLI sign-in (`auth.json`) is read from                                                                                        |

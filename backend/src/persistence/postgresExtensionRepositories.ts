@@ -780,13 +780,11 @@ class PostgresPluginUsageRepository implements PluginUsageRepository {
     if (agentIds.length === 0) return Promise.resolve([]);
     return this.rows(
       `WITH agent_events AS (
-         SELECT CASE WHEN substr(plugin_id, 1, 11) = 'dsh-native:'
-                     THEN 'dsh' ELSE substr(plugin_id, 11) END AS agent_id,
+         SELECT substr(plugin_id, 11) AS agent_id,
                 model, total_tokens, status, duration_ms
            FROM plugin_usage_events
           WHERE created_at >= $1 AND created_at <= $2
-            AND (plugin_id = ANY($3::text[])
-                 OR (substr(plugin_id, 1, 11) = 'dsh-native:' AND length(plugin_id) > 11))
+            AND plugin_id = ANY($3::text[])
        ), agent_totals AS (
          SELECT agent_id, NULL AS model, COUNT(*) AS calls,
                 COALESCE(SUM(total_tokens), 0) AS tokens,

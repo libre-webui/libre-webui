@@ -240,7 +240,7 @@ function ThinkingBlock({
               </span>
             ) : (
               <span className='truncate'>
-                {t('libreClaw.metrics.reasoning', {
+                {t('common.reasoning', {
                   defaultValue: 'Reasoning',
                 })}
               </span>

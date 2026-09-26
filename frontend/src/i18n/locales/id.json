@@ -40,7 +40,8 @@
     "custom": "Kustom",
     "remove": "Hapus",
     "home": "Beranda",
-    "more": "Banyak"
+    "more": "Banyak",
+    "reasoning": "Penalaran"
   },
   "brand": {
     "name": "Libre WebUI",
@@ -528,7 +529,6 @@
       "models": "Model",
       "personas": "Persona",
       "imagine": "Imajinasi",
-      "agents": "Agen",
       "work": "Kerja",
       "settings": "Pengaturan",
       "usageAnalytics": "Penggunaan Penyedia",
@@ -543,7 +543,7 @@
       "skills": "Keterampilan",
       "tools": "Alat",
       "channels": "Kanal",
-      "cordis": "Mesin Cordis"
+      "strands": "Strands"
     },
     "toggleSize": "Ubah ukuran sidebar",
     "expandSidebar": "Perluas sidebar"
@@ -1830,13 +1830,6 @@
       "saved": "Tema bawaan diperbarui",
       "saveFailed": "Tidak dapat memperbarui tema bawaan"
     },
-    "agentAccess": {
-      "title": "Libre Claw",
-      "description": "Tampilkan ruang kerja Libre Claw kepada administrator.",
-      "saved": "Akses agen diperbarui",
-      "saveFailed": "Tidak dapat memperbarui akses agen",
-      "lockedByEnv": "Dikunci oleh variabel lingkungan LIBRE_CLAW_ENABLED."
-    },
     "groups": {
       "title": "Grup",
       "description": "Kelompokkan akun untuk mengelola akses bersama, dan periksa apa saja yang benar-benar dapat dilakukan sebuah akun.",
@@ -1973,13 +1966,17 @@
       "saved": "Pengaturan email tersimpan.",
       "saveFailed": "Pengaturan email tidak dapat disimpan."
     },
-    "cordisAccess": {
-      "title": "Mesin Cordis",
-      "description": "Tawarkan mesin Cordis kepada administrator. Mesin ini menjalankan alat dengan akses sistem berkas nyata di luar alur persetujuan alat Libre WebUI.",
-      "saved": "Akses Cordis diperbarui",
-      "saveFailed": "Tidak dapat memperbarui akses Cordis",
-      "lockedByEnv": "Dikunci oleh variabel lingkungan LIBRE_CORDIS_ENABLED.",
-      "lockedByFile": "Dikunci oleh features.enabled di cordis.config.yml."
+    "strandsAccess": {
+      "title": "Mesin Strands",
+      "description": "Pilih siapa yang dapat menggunakan agen Strands tertanam. Agen ini dapat membaca dan mengedit file di ruang kerja pribadi setiap sesi, tetapi tidak dapat menjalankan perintah shell.",
+      "saved": "Akses Strands diperbarui",
+      "saveFailed": "Tidak dapat memperbarui akses Strands",
+      "lockedByEnv": "Ditetapkan oleh variabel lingkungan LIBRE_STRANDS_ACCESS.",
+      "modes": {
+        "disabled": "Mati",
+        "admins": "Administrator",
+        "all-users": "Semua pengguna"
+      }
     },
     "agentCliAccess": {
       "title": "Model agen CLI",
@@ -2070,7 +2067,7 @@
     },
     "agents": {
       "title": "Agen",
-      "description": "Panggilan agen CLI dan permintaan DSH native. DSH yang memakai model Libre WebUI dihitung di bawah penyedia modelnya.",
+      "description": "Panggilan ke agen CLI dan mesin Strands.",
       "noCalls": "Tidak ada panggilan tercatat dalam periode ini",
       "unreported": "Token tidak dilaporkan",
       "topModels": "Model teratas",
@@ -2573,144 +2570,6 @@
     "title": "Mode demo",
     "github": "GitHub"
   },
-  "libreClaw": {
-    "title": "Agen",
-    "subtitle": "Agen lokal dijalankan, persetujuan, jadwal, memori, alat, dan penggunaan.",
-    "dashboard": "Dasbor",
-    "connection": {
-      "disconnectedTitle": "Daemon Libre Claw tidak terhubung",
-      "disconnectedDescription": "Mulai secara lokal dengan <command>libre-claw start</command> atau atur <env>LIBRE_CLAW_BASE_URL</env> di lingkungan backend."
-    },
-    "status": {
-      "connected": "Terhubung",
-      "disconnected": "Terputus",
-      "activeRuns": "{{count}} aktif",
-      "activeRuns_plural": "{{count}} aktif"
-    },
-    "states": {
-      "queued": "Mengantri",
-      "running": "Sedang berjalan",
-      "blocked": "Diblokir",
-      "done": "Selesai",
-      "failed": "Gagal",
-      "cancelled": "Dibatalkan"
-    },
-    "startRun": {
-      "title": "Mulai eksekusi agen",
-      "placeholder": "Minta Libre Claw untuk memeriksa repo, memperbaiki bug, menjalankan tinjauan, menjadwalkan laporan...",
-      "chatRun": "Obrolan berjalan",
-      "goalMode": "Modus sasaran",
-      "providerOverride": "Penggantian penyedia",
-      "modelOverride": "Penggantian model",
-      "run": "Jalankan"
-    },
-    "modelRoute": {
-      "title": "Rute Model",
-      "providerPlaceholder": "penyedia",
-      "modelPlaceholder": "model",
-      "persistGlobal": "Bertahan pada Libre Claw konfigurasi global",
-      "saveModel": "Simpan modelnya",
-      "theme": "Tema Libre Claw",
-      "saveTheme": "Simpan tema"
-    },
-    "runs": {
-      "title": "Eksekusi",
-      "empty": "Belum ada eksekusi Libre Claw."
-    },
-    "timeline": {
-      "title": "Linimasa eksekusi",
-      "empty": "Pilih proses untuk memeriksa kejadiannya.",
-      "streaming": "Streaming...",
-      "assistantResponse": "Tanggapan asisten",
-      "resultOk": "oke",
-      "resultError": "kesalahan",
-      "labels": {
-        "userMessage": "Pesan pengguna",
-        "toolCall": "Panggilan alat",
-        "toolResult": "Hasil alat",
-        "approvalRequest": "Permintaan persetujuan",
-        "approvalResponse": "Tanggapan persetujuan",
-        "runStarted": "Eksekusi dimulai",
-        "runFinished": "Eksekusi selesai",
-        "usage": "Penggunaan",
-        "error": "Kesalahan"
-      }
-    },
-    "approvals": {
-      "needed": "Diperlukan persetujuan",
-      "allowOnce": "Izinkan sekali",
-      "alwaysAllowTool": "Selalu izinkan alat",
-      "deny": "Tolak",
-      "toolApprovalRequested": "Persetujuan alat diminta"
-    },
-    "automations": {
-      "title": "Otomatisasi",
-      "namePlaceholder": "Nama",
-      "schedulePlaceholder": "daily 09:00",
-      "promptPlaceholder": "Perintah otomatisasi",
-      "create": "Buat",
-      "empty": "Tidak ada otomatisasi Libre Claw terjadwal.",
-      "runNow": "Jalankan sekarang",
-      "pause": "Jeda",
-      "resume": "Lanjutkan",
-      "routes": {
-        "report": "Laporkan",
-        "telegram": "Telegram"
-      },
-      "status": {
-        "active": "Aktif",
-        "paused": "Dijeda"
-      }
-    },
-    "usageFallback": {
-      "title": "Penggunaan dan Penggantian",
-      "usage": "Penggunaan",
-      "fallbackRoute": "Rute Mundur",
-      "noUsage": "Belum ada catatan penggunaan."
-    },
-    "metrics": {
-      "provider": "Penyedia",
-      "model": "Model",
-      "input": "Masukan",
-      "output": "Keluaran",
-      "cached": "Di-cache",
-      "reasoning": "Penalaran",
-      "cost": "Biaya",
-      "tool": "Alat",
-      "resolution": "Resolusi",
-      "state": "Status",
-      "stopReason": "Alasan berhenti",
-      "tokens": "{{formatted}} tanda",
-      "tokens_plural": "{{formatted}} token"
-    },
-    "fallbacks": {
-      "tool": "alat",
-      "unknown": "tidak diketahui",
-      "resolved": "terselesaikan",
-      "unknownError": "Kesalahan tidak diketahui"
-    },
-    "toasts": {
-      "loadStatusFailed": "Tidak dapat memuat status Libre Claw",
-      "enterTask": "Masukkan tugas untuk Libre Claw",
-      "runStarted": "Eksekusi Libre Claw dimulai",
-      "startRunFailed": "Tidak dapat memulai eksekusi Libre Claw",
-      "runCancelled": "Eksekusi dibatalkan",
-      "cancelRunFailed": "Tidak dapat membatalkan eksekusi",
-      "approved": "Disetujui",
-      "denied": "Ditolak",
-      "resolvePermissionFailed": "Tidak dapat menyelesaikan izin",
-      "providerModelRequired": "Penyedia dan model diperlukan",
-      "modelUpdated": "Model Libre Claw diperbarui",
-      "updateModelFailed": "Tidak dapat memperbarui model",
-      "themeUpdated": "Tema Libre Claw diperbarui",
-      "updateThemeFailed": "Tidak dapat memperbarui tema",
-      "automationRequired": "Nama otomatisasi, jadwal, dan perintah diperlukan",
-      "automationCreated": "Otomatisasi dibuat",
-      "createAutomationFailed": "Tidak dapat membuat otomatisasi",
-      "automationUpdated": "Otomatisasi diperbarui",
-      "updateAutomationFailed": "Tidak dapat memperbarui otomatisasi"
-    }
-  },
   "work": {
     "title": "Kerja",
     "subtitle": "Ruang kerja model terisolasi",
@@ -2758,9 +2617,8 @@
       "noModelSelected": "Tidak ada model kompatibel Kerja yang dipilih.",
       "mentionAgents": "Sebut agen",
       "engine": "Mesin",
-      "nativeDshModels": "Model DSH native",
       "libreModels": "Model Libre WebUI",
-      "nativeDshUnavailable": "Model DSH native tidak tersedia. Segarkan daftar model atau periksa konfigurasi penyedia.",
+      "strandsDisabled": "Mesin Strands tidak tersedia untuk akun Anda.",
       "modelLabel": "Model"
     },
     "conversation": {
@@ -3941,41 +3799,34 @@
       "saveFailed": "Tidak dapat menyimpan API key"
     }
   },
-  "cordis": {
-    "title": "Mesin Cordis",
-    "description": "Sesi, alat, dan obrolan untuk mesin DeepSeek Harness yang tertanam.",
+  "strands": {
+    "title": "Strands",
+    "subtitle": "Mesin agen tertanam yang berjalan di model Libre WebUI Anda.",
+    "subtitleVersion": "Mesin agen tertanam, harness {{version}}.",
     "newSession": "Sesi baru",
-    "createFailed": "Tidak dapat membuat sesi.",
-    "deleteFailed": "Tidak dapat menghapus sesi.",
-    "sendFailed": "Mesin tidak dapat menyelesaikan giliran.",
-    "sessionsHeading": "Sesi",
-    "toolsHeading": "Alat",
-    "transcriptHeading": "Transkrip",
+    "sessions": "Sesi",
     "noSessions": "Belum ada sesi. Buat satu untuk memulai.",
-    "noTools": "Mesin tidak mendaftarkan alat apa pun.",
-    "selectSession": "Pilih sesi, atau buat satu untuk memulai.",
-    "working": "Agen sedang bekerja…",
-    "composerLabel": "Pesan ke mesin",
-    "composerPlaceholder": "Minta mesin melakukan sesuatu…",
+    "empty": "Minta agen membaca atau mengedit file di ruang kerjanya.",
+    "placeholder": "Minta mesin melakukan sesuatu…",
+    "model": "Model",
+    "defaultModel": "Model default",
     "send": "Kirim",
     "stop": "Hentikan",
-    "deleteSession": "Hapus sesi",
-    "unknownTime": "Waktu tidak diketahui",
-    "disabledTitle": "Mesin Cordis dimatikan",
-    "disabledHint": "Administrator dapat mengaktifkannya di Manajemen Pengguna → Akses & kebijakan.",
-    "unavailableTitle": "Mesin Cordis tidak dapat dimulai",
-    "role": {
-      "user": "Anda",
-      "assistant": "Mesin",
-      "system": "Sistem",
-      "tool": "Alat",
-      "unknown": "Pesan"
+    "reasoning": "Penalaran",
+    "tool": {
+      "running": "Sedang berjalan",
+      "done": "Selesai",
+      "failed": "Gagal"
     },
-    "turnFailed": "Mesin tidak dapat menyelesaikan giliran",
-    "permissions": "Izin",
-    "readOnly": "Hanya baca",
-    "workspaceWrite": "Tulis di ruang kerja",
-    "context": "Konteks sesi",
-    "permissionHint": "Hanya baca memungkinkan pemeriksaan berkas. Tulis di ruang kerja mengizinkan perubahan di dalam ruang kerja sesi ini."
+    "cancelled": "Dibatalkan",
+    "turnLimit": "Berhenti di batas giliran.",
+    "messageCount": "Pesan: {{count}}",
+    "deleteSession": "Hapus sesi",
+    "deleteConfirm": "Hapus \"{{title}}\" beserta riwayatnya?",
+    "loadFailed": "Tidak dapat memuat Strands.",
+    "createFailed": "Tidak dapat membuat sesi.",
+    "deleteFailed": "Tidak dapat menghapus sesi.",
+    "saveFailed": "Tidak dapat menyimpan sesi.",
+    "turnFailed": "Mesin tidak dapat menyelesaikan giliran"
   }
 }

@@ -18,10 +18,8 @@
 import type { GenerationTarget } from './chatGenerationService.js';
 import {
   AUTO_TITLE_CURRENT_MODEL,
-  resolveDshAuxiliaryTarget,
-  generateNativeDshText,
-  type DshAuxiliaryTargetResolver,
-  type DshTextGenerator,
+  resolveStrandsAuxiliaryTarget,
+  type StrandsAuxiliaryTargetResolver,
 } from './titleGenerationService.js';
 import type {
   ChatMessage,
@@ -85,17 +83,17 @@ export function parseThinkingSummaryRequest(
     throw new ThinkingSummaryInputError('Provider fields must be strings.');
   }
   const provider = normalizeChatProviderSelection({ providerType, providerId });
-  const usesDsh =
-    provider?.providerType === 'agent' && provider.providerId === 'dsh';
-  if (provider?.providerType === 'agent' && !usesDsh) {
+  const usesStrands =
+    provider?.providerType === 'agent' && provider.providerId === 'strands';
+  if (provider?.providerType === 'agent' && !usesStrands) {
     throw new ChatProviderSelectionError(
-      'Thinking summaries require an Ollama, plugin, or DeepSeek Harness model.'
+      'Thinking summaries require an Ollama, plugin, or Strands model.'
     );
   }
   const maxModelLength =
-    usesDsh &&
+    usesStrands &&
     typeof model === 'string' &&
-    (model === 'dsh' || model.startsWith('dsh:'))
+    (model === 'strands' || model.startsWith('strands:'))
       ? 2048
       : 256;
   if (
@@ -171,8 +169,7 @@ interface ThinkingSummaryDependencies {
     ): Promise<OllamaChatResponse>;
   };
   timeoutMs?: number;
-  resolveDshProviderTarget?: DshAuxiliaryTargetResolver;
-  generateDshText?: DshTextGenerator;
+  resolveStrandsProviderTarget?: StrandsAuxiliaryTargetResolver;
 }
 
 interface SummarizeThinkingOptions extends ChatProviderSelection {
@@ -254,15 +251,15 @@ export class ThinkingSummaryService {
       ) {
         provider = undefined;
       }
-      const usesDsh =
-        provider?.providerType === 'agent' && provider.providerId === 'dsh';
-      if (provider?.providerType === 'agent' && !usesDsh) {
+      const usesStrands =
+        provider?.providerType === 'agent' && provider.providerId === 'strands';
+      if (provider?.providerType === 'agent' && !usesStrands) {
         throw new ChatProviderSelectionError(
-          'Thinking summaries require an Ollama, plugin, or DeepSeek Harness model.'
+          'Thinking summaries require an Ollama, plugin, or Strands model.'
         );
       }
       let model = usesCurrentModel
-        ? usesDsh
+        ? usesStrands
           ? session.model
           : await wait(() =>
               chatGenerationService.resolveActualModelName(
@@ -271,30 +268,14 @@ export class ThinkingSummaryService {
               )
             )
         : request.model;
-      if (usesDsh) {
+      if (usesStrands) {
         const resolved = await wait(() =>
           (
-            this.dependencies.resolveDshProviderTarget ??
-            resolveDshAuxiliaryTarget
+            this.dependencies.resolveStrandsProviderTarget ??
+            resolveStrandsAuxiliaryTarget
           )(model, userId)
         );
         model = resolved.model;
-        if (resolved.providerType === 'dsh') {
-          if (!resolved.providerId)
-            throw new Error('Native DSH provider identity is missing.');
-          const raw = await wait(() =>
-            (this.dependencies.generateDshText ?? generateNativeDshText)({
-              model,
-              providerId: resolved.providerId!,
-              userId,
-              prompt: buildThinkingSummaryPrompt(request.thinking),
-              purpose: 'session-title',
-              signal,
-            })
-          );
-          signal.throwIfAborted();
-          return { summary: sanitizeSummary(raw) };
-        }
         provider = normalizeChatProviderSelection(resolved);
       }
       const options: GenerationOptions = {

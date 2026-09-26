@@ -40,7 +40,8 @@
     "custom": "Tilpasset",
     "remove": "Fjern",
     "home": "Hjem",
-    "more": "Mere"
+    "more": "Mere",
+    "reasoning": "Ræsonnement"
   },
   "brand": {
     "name": "Libre WebUI",
@@ -528,7 +529,6 @@
       "models": "Modeller",
       "personas": "Personaer",
       "imagine": "Forestil",
-      "agents": "Agenter",
       "work": "Arbejde",
       "settings": "Indstillinger",
       "usageAnalytics": "Udbyderforbrug",
@@ -543,7 +543,7 @@
       "skills": "Færdigheder",
       "tools": "Værktøjer",
       "channels": "Kanaler",
-      "cordis": "Cordis-motor"
+      "strands": "Strands"
     },
     "toggleSize": "Skift sidebjælkestørrelse",
     "expandSidebar": "Udvid sidebjælke"
@@ -1830,13 +1830,6 @@
       "saved": "Standardtema opdateret",
       "saveFailed": "Standardtemaet kunne ikke opdateres"
     },
-    "agentAccess": {
-      "title": "Libre Claw",
-      "description": "Vis Libre Claw-arbejdsområdet for administratorer.",
-      "saved": "Agent-adgang opdateret",
-      "saveFailed": "Kunne ikke opdatere agent-adgang",
-      "lockedByEnv": "Fastlåst af miljøvariablen LIBRE_CLAW_ENABLED."
-    },
     "groups": {
       "title": "Grupper",
       "description": "Saml konti i grupper for at administrere delt adgang, og se hvad en konto reelt kan gøre.",
@@ -1973,13 +1966,17 @@
       "saved": "E-mailindstillingerne er gemt.",
       "saveFailed": "E-mailindstillingerne kunne ikke gemmes."
     },
-    "cordisAccess": {
-      "title": "Cordis-motor",
-      "description": "Tilbyd Cordis-motoren til administratorer. Den kører værktøjer med rigtig filsystemadgang uden for Libre WebUIs godkendelsesflow.",
-      "saved": "Cordis-adgang opdateret",
-      "saveFailed": "Cordis-adgang kunne ikke opdateres",
-      "lockedByEnv": "Låst af miljøvariablen LIBRE_CORDIS_ENABLED.",
-      "lockedByFile": "Låst af features.enabled i cordis.config.yml."
+    "strandsAccess": {
+      "title": "Strands-motor",
+      "description": "Vælg, hvem der kan bruge den indbyggede Strands-agent. Den kan læse og redigere filer i hver sessions private arbejdsområde, men den kan ikke køre shell-kommandoer.",
+      "saved": "Strands-adgang opdateret",
+      "saveFailed": "Kunne ikke opdatere Strands-adgang",
+      "lockedByEnv": "Fastlåst af miljøvariablen LIBRE_STRANDS_ACCESS.",
+      "modes": {
+        "disabled": "Fra",
+        "admins": "Administratorer",
+        "all-users": "Alle brugere"
+      }
     },
     "agentCliAccess": {
       "title": "CLI-agentmodeller",
@@ -2070,7 +2067,7 @@
     },
     "agents": {
       "title": "Agenter",
-      "description": "CLI-agentkald og native DSH-anmodninger. DSH med Libre WebUI-modeller tælles under modeludbyderen.",
+      "description": "Kald til CLI-agenter og Strands-motoren.",
       "noCalls": "Ingen registrerede kald i denne periode",
       "unreported": "Tokens ikke rapporteret",
       "topModels": "Mest brugte modeller",
@@ -2573,144 +2570,6 @@
     "title": "Demotilstand",
     "github": "GitHub"
   },
-  "libreClaw": {
-    "title": "Agenter",
-    "subtitle": "Lokale agentkørsler, godkendelser, tidsplaner, hukommelse, værktøjer og brug.",
-    "dashboard": "Dashboard",
-    "connection": {
-      "disconnectedTitle": "Libre Claw-dæmonen er ikke forbundet",
-      "disconnectedDescription": "Start det lokalt med <command>libre-claw start</command> eller indstil <env>LIBRE_CLAW_BASE_URL</env> i backend-miljøet."
-    },
-    "status": {
-      "connected": "Forbundet",
-      "disconnected": "Afbrudt",
-      "activeRuns": "{{count}} aktiv",
-      "activeRuns_plural": "{{count}} aktiv"
-    },
-    "states": {
-      "queued": "I kø",
-      "running": "Kører",
-      "blocked": "Blokeret",
-      "done": "Færdig",
-      "failed": "Mislykkedes",
-      "cancelled": "Annulleret"
-    },
-    "startRun": {
-      "title": "Start agentkørsel",
-      "placeholder": "Bed Libre Claw om at inspicere en repo, rette en fejl, køre en anmeldelse, planlægge en rapport...",
-      "chatRun": "Chat køre",
-      "goalMode": "Måltilstand",
-      "providerOverride": "Udbyder tilsidesættelse",
-      "modelOverride": "Model tilsidesættelse",
-      "run": "Kør"
-    },
-    "modelRoute": {
-      "title": "Model Rute",
-      "providerPlaceholder": "udbyder",
-      "modelPlaceholder": "model",
-      "persistGlobal": "Fortsæt til Libre Claw global konfig",
-      "saveModel": "Gem model",
-      "theme": "Libre Claw-tema",
-      "saveTheme": "Gem tema"
-    },
-    "runs": {
-      "title": "Kørsler",
-      "empty": "Ingen Libre Claw-kørsler endnu."
-    },
-    "timeline": {
-      "title": "Kørselstidslinje",
-      "empty": "Vælg en løbetur for at inspicere dens begivenheder.",
-      "streaming": "Streamer...",
-      "assistantResponse": "Assistent-svar",
-      "resultOk": "ok",
-      "resultError": "fejl",
-      "labels": {
-        "userMessage": "Bruger besked",
-        "toolCall": "Værktøjskald",
-        "toolResult": "Værktøjsresultat",
-        "approvalRequest": "Anmodning om godkendelse",
-        "approvalResponse": "Godkendelsessvar",
-        "runStarted": "Kørsel startet",
-        "runFinished": "Kørsel afsluttet",
-        "usage": "Brug",
-        "error": "Fejl"
-      }
-    },
-    "approvals": {
-      "needed": "Godkendelse nødvendig",
-      "allowOnce": "Tillad én gang",
-      "alwaysAllowTool": "Tillad altid værktøj",
-      "deny": "Afvis",
-      "toolApprovalRequested": "Værktøjsgodkendelse anmodet"
-    },
-    "automations": {
-      "title": "Automatiseringer",
-      "namePlaceholder": "Navn",
-      "schedulePlaceholder": "daily 09:00",
-      "promptPlaceholder": "Automatiseringsprompt",
-      "create": "Opret",
-      "empty": "Ingen planlagte Libre Claw automatiseringer.",
-      "runNow": "Kør nu",
-      "pause": "Pause",
-      "resume": "Genoptag",
-      "routes": {
-        "report": "Rapport",
-        "telegram": "Telegram"
-      },
-      "status": {
-        "active": "Aktiv",
-        "paused": "Pause"
-      }
-    },
-    "usageFallback": {
-      "title": "Brug og Fallback",
-      "usage": "Brug",
-      "fallbackRoute": "Reserverute",
-      "noUsage": "Ingen brugsregistreringer endnu."
-    },
-    "metrics": {
-      "provider": "Udbyder",
-      "model": "Model",
-      "input": "Input",
-      "output": "Output",
-      "cached": "Cachelagret",
-      "reasoning": "Ræsonnement",
-      "cost": "Omkostninger",
-      "tool": "Værktøj",
-      "resolution": "Opløsning",
-      "state": "Status",
-      "stopReason": "Stopårsag",
-      "tokens": "{{formatted}} token",
-      "tokens_plural": "{{formatted}} poletter"
-    },
-    "fallbacks": {
-      "tool": "værktøj",
-      "unknown": "ukendt",
-      "resolved": "løst",
-      "unknownError": "Ukendt fejl"
-    },
-    "toasts": {
-      "loadStatusFailed": "Kunne ikke indlæse Libre Claw-status",
-      "enterTask": "Indtast en opgave til Libre Claw",
-      "runStarted": "Libre Claw-kørsel startet",
-      "startRunFailed": "Kunne ikke starte Libre Claw-kørsel",
-      "runCancelled": "Kørsel annulleret",
-      "cancelRunFailed": "Kørslen kunne ikke annulleres",
-      "approved": "Godkendt",
-      "denied": "Afvist",
-      "resolvePermissionFailed": "Kunne ikke løse tilladelsen",
-      "providerModelRequired": "Udbyder og model er påkrævet",
-      "modelUpdated": "Libre Claw-model opdateret",
-      "updateModelFailed": "Modellen kunne ikke opdateres",
-      "themeUpdated": "Libre Claw-tema opdateret",
-      "updateThemeFailed": "Temaet kunne ikke opdateres",
-      "automationRequired": "Automatiseringsnavn, tidsplan og prompt er påkrævet",
-      "automationCreated": "Automatisering oprettet",
-      "createAutomationFailed": "Kunne ikke oprette automatisering",
-      "automationUpdated": "Automatisering opdateret",
-      "updateAutomationFailed": "Automatiseringen kunne ikke opdateres"
-    }
-  },
   "work": {
     "title": "Arbejde",
     "subtitle": "Isolerede arbejdsområder til modeller",
@@ -2758,9 +2617,8 @@
       "noModelSelected": "Der er ikke valgt en model, der er kompatibel med Arbejde.",
       "mentionAgents": "Nævn en agent",
       "engine": "Motor",
-      "nativeDshModels": "Native DSH-modeller",
       "libreModels": "Libre WebUI-modeller",
-      "nativeDshUnavailable": "Native DSH-modeller er ikke tilgængelige. Opdater modellisten, eller kontrollér udbyderens konfiguration.",
+      "strandsDisabled": "Strands-motoren er ikke tilgængelig for din konto.",
       "modelLabel": "Model"
     },
     "conversation": {
@@ -3941,41 +3799,34 @@
       "saveFailed": "Kunne ikke gemme API-nøglen"
     }
   },
-  "cordis": {
-    "title": "Cordis-motor",
-    "description": "Sessioner, værktøjer og chat til den indlejrede DeepSeek Harness-motor.",
+  "strands": {
+    "title": "Strands",
+    "subtitle": "Indbygget agentmotor, der kører på dine Libre WebUI-modeller.",
+    "subtitleVersion": "Indbygget agentmotor, harness {{version}}.",
     "newSession": "Ny session",
-    "createFailed": "Sessionen kunne ikke oprettes.",
-    "deleteFailed": "Sessionen kunne ikke slettes.",
-    "sendFailed": "Motoren kunne ikke fuldføre turen.",
-    "sessionsHeading": "Sessioner",
-    "toolsHeading": "Værktøjer",
-    "transcriptHeading": "Transskription",
+    "sessions": "Sessioner",
     "noSessions": "Ingen sessioner endnu. Opret en for at begynde.",
-    "noTools": "Motoren registrerede ingen værktøjer.",
-    "selectSession": "Vælg en session, eller opret en for at begynde.",
-    "working": "Agenten arbejder…",
-    "composerLabel": "Besked til motoren",
-    "composerPlaceholder": "Bed motoren om at gøre noget…",
+    "empty": "Bed agenten om at læse eller redigere filer i sit arbejdsområde.",
+    "placeholder": "Bed motoren om at gøre noget…",
+    "model": "Model",
+    "defaultModel": "Standardmodel",
     "send": "Send",
     "stop": "Stop",
-    "deleteSession": "Slet session",
-    "unknownTime": "Ukendt tidspunkt",
-    "disabledTitle": "Cordis-motoren er slået fra",
-    "disabledHint": "En administrator kan slå det til under Brugerstyring → Adgang og politikker.",
-    "unavailableTitle": "Cordis-motoren kunne ikke starte",
-    "role": {
-      "user": "Dig",
-      "assistant": "Motor",
-      "system": "System",
-      "tool": "Værktøj",
-      "unknown": "Besked"
+    "reasoning": "Ræsonnement",
+    "tool": {
+      "running": "Kører",
+      "done": "Færdig",
+      "failed": "Mislykkedes"
     },
-    "turnFailed": "Motoren kunne ikke fuldføre turen",
-    "permissions": "Tilladelser",
-    "readOnly": "Kun læsning",
-    "workspaceWrite": "Skrivning i arbejdsområdet",
-    "context": "Sessionskontekst",
-    "permissionHint": "Kun læsning giver adgang til at se filer. Skrivning tillader ændringer i denne sessions arbejdsområde."
+    "cancelled": "Annulleret",
+    "turnLimit": "Stoppet ved grænsen for antal ture.",
+    "messageCount": "Beskeder: {{count}}",
+    "deleteSession": "Slet session",
+    "deleteConfirm": "Slet \"{{title}}\" og dens historik?",
+    "loadFailed": "Kunne ikke indlæse Strands.",
+    "createFailed": "Sessionen kunne ikke oprettes.",
+    "deleteFailed": "Sessionen kunne ikke slettes.",
+    "saveFailed": "Kunne ikke gemme sessionen.",
+    "turnFailed": "Motoren kunne ikke fuldføre turen"
   }
 }

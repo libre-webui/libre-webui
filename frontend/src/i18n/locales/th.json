@@ -40,7 +40,8 @@
     "custom": "กำหนดเอง",
     "remove": "ลบ",
     "home": "หน้าหลัก",
-    "more": "มาก"
+    "more": "มาก",
+    "reasoning": "การใช้เหตุผล"
   },
   "brand": {
     "name": "Libre WebUI",
@@ -528,7 +529,6 @@
       "models": "โมเดล",
       "personas": "เพอร์โซน่า",
       "imagine": "จินตนาการ",
-      "agents": "เอเจนต์",
       "work": "งาน",
       "settings": "การตั้งค่า",
       "usageAnalytics": "การใช้งานผู้ให้บริการ",
@@ -543,7 +543,7 @@
       "skills": "ทักษะ",
       "tools": "เครื่องมือ",
       "channels": "แชนเนล",
-      "cordis": "เอนจิน Cordis"
+      "strands": "Strands"
     },
     "toggleSize": "สลับขนาดแถบด้านข้าง",
     "expandSidebar": "ขยายแถบด้านข้าง"
@@ -1830,13 +1830,6 @@
       "saved": "อัปเดตธีมเริ่มต้นแล้ว",
       "saveFailed": "ไม่สามารถอัปเดตธีมเริ่มต้นได้"
     },
-    "agentAccess": {
-      "title": "Libre Claw",
-      "description": "แสดงพื้นที่ทำงาน Libre Claw ให้ผู้ดูแลระบบ",
-      "saved": "อัปเดตการเข้าถึงเอเจนต์แล้ว",
-      "saveFailed": "ไม่สามารถอัปเดตการเข้าถึงเอเจนต์ได้",
-      "lockedByEnv": "ถูกกำหนดโดยตัวแปรสภาพแวดล้อม LIBRE_CLAW_ENABLED"
-    },
     "groups": {
       "title": "กลุ่ม",
       "description": "จัดกลุ่มบัญชีเพื่อจัดการการเข้าถึงร่วมกัน และตรวจสอบว่าแต่ละบัญชีทำอะไรได้บ้างจริง ๆ",
@@ -1973,13 +1966,17 @@
       "saved": "บันทึกการตั้งค่าอีเมลแล้ว",
       "saveFailed": "ไม่สามารถบันทึกการตั้งค่าอีเมลได้"
     },
-    "cordisAccess": {
-      "title": "เอนจิน Cordis",
-      "description": "เปิดให้ผู้ดูแลระบบใช้เอนจิน Cordis ซึ่งเรียกใช้เครื่องมือด้วยการเข้าถึงไฟล์จริงนอกขั้นตอนอนุมัติเครื่องมือของ Libre WebUI",
-      "saved": "อัปเดตการเข้าถึง Cordis แล้ว",
-      "saveFailed": "ไม่สามารถอัปเดตการเข้าถึง Cordis ได้",
-      "lockedByEnv": "ถูกกำหนดโดยตัวแปรสภาพแวดล้อม LIBRE_CORDIS_ENABLED",
-      "lockedByFile": "ถูกกำหนดโดย features.enabled ใน cordis.config.yml"
+    "strandsAccess": {
+      "title": "เอนจิน Strands",
+      "description": "เลือกผู้ที่ใช้เอเจนต์ Strands ในตัวได้ เอเจนต์สามารถอ่านและแก้ไขไฟล์ในพื้นที่ทำงานส่วนตัวของแต่ละเซสชัน แต่ไม่สามารถรันคำสั่งเชลล์ได้",
+      "saved": "อัปเดตสิทธิ์เข้าถึง Strands แล้ว",
+      "saveFailed": "ไม่สามารถอัปเดตสิทธิ์เข้าถึง Strands ได้",
+      "lockedByEnv": "กำหนดไว้โดยตัวแปรสภาพแวดล้อม LIBRE_STRANDS_ACCESS",
+      "modes": {
+        "disabled": "ปิด",
+        "admins": "ผู้ดูแลระบบ",
+        "all-users": "ผู้ใช้ทั้งหมด"
+      }
     },
     "agentCliAccess": {
       "title": "โมเดลเอเจนต์ CLI",
@@ -2070,7 +2067,7 @@
     },
     "agents": {
       "title": "เอเจนต์",
-      "description": "การเรียกเอเจนต์ CLI และคำขอ DSH แบบเนทีฟ การใช้ DSH กับโมเดล Libre WebUI จะนับรวมภายใต้ผู้ให้บริการโมเดลนั้น",
+      "description": "การเรียกเอเจนต์ CLI และเอนจิน Strands",
       "noCalls": "ไม่มีการเรียกที่บันทึกไว้ในช่วงเวลานี้",
       "unreported": "ไม่ได้รายงานโทเคน",
       "topModels": "โมเดลที่ใช้มากที่สุด",
@@ -2573,144 +2570,6 @@
     "title": "โหมดสาธิต",
     "github": "GitHub"
   },
-  "libreClaw": {
-    "title": "เอเจนต์",
-    "subtitle": "การเรียกใช้ตัวแทนในพื้นที่ การอนุมัติ กำหนดการ หน่วยความจำ เครื่องมือ และการใช้งาน",
-    "dashboard": "แดชบอร์ด",
-    "connection": {
-      "disconnectedTitle": "daemon ของ Libre Claw ไม่ได้เชื่อมต่อ",
-      "disconnectedDescription": "เริ่มต้นในเครื่องด้วย <command>libre-claw start</command> หรือตั้งค่า <env>LIBRE_CLAW_BASE_URL</env> ในสภาพแวดล้อมแบ็กเอนด์"
-    },
-    "status": {
-      "connected": "เชื่อมต่อแล้ว",
-      "disconnected": "ตัดการเชื่อมต่อแล้ว",
-      "activeRuns": "{{count}} ใช้งานอยู่",
-      "activeRuns_plural": "{{count}} ใช้งานอยู่"
-    },
-    "states": {
-      "queued": "เข้าคิว",
-      "running": "กำลังทำงาน",
-      "blocked": "ถูกบล็อก",
-      "done": "เสร็จแล้ว",
-      "failed": "ล้มเหลว",
-      "cancelled": "ยกเลิกแล้ว"
-    },
-    "startRun": {
-      "title": "เริ่มการทำงานของเอเจนต์",
-      "placeholder": "ขอให้ Libre Claw ตรวจสอบ repo แก้ไขข้อบกพร่อง เรียกใช้การตรวจสอบ กำหนดเวลารายงาน...",
-      "chatRun": "แชทวิ่ง",
-      "goalMode": "โหมดเป้าหมาย",
-      "providerOverride": "การแทนที่ผู้ให้บริการ",
-      "modelOverride": "การแทนที่โมเดล",
-      "run": "เรียกใช้"
-    },
-    "modelRoute": {
-      "title": "เส้นทางจำลอง",
-      "providerPlaceholder": "ผู้ให้บริการ",
-      "modelPlaceholder": "โมเดล",
-      "persistGlobal": "คงอยู่ใน Libre Claw การกำหนดค่าส่วนกลาง",
-      "saveModel": "บันทึกโมเดล",
-      "theme": "ธีม Libre Claw",
-      "saveTheme": "บันทึกธีม"
-    },
-    "runs": {
-      "title": "การทำงาน",
-      "empty": "ยังไม่มีการทำงานของ Libre Claw"
-    },
-    "timeline": {
-      "title": "ไทม์ไลน์การทำงาน",
-      "empty": "เลือกการวิ่งเพื่อตรวจสอบเหตุการณ์",
-      "streaming": "กำลังสตรีม...",
-      "assistantResponse": "การตอบสนองของผู้ช่วย",
-      "resultOk": "ตกลง",
-      "resultError": "ข้อผิดพลาด",
-      "labels": {
-        "userMessage": "ข้อความของผู้ใช้",
-        "toolCall": "การเรียกเครื่องมือ",
-        "toolResult": "ผลลัพธ์ของเครื่องมือ",
-        "approvalRequest": "ขออนุมัติ",
-        "approvalResponse": "การตอบรับการอนุมัติ",
-        "runStarted": "เริ่มการทำงานแล้ว",
-        "runFinished": "การทำงานเสร็จสิ้น",
-        "usage": "การใช้งาน",
-        "error": "เกิดข้อผิดพลาด"
-      }
-    },
-    "approvals": {
-      "needed": "จำเป็นต้องได้รับการอนุมัติ",
-      "allowOnce": "อนุญาตครั้งหนึ่ง",
-      "alwaysAllowTool": "อนุญาตเครื่องมือเสมอ",
-      "deny": "ปฏิเสธ",
-      "toolApprovalRequested": "ร้องขอการอนุมัติเครื่องมือ"
-    },
-    "automations": {
-      "title": "ระบบอัตโนมัติ",
-      "namePlaceholder": "ชื่อ",
-      "schedulePlaceholder": "daily 09:00",
-      "promptPlaceholder": "พรอมต์อัตโนมัติ",
-      "create": "สร้าง",
-      "empty": "ไม่มีการกำหนด Libre Claw การทำงานอัตโนมัติ",
-      "runNow": "เรียกใช้ตอนนี้",
-      "pause": "หยุดชั่วคราว",
-      "resume": "ดำเนินการต่อ",
-      "routes": {
-        "report": "รายงาน",
-        "telegram": "Telegram"
-      },
-      "status": {
-        "active": "ใช้งานอยู่",
-        "paused": "หยุดชั่วคราว"
-      }
-    },
-    "usageFallback": {
-      "title": "การใช้งานและทางเลือก",
-      "usage": "การใช้งาน",
-      "fallbackRoute": "เส้นทางสำรอง",
-      "noUsage": "ยังไม่มีบันทึกการใช้งาน"
-    },
-    "metrics": {
-      "provider": "ผู้ให้บริการ",
-      "model": "รุ่น",
-      "input": "อินพุต",
-      "output": "เอาท์พุต",
-      "cached": "แคช",
-      "reasoning": "การใช้เหตุผล",
-      "cost": "ราคา",
-      "tool": "เครื่องมือ",
-      "resolution": "ความละเอียด",
-      "state": "สถานะ",
-      "stopReason": "เหตุผลที่หยุด",
-      "tokens": "โทเค็น {{formatted}}",
-      "tokens_plural": "โทเค็น {{formatted}}"
-    },
-    "fallbacks": {
-      "tool": "เครื่องมือ",
-      "unknown": "ไม่ทราบ",
-      "resolved": "แก้ไขแล้ว",
-      "unknownError": "ข้อผิดพลาดที่ไม่รู้จัก"
-    },
-    "toasts": {
-      "loadStatusFailed": "ไม่สามารถโหลดสถานะ Libre Claw",
-      "enterTask": "ป้อนงานสำหรับ Libre Claw",
-      "runStarted": "เริ่มการทำงานของ Libre Claw แล้ว",
-      "startRunFailed": "ไม่สามารถเริ่มการทำงานของ Libre Claw ได้",
-      "runCancelled": "ยกเลิกการทำงานแล้ว",
-      "cancelRunFailed": "ไม่สามารถยกเลิกการทำงานได้",
-      "approved": "อนุมัติแล้ว",
-      "denied": "ถูกปฏิเสธ",
-      "resolvePermissionFailed": "ไม่สามารถแก้ไขการอนุญาตได้",
-      "providerModelRequired": "ต้องระบุผู้ให้บริการและรุ่น",
-      "modelUpdated": "อัปเดตโมเดล Libre Claw แล้ว",
-      "updateModelFailed": "ไม่สามารถอัปเดตโมเดลได้",
-      "themeUpdated": "อัปเดตธีม Libre Claw แล้ว",
-      "updateThemeFailed": "ไม่สามารถอัปเดตธีมได้",
-      "automationRequired": "ต้องมีชื่อการทำงานอัตโนมัติ กำหนดการ และพร้อมท์",
-      "automationCreated": "สร้างระบบอัตโนมัติแล้ว",
-      "createAutomationFailed": "ไม่สามารถสร้างระบบอัตโนมัติได้",
-      "automationUpdated": "อัปเดตระบบอัตโนมัติแล้ว",
-      "updateAutomationFailed": "ไม่สามารถอัปเดตการทำงานอัตโนมัติได้"
-    }
-  },
   "work": {
     "title": "งาน",
     "subtitle": "พื้นที่ทำงานของโมเดลแบบแยกอิสระ",
@@ -2758,9 +2617,8 @@
       "noModelSelected": "ยังไม่ได้เลือกโมเดลที่รองรับโหมดงาน",
       "mentionAgents": "กล่าวถึงเอเจนต์",
       "engine": "เอนจิน",
-      "nativeDshModels": "โมเดล DSH ดั้งเดิม",
       "libreModels": "โมเดล Libre WebUI",
-      "nativeDshUnavailable": "โมเดล DSH ดั้งเดิมไม่พร้อมใช้งาน รีเฟรชรายการโมเดลหรือตรวจสอบการตั้งค่าผู้ให้บริการ",
+      "strandsDisabled": "เอนจิน Strands ไม่พร้อมใช้งานสำหรับบัญชีของคุณ",
       "modelLabel": "โมเดล"
     },
     "conversation": {
@@ -3941,41 +3799,34 @@
       "saveFailed": "ไม่สามารถบันทึก API Key ได้"
     }
   },
-  "cordis": {
-    "title": "เอนจิน Cordis",
-    "description": "เซสชัน เครื่องมือ และแชตสำหรับเอนจิน DeepSeek Harness ที่ฝังอยู่",
+  "strands": {
+    "title": "Strands",
+    "subtitle": "เอนจินเอเจนต์ในตัวที่ทำงานบนโมเดล Libre WebUI ของคุณ",
+    "subtitleVersion": "เอนจินเอเจนต์ในตัว, harness {{version}}",
     "newSession": "เซสชันใหม่",
-    "createFailed": "สร้างเซสชันไม่สำเร็จ",
-    "deleteFailed": "ลบเซสชันไม่สำเร็จ",
-    "sendFailed": "เอนจินทำงานรอบนี้ไม่สำเร็จ",
-    "sessionsHeading": "เซสชัน",
-    "toolsHeading": "เครื่องมือ",
-    "transcriptHeading": "บันทึกบทสนทนา",
+    "sessions": "เซสชัน",
     "noSessions": "ยังไม่มีเซสชัน สร้างหนึ่งรายการเพื่อเริ่ม",
-    "noTools": "เอนจินไม่ได้ลงทะเบียนเครื่องมือใด ๆ",
-    "selectSession": "เลือกเซสชัน หรือสร้างใหม่เพื่อเริ่ม",
-    "working": "เอเจนต์กำลังทำงาน…",
-    "composerLabel": "ข้อความถึงเอนจิน",
-    "composerPlaceholder": "ขอให้เอนจินทำบางสิ่ง…",
+    "empty": "ขอให้เอเจนต์อ่านหรือแก้ไขไฟล์ในพื้นที่ทำงานของตน",
+    "placeholder": "ขอให้เอนจินทำบางสิ่ง…",
+    "model": "โมเดล",
+    "defaultModel": "โมเดลเริ่มต้น",
     "send": "ส่ง",
     "stop": "หยุด",
-    "deleteSession": "ลบเซสชัน",
-    "unknownTime": "เวลาไม่ทราบ",
-    "disabledTitle": "เอนจิน Cordis ปิดอยู่",
-    "disabledHint": "ผู้ดูแลระบบสามารถเปิดได้ที่ การจัดการผู้ใช้ → การเข้าถึงและนโยบาย",
-    "unavailableTitle": "เอนจิน Cordis เริ่มทำงานไม่สำเร็จ",
-    "role": {
-      "user": "คุณ",
-      "assistant": "เอนจิน",
-      "system": "ระบบ",
-      "tool": "เครื่องมือ",
-      "unknown": "ข้อความ"
+    "reasoning": "การใช้เหตุผล",
+    "tool": {
+      "running": "กำลังทำงาน",
+      "done": "เสร็จแล้ว",
+      "failed": "ล้มเหลว"
     },
-    "turnFailed": "เอนจินทำงานรอบนี้ไม่สำเร็จ",
-    "permissions": "สิทธิ์",
-    "readOnly": "อ่านอย่างเดียว",
-    "workspaceWrite": "เขียนในพื้นที่ทำงาน",
-    "context": "บริบทเซสชัน",
-    "permissionHint": "โหมดอ่านอย่างเดียวใช้ตรวจสอบไฟล์ได้ การเขียนในพื้นที่ทำงานอนุญาตให้แก้ไขภายในพื้นที่ทำงานของเซสชันนี้"
+    "cancelled": "ยกเลิกแล้ว",
+    "turnLimit": "หยุดเมื่อถึงขีดจำกัดจำนวนรอบ",
+    "messageCount": "ข้อความ: {{count}}",
+    "deleteSession": "ลบเซสชัน",
+    "deleteConfirm": "ลบ \"{{title}}\" และประวัติหรือไม่",
+    "loadFailed": "ไม่สามารถโหลด Strands ได้",
+    "createFailed": "สร้างเซสชันไม่สำเร็จ",
+    "deleteFailed": "ลบเซสชันไม่สำเร็จ",
+    "saveFailed": "ไม่สามารถบันทึกเซสชันได้",
+    "turnFailed": "เอนจินทำงานรอบนี้ไม่สำเร็จ"
   }
 }

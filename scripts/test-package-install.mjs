@@ -278,8 +278,7 @@ test(
       OLLAMA_BASE_URL: 'http://127.0.0.1:9',
       CODEX_OAUTH_MODELS_ENABLED: 'false',
       AGENT_CLI_MODELS_ENABLED: 'false',
-      LIBRE_CLAW_ENABLED: 'false',
-      LIBRE_CORDIS_ENABLED: 'false',
+      LIBRE_STRANDS_ACCESS: 'disabled',
     };
     if (!process.argv[2]) {
       await fs.access(path.join(repoRoot, 'backend/dist/main.js'));
@@ -352,10 +351,8 @@ test(
       'ws',
       'undici',
       '@aws-sdk/client-s3',
-      '@deepseek-ai/cordis',
-      '@deepseek-ai/dsh-llm',
-      '@deepseek-ai/dsh-agent-loop',
-      '@deepseek-ai/dsh-session-persistence-jsonl',
+      '@strands-agents/harness',
+      '@strands-agents/sdk',
     ]) {
       const resolved = await fs.realpath(installedRequire.resolve(dependency));
       assert.ok(

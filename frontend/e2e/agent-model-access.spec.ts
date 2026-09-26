@@ -33,6 +33,16 @@ const legacy = [
   binaryPath: '/fixture/bin/agent',
 }));
 
+const strandsAgent = {
+  id: 'strands',
+  name: 'Strands',
+  agentId: 'strands',
+  command: 'strands',
+  binaryPath: '',
+};
+
+type StrandsMode = 'disabled' | 'admins' | 'all-users';
+
 async function openPicker(page: Page) {
   await page
     .locator('main button[aria-haspopup="dialog"]')
@@ -52,21 +62,19 @@ async function openAccess(page: Page) {
     .click();
 }
 
-for (const toggle of ['cli', 'cordis', 'claw'] as const) {
+for (const toggle of ['cli', 'strands'] as const) {
   test(`changing ${toggle} access updates only its Chat model access without a reload`, async ({
     page,
   }) => {
-    let clawEnabled = false;
     let cliEnabled = toggle !== 'cli';
-    let cordisEnabled = toggle !== 'cordis';
+    let strandsMode: StrandsMode = toggle === 'strands' ? 'disabled' : 'admins';
     let modelReads = 0;
     await mockLibreWebUiApi(page, {
       systemInfo: {
         ...defaultSystemInfo,
         requiresAuth: true,
-        agentsEnabled: clawEnabled,
         agentCliModelsEnabled: cliEnabled,
-        cordisEnabled,
+        strandsAccess: strandsMode,
       },
       authUsers: [
         {
@@ -96,33 +104,13 @@ for (const toggle of ['cli', 'cordis', 'claw'] as const) {
     );
     await page.route('**/api/agent-clis/models', async route => {
       modelReads += 1;
-      const models = cliEnabled
-        ? [
-            ...legacy,
-            ...(cordisEnabled
-              ? [
-                  {
-                    id: 'dsh',
-                    name: 'DeepSeek Harness',
-                    agentId: 'dsh',
-                    command: '',
-                    binaryPath: '',
-                  },
-                ]
-              : []),
-          ]
-        : [];
+      // Mirrors the backend: installed CLIs follow the CLI opt-in, while the
+      // embedded Strands engine follows its own access mode.
+      const models = [
+        ...(cliEnabled ? legacy : []),
+        ...(strandsMode !== 'disabled' ? [strandsAgent] : []),
+      ];
       await route.fulfill({ json: { success: true, data: models } });
-    });
-    await page.route('**/api/libre-claw/access', async route => {
-      if (route.request().method() === 'PUT')
-        clawEnabled = route.request().postDataJSON().enabled;
-      await route.fulfill({
-        json: {
-          success: true,
-          data: { enabled: clawEnabled, lockedByEnv: false },
-        },
-      });
     });
     await page.route('**/api/agent-clis/access', async route => {
       if (route.request().method() === 'PUT')
@@ -134,11 +122,14 @@ for (const toggle of ['cli', 'cordis', 'claw'] as const) {
         },
       });
     });
-    await page.route('**/api/cordis/access', async route => {
+    await page.route('**/api/strands/access', async route => {
       if (route.request().method() === 'PUT')
-        cordisEnabled = route.request().postDataJSON().enabled;
+        strandsMode = route.request().postDataJSON().mode;
       await route.fulfill({
-        json: { success: true, enabled: cordisEnabled, lockedByEnv: false },
+        json: {
+          success: true,
+          data: { mode: strandsMode, lockedByEnv: false },
+        },
       });
     });
     await page.goto('/chat');
@@ -148,43 +139,58 @@ for (const toggle of ['cli', 'cordis', 'claw'] as const) {
         toggle === 'cli' ? 0 : 1
       );
     }
-    await expect(
-      picker.getByText('DeepSeek Harness', { exact: true })
-    ).toHaveCount(toggle === 'claw' ? 1 : 0);
+    await expect(picker.getByText('Strands', { exact: true })).toHaveCount(
+      toggle === 'strands' ? 0 : 1
+    );
     await expect(
       picker.getByText('plugin-chat-model', { exact: true })
     ).toBeVisible();
     await page.keyboard.press('Escape');
-    // The chat category remains available even while Libre Claw navigation is off.
-    await expect(
-      page
-        .getByRole('navigation', { name: 'Explore' })
-        .getByRole('link', { name: 'Agents', exact: true })
-    ).toHaveCount(0);
 
     await openAccess(page);
-    await expect(
-      page
-        .getByTestId('agent-access-settings')
-        .getByRole('heading', { name: 'Libre Claw', exact: true })
-    ).toBeVisible();
     await expect(
       page
         .getByTestId('agent-cli-access-settings')
         .getByRole('heading', { name: 'Agent CLI models', exact: true })
     ).toBeVisible();
-    const card = page.getByTestId(
-      toggle === 'cli'
-        ? 'agent-cli-access-settings'
-        : toggle === 'claw'
-          ? 'agent-access-settings'
-          : 'cordis-access-settings'
-    );
-    await expect(card.getByRole('checkbox')).not.toBeChecked();
-    const previousReads = modelReads;
-    await card.locator('label').click();
-    await expect.poll(() => modelReads).toBeGreaterThan(previousReads);
-    await expect(card.getByRole('checkbox')).toBeEnabled();
+    await expect(
+      page
+        .getByTestId('strands-access-settings')
+        .getByRole('heading', { name: 'Strands engine', exact: true })
+    ).toBeVisible();
+
+    const enable = async () => {
+      const previousReads = modelReads;
+      if (toggle === 'cli') {
+        const card = page.getByTestId('agent-cli-access-settings');
+        await expect(card.getByRole('checkbox')).not.toBeChecked();
+        await card.locator('label').click();
+        await expect.poll(() => modelReads).toBeGreaterThan(previousReads);
+        await expect(card.getByRole('checkbox')).toBeEnabled();
+      } else {
+        const select = page.getByTestId('strands-access-mode');
+        await expect(select).toHaveValue('disabled');
+        await select.selectOption('admins');
+        await expect.poll(() => modelReads).toBeGreaterThan(previousReads);
+        await expect(select).toBeEnabled();
+      }
+    };
+    const disable = async () => {
+      const previousReads = modelReads;
+      if (toggle === 'cli') {
+        const card = page.getByTestId('agent-cli-access-settings');
+        await card.locator('label').click();
+        await expect.poll(() => modelReads).toBeGreaterThan(previousReads);
+        await expect(card.getByRole('checkbox')).toBeEnabled();
+      } else {
+        const select = page.getByTestId('strands-access-mode');
+        await select.selectOption('disabled');
+        await expect.poll(() => modelReads).toBeGreaterThan(previousReads);
+        await expect(select).toBeEnabled();
+      }
+    };
+
+    await enable();
     await page.keyboard.press('Escape');
     picker = await openPicker(page);
     await expect(picker.getByText('Agents (4)', { exact: true })).toBeVisible();
@@ -193,24 +199,19 @@ for (const toggle of ['cli', 'cordis', 'claw'] as const) {
         1
       );
     }
-    await expect(
-      picker.getByText('DeepSeek Harness', { exact: true })
-    ).toBeVisible();
+    await expect(picker.getByText('Strands', { exact: true })).toBeVisible();
     await expect(
       picker.getByText('plugin-chat-model', { exact: true })
     ).toBeVisible();
     await page.keyboard.press('Escape');
 
     await openAccess(page);
-    const beforeDisable = modelReads;
-    await card.locator('label').click();
-    await expect.poll(() => modelReads).toBeGreaterThan(beforeDisable);
-    await expect(card.getByRole('checkbox')).toBeEnabled();
+    await disable();
     await page.keyboard.press('Escape');
     picker = await openPicker(page);
-    await expect(
-      picker.getByText('DeepSeek Harness', { exact: true })
-    ).toHaveCount(toggle === 'claw' ? 1 : 0);
+    await expect(picker.getByText('Strands', { exact: true })).toHaveCount(
+      toggle === 'strands' ? 0 : 1
+    );
     for (const agent of legacy) {
       await expect(picker.getByText(agent.name, { exact: true })).toHaveCount(
         toggle === 'cli' ? 0 : 1

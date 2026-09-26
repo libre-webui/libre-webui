@@ -89,15 +89,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const loadingWorkTasks = useWorkStore(state => state.loadingTasks);
   const workActionLoading = useWorkStore(state => state.actionLoading);
   const deleteWorkTask = useWorkStore(state => state.deleteTask);
-  const {
-    user,
-    isAdmin,
-    systemInfo,
-    setUser,
-    canUseWork,
-    canUseAgents,
-    canUseCordis,
-  } = useAuthStore();
+  const { user, isAdmin, systemInfo, setUser, canUseWork, canUseStrands } =
+    useAuthStore();
   const {
     theme,
     sidebarCompact,
@@ -450,8 +443,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <SidebarNavigation
               sidebarCompact={sidebarCompact}
               activePath={location.pathname}
-              showAgents={canUseAgents()}
-              showCordis={canUseCordis()}
+              showStrands={canUseStrands()}
               unseenRunCount={unseenRunCount}
               onMobileNavigate={compactOnMobile}
             />

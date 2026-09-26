@@ -15,13 +15,18 @@
  * limitations under the License.
  */
 
-import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import React, {
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { createPortal } from 'react-dom';
 import { useLocation, useNavigate } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import {
   Bot,
-  Boxes,
   Briefcase,
   ChartNoAxesCombined,
   Ghost,
@@ -65,8 +70,7 @@ const PAGE_META: Record<string, { icon: IconComponent; labelKey: string }> = {
   },
   '/personas': { icon: UserIcon, labelKey: 'sidebar.navigation.personas' },
   '/gallery': { icon: Sparkles, labelKey: 'sidebar.navigation.imagine' },
-  '/agents': { icon: Bot, labelKey: 'sidebar.navigation.agents' },
-  '/cordis': { icon: Boxes, labelKey: 'sidebar.navigation.cordis' },
+  '/strands': { icon: Bot, labelKey: 'sidebar.navigation.strands' },
   '/usage': { icon: ChartNoAxesCombined, labelKey: 'usageAnalytics.title' },
   '/system': { icon: Server, labelKey: 'systemPage.title' },
   '/artifacts': { icon: Package, labelKey: 'tabs.artifacts' },
@@ -81,12 +85,18 @@ const tabIcon = (tab: AppTab): IconComponent => {
 
 const modKey = () => (isMac() ? '⌘' : 'Ctrl');
 
-const ADMIN_ONLY_TAB_PATHS = new Set(['/agents', '/usage', '/system']);
+const ADMIN_ONLY_TAB_PATHS = new Set(['/usage', '/system']);
 
-// Work tabs follow Work access (admins, or everyone once an administrator
-// opens Work up); the listed paths stay admin-only regardless.
-const isRestrictedTab = (tab: AppTab, canWork: boolean) =>
-  tab.kind === 'work' ? !canWork : ADMIN_ONLY_TAB_PATHS.has(tab.path);
+// Work and Strands tabs follow their access modes (admins, or everyone once
+// an administrator opens them up); the listed paths stay admin-only.
+const isRestrictedTab = (
+  tab: AppTab,
+  access: { work: boolean; strands: boolean }
+) => {
+  if (tab.kind === 'work') return !access.work;
+  if (tab.path === '/strands') return !access.strands;
+  return ADMIN_ONLY_TAB_PATHS.has(tab.path);
+};
 
 interface NewTabMenuItem {
   key: string;
@@ -121,8 +131,7 @@ export const AppTabBar: React.FC = () => {
   const sessions = useChatStore(state => state.sessions);
   const currentSession = useChatStore(state => state.currentSession);
   const workTasks = useWorkStore(state => state.tasks);
-  const { systemInfo, isAdmin, canUseWork, canUseAgents, canUseCordis } =
-    useAuthStore();
+  const { systemInfo, isAdmin, canUseWork, canUseStrands } = useAuthStore();
   const [menuOpen, setMenuOpen] = useState(false);
   const [menuPosition, setMenuPosition] = useState<NewTabMenuPosition | null>(
     null
@@ -141,9 +150,14 @@ export const AppTabBar: React.FC = () => {
   const admin = isAdmin();
   const showAdminWorkspace = systemInfo?.requiresAuth === false || admin;
   const showWork = canUseWork();
+  const showStrands = canUseStrands();
+  const tabAccess = useMemo(
+    () => ({ work: showWork, strands: showStrands }),
+    [showStrands, showWork]
+  );
   const accessibleTabs = showAdminWorkspace
     ? tabs
-    : tabs.filter(tab => !isRestrictedTab(tab, showWork));
+    : tabs.filter(tab => !isRestrictedTab(tab, tabAccess));
 
   useEffect(() => {
     syncWithPath(location.pathname);
@@ -212,12 +226,12 @@ export const AppTabBar: React.FC = () => {
   useEffect(() => {
     if (!systemInfo || showAdminWorkspace) return;
     const restrictedTabIds = tabs
-      .filter(tab => isRestrictedTab(tab, showWork))
+      .filter(tab => isRestrictedTab(tab, tabAccess))
       .map(tab => tab.id);
     if (restrictedTabIds.length === 0) return;
     const fallback = closeTabs(restrictedTabIds, 'home');
     if (fallback) navigate(fallback.path, { replace: true });
-  }, [closeTabs, navigate, showAdminWorkspace, showWork, systemInfo, tabs]);
+  }, [closeTabs, navigate, showAdminWorkspace, systemInfo, tabAccess, tabs]);
 
   useEffect(() => {
     if (!menuOpen && !contextMenu) return;
@@ -457,24 +471,14 @@ export const AppTabBar: React.FC = () => {
       icon: PAGE_META[path].icon,
       action: () => navigate(path),
     })),
-    ...(canUseAgents()
+    ...(showStrands
       ? [
           {
-            key: '/agents',
-            label: t(PAGE_META['/agents'].labelKey, 'Agents'),
-            icon: PAGE_META['/agents'].icon,
+            key: '/strands',
+            label: t(PAGE_META['/strands'].labelKey, 'Strands'),
+            icon: PAGE_META['/strands'].icon,
             separatorBefore: true,
-            action: () => navigate('/agents'),
-          },
-        ]
-      : []),
-    ...(canUseCordis()
-      ? [
-          {
-            key: '/cordis',
-            label: t(PAGE_META['/cordis'].labelKey, 'Cordis Engine'),
-            icon: PAGE_META['/cordis'].icon,
-            action: () => navigate('/cordis'),
+            action: () => navigate('/strands'),
           },
         ]
       : []),

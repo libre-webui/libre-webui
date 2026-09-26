@@ -22,11 +22,11 @@ import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import { randomBytes } from 'crypto';
 import { turnstileService, TurnstilePublicConfig } from './turnstileService.js';
+import { getAgentCliModelsEnabled } from './agentAccessService.js';
 import {
-  getAgentCliModelsEnabled,
-  getAgentsEnabled,
-} from './agentAccessService.js';
-import { getCordisEnabled } from './cordisAccessService.js';
+  getStrandsAccessMode,
+  type StrandsAccessMode,
+} from './strandsAccessService.js';
 import {
   getDefaultTheme,
   type ThemePreference,
@@ -160,10 +160,9 @@ export interface SystemInfo {
   hasUsers: boolean;
   userCount: number;
   signupEnabled: boolean;
-  agentsEnabled: boolean;
   agentCliModelsEnabled: boolean;
-  /** Administrator opt-in for the embedded Cordis engine. */
-  cordisEnabled: boolean;
+  /** Who may use the embedded Strands agent engine. */
+  strandsAccess: StrandsAccessMode;
   /** True when at least one passkey is registered system-wide. */
   passkeysInUse: boolean;
   /** False when the admin disabled the Ollama provider entirely. */
@@ -281,9 +280,8 @@ export class AuthService {
       hasUsers: userCount > 0,
       userCount,
       signupEnabled: canCreateLocalAccount(userCount),
-      agentsEnabled: await getAgentsEnabled(),
       agentCliModelsEnabled: await getAgentCliModelsEnabled(),
-      cordisEnabled: await getCordisEnabled(),
+      strandsAccess: await getStrandsAccessMode(),
       passkeysInUse: await anyPasskeysRegistered(),
       ollamaEnabled: (await getOllamaRuntimeSettings()).enabled,
       version: packageVersion,

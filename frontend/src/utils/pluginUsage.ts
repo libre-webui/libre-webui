@@ -19,7 +19,7 @@ export interface UsageAgentSummary extends Omit<
 }
 
 const agentNames: Record<string, string> = {
-  dsh: 'DeepSeek Harness',
+  strands: 'Strands',
   'claude-code': 'Claude Code',
   codex: 'Codex',
   opencode: 'OpenCode',
@@ -27,7 +27,6 @@ const agentNames: Record<string, string> = {
 };
 
 const usageAgentId = (providerId: string): string | undefined => {
-  if (providerId.startsWith('dsh-native:')) return 'dsh';
   if (providerId.startsWith('agent-cli:')) {
     return providerId.slice('agent-cli:'.length) || undefined;
   }

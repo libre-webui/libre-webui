@@ -40,7 +40,8 @@
     "custom": "কাস্টম",
     "remove": "সরান",
     "home": "হোম",
-    "more": "বেশি"
+    "more": "বেশি",
+    "reasoning": "যুক্তি"
   },
   "brand": {
     "name": "Libre WebUI",
@@ -528,7 +529,6 @@
       "models": "মডেল",
       "personas": "পার্সোনা",
       "imagine": "ইমাজিন",
-      "agents": "এজেন্ট",
       "work": "কাজ",
       "settings": "সেটিংস",
       "usageAnalytics": "প্রোভাইডার ব্যবহার",
@@ -543,7 +543,7 @@
       "skills": "দক্ষতা",
       "tools": "টুল",
       "channels": "চ্যানেল",
-      "cordis": "কর্ডিস ইঞ্জিন"
+      "strands": "Strands"
     },
     "toggleSize": "সাইডবার সাইজ টগল করুন",
     "expandSidebar": "সাইডবার প্রসারিত করুন"
@@ -1830,13 +1830,6 @@
       "saved": "ডিফল্ট থিম আপডেট হয়েছে",
       "saveFailed": "ডিফল্ট থিম আপডেট করা যায়নি"
     },
-    "agentAccess": {
-      "title": "Libre Claw",
-      "description": "প্রশাসকদের জন্য Libre Claw কর্মক্ষেত্র দেখান।",
-      "saved": "এজেন্ট অ্যাক্সেস আপডেট হয়েছে",
-      "saveFailed": "এজেন্ট অ্যাক্সেস আপডেট করা যায়নি",
-      "lockedByEnv": "LIBRE_CLAW_ENABLED এনভায়রনমেন্ট ভেরিয়েবল দ্বারা নির্ধারিত।"
-    },
     "groups": {
       "title": "গ্রুপ",
       "description": "শেয়ার করা অ্যাক্সেস পরিচালনা করতে অ্যাকাউন্টগুলিকে গ্রুপে রাখুন, এবং কোনো অ্যাকাউন্ট কার্যত কী করতে পারে তা দেখুন।",
@@ -1973,13 +1966,17 @@
       "saved": "ইমেইল সেটিংস সংরক্ষিত হয়েছে।",
       "saveFailed": "ইমেইল সেটিংস সংরক্ষণ করা যায়নি।"
     },
-    "cordisAccess": {
-      "title": "কর্ডিস ইঞ্জিন",
-      "description": "প্রশাসকদের জন্য কর্ডিস ইঞ্জিন চালু করুন। এটি Libre WebUI-এর টুল অনুমোদন প্রবাহের বাইরে প্রকৃত ফাইলসিস্টেম অ্যাক্সেস নিয়ে টুল চালায়।",
-      "saved": "কর্ডিস অ্যাক্সেস আপডেট হয়েছে",
-      "saveFailed": "কর্ডিস অ্যাক্সেস আপডেট করা যায়নি",
-      "lockedByEnv": "LIBRE_CORDIS_ENABLED পরিবেশ ভেরিয়েবল দ্বারা নির্ধারিত।",
-      "lockedByFile": "cordis.config.yml-এ features.enabled দ্বারা নির্ধারিত।"
+    "strandsAccess": {
+      "title": "Strands ইঞ্জিন",
+      "description": "কে এমবেডেড Strands এজেন্ট ব্যবহার করতে পারবে তা বেছে নিন। এটি প্রতিটি সেশনের ব্যক্তিগত ওয়ার্কস্পেসে ফাইল পড়তে ও সম্পাদনা করতে পারে, কিন্তু শেল কমান্ড চালাতে পারে না।",
+      "saved": "Strands অ্যাক্সেস আপডেট হয়েছে",
+      "saveFailed": "Strands অ্যাক্সেস আপডেট করা যায়নি",
+      "lockedByEnv": "LIBRE_STRANDS_ACCESS এনভায়রনমেন্ট ভেরিয়েবল দ্বারা নির্ধারিত।",
+      "modes": {
+        "disabled": "বন্ধ",
+        "admins": "প্রশাসকগণ",
+        "all-users": "সব ব্যবহারকারী"
+      }
     },
     "agentCliAccess": {
       "title": "এজেন্ট CLI মডেল",
@@ -2070,7 +2067,7 @@
     },
     "agents": {
       "title": "এজেন্ট",
-      "description": "CLI এজেন্ট কল এবং নেটিভ DSH অনুরোধ। Libre WebUI মডেল ব্যবহার করা DSH তার মডেল প্রদানকারীর অধীনে গণনা করা হয়।",
+      "description": "CLI এজেন্ট এবং Strands ইঞ্জিনের কল।",
       "noCalls": "এই সময়ে কোনো কল রেকর্ড করা হয়নি",
       "unreported": "টোকেন রিপোর্ট করা হয়নি",
       "topModels": "শীর্ষ মডেল",
@@ -2573,144 +2570,6 @@
     "title": "ডেমো মোড",
     "github": "GitHub"
   },
-  "libreClaw": {
-    "title": "এজেন্ট",
-    "subtitle": "স্থানীয় এজেন্ট রান, অনুমোদন, সময়সূচী, মেমরি, সরঞ্জাম, এবং ব্যবহার.",
-    "dashboard": "ড্যাশবোর্ড",
-    "connection": {
-      "disconnectedTitle": "Libre Claw ডেমন সংযুক্ত নয়",
-      "disconnectedDescription": "স্থানীয়ভাবে <command>libre-claw start</command> দিয়ে শুরু করুন অথবা ব্যাকএন্ড পরিবেশে <env>LIBRE_CLAW_BASE_URL</env> সেট করুন।"
-    },
-    "status": {
-      "connected": "সংযুক্ত",
-      "disconnected": "সংযোগ বিচ্ছিন্ন",
-      "activeRuns": "{{count}} সক্রিয়",
-      "activeRuns_plural": "{{count}} সক্রিয়"
-    },
-    "states": {
-      "queued": "সারিবদ্ধ",
-      "running": "চলছে",
-      "blocked": "অবরুদ্ধ",
-      "done": "সম্পন্ন",
-      "failed": "ব্যর্থ হয়েছে",
-      "cancelled": "বাতিল"
-    },
-    "startRun": {
-      "title": "এজেন্ট রান শুরু করুন",
-      "placeholder": "একটি রেপো পরিদর্শন করতে, একটি বাগ ঠিক করতে, একটি পর্যালোচনা চালাতে, একটি প্রতিবেদনের সময়সূচী করতে Libre Clawকে বলুন...",
-      "chatRun": "চ্যাট রান",
-      "goalMode": "লক্ষ্য মোড",
-      "providerOverride": "প্রদানকারী ওভাররাইড",
-      "modelOverride": "মডেল ওভাররাইড",
-      "run": "চালান"
-    },
-    "modelRoute": {
-      "title": "মডেল রুট",
-      "providerPlaceholder": "প্রদানকারী",
-      "modelPlaceholder": "মডেল",
-      "persistGlobal": "Libre Claw গ্লোবাল কনফিগারেশনে স্থির থাকুন",
-      "saveModel": "মডেল সংরক্ষণ করুন",
-      "theme": "Libre Claw থিম",
-      "saveTheme": "থিম সংরক্ষণ করুন"
-    },
-    "runs": {
-      "title": "রানসমূহ",
-      "empty": "এখনও কোনো Libre Claw রান নেই।"
-    },
-    "timeline": {
-      "title": "রানের টাইমলাইন",
-      "empty": "এর ইভেন্টগুলি পরিদর্শন করতে একটি দৌড় নির্বাচন করুন৷",
-      "streaming": "স্ট্রিমিং...",
-      "assistantResponse": "সহকারীর প্রতিক্রিয়া",
-      "resultOk": "ঠিক আছে",
-      "resultError": "ত্রুটি",
-      "labels": {
-        "userMessage": "ব্যবহারকারীর বার্তা",
-        "toolCall": "টুল কল",
-        "toolResult": "টুল ফলাফল",
-        "approvalRequest": "অনুমোদনের অনুরোধ",
-        "approvalResponse": "অনুমোদন প্রতিক্রিয়া",
-        "runStarted": "রান শুরু হয়েছে",
-        "runFinished": "রান শেষ হয়েছে",
-        "usage": "ব্যবহার",
-        "error": "ত্রুটি"
-      }
-    },
-    "approvals": {
-      "needed": "অনুমোদন প্রয়োজন",
-      "allowOnce": "একবার অনুমতি দিন",
-      "alwaysAllowTool": "সর্বদা টুল মঞ্জুরি",
-      "deny": "প্রত্যাখ্যান করুন",
-      "toolApprovalRequested": "টুল অনুমোদন অনুরোধ করা হয়েছে"
-    },
-    "automations": {
-      "title": "অটোমেশন",
-      "namePlaceholder": "নাম",
-      "schedulePlaceholder": "daily 09:00",
-      "promptPlaceholder": "অটোমেশন প্রম্পট",
-      "create": "তৈরি করুন",
-      "empty": "কোন নির্ধারিত Libre Claw অটোমেশন।",
-      "runNow": "এখন চালান",
-      "pause": "বিরতি",
-      "resume": "পুনরায় শুরু করুন",
-      "routes": {
-        "report": "রিপোর্ট",
-        "telegram": "Telegram"
-      },
-      "status": {
-        "active": "সক্রিয়",
-        "paused": "বিরতি দেওয়া হয়েছে"
-      }
-    },
-    "usageFallback": {
-      "title": "ব্যবহার এবং ফলব্যাক",
-      "usage": "ব্যবহার",
-      "fallbackRoute": "ফলব্যাক রুট",
-      "noUsage": "এখনও কোন ব্যবহার রেকর্ড."
-    },
-    "metrics": {
-      "provider": "প্রদানকারী",
-      "model": "মডেল",
-      "input": "ইনপুট",
-      "output": "আউটপুট",
-      "cached": "ক্যাশে",
-      "reasoning": "যুক্তি",
-      "cost": "খরচ",
-      "tool": "টুল",
-      "resolution": "রেজোলিউশন",
-      "state": "অবস্থা",
-      "stopReason": "বন্ধের কারণ",
-      "tokens": "{{formatted}} টোকেন",
-      "tokens_plural": "{{formatted}} টোকেন"
-    },
-    "fallbacks": {
-      "tool": "টুল",
-      "unknown": "অজানা",
-      "resolved": "সমাধান করা",
-      "unknownError": "অজানা ত্রুটি"
-    },
-    "toasts": {
-      "loadStatusFailed": "Libre Claw স্থিতি লোড করা যায়নি",
-      "enterTask": "Libre Claw এর জন্য একটি টাস্ক লিখুন",
-      "runStarted": "Libre Claw রান শুরু হয়েছে",
-      "startRunFailed": "Libre Claw রান শুরু করা যায়নি",
-      "runCancelled": "রান বাতিল হয়েছে",
-      "cancelRunFailed": "রান বাতিল করা যায়নি",
-      "approved": "অনুমোদিত",
-      "denied": "অস্বীকার করেছে",
-      "resolvePermissionFailed": "অনুমতি সমাধান করা যায়নি",
-      "providerModelRequired": "প্রদানকারী এবং মডেল প্রয়োজন",
-      "modelUpdated": "Libre Claw মডেল আপডেট করা হয়েছে",
-      "updateModelFailed": "মডেল আপডেট করা যায়নি",
-      "themeUpdated": "Libre Claw থিম আপডেট করা হয়েছে",
-      "updateThemeFailed": "থিম আপডেট করা যায়নি",
-      "automationRequired": "অটোমেশন নাম, সময়সূচী, এবং প্রম্পট প্রয়োজন",
-      "automationCreated": "অটোমেশন তৈরি করা হয়েছে",
-      "createAutomationFailed": "অটোমেশন তৈরি করা যায়নি",
-      "automationUpdated": "অটোমেশন আপডেট করা হয়েছে",
-      "updateAutomationFailed": "অটোমেশন আপডেট করা যায়নি"
-    }
-  },
   "work": {
     "title": "কাজ",
     "subtitle": "বিচ্ছিন্ন মডেল ওয়ার্কস্পেস",
@@ -2758,9 +2617,8 @@
       "noModelSelected": "কাজের সঙ্গে সামঞ্জস্যপূর্ণ কোনো মডেল নির্বাচন করা নেই।",
       "mentionAgents": "একজন এজেন্টকে উল্লেখ করুন",
       "engine": "ইঞ্জিন",
-      "nativeDshModels": "নেটিভ DSH মডেল",
       "libreModels": "Libre WebUI মডেল",
-      "nativeDshUnavailable": "নেটিভ DSH মডেল পাওয়া যাচ্ছে না। মডেল তালিকা রিফ্রেশ করুন বা প্রদানকারীর কনফিগারেশন পরীক্ষা করুন।",
+      "strandsDisabled": "আপনার অ্যাকাউন্টের জন্য Strands ইঞ্জিন উপলব্ধ নয়।",
       "modelLabel": "মডেল"
     },
     "conversation": {
@@ -3941,41 +3799,34 @@
       "saveFailed": "API কী সংরক্ষণ করা যায়নি"
     }
   },
-  "cordis": {
-    "title": "কর্ডিস ইঞ্জিন",
-    "description": "এমবেডেড DeepSeek Harness ইঞ্জিনের জন্য সেশন, টুল ও চ্যাট।",
+  "strands": {
+    "title": "Strands",
+    "subtitle": "আপনার Libre WebUI মডেলে চলা এমবেডেড এজেন্ট ইঞ্জিন।",
+    "subtitleVersion": "এমবেডেড এজেন্ট ইঞ্জিন, হার্নেস {{version}}।",
     "newSession": "নতুন সেশন",
-    "createFailed": "সেশন তৈরি করা যায়নি।",
-    "deleteFailed": "সেশন মুছে ফেলা যায়নি।",
-    "sendFailed": "ইঞ্জিন পালা সম্পূর্ণ করতে পারেনি।",
-    "sessionsHeading": "সেশন",
-    "toolsHeading": "টুল",
-    "transcriptHeading": "প্রতিলিপি",
+    "sessions": "সেশন",
     "noSessions": "এখনও কোনো সেশন নেই। শুরু করতে একটি তৈরি করুন।",
-    "noTools": "ইঞ্জিন কোনো টুল নিবন্ধন করেনি।",
-    "selectSession": "একটি সেশন নির্বাচন করুন বা শুরু করতে একটি তৈরি করুন।",
-    "working": "এজেন্ট কাজ করছে…",
-    "composerLabel": "ইঞ্জিনকে বার্তা",
-    "composerPlaceholder": "ইঞ্জিনকে কিছু করতে বলুন…",
+    "empty": "এজেন্টকে তার ওয়ার্কস্পেসে ফাইল পড়তে বা সম্পাদনা করতে বলুন।",
+    "placeholder": "ইঞ্জিনকে কিছু করতে বলুন…",
+    "model": "মডেল",
+    "defaultModel": "ডিফল্ট মডেল",
     "send": "পাঠান",
     "stop": "থামান",
-    "deleteSession": "সেশন মুছুন",
-    "unknownTime": "অজানা সময়",
-    "disabledTitle": "কর্ডিস ইঞ্জিন বন্ধ আছে",
-    "disabledHint": "একজন প্রশাসক এটি ব্যবহারকারী ব্যবস্থাপনা → অ্যাক্সেস ও নীতি-তে সক্রিয় করতে পারেন।",
-    "unavailableTitle": "কর্ডিস ইঞ্জিন চালু করা যায়নি",
-    "role": {
-      "user": "আপনি",
-      "assistant": "ইঞ্জিন",
-      "system": "সিস্টেম",
-      "tool": "টুল",
-      "unknown": "বার্তা"
+    "reasoning": "যুক্তি",
+    "tool": {
+      "running": "চলছে",
+      "done": "সম্পন্ন",
+      "failed": "ব্যর্থ হয়েছে"
     },
-    "turnFailed": "ইঞ্জিন পালা সম্পূর্ণ করতে পারেনি",
-    "permissions": "অনুমতি",
-    "readOnly": "শুধু পড়া",
-    "workspaceWrite": "কর্মক্ষেত্রে লেখা",
-    "context": "সেশনের প্রসঙ্গ",
-    "permissionHint": "শুধু পড়া মোডে ফাইল দেখা যায়। কর্মক্ষেত্রে লেখা মোড এই সেশনের কর্মক্ষেত্রে সম্পাদনার অনুমতি দেয়।"
+    "cancelled": "বাতিল",
+    "turnLimit": "টার্ন সীমায় থেমে গেছে।",
+    "messageCount": "বার্তা: {{count}}",
+    "deleteSession": "সেশন মুছুন",
+    "deleteConfirm": "\"{{title}}\" এবং এর ইতিহাস মুছবেন?",
+    "loadFailed": "Strands লোড করা যায়নি।",
+    "createFailed": "সেশন তৈরি করা যায়নি।",
+    "deleteFailed": "সেশন মুছে ফেলা যায়নি।",
+    "saveFailed": "সেশন সংরক্ষণ করা যায়নি।",
+    "turnFailed": "ইঞ্জিন পালা সম্পূর্ণ করতে পারেনি"
   }
 }

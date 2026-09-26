@@ -40,7 +40,8 @@
     "custom": "Personalizado",
     "remove": "Remover",
     "home": "Início",
-    "more": "Mais"
+    "more": "Mais",
+    "reasoning": "Raciocínio"
   },
   "brand": {
     "name": "Libre WebUI",
@@ -528,7 +529,6 @@
       "models": "Modelos",
       "personas": "Personas",
       "imagine": "Imaginar",
-      "agents": "Agentes",
       "work": "Trabalho",
       "settings": "Configurações",
       "usageAnalytics": "Uso de Fornecedores",
@@ -543,7 +543,7 @@
       "skills": "Habilidades",
       "tools": "Ferramentas",
       "channels": "Canais",
-      "cordis": "Motor Cordis"
+      "strands": "Strands"
     },
     "toggleSize": "Alternar tamanho da barra lateral",
     "expandSidebar": "Expandir barra lateral"
@@ -1830,13 +1830,6 @@
       "saved": "Tema padrão atualizado",
       "saveFailed": "Não foi possível atualizar o tema padrão"
     },
-    "agentAccess": {
-      "title": "Libre Claw",
-      "description": "Mostrar o espaço de trabalho Libre Claw aos administradores.",
-      "saved": "Acesso a agentes atualizado",
-      "saveFailed": "Não foi possível atualizar o acesso a agentes",
-      "lockedByEnv": "Fixado pela variável de ambiente LIBRE_CLAW_ENABLED."
-    },
     "groups": {
       "title": "Grupos",
       "description": "Agrupe contas para gerenciar o acesso compartilhado e inspecione o que qualquer conta pode efetivamente fazer.",
@@ -1973,13 +1966,17 @@
       "saved": "Configurações de e-mail salvas.",
       "saveFailed": "Não foi possível salvar as configurações de e-mail."
     },
-    "cordisAccess": {
-      "title": "Motor Cordis",
-      "description": "Oferecer o motor Cordis aos administradores. Ele executa ferramentas com acesso real ao sistema de arquivos, fora do fluxo de aprovação de ferramentas do Libre WebUI.",
-      "saved": "Acesso ao Cordis atualizado",
-      "saveFailed": "Não foi possível atualizar o acesso ao Cordis",
-      "lockedByEnv": "Fixado pela variável de ambiente LIBRE_CORDIS_ENABLED.",
-      "lockedByFile": "Fixado por features.enabled em cordis.config.yml."
+    "strandsAccess": {
+      "title": "Motor Strands",
+      "description": "Escolha quem pode usar o agente Strands integrado. Ele pode ler e editar arquivos no espaço de trabalho privado de cada sessão, mas não pode executar comandos de shell.",
+      "saved": "Acesso ao Strands atualizado",
+      "saveFailed": "Não foi possível atualizar o acesso ao Strands",
+      "lockedByEnv": "Fixado pela variável de ambiente LIBRE_STRANDS_ACCESS.",
+      "modes": {
+        "disabled": "Desligado",
+        "admins": "Administradores",
+        "all-users": "Todos os usuários"
+      }
     },
     "agentCliAccess": {
       "title": "Modelos de agentes CLI",
@@ -2070,7 +2067,7 @@
     },
     "agents": {
       "title": "Agentes",
-      "description": "Chamadas de agentes CLI e solicitações nativas do DSH. O DSH com modelos do Libre WebUI é contabilizado no provedor do modelo.",
+      "description": "Chamadas a agentes CLI e ao motor Strands.",
       "noCalls": "Nenhuma chamada registrada neste período",
       "unreported": "Tokens não reportados",
       "topModels": "Modelos mais usados",
@@ -2573,144 +2570,6 @@
     "title": "Modo demo",
     "github": "GitHub"
   },
-  "libreClaw": {
-    "title": "Agentes",
-    "subtitle": "Execuções, aprovações, programações, memória, ferramentas e uso do agente local.",
-    "dashboard": "Painel",
-    "connection": {
-      "disconnectedTitle": "O daemon do Libre Claw não está conectado",
-      "disconnectedDescription": "Inicie localmente com <command>libre-claw start</command> ou defina <env>LIBRE_CLAW_BASE_URL</env> no ambiente de back-end."
-    },
-    "status": {
-      "connected": "Conectado",
-      "disconnected": "Desconectado",
-      "activeRuns": "{{count}} ativo",
-      "activeRuns_plural": "{{count}} ativo"
-    },
-    "states": {
-      "queued": "Na fila",
-      "running": "Em execução",
-      "blocked": "Bloqueado",
-      "done": "Concluído",
-      "failed": "Falha",
-      "cancelled": "Cancelado"
-    },
-    "startRun": {
-      "title": "Iniciar execução do agente",
-      "placeholder": "Peça ao Libre Claw para inspecionar um repositório, corrigir um bug, executar uma revisão, agendar um relatório...",
-      "chatRun": "Execução de bate-papo",
-      "goalMode": "Modo meta",
-      "providerOverride": "Substituição do provedor",
-      "modelOverride": "Substituição de modelo",
-      "run": "Executar"
-    },
-    "modelRoute": {
-      "title": "Rota modelo",
-      "providerPlaceholder": "provedor",
-      "modelPlaceholder": "modelo",
-      "persistGlobal": "Persistir na configuração global Libre Claw",
-      "saveModel": "Salvar modelo",
-      "theme": "Tema do Libre Claw",
-      "saveTheme": "Salvar tema"
-    },
-    "runs": {
-      "title": "Execuções",
-      "empty": "Ainda não há execuções do Libre Claw."
-    },
-    "timeline": {
-      "title": "Linha do tempo da execução",
-      "empty": "Selecione uma execução para inspecionar seus eventos.",
-      "streaming": "Transmissão...",
-      "assistantResponse": "Resposta do assistente",
-      "resultOk": "ok",
-      "resultError": "erro",
-      "labels": {
-        "userMessage": "Mensagem do usuário",
-        "toolCall": "Chamada de ferramenta",
-        "toolResult": "Resultado da ferramenta",
-        "approvalRequest": "Solicitação de aprovação",
-        "approvalResponse": "Resposta de aprovação",
-        "runStarted": "Execução iniciada",
-        "runFinished": "Execução finalizada",
-        "usage": "Uso",
-        "error": "Erro"
-      }
-    },
-    "approvals": {
-      "needed": "Aprovação necessária",
-      "allowOnce": "Permitir uma vez",
-      "alwaysAllowTool": "Sempre permitir a ferramenta",
-      "deny": "Recusar",
-      "toolApprovalRequested": "Aprovação da ferramenta solicitada"
-    },
-    "automations": {
-      "title": "Automações",
-      "namePlaceholder": "Nome",
-      "schedulePlaceholder": "daily 09:00",
-      "promptPlaceholder": "Solicitação de automação",
-      "create": "Criar",
-      "empty": "Nenhuma automação Libre Claw programada.",
-      "runNow": "Executar agora",
-      "pause": "Pausa",
-      "resume": "Retomar",
-      "routes": {
-        "report": "Relatório",
-        "telegram": "Telegram"
-      },
-      "status": {
-        "active": "Ativo",
-        "paused": "Pausado"
-      }
-    },
-    "usageFallback": {
-      "title": "Uso e substituto",
-      "usage": "Uso",
-      "fallbackRoute": "Rota substituta",
-      "noUsage": "Ainda não há registros de uso."
-    },
-    "metrics": {
-      "provider": "Provedor",
-      "model": "Modelo",
-      "input": "Entrada",
-      "output": "Saída",
-      "cached": "Em cache",
-      "reasoning": "Raciocínio",
-      "cost": "Custo",
-      "tool": "Ferramenta",
-      "resolution": "Resolução",
-      "state": "Estado",
-      "stopReason": "Motivo da parada",
-      "tokens": "{{formatted}} ficha",
-      "tokens_plural": "{{formatted}} fichas"
-    },
-    "fallbacks": {
-      "tool": "ferramenta",
-      "unknown": "desconhecido",
-      "resolved": "resolvido",
-      "unknownError": "Erro desconhecido"
-    },
-    "toasts": {
-      "loadStatusFailed": "Não foi possível carregar o status Libre Claw",
-      "enterTask": "Insira uma tarefa para Libre Claw",
-      "runStarted": "Execução do Libre Claw iniciada",
-      "startRunFailed": "Não foi possível iniciar a execução do Libre Claw",
-      "runCancelled": "Execução cancelada",
-      "cancelRunFailed": "Não foi possível cancelar a execução",
-      "approved": "Aprovado",
-      "denied": "Negado",
-      "resolvePermissionFailed": "Não foi possível resolver a permissão",
-      "providerModelRequired": "Provedor e modelo são obrigatórios",
-      "modelUpdated": "Modelo do Libre Claw atualizado",
-      "updateModelFailed": "Não foi possível atualizar o modelo",
-      "themeUpdated": "Tema do Libre Claw atualizado",
-      "updateThemeFailed": "Não foi possível atualizar o tema",
-      "automationRequired": "O nome da automação, a programação e o prompt são obrigatórios",
-      "automationCreated": "Automação criada",
-      "createAutomationFailed": "Não foi possível criar a automação",
-      "automationUpdated": "Automação atualizada",
-      "updateAutomationFailed": "Não foi possível atualizar a automação"
-    }
-  },
   "work": {
     "title": "Trabalho",
     "subtitle": "Espaços de trabalho isolados para modelos",
@@ -2758,9 +2617,8 @@
       "noModelSelected": "Nenhum modelo compatível com o modo Trabalho está selecionado.",
       "mentionAgents": "Mencionar um agente",
       "engine": "Motor",
-      "nativeDshModels": "Modelos DSH nativos",
       "libreModels": "Modelos Libre WebUI",
-      "nativeDshUnavailable": "Os modelos DSH nativos estão indisponíveis. Atualize a lista de modelos ou verifique a configuração do fornecedor.",
+      "strandsDisabled": "O motor Strands não está disponível para sua conta.",
       "modelLabel": "Modelo"
     },
     "conversation": {
@@ -3941,41 +3799,34 @@
       "saveFailed": "Não foi possível salvar a chave de API"
     }
   },
-  "cordis": {
-    "title": "Motor Cordis",
-    "description": "Sessões, ferramentas e chat para o motor DeepSeek Harness incorporado.",
+  "strands": {
+    "title": "Strands",
+    "subtitle": "Motor de agentes integrado que usa seus modelos do Libre WebUI.",
+    "subtitleVersion": "Motor de agentes integrado, harness {{version}}.",
     "newSession": "Nova sessão",
-    "createFailed": "Não foi possível criar a sessão.",
-    "deleteFailed": "Não foi possível excluir a sessão.",
-    "sendFailed": "O motor não conseguiu concluir o turno.",
-    "sessionsHeading": "Sessões",
-    "toolsHeading": "Ferramentas",
-    "transcriptHeading": "Transcrição",
+    "sessions": "Sessões",
     "noSessions": "Ainda não há sessões. Crie uma para começar.",
-    "noTools": "O motor não registrou ferramentas.",
-    "selectSession": "Selecione uma sessão ou crie uma para começar.",
-    "working": "O agente está trabalhando…",
-    "composerLabel": "Mensagem para o motor",
-    "composerPlaceholder": "Peça ao motor para fazer algo…",
+    "empty": "Peça ao agente para ler ou editar arquivos no espaço de trabalho dele.",
+    "placeholder": "Peça ao motor para fazer algo…",
+    "model": "Modelo",
+    "defaultModel": "Modelo padrão",
     "send": "Enviar",
     "stop": "Parar",
-    "deleteSession": "Excluir sessão",
-    "unknownTime": "Hora desconhecida",
-    "disabledTitle": "O motor Cordis está desativado",
-    "disabledHint": "Um administrador pode ativá-lo em Gerenciamento de usuários → Acesso e políticas.",
-    "unavailableTitle": "O motor Cordis não pôde ser iniciado",
-    "role": {
-      "user": "Você",
-      "assistant": "Motor",
-      "system": "Sistema",
-      "tool": "Ferramenta",
-      "unknown": "Mensagem"
+    "reasoning": "Raciocínio",
+    "tool": {
+      "running": "Em execução",
+      "done": "Concluído",
+      "failed": "Falha"
     },
-    "turnFailed": "O motor não conseguiu concluir o turno",
-    "permissions": "Permissões",
-    "readOnly": "Apenas leitura",
-    "workspaceWrite": "Escrita no espaço de trabalho",
-    "context": "Contexto da sessão",
-    "permissionHint": "Apenas leitura permite inspecionar ficheiros. A escrita permite alterações no espaço de trabalho desta sessão."
+    "cancelled": "Cancelado",
+    "turnLimit": "Interrompido no limite de turnos.",
+    "messageCount": "Mensagens: {{count}}",
+    "deleteSession": "Excluir sessão",
+    "deleteConfirm": "Excluir \"{{title}}\" e o histórico?",
+    "loadFailed": "Não foi possível carregar o Strands.",
+    "createFailed": "Não foi possível criar a sessão.",
+    "deleteFailed": "Não foi possível excluir a sessão.",
+    "saveFailed": "Não foi possível salvar a sessão.",
+    "turnFailed": "O motor não conseguiu concluir o turno"
   }
 }

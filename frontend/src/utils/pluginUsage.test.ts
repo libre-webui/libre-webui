@@ -114,8 +114,8 @@ test('agent summaries preserve authoritative totals and reported zero tokens', (
   const analytics = fixture();
   analytics.agents = [
     {
-      agentId: 'dsh',
-      agentName: 'DeepSeek Harness',
+      agentId: 'strands',
+      agentName: 'Strands',
       calls: 20,
       tokens: 0,
       errors: 1,
@@ -153,20 +153,12 @@ test('older agent records use reserved identities without inventing token covera
   const analytics = fixture();
   analytics.plugins = [
     {
-      pluginId: 'dsh-native:first',
-      pluginName: 'First native',
-      calls: 2,
-      tokens: 10,
+      pluginId: 'agent-cli:strands',
+      pluginName: 'Strands',
+      calls: 5,
+      tokens: 30,
       errors: 1,
-      averageLatencyMs: 100,
-    },
-    {
-      pluginId: 'dsh-native:second',
-      pluginName: 'Second native',
-      calls: 3,
-      tokens: 20,
-      errors: 0,
-      averageLatencyMs: 200,
+      averageLatencyMs: 160,
     },
     {
       pluginId: 'agent-cli:codex',
@@ -178,7 +170,7 @@ test('older agent records use reserved identities without inventing token covera
     },
     {
       pluginId: 'regular-provider',
-      pluginName: 'DeepSeek Harness',
+      pluginName: 'Strands',
       calls: 50,
       tokens: 900,
       errors: 0,
@@ -186,8 +178,7 @@ test('older agent records use reserved identities without inventing token covera
     },
   ];
   analytics.models = [
-    model('same-model', 'dsh-native:first', 2),
-    model('same-model', 'dsh-native:second', 3),
+    model('same-model', 'agent-cli:strands', 5),
     { ...model('codex:chosen', 'agent-cli:codex', 1), tokens: 0 },
     model('do-not-attribute', 'regular-provider', 50),
   ];
@@ -195,7 +186,7 @@ test('older agent records use reserved identities without inventing token covera
   const agents = getUsageAgentSummaries(analytics);
   assert.deepEqual(
     agents.map(agent => agent.agentId),
-    ['dsh', 'codex']
+    ['strands', 'codex']
   );
   assert.equal(agents[0].calls, 5);
   assert.equal(agents[0].tokens, 30);

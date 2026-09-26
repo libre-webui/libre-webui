@@ -142,7 +142,7 @@ persistent storage.
 | **Media generation**   | Image generation and editing plus video generation, with a persistent gallery and retention controls                                                                 |
 | **Voice**              | Speech-to-text dictation, text-to-speech playback, and hands-free voice mode with consent-aware voices                                                               |
 | **Context management** | Context meter and undoable conversation compaction for long chats                                                                                                    |
-| **Agents**             | Optional integration with installed agent CLIs and Libre Claw                                                                                                        |
+| **Agents**             | Optional installed agent CLIs and the embedded Strands agent engine                                                                                                  |
 | **Sharing**            | One grant model for chats, notes, knowledge, personas, prompts, skills, and calendars                                                                                |
 | **Accounts**           | Local accounts, roles, groups, API tokens, and SSO                                                                                                                   |
 | **Public API**         | OpenAI-compatible `/v1` endpoints on scoped API tokens                                                                                                               |
@@ -302,69 +302,34 @@ Disable this feature with:
 AGENT_CLI_MODELS_ENABLED=false
 ```
 
-For broader automation, the optional
-[Libre Claw](https://github.com/kroonen-ai/libre-claw) integration provides a
-separate agent runtime for workflows involving files, shell, Git, browsers,
-HTTP, web search, MCP, memory, approvals, and schedules.
-
 - [Installed agent CLIs](https://docs.librewebui.org/AGENT_CLI_MODELS)
-- [Libre Claw integration](https://docs.librewebui.org/LIBRE_CLAW_INTEGRATION)
 
-## Cordis bridge
+## Strands engine
 
-The optional Cordis bridge embeds the
-[DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) engine inside
-Libre WebUI's backend. The engine runs as a plugin tree in a
-[Cordis](https://github.com/cordiverse/cordis) runtime that Libre WebUI hosts, so
-its sessions, agents, and tools arrive as Cordis services rather than as
-imported modules.
+Libre WebUI embeds an agent engine built on the open-source
+[Strands Agents harness](https://github.com/strands-agents/harness-sdk). It
+runs inside the backend process and drives the models Libre WebUI already
+has: Ollama models when Ollama is enabled, and active chat or completion
+provider plugins. It needs no separate provider configuration or API keys.
 
-> **Privacy warning for external DSH:** Upstream `dsh-base` profiles enable
-> session-log and plugin-inventory sharing by default, plus feedback-triggered
-> session exports that can include tool output and earlier context. LWUI's
-> embedded composition omits these uploaders. Before connecting a separate DSH
-> instance, follow the [complete opt-out instructions](docs/65-CORDIS_CONFIGURATION.md#privacy-and-telemetry).
+An administrator chooses who can use it in **Settings → User Management →
+Access & policies → Strands engine**: off (the default), administrators, or
+all users. `LIBRE_STRANDS_ACCESS=disabled|admins|all-users` pins the mode, and
+any other value locks the engine off. The server enforces the mode on every
+REST, WebSocket, and Work request.
 
-The engine is off by default. An administrator enables it in **Settings → User
-Management → Access & policies → Cordis Engine**; the change takes effect
-immediately, with no restart.
+- **Strands page** (`/strands`): persistent sessions with a model picker,
+  streaming replies, reasoning, and tool-call cards. The agent can only read,
+  write, and edit files in a private workspace for each session. It cannot run
+  shell commands or reach the network.
+- **Chat**: pick **Strands** in the model selector, next to the Agent CLI
+  models.
+- **Work**: choose **Strands** in the composer's **Engine** control. A Strands
+  agent plans each step, and Work runs the tools in its sandbox under the
+  normal approval policy.
 
-The engine still needs a composition, so configure one once:
-
-```bash
-cd backend
-cp cordis.patch.example.yml cordis.patch.yml
-cp cordis.config.example.yml cordis.config.yml
-```
-
-Because the engine is a plugin tree rather than an import, operators can:
-
-- **Retarget the model provider** by editing YAML — Ollama, an
-  OpenAI-compatible gateway, or the first-party DeepSeek adapter.
-- **Swap the model adapter at runtime** by reloading one plugin row, without
-  restarting Libre WebUI or losing the session store, tool registry, or agents.
-- **Remove the engine cleanly** by disposing the tree, which withdraws its
-  services, releases its listeners, and disposes the agents it created.
-
-Once enabled, administrators can use the **Cordis Engine** page for persistent
-engine sessions and select **DeepSeek Harness** in Chat (with Agent CLI models also
-enabled). In Work, select **DeepSeek Harness** in the **Engine** control to run its agent loop
-through Work's existing container runtime, approval gates, and durable records.
-Normal provider models remain available.
-
-The host Engine is a shared administrator console for single-replica solo
-installations. Its shipped filesystem tools are confined to the configured
-workspace and use DSH's mutation policies. Work uses a separate in-memory DSH
-composition with no host filesystem tools. Review the security notes before
-enabling either surface.
-
-```bash
-curl -s http://127.0.0.1:3001/api/cordis/health | jq
-```
-
-- [Cordis bridge architecture](https://docs.librewebui.org/CORDIS_BRIDGE)
-- [Cordis configuration reference](https://docs.librewebui.org/CORDIS_CONFIGURATION)
-- [Writing Cordis plugins](https://docs.librewebui.org/CORDIS_PLUGIN_AUTHORING)
+See the [Strands engine documentation](https://docs.librewebui.org/STRANDS_ENGINE)
+for the security model, limits, storage, and API.
 
 ## Deployment options
 
@@ -405,9 +370,7 @@ See the [deployment documentation](https://docs.librewebui.org) for details.
 - [Calendar](https://docs.librewebui.org/CALENDAR)
 - [Public API](https://docs.librewebui.org/PUBLIC_API)
 - [Plugin architecture](https://docs.librewebui.org/PLUGIN_ARCHITECTURE)
-- [Cordis bridge](https://docs.librewebui.org/CORDIS_BRIDGE)
-- [Cordis configuration](https://docs.librewebui.org/CORDIS_CONFIGURATION)
-- [Writing Cordis plugins](https://docs.librewebui.org/CORDIS_PLUGIN_AUTHORING)
+- [Strands engine](https://docs.librewebui.org/STRANDS_ENGINE)
 - [Capability contracts](https://docs.librewebui.org/CAPABILITY_CONTRACTS)
 - [Authentication](https://docs.librewebui.org/AUTHENTICATION)
 - [Data portability](https://docs.librewebui.org/DATA_PORTABILITY)

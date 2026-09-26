@@ -675,13 +675,11 @@ class SQLitePluginUsageRepository implements PluginUsageRepository {
     return this.database
       .prepare(
         `WITH agent_events AS (
-         SELECT CASE WHEN substr(plugin_id, 1, 11) = 'dsh-native:'
-                     THEN 'dsh' ELSE substr(plugin_id, 11) END AS agent_id,
+         SELECT substr(plugin_id, 11) AS agent_id,
                 model, total_tokens, status, duration_ms
            FROM plugin_usage_events
           WHERE created_at >= ? AND created_at <= ?
-            AND (plugin_id IN (${agentIds.map(() => '?').join(',')})
-                 OR (substr(plugin_id, 1, 11) = 'dsh-native:' AND length(plugin_id) > 11))
+            AND plugin_id IN (${agentIds.map(() => '?').join(',')})
        ), agent_totals AS (
          SELECT agent_id, NULL AS model, COUNT(*) AS calls,
                 COALESCE(SUM(total_tokens), 0) AS tokens,

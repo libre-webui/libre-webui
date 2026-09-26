@@ -9,11 +9,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### ✨ New Features
 
+- **Strands engine**: An embedded agent engine built on the open-source
+  Strands Agents harness. It runs inside the backend on the models Libre WebUI
+  already serves (Ollama and active chat provider plugins), with no separate
+  provider setup. Use it from the new **Strands** page with persistent
+  sessions, from Chat as the **Strands** agent, or in Work through the
+  **Strands** engine option.
+- **Strands access**: Administrators choose who can use the engine under
+  **User Management → Access & policies → Strands engine** (off, administrators,
+  or all users). It is off by default, `LIBRE_STRANDS_ACCESS` pins the mode,
+  and the server enforces it on REST, WebSocket, and Work requests.
+
 ### 🔧 Improvements
+
+- **Contained agent tools**: On the Strands page the agent gets only `read`,
+  `write`, and `edit`, jailed to a private per-session workspace. It has no
+  shell, no web access, and no memory or skills from the host.
+
+### ⚠️ Breaking Changes
+
+- **Libre Claw removed**: The `/agents` page, `/api/libre-claw`, and the
+  `LIBRE_CLAW_*` variables are gone. Use the Strands page instead.
+- **Cordis bridge and DeepSeek Harness removed**: The Cordis Engine page,
+  `/api/cordis`, `cordis.config.yml`, `cordis.patch.yml`,
+  `LIBRE_CORDIS_ENABLED`, and the native DSH provider are gone, along with the
+  `@deepseek-ai/*` packages. Work runs saved with the DeepSeek Harness engine
+  open as Strands runs.
 
 ### 🐛 Bug Fixes
 
 ### 📚 Documentation
+
+- Added the [Strands engine guide](docs/67-STRANDS_ENGINE.md) and replaced the
+  Libre Claw and Cordis guides.
 
 ## [0.37.2] - 2026-09-22
 

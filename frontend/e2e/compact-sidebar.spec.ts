@@ -65,7 +65,7 @@ async function prepareCompactSidebar(
   page: Page,
   options: {
     role?: 'admin' | 'user';
-    agentsEnabled?: boolean;
+    strandsAccess?: 'disabled' | 'admins' | 'all-users';
     language?: 'en' | 'ar';
   } = {}
 ) {
@@ -74,10 +74,7 @@ async function prepareCompactSidebar(
     hasUsers: true,
     userCount: 2,
     version: '0.25.0-e2e',
-    agentsEnabled: options.agentsEnabled ?? false,
-    // The Cordis destination is an opt-in too, and the fixture below lists it,
-    // so the deployment under test has opted in.
-    cordisEnabled: true,
+    strandsAccess: options.strandsAccess ?? 'disabled',
     turnstile: { enabled: false },
   };
   await mockLibreWebUiApi(page, {
@@ -104,7 +101,6 @@ const destinations = [
   { name: 'Notes', path: '/notes' },
   { name: 'Calendar', path: '/calendar' },
   { name: 'Automations', path: '/automations' },
-  { name: 'Cordis Engine', path: '/cordis' },
   { name: 'Personas', path: '/personas' },
   { name: 'Imagine', path: '/gallery' },
 ] as const;
@@ -224,27 +220,22 @@ test('legacy User Management pins stay absent while System and Settings remain a
   await expect(settings.getByTestId('user-directory')).toBeVisible();
 });
 
-for (const { role, agentsEnabled, visible } of [
-  { role: 'admin', agentsEnabled: true, visible: true },
-  { role: 'admin', agentsEnabled: false, visible: false },
-  { role: 'user', agentsEnabled: true, visible: false },
+for (const { role, strandsAccess, visible } of [
+  { role: 'admin', strandsAccess: 'admins', visible: true },
+  { role: 'admin', strandsAccess: 'disabled', visible: false },
+  { role: 'user', strandsAccess: 'admins', visible: false },
+  { role: 'user', strandsAccess: 'all-users', visible: true },
 ] as const) {
-  test(`compact Agents access for ${role} with opt-in ${agentsEnabled}`, async ({
+  test(`compact Strands access for ${role} with mode ${strandsAccess}`, async ({
     page,
   }) => {
-    await prepareCompactSidebar(page, { role, agentsEnabled });
+    await prepareCompactSidebar(page, { role, strandsAccess });
     const navigation = page.getByTestId('sidebar-navigation');
     await expect(
-      navigation.getByRole('link', { name: 'Agents', exact: true })
+      navigation.getByRole('link', { name: 'Strands', exact: true })
     ).toHaveCount(visible ? 1 : 0);
-    await expect(
-      navigation.getByRole('link', { name: 'Cordis Engine', exact: true })
-    ).toHaveCount(role === 'admin' ? 1 : 0);
-    // Both opt-in destinations are administrator-only, so the expected total
-    // depends on the role as well as on the flags.
-    const cordis = destinations.filter(d => d.path !== '/cordis').length;
     await expect(navigation.getByRole('link')).toHaveCount(
-      cordis + (role === 'admin' ? 1 : 0) + (visible ? 1 : 0)
+      destinations.length + (visible ? 1 : 0)
     );
   });
 }
@@ -253,7 +244,10 @@ test('short mobile RTL rails scroll Explore while keeping settings and account r
   page,
 }, testInfo) => {
   await page.setViewportSize({ width: 390, height: 400 });
-  await prepareCompactSidebar(page, { language: 'ar', agentsEnabled: true });
+  await prepareCompactSidebar(page, {
+    language: 'ar',
+    strandsAccess: 'admins',
+  });
   await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
   const sidebar = page.getByTestId('sidebar');
   const browse = sidebar.getByTestId('sidebar-browse-scroll-region');
@@ -267,9 +261,9 @@ test('short mobile RTL rails scroll Explore while keeping settings and account r
       browse.evaluate(element => element.scrollHeight - element.clientHeight)
     )
     .toBeGreaterThan(0);
-  const agents = navigation.locator('a[href="/agents"]');
-  await agents.scrollIntoViewIfNeeded();
-  await expect(agents).toBeInViewport();
+  const strands = navigation.locator('a[href="/strands"]');
+  await strands.scrollIntoViewIfNeeded();
+  await expect(strands).toBeInViewport();
   await expect
     .poll(() => browse.evaluate(element => element.scrollTop))
     .toBeGreaterThan(0);
@@ -312,7 +306,7 @@ for (const layout of [
     await page.setViewportSize({ width: layout.width, height: layout.height });
     await prepareCompactSidebar(page, {
       language: layout.language,
-      agentsEnabled: true,
+      strandsAccess: 'admins',
     });
     if (layout.fontSize === 16) {
       await page.evaluate(() => {

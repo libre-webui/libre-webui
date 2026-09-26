@@ -21,41 +21,44 @@ import {
   type WorkProviderType,
 } from '../types/work';
 
-const DSH_PREFIX = 'dsh:';
+const STRANDS_PREFIX = 'strands:';
+/** Work records from before Strands replaced the DeepSeek Harness. */
+const LEGACY_ENGINE_PREFIXES = ['dsh:'] as const;
 
-export type WorkEngine = 'libre' | 'dsh';
+export type WorkEngine = 'libre' | 'strands';
+
+const enginePrefix = (model: string): string | undefined =>
+  model.startsWith(STRANDS_PREFIX)
+    ? STRANDS_PREFIX
+    : LEGACY_ENGINE_PREFIXES.find(prefix => model.startsWith(prefix));
 
 export const workModelEngine = (
   model: string,
-  providerType?: WorkProviderType
-): WorkEngine =>
-  providerType === 'dsh' || model.startsWith(DSH_PREFIX) ? 'dsh' : 'libre';
+  _providerType?: WorkProviderType
+): WorkEngine => (enginePrefix(model) ? 'strands' : 'libre');
 
 export const baseWorkModel = (
   model: string,
-  providerType?: WorkProviderType
-): string =>
-  providerType !== 'dsh' && model.startsWith(DSH_PREFIX)
-    ? model.slice(DSH_PREFIX.length)
-    : model;
+  _providerType?: WorkProviderType
+): string => {
+  const prefix = enginePrefix(model);
+  return prefix ? model.slice(prefix.length) : model;
+};
 
+/** Every provider model can run on either engine. */
 export const workModelSupportsEngine = (
-  option: WorkModelOption,
-  engine: WorkEngine
-): boolean => engine === 'dsh' || option.providerType !== 'dsh';
+  _option: WorkModelOption,
+  _engine: WorkEngine
+): boolean => true;
 
 /** The engine choice never changes the selected provider or remote disclosure. */
 export const selectWorkEngine = (
   option: WorkModelOption,
   engine: WorkEngine
 ): WorkModelOption => {
-  // Native provider identity already fixes the engine; its raw model is never
-  // an engine prefix. Callers must handle incompatible engine switches first.
-  if (option.providerType === 'dsh')
-    return { ...option, key: workModelSelectionKey(option) };
   const selection = {
     ...option,
-    model: `${engine === 'dsh' ? DSH_PREFIX : ''}${baseWorkModel(option.model)}`,
+    model: `${engine === 'strands' ? STRANDS_PREFIX : ''}${baseWorkModel(option.model)}`,
   };
   return { ...selection, key: workModelSelectionKey(selection) };
 };
@@ -84,54 +87,39 @@ function providerModelName(value: string): boolean {
     !['persona:', 'agent:', 'lwui:'].some(prefix =>
       normalized.startsWith(prefix)
     ) &&
-    !['dsh', 'claude-code', 'codex', 'opencode', 'pi'].some(
+    !['strands', 'dsh', 'claude-code', 'codex', 'opencode', 'pi'].some(
       selector =>
         normalized === selector || normalized.startsWith(`${selector}:`)
     )
   );
 }
 
-/** Translate only an explicitly identified Chat agent selection, retaining its provider. */
-export function workModelFromChatDsh(
+/** Translate only an explicitly identified Chat Strands selection, retaining its provider. */
+export function workModelFromChatStrands(
   selection: ChatWorkModelSelection,
   models: readonly WorkModelOption[]
 ): { option: WorkModelOption; available: boolean } | undefined {
-  if (selection.providerType !== 'agent' || selection.providerId !== 'dsh')
+  if (selection.providerType !== 'agent' || selection.providerId !== 'strands')
     return undefined;
   const parts = selection.model.split(':');
-  if (parts[0] !== 'dsh' || !['lwui', 'native'].includes(parts[1]))
-    return undefined;
+  if (parts[0] !== 'strands') return undefined;
   let model: string;
   let providerType: WorkProviderType;
   let providerId: string | undefined;
   try {
-    if (parts[1] === 'native' && parts.length === 4) {
-      providerType = 'dsh';
+    if (parts[1] === 'ollama' && parts.length === 3) {
+      providerType = 'ollama';
+      model = decodeURIComponent(parts[2]);
+    } else if (parts[1] === 'plugin' && parts.length === 4) {
+      providerType = 'plugin';
       providerId = decodeURIComponent(parts[2]);
       model = decodeURIComponent(parts[3]);
-      if (!validSelectionPart(providerId) || !validSelectionPart(model))
-        return undefined;
-    } else if (
-      parts[1] === 'lwui' &&
-      parts[2] === 'ollama' &&
-      parts.length === 4
-    ) {
-      providerType = 'ollama';
-      model = decodeURIComponent(parts[3]);
-    } else if (
-      parts[1] === 'lwui' &&
-      parts[2] === 'plugin' &&
-      parts.length === 5
-    ) {
-      providerType = 'plugin';
-      providerId = decodeURIComponent(parts[3]);
-      model = decodeURIComponent(parts[4]);
       if (!validSelectionPart(providerId)) return undefined;
     } else return undefined;
   } catch {
     return undefined;
   }
-  if (providerType !== 'dsh' && !providerModelName(model)) return undefined;
+  if (!providerModelName(model)) return undefined;
   const target = { model, providerType, ...(providerId ? { providerId } : {}) };
   const key = workModelSelectionKey(target);
   const available = models.find(option => option.key === key);
@@ -142,7 +130,7 @@ export function workModelFromChatDsh(
     remote: providerType !== 'ollama' || /(?::cloud|-cloud)$/i.test(model),
   };
   return {
-    option: selectWorkEngine(option, 'dsh'),
+    option: selectWorkEngine(option, 'strands'),
     available: available !== undefined,
   };
 }

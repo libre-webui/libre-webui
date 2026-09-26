@@ -24,8 +24,7 @@ const systemInfo = {
   hasUsers: true,
   userCount: 2,
   signupEnabled: true,
-  // The Agents entry only exists when an administrator enabled the feature.
-  agentsEnabled: true,
+  strandsAccess: 'admins',
   version: '0.17.0-e2e',
   turnstile: { enabled: false },
 };
@@ -321,8 +320,8 @@ const agentUsageFixture = (): PluginUsageAnalytics => ({
   ...modelUsageFixture(),
   agents: [
     {
-      agentId: 'dsh',
-      agentName: 'DeepSeek Harness',
+      agentId: 'strands',
+      agentName: 'Strands',
       calls: 12,
       tokens: 410,
       errors: 1,
@@ -330,14 +329,14 @@ const agentUsageFixture = (): PluginUsageAnalytics => ({
       meteredCalls: 10,
       models: [
         {
-          model: 'deepseek-flash',
+          model: 'strands:lwui:ollama:qwen3',
           calls: 10,
           tokens: 410,
           errors: 1,
           meteredCalls: 10,
         },
         {
-          model: 'deepseek-v4-pro',
+          model: 'strands:lwui:ollama:llama3',
           calls: 2,
           tokens: 0,
           errors: 0,
@@ -412,13 +411,17 @@ test('agent usage appears before cost and charts with recorded, unmetered, and z
   expect((await agents.boundingBox())!.y).toBeLessThan(
     (await page.getByTestId('plugin-usage-chart').boundingBox())!.y
   );
-  const dsh = agents.locator('[data-agent="dsh"]');
-  await expect(dsh.locator('[data-agent-metric="calls"]')).toHaveText('12');
-  await expect(dsh.locator('[data-agent-metric="tokens"]')).toHaveText('410');
-  await expect(dsh).toContainText('Usage reported on 10 call(s)');
-  await expect(dsh).toContainText('Average latency: 900 ms');
-  await expect(dsh).toContainText('1 failed or cancelled');
-  const flash = dsh.locator('[data-agent-model="deepseek-flash"]');
+  const strands = agents.locator('[data-agent="strands"]');
+  await expect(strands.locator('[data-agent-metric="calls"]')).toHaveText('12');
+  await expect(strands.locator('[data-agent-metric="tokens"]')).toHaveText(
+    '410'
+  );
+  await expect(strands).toContainText('Usage reported on 10 call(s)');
+  await expect(strands).toContainText('Average latency: 900 ms');
+  await expect(strands).toContainText('1 failed or cancelled');
+  const flash = strands.locator(
+    '[data-agent-model="strands:lwui:ollama:qwen3"]'
+  );
   await expect(flash.getByRole('cell').nth(1)).toHaveText('10');
   await expect(flash.getByRole('cell').nth(2)).toHaveText('410');
   await expect(agents.locator('[data-agent="codex"]')).toContainText(
@@ -456,7 +459,9 @@ test('agent usage refreshes while visible and suspends polling in the background
     refreshed.agents![0].calls = 12 + refreshes;
     return route.fulfill({ json: { success: true, data: refreshed } });
   });
-  const calls = page.locator('[data-agent="dsh"] [data-agent-metric="calls"]');
+  const calls = page.locator(
+    '[data-agent="strands"] [data-agent-metric="calls"]'
+  );
   await page.clock.fastForward(20_000);
   await expect(calls).toHaveText('13');
   await page.evaluate(() => {
@@ -495,86 +500,6 @@ test('older usage responses identify incomplete agent coverage without fabricate
   );
   await expect(agents.locator('[data-agent]')).toHaveCount(0);
   await expect(agents).not.toContainText('No recorded calls in this period');
-});
-
-test('native DSH calls appear alongside existing providers without Ollama labels', async ({
-  page,
-}) => {
-  const usage = modelUsageFixture();
-  const nativeId = 'dsh-native:deepseek-official';
-  const nativeName = 'DeepSeek Harness · DeepSeek';
-  const names: Record<string, string> = {
-    [gptModel]: 'deepseek-flash',
-    [claudeModel]: 'deepseek-v4-pro',
-    'claude-haiku-4.5': 'gpt-6-astra',
-  };
-  usage.models = usage.models.map((entry, index) => ({
-    ...entry,
-    model: names[entry.model],
-    pluginId: index < 2 ? nativeId : 'codex-oauth',
-    pluginName: index < 2 ? nativeName : 'Codex (ChatGPT)',
-  }));
-  const native = usage.models.slice(0, 2);
-  const codex = usage.models[2];
-  usage.plugins = [
-    {
-      pluginId: nativeId,
-      pluginName: nativeName,
-      calls: native.reduce((total, entry) => total + entry.calls, 0),
-      tokens: native.reduce((total, entry) => total + entry.tokens, 0),
-      errors: native.reduce((total, entry) => total + entry.errors, 0),
-      averageLatencyMs: 1800,
-    },
-    { ...codex },
-  ];
-  usage.modelSeries = usage.modelSeries?.map(series => ({
-    ...series,
-    model: series.model === null ? null : names[series.model],
-  }));
-  if (usage.heatmap) {
-    usage.heatmap.models = usage.heatmap.models.map(model => names[model]);
-    usage.heatmap.cells = usage.heatmap.cells.map(cell => ({
-      ...cell,
-      models: cell.models.map(entry => ({
-        ...entry,
-        model: names[entry.model],
-      })),
-    }));
-  }
-  await openModelUsage(page, usage);
-  const providers = page.getByTestId('usage-provider-breakdown');
-  await expect(providers).toContainText('Provider and agent traffic');
-  const nativeRow = providers.locator(`[data-provider="${nativeId}"]`);
-  await expect(nativeRow).toContainText(nativeName);
-  await expect(nativeRow).toContainText('2 failed or cancelled');
-  await expect(nativeRow.locator('span[data-model]')).toHaveCount(2);
-  await expect(providers).toContainText('Codex (ChatGPT)');
-  await expect(providers).not.toContainText('Ollama');
-  const models = page.getByTestId('usage-model-table');
-  for (const model of native) {
-    const row = models.locator(`[data-model="${model.model}"]`);
-    await expect(row).toContainText(nativeName);
-    await expect(row.getByRole('cell').nth(1)).toContainText(
-      String(model.calls)
-    );
-  }
-  const chart = page.getByTestId('plugin-usage-chart');
-  const flashLine = chart.locator(
-    '[data-testid="usage-model-line"][data-model="deepseek-flash"]'
-  );
-  await expect(flashLine).toBeVisible();
-  await expect(
-    chart.locator(
-      '[data-testid="usage-model-line"][data-model="deepseek-v4-pro"]'
-    )
-  ).toBeVisible();
-  const flashModel = models.getByRole('button', {
-    name: 'Highlight deepseek-flash',
-    exact: true,
-  });
-  await flashModel.click();
-  await expect(flashModel).toHaveAttribute('aria-pressed', 'true');
-  await expect(flashLine).toHaveAttribute('data-highlighted', 'true');
 });
 
 test('administrators open provider usage from the user menu', async ({
@@ -667,13 +592,15 @@ test('administrators open provider usage from the user menu', async ({
   await page.getByTestId('app-tab-new').click();
   const newTabMenu = page.getByTestId('app-tab-new-menu');
   const newTabLabels = await newTabMenu.getByRole('menuitem').allTextContents();
-  const agentsIndex = newTabLabels.findIndex(label => label.includes('Agents'));
+  const strandsIndex = newTabLabels.findIndex(label =>
+    label.includes('Strands')
+  );
   const systemIndex = newTabLabels.findIndex(label => label.includes('System'));
   const usageIndex = newTabLabels.findIndex(label =>
     label.includes('Provider Usage')
   );
-  expect(agentsIndex).toBeGreaterThan(-1);
-  expect(systemIndex).toBeGreaterThan(agentsIndex);
+  expect(strandsIndex).toBeGreaterThan(-1);
+  expect(systemIndex).toBeGreaterThan(strandsIndex);
   expect(usageIndex).toBeGreaterThan(systemIndex);
   // User Management moved into Settings; it is no longer a page tab.
   expect(newTabLabels.some(label => label.includes('User Management'))).toBe(
@@ -1200,7 +1127,7 @@ for (const variant of [
     const agents = page.getByTestId('usage-agent-breakdown');
     await expect(agents.locator('[data-agent]')).toHaveCount(5);
     await expect(
-      agents.locator('[data-agent="dsh"] [data-agent-metric="tokens"]')
+      agents.locator('[data-agent="strands"] [data-agent-metric="tokens"]')
     ).toHaveText('410');
     await expect(chart.getByTestId('usage-model-line')).toHaveCount(3);
     await expect(page.getByTestId('usage-heatmap')).toBeVisible();

@@ -79,7 +79,7 @@ export type {
   ImageGenRequest,
   ImageGenResponse,
 } from './api/imageGenApi';
-export { libreClawApi } from './api/libreClawApi';
+export { strandsApi } from './api/strandsApi';
 export { mediaApi } from './api/mediaApi';
 export type {
   AudioGenModel,
@@ -88,14 +88,13 @@ export type {
   VideoGenModel,
 } from './api/mediaApi';
 export type {
-  LibreClawAutomation,
-  LibreClawEvent,
-  LibreClawPermissionResolution,
-  LibreClawRun,
-  LibreClawRunState,
-  LibreClawStartRunPayload,
-  LibreClawStatus,
-} from './api/libreClawApi';
+  StrandsAccess,
+  StrandsMessage,
+  StrandsModel,
+  StrandsSession,
+  StrandsSessionDetail,
+  StrandsTurnEvent,
+} from './api/strandsApi';
 export { ollamaApi, MODELS_CHANGED_EVENT } from './api/modelApi';
 export { personaApi } from './api/personaApi';
 export { promptsApi } from './api/promptsApi';

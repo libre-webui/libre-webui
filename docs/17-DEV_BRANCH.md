@@ -241,7 +241,7 @@ still report a skip when the optional GUI fixture is absent.
 
 This matrix adds checks for the supported surfaces; it does not enable
 unsupported combinations. Node-local CLI credentials remain unavailable to
-external team workers, and native DSH sockets still require a shared Unix host.
+external team workers.
 
 CodeQL covers JavaScript/TypeScript, Python, and workflow code on every pull
 request. The executable Python provider servers under `examples/` are explicitly

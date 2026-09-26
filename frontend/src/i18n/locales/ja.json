@@ -40,7 +40,8 @@
     "custom": "カスタム",
     "remove": "削除",
     "home": "ホーム",
-    "more": "多"
+    "more": "多",
+    "reasoning": "推論"
   },
   "brand": {
     "name": "Libre WebUI",
@@ -528,7 +529,6 @@
       "models": "モデル",
       "personas": "ペルソナ",
       "imagine": "画像生成",
-      "agents": "エージェント",
       "work": "作業",
       "settings": "設定",
       "usageAnalytics": "プロバイダー使用状況",
@@ -543,7 +543,7 @@
       "skills": "スキル",
       "tools": "ツール",
       "channels": "チャンネル",
-      "cordis": "Cordis エンジン"
+      "strands": "Strands"
     },
     "toggleSize": "サイドバーのサイズを切り替え",
     "expandSidebar": "サイドバーを展開"
@@ -1830,13 +1830,6 @@
       "saved": "デフォルトテーマを更新しました",
       "saveFailed": "デフォルトテーマを更新できませんでした"
     },
-    "agentAccess": {
-      "title": "Libre Claw",
-      "description": "管理者にLibre Clawワークスペースを表示します。",
-      "saved": "エージェントへのアクセスを更新しました",
-      "saveFailed": "エージェントへのアクセスを更新できませんでした",
-      "lockedByEnv": "環境変数 LIBRE_CLAW_ENABLED によって固定されています。"
-    },
     "groups": {
       "title": "グループ",
       "description": "アカウントをグループ化して共有アクセスを管理し、各アカウントが実際に何をできるかを確認できます。",
@@ -1973,13 +1966,17 @@
       "saved": "メール設定を保存しました。",
       "saveFailed": "メール設定を保存できませんでした。"
     },
-    "cordisAccess": {
-      "title": "Cordis エンジン",
-      "description": "Cordis エンジンを管理者に提供します。Libre WebUI のツール承認フローの外で、実際のファイルシステムアクセスを伴うツールを実行します。",
-      "saved": "Cordis アクセスを更新しました",
-      "saveFailed": "Cordis アクセスを更新できませんでした",
-      "lockedByEnv": "環境変数 LIBRE_CORDIS_ENABLED によって固定されています。",
-      "lockedByFile": "cordis.config.yml の features.enabled によって固定されています。"
+    "strandsAccess": {
+      "title": "Strands エンジン",
+      "description": "組み込みの Strands エージェントを使えるユーザーを選びます。各セッション専用のワークスペース内でファイルを読み取り・編集できますが、シェルコマンドは実行できません。",
+      "saved": "Strands のアクセス設定を更新しました",
+      "saveFailed": "Strands のアクセス設定を更新できませんでした",
+      "lockedByEnv": "環境変数 LIBRE_STRANDS_ACCESS で固定されています。",
+      "modes": {
+        "disabled": "オフ",
+        "admins": "管理者",
+        "all-users": "すべてのユーザー"
+      }
     },
     "agentCliAccess": {
       "title": "エージェントCLIモデル",
@@ -2070,7 +2067,7 @@
     },
     "agents": {
       "title": "エージェント",
-      "description": "CLIエージェントの呼び出しとネイティブDSHリクエスト。Libre WebUIモデルを使用するDSHは、そのモデルのプロバイダーに計上されます。",
+      "description": "CLI エージェントと Strands エンジンの呼び出し。",
       "noCalls": "この期間に記録された呼び出しはありません",
       "unreported": "トークン数は未報告",
       "topModels": "使用頻度の高いモデル",
@@ -2573,144 +2570,6 @@
     "title": "デモモード",
     "github": "GitHub"
   },
-  "libreClaw": {
-    "title": "エージェント",
-    "subtitle": "ローカル エージェントの実行、承認、スケジュール、メモリ、ツール、および使用状況。",
-    "dashboard": "ダッシュボード",
-    "connection": {
-      "disconnectedTitle": "Libre Claw デーモンが接続されていません",
-      "disconnectedDescription": "<command>libre-claw start</command> を使用してローカルで開始するか、バックエンド環境で <env>LIBRE_CLAW_BASE_URL</env> を設定します。"
-    },
-    "status": {
-      "connected": "接続済み",
-      "disconnected": "切断されました",
-      "activeRuns": "{{count}} アクティブ",
-      "activeRuns_plural": "{{count}} アクティブ"
-    },
-    "states": {
-      "queued": "キューに入れられました",
-      "running": "実行中",
-      "blocked": "ブロックされました",
-      "done": "完了",
-      "failed": "失敗しました",
-      "cancelled": "キャンセルされました"
-    },
-    "startRun": {
-      "title": "エージェント実行を開始",
-      "placeholder": "Libre Claw にリポジトリの検査、バグの修正、レビューの実行、レポートのスケジュールを依頼してください...",
-      "chatRun": "チャットラン",
-      "goalMode": "ゴールモード",
-      "providerOverride": "プロバイダーのオーバーライド",
-      "modelOverride": "モデルオーバーライド",
-      "run": "実行"
-    },
-    "modelRoute": {
-      "title": "モデルルート",
-      "providerPlaceholder": "プロバイダー",
-      "modelPlaceholder": "モデル",
-      "persistGlobal": "Libre Claw グローバル構成を保持する",
-      "saveModel": "モデルの保存",
-      "theme": "Libre Claw テーマ",
-      "saveTheme": "テーマの保存"
-    },
-    "runs": {
-      "title": "実行",
-      "empty": "Libre Claw の実行はまだありません。"
-    },
-    "timeline": {
-      "title": "実行タイムライン",
-      "empty": "実行を選択してそのイベントを検査します。",
-      "streaming": "ストリーミング中...",
-      "assistantResponse": "アシスタントの応答",
-      "resultOk": "わかりました",
-      "resultError": "エラー",
-      "labels": {
-        "userMessage": "ユーザーメッセージ",
-        "toolCall": "ツール呼び出し",
-        "toolResult": "ツールの結果",
-        "approvalRequest": "承認リクエスト",
-        "approvalResponse": "承認応答",
-        "runStarted": "実行開始",
-        "runFinished": "実行完了",
-        "usage": "使用法",
-        "error": "エラー"
-      }
-    },
-    "approvals": {
-      "needed": "承認が必要です",
-      "allowOnce": "一度許可する",
-      "alwaysAllowTool": "ツールを常に許可する",
-      "deny": "拒否",
-      "toolApprovalRequested": "ツールの承認が要求されました"
-    },
-    "automations": {
-      "title": "自動化",
-      "namePlaceholder": "名前",
-      "schedulePlaceholder": "daily 09:00",
-      "promptPlaceholder": "自動化プロンプト",
-      "create": "作成",
-      "empty": "スケジュールされたLibre Claw 自動化はありません。",
-      "runNow": "今すぐ実行",
-      "pause": "一時停止",
-      "resume": "再開",
-      "routes": {
-        "report": "レポート",
-        "telegram": "Telegram"
-      },
-      "status": {
-        "active": "アクティブ",
-        "paused": "一時停止中"
-      }
-    },
-    "usageFallback": {
-      "title": "使用法とフォールバック",
-      "usage": "使用法",
-      "fallbackRoute": "フォールバックルート",
-      "noUsage": "まだ使用実績はありません。"
-    },
-    "metrics": {
-      "provider": "プロバイダー",
-      "model": "モデル",
-      "input": "入力",
-      "output": "出力",
-      "cached": "キャッシュされた",
-      "reasoning": "推論",
-      "cost": "コスト",
-      "tool": "ツール",
-      "resolution": "解像度",
-      "state": "状態",
-      "stopReason": "停止理由",
-      "tokens": "{{formatted}} トークン",
-      "tokens_plural": "{{formatted}} トークン"
-    },
-    "fallbacks": {
-      "tool": "ツール",
-      "unknown": "不明",
-      "resolved": "解決済み",
-      "unknownError": "不明なエラー"
-    },
-    "toasts": {
-      "loadStatusFailed": "Libre Claw ステータスをロードできませんでした",
-      "enterTask": "Libre Claw のタスクを入力してください",
-      "runStarted": "Libre Claw の実行を開始しました",
-      "startRunFailed": "Libre Claw の実行を開始できませんでした",
-      "runCancelled": "実行をキャンセルしました",
-      "cancelRunFailed": "実行をキャンセルできませんでした",
-      "approved": "承認済み",
-      "denied": "拒否されました",
-      "resolvePermissionFailed": "権限を解決できませんでした",
-      "providerModelRequired": "プロバイダーとモデルは必須です",
-      "modelUpdated": "Libre Claw モデルが更新されました",
-      "updateModelFailed": "モデルを更新できませんでした",
-      "themeUpdated": "Libre Claw テーマを更新しました",
-      "updateThemeFailed": "テーマを更新できませんでした",
-      "automationRequired": "オートメーション名、スケジュール、プロンプトは必須です",
-      "automationCreated": "自動化が作成されました",
-      "createAutomationFailed": "オートメーションを作成できませんでした",
-      "automationUpdated": "自動化が更新されました",
-      "updateAutomationFailed": "オートメーションを更新できませんでした"
-    }
-  },
   "work": {
     "title": "作業",
     "subtitle": "隔離されたモデルワークスペース",
@@ -2758,9 +2617,8 @@
       "noModelSelected": "作業対応モデルが選択されていません。",
       "mentionAgents": "エージェントをメンション",
       "engine": "エンジン",
-      "nativeDshModels": "ネイティブDSHモデル",
       "libreModels": "Libre WebUIモデル",
-      "nativeDshUnavailable": "ネイティブDSHモデルを利用できません。モデル一覧を更新するか、プロバイダー設定を確認してください。",
+      "strandsDisabled": "このアカウントでは Strands エンジンを利用できません。",
       "modelLabel": "モデル"
     },
     "conversation": {
@@ -3941,41 +3799,34 @@
       "saveFailed": "APIキーを保存できませんでした"
     }
   },
-  "cordis": {
-    "title": "Cordis エンジン",
-    "description": "組み込みの DeepSeek Harness エンジンのセッション、ツール、チャット。",
+  "strands": {
+    "title": "Strands",
+    "subtitle": "Libre WebUI のモデルで動く組み込みエージェントエンジン。",
+    "subtitleVersion": "組み込みエージェントエンジン、harness {{version}}。",
     "newSession": "新しいセッション",
-    "createFailed": "セッションを作成できませんでした。",
-    "deleteFailed": "セッションを削除できませんでした。",
-    "sendFailed": "エンジンがターンを完了できませんでした。",
-    "sessionsHeading": "セッション",
-    "toolsHeading": "ツール",
-    "transcriptHeading": "文字起こし",
+    "sessions": "セッション",
     "noSessions": "セッションはまだありません。作成して開始してください。",
-    "noTools": "エンジンはツールを登録していません。",
-    "selectSession": "セッションを選択するか、作成して開始してください。",
-    "working": "エージェントが作業中…",
-    "composerLabel": "エンジンへのメッセージ",
-    "composerPlaceholder": "エンジンに依頼を入力…",
+    "empty": "ワークスペース内のファイルの読み取りや編集をエージェントに依頼できます。",
+    "placeholder": "エンジンに依頼を入力…",
+    "model": "モデル",
+    "defaultModel": "既定のモデル",
     "send": "送信",
     "stop": "停止",
-    "deleteSession": "セッションを削除",
-    "unknownTime": "不明な時刻",
-    "disabledTitle": "Cordis エンジンは無効です",
-    "disabledHint": "管理者は「ユーザー管理」→「アクセスとポリシー」で有効にできます。",
-    "unavailableTitle": "Cordis エンジンを起動できませんでした",
-    "role": {
-      "user": "あなた",
-      "assistant": "エンジン",
-      "system": "システム",
-      "tool": "ツール",
-      "unknown": "メッセージ"
+    "reasoning": "推論",
+    "tool": {
+      "running": "実行中",
+      "done": "完了",
+      "failed": "失敗しました"
     },
-    "turnFailed": "エンジンがターンを完了できませんでした",
-    "permissions": "権限",
-    "readOnly": "読み取り専用",
-    "workspaceWrite": "ワークスペースへの書き込み",
-    "context": "セッションのコンテキスト",
-    "permissionHint": "読み取り専用ではファイルを確認できます。書き込みでは、このセッションのワークスペース内で編集できます。"
+    "cancelled": "キャンセルされました",
+    "turnLimit": "ターン上限で停止しました。",
+    "messageCount": "メッセージ: {{count}}",
+    "deleteSession": "セッションを削除",
+    "deleteConfirm": "「{{title}}」と履歴を削除しますか？",
+    "loadFailed": "Strands を読み込めませんでした。",
+    "createFailed": "セッションを作成できませんでした。",
+    "deleteFailed": "セッションを削除できませんでした。",
+    "saveFailed": "セッションを保存できませんでした。",
+    "turnFailed": "エンジンがターンを完了できませんでした"
   }
 }
