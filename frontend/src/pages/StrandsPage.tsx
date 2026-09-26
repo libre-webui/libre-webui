@@ -188,6 +188,9 @@ export default function StrandsPage() {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [messages, setMessages] = useState<StrandsMessage[]>([]);
   const [draft, setDraft] = useState('');
+  // The model for the next new session. It is the only choice there is before
+  // any session exists, and new sessions inherit it afterwards.
+  const [nextModel, setNextModel] = useState('');
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [streaming, setStreaming] = useState<StrandsMessage | null>(null);
@@ -196,6 +199,7 @@ export default function StrandsPage() {
   const bottomRef = useRef<HTMLDivElement>(null);
 
   const active = sessions.find(session => session.id === activeId) ?? null;
+  const selectedModel = active ? (active.model ?? '') : nextModel;
 
   const refreshSessions = useCallback(async () => {
     const response = await strandsApi.listSessions();
@@ -259,7 +263,7 @@ export default function StrandsPage() {
   const createSession = async () => {
     try {
       const response = await strandsApi.createSession({
-        model: active?.model ?? null,
+        model: selectedModel || null,
       });
       if (!response.success || !response.data) throw new Error(response.error);
       freshSessionRef.current = response.data.id;
@@ -290,17 +294,28 @@ export default function StrandsPage() {
   };
 
   const changeModel = async (model: string) => {
+    setNextModel(model);
     if (!active) return;
+    const sessionId = active.id;
+    const previous = active.model;
+    const setSessionModel = (value: string | null) =>
+      setSessions(current =>
+        current.map(item =>
+          item.id === sessionId ? { ...item, model: value } : item
+        )
+      );
+    setSessionModel(model || null);
     try {
-      const response = await strandsApi.updateSession(active.id, {
+      const response = await strandsApi.updateSession(sessionId, {
         model: model || null,
       });
-      if (response.success && response.data) {
-        setSessions(current =>
-          current.map(item => (item.id === active.id ? response.data! : item))
-        );
-      }
+      if (!response.success || !response.data) throw new Error(response.error);
+      setSessions(current =>
+        current.map(item => (item.id === sessionId ? response.data! : item))
+      );
     } catch (error) {
+      setSessionModel(previous);
+      setNextModel(previous ?? '');
       toast.error(errorMessage(error, t('strands.saveFailed')));
     }
   };
@@ -363,6 +378,11 @@ export default function StrandsPage() {
       label: `${model.name} · ${model.providerName}`,
     })),
   ];
+  // Keep a saved choice visible even when its provider no longer lists it,
+  // instead of silently showing the default.
+  if (selectedModel && !models.some(model => model.id === selectedModel)) {
+    modelOptions.push({ value: selectedModel, label: selectedModel });
+  }
 
   return (
     <div
@@ -514,9 +534,9 @@ export default function StrandsPage() {
                   <Select
                     aria-label={t('strands.model')}
                     data-testid='strands-model-select'
-                    value={active?.model ?? ''}
+                    value={selectedModel}
                     onChange={event => void changeModel(event.target.value)}
-                    disabled={!active || !!streaming}
+                    disabled={!!streaming}
                     options={modelOptions}
                     className='h-9 py-1 text-sm'
                   />

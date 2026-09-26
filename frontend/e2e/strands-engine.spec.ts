@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 import { defaultSystemInfo, mockLibreWebUiApi } from './lib/mockApi';
 
 interface MockSession {
@@ -27,11 +27,11 @@ interface MockSession {
   messageCount: number;
 }
 
-test('an admin creates a Strands session and streams a turn with a tool call', async ({
-  page,
-}) => {
+const mockStrands = async (page: Page) => {
   const sessions: MockSession[] = [];
   const turnBodies: unknown[] = [];
+  const createBodies: unknown[] = [];
+  const patchBodies: unknown[] = [];
   await mockLibreWebUiApi(page, {
     systemInfo: {
       ...defaultSystemInfo,
@@ -81,6 +81,13 @@ test('an admin creates a Strands session and streams a turn with a tool call', a
               providerId: null,
               providerName: 'Ollama',
             },
+            {
+              id: 'ollama:fixture-coder',
+              name: 'fixture-coder',
+              providerType: 'ollama',
+              providerId: null,
+              providerName: 'Ollama',
+            },
           ],
         },
       });
@@ -91,10 +98,12 @@ test('an admin creates a Strands session and streams a turn with a tool call', a
       return;
     }
     if (path === '/sessions' && method === 'POST') {
+      const body = route.request().postDataJSON() as { model?: string | null };
+      createBodies.push(body);
       const session: MockSession = {
         id: '00000000-0000-4000-8000-000000000001',
         title: 'New session',
-        model: null,
+        model: body.model ?? null,
         createdAt: 1,
         updatedAt: 1,
         messageCount: 0,
@@ -107,6 +116,13 @@ test('an admin creates a Strands session and streams a turn with a tool call', a
       return;
     }
     const session = sessions[0];
+    if (session && path === `/sessions/${session.id}` && method === 'PATCH') {
+      const body = route.request().postDataJSON() as { model?: string | null };
+      patchBodies.push(body);
+      if (body.model !== undefined) session.model = body.model;
+      await route.fulfill({ json: { success: true, data: session } });
+      return;
+    }
     if (session && path === `/sessions/${session.id}` && method === 'GET') {
       await route.fulfill({
         json: {
@@ -156,6 +172,13 @@ test('an admin creates a Strands session and streams a turn with a tool call', a
       json: { success: false, error: 'not mocked' },
     });
   });
+  return { sessions, turnBodies, createBodies, patchBodies };
+};
+
+test('an admin creates a Strands session and streams a turn with a tool call', async ({
+  page,
+}) => {
+  const { turnBodies } = await mockStrands(page);
 
   await page.goto('/strands');
   const strandsPage = page.getByTestId('strands-page');
@@ -175,4 +198,35 @@ test('an admin creates a Strands session and streams a turn with a tool call', a
   await expect(reply).toContainText('Saved the note.');
   await expect(page.getByTestId('strands-tool-trace')).toContainText('write');
   expect(turnBodies).toEqual([{ text: 'Save a note' }]);
+});
+
+test('the Strands model selector works before a session exists and on an open session', async ({
+  page,
+}) => {
+  const { createBodies, patchBodies } = await mockStrands(page);
+
+  await page.goto('/strands');
+  const select = page.getByTestId('strands-model-select');
+  await expect(select).toBeEnabled();
+  await select.selectOption('ollama:fixture-coder');
+
+  await page.getByTestId('strands-input').fill('Hello');
+  await page.getByTestId('strands-send').click();
+  await expect(
+    page.getByTestId('strands-assistant-message').last()
+  ).toContainText('Saved the note.');
+  expect(createBodies).toEqual([{ model: 'ollama:fixture-coder' }]);
+  await expect(select).toHaveValue('ollama:fixture-coder');
+
+  await select.selectOption('ollama:fixture-agent');
+  await expect(select).toHaveValue('ollama:fixture-agent');
+  await expect
+    .poll(() => patchBodies)
+    .toEqual([{ model: 'ollama:fixture-agent' }]);
+
+  await select.selectOption('');
+  await expect(select).toHaveValue('');
+  await expect
+    .poll(() => patchBodies[patchBodies.length - 1])
+    .toEqual({ model: null });
 });
