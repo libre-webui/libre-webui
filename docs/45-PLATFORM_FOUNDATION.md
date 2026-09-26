@@ -91,8 +91,11 @@ active key plus the matching `legacy` entry.
 
 ### Run the bundled team profile
 
-The team profile and CI pull the pinned MinIO server and client images from
-`quay.io/minio`. Hosts that restrict registry access must permit `quay.io`.
+MinIO no longer publishes container images. The team profile and CI pull
+Chainguard's MinIO server and client builds from `cgr.dev/chainguard`, pinned
+by digest. Hosts that restrict registry access must permit `cgr.dev`. The
+server runs as root, as the earlier official image did, so volumes created
+before the switch stay writable.
 
 Start from the shipped fail-closed template. Keep the completed environment
 file outside the repository and restrict it to its operator:

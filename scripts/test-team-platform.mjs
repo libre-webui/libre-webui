@@ -106,7 +106,7 @@ test(
           `${project}_default`,
           '--env',
           'MC_HOST_local=http://libreteam:libre-team-minio-password@minio:9000',
-          'quay.io/minio/mc:RELEASE.2025-07-21T05-28-08Z',
+          'cgr.dev/chainguard/minio-client@sha256:f0dd93b48af1f8a641edcd3c64661c8dbe05189bd2ef2f8cea216eb18af10bf8',
           'stat',
           `local/libre-blobs/${objectKey}`,
         ],

@@ -38,6 +38,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 🐛 Bug Fixes
 
+- **Team profile storage image**: MinIO stopped publishing container images,
+  and `quay.io/minio` now refuses anonymous pulls, so the team profile could not
+  start its object store. The team profile and CI now pull Chainguard's MinIO
+  server and client builds from `cgr.dev`, pinned by digest. The server keeps
+  running as root so existing MinIO volumes stay writable.
+
 ### 📚 Documentation
 
 - Added the [Strands engine guide](docs/67-STRANDS_ENGINE.md) and replaced the

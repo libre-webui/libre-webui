@@ -75,7 +75,11 @@ services:
       - libre-team-redis:/data
 
   minio:
-    image: quay.io/minio/minio:RELEASE.2025-07-23T15-54-02Z
+    image: cgr.dev/chainguard/minio@sha256:bd014394a80898e68c149f2311fdf8d5a2c2f3bb2c33b9327ae6d02b4b065ae1
+    # MinIO no longer publishes images, so this is Chainguard's source build.
+    # It defaults to a non-root user; keep root so volumes written by the
+    # earlier official image stay writable after an upgrade.
+    user: '0:0'
     command: ['server', '/data', '--console-address', ':9001']
     environment:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER:?set MINIO_ROOT_USER}
@@ -84,7 +88,7 @@ services:
       - libre-team-minio:/data
 
   minio-init:
-    image: quay.io/minio/mc:RELEASE.2025-07-21T05-28-08Z
+    image: cgr.dev/chainguard/minio-client@sha256:f0dd93b48af1f8a641edcd3c64661c8dbe05189bd2ef2f8cea216eb18af10bf8
     depends_on:
       minio:
         condition: service_started

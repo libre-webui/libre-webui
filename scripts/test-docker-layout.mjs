@@ -594,7 +594,7 @@ test('real-service CI uses the exact shipped team dependency image references', 
   )?.[1];
   const releaseMinio = releasePreflight.match(/^\s+(\S+) server \/data$/m)?.[1];
   const teamMinioClient = teamPlatformTest.match(
-    /^\s+'(quay\.io\/minio\/mc:[^']+)',$/m
+    /^\s+'(cgr\.dev\/chainguard\/minio-client@sha256:[a-f0-9]{64})',$/m
   )?.[1];
   const backupMinio = teamBackupTest.match(
     /const MINIO_IMAGE =\s*'([^']+)';/
@@ -602,17 +602,24 @@ test('real-service CI uses the exact shipped team dependency image references', 
 
   assert.equal(ciPostgres, composePostgres);
   assert.equal(ciRedis, composeRedis);
-  assert.match(composeMinio, /^quay\.io\/minio\/minio:RELEASE\.[\w-]+$/);
+  assert.match(
+    composeMinio,
+    /^cgr\.dev\/chainguard\/minio@sha256:[a-f0-9]{64}$/,
+    'team MinIO must be a digest-pinned image that still publishes'
+  );
   assert.equal(ciMinio, composeMinio);
   assert.equal(releasePostgres, composePostgres);
   assert.equal(releaseRedis, composeRedis);
   assert.equal(releaseMinio, composeMinio);
-  assert.match(composeMinioClient, /^quay\.io\/minio\/mc:RELEASE\.[\w-]+$/);
-  assert.equal(teamMinioClient, composeMinioClient);
   assert.match(
+    composeMinioClient,
+    /^cgr\.dev\/chainguard\/minio-client@sha256:[a-f0-9]{64}$/
+  );
+  assert.equal(teamMinioClient, composeMinioClient);
+  assert.equal(
     backupMinio,
-    /^quay\.io\/minio\/minio@sha256:[a-f0-9]{64}$/,
-    'backup fixture must use a digest-pinned MinIO image from Quay'
+    composeMinio,
+    'backup fixture must use the shipped MinIO image'
   );
   const testStorageKey = '91'.repeat(32);
   for (const workflow of [formatWorkflow, releasePreflight]) {
