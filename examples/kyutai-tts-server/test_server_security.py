@@ -155,7 +155,7 @@ class VoiceCloneCleanupTests(unittest.TestCase):
             "Form": lambda default: default,
             "HTTPException": HTTPException,
             "UploadFile": object,
-            "Response": lambda **kwargs: SimpleNamespace(**kwargs),
+            "Response": SimpleNamespace,
             "model": Mock(),
             "model_type": "base-1.7b",
             "os": SimpleNamespace(unlink=Mock(wraps=os.unlink)),

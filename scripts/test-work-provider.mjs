@@ -1337,9 +1337,7 @@ test('Strands Work streams through the exact plugin using its unwrapped model id
   const remotePlugin = { ...plugin('openai'), active: true };
   const service = streamingService(remotePlugin);
   const originalFetch = globalThis.fetch;
-  let strandsAllowed = true;
   const payloads = [];
-  strandsAllowed = true;
   globalThis.fetch = async (_url, init) => {
     payloads.push(JSON.parse(init.body));
     return new Response(
@@ -1379,6 +1377,5 @@ test('Strands Work streams through the exact plugin using its unwrapped model id
     assert.deepEqual(payloads[0].tools, [tool]);
   } finally {
     globalThis.fetch = originalFetch;
-    strandsAllowed = true;
   }
 });
