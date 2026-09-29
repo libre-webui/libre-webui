@@ -98,7 +98,44 @@ const ANTHROPIC_MAX_OUTPUT_TOKENS: ReadonlyArray<[string, number]> = [
   ['claude-sonnet-4', 64000],
   ['claude-haiku-4', 64000],
   ['claude-opus-4', 32000],
+  ['claude-opus-5-5', 128000],
+  ['claude-sonnet-5-5', 128000],
 ];
+
+/**
+ * Claude models that reject manual thinking budgets and `type: 'disabled'`.
+ * They think adaptively by default; depth is set with `output_config.effort`.
+ */
+const ANTHROPIC_ADAPTIVE_THINKING_MODELS = new Set([
+  'claude-opus-5-5',
+  'claude-sonnet-5-5',
+]);
+
+/**
+ * Adaptive models whose lowest setting is `between_tools`, which keeps
+ * up-front thinking off. The others have no way to switch thinking off.
+ */
+const ANTHROPIC_BETWEEN_TOOLS_MODELS = new Set(['claude-sonnet-5-5']);
+
+/** Room for adaptive thinking plus the answer when no ceiling was set. */
+const ANTHROPIC_ADAPTIVE_DEFAULT_MAX_TOKENS = 16384;
+
+function anthropicAdaptiveThinking(
+  model: string,
+  think: GenerationOptions['think']
+): Record<string, unknown> {
+  const preference = normalizeThinkingPreference(think);
+  if (preference === undefined) return {};
+  if (preference === false) {
+    return ANTHROPIC_BETWEEN_TOOLS_MODELS.has(model)
+      ? { thinking: { type: 'between_tools' } }
+      : {};
+  }
+  return {
+    thinking: { type: 'adaptive' },
+    ...(preference === true ? {} : { output_config: { effort: preference } }),
+  };
+}
 
 export function anthropicMaxOutputTokens(model: string): number | undefined {
   const name = bedrockAnthropicModelName(model).toLowerCase();
@@ -415,18 +452,27 @@ function buildAnthropicChatPayload(
     message => message.role !== 'system'
   );
 
+  const anthropicModel = bedrockAnthropicModelName(model);
+  const adaptive = ANTHROPIC_ADAPTIVE_THINKING_MODELS.has(anthropicModel);
+
   // Anthropic prices thinking in tokens and takes it as its own block. The
   // budget has to fit inside max_tokens with room left for the answer; an
   // explicit user ceiling shrinks the budget rather than being raised, and
-  // the model's own documented ceiling bounds them both.
-  const levelBudget = thinkingBudgetTokens(options.think);
+  // the model's own documented ceiling bounds them both. Adaptive models take
+  // no budget, so max_tokens is left to the user or a roomy default.
+  const levelBudget = adaptive
+    ? undefined
+    : thinkingBudgetTokens(options.think);
   const fitted =
     levelBudget === undefined
       ? undefined
       : fitThinkingBudget(params.maxTokens, levelBudget);
   const modelCeiling = anthropicMaxOutputTokens(model);
   let budgetTokens = fitted?.budgetTokens;
-  let maxTokens = fitted?.maxTokens ?? params.maxTokens ?? 1024;
+  let maxTokens =
+    fitted?.maxTokens ??
+    params.maxTokens ??
+    (adaptive ? ANTHROPIC_ADAPTIVE_DEFAULT_MAX_TOKENS : 1024);
   if (modelCeiling !== undefined && maxTokens > modelCeiling) {
     maxTokens = modelCeiling;
     if (budgetTokens !== undefined) {
@@ -447,6 +493,9 @@ function buildAnthropicChatPayload(
     ...(anthropicTools ? { tools: anthropicTools } : {}),
     ...(budgetTokens !== undefined
       ? { thinking: { type: 'enabled', budget_tokens: budgetTokens } }
+      : {}),
+    ...(adaptive
+      ? anthropicAdaptiveThinking(anthropicModel, options.think)
       : {}),
   };
 

@@ -404,9 +404,11 @@ test('packed npm artifact resolves package metadata and frontend dist', async ()
       'claude-opus-4-7',
       'claude-opus-4-8',
       'claude-opus-5',
+      'claude-opus-5-5',
       'claude-sonnet-4-5-20250929',
       'claude-sonnet-4-6',
       'claude-sonnet-5',
+      'claude-sonnet-5-5',
     ]);
     const anthropicVariables = new Map(
       anthropicPlugin.variables.map(variable => [variable.name, variable])

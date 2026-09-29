@@ -103,6 +103,7 @@ export const AGENT_CLI_DEFINITIONS: AgentCliDefinition[] = [
     ],
     modelOptions: [
       { id: 'sonnet', label: 'Sonnet' },
+      { id: 'claude-sonnet-5-5', label: 'Sonnet 5.5' },
       { id: 'opus', label: 'Opus' },
       { id: 'claude-opus-5-5', label: 'Opus 5.5' },
       { id: 'haiku', label: 'Haiku' },

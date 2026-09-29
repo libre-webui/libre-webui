@@ -25,8 +25,8 @@ import { Plugin } from '../types/index.js';
 export const BUNDLED_PLUGIN_DEFINITION_FINGERPRINTS: Readonly<
   Record<string, string>
 > = Object.freeze({
-  anthropic: '4ba7c2344e8404ed78f6d6f622f24307fcc8f5451047d45ee427bb0ab4d1aecf',
-  bedrock: 'c4a676fd3f87b1717ad1ca1cee26cf18012975d412ac3b28c33826fc86fcf721',
+  anthropic: '282d559305b7a3a8010854cb5889aac992d799d1f3c6bdfd7b3b1009af53dca8',
+  bedrock: '22eaf01882bfbf2d911cb320103de97f534f3aef829001b982d21445a9ed4980',
   'codex-oauth':
     '733d9992eb9209deaec037230cae31178e6000c009d971fef6c26a7666a6f46f',
   comfyui: 'eaefe81897b58bffdf92bae8f0d0b675a062af276d5379e43147d6a0adaf0f47',
@@ -54,7 +54,7 @@ export const BUNDLED_PLUGIN_DEFINITION_FINGERPRINTS: Readonly<
     'ebc3677f4f0ef2ec1628408d59a9e273059cc50d2f9d462e7a3b7f0c4eefe843',
   openai: 'f7a8104551d63b5fe9a771832d7e99cff5e907de66c443f3440323eeef32423c',
   openrouter:
-    '83cd1e5918d6c3176bb2929fbed6e325677e5d2e0c1ceda2da7a75f64df8365f',
+    '7377f21a07da8d202e09d2437e3b529d53814a80f7cd1ecef7ce0a18b38710db',
   'qwen-tts':
     '3a663efb46a9a228a78f850996b8006e886a67c32b52d0e31627586f856a9ba9',
 });

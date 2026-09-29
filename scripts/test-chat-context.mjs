@@ -1454,6 +1454,55 @@ test('buildPluginChatPayload uses Anthropic defaults for Claude Opus 5', () => {
   ]);
 });
 
+test('buildPluginChatPayload sends adaptive thinking to Claude Sonnet 5.5', () => {
+  const build = (model, think, extra = {}) =>
+    pluginChatAdapter.buildPluginChatPayload(
+      { id: 'anthropic' },
+      model,
+      [{ role: 'user', content: 'Plan the migration.' }],
+      { temperature: 0.2, think, ...extra },
+      { top_p: 0.8 },
+      true
+    ).payload;
+
+  const high = build('claude-sonnet-5-5', 'high', { num_predict: 4096 });
+  assert.deepEqual(high.thinking, { type: 'adaptive' });
+  assert.deepEqual(high.output_config, { effort: 'high' });
+  assert.equal(high.max_tokens, 4096);
+  assert.equal('temperature' in high, false);
+  assert.equal('top_p' in high, false);
+
+  const on = build('claude-sonnet-5-5', true);
+  assert.deepEqual(on.thinking, { type: 'adaptive' });
+  assert.equal('output_config' in on, false);
+  assert.equal(on.max_tokens, 16384);
+
+  // Sonnet 5.5 rejects `disabled`; `between_tools` is its lowest setting.
+  const off = build('claude-sonnet-5-5', false, { num_predict: 512 });
+  assert.deepEqual(off.thinking, { type: 'between_tools' });
+  assert.equal('output_config' in off, false);
+
+  const unset = build('claude-sonnet-5-5', undefined);
+  assert.equal('thinking' in unset, false);
+  assert.equal('output_config' in unset, false);
+
+  const bedrock = build('anthropic.claude-sonnet-5-5', 'low', {
+    num_predict: 200000,
+  });
+  assert.deepEqual(bedrock.thinking, { type: 'adaptive' });
+  assert.deepEqual(bedrock.output_config, { effort: 'low' });
+  assert.equal(bedrock.max_tokens, 128000);
+
+  // Opus 5.5 is adaptive too but has no way to turn thinking off.
+  const opus = build('claude-opus-5-5', 'medium');
+  assert.deepEqual(opus.thinking, { type: 'adaptive' });
+  assert.deepEqual(opus.output_config, { effort: 'medium' });
+  assert.equal('thinking' in build('claude-opus-5-5', false), false);
+
+  // Older models keep manual budgets.
+  assert.equal(build('claude-sonnet-4-6', 'low').thinking.type, 'enabled');
+});
+
 test('convertProviderResponse normalizes Gemini responses', () => {
   const response = pluginChatAdapter.convertProviderResponse(
     { id: 'gemini' },
