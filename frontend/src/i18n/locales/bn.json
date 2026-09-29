@@ -2934,7 +2934,8 @@
     "agentModels": "এজেন্ট",
     "showAll": "সব দেখুন ({{total}})",
     "sources": "মডেলের উৎস",
-    "defaultModel": "ডিফল্ট মডেল"
+    "defaultModel": "ডিফল্ট মডেল",
+    "contextSize": "{{size}} কনটেক্সট"
   },
   "whatsNew": {
     "title": "নতুন কী আছে",

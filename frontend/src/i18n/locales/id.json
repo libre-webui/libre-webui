@@ -2934,7 +2934,8 @@
     "agentModels": "Agen",
     "showAll": "Tampilkan semua ({{total}})",
     "sources": "Sumber model",
-    "defaultModel": "Model default"
+    "defaultModel": "Model default",
+    "contextSize": "konteks {{size}}"
   },
   "whatsNew": {
     "title": "Yang baru",

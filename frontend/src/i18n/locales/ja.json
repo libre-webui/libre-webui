@@ -2934,7 +2934,8 @@
     "agentModels": "エージェント",
     "showAll": "すべて表示 ({{total}})",
     "sources": "モデルの提供元",
-    "defaultModel": "デフォルトモデル"
+    "defaultModel": "デフォルトモデル",
+    "contextSize": "コンテキスト {{size}}"
   },
   "whatsNew": {
     "title": "新機能",

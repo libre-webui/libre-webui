@@ -2934,7 +2934,8 @@
     "agentModels": "เอเจนต์",
     "showAll": "แสดงทั้งหมด ({{total}})",
     "sources": "แหล่งที่มาของโมเดล",
-    "defaultModel": "โมเดลเริ่มต้น"
+    "defaultModel": "โมเดลเริ่มต้น",
+    "contextSize": "บริบท {{size}}"
   },
   "whatsNew": {
     "title": "มีอะไรใหม่",

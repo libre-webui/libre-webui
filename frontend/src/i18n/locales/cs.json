@@ -2934,7 +2934,8 @@
     "agentModels": "Agenti",
     "showAll": "Zobrazit vše ({{total}})",
     "sources": "Zdroje modelů",
-    "defaultModel": "Výchozí model"
+    "defaultModel": "Výchozí model",
+    "contextSize": "kontext {{size}}"
   },
   "whatsNew": {
     "title": "Co je nového",

@@ -2934,7 +2934,8 @@
     "agentModels": "Agenter",
     "showAll": "Visa alla ({{total}})",
     "sources": "Modellkällor",
-    "defaultModel": "Standardmodell"
+    "defaultModel": "Standardmodell",
+    "contextSize": "{{size}} kontext"
   },
   "whatsNew": {
     "title": "Nyheter",

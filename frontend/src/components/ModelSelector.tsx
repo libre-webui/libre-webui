@@ -61,7 +61,14 @@ import {
   type ModelSource,
 } from '@/utils/modelSelectorGroups';
 import { modelVisibilityKey } from '@/utils/modelVisibility';
+import {
+  formatContextLength,
+  formatModelSize,
+  modelNameParts,
+  type ModelNameParts,
+} from '@/utils/modelNames';
 import { useChatStore } from '@/store/chatStore';
+import { ModelMark } from '@/components/model-selector/ModelMark';
 import { HuggingFaceModelsTab } from '@/components/model-selector/HuggingFaceModelsTab';
 import { InstalledModelsTab } from '@/components/model-selector/InstalledModelsTab';
 import {
@@ -89,6 +96,7 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
   showImageGen = false,
   onModelsRefresh,
   getModelValue: getModelValueOverride,
+  getModelId,
   getModelLabel: getModelLabelOverride,
   getModelTitle,
   triggerRef,
@@ -152,16 +160,16 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
           'Unavailable selections'
         ),
         personas: t('modelSelector.personas'),
-        ollama: t('modelSelector.ollamaModels'),
+        ollama: 'Ollama',
         plugins: t('modelSelector.pluginModels'),
         agents: t('modelSelector.agentModels', 'Agents'),
       }),
     [models, t]
   );
 
-  const sourceIcon = (kind: ModelSource['kind']) => {
+  const sourceIcon = (source: ModelSource) => {
     const className = 'h-4 w-4 shrink-0 text-gray-500 dark:text-dark-600';
-    switch (kind) {
+    switch (source.kind) {
       case 'legacy':
         return <Brain className={className} />;
       case 'unavailable':
@@ -170,15 +178,26 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
         return <User className={className} />;
       case 'agent':
         return <Terminal className={className} />;
-      case 'plugin':
-        return <Zap className={className} />;
       default:
-        return <Bot className={className} />;
+        return <ModelMark seed={source.label} />;
     }
   };
 
   const getModelValue = (model: OllamaModel): string =>
     getModelValueOverride?.(model) ?? model.name;
+
+  /** Readable name, vendor, and tag for provider and Ollama models. */
+  const nameParts = (model: OllamaModel): ModelNameParts =>
+    modelNameParts(
+      getModelId?.(model) ?? model.name,
+      model.isPlugin ? { prettify: true } : {}
+    );
+
+  /** The name with its tag, for places that show a single line. */
+  const namePartsLabel = (model: OllamaModel): string => {
+    const parts = nameParts(model);
+    return parts.tag ? `${parts.name} ${parts.tag}` : parts.name;
+  };
 
   const modelMetadata = useChatStore(state => state.modelMetadata);
   const personasById = useChatStore(state => state.personas);
@@ -518,7 +537,11 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
     );
   };
 
-  const getModelIcon = (model: OllamaModel) => {
+  const getModelIcon = (
+    model: OllamaModel,
+    size: 'sm' | 'md' = 'sm'
+  ): React.ReactNode => {
+    const box = size === 'md' ? 'h-6 w-6 rounded-md' : 'h-4 w-4 rounded';
     // An administrator-set picture stands in for the generic provider icon.
     const picture = modelMetadata[modelVisibilityKey(model)]?.avatar;
     if (picture && !model.isPersona) {
@@ -526,7 +549,7 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
         <img
           src={picture}
           alt=''
-          className='h-4 w-4 shrink-0 rounded-full object-cover'
+          className={cn(box, 'shrink-0 rounded-full object-cover')}
         />
       );
     }
@@ -539,30 +562,47 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
           <img
             src={getPersonaAvatarSrc(persona, 64)}
             alt=''
-            className='h-4 w-4 shrink-0 rounded object-cover'
+            className={cn(box, 'shrink-0 object-cover')}
           />
         );
       }
     }
-    if (model.isLegacySelection) {
-      return <Brain className='h-4 w-4 text-gray-500 dark:text-dark-600' />;
+    if (model.isLegacySelection || model.isPersona || model.isAgent) {
+      const Icon = model.isLegacySelection
+        ? Brain
+        : model.isPersona
+          ? User
+          : Terminal;
+      const icon = (
+        <Icon className='h-4 w-4 shrink-0 text-gray-500 dark:text-dark-600' />
+      );
+      return size === 'md' ? (
+        <span
+          className={cn(
+            box,
+            'flex shrink-0 items-center justify-center bg-gray-100 dark:bg-dark-200'
+          )}
+        >
+          {icon}
+        </span>
+      ) : (
+        icon
+      );
     }
-    if (model.isPersona) {
-      return <User className='h-4 w-4 text-gray-500 dark:text-dark-600' />;
-    }
-    if (model.isPlugin) {
-      return <Zap className='h-4 w-4 text-gray-500 dark:text-dark-600' />;
-    }
-    return <Bot className='h-4 w-4 text-gray-500 dark:text-dark-600' />;
+    const parts = nameParts(model);
+    const seed = model.isPlugin
+      ? parts.vendor || model.pluginName || model.pluginId || parts.name
+      : parts.vendor || parts.name;
+    return <ModelMark seed={seed} size={size} />;
   };
 
   const getModelLabel = (model: OllamaModel) => {
-    if (getModelLabelOverride) {
-      return getModelLabelOverride(model);
-    }
     const named = modelMetadata[modelVisibilityKey(model)]?.label;
     if (named && !model.isPersona) {
       return named;
+    }
+    if (getModelLabelOverride) {
+      return getModelLabelOverride(model);
     }
     if (model.isLegacySelection) {
       const personaLabel = personaDisplayName(model);
@@ -579,14 +619,10 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
         ? `${model.agentName || model.name} (${t('modelSelector.unavailable', 'unavailable')})`
         : model.agentName || model.name;
     }
-    if (model.isPlugin) {
-      return model.isUnavailable
-        ? `${model.name} (${t('modelSelector.unavailable', 'unavailable')})`
-        : model.name;
-    }
+    const label = namePartsLabel(model);
     return model.isUnavailable
-      ? `${model.name} (${t('modelSelector.unavailable', 'unavailable')})`
-      : model.name;
+      ? `${label} (${t('modelSelector.unavailable', 'unavailable')})`
+      : label;
   };
 
   const getModelSubLabel = (model: OllamaModel) => {
@@ -615,26 +651,79 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
     return null;
   };
 
+  const isCatalogGroup = (group: ModelGroup) =>
+    group.kind === 'plugin' || group.kind === 'ollama';
+
+  /**
+   * The row form of a catalog name. A bare Ollama name keeps its spelling
+   * but moves the tag into a badge, and ":latest" says nothing.
+   */
+  const rowNameParts = (model: OllamaModel): ModelNameParts => {
+    const parts = nameParts(model);
+    if (model.isPlugin || parts.vendor || parts.tag) return parts;
+    const colon = parts.name.lastIndexOf(':');
+    if (colon <= 0) return parts;
+    const tag = parts.name.slice(colon + 1);
+    return {
+      name: parts.name.slice(0, colon),
+      ...(tag && tag !== 'latest' ? { tag } : {}),
+    };
+  };
+
+  const hasAdminLabel = (model: OllamaModel) =>
+    Boolean(modelMetadata[modelVisibilityKey(model)]?.label);
+
   /**
    * Inside a harness group the header already names the harness, so agent
    * rows show just the model, with its provider underneath.
    */
   const getRowLabel = (model: OllamaModel, group: ModelGroup): string => {
-    if (group.kind !== 'agent' || getModelLabelOverride) {
+    if (getModelLabelOverride || hasAdminLabel(model)) {
       return getModelLabel(model);
     }
-    const named = modelMetadata[modelVisibilityKey(model)]?.label;
-    return named || agentRowParts(model, group.label).title;
+    if (isCatalogGroup(group)) return rowNameParts(model).name;
+    if (group.kind !== 'agent') return getModelLabel(model);
+    return agentRowParts(model, group.label).title;
   };
 
+  const getRowTag = (model: OllamaModel, group: ModelGroup): string | null => {
+    if (!isCatalogGroup(group) || getModelLabelOverride || hasAdminLabel(model))
+      return null;
+    return rowNameParts(model).tag ?? null;
+  };
+
+  /**
+   * The group header already names the provider, so catalog rows spend
+   * their second line on what tells models apart: maker, size, context.
+   */
   const getRowSubLabel = (
     model: OllamaModel,
     group: ModelGroup
   ): string | null => {
-    if (group.kind !== 'agent') return getModelSubLabel(model);
-    const parts = agentRowParts(model, group.label);
-    if (parts.isDefault) return t('modelSelector.defaultModel');
-    return parts.provider ? `via ${parts.provider}` : null;
+    if (group.kind === 'agent') {
+      const parts = agentRowParts(model, group.label);
+      if (parts.isDefault) return t('modelSelector.defaultModel');
+      return parts.provider ? `via ${parts.provider}` : null;
+    }
+    if (!isCatalogGroup(group)) return getModelSubLabel(model);
+    const parts = rowNameParts(model);
+    const details = model.details ?? {};
+    const cloud = /(^|[-:])cloud$/i.test(model.name);
+    const bits = [
+      parts.vendor,
+      model.isPlugin ? undefined : details.parameter_size,
+      model.isPlugin || details.quantization_level === parts.tag
+        ? undefined
+        : details.quantization_level,
+      model.contextLength
+        ? t('modelSelector.contextSize', {
+            size: formatContextLength(model.contextLength),
+            defaultValue: '{{size}} context',
+          })
+        : undefined,
+      model.isPlugin || cloud ? undefined : formatModelSize(model.size),
+    ].filter((bit): bit is string => Boolean(bit));
+    return bits.length > 0 ? bits.join(' · ') : null;
   };
 
   const isSelectedModel = (model: OllamaModel) =>
@@ -662,7 +751,7 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
         key: source.key,
         kind: source.kind,
         label: source.label,
-        icon: sourceIcon(source.kind),
+        icon: sourceIcon(source),
         models: preview.visible,
         total: matches.length,
         hidden: preview.hidden,
@@ -843,6 +932,24 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
                       }
                       value={searchTerm}
                       onChange={e => setSearchTerm(e.target.value)}
+                      onKeyDown={event => {
+                        if (tab !== 'installed') return;
+                        const first =
+                          dialogRef.current?.querySelector<HTMLButtonElement>(
+                            '[data-testid="model-selector-option"]'
+                          );
+                        if (event.key === 'ArrowDown' && first) {
+                          event.preventDefault();
+                          first.focus();
+                        } else if (
+                          event.key === 'Enter' &&
+                          searchTerm.trim() &&
+                          first
+                        ) {
+                          event.preventDefault();
+                          first.click();
+                        }
+                      }}
                       className={cn(
                         'w-full rounded-xl border border-black/[0.07] bg-gray-100/70 py-2.5 ps-10 pe-4 text-sm dark:border-white/[0.07] dark:bg-dark-200/70',
                         'focus:outline-none focus:ring-2 focus:ring-primary-500/20',
@@ -918,9 +1025,11 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
                   selectedModel={selectedModel}
                   showImageGen={showImageGen && combinedView}
                   getModelValue={getModelValue}
-                  getModelIcon={getModelIcon}
+                  getModelIcon={model => getModelIcon(model, 'md')}
                   getModelLabel={getRowLabel}
+                  getModelTag={getRowTag}
                   getModelSubLabel={getRowSubLabel}
+                  onExitTop={() => searchInputRef.current?.focus()}
                   onModelSelect={handleModelSelect}
                   onShowAll={showAllInSource}
                   onOpenGallery={openGallery}

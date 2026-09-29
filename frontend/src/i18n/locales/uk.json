@@ -2934,7 +2934,8 @@
     "agentModels": "Агенти",
     "showAll": "Показати всі ({{total}})",
     "sources": "Джерела моделей",
-    "defaultModel": "Модель за замовчуванням"
+    "defaultModel": "Модель за замовчуванням",
+    "contextSize": "контекст {{size}}"
   },
   "whatsNew": {
     "title": "Що нового",

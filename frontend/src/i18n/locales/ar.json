@@ -2934,7 +2934,8 @@
     "agentModels": "الوكلاء",
     "showAll": "عرض الكل ({{total}})",
     "sources": "مصادر النماذج",
-    "defaultModel": "النموذج الافتراضي"
+    "defaultModel": "النموذج الافتراضي",
+    "contextSize": "سياق {{size}}"
   },
   "whatsNew": {
     "title": "ما الجديد",

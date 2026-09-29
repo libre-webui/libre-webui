@@ -2934,7 +2934,8 @@
     "agentModels": "Ajanlar",
     "showAll": "Tümünü göster ({{total}})",
     "sources": "Model kaynakları",
-    "defaultModel": "Varsayılan model"
+    "defaultModel": "Varsayılan model",
+    "contextSize": "{{size}} bağlam"
   },
   "whatsNew": {
     "title": "Yenilikler",

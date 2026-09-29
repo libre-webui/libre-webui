@@ -2934,7 +2934,8 @@
     "agentModels": "Agents",
     "showAll": "Alles tonen ({{total}})",
     "sources": "Modelbronnen",
-    "defaultModel": "Standaardmodel"
+    "defaultModel": "Standaardmodel",
+    "contextSize": "{{size}} context"
   },
   "whatsNew": {
     "title": "Wat is nieuw",

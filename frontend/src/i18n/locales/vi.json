@@ -2934,7 +2934,8 @@
     "agentModels": "Tác nhân",
     "showAll": "Hiện tất cả ({{total}})",
     "sources": "Nguồn mô hình",
-    "defaultModel": "Mô hình mặc định"
+    "defaultModel": "Mô hình mặc định",
+    "contextSize": "ngữ cảnh {{size}}"
   },
   "whatsNew": {
     "title": "Có gì mới",

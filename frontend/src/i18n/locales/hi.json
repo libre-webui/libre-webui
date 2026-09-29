@@ -2934,7 +2934,8 @@
     "agentModels": "एजेंट",
     "showAll": "सभी दिखाएँ ({{total}})",
     "sources": "मॉडल स्रोत",
-    "defaultModel": "डिफ़ॉल्ट मॉडल"
+    "defaultModel": "डिफ़ॉल्ट मॉडल",
+    "contextSize": "{{size}} कॉन्टेक्स्ट"
   },
   "whatsNew": {
     "title": "नया क्या है",

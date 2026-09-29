@@ -54,6 +54,19 @@ function agentKey(model: OllamaModel): string {
   return model.agentId || model.name.split(':')[0] || model.name;
 }
 
+/**
+ * Embedding models cannot chat. Ollama tags them by name ("nomic-embed-text")
+ * or by a BERT family ("all-minilm", "bge-m3", "mxbai-embed-large").
+ */
+export function isEmbeddingModel(model: OllamaModel): boolean {
+  if (/embed/i.test(model.name)) return true;
+  const families = [
+    model.details?.family,
+    ...(model.details?.families ?? []),
+  ].filter((family): family is string => Boolean(family));
+  return families.some(family => /bert$/i.test(family));
+}
+
 /** The bare harness entry, which runs the harness's own default model. */
 export function isDefaultAgentEntry(model: OllamaModel): boolean {
   return Boolean(
@@ -146,7 +159,7 @@ export function buildModelSources(
     } else if (model.isPlugin) {
       const key = model.pluginId || model.pluginName || '';
       plugins.set(key, [...(plugins.get(key) ?? []), model]);
-    } else if (isAvailableOllamaModel(model) && !model.name.includes('embed')) {
+    } else if (isAvailableOllamaModel(model) && !isEmbeddingModel(model)) {
       ollama.push(model);
     }
   }

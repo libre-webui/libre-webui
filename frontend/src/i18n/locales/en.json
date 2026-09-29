@@ -2934,7 +2934,8 @@
     "agentModels": "Agents",
     "showAll": "Show all ({{total}})",
     "sources": "Model sources",
-    "defaultModel": "Default model"
+    "defaultModel": "Default model",
+    "contextSize": "{{size}} context"
   },
   "whatsNew": {
     "title": "What's new",

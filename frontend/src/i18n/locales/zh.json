@@ -2934,7 +2934,8 @@
     "agentModels": "智能体",
     "showAll": "显示全部 ({{total}})",
     "sources": "模型来源",
-    "defaultModel": "默认模型"
+    "defaultModel": "默认模型",
+    "contextSize": "{{size}} 上下文"
   },
   "whatsNew": {
     "title": "新功能",

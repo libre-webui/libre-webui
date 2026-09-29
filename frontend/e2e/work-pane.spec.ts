@@ -1185,7 +1185,7 @@ test('offers cloud models and remembers remote disclosure dismissal', async ({
     'llama3.2:3b',
     'glm5.2:cloud',
     'gpt-5.4',
-    'gpt-5.4',
+    'GPT 5.4',
   ]);
   const optionValues = await selector
     .locator('option')
@@ -1200,7 +1200,7 @@ test('offers cloud models and remembers remote disclosure dismissal', async ({
     '[data-testid="model-selector-option"][data-model-value="plugin:openai:gpt-5.4"]'
   );
   await expect(pluginOption).toHaveCount(1);
-  await expect(pluginOption).toContainText('via OpenAI GPT');
+  await expect(pluginOption).toContainText('GPT 5.4');
   await pluginOption.click();
   await expect(selector).toHaveValue('plugin:openai:gpt-5.4');
   const disclosure = page.getByTestId('work-provider-disclosure-popover');
@@ -1437,10 +1437,10 @@ test('loads plugin Work models when Ollama is offline', async ({ page }) => {
   await expect(
     page
       .getByTestId('work-model-select')
-      .locator('option', { hasText: 'remote-tools-model' })
+      .locator('option', { hasText: 'Remote Tools Model' })
   ).toHaveCount(1);
   await expect(page.getByTestId('work-model-selector-trigger')).toContainText(
-    'remote-tools-model'
+    'Remote Tools Model'
   );
   await expect(page.getByTestId('work-submit-button')).toBeDisabled();
 });

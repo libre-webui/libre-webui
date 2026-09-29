@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import type { ReactNode } from 'react';
+import type { KeyboardEvent, ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Check, ChevronRight, Cpu, ImageIcon, Plus } from 'lucide-react';
 import type { OllamaModel } from '@/types';
@@ -29,10 +29,36 @@ interface InstalledModelsTabProps {
   getModelValue: (model: OllamaModel) => string;
   getModelIcon: (model: OllamaModel) => ReactNode;
   getModelLabel: (model: OllamaModel, group: ModelGroup) => string;
+  getModelTag: (model: OllamaModel, group: ModelGroup) => string | null;
   getModelSubLabel: (model: OllamaModel, group: ModelGroup) => string | null;
   onModelSelect: (modelName: string) => void;
   onShowAll: (groupKey: string) => void;
   onOpenGallery: () => void;
+  /** Arrow Up on the first row hands focus back to the search field. */
+  onExitTop: () => void;
+}
+
+const ROW_SELECTOR =
+  '[data-testid="model-selector-option"], [data-testid="model-selector-show-all"]';
+
+/** Up and Down walk the rows, so the list works without a pointer. */
+function moveRowFocus(
+  event: KeyboardEvent<HTMLDivElement>,
+  onExitTop: () => void
+) {
+  if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') return;
+  const rows = Array.from(
+    event.currentTarget.querySelectorAll<HTMLButtonElement>(ROW_SELECTOR)
+  );
+  const index = rows.indexOf(document.activeElement as HTMLButtonElement);
+  if (index === -1) return;
+  event.preventDefault();
+  const next = index + (event.key === 'ArrowDown' ? 1 : -1);
+  if (next < 0) {
+    onExitTop();
+    return;
+  }
+  rows[Math.min(next, rows.length - 1)]?.focus();
 }
 
 export function InstalledModelsTab({
@@ -42,15 +68,20 @@ export function InstalledModelsTab({
   getModelValue,
   getModelIcon,
   getModelLabel,
+  getModelTag,
   getModelSubLabel,
   onModelSelect,
   onShowAll,
   onOpenGallery,
+  onExitTop,
 }: InstalledModelsTabProps) {
   const { t } = useTranslation();
 
   return (
-    <div className='scroll-region min-h-0 flex-1 scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-dark-400'>
+    <div
+      className='scroll-region min-h-0 flex-1 scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-dark-400'
+      onKeyDown={event => moveRowFocus(event, onExitTop)}
+    >
       {groups.length > 0 ? (
         groups.map(group => (
           <div key={group.key} data-testid='model-selector-group'>
@@ -66,6 +97,7 @@ export function InstalledModelsTab({
             {group.models.map(model => {
               const modelValue = getModelValue(model);
               const subLabel = getModelSubLabel(model, group);
+              const tag = getModelTag(model, group);
               return (
                 <button
                   type='button'
@@ -73,9 +105,10 @@ export function InstalledModelsTab({
                   data-testid='model-selector-option'
                   data-model-value={modelValue}
                   aria-pressed={selectedModel === modelValue}
+                  title={model.isPersona ? undefined : model.name}
                   onClick={() => onModelSelect(modelValue)}
                   className={cn(
-                    'block w-full cursor-pointer border-b border-gray-100 px-3 py-2.5 text-start last:border-b-0 dark:border-dark-200',
+                    'block w-full cursor-pointer border-b border-gray-100 px-3 py-2 text-start last:border-b-0 dark:border-dark-200',
                     'hover:bg-gray-50 dark:hover:bg-dark-200',
                     'bg-white dark:bg-dark-100 transition-colors',
                     'focus-visible:relative focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary-500/50',
@@ -86,11 +119,21 @@ export function InstalledModelsTab({
                   <div className='flex items-center gap-3'>
                     {getModelIcon(model)}
                     <div className='flex-1 min-w-0'>
-                      <div
-                        dir={model.isPersona ? 'auto' : 'ltr'}
-                        className='text-sm font-medium text-gray-900 dark:text-gray-100 truncate'
-                      >
-                        {getModelLabel(model, group)}
+                      <div className='flex min-w-0 items-center gap-1.5'>
+                        <span
+                          dir={model.isPersona ? 'auto' : 'ltr'}
+                          className='min-w-0 truncate text-sm font-medium text-gray-900 dark:text-gray-100'
+                        >
+                          {getModelLabel(model, group)}
+                        </span>
+                        {tag && (
+                          <span
+                            dir='ltr'
+                            className='shrink-0 rounded border border-black/[0.08] px-1 py-px font-mono text-[10px] leading-4 text-gray-500 dark:border-white/[0.1] dark:text-dark-600'
+                          >
+                            {tag}
+                          </span>
+                        )}
                       </div>
                       {subLabel && (
                         <div

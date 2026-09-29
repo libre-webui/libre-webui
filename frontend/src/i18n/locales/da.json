@@ -2934,7 +2934,8 @@
     "agentModels": "Agenter",
     "showAll": "Vis alle ({{total}})",
     "sources": "Modelkilder",
-    "defaultModel": "Standardmodel"
+    "defaultModel": "Standardmodel",
+    "contextSize": "{{size}} kontekst"
   },
   "whatsNew": {
     "title": "Nyheder",

@@ -69,14 +69,8 @@ const workSelectorModelValue = (model: OllamaModel): string =>
     providerId: model.isPlugin ? model.pluginId : undefined,
   });
 
-const workSelectorModelLabel = (model: OllamaModel): string => {
-  const pathSegments = baseWorkModel(model.name).split('/').filter(Boolean);
-  const modelName = pathSegments[pathSegments.length - 1] || model.name;
-  const readableModelName =
-    pathSegments.length > 1 ? modelName.replace(/[-_]+/g, ' ') : modelName;
-
-  return readableModelName;
-};
+const workSelectorModelId = (model: OllamaModel): string =>
+  baseWorkModel(model.name);
 
 const modelFromOption = (option: WorkModelOption): OllamaModel => {
   const providerPrefix = `${option.model} · `;
@@ -494,7 +488,7 @@ export function WorkComposer({
                       onModelChange={event => changeModel(event.target.value)}
                       onModelsRefresh={() => void onModelsRefresh()}
                       getModelValue={workSelectorModelValue}
-                      getModelLabel={workSelectorModelLabel}
+                      getModelId={workSelectorModelId}
                       getModelTitle={model => model.name}
                       triggerRef={desktopModelTriggerRef}
                       triggerTestId='work-model-selector-trigger'
@@ -520,7 +514,7 @@ export function WorkComposer({
                       onModelChange={event => changeModel(event.target.value)}
                       onModelsRefresh={() => void onModelsRefresh()}
                       getModelValue={workSelectorModelValue}
-                      getModelLabel={workSelectorModelLabel}
+                      getModelId={workSelectorModelId}
                       getModelTitle={model => model.name}
                       triggerRef={mobileModelTriggerRef}
                       triggerTestId='work-model-selector-trigger-mobile'

@@ -155,7 +155,7 @@ for (const toggle of ['cli', 'strands'] as const) {
       toggle === 'strands' ? 0 : 1
     );
     await expect(
-      picker.getByText('plugin-chat-model', { exact: true })
+      picker.getByText('Plugin Chat Model', { exact: true })
     ).toBeVisible();
     await page.keyboard.press('Escape');
 
@@ -210,7 +210,7 @@ for (const toggle of ['cli', 'strands'] as const) {
     }
     await expect(option(picker, strandsAgent)).toBeVisible();
     await expect(
-      picker.getByText('plugin-chat-model', { exact: true })
+      picker.getByText('Plugin Chat Model', { exact: true })
     ).toBeVisible();
     await page.keyboard.press('Escape');
 
@@ -225,7 +225,7 @@ for (const toggle of ['cli', 'strands'] as const) {
       await expect(option(picker, agent)).toHaveCount(toggle === 'cli' ? 0 : 1);
     }
     await expect(
-      picker.getByText('plugin-chat-model', { exact: true })
+      picker.getByText('Plugin Chat Model', { exact: true })
     ).toBeVisible();
   });
 }

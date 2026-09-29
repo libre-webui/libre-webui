@@ -2934,7 +2934,8 @@
     "agentModels": "Agentes",
     "showAll": "Ver todos ({{total}})",
     "sources": "Orígenes de modelos",
-    "defaultModel": "Modelo predeterminado"
+    "defaultModel": "Modelo predeterminado",
+    "contextSize": "contexto de {{size}}"
   },
   "whatsNew": {
     "title": "Novedades",

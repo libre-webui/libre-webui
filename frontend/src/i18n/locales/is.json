@@ -2934,7 +2934,8 @@
     "agentModels": "Fulltrúar",
     "showAll": "Sýna allt ({{total}})",
     "sources": "Uppruni líkana",
-    "defaultModel": "Sjálfgefið líkan"
+    "defaultModel": "Sjálfgefið líkan",
+    "contextSize": "{{size}} samhengi"
   },
   "whatsNew": {
     "title": "Nýjungar",

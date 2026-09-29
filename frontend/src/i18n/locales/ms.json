@@ -2934,7 +2934,8 @@
     "agentModels": "Ejen",
     "showAll": "Tunjukkan semua ({{total}})",
     "sources": "Sumber model",
-    "defaultModel": "Model lalai"
+    "defaultModel": "Model lalai",
+    "contextSize": "konteks {{size}}"
   },
   "whatsNew": {
     "title": "Apa yang baharu",

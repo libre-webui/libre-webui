@@ -21,6 +21,7 @@ import type { OllamaModel } from '@/types';
 import {
   agentRowParts,
   buildModelSources,
+  isEmbeddingModel,
   modelMatchesSearch,
   previewSourceModels,
   SOURCE_PREVIEW_SIZE,
@@ -162,4 +163,24 @@ test('previews keep small groups whole and always show the selection', () => {
   assert.equal(preview.visible.length, SOURCE_PREVIEW_SIZE);
   assert.equal(preview.hidden, 40 - SOURCE_PREVIEW_SIZE);
   assert.ok(preview.visible.some(entry => entry.name === 'm30'));
+});
+
+test('embedding models stay out of the chat list', () => {
+  assert.equal(isEmbeddingModel(model('nomic-embed-text:latest')), true);
+  assert.equal(
+    isEmbeddingModel(
+      model('all-minilm:latest', { details: { family: 'bert' } })
+    ),
+    true
+  );
+  assert.equal(
+    isEmbeddingModel(
+      model('bge-m3:latest', { details: { families: ['nomic-bert'] } })
+    ),
+    true
+  );
+  assert.equal(
+    isEmbeddingModel(model('smollm2:latest', { details: { family: 'llama' } })),
+    false
+  );
 });

@@ -2934,7 +2934,8 @@
     "agentModels": "에이전트",
     "showAll": "모두 보기 ({{total}})",
     "sources": "모델 출처",
-    "defaultModel": "기본 모델"
+    "defaultModel": "기본 모델",
+    "contextSize": "컨텍스트 {{size}}"
   },
   "whatsNew": {
     "title": "새로운 기능",

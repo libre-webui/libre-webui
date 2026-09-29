@@ -54,6 +54,8 @@ export interface ModelSelectorProps {
   showImageGen?: boolean;
   onModelsRefresh?: () => void;
   getModelValue?: (model: OllamaModel) => string;
+  /** The raw model id to present, e.g. without a Work engine prefix. */
+  getModelId?: (model: OllamaModel) => string;
   getModelLabel?: (model: OllamaModel) => string;
   getModelTitle?: (model: OllamaModel) => string;
   triggerRef?: Ref<HTMLButtonElement>;
