@@ -302,7 +302,7 @@ function buildDeterministicReleaseNotes(version, evidence) {
   });
   applyUnreleasedNotes(evidence.unreleasedNotes, sections);
 
-  const overview = inferOverview(version, evidence, sections);
+  const overview = inferOverview(version, sections);
   return renderReleaseNotes(overview, sections);
 }
 
@@ -356,25 +356,16 @@ function applyUnreleasedNotes(unreleasedNotes, sections) {
   }
 }
 
-function inferOverview(version, evidence, sections) {
-  const text = [
-    ...evidence.commits.map(commit => commit.subject),
-    ...evidence.changedFiles.map(file => file.to || file.file),
-  ].join('\n');
-
-  if (/backend\/src\/strands\//.test(text)) {
-    return `Libre WebUI ${version} is the Strands engine release. It replaces Libre Claw and the Cordis bridge with an embedded Strands agent engine that runs on the models Libre WebUI already serves, in Chat, Work, and a dedicated sessions page.`;
-  }
-
+function inferOverview(version, sections) {
   if (sections.security.length > 0 && sections.features.length === 0) {
-    return `Libre WebUI ${version} is a maintenance and security release. It focuses on dependency refreshes, safer runtime behavior, and release polish grounded in the current code changes.`;
+    return `Libre WebUI ${version} refreshes dependencies and fixes security issues.`;
   }
 
   if (sections.features.length > 0) {
-    return `Libre WebUI ${version} adds new user-facing capabilities while tightening the supporting backend and frontend paths. The release notes below are generated from the commit history, changed files, and existing unreleased notes.`;
+    return `Libre WebUI ${version} adds new features, improvements, and fixes.`;
   }
 
-  return `Libre WebUI ${version} is a focused maintenance release generated from the real git history since the previous tag. It groups the shipped fixes, improvements, documentation, and dependency work into release-ready notes.`;
+  return `Libre WebUI ${version} is a maintenance release.`;
 }
 
 function renderReleaseNotes(overview, sections) {
