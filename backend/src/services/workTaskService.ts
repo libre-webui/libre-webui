@@ -46,6 +46,10 @@ import {
   WorkTaskStatus,
 } from '../types/work.js';
 import { createLogger } from '../utils/logger.js';
+import {
+  normalizeThinkingPreference,
+  type ThinkingPreference,
+} from '../utils/thinkingOptions.js';
 import { getCoordinator } from '../platform/coordination/service.js';
 import { randomUUID } from 'node:crypto';
 
@@ -230,7 +234,8 @@ export class WorkTaskService {
     provider: WorkProviderSelection = { providerType: 'ollama' },
     hostPath?: string,
     policyId?: string,
-    identity?: WorkAgentIdentityInput
+    identity?: WorkAgentIdentityInput,
+    think?: ThinkingPreference
   ): Promise<WorkTaskDetail> {
     return this.withUserLifecycleLease(userId, assertHeld =>
       this.createTaskWithRunWithLeaseHeld(
@@ -242,7 +247,8 @@ export class WorkTaskService {
         hostPath,
         policyId,
         identity,
-        assertHeld
+        assertHeld,
+        think
       )
     );
   }
@@ -256,7 +262,8 @@ export class WorkTaskService {
     hostPath?: string,
     policyId?: string,
     identity?: WorkAgentIdentityInput,
-    assertHeld: () => Promise<void> = async () => undefined
+    assertHeld: () => Promise<void> = async () => undefined,
+    think?: ThinkingPreference
   ): Promise<WorkTaskDetail> {
     await this.assertUserIsActive(userId);
     const selectedProvider = normalizeProvider(provider);
@@ -304,6 +311,7 @@ export class WorkTaskService {
       summary: null,
       changed_files: null,
       exit_state: null,
+      think: think === undefined ? null : String(think),
       created_at: now,
       started_at: null,
       finished_at: null,
@@ -356,7 +364,8 @@ export class WorkTaskService {
     message: string,
     model?: string,
     provider?: WorkProviderSelection,
-    messageMetadata?: Record<string, unknown>
+    messageMetadata?: Record<string, unknown>,
+    think?: ThinkingPreference
   ): Promise<WorkTaskDetail> {
     return this.withUserLifecycleLease(userId, assertHeld =>
       this.createRunWithLeaseHeld(
@@ -366,7 +375,8 @@ export class WorkTaskService {
         model,
         provider,
         assertHeld,
-        messageMetadata
+        messageMetadata,
+        think
       )
     );
   }
@@ -378,7 +388,8 @@ export class WorkTaskService {
     model?: string,
     provider?: WorkProviderSelection,
     assertHeld: () => Promise<void> = async () => undefined,
-    messageMetadata?: Record<string, unknown>
+    messageMetadata?: Record<string, unknown>,
+    think?: ThinkingPreference
   ): Promise<WorkTaskDetail> {
     const task = await this.requireMutableTaskRecord(taskId, userId);
     if (await this.getActiveRun(taskId)) {
@@ -406,6 +417,7 @@ export class WorkTaskService {
       summary: null,
       changed_files: null,
       exit_state: null,
+      think: think === undefined ? null : String(think),
       created_at: now,
       started_at: null,
       finished_at: null,
@@ -1360,6 +1372,7 @@ const mapRun = (row: RunRow): WorkRun => ({
   summary: row.summary || undefined,
   changedFiles: parseChangedFiles(row.changed_files ?? null),
   exitState: row.exit_state || undefined,
+  think: normalizeThinkingPreference(row.think ?? undefined),
   createdAt: row.created_at,
   startedAt: row.started_at || undefined,
   finishedAt: row.finished_at || undefined,

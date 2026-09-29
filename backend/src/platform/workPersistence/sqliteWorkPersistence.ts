@@ -904,8 +904,8 @@ export class SQLiteWorkPersistence implements WorkPersistenceRepository {
       .prepare(
         `INSERT INTO work_runs (
            id, task_id, model, provider_type, provider_id, status, error,
-           created_at, started_at, finished_at
-         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+           created_at, started_at, finished_at, think
+         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
       )
       .run(
         row.id,
@@ -917,7 +917,8 @@ export class SQLiteWorkPersistence implements WorkPersistenceRepository {
         row.error,
         row.created_at,
         row.started_at,
-        row.finished_at
+        row.finished_at,
+        row.think
       );
   }
 

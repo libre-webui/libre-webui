@@ -1044,8 +1044,8 @@ export class PostgresWorkPersistence implements WorkPersistenceRepository {
   ): Promise<void> {
     await executor.query(
       `INSERT INTO work_runs (
-       id,task_id,model,provider_type,provider_id,status,error,created_at,started_at,finished_at)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`,
+       id,task_id,model,provider_type,provider_id,status,error,created_at,started_at,finished_at,think)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`,
       [
         row.id,
         row.task_id,
@@ -1057,6 +1057,7 @@ export class PostgresWorkPersistence implements WorkPersistenceRepository {
         row.created_at,
         row.started_at,
         row.finished_at,
+        row.think,
       ]
     );
   }

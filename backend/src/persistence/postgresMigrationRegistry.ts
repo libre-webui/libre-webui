@@ -35,6 +35,7 @@ import { POSTGRES_AGENT_SEEN_MIGRATION } from './postgresAgentSeenMigration.js';
 import { POSTGRES_WORK_APPROVALS_MIGRATION } from './postgresWorkApprovalsMigration.js';
 import { POSTGRES_AUTOMATION_WEBHOOKS_MIGRATION } from './postgresAutomationWebhooksMigration.js';
 import { POSTGRES_WORK_RUN_RESULTS_MIGRATION } from './postgresWorkRunResultsMigration.js';
+import { POSTGRES_WORK_RUN_THINK_MIGRATION } from './postgresWorkRunThinkMigration.js';
 import type { PostgresMigration } from './postgresMigrationTypes.js';
 import { validatePostgresMigrationRegistry } from './postgresMigrations.js';
 
@@ -72,6 +73,7 @@ export const POSTGRES_MIGRATIONS: readonly PostgresMigration[] =
         POSTGRES_WORK_APPROVALS_MIGRATION,
         POSTGRES_AUTOMATION_WEBHOOKS_MIGRATION,
         POSTGRES_WORK_RUN_RESULTS_MIGRATION,
+        POSTGRES_WORK_RUN_THINK_MIGRATION,
       ].map(migration => Object.freeze({ ...migration }))
     )
   );

@@ -1379,3 +1379,78 @@ test('Strands Work streams through the exact plugin using its unwrapped model id
     globalThis.fetch = originalFetch;
   }
 });
+
+test('Work payloads carry the run reasoning level per provider', () => {
+  const request = (model, think) => ({
+    model,
+    messages: messages.slice(0, 2),
+    tools: [tool],
+    stream: false,
+    ...(think === undefined ? {} : { options: { think } }),
+  });
+
+  const openai = buildPluginWorkPayload(
+    plugin('openai'),
+    request('test-model', 'high')
+  ).payload;
+  assert.equal(openai.reasoning_effort, 'high');
+  const openaiDefault = buildPluginWorkPayload(
+    plugin('openai'),
+    request('test-model')
+  ).payload;
+  assert.equal('reasoning_effort' in openaiDefault, false);
+
+  const deepseek = buildPluginWorkPayload(
+    plugin('deepseek'),
+    request('test-model', false)
+  ).payload;
+  assert.deepEqual(deepseek.thinking, { type: 'disabled' });
+  assert.equal('reasoning_effort' in deepseek, false);
+
+  const responses = buildPluginWorkPayload(
+    plugin('openai'),
+    request('test-model', 'low'),
+    {},
+    'responses'
+  ).payload;
+  assert.deepEqual(responses.reasoning, { effort: 'low', summary: 'auto' });
+
+  const anthropic = buildPluginWorkPayload(
+    plugin('anthropic'),
+    request('claude-opus-4-1', 'medium')
+  ).payload;
+  assert.deepEqual(anthropic.thinking, {
+    type: 'enabled',
+    budget_tokens: 8192,
+  });
+  assert.equal(anthropic.max_tokens, 4096 + 8192);
+  const anthropicDefault = buildPluginWorkPayload(
+    plugin('anthropic'),
+    request('claude-opus-4-1')
+  ).payload;
+  assert.equal(anthropicDefault.max_tokens, 4096);
+  assert.equal('thinking' in anthropicDefault, false);
+
+  const adaptive = buildPluginWorkPayload(
+    plugin('anthropic'),
+    request('claude-sonnet-5-5', 'high')
+  ).payload;
+  assert.deepEqual(adaptive.thinking, { type: 'adaptive' });
+  assert.deepEqual(adaptive.output_config, { effort: 'high' });
+
+  const gemini = buildPluginWorkPayload(
+    plugin('gemini'),
+    request('gemini-2.5-pro', 'low')
+  ).payload;
+  assert.deepEqual(gemini.generationConfig.thinkingConfig, {
+    thinkingBudget: 2048,
+    includeThoughts: true,
+  });
+  assert.equal(gemini.generationConfig.maxOutputTokens, 4096 + 2048);
+  const geminiOff = buildPluginWorkPayload(
+    plugin('gemini'),
+    request('gemini-2.5-pro', false)
+  ).payload;
+  assert.equal(geminiOff.generationConfig.maxOutputTokens, 4096);
+  assert.equal('thinkingConfig' in geminiOff.generationConfig, false);
+});

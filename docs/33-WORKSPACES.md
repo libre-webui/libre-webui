@@ -70,6 +70,22 @@ The server re-checks Strands access on every model call of a Strands run, so
 turning the engine off for your account stops a live run at its next step.
 Existing tasks remain readable and can select the Libre WebUI engine again.
 
+## Reasoning level
+
+The Work composer carries the same reasoning control as Chat, beside the model
+picker, with the levels **off**, **on**, **low**, **medium**, and **high**. It
+starts from the default Chat uses: the level pinned for that model, else the
+one in Settings > Generation. A level picked in the composer applies to each
+run started from it, and a new task keeps the level it was created with while
+the page is open.
+
+Each run stores the level it asked for, and the server translates it per
+provider exactly as it does for Chat, on either engine. Anthropic and Gemini
+budgets are added on top of Work's usual 4,096-token answer room so thinking
+does not crowd out a large tool call. The control is hidden for a model that
+reports it cannot reason. Runs started by automations or by another agent use
+the model default.
+
 ## Release Highlights
 
 This release introduces Work as a complete task workflow:

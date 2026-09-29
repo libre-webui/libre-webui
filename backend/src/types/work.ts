@@ -15,6 +15,8 @@
  * limitations under the License.
  */
 
+import type { ThinkingPreference } from '../utils/thinkingOptions.js';
+
 export type WorkTaskStatus =
   | 'idle'
   | 'preparing'
@@ -90,6 +92,8 @@ export interface WorkRun {
   changedFiles?: string[];
   /** Short machine reason for the terminal transition. */
   exitState?: string;
+  /** Requested reasoning level; unset means the model's own default. */
+  think?: ThinkingPreference;
   createdAt: number;
   startedAt?: number;
   finishedAt?: number;

@@ -423,3 +423,27 @@ for (const mode of ['light', 'dark'] as const) {
     });
   }
 }
+
+test('the landing composer sends the picked reasoning level with a new task', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await openConfiguredLanding(page, 'dark');
+  let body: Record<string, unknown> | undefined;
+  await page.route('**/api/work/tasks', route => {
+    if (route.request().method() !== 'POST') return route.fallback();
+    body = route.request().postDataJSON();
+    return route.fulfill({
+      status: 400,
+      json: { success: false, error: 'stop here' },
+    });
+  });
+  const control = page.getByTestId('work-thinking-selector');
+  await expect(control).toBeVisible();
+  await control.getByRole('button').click();
+  await expect(control.getByRole('menu')).toBeVisible();
+  await control.getByRole('menuitemradio', { name: 'High' }).click();
+  await page.getByTestId('work-composer-input').fill('Plan the migration.');
+  await page.getByTestId('work-submit-button').click();
+  await expect.poll(() => body?.think).toBe('high');
+});

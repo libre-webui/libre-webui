@@ -932,6 +932,7 @@ const TABLE_MAPPINGS: readonly TableMapping[] = Object.freeze([
       'summary',
       'changed_files',
       'exit_state',
+      'think',
     ],
     ['id'],
     { integers: timestamps }

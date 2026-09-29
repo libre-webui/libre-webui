@@ -53,6 +53,11 @@ export interface WorkRunRow {
   changed_files: string | null;
   /** Short machine reason for the terminal transition, e.g. `failed:error`. */
   exit_state: string | null;
+  /**
+   * Requested reasoning level for the run: 'true', 'false', 'low', 'medium'
+   * or 'high', or NULL to use the model default.
+   */
+  think: string | null;
   created_at: number;
   started_at: number | null;
   finished_at: number | null;

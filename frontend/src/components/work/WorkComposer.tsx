@@ -19,13 +19,15 @@ import { ArrowUp, CircleAlert, Loader2, Mic, Square, X } from 'lucide-react';
 import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ModelSelector } from '@/components/ModelSelector';
+import { ThinkingSelector } from '@/components/ThinkingSelector';
 import {
   composerSendButtonClass,
   composerSurfaceClass,
 } from '@/components/composer/composerStyles';
 import { Button, Select } from '@/components/ui';
 import { useDictation } from '@/hooks/useDictation';
-import type { OllamaModel } from '@/types';
+import type { OllamaModel, ThinkingPreference } from '@/types';
+import { ollamaApi } from '@/utils/api';
 import { workModelSelectionKey, type WorkModelOption } from '@/types/work';
 import { cn } from '@/utils';
 import {
@@ -51,6 +53,11 @@ interface WorkComposerProps {
   dictationOwnerKey?: string;
   remoteDisclosureDismissed: boolean;
   remoteDisclosureSaving: boolean;
+  /** This composer's own reasoning choice; null means the default applies. */
+  think?: ThinkingPreference | null;
+  /** What the default resolves to: the pinned or global chat setting. */
+  inheritedThink?: ThinkingPreference | null;
+  onThinkChange?: (think: ThinkingPreference | null) => void;
   onModelChange: (
     model: WorkModelOption,
     engine?: WorkEngine
@@ -106,6 +113,9 @@ export function WorkComposer({
   dictationOwnerKey,
   remoteDisclosureDismissed,
   remoteDisclosureSaving,
+  think,
+  inheritedThink,
+  onThinkChange,
   onModelChange,
   onEngineChange,
   onDismissRemoteDisclosure,
@@ -145,6 +155,50 @@ export function WorkComposer({
       option => available.get(option.key) ?? modelFromOption(option)
     );
   }, [models, selectorModels]);
+
+  // The reasoning control shows where thinking means something, as in Chat:
+  // a plugin model answers for itself, and Ollama is asked about its own
+  // models. Where Ollama says nothing the control is offered, not hidden.
+  const selectedEntry = effectiveSelectorModels.find(
+    model => workSelectorModelValue(model) === modelKey
+  );
+  const ollamaModelName =
+    selectedEntry && !selectedEntry.isPlugin
+      ? baseWorkModel(selectedEntry.name)
+      : undefined;
+  const [ollamaThinking, setOllamaThinking] = useState<{
+    model: string;
+    supported?: boolean;
+  } | null>(null);
+  useEffect(() => {
+    if (!ollamaModelName || !onThinkChange) return;
+    let cancelled = false;
+    void ollamaApi
+      .getModelDefaults(ollamaModelName)
+      .then(response => {
+        if (cancelled || !response.success || !response.data) return;
+        setOllamaThinking({
+          model: ollamaModelName,
+          supported: response.data.supportsThinking,
+        });
+      })
+      .catch(() => {
+        // A model that cannot be inspected keeps the control available.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [ollamaModelName, onThinkChange]);
+  const thinkingAvailable = Boolean(
+    onThinkChange &&
+    selectedEntry &&
+    (selectedEntry.isPlugin
+      ? selectedEntry.reasoningSupport !== false
+      : !(
+          ollamaThinking?.model === ollamaModelName &&
+          ollamaThinking?.supported === false
+        ))
+  );
 
   useEffect(() => {
     const textarea = textareaRef.current;
@@ -541,6 +595,15 @@ export function WorkComposer({
                 landing && 'ms-auto'
               )}
             >
+              {thinkingAvailable && onThinkChange && (
+                <div data-testid='work-thinking-selector'>
+                  <ThinkingSelector
+                    value={think}
+                    inheritedValue={inheritedThink}
+                    onChange={onThinkChange}
+                  />
+                </div>
+              )}
               {dictation.supported && (
                 <Button
                   data-testid='work-voice-input'

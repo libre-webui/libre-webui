@@ -1123,6 +1123,10 @@ const WORK_RUN_RESULTS_REQUIRED_SCHEMA = {
   skills: ['approval_policy', 'approval_tools'],
 } as const;
 
+const WORK_RUN_THINK_REQUIRED_SCHEMA = {
+  work_runs: ['think'],
+} as const;
+
 const WORK_APPROVALS_REQUIRED_SCHEMA = {
   work_policies: ['approvals_required'],
   work_tasks: ['approvals_enabled'],
@@ -3805,6 +3809,10 @@ const collectMissingWorkRunResultsSchema = (
 ): string[] =>
   collectMissingColumns(database, WORK_RUN_RESULTS_REQUIRED_SCHEMA);
 
+const collectMissingWorkRunThinkSchema = (
+  database: Database.Database
+): string[] => collectMissingColumns(database, WORK_RUN_THINK_REQUIRED_SCHEMA);
+
 const collectMissingWorkApprovalsSchema = (
   database: Database.Database
 ): string[] => [
@@ -3993,6 +4001,8 @@ const AUTOMATION_WEBHOOKS_MIGRATION_CHECKSUM =
   'a136ac591774852516f4de5c4f97d607259d57aa7d16db37249bc1c3e2dcd776';
 const WORK_RUN_RESULTS_MIGRATION_CHECKSUM =
   '0eee2956bbe4af84715660e9a01cb8bf1303b0c9ff8cb90050ee5c919badec08';
+const WORK_RUN_THINK_MIGRATION_CHECKSUM =
+  '0797af144de0ed923d560b22c06affb710b0c8c70489f191e7ea058db93654e4';
 
 const MIGRATIONS: readonly SQLiteMigration[] = [
   {
@@ -4539,6 +4549,23 @@ const MIGRATIONS: readonly SQLiteMigration[] = [
       if (missing.length > 0) {
         throw new Error(
           `SQLite work run results schema is incomplete; missing ${missing.join(', ')}`
+        );
+      }
+    },
+  },
+  {
+    version: 31,
+    name: 'work-run-think',
+    checksum: WORK_RUN_THINK_MIGRATION_CHECKSUM,
+    apply(database) {
+      // A run records the reasoning level it was asked to run with (true,
+      // false, low, medium, high) or NULL for the model default. Nullable so
+      // existing rows keep their pre-migration meaning.
+      addColumnIfMissing(database, 'work_runs', 'think', 'TEXT');
+      const missing = collectMissingWorkRunThinkSchema(database);
+      if (missing.length > 0) {
+        throw new Error(
+          `SQLite work run think schema is incomplete; missing ${missing.join(', ')}`
         );
       }
     },

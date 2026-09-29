@@ -56,6 +56,7 @@ import {
   type WorkRunEvent,
   type WorkTask,
 } from '@/types/work';
+import type { ThinkingPreference } from '@/types';
 import { cn, formatRelativeTime } from '@/utils';
 import { preferencesApi, workApi } from '@/utils/api';
 import { clearWorkDraft, clearWorkTaskDrafts } from '@/utils/workDrafts';
@@ -204,6 +205,12 @@ export default function WorkPage() {
     engine: WorkEngine;
   } | null>(null);
   const engineChoiceRef = useRef<typeof engineChoice>(null);
+  // A reasoning level picked in this composer. It belongs to the task (or
+  // the new-task landing) it was picked on, and a new task takes it along.
+  const [thinkChoice, setThinkChoice] = useState<{
+    owner: string;
+    think: ThinkingPreference | null;
+  } | null>(null);
   const pendingModelSelection = useRef<{
     taskId: string;
     option: WorkModelOption;
@@ -788,6 +795,24 @@ export default function WorkPage() {
     navigate('/work');
   };
 
+  // Work reads the same reasoning default as Chat: the level pinned for the
+  // model, else the global one. A choice made here overrides it.
+  const inheritedThinkFor = (model?: string): ThinkingPreference | null =>
+    (model
+      ? preferences.modelGenerationOptions?.[baseWorkModel(model)]?.think
+      : undefined) ??
+    preferences.generationOptions?.think ??
+    null;
+  const freshThink = thinkChoice?.owner === 'new' ? thinkChoice.think : null;
+  const freshInheritedThink = inheritedThinkFor(freshModel?.model);
+  const freshThinkEffective = freshThink ?? freshInheritedThink;
+  const taskThink =
+    selectedTask && thinkChoice?.owner === selectedTask.id
+      ? thinkChoice.think
+      : (selectedTask?.activeRun?.think ?? null);
+  const taskInheritedThink = inheritedThinkFor(selectedTask?.model);
+  const taskThinkEffective = taskThink ?? taskInheritedThink;
+
   const submitMessage = async (message: string): Promise<boolean> => {
     if (selectedTask && !confirmWorkspaceDiscard()) return false;
     if (selectedTask && workspaceDirty) {
@@ -810,6 +835,7 @@ export default function WorkPage() {
           model: selectedTask.model,
           providerType: selectedTask.providerType,
           providerId: selectedTask.providerId || undefined,
+          ...(taskThinkEffective !== null ? { think: taskThinkEffective } : {}),
         });
       } else {
         if (!freshModel) {
@@ -834,7 +860,13 @@ export default function WorkPage() {
             : {}),
           ...(policyId ? { policyId } : {}),
           ...(personaId ? { personaId, isAgent: true } : {}),
+          ...(freshThinkEffective !== null
+            ? { think: freshThinkEffective }
+            : {}),
         });
+        if (thinkChoice?.owner === 'new') {
+          setThinkChoice({ owner: task.id, think: thinkChoice.think });
+        }
         navigate(`/work/${task.id}`);
       }
       return true;
@@ -1787,6 +1819,9 @@ export default function WorkPage() {
                   preferences.workRemoteProviderDisclosureDismissed
                 }
                 remoteDisclosureSaving={remoteDisclosureSaving}
+                think={freshThink}
+                inheritedThink={freshInheritedThink}
+                onThinkChange={think => setThinkChoice({ owner: 'new', think })}
                 onModelChange={changeModel}
                 onEngineChange={changeEngine}
                 onDismissRemoteDisclosure={dismissRemoteDisclosure}
@@ -1857,6 +1892,11 @@ export default function WorkPage() {
                     preferences.workRemoteProviderDisclosureDismissed
                   }
                   remoteDisclosureSaving={remoteDisclosureSaving}
+                  think={taskThink}
+                  inheritedThink={taskInheritedThink}
+                  onThinkChange={think =>
+                    setThinkChoice({ owner: selectedTask.id, think })
+                  }
                   onModelChange={changeModel}
                   onEngineChange={changeEngine}
                   onDismissRemoteDisclosure={dismissRemoteDisclosure}

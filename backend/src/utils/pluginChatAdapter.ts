@@ -441,6 +441,118 @@ function toAnthropicMessages(messages: ChatMessage[]): Array<{
   });
 }
 
+/**
+ * Anthropic prices thinking in tokens and takes it as its own block. The
+ * budget has to fit inside max_tokens with room left for the answer; an
+ * explicit user ceiling shrinks the budget rather than being raised, and the
+ * model's own documented ceiling bounds them both. Adaptive models take no
+ * budget, so max_tokens is left to the user or a roomy default. Chat and Work
+ * both build Anthropic requests from this, so the two cannot drift.
+ */
+export function resolveAnthropicThinking(
+  model: string,
+  think: unknown,
+  requestedMaxTokens: number | undefined,
+  /** Ceiling for a non-adaptive request that asked for no budget. */
+  defaultMaxTokens = 1024
+): {
+  maxTokens: number;
+  /** Set when a manual budget went out; sampling parameters must then stay off. */
+  budgetTokens?: number;
+  fields: Record<string, unknown>;
+} {
+  const anthropicModel = bedrockAnthropicModelName(model);
+  const adaptive = ANTHROPIC_ADAPTIVE_THINKING_MODELS.has(anthropicModel);
+  const levelBudget = adaptive ? undefined : thinkingBudgetTokens(think);
+  const fitted =
+    levelBudget === undefined
+      ? undefined
+      : fitThinkingBudget(requestedMaxTokens, levelBudget);
+  const modelCeiling = anthropicMaxOutputTokens(model);
+  let budgetTokens = fitted?.budgetTokens;
+  let maxTokens =
+    fitted?.maxTokens ??
+    requestedMaxTokens ??
+    (adaptive ? ANTHROPIC_ADAPTIVE_DEFAULT_MAX_TOKENS : defaultMaxTokens);
+  if (modelCeiling !== undefined && maxTokens > modelCeiling) {
+    maxTokens = modelCeiling;
+    if (budgetTokens !== undefined) {
+      budgetTokens = Math.max(
+        1024,
+        Math.min(budgetTokens, modelCeiling - 1024)
+      );
+    }
+  }
+  return {
+    maxTokens,
+    budgetTokens,
+    fields: {
+      ...(budgetTokens !== undefined
+        ? { thinking: { type: 'enabled', budget_tokens: budgetTokens } }
+        : {}),
+      ...(adaptive
+        ? anthropicAdaptiveThinking(
+            anthropicModel,
+            think as GenerationOptions['think']
+          )
+        : {}),
+    },
+  };
+}
+
+/**
+ * Gemini takes a thinking budget inside the generation config. Only an
+ * enabled setting is sent: a zero budget is rejected by the models that
+ * always reason, so switching thinking off is left to the model. Thinking
+ * tokens count against maxOutputTokens, so the ceiling has to hold the budget
+ * plus the answer or the reply arrives empty at MAX_TOKENS.
+ */
+export function resolveGeminiThinking(
+  think: unknown,
+  requestedMaxTokens: number | undefined
+): { maxOutputTokens: number; thinkingConfig?: Record<string, unknown> } {
+  const levelBudget = thinkingBudgetTokens(think);
+  const fitted =
+    levelBudget === undefined
+      ? undefined
+      : fitThinkingBudget(requestedMaxTokens, levelBudget);
+  return {
+    maxOutputTokens: fitted?.maxTokens ?? requestedMaxTokens ?? 1024,
+    ...(fitted !== undefined
+      ? {
+          thinkingConfig: {
+            thinkingBudget: fitted.budgetTokens,
+            // Without this the user pays for thinking and sees none.
+            includeThoughts: true,
+          },
+        }
+      : {}),
+  };
+}
+
+/**
+ * Reasoning fields for OpenAI-compatible Chat Completions. OpenAI and the
+ * providers that copy its shape name the levels instead of budgeting tokens.
+ * Nothing is sent unless thinking was asked for: the field is unknown to
+ * models that do not reason. DeepSeek documents low, high and max only; its
+ * middle is the provider default, so a plain "thinking on" preference sends
+ * no effort at all, and it toggles thinking with its own object.
+ */
+export function openAICompatibleReasoningFields(
+  plugin: Pick<Plugin, 'id'>,
+  think: unknown
+): Record<string, unknown> {
+  const thinkingLevel = thinkingEffort(think);
+  const effort =
+    plugin.id === 'deepseek' && thinkingLevel === 'medium'
+      ? undefined
+      : thinkingLevel;
+  return {
+    ...(effort ? { reasoning_effort: effort } : {}),
+    ...getOpenAICompatibleThinkingParameters(plugin, think),
+  };
+}
+
 function buildAnthropicChatPayload(
   model: string,
   messages: ChatMessage[],
@@ -452,51 +564,22 @@ function buildAnthropicChatPayload(
     message => message.role !== 'system'
   );
 
-  const anthropicModel = bedrockAnthropicModelName(model);
-  const adaptive = ANTHROPIC_ADAPTIVE_THINKING_MODELS.has(anthropicModel);
-
-  // Anthropic prices thinking in tokens and takes it as its own block. The
-  // budget has to fit inside max_tokens with room left for the answer; an
-  // explicit user ceiling shrinks the budget rather than being raised, and
-  // the model's own documented ceiling bounds them both. Adaptive models take
-  // no budget, so max_tokens is left to the user or a roomy default.
-  const levelBudget = adaptive
-    ? undefined
-    : thinkingBudgetTokens(options.think);
-  const fitted =
-    levelBudget === undefined
-      ? undefined
-      : fitThinkingBudget(params.maxTokens, levelBudget);
-  const modelCeiling = anthropicMaxOutputTokens(model);
-  let budgetTokens = fitted?.budgetTokens;
-  let maxTokens =
-    fitted?.maxTokens ??
-    params.maxTokens ??
-    (adaptive ? ANTHROPIC_ADAPTIVE_DEFAULT_MAX_TOKENS : 1024);
-  if (modelCeiling !== undefined && maxTokens > modelCeiling) {
-    maxTokens = modelCeiling;
-    if (budgetTokens !== undefined) {
-      budgetTokens = Math.max(
-        1024,
-        Math.min(budgetTokens, modelCeiling - 1024)
-      );
-    }
-  }
+  const thinking = resolveAnthropicThinking(
+    model,
+    options.think,
+    params.maxTokens
+  );
+  const budgetTokens = thinking.budgetTokens;
 
   const anthropicTools = toAnthropicTools(options.tools);
   const payload: Record<string, unknown> = {
     model,
     messages: toAnthropicMessages(nonSystemMessages),
-    max_tokens: maxTokens,
+    max_tokens: thinking.maxTokens,
     stop_sequences: options.stop,
     stream: params.shouldStream,
     ...(anthropicTools ? { tools: anthropicTools } : {}),
-    ...(budgetTokens !== undefined
-      ? { thinking: { type: 'enabled', budget_tokens: budgetTokens } }
-      : {}),
-    ...(adaptive
-      ? anthropicAdaptiveThinking(anthropicModel, options.think)
-      : {}),
+    ...thinking.fields,
   };
 
   // Anthropic rejects non-default sampling parameters on Claude Opus 4.7 and
@@ -556,33 +639,18 @@ function buildGeminiChatPayload(
     parts.push({ text: lastMessage.content });
   }
 
-  // Gemini takes a thinking budget too, inside the generation config. Only an
-  // enabled setting is sent: a zero budget is rejected by the models that
-  // always reason, so switching thinking off is left to the model. Thinking
-  // tokens count against maxOutputTokens, so the ceiling has to hold the
-  // budget plus the answer or the reply arrives empty at MAX_TOKENS.
-  const levelBudget = thinkingBudgetTokens(options.think);
-  const fitted =
-    levelBudget === undefined
-      ? undefined
-      : fitThinkingBudget(params.maxTokens, levelBudget);
+  const thinking = resolveGeminiThinking(options.think, params.maxTokens);
 
   return {
     payload: {
       contents: [{ parts }],
       generationConfig: {
         temperature: params.temperature,
-        maxOutputTokens: fitted?.maxTokens ?? params.maxTokens ?? 1024,
+        maxOutputTokens: thinking.maxOutputTokens,
         topP: params.topP,
         stopSequences: options.stop,
-        ...(fitted !== undefined
-          ? {
-              thinkingConfig: {
-                thinkingBudget: fitted.budgetTokens,
-                // Without this the user pays for thinking and sees none.
-                includeThoughts: true,
-              },
-            }
+        ...(thinking.thinkingConfig
+          ? { thinkingConfig: thinking.thinkingConfig }
           : {}),
       },
     },
@@ -596,16 +664,6 @@ function buildOpenAICompatibleChatPayload(
   options: GenerationOptions,
   params: PluginChatParameters
 ): PluginChatPayloadResult {
-  // OpenAI and the providers that copy its shape name the levels instead of
-  // budgeting tokens. Nothing is sent unless thinking was asked for: the field
-  // is unknown to models that do not reason.
-  const thinkingLevel = thinkingEffort(options.think);
-  // DeepSeek documents low, high and max only; its middle is the provider
-  // default, so a plain "thinking on" preference sends no effort at all.
-  const effort =
-    plugin.id === 'deepseek' && thinkingLevel === 'medium'
-      ? undefined
-      : thinkingLevel;
   const tools = toOpenAICompatibleTools(options.tools);
   // Replayed reasoning has no single wire name: OpenRouter reads `reasoning`,
   // while DeepSeek requires `reasoning_content` beside its tool calls. Both
@@ -626,8 +684,7 @@ function buildOpenAICompatibleChatPayload(
       max_tokens: params.maxTokens,
       stop: options.stop,
       stream: params.shouldStream,
-      ...(effort ? { reasoning_effort: effort } : {}),
-      ...getOpenAICompatibleThinkingParameters(plugin, options.think),
+      ...openAICompatibleReasoningFields(plugin, options.think),
       ...(tools ? { tools } : {}),
     },
   };

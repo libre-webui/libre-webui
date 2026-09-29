@@ -15,6 +15,8 @@
  * limitations under the License.
  */
 
+import type { ThinkingPreference } from './index';
+
 export type WorkTaskStatus =
   | 'idle'
   | 'preparing'
@@ -309,6 +311,8 @@ export interface WorkRun {
   changedFiles?: string[] | null;
   /** Short machine reason for the terminal transition, e.g. `failed:error`. */
   exitState?: string | null;
+  /** Reasoning level the run asked for; absent means the model default. */
+  think?: ThinkingPreference | null;
   createdAt: number;
   startedAt?: number | null;
   finishedAt?: number | null;
@@ -428,6 +432,8 @@ export interface CreateWorkTaskRequest {
   personaId?: string;
   /** Pin the task above ad-hoc tasks as a persistent named agent. */
   isAgent?: boolean;
+  /** Reasoning level for the first run; omitted leaves the model default. */
+  think?: ThinkingPreference;
 }
 
 export interface WorkPolicy {
@@ -496,6 +502,8 @@ export interface StartWorkRunRequest {
   model: string;
   providerType: WorkProviderType;
   providerId?: string;
+  /** Reasoning level for this run; omitted leaves the model default. */
+  think?: ThinkingPreference;
 }
 
 export interface UpdateWorkTaskRequest {

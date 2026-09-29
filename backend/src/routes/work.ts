@@ -77,6 +77,10 @@ import {
   WorkTaskSummary,
 } from '../types/work.js';
 import { ApiResponse } from '../types/index.js';
+import {
+  normalizeThinkingPreference,
+  type ThinkingPreference,
+} from '../utils/thinkingOptions.js';
 
 const router = express.Router();
 const WORK_SSE_MAX_PENDING_BYTES = 1_000_000;
@@ -494,7 +498,8 @@ router.post(
         {
           personaId: requestedPersonaId || undefined,
           isAgent,
-        }
+        },
+        readThinkSelection(req.body)
       );
       const runId = detail.activeRun?.id;
       if (!runId) {
@@ -1165,7 +1170,9 @@ router.post(
         userId,
         message,
         model,
-        provider
+        provider,
+        undefined,
+        readThinkSelection(req.body)
       );
       const runId = detail.activeRun?.id;
       if (!runId) throw new Error('Work run was not created.');
@@ -1823,6 +1830,25 @@ async function requireIdleGitTask(
   }
   return task;
 }
+
+/**
+ * The run's reasoning level. Absent or null leaves the model on its default;
+ * anything else must be a boolean or a named level.
+ */
+const readThinkSelection = (
+  body: Record<string, unknown> | undefined
+): ThinkingPreference | undefined => {
+  const raw = body?.think;
+  if (raw === undefined || raw === null) return undefined;
+  const think = normalizeThinkingPreference(raw);
+  if (think === undefined) {
+    throw new WorkRouteError(
+      'Field "think" must be true, false, "low", "medium" or "high".',
+      400
+    );
+  }
+  return think;
+};
 
 function readProviderSelection(
   body: unknown,

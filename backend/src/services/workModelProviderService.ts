@@ -36,9 +36,17 @@ import type {
 } from '../types/index.js';
 import {
   getOpenAICompatibleSamplingParameters,
+  openAICompatibleReasoningFields,
+  resolveAnthropicThinking,
+  resolveGeminiThinking,
   resolvePluginChatParameters,
   type PluginVariables,
 } from '../utils/pluginChatAdapter.js';
+import {
+  normalizeThinkingPreference,
+  thinkingBudgetTokens,
+  thinkingEffort,
+} from '../utils/thinkingOptions.js';
 import {
   OPENAI_RESPONSES_OUTPUT_ITEMS_METADATA_KEY,
   OPENAI_RESPONSES_STATE_SCOPE_METADATA_KEY,
@@ -846,7 +854,8 @@ export function buildPluginWorkPayload(
         request.messages,
         request.tools || [],
         params.maxTokens,
-        Boolean(request.stream)
+        Boolean(request.stream),
+        options.think
       ),
       extraHeaders: { 'anthropic-version': '2023-06-01' },
     };
@@ -856,7 +865,8 @@ export function buildPluginWorkPayload(
       payload: buildGeminiWorkPayload(
         request.messages,
         request.tools || [],
-        params
+        params,
+        options.think
       ),
       extraHeaders: {},
     };
@@ -866,6 +876,7 @@ export function buildPluginWorkPayload(
     const tools = toOpenAIResponsesTools(request.tools || []);
     // The ChatGPT-backed codex endpoint rejects sampling parameters outright.
     const supportsSampling = plugin.id !== CODEX_OAUTH_PLUGIN_ID;
+    const reasoningEffort = thinkingEffort(options.think);
     return {
       payload: {
         model: request.model,
@@ -880,6 +891,9 @@ export function buildPluginWorkPayload(
           : {}),
         // The codex endpoint rejects non-streaming requests outright.
         stream: supportsSampling ? Boolean(request.stream) : true,
+        ...(reasoningEffort
+          ? { reasoning: { effort: reasoningEffort, summary: 'auto' } }
+          : {}),
         store: false,
         include: ['reasoning.encrypted_content'],
       },
@@ -894,6 +908,7 @@ export function buildPluginWorkPayload(
       tool_choice: request.tools?.length ? 'auto' : undefined,
       ...getOpenAICompatibleSamplingParameters(plugin, params),
       max_tokens: params.maxTokens,
+      ...openAICompatibleReasoningFields(plugin, options.think),
       stream: Boolean(request.stream),
     },
     extraHeaders: {},
@@ -1140,12 +1155,30 @@ export function toOpenAIResponsesWorkInput(
   return input;
 }
 
+/** Work's output ceiling when the user set none: room for a large tool call. */
+const WORK_DEFAULT_MAX_TOKENS = 4096;
+
+/**
+ * The ceiling for a run that asked for a thinking budget and set no limit of
+ * its own: the budget plus Work's usual answer room.
+ */
+const workCeilingForThinking = (
+  think: unknown,
+  withoutBudget: number | undefined
+): number | undefined => {
+  const budget = thinkingBudgetTokens(think);
+  return budget === undefined
+    ? withoutBudget
+    : WORK_DEFAULT_MAX_TOKENS + budget;
+};
+
 function buildAnthropicWorkPayload(
   model: string,
   messages: OllamaChatMessage[],
   tools: JsonObject[],
   maxTokens?: number,
-  stream = false
+  stream = false,
+  think?: unknown
 ): JsonObject {
   const system = messages
     .filter(message => message.role === 'system')
@@ -1234,12 +1267,26 @@ function buildAnthropicWorkPayload(
     appendToolResult = false;
   }
 
+  // An unset level keeps Work's own output ceiling. A chosen one sizes the
+  // request as Chat does, with Work's answer room on top of the budget so a
+  // large tool call is not squeezed out by thinking.
+  const thinking =
+    normalizeThinkingPreference(think) === undefined
+      ? undefined
+      : resolveAnthropicThinking(
+          model,
+          think,
+          maxTokens ?? workCeilingForThinking(think, undefined),
+          WORK_DEFAULT_MAX_TOKENS
+        );
   return {
     model,
     system: system || undefined,
     messages: providerMessages,
     tools: toAnthropicTools(tools),
-    max_tokens: maxTokens ?? 4096,
+    ...(thinking
+      ? { max_tokens: thinking.maxTokens, ...thinking.fields }
+      : { max_tokens: maxTokens ?? WORK_DEFAULT_MAX_TOKENS }),
     stream,
   };
 }
@@ -1247,7 +1294,8 @@ function buildAnthropicWorkPayload(
 function buildGeminiWorkPayload(
   messages: OllamaChatMessage[],
   tools: JsonObject[],
-  params: ReturnType<typeof resolvePluginChatParameters>
+  params: ReturnType<typeof resolvePluginChatParameters>,
+  think?: unknown
 ): JsonObject {
   const system = messages
     .filter(message => message.role === 'system')
@@ -1337,8 +1385,14 @@ function buildGeminiWorkPayload(
       : {}),
     generationConfig: {
       temperature: params.temperature,
-      maxOutputTokens: params.maxTokens ?? 4096,
       topP: params.topP,
+      ...(normalizeThinkingPreference(think) === undefined
+        ? { maxOutputTokens: params.maxTokens ?? WORK_DEFAULT_MAX_TOKENS }
+        : resolveGeminiThinking(
+            think,
+            params.maxTokens ??
+              workCeilingForThinking(think, WORK_DEFAULT_MAX_TOKENS)
+          )),
     },
   };
 }

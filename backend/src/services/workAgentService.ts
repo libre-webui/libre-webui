@@ -1256,6 +1256,9 @@ export class WorkAgentService {
                 ...(externalTools?.schemas ?? []),
               ],
               stream: true,
+              ...(run.think !== undefined
+                ? { options: { think: run.think } }
+                : {}),
             },
             {
               onContent: delta => contentStream.push(delta),
