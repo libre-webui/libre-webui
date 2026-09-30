@@ -28,7 +28,7 @@ export const BUNDLED_PLUGIN_DEFINITION_FINGERPRINTS: Readonly<
   anthropic: '282d559305b7a3a8010854cb5889aac992d799d1f3c6bdfd7b3b1009af53dca8',
   bedrock: '22eaf01882bfbf2d911cb320103de97f534f3aef829001b982d21445a9ed4980',
   'codex-oauth':
-    '733d9992eb9209deaec037230cae31178e6000c009d971fef6c26a7666a6f46f',
+    '685ec47cc56dcf8cb9bd1667f41ad69a94eb66c1d6dd9aeca5564134c1b1b1f3',
   comfyui: 'eaefe81897b58bffdf92bae8f0d0b675a062af276d5379e43147d6a0adaf0f47',
   deepseek: '32cc8662939e304869f9e02ef3b7c8ced6ffe14c333bea9230bfabe2f2350181',
   elevenlabs:

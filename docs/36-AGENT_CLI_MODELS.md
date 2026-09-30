@@ -59,8 +59,8 @@ Each CLI can expose several entries in the Agents group:
   the CLI. The existing **Sonnet** and **Opus** aliases continue to follow the
   CLI's current model mapping.
 - **Codex** offers its configured default plus the documented ChatGPT sign-in
-  family: GPT-6 Astra, GPT-6 Sol, GPT-6 Luna, GPT-5.6 Sol, Terra, Luna, GPT-5.5,
-  and GPT-5.3 Codex Spark.
+  family: GPT-6 Astra, **GPT-6.1 Sol** (`gpt-6.1-sol`), GPT-6 Sol, GPT-6 Luna,
+  GPT-5.6 Sol, Terra, Luna, GPT-5.5, and GPT-5.3 Codex Spark.
   Availability depends on the CLI's sign-in and account access.
 - **Pi** runs with the model configured in the CLI itself.
 - **OpenCode** lists the models of every provider it is authenticated with

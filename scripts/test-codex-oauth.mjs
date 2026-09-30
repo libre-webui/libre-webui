@@ -177,7 +177,12 @@ test('the bundled codex plugin omits sampling parameters and adds ChatGPT header
   );
   assert.equal(plugin.id, CODEX_OAUTH_PLUGIN_ID);
   assert.equal(plugin.api_mode, 'responses');
-  for (const model of ['gpt-6-astra', 'gpt-6-sol', 'gpt-6-luna']) {
+  for (const model of [
+    'gpt-6-astra',
+    'gpt-6.1-sol',
+    'gpt-6-sol',
+    'gpt-6-luna',
+  ]) {
     assert.ok(plugin.model_map.includes(model), `${model} must be selectable`);
   }
 
@@ -204,6 +209,7 @@ test('the bundled codex plugin omits sampling parameters and adds ChatGPT header
   );
   for (const model of [
     'gpt-6-astra',
+    'gpt-6.1-sol',
     'gpt-6-sol',
     'gpt-6-luna',
     'gpt-5.6-luna',

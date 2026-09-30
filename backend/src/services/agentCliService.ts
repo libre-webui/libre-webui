@@ -133,6 +133,7 @@ export const AGENT_CLI_DEFINITIONS: AgentCliDefinition[] = [
     // The ChatGPT sign-in family from learn.chatgpt.com/docs/models.
     modelOptions: [
       { id: 'gpt-6-astra', label: 'GPT-6 Astra' },
+      { id: 'gpt-6.1-sol', label: 'GPT-6.1 Sol' },
       { id: 'gpt-6-sol', label: 'GPT-6 Sol' },
       { id: 'gpt-6-luna', label: 'GPT-6 Luna' },
       { id: 'gpt-5.6-sol', label: 'GPT-5.6 Sol' },
