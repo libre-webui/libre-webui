@@ -1314,7 +1314,9 @@ export class WorkRuntimeService {
       try {
         if (remaining <= 0 && !this.shuttingDown) {
           await this.withLifecycleLock(task.id, (_assertHeld, signal) =>
-            this.stopContainerIfIdleWithLock(task, signal)
+            this.stopContainerIfIdleWithLock(task, signal, {
+              ownsRuntimeLease: false,
+            })
           );
         }
       } catch (error) {
@@ -2176,11 +2178,24 @@ export class WorkRuntimeService {
   private async stopContainerIfIdleWithLock(
     task: WorkTaskRecord,
     signal?: AbortSignal,
-    options: { ignoreActiveCommands?: boolean } = {}
+    options: {
+      ignoreActiveCommands?: boolean;
+      ownsRuntimeLease?: boolean;
+    } = {}
   ): Promise<boolean> {
     if (!options.ignoreActiveCommands && this.activeCommands.has(task.id)) {
       return false;
     }
+    // Commands and helpers still own their lease during teardown, but screen
+    // viewers do not. Preserve any other holder, including the run executor
+    // retaining the sandbox between tool calls, until explicit run cleanup.
+    const ownLeaseHolders = options.ownsRuntimeLease === false ? 0 : 1;
+    // A registered preview lease is checked for readiness below. Counting it
+    // as another hold would retain dead previews and their capacity forever.
+    const hasOtherRuntimeHolders = (): boolean =>
+      (this.runtimeLeases.get(task.id)?.holders ?? 0) >
+      ownLeaseHolders + (this.previewLeaseReleases.has(task.id) ? 1 : 0);
+    if (hasOtherRuntimeHolders()) return false;
     // An attached terminal session owns the running container exactly like a
     // ready preview does.
     if ((this.terminalHolds.get(task.id) ?? 0) > 0) return false;
@@ -2224,11 +2239,12 @@ export class WorkRuntimeService {
         error
       );
     }
-    // The preview probe above awaits a container exec; a terminal or screen
-    // hold can land during that window. Re-check synchronously so a viewer
-    // who just attached does not lose the session to a stale decision.
+    // The preview probe above awaits a container exec; a runtime lease or
+    // terminal/screen hold can land during that window. Re-check synchronously
+    // so newly acquired holds do not lose the sandbox to a stale decision.
     if (
       (!options.ignoreActiveCommands && this.activeCommands.has(task.id)) ||
+      hasOtherRuntimeHolders() ||
       (this.terminalHolds.get(task.id) ?? 0) > 0 ||
       (this.screenHolds.get(task.id) ?? 0) > 0
     ) {

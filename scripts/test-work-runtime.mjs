@@ -755,6 +755,173 @@ test('run command keeps the lifecycle lease through exec and teardown', async ()
   assert.equal(service.activeCommands.size, 0);
 });
 
+test('a retained run lease keeps its sandbox running between commands and Files helpers', async () => {
+  const service = new WorkRuntimeService();
+  let running = false;
+  let starts = 0;
+  let stops = 0;
+  let failCommand = false;
+  service.ensureImage = async () => {};
+  service.assertTaskIsActive = async () => {};
+  service.withLifecycleLock = runWithHeldLifecycleLease;
+  service.prepareWithLock = async () => {
+    service.assertRuntimeLease(task);
+    if (!running) starts += 1;
+    running = true;
+  };
+  service.previewProcessCheckWithLock = async () => {
+    if (failCommand) throw new Error('preview inspection failed');
+    return 'dead';
+  };
+  service.driver.exec = async (_task, command) => {
+    assert.equal(running, true);
+    return {
+      exitCode: 0,
+      stdout: command[0] === 'node' ? '{"entries":[]}' : 'ready',
+      stderr: '',
+      truncated: false,
+    };
+  };
+  service.driver.stopRuntime = async () => {
+    stops += 1;
+    running = false;
+  };
+  service.markPreviewStopped = async () => {};
+  service.completeRecoveryTask = () => {};
+
+  const releaseRun = await service.prepare(task);
+  try {
+    await service.runCommand(task, 'printf ready', 10_000);
+    assert.equal(
+      running,
+      true,
+      'the first command must retain the run sandbox'
+    );
+    await service.listFiles(task);
+    const releaseViewer = await service.beginScreenSession(task);
+    await releaseViewer();
+    assert.equal(running, true, 'closing a viewer must retain the run sandbox');
+    await service.runCommand(task, 'printf ready', 10_000);
+    assert.equal(starts, 1);
+    assert.equal(stops, 0);
+    assert.equal(service.runtimeLeases.get(task.id).holders, 1);
+
+    // Preparation/preview inspection failure must also leave the outer run's
+    // sandbox alive, even before the command is registered.
+    failCommand = true;
+    await assert.rejects(
+      service.runCommand(task, 'printf ready', 10_000),
+      /preview inspection failed/
+    );
+    failCommand = false;
+    assert.equal(stops, 0);
+    assert.equal(service.runtimeLeases.get(task.id).holders, 1);
+
+    // Run-end cleanup explicitly stops even while the execution lease exists.
+    await service.stopContainer(task);
+    assert.equal(running, false);
+    assert.equal(stops, 1);
+  } finally {
+    releaseRun();
+  }
+  assert.equal(service.runtimeLeases.has(task.id), false);
+
+  // Commands and Files helpers used outside a run still stop their sandbox.
+  await service.runCommand(task, 'printf ready', 10_000);
+  assert.equal(running, false);
+  assert.equal(stops, 2);
+  await service.listFiles(task);
+  assert.equal(running, false);
+  assert.equal(stops, 3);
+  assert.equal(service.runtimeLeases.has(task.id), false);
+
+  // A viewer without an ongoing run still idles its sandbox on disconnect.
+  running = true;
+  const releaseViewer = await service.beginScreenSession(task);
+  await releaseViewer();
+  assert.equal(running, false);
+  assert.equal(stops, 4);
+});
+
+test('helper teardown checks preview readiness without losing a retained run lease', async () => {
+  const service = new WorkRuntimeService();
+  service.ensureImage = async () => {};
+  service.assertTaskIsActive = async () => {};
+  service.withLifecycleLock = runWithHeldLifecycleLease;
+  service.prepareWithLock = async () => service.assertRuntimeLease(task);
+  service.markPreviewStopped = async () => {};
+  service.completeRecoveryTask = () => {};
+  let previewState = 'dead';
+  let stops = 0;
+  service.previewProcessCheckWithLock = async () => previewState;
+  service.driver.exec = async () => ({
+    exitCode: 0,
+    stdout: '{"entries":[]}',
+    stderr: '',
+    truncated: false,
+  });
+  service.driver.stopRuntime = async () => {
+    stops += 1;
+  };
+
+  const releaseRun = await service.prepare(task);
+  service.previewLeaseReleases.set(
+    task.id,
+    await service.acquireRuntimeLease(task)
+  );
+  try {
+    await service.listFiles(task);
+    assert.equal(stops, 0, 'a run plus dead preview still retains the sandbox');
+    assert.equal(service.runtimeLeases.get(task.id).holders, 2);
+  } finally {
+    releaseRun();
+  }
+
+  await service.listFiles(task);
+  assert.equal(stops, 1, 'a dead preview alone must not keep the helper alive');
+  assert.equal(service.previewLeaseReleases.has(task.id), false);
+  assert.equal(service.runtimeLeases.has(task.id), false);
+
+  previewState = 'ready';
+  service.previewLeaseReleases.set(
+    task.id,
+    await service.acquireRuntimeLease(task)
+  );
+  await service.listFiles(task);
+  assert.equal(stops, 1, 'a ready preview must keep its sandbox');
+  assert.equal(service.runtimeLeases.get(task.id).holders, 1);
+  previewState = 'dead';
+  await service.listFiles(task);
+  assert.equal(stops, 2);
+  assert.equal(service.previewLeaseReleases.has(task.id), false);
+  assert.equal(service.runtimeLeases.has(task.id), false);
+});
+
+test('idle teardown rechecks runtime holders after the preview probe', async () => {
+  const service = new WorkRuntimeService();
+  service.assertTaskIsActive = async () => {};
+  service.markPreviewStopped = async () => {};
+  service.completeRecoveryTask = () => {};
+  let stops = 0;
+  let releaseRun;
+  service.previewProcessCheckWithLock = async () => {
+    releaseRun = await service.acquireRuntimeLease(task);
+    return 'dead';
+  };
+  service.driver.stopRuntime = async () => {
+    stops += 1;
+  };
+  const releaseHelper = await service.acquireRuntimeLease(task);
+  try {
+    assert.equal(await service.stopContainerIfIdleWithLock(task), false);
+    assert.equal(stops, 0);
+    assert.equal(service.runtimeLeases.get(task.id).holders, 2);
+  } finally {
+    releaseRun?.();
+    releaseHelper();
+  }
+});
+
 test('network-disabled containers use a non-root, least-privilege policy', () => {
   const image = 'example.invalid/work-runtime@sha256:test-only';
   const args = buildWorkContainerRunArgs(task, {

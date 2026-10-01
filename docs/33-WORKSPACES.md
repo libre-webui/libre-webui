@@ -122,6 +122,10 @@ This release introduces Work as a complete task workflow:
 The persistent unit is the task workspace, not a continuously running
 container. Libre WebUI starts, stops, and may recreate the task's container as
 needed while retaining its named volume.
+During an agent run, the sandbox stays running between commands and workspace
+helpers. Run completion stops it unless a verified preview or watched Work
+Computer screen keeps it active; standalone commands and workspace helpers
+stop their sandbox when no other activity needs it.
 
 ## Architecture
 
