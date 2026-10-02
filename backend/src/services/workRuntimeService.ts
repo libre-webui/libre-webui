@@ -651,10 +651,20 @@ interface RuntimeLease {
   sharedLease?: CoordinationLease;
   sharedLeaseTimer?: NodeJS.Timeout;
   sharedLeaseLost?: boolean;
+  presenceTail?: Promise<void>;
+  released?: boolean;
+  previewGeneration?: number;
 }
 
 /** How long a preview may sit at `starting` before it counts as abandoned. */
 const PREVIEW_START_GRACE_MS = 5 * 60_000;
+
+// Only this explicit protocol exempts a runtime hold from idle cleanup. Older
+// generic members and unrecognized members remain protected during upgrades.
+const isPreviewOnlyPresence = (member: string): boolean =>
+  /^(?:standalone|app-external|app-embedded|external-worker)-\d+-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}:preview-only$/.test(
+    member
+  );
 
 export class WorkRuntimeService {
   readonly driver: WorkRuntimeDriver;
@@ -676,6 +686,7 @@ export class WorkRuntimeService {
   private activeCommands = new Set<string>();
   private lastRuntimeUnavailableReason: string | null = null;
   private runtimeLeases = new Map<string, RuntimeLease>();
+  private runtimePresenceTails = new Map<string, Promise<void>>();
   private previewLeaseReleases = new Map<string, () => void>();
   private previewUsageReleases = new Map<string, () => void>();
   private terminalHolds = new Map<string, number>();
@@ -990,6 +1001,14 @@ export class WorkRuntimeService {
         );
       }
       existing.holders += 1;
+      try {
+        // Publish protection before a helper or run can enter the lifecycle
+        // lock, even when its only previous holder was an idle preview.
+        await this.refreshRuntimePresence(task, existing);
+      } catch (error) {
+        this.releaseRuntimeLease(task.id, task.userId);
+        throw error;
+      }
     } else {
       const perUser = [...this.runtimeLeases.values()].filter(
         lease => lease.userId === task.userId
@@ -1060,7 +1079,12 @@ export class WorkRuntimeService {
               if (!extended) throw new Error('lease ownership was lost');
             })
             .catch(error => {
-              if (runtimeLease.sharedLeaseLost) return;
+              if (
+                runtimeLease.sharedLeaseLost ||
+                this.runtimeLeases.get(task.id) !== runtimeLease
+              ) {
+                return;
+              }
               runtimeLease.sharedLeaseLost = true;
               logger.error(
                 `Shared Work runtime lease was lost for task ${task.id}; stopping its sandbox:`,
@@ -1077,15 +1101,8 @@ export class WorkRuntimeService {
             });
         }, 20_000);
         runtimeLease.sharedLeaseTimer.unref?.();
-        const refreshPresence = (): Promise<void> =>
-          withCoordinationTimeout(
-            getCoordinator().setPresence(
-              `work-task-active:${task.id}`,
-              this.activityMemberId,
-              30_000
-            ),
-            SHARED_COORDINATION_OPERATION_TIMEOUT_MS
-          );
+        const refreshPresence = (reconcilePreview = false): Promise<void> =>
+          this.refreshRuntimePresence(task, runtimeLease, reconcilePreview);
         try {
           await waitForAbortSignal(refreshPresence(), signal);
         } catch (error) {
@@ -1099,7 +1116,7 @@ export class WorkRuntimeService {
           throw error;
         }
         runtimeLease.presenceTimer = setInterval(() => {
-          void refreshPresence().catch(error =>
+          void refreshPresence(true).catch(error =>
             logger.warn(
               `Could not refresh Work activity for ${task.id}:`,
               error
@@ -1128,17 +1145,132 @@ export class WorkRuntimeService {
     if (!lease || (expectedUserId && lease.userId !== expectedUserId)) return;
     if (!force) lease.holders -= 1;
     if (!force && lease.holders > 0) return;
+    lease.released = true;
     if (lease.presenceTimer) clearInterval(lease.presenceTimer);
     if (lease.sharedLeaseTimer) clearInterval(lease.sharedLeaseTimer);
     this.runtimeLeases.delete(taskId);
     void lease.sharedLease?.release().catch(() => false);
     if (getPlatformRuntimeConfig().mode === 'team') {
-      void getCoordinator()
-        .clearPresence(`work-task-active:${taskId}`, this.activityMemberId)
-        .catch(error =>
-          logger.warn(`Could not clear Work activity for ${taskId}:`, error)
+      const clear = async (): Promise<void> => {
+        await withCoordinationTimeout(
+          getCoordinator().clearPresence(
+            `work-task-active:${taskId}`,
+            this.activityMemberId
+          ),
+          SHARED_COORDINATION_OPERATION_TIMEOUT_MS
         );
+        await withCoordinationTimeout(
+          getCoordinator().clearPresence(
+            `work-task-active:${taskId}`,
+            `${this.activityMemberId}:preview-only`
+          ),
+          SHARED_COORDINATION_OPERATION_TIMEOUT_MS
+        );
+      };
+      lease.presenceTail = this.queueRuntimePresence(taskId, clear);
+      void lease.presenceTail.catch(error =>
+        logger.warn(`Could not clear Work activity for ${taskId}:`, error)
+      );
     }
+  }
+
+  private refreshRuntimePresence(
+    task: WorkTaskRecord,
+    lease: RuntimeLease,
+    reconcilePreview = false
+  ): Promise<void> {
+    if (getPlatformRuntimeConfig().mode !== 'team') return Promise.resolve();
+    const refresh = async (): Promise<void> => {
+      if (lease.released) return;
+      if (reconcilePreview && this.previewLeaseReleases.has(task.id)) {
+        const generation = lease.previewGeneration;
+        const release = this.previewLeaseReleases.get(task.id);
+        const row = await getWorkPersistence().findTask(task.id, task.userId);
+        // A stopped-state snapshot must not release a preview reopened while
+        // this database read was in flight. Startup advances the generation
+        // under the lifecycle lock before changing its persisted state.
+        if (
+          (!row || row.preview_status === 'stopped') &&
+          lease.previewGeneration === generation &&
+          this.previewLeaseReleases.get(task.id) === release
+        ) {
+          this.releasePreviewLease(task.id);
+        }
+      }
+      if (lease.released) return;
+      const activeMember = this.activityMemberId;
+      const previewMember = `${activeMember}:preview-only`;
+      const previewOnly =
+        lease.holders === 1 && this.previewLeaseReleases.has(task.id);
+      // Set the new member before clearing the old one, and serialize all
+      // transitions so a racing heartbeat cannot erase a newly active hold.
+      await withCoordinationTimeout(
+        getCoordinator().setPresence(
+          `work-task-active:${task.id}`,
+          previewOnly ? previewMember : activeMember,
+          30_000
+        ),
+        SHARED_COORDINATION_OPERATION_TIMEOUT_MS
+      );
+      await withCoordinationTimeout(
+        getCoordinator().clearPresence(
+          `work-task-active:${task.id}`,
+          previewOnly ? activeMember : previewMember
+        ),
+        SHARED_COORDINATION_OPERATION_TIMEOUT_MS
+      );
+    };
+    const pending = this.queueRuntimePresence(task.id, refresh);
+    lease.presenceTail = pending;
+    return pending;
+  }
+
+  private queueRuntimePresence(
+    taskId: string,
+    operation: () => Promise<void>
+  ): Promise<void> {
+    // Include releases and reacquisitions in one queue: an old lease's delayed
+    // clear must finish before a new lease publishes the same process member.
+    const pending = (this.runtimePresenceTails.get(taskId) ?? Promise.resolve())
+      .catch(() => undefined)
+      .then(operation);
+    this.runtimePresenceTails.set(taskId, pending);
+    void pending
+      .finally(() => {
+        if (this.runtimePresenceTails.get(taskId) === pending) {
+          this.runtimePresenceTails.delete(taskId);
+        }
+      })
+      .catch(() => undefined);
+    return pending;
+  }
+
+  private hasLocalRuntimeActivity(taskId: string): boolean {
+    return (
+      this.activeCommands.has(taskId) ||
+      (this.terminalHolds.get(taskId) ?? 0) > 0 ||
+      (this.screenHolds.get(taskId) ?? 0) > 0 ||
+      (this.runtimeLeases.get(taskId)?.holders ?? 0) >
+        (this.previewLeaseReleases.has(taskId) ? 1 : 0)
+    );
+  }
+
+  private async hasRuntimeActivity(taskId: string): Promise<boolean> {
+    if (this.hasLocalRuntimeActivity(taskId)) return true;
+    if (
+      getPlatformRuntimeConfig().mode === 'team' &&
+      (
+        await withCoordinationTimeout(
+          getCoordinator().listPresence(`work-task-active:${taskId}`),
+          SHARED_COORDINATION_OPERATION_TIMEOUT_MS
+        )
+      ).some(member => !isPreviewOnlyPresence(member))
+    ) {
+      return true;
+    }
+    return (await workUsageService.list(taskId)).some(
+      entry => entry.kind !== 'preview'
+    );
   }
 
   private assertRuntimeLease(task: WorkTaskRecord): void {
@@ -1678,24 +1810,7 @@ export class WorkRuntimeService {
       const task = records.get(entry.taskId);
       // Containers without a task row are startup reconciliation's business.
       if (!task) continue;
-      if (
-        getPlatformRuntimeConfig().mode === 'team' &&
-        (await getCoordinator().listPresence(`work-task-active:${task.id}`))
-          .length > 0
-      ) {
-        continue;
-      }
-      const busy =
-        this.activeCommands.has(task.id) ||
-        (this.terminalHolds.get(task.id) ?? 0) > 0 ||
-        (this.screenHolds.get(task.id) ?? 0) > 0 ||
-        (this.runtimeLeases.has(task.id) &&
-          !this.previewLeaseReleases.has(task.id)) ||
-        // Holds from other processes: terminals, screens and commands
-        // record themselves in the usage registry.
-        (await workUsageService.list(task.id)).some(
-          entry => entry.kind !== 'preview'
-        );
+      const busy = await this.hasRuntimeActivity(task.id);
       const sharedActivity =
         getPlatformRuntimeConfig().mode === 'team'
           ? await getCoordinator().getCache<number>(
@@ -1711,13 +1826,36 @@ export class WorkRuntimeService {
         .idleTimeoutMs;
       if (idleAfterMs <= 0 || now - lastActivity < idleAfterMs) continue;
       try {
-        if (this.previewLeaseReleases.has(task.id)) {
-          await this.stopPreview(task, {
-            onStopped: () => workTaskService.updatePreview(task.id, 'stopped'),
-          });
-        } else {
-          await this.stopContainer(task);
-        }
+        const didStop = await this.withLifecycleLock(
+          task.id,
+          async (assertHeld, signal) => {
+            await assertHeld();
+            // A run, viewer, or preview request may have arrived while the
+            // sweep awaited policy resolution or the lifecycle lock.
+            const currentActivity =
+              getPlatformRuntimeConfig().mode === 'team'
+                ? await getCoordinator().getCache<number>(
+                    `work-task-activity:${task.id}`
+                  )
+                : this.taskActivity.get(task.id);
+            if (
+              (await this.hasRuntimeActivity(task.id)) ||
+              this.hasLocalRuntimeActivity(task.id) ||
+              (currentActivity !== null &&
+                currentActivity !== undefined &&
+                now - currentActivity < idleAfterMs)
+            ) {
+              return false;
+            }
+            await this.stopPreviewPrepared(task, signal);
+            await assertHeld();
+            await this.markPreviewStopped(task.id);
+            this.releasePreviewLease(task.id);
+            this.completeRecoveryTask(task.id);
+            return true;
+          }
+        );
+        if (!didStop) continue;
         this.taskActivity.delete(task.id);
         stopped += 1;
         logger.info(
@@ -1755,68 +1893,72 @@ export class WorkRuntimeService {
         task.previewStatus === 'starting' || task.previewStatus === 'running'
     );
     if (candidates.length === 0) return { stopped: 0 };
-    let discovered: DiscoveredWorkContainer[];
     try {
-      discovered = await this.driver.listManaged();
+      await this.driver.listManaged();
     } catch {
       // The runtime is unreachable; the rows cannot be judged either way.
       return { stopped: 0 };
     }
-    const running = new Set(
-      discovered.filter(entry => entry.running).map(entry => entry.taskId)
-    );
     let stopped = 0;
     for (const task of candidates) {
-      // A preview that is still being brought up, or a task someone holds
-      // open, is not stale: leave the owner's own flows to settle it.
-      if (
-        this.activeCommands.has(task.id) ||
-        (this.terminalHolds.get(task.id) ?? 0) > 0 ||
-        (this.screenHolds.get(task.id) ?? 0) > 0 ||
-        (this.runtimeLeases.has(task.id) &&
-          !this.previewLeaseReleases.has(task.id))
-      ) {
-        continue;
-      }
-      if (
-        task.previewStatus === 'starting' &&
-        now - task.updatedAt < PREVIEW_START_GRACE_MS
-      ) {
-        continue;
-      }
-      if (
-        (await workUsageService.list(task.id)).some(
-          entry => entry.kind !== 'preview'
-        )
-      ) {
-        continue;
-      }
-      if (
-        getPlatformRuntimeConfig().mode === 'team' &&
-        (await getCoordinator().listPresence(`work-task-active:${task.id}`))
-          .length > 0
-      ) {
-        continue;
-      }
+      if (await this.hasRuntimeActivity(task.id)) continue;
       try {
-        // Without a running container the preview cannot exist; with one,
-        // the same probe the Work list uses decides.
-        if (running.has(task.id) && (await this.isPreviewRunning(task))) {
-          continue;
-        }
+        const didReconcile = await this.withLifecycleLock(
+          task.id,
+          async (assertHeld, signal) => {
+            await assertHeld();
+            const row = await getWorkPersistence().findTask(
+              task.id,
+              task.userId
+            );
+            if (
+              !row ||
+              (row.preview_status !== 'starting' &&
+                row.preview_status !== 'running') ||
+              (row.preview_status === 'starting' &&
+                now - row.updated_at < PREVIEW_START_GRACE_MS) ||
+              (await this.hasRuntimeActivity(task.id)) ||
+              this.hasLocalRuntimeActivity(task.id)
+            ) {
+              return false;
+            }
+            const sharedPreview =
+              getPlatformRuntimeConfig().mode === 'team' &&
+              (
+                await getCoordinator().listPresence(
+                  `work-task-active:${task.id}`
+                )
+              ).some(isPreviewOnlyPresence);
+            const state = await this.previewProcessCheckWithLock(task, signal);
+            if (
+              state === 'ready' &&
+              (this.previewLeaseReleases.has(task.id) || sharedPreview)
+            )
+              return false;
+            if (
+              (await this.hasRuntimeActivity(task.id)) ||
+              this.hasLocalRuntimeActivity(task.id)
+            )
+              return false;
+            if (state !== 'absent')
+              await this.stopPreviewPrepared(task, signal);
+            await assertHeld();
+            await this.markPreviewStopped(task.id);
+            this.releasePreviewLease(task.id);
+            return true;
+          }
+        );
+        if (!didReconcile) continue;
+        stopped += 1;
+        logger.info(
+          `Marked the stale ${task.previewStatus} preview of Work task ${task.id} as stopped.`
+        );
       } catch (error) {
         logger.warn(
           `Could not check the preview of Work task ${task.id}:`,
           error
         );
-        continue;
       }
-      await this.markPreviewStopped(task.id);
-      this.releasePreviewLease(task.id);
-      stopped += 1;
-      logger.info(
-        `Marked the stale ${task.previewStatus} preview of Work task ${task.id} as stopped.`
-      );
     }
     return { stopped };
   }
@@ -2146,9 +2288,21 @@ export class WorkRuntimeService {
         error instanceof WorkRuntimeError &&
         error.code === 'WORK_RUNTIME_LEASE_CONFLICT'
       ) {
-        await this.assertTaskIsActive(task);
-        if ((await this.driver.runtimeState(task)) === 'running') {
-          return operation();
+        const releasePresence = await this.acquireViewerPresence(task.id);
+        try {
+          return await this.withLifecycleLock(task.id, async () => {
+            await this.assertTaskIsActive(task);
+            if ((await this.driver.runtimeState(task)) !== 'running') {
+              throw error;
+            }
+            try {
+              return await operation();
+            } finally {
+              this.noteTaskActivity(task.id);
+            }
+          });
+        } finally {
+          releasePresence();
         }
       }
       throw error;
@@ -3136,12 +3290,23 @@ export class WorkRuntimeService {
         error instanceof WorkRuntimeError &&
         error.code === 'WORK_RUNTIME_LEASE_CONFLICT'
       ) {
-        await this.assertTaskIsActive(task);
-        if ((await this.driver.runtimeState(task)) === 'running') {
-          await this.startComputerInContainer(task);
-          const value = await fn();
-          this.noteTaskActivity(task.id);
-          return value;
+        const releasePresence = await this.acquireViewerPresence(task.id);
+        try {
+          return await this.withLifecycleLock(
+            task.id,
+            async (_assertHeld, signal) => {
+              await this.assertTaskIsActive(task);
+              if ((await this.driver.runtimeState(task)) !== 'running') {
+                throw error;
+              }
+              await this.startComputerInContainer(task, signal);
+              const value = await fn(signal);
+              this.noteTaskActivity(task.id);
+              return value;
+            }
+          );
+        } finally {
+          releasePresence();
         }
       }
       throw error;
@@ -3227,7 +3392,13 @@ export class WorkRuntimeService {
             );
           }
           await assertHeld();
+          const startingLease = this.runtimeLeases.get(task.id);
+          if (startingLease) {
+            startingLease.previewGeneration =
+              (startingLease.previewGeneration ?? 0) + 1;
+          }
           await hooks.onStarting?.();
+          let registeredPreview = false;
           try {
             await this.prepareWithLock(task, signal);
             await this.assertTaskIsActive(task);
@@ -3246,29 +3417,53 @@ export class WorkRuntimeService {
             await this.assertTaskIsActive(task);
             await assertHeld();
             await hooks.onRunning?.(preview.url, preview.endpoint);
+            // Invalidate stopped snapshots begun during startup as well as
+            // those begun before it, including a reused preview callback.
+            if (startingLease) {
+              startingLease.previewGeneration =
+                (startingLease.previewGeneration ?? 0) + 1;
+            }
+            if (this.previewLeaseReleases.has(task.id)) {
+              releaseLease();
+            } else {
+              this.previewLeaseReleases.set(task.id, releaseLease);
+              registeredPreview = true;
+              this.previewUsageReleases.set(
+                task.id,
+                await workUsageService.begin(task.id, 'preview', task.userId)
+              );
+            }
+            const lease = this.runtimeLeases.get(task.id);
+            if (lease) await this.refreshRuntimePresence(task, lease);
+            leaseRetained = true;
             return preview.url;
           } catch (error) {
-            await hooks.onFailed?.();
-            this.releasePreviewLease(task.id);
+            if (registeredPreview && !this.hasLocalRuntimeActivity(task.id)) {
+              // Retain ownership and the startup lifecycle lock until rollback
+              // has stopped the sandbox. Never stop a newly active run holder.
+              try {
+                await this.stopPreviewPrepared(task, signal);
+                await assertHeld();
+                await this.markPreviewStopped(task.id);
+              } catch (cleanupError) {
+                logger.warn(
+                  `Could not clean up failed Work preview ${task.id}:`,
+                  cleanupError
+                );
+              }
+            }
+            try {
+              await hooks.onFailed?.();
+            } finally {
+              this.releasePreviewLease(task.id);
+            }
             throw error;
           }
         }
       );
-      if (this.previewLeaseReleases.has(task.id)) {
-        releaseLease();
-      } else {
-        this.previewLeaseReleases.set(task.id, releaseLease);
-        this.previewUsageReleases.set(
-          task.id,
-          await workUsageService.begin(task.id, 'preview', task.userId)
-        );
-      }
-      leaseRetained = true;
       return url;
     } finally {
-      if (!leaseRetained) {
-        releaseLease();
-      }
+      if (!leaseRetained) releaseLease();
     }
   }
 
@@ -3537,6 +3732,15 @@ export class WorkRuntimeService {
       // it finishes. Preview reconciliation must not interrupt that command.
       if (this.activeCommands.has(task.id)) return false;
       const state = await this.previewProcessCheckWithLock(task, signal);
+      const sharedPreview =
+        getPlatformRuntimeConfig().mode === 'team' &&
+        (
+          await withCoordinationTimeout(
+            getCoordinator().listPresence(`work-task-active:${task.id}`),
+            SHARED_COORDINATION_OPERATION_TIMEOUT_MS
+          )
+        ).some(member => member !== this.activityMemberId);
+      if (sharedPreview) return state === 'ready';
       if (state === 'ready' && this.previewLeaseReleases.has(task.id)) {
         return true;
       }

@@ -1000,7 +1000,12 @@ cheap and the workspace persists, so an idled preview simply restarts on
 the next use. The default is thirty minutes; the preview and screen panes
 say so ("Stops after 30 minutes without activity"), a named policy can set
 its own value, and `0` turns the sweep off so a preview runs until it is
-stopped explicitly.
+stopped explicitly. In team mode, the external worker also expires previews
+owned by application replicas. A preview's ownership hold alone does not
+count as activity; active runs, commands, and attached terminals or screens
+keep the sandbox running. After the worker stops a preview, its application
+owner releases the runtime admission slot on the next heartbeat (normally
+within ten seconds).
 
 A finished task (completed, failed, or cancelled) does not get a preview or
 a screen by accident: the panes offer **Reopen task and start preview** or

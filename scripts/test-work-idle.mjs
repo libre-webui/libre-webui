@@ -204,9 +204,8 @@ test('an idle preview is stopped through the preview path', async () => {
   service.runtimeLeases.set(task.id, { userId: task.userId, holders: 1 });
   service.previewLeaseReleases.set(task.id, () => {});
   const previewStops = [];
-  service.stopPreview = async (candidate, hooks) => {
+  service.stopPreviewPrepared = async candidate => {
     previewStops.push(candidate.id);
-    hooks?.onStopped?.();
   };
 
   service.noteTaskActivity(task.id);
@@ -232,7 +231,12 @@ test('a preview whose container is gone is marked stopped without idle-stop', as
   // No labeled container exists any more: `docker ps` lists nothing.
   service.driver.docker = async args => {
     calls.push(args);
-    return { exitCode: 0, stdout: '', stderr: '', truncated: false };
+    return {
+      exitCode: args[0] === 'container' ? 1 : 0,
+      stdout: '',
+      stderr: args[0] === 'container' ? 'No such container' : '',
+      truncated: false,
+    };
   };
   // No activity was ever noted and no lease is held: the idle sweep has
   // nothing to say, and this must not depend on it.
@@ -269,12 +273,21 @@ test('a running container with a dead preview process is reconciled, a held one 
         truncated: false,
       };
     }
-    return { exitCode: 0, stdout: '', stderr: '', truncated: false };
+    return {
+      exitCode: 0,
+      stdout:
+        args[0] === 'inspect'
+          ? ([held, dead].find(task => task.containerName === args.at(-1))
+              ?.id ?? '')
+          : '',
+      stderr: '',
+      truncated: false,
+    };
   };
   const probed = [];
-  service.isPreviewRunning = async task => {
+  service.previewProcessCheckWithLock = async task => {
     probed.push(task.id);
-    return false;
+    return 'dead';
   };
   // Someone is watching the first task's screen: it is in use, not stale.
   service.screenHolds.set(held.id, 1);
@@ -343,10 +356,10 @@ test('usage recorded outside process memory keeps another process from reconcili
     ['terminal']
   );
   const service = new WorkRuntimeService();
-  service.driver.docker = async () => ({
-    exitCode: 0,
+  service.driver.docker = async args => ({
+    exitCode: args[0] === 'container' ? 1 : 0,
     stdout: '',
-    stderr: '',
+    stderr: args[0] === 'container' ? 'No such container' : '',
     truncated: false,
   });
   assert.deepEqual(await service.reconcileStalePreviews(), { stopped: 0 });
@@ -397,10 +410,10 @@ test('a preview still starting gets a grace period before it counts as stale', a
     `UPDATE work_tasks SET preview_status = 'starting', updated_at = ? WHERE id = ?`
   ).run(Date.now(), fresh.id);
   const service = new WorkRuntimeService();
-  service.driver.docker = async () => ({
-    exitCode: 0,
+  service.driver.docker = async args => ({
+    exitCode: args[0] === 'container' ? 1 : 0,
     stdout: '',
-    stderr: '',
+    stderr: args[0] === 'container' ? 'No such container' : '',
     truncated: false,
   });
   assert.deepEqual(await service.reconcileStalePreviews(), { stopped: 0 });
@@ -460,4 +473,566 @@ test('preview traffic through the signed proxy refreshes the idle clock', async 
   const tampered = previewPath.replace(/.\/$/, 'x/');
   assert.equal(await service.parseTarget(`${tampered}index.html`), undefined);
   assert.deepEqual(activity, [taskRecordId]);
+});
+
+// Exercise team runtime coordination with the real local coordinator and test
+// SQL adapters. Separate service instances model the app owner and worker;
+// Docker and network services remain deterministic stubs.
+const coordinationModule = await import(
+  pathToFileURL(
+    path.join(
+      repoRoot,
+      'backend',
+      'dist',
+      'platform',
+      'coordination',
+      'service.js'
+    )
+  ).href
+);
+const usageModule = await import(
+  pathToFileURL(
+    path.join(repoRoot, 'backend', 'dist', 'services', 'workUsageService.js')
+  ).href
+);
+
+const withTeamRuntime = async operation => {
+  const config = coordinationModule.getPlatformRuntimeConfig();
+  const previousMode = config.mode;
+  const previousRole = process.env.LIBRE_PROCESS_ROLE;
+  const services = [];
+  const previousTasks = new Set(
+    db
+      .prepare('SELECT id FROM work_tasks')
+      .all()
+      .map(row => row.id)
+  );
+  config.mode = 'team';
+  const create = role => {
+    process.env.LIBRE_PROCESS_ROLE = role;
+    const service = new WorkRuntimeService();
+    services.push(service);
+    return service;
+  };
+  try {
+    await operation(create, coordinationModule.getCoordinator());
+  } finally {
+    for (const service of services) service.beginShutdown();
+    await Promise.all(
+      services.flatMap(service => [...service.runtimePresenceTails.values()])
+    );
+    for (const row of db.prepare('SELECT id FROM work_tasks').all()) {
+      if (!previousTasks.has(row.id)) {
+        db.prepare(
+          "UPDATE work_tasks SET preview_status = 'stopped' WHERE id = ?"
+        ).run(row.id);
+      }
+    }
+    config.mode = previousMode;
+    if (previousRole === undefined) delete process.env.LIBRE_PROCESS_ROLE;
+    else process.env.LIBRE_PROCESS_ROLE = previousRole;
+  }
+};
+
+const holdPreview = async (service, task) => {
+  db.prepare(
+    "UPDATE work_tasks SET preview_status = 'running' WHERE id = ?"
+  ).run(task.id);
+  const release = await service.acquireRuntimeLease(task);
+  service.previewLeaseReleases.set(task.id, release);
+  service.previewUsageReleases.set(
+    task.id,
+    await usageModule.workUsageService.begin(task.id, 'preview', task.userId)
+  );
+  const lease = service.runtimeLeases.get(task.id);
+  await service.refreshRuntimePresence(task, lease);
+  return lease;
+};
+
+test('the team worker expires an app-owned idle preview and its owner releases capacity', async () => {
+  await withTeamRuntime(async (create, coordinator) => {
+    const task = makeTask('team-idle-preview');
+    const owner = create('app-external');
+    const lease = await holdPreview(owner, task);
+    const worker = create('external-worker');
+    const calls = [];
+    stubDocker(worker, task, calls);
+    await coordinator.setCache(
+      `work-task-activity:${task.id}`,
+      Date.now() - IDLE_MS - 1,
+      86_400_000
+    );
+    assert.deepEqual(
+      await coordinator.listPresence(`work-task-active:${task.id}`),
+      [`${owner.activityMemberId}:preview-only`]
+    );
+    assert.deepEqual(
+      (await usageModule.workUsageService.list(task.id)).map(
+        entry => entry.kind
+      ),
+      ['preview']
+    );
+    assert.deepEqual(await worker.sweepIdleRuntimes(), { stopped: 1 });
+    assert.ok(calls.some(args => args[0] === 'stop'));
+    assert.equal(
+      db
+        .prepare('SELECT preview_status FROM work_tasks WHERE id = ?')
+        .get(task.id).preview_status,
+      'stopped'
+    );
+    await owner.refreshRuntimePresence(task, lease, true);
+    await lease.presenceTail;
+    assert.equal(owner.runtimeLeases.has(task.id), false);
+    assert.equal(owner.previewLeaseReleases.has(task.id), false);
+    assert.deepEqual(
+      await coordinator.listPresence(`work-task-active:${task.id}`),
+      []
+    );
+    assert.deepEqual(await usageModule.workUsageService.list(task.id), []);
+    const acquired = await coordinator.acquireLease(
+      `work-task-runtime:${task.id}`,
+      60_000
+    );
+    assert.ok(acquired, 'worker cleanup must free distributed ownership');
+    await acquired.release();
+  });
+});
+
+test('team idle cleanup protects active runs, viewers, usage and unknown members alongside a preview', async () => {
+  await withTeamRuntime(async (create, coordinator) => {
+    const task = makeTask('team-preview-protected');
+    const owner = create('app-external');
+    const lease = await holdPreview(owner, task);
+    const worker = create('external-worker');
+    const calls = [];
+    stubDocker(worker, task, calls);
+    const expire = () =>
+      coordinator.setCache(
+        `work-task-activity:${task.id}`,
+        Date.now() - IDLE_MS - 1,
+        86_400_000
+      );
+    const releaseRun = await owner.acquireRuntimeLease(task);
+    assert.equal(lease.holders, 2);
+    assert.deepEqual(
+      await coordinator.listPresence(`work-task-active:${task.id}`),
+      [owner.activityMemberId]
+    );
+    await expire();
+    assert.deepEqual(await worker.sweepIdleRuntimes(), { stopped: 0 });
+    assert.equal(owner.hasLocalRuntimeActivity(task.id), true);
+    releaseRun();
+    await owner.refreshRuntimePresence(task, lease);
+    for (const member of [
+      `${owner.activityMemberId}:viewer`,
+      'legacy-foreign-runtime',
+      'unknown:preview-only',
+    ]) {
+      await coordinator.setPresence(
+        `work-task-active:${task.id}`,
+        member,
+        30_000
+      );
+      await expire();
+      assert.deepEqual(
+        await worker.sweepIdleRuntimes(),
+        { stopped: 0 },
+        member
+      );
+      await coordinator.clearPresence(`work-task-active:${task.id}`, member);
+    }
+    for (const kind of ['command', 'screen', 'terminal']) {
+      const release = await usageModule.workUsageService.begin(
+        task.id,
+        kind,
+        task.userId
+      );
+      await expire();
+      assert.deepEqual(await worker.sweepIdleRuntimes(), { stopped: 0 }, kind);
+      release();
+    }
+    assert.ok(!calls.some(args => args[0] === 'stop'));
+    // A persisted stop only releases the preview holder, never a concurrent run.
+    const releaseAnotherRun = await owner.acquireRuntimeLease(task);
+    db.prepare(
+      "UPDATE work_tasks SET preview_status = 'stopped' WHERE id = ?"
+    ).run(task.id);
+    await owner.refreshRuntimePresence(task, lease, true);
+    assert.equal(lease.holders, 1);
+    assert.equal(owner.runtimeLeases.get(task.id), lease);
+    assert.deepEqual(
+      await coordinator.listPresence(`work-task-active:${task.id}`),
+      [owner.activityMemberId]
+    );
+    releaseAnotherRun();
+  });
+});
+
+test('the idle sweep rechecks a hold acquired while it waits for the lifecycle lock', async () => {
+  const task = makeTask('idle-lifecycle-race');
+  const service = new WorkRuntimeService();
+  const calls = [];
+  stubDocker(service, task, calls);
+  service.taskActivity.set(task.id, Date.now() - IDLE_MS - 1);
+  const lock = service.withLifecycleLock.bind(service);
+  service.withLifecycleLock = async (...args) => {
+    service.screenHolds.set(task.id, 1);
+    return lock(...args);
+  };
+  assert.deepEqual(await service.sweepIdleRuntimes(), { stopped: 0 });
+  assert.ok(!calls.some(args => args[0] === 'stop'));
+  service.beginShutdown();
+});
+
+test('delayed old presence cleanup cannot erase a new runtime generation', async () => {
+  await withTeamRuntime(async (create, coordinator) => {
+    const task = makeTask('team-presence-generation');
+    const service = create('app-external');
+    const release = await service.acquireRuntimeLease(task);
+    let unblock;
+    const blocked = new Promise(resolve => {
+      unblock = resolve;
+    });
+    let entered;
+    const clearing = new Promise(resolve => {
+      entered = resolve;
+    });
+    const originalClear = coordinator.clearPresence.bind(coordinator);
+    let delayed = false;
+    coordinator.clearPresence = async (scope, member) => {
+      if (
+        !delayed &&
+        scope === `work-task-active:${task.id}` &&
+        member === service.activityMemberId
+      ) {
+        delayed = true;
+        entered();
+        await blocked;
+      }
+      return originalClear(scope, member);
+    };
+    try {
+      release();
+      await clearing;
+      const next = service.acquireRuntimeLease(task);
+      unblock();
+      const releaseNext = await next;
+      assert.deepEqual(
+        await coordinator.listPresence(`work-task-active:${task.id}`),
+        [service.activityMemberId]
+      );
+      releaseNext();
+      await Promise.all([...service.runtimePresenceTails.values()]);
+    } finally {
+      unblock();
+      coordinator.clearPresence = originalClear;
+    }
+  });
+});
+
+test('failed preview presence publication rolls back its registered holder', async () => {
+  await withTeamRuntime(async (create, coordinator) => {
+    const task = makeTask('team-preview-publish-failed');
+    const service = create('app-external');
+    service.ensureImage = async () => {};
+    service.prepareWithLock = async () => {};
+    service.startPreviewPrepared = async () => ({
+      url: '/preview',
+      endpoint: { host: '127.0.0.1', port: 4173 },
+    });
+    service.driver.stopRuntime = async () => {};
+    const originalSet = coordinator.setPresence.bind(coordinator);
+    coordinator.setPresence = async (scope, member, ttl) => {
+      if (member.endsWith(':preview-only'))
+        throw new Error('publication unavailable');
+      return originalSet(scope, member, ttl);
+    };
+    try {
+      await assert.rejects(
+        service.startPreview(task, 'npm run dev', {
+          onRunning: () => {
+            db.prepare(
+              "UPDATE work_tasks SET preview_status = 'running' WHERE id = ?"
+            ).run(task.id);
+          },
+        }),
+        /publication unavailable/
+      );
+      assert.equal(service.previewLeaseReleases.has(task.id), false);
+      assert.equal(service.previewUsageReleases.has(task.id), false);
+      assert.equal(service.runtimeLeases.has(task.id), false);
+      const release = await service.acquireRuntimeLease(task);
+      assert.equal(service.hasLocalRuntimeActivity(task.id), true);
+      assert.deepEqual(
+        await coordinator.listPresence(`work-task-active:${task.id}`),
+        [service.activityMemberId]
+      );
+      release();
+    } finally {
+      coordinator.setPresence = originalSet;
+    }
+  });
+});
+
+test('stale reconciliation rechecks a run that acquires ownership before its lifecycle lock', async () => {
+  await withTeamRuntime(async (create, coordinator) => {
+    const task = makeTask('team-reconcile-race');
+    const owner = create('app-external');
+    await holdPreview(owner, task);
+    const worker = create('external-worker');
+    const calls = [];
+    stubDocker(worker, task, calls);
+    let releaseRun;
+    const lock = worker.withLifecycleLock.bind(worker);
+    worker.withLifecycleLock = async (...args) => {
+      releaseRun = await owner.acquireRuntimeLease(task);
+      return lock(...args);
+    };
+    worker.previewProcessCheckWithLock = async () => {
+      throw new Error('must not probe an active run');
+    };
+    assert.deepEqual(await worker.reconcileStalePreviews(), { stopped: 0 });
+    assert.ok(releaseRun);
+    assert.equal(
+      db
+        .prepare('SELECT preview_status FROM work_tasks WHERE id = ?')
+        .get(task.id).preview_status,
+      'running'
+    );
+    assert.ok(!calls.some(args => args[0] === 'stop'));
+    releaseRun();
+  });
+});
+
+test('a remote Files helper holds the lifecycle while using an idle preview', async () => {
+  await withTeamRuntime(async (create, coordinator) => {
+    const task = makeTask('team-files-idle-preview');
+    const owner = create('app-external');
+    await holdPreview(owner, task);
+    const helper = create('app-external');
+    const worker = create('external-worker');
+    const calls = [];
+    stubDocker(worker, task, calls);
+    helper.driver.runtimeState = async () => 'running';
+    await coordinator.setCache(
+      `work-task-activity:${task.id}`,
+      Date.now() - IDLE_MS - 1,
+      86_400_000
+    );
+    const result = await helper.withWorkspaceHelperContainer(task, async () => {
+      assert.ok(
+        (
+          await coordinator.listPresence(`work-task-active:${task.id}`)
+        ).includes(`${helper.activityMemberId}:viewer`)
+      );
+      assert.deepEqual(await worker.sweepIdleRuntimes(), { stopped: 0 });
+      const lease = await coordinator.acquireLease(
+        `work-task-lifecycle:${task.id}`,
+        60_000
+      );
+      assert.equal(lease, null, 'helper must serialize use with idle stop');
+      return 'files';
+    });
+    assert.equal(result, 'files');
+    assert.ok(!calls.some(args => args[0] === 'stop'));
+  });
+});
+
+test('failed preview publication never rolls back a newly acquired operation holder', async () => {
+  await withTeamRuntime(async (create, coordinator) => {
+    const task = makeTask('team-preview-rollback-race');
+    const service = create('app-external');
+    service.ensureImage = async () => {};
+    service.prepareWithLock = async () => {};
+    service.startPreviewPrepared = async () => ({
+      url: '/preview',
+      endpoint: { host: '127.0.0.1', port: 4173 },
+    });
+    let stopped = 0;
+    service.driver.stopRuntime = async () => {
+      stopped += 1;
+    };
+    const originalSet = coordinator.setPresence.bind(coordinator);
+    const originalRefresh = service.refreshRuntimePresence.bind(service);
+    let registered;
+    const holderRegistered = new Promise(resolve => {
+      registered = resolve;
+    });
+    let nextHolder;
+    service.refreshRuntimePresence = (...args) => {
+      if (args[1].holders === 2) registered();
+      return originalRefresh(...args);
+    };
+    coordinator.setPresence = async (scope, member, ttl) => {
+      if (member.endsWith(':preview-only')) {
+        nextHolder = service.acquireRuntimeLease(task);
+        await holderRegistered;
+        throw new Error('publication unavailable');
+      }
+      return originalSet(scope, member, ttl);
+    };
+    try {
+      await assert.rejects(
+        service.startPreview(task, 'npm run dev', {
+          onRunning: () => {
+            db.prepare(
+              "UPDATE work_tasks SET preview_status = 'running' WHERE id = ?"
+            ).run(task.id);
+          },
+        }),
+        /publication unavailable/
+      );
+      const release = await nextHolder;
+      assert.equal(
+        stopped,
+        0,
+        'rollback must preserve the new operation holder'
+      );
+      assert.equal(service.runtimeLeases.get(task.id).holders, 1);
+      assert.equal(service.previewLeaseReleases.has(task.id), false);
+      assert.deepEqual(
+        await coordinator.listPresence(`work-task-active:${task.id}`),
+        [service.activityMemberId]
+      );
+      release();
+    } finally {
+      coordinator.setPresence = originalSet;
+    }
+  });
+});
+
+test('stale reconciliation retries a stopped preview after its first SQL update fails', async () => {
+  await withTeamRuntime(async (create, coordinator) => {
+    const persistenceModule = await import(
+      pathToFileURL(
+        path.join(
+          repoRoot,
+          'backend',
+          'dist',
+          'platform',
+          'workPersistence',
+          'index.js'
+        )
+      ).href
+    );
+    const persistence = persistenceModule.getWorkPersistence();
+    const task = makeTask('team-preview-state-retry');
+    const owner = create('app-external');
+    const lease = await holdPreview(owner, task);
+    const worker = create('external-worker');
+    const calls = [];
+    stubDocker(worker, task, calls);
+    await coordinator.setCache(
+      `work-task-activity:${task.id}`,
+      Date.now() - IDLE_MS - 1,
+      86_400_000
+    );
+    const originalUpdate = persistence.updatePreview.bind(persistence);
+    let failed = false;
+    persistence.updatePreview = async (...args) => {
+      if (!failed && args[0] === task.id) {
+        failed = true;
+        throw new Error('temporary SQL outage');
+      }
+      return originalUpdate(...args);
+    };
+    try {
+      assert.deepEqual(await worker.sweepIdleRuntimes(), { stopped: 1 });
+      assert.equal(
+        db
+          .prepare('SELECT preview_status FROM work_tasks WHERE id = ?')
+          .get(task.id).preview_status,
+        'running'
+      );
+      worker.previewProcessCheckWithLock = async () => 'absent';
+      assert.deepEqual(await worker.reconcileStalePreviews(), { stopped: 1 });
+      assert.equal(
+        db
+          .prepare('SELECT preview_status FROM work_tasks WHERE id = ?')
+          .get(task.id).preview_status,
+        'stopped'
+      );
+      await owner.refreshRuntimePresence(task, lease, true);
+      await lease.presenceTail;
+      assert.equal(owner.runtimeLeases.has(task.id), false);
+    } finally {
+      persistence.updatePreview = originalUpdate;
+    }
+  });
+});
+
+test('a delayed stopped snapshot during preview restart cannot release the restarted preview', async () => {
+  await withTeamRuntime(async create => {
+    const persistenceModule = await import(
+      pathToFileURL(
+        path.join(
+          repoRoot,
+          'backend',
+          'dist',
+          'platform',
+          'workPersistence',
+          'index.js'
+        )
+      ).href
+    );
+    const persistence = persistenceModule.getWorkPersistence();
+    const task = makeTask('team-preview-restart-snapshot');
+    const owner = create('app-external');
+    const lease = await holdPreview(owner, task);
+    const retainedRelease = owner.previewLeaseReleases.get(task.id);
+    db.prepare(
+      "UPDATE work_tasks SET preview_status = 'stopped' WHERE id = ?"
+    ).run(task.id);
+    const stoppedRow = await persistence.findTask(task.id, task.userId);
+    const originalFind = persistence.findTask.bind(persistence);
+    let reading;
+    const readStarted = new Promise(resolve => {
+      reading = resolve;
+    });
+    let deliver;
+    const delayedRead = new Promise(resolve => {
+      deliver = resolve;
+    });
+    let heartbeat;
+    let delayed = false;
+    persistence.findTask = async (...args) => {
+      if (!delayed && args[0] === task.id) {
+        delayed = true;
+        reading();
+        await delayedRead;
+        return stoppedRow;
+      }
+      return originalFind(...args);
+    };
+    owner.ensureImage = async () => {};
+    owner.prepareWithLock = async () => {};
+    owner.startPreviewPrepared = async () => ({
+      url: '/restarted',
+      endpoint: { host: '127.0.0.1', port: 4173 },
+    });
+    try {
+      assert.equal(
+        await owner.startPreview(task, 'npm run dev', {
+          onStarting: async () => {
+            heartbeat = owner.refreshRuntimePresence(task, lease, true);
+            await readStarted;
+          },
+          onRunning: () => {
+            db.prepare(
+              "UPDATE work_tasks SET preview_status = 'running' WHERE id = ?"
+            ).run(task.id);
+            setImmediate(deliver);
+          },
+        }),
+        '/restarted'
+      );
+      await heartbeat;
+      assert.equal(owner.runtimeLeases.get(task.id), lease);
+      assert.equal(lease.holders, 1);
+      assert.equal(owner.previewLeaseReleases.get(task.id), retainedRelease);
+    } finally {
+      deliver();
+      persistence.findTask = originalFind;
+    }
+  });
 });
