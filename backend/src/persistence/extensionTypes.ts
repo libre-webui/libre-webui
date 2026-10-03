@@ -25,6 +25,8 @@ export interface PluginCredentialRepository {
     userId: string
   ): Promise<StoredPluginCredential | null>;
   bindLegacy(id: string, fingerprint: string): Promise<boolean>;
+  /** Replace one binding with another; false when it already changed. */
+  rebind(id: string, from: string, to: string): Promise<boolean>;
   listByUser(userId: string): Promise<StoredPluginCredential[]>;
   upsert(record: StoredPluginCredential): Promise<void>;
   delete(pluginId: string, userId: string): Promise<boolean>;

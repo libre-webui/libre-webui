@@ -212,6 +212,16 @@ class PostgresPluginCredentialRepository implements PluginCredentialRepository {
     return result.rowCount === 1;
   }
 
+  async rebind(id: string, from: string, to: string): Promise<boolean> {
+    const result = await this.database.query(
+      `UPDATE plugin_credentials
+          SET routing_auth_fingerprint = $1
+        WHERE id = $2 AND routing_auth_fingerprint = $3`,
+      [to, id, from]
+    );
+    return result.rowCount === 1;
+  }
+
   async listByUser(userId: string): Promise<StoredPluginCredential[]> {
     const result = await this.database.query<NumericRow>(
       'SELECT * FROM plugin_credentials WHERE user_id = $1',

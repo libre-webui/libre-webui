@@ -147,6 +147,18 @@ class SQLitePluginCredentialRepository implements PluginCredentialRepository {
     );
   }
 
+  async rebind(id: string, from: string, to: string): Promise<boolean> {
+    return (
+      this.database
+        .prepare(
+          `UPDATE plugin_credentials
+              SET routing_auth_fingerprint = ?
+            WHERE id = ? AND routing_auth_fingerprint = ?`
+        )
+        .run(to, id, from).changes === 1
+    );
+  }
+
   async listByUser(userId: string): Promise<StoredPluginCredential[]> {
     return this.database
       .prepare('SELECT * FROM plugin_credentials WHERE user_id = ?')

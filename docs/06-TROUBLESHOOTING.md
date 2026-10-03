@@ -361,8 +361,9 @@ The following security and ownership rules also apply:
   directly quarantines it again; use the administrator install or update flow
   so its source path and definition hash are recorded.
 - Saved credentials are bound to the route, authentication contract,
-  definition, and source in effect when they were entered. After changing an
-  endpoint or definition, save that account's credential again. An old unbound
+  definition, and source in effect when they were entered. Adding or removing
+  models keeps them. After changing an endpoint or any other part of the
+  definition, save that account's credential again. An old unbound
   credential migrates automatically only on an exact anchored bundled route.
 - Imported plugins may use `api_url` as a legacy full-operation URL alias.
   `endpoint` wins when both fields are set. If model discovery lives elsewhere,

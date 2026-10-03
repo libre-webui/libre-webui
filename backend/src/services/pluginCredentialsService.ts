@@ -40,6 +40,8 @@ class PluginCredentialsService {
     userId: string | undefined,
     options: {
       expectedRoutingAuthFingerprint: string;
+      /** The same route under the earlier binding formula. */
+      previousRoutingAuthFingerprint?: string;
       allowLegacyUnboundCredential: boolean;
     }
   ): Promise<string | null> {
@@ -47,14 +49,35 @@ class PluginCredentialsService {
     try {
       const row = await this.repository().find(pluginId, effectiveUserId);
       if (row?.api_key) {
+        const storedBinding = row.routing_auth_fingerprint;
         const bindingMatches =
-          row.routing_auth_fingerprint ===
-          options.expectedRoutingAuthFingerprint;
+          storedBinding === options.expectedRoutingAuthFingerprint;
+        const previousBinding =
+          !bindingMatches &&
+          storedBinding !== null &&
+          storedBinding === options.previousRoutingAuthFingerprint;
         const trustedLegacyCredential =
-          row.routing_auth_fingerprint === null &&
-          options.allowLegacyUnboundCredential;
-        if (!bindingMatches && !trustedLegacyCredential) {
+          storedBinding === null && options.allowLegacyUnboundCredential;
+        if (!bindingMatches && !previousBinding && !trustedLegacyCredential) {
           return null;
+        }
+        if (previousBinding) {
+          // Same route, older formula: move it forward so a later model
+          // catalog change cannot strand the key. The match above already
+          // proved the route, so a failed rebind does not withhold the key.
+          try {
+            await this.repository().rebind(
+              row.id,
+              storedBinding,
+              options.expectedRoutingAuthFingerprint
+            );
+          } catch (error) {
+            logger.warn(
+              'Failed to rebind credential for plugin %s:',
+              pluginId,
+              error
+            );
+          }
         }
         if (trustedLegacyCredential) {
           if (
@@ -92,6 +115,7 @@ class PluginCredentialsService {
     options: {
       allowEnvironmentFallback: boolean;
       expectedRoutingAuthFingerprint: string;
+      previousRoutingAuthFingerprint?: string;
       allowLegacyUnboundCredential: boolean;
     }
   ): Promise<string | null> {

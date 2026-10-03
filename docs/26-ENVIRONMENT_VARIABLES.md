@@ -554,8 +554,8 @@ layouts where the legacy and bundled plugin directories share a path remain
 supported without treating a modified manifest as bundled.
 
 User-saved keys are bound to the effective provider definition, source,
-authentication contract, and routing values. Users must save a key again after
-an administrator changes that destination. Pre-upgrade unbound keys are
+authentication contract, and routing values. Model catalog updates keep them.
+Users must save a key again after an administrator changes that destination. Pre-upgrade unbound keys are
 accepted and bound on first use only for an exact shipped definition using its
 bundled route.
 

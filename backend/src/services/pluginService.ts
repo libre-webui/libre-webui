@@ -126,6 +126,7 @@ import pluginUsageService, {
   type ProviderTokenUsage,
 } from './pluginUsageService.js';
 import {
+  getCredentialBindingDefinitionFingerprint,
   getPluginDefinitionFingerprint,
   matchesBundledPluginTrustAnchor,
 } from '../utils/pluginDefinitionTrust.js';
@@ -1373,14 +1374,18 @@ export class PluginService {
     const usesTrustedBundledRouting = this.usesTrustedBundledRouting(plugin);
     const allowTrustedFallback =
       usesTrustedBundledRouting && !hasHonoredConnectionOverride;
+    const bindings = await this.getCredentialRoutingAuthFingerprints(
+      plugin,
+      userId
+    );
     return pluginCredentialsService.getApiKey(
       plugin.id,
       plugin.auth.key_env,
       userId,
       {
         allowEnvironmentFallback: allowTrustedFallback,
-        expectedRoutingAuthFingerprint:
-          await this.getCredentialRoutingAuthFingerprint(plugin, userId),
+        expectedRoutingAuthFingerprint: bindings.current,
+        previousRoutingAuthFingerprint: bindings.previous,
         allowLegacyUnboundCredential: allowTrustedFallback,
       }
     );
@@ -1394,6 +1399,19 @@ export class PluginService {
     plugin: Plugin,
     userId?: string
   ): Promise<string> {
+    return (await this.getCredentialRoutingAuthFingerprints(plugin, userId))
+      .current;
+  }
+
+  /**
+   * `current` leaves the model catalog out, so adding a model keeps saved
+   * keys. `previous` is the earlier binding that hashed the whole definition;
+   * credentials saved under it stay valid for the same route.
+   */
+  async getCredentialRoutingAuthFingerprints(
+    plugin: Plugin,
+    userId?: string
+  ): Promise<{ current: string; previous: string }> {
     const variables = await this.getPluginVariables(plugin, userId);
     const effectiveConnectionValues = Array.from(
       getPluginConnectionVariableNames(plugin),
@@ -1415,38 +1433,52 @@ export class PluginService {
     const effectivePath = sharedDefinition
       ? null
       : this.resolveEffectivePluginFilePath(plugin.id);
-    let effectiveDefinitionFingerprint = getPluginDefinitionFingerprint(plugin);
+    let effectiveDefinition = plugin;
     if (effectivePath) {
       try {
-        const effectiveDefinition = JSON.parse(
+        const sourceDefinition = JSON.parse(
           readRegularPluginDefinition(effectivePath)
         ) as Plugin;
         if (
-          this.validatePlugin(effectiveDefinition) &&
-          effectiveDefinition.id === plugin.id
+          this.validatePlugin(sourceDefinition) &&
+          sourceDefinition.id === plugin.id
         ) {
-          effectiveDefinitionFingerprint =
-            getPluginDefinitionFingerprint(effectiveDefinition);
+          effectiveDefinition = sourceDefinition;
         }
       } catch {
-        // Keep the in-memory fingerprint. A missing/invalid source is already
+        // Keep the in-memory definition. A missing/invalid source is already
         // excluded from normal plugin loading and cannot gain trust here.
       }
     }
-    const fingerprintInput = JSON.stringify({
-      plugin_id: plugin.id,
-      plugin_type: plugin.type,
-      trusted_bundled_source: this.usesTrustedBundledRouting(plugin),
-      effective_source_path: sharedDefinition
-        ? 'database:plugin_definitions'
-        : effectivePath
-          ? path.resolve(effectivePath)
-          : null,
-      effective_definition_fingerprint: effectiveDefinitionFingerprint,
-      routing_auth_projection: getPluginRoutingAuthProjection(plugin),
-      effective_connection_values: effectiveConnectionValues,
-    });
-    return createHash('sha256').update(fingerprintInput).digest('hex');
+    const trustedBundledSource = this.usesTrustedBundledRouting(plugin);
+    const routingAuthProjection = getPluginRoutingAuthProjection(plugin);
+    const binding = (effectiveDefinitionFingerprint: string) =>
+      createHash('sha256')
+        .update(
+          JSON.stringify({
+            plugin_id: plugin.id,
+            plugin_type: plugin.type,
+            trusted_bundled_source: trustedBundledSource,
+            effective_source_path: sharedDefinition
+              ? 'database:plugin_definitions'
+              : effectivePath
+                ? path.resolve(effectivePath)
+                : null,
+            effective_definition_fingerprint: effectiveDefinitionFingerprint,
+            routing_auth_projection: routingAuthProjection,
+            effective_connection_values: effectiveConnectionValues,
+          })
+        )
+        .digest('hex');
+    return {
+      current: binding(
+        getCredentialBindingDefinitionFingerprint(
+          effectiveDefinition,
+          effectiveConnectionValues
+        )
+      ),
+      previous: binding(getPluginDefinitionFingerprint(effectiveDefinition)),
+    };
   }
 
   /**

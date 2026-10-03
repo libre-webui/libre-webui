@@ -219,9 +219,17 @@ async function assertProfileRoutingIsCurrent(
   userId: string
 ): Promise<void> {
   if (
-    profile.routingFingerprint !==
+    profile.routingFingerprint ===
     (await pluginService.getCredentialRoutingAuthFingerprint(plugin, userId))
   ) {
+    return;
+  }
+  // Profiles saved under the earlier binding stay valid for the same route.
+  const { previous } = await pluginService.getCredentialRoutingAuthFingerprints(
+    plugin,
+    userId
+  );
+  if (profile.routingFingerprint !== previous) {
     throw new Error(
       'Saved voice provider routing changed; create a new profile to consent to the current endpoint'
     );

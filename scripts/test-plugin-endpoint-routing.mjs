@@ -2429,6 +2429,97 @@ test('a pre-upgrade same-ID shadow cannot consume a legacy unbound credential', 
   }
 });
 
+test('saved keys survive model catalog changes but not route changes', async () => {
+  const service = new PluginService();
+  const user = upsertTestUser('model-catalog-binding-user', 'user');
+  const plugin = {
+    id: 'catalog-binding-probe',
+    name: 'Catalog binding probe',
+    type: 'completion',
+    endpoint: 'https://catalog-probe.example.test/v1/chat/completions',
+    auth: {
+      header: 'Authorization',
+      prefix: 'Bearer ',
+      key_env: 'CATALOG_BINDING_PROBE_KEY',
+    },
+    model_map: ['model-a'],
+    capabilities: {
+      tts: {
+        endpoint: 'https://catalog-probe.example.test/v1/audio/speech',
+        model_map: ['voice-a'],
+      },
+    },
+  };
+  const withModels = {
+    ...plugin,
+    model_map: ['model-a', 'model-b'],
+    model_context: { 'model-b': 200000 },
+    capabilities: {
+      tts: { ...plugin.capabilities.tts, model_map: ['voice-a', 'voice-b'] },
+    },
+  };
+  const rerouted = {
+    ...plugin,
+    endpoint: 'https://elsewhere.example.test/v1/chat/completions',
+  };
+  const binding = definition =>
+    service.getCredentialRoutingAuthFingerprint(definition, user.id);
+
+  assert.equal(
+    await binding(withModels),
+    await binding(plugin),
+    'adding a model must not invalidate a saved key'
+  );
+  assert.notEqual(await binding(rerouted), await binding(plugin));
+  const hostFromModel = {
+    ...plugin,
+    endpoint: 'https://{model}.example.test/v1/chat/completions',
+  };
+  assert.notEqual(
+    await binding({ ...hostFromModel, model_map: ['model-a', 'attacker'] }),
+    await binding(hostFromModel),
+    'a model that can choose the host stays part of the binding'
+  );
+
+  const { current, previous } =
+    await service.getCredentialRoutingAuthFingerprints(plugin, user.id);
+  assert.notEqual(previous, current);
+  try {
+    assert.equal(
+      await pluginCredentialsService.setApiKey(
+        plugin.id,
+        'catalog-binding-secret',
+        user.id,
+        previous
+      ),
+      true
+    );
+    assert.equal(
+      await service.getApiKey(plugin, user.id),
+      'catalog-binding-secret',
+      'a key saved under the previous binding keeps working'
+    );
+    assert.equal(
+      databaseModule
+        .getDatabase()
+        .prepare(
+          `SELECT routing_auth_fingerprint
+           FROM plugin_credentials
+           WHERE user_id = ? AND plugin_id = ?`
+        )
+        .get(user.id, plugin.id).routing_auth_fingerprint,
+      current,
+      'the previous binding is moved forward on first use'
+    );
+    assert.equal(
+      await service.getApiKey(withModels, user.id),
+      'catalog-binding-secret'
+    );
+    assert.equal(await service.getApiKey(rerouted, user.id), null);
+  } finally {
+    await pluginCredentialsService.deleteApiKey(plugin.id, user.id);
+  }
+});
 test('bundled-ID shadows cannot consume environment credentials', async () => {
   const service = new PluginService();
   const pluginId = 'openai';
