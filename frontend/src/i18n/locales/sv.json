@@ -1964,7 +1964,19 @@
       "save": "Spara",
       "saving": "Sparar…",
       "saved": "E-postinställningarna har sparats.",
-      "saveFailed": "E-postinställningarna kunde inte sparas."
+      "saveFailed": "E-postinställningarna kunde inte sparas.",
+      "templateTitle": "E-postens utseende",
+      "templateHint": "Välj en ljus eller mörk mall för nyhetssammandrag och e-postaviseringar.",
+      "themeLabel": "E-postmall",
+      "themeLight": "Ljus",
+      "themeDark": "Mörk",
+      "previewTitle": "Förhandsvisning av mallen",
+      "previewLoading": "Läser in förhandsvisning…",
+      "previewFailed": "Det gick inte att läsa in e-postens förhandsvisning.",
+      "previewHeading": "Ditt nyhetssammandrag",
+      "previewIntro": "En förhandsvisning av ditt dagliga nyhetsmejl.",
+      "previewMarkdown": "## Dagens höjdpunkter\n\n- Uppdateringar om teknik och forskning\n- Nyheter från dina valda källor\n\n**Sammanfattning:** Dagens nyheter är redo att läsas.",
+      "previewLinkLabel": "Öppna resultatet"
     },
     "strandsAccess": {
       "title": "Strands-motor",

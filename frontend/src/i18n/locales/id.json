@@ -1964,7 +1964,19 @@
       "save": "Simpan",
       "saving": "Menyimpan…",
       "saved": "Pengaturan email tersimpan.",
-      "saveFailed": "Pengaturan email tidak dapat disimpan."
+      "saveFailed": "Pengaturan email tidak dapat disimpan.",
+      "templateTitle": "Tampilan email",
+      "templateHint": "Pilih templat terang atau gelap untuk rangkuman berita dan email notifikasi.",
+      "themeLabel": "Templat email",
+      "themeLight": "Terang",
+      "themeDark": "Gelap",
+      "previewTitle": "Pratinjau templat",
+      "previewLoading": "Memuat pratinjau…",
+      "previewFailed": "Pratinjau email tidak dapat dimuat.",
+      "previewHeading": "Rangkuman berita Anda",
+      "previewIntro": "Pratinjau email berita harian Anda.",
+      "previewMarkdown": "## Sorotan hari ini\n\n- Kabar terbaru teknologi dan riset\n- Berita dari sumber pilihan Anda\n\n**Ringkasan:** Berita harian Anda siap dibaca.",
+      "previewLinkLabel": "Buka hasil"
     },
     "strandsAccess": {
       "title": "Mesin Strands",

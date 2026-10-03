@@ -1964,7 +1964,19 @@
       "save": "Gem",
       "saving": "Gemmer...",
       "saved": "E-mailindstillingerne er gemt.",
-      "saveFailed": "E-mailindstillingerne kunne ikke gemmes."
+      "saveFailed": "E-mailindstillingerne kunne ikke gemmes.",
+      "templateTitle": "E-mailudseende",
+      "templateHint": "Vælg en lys eller mørk skabelon til nyhedsoversigter og e-mailnotifikationer.",
+      "themeLabel": "E-mail-skabelon",
+      "themeLight": "Lys",
+      "themeDark": "Mørk",
+      "previewTitle": "Forhåndsvisning af skabelon",
+      "previewLoading": "Indlæser forhåndsvisning…",
+      "previewFailed": "E-mailforhåndsvisningen kunne ikke indlæses.",
+      "previewHeading": "Din nyhedsoversigt",
+      "previewIntro": "En forhåndsvisning af din daglige nyhedsmail.",
+      "previewMarkdown": "## Dagens højdepunkter\n\n- Nyt om teknologi og forskning\n- Nyheder fra dine valgte kilder\n\n**Opsummering:** Dine daglige nyheder er klar til at blive læst.",
+      "previewLinkLabel": "Åbn resultatet"
     },
     "strandsAccess": {
       "title": "Strands-motor",

@@ -1964,7 +1964,19 @@
       "save": "Uložit",
       "saving": "Ukládání...",
       "saved": "Nastavení e-mailu bylo uloženo.",
-      "saveFailed": "Nastavení e-mailu se nepodařilo uložit."
+      "saveFailed": "Nastavení e-mailu se nepodařilo uložit.",
+      "templateTitle": "Vzhled e-mailu",
+      "templateHint": "Vyberte světlou nebo tmavou šablonu pro souhrny zpráv a e-mailová oznámení.",
+      "themeLabel": "Šablona e-mailu",
+      "themeLight": "Světlá",
+      "themeDark": "Tmavá",
+      "previewTitle": "Náhled šablony",
+      "previewLoading": "Načítání náhledu…",
+      "previewFailed": "Náhled e-mailu se nepodařilo načíst.",
+      "previewHeading": "Váš přehled zpráv",
+      "previewIntro": "Náhled vašeho denního e-mailového přehledu zpráv.",
+      "previewMarkdown": "## Dnešní hlavní zprávy\n\n- Novinky z technologií a výzkumu\n- Zprávy z vybraných zdrojů\n\n**Shrnutí:** Vaše denní zprávy jsou připravené ke čtení.",
+      "previewLinkLabel": "Otevřít výsledek"
     },
     "strandsAccess": {
       "title": "Engine Strands",

@@ -1964,7 +1964,19 @@
       "save": "Speichern",
       "saving": "Wird gespeichert…",
       "saved": "E-Mail-Einstellungen gespeichert.",
-      "saveFailed": "Die E-Mail-Einstellungen konnten nicht gespeichert werden."
+      "saveFailed": "Die E-Mail-Einstellungen konnten nicht gespeichert werden.",
+      "templateTitle": "Erscheinungsbild der E-Mail",
+      "templateHint": "Wählen Sie eine helle oder dunkle Vorlage für Nachrichtenübersichten und Benachrichtigungs-E-Mails.",
+      "themeLabel": "E-Mail-Vorlage",
+      "themeLight": "Hell",
+      "themeDark": "Dunkel",
+      "previewTitle": "Vorschau der Vorlage",
+      "previewLoading": "Vorschau wird geladen…",
+      "previewFailed": "Die E-Mail-Vorschau konnte nicht geladen werden.",
+      "previewHeading": "Ihre Nachrichtenübersicht",
+      "previewIntro": "Eine Vorschau Ihrer täglichen Nachrichten-E-Mail.",
+      "previewMarkdown": "## Die wichtigsten Meldungen heute\n\n- Neuigkeiten aus Technik und Forschung\n- Nachrichten aus Ihren ausgewählten Quellen\n\n**Zusammenfassung:** Ihre täglichen Nachrichten sind bereit zum Lesen.",
+      "previewLinkLabel": "Ergebnis öffnen"
     },
     "strandsAccess": {
       "title": "Strands-Engine",

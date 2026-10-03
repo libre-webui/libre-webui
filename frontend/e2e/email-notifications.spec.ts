@@ -17,6 +17,7 @@
 
 import { expect, test, type Locator, type Page } from '@playwright/test';
 import en from '../src/i18n/locales/en.json' with { type: 'json' };
+import ar from '../src/i18n/locales/ar.json' with { type: 'json' };
 import { mockLibreWebUiApi, type MockEmailSettings } from './lib/mockApi';
 import { openSettingsTab } from './lib/settingsTab';
 
@@ -57,6 +58,7 @@ async function prepare(
     as: typeof admin | typeof member | typeof addressless;
     emailSettings?: Partial<MockEmailSettings>;
     emailTestFailure?: string;
+    language?: 'en' | 'ar';
   }
 ) {
   await mockLibreWebUiApi(page, {
@@ -74,11 +76,140 @@ async function prepare(
       ? { emailTestFailure: options.emailTestFailure }
       : {}),
   });
-  await page.addInitScript(token => {
-    localStorage.setItem('i18nextLng', 'en');
-    localStorage.setItem('auth-token', token);
-  }, options.as.token);
+  await page.addInitScript(
+    ({ token, language }) => {
+      localStorage.setItem('i18nextLng', language);
+      localStorage.setItem('auth-token', token);
+    },
+    { token: options.as.token, language: options.language ?? 'en' }
+  );
 }
+
+for (const language of ['en', 'ar'] as const) {
+  test(`an administrator previews and saves a dark email template in ${language}`, async ({
+    page,
+  }) => {
+    await prepare(page, { as: admin, language });
+    const strings = language === 'ar' ? ar : en;
+    let testMessages = 0;
+    page.on('request', request => {
+      if (request.url().endsWith('/api/email/test')) testMessages += 1;
+    });
+    await page.goto('/users');
+    await page
+      .getByRole('tab', { name: strings.userManager.sections.access })
+      .click();
+    const card = page.getByTestId('email-notification-settings');
+    const theme = card.getByTestId('email-template-theme');
+    await expect(theme).toHaveValue('light');
+    const previewRequest = page.waitForRequest(
+      request =>
+        request.url().endsWith('/api/email/preview') &&
+        request.postDataJSON().emailTheme === 'dark'
+    );
+    await theme.selectOption('dark');
+    expect((await previewRequest).postDataJSON()).toMatchObject({
+      emailTheme: 'dark',
+      heading: strings.userManager.emailNotifications.previewHeading,
+    });
+    const frame = card.getByTestId('email-template-preview');
+    await expect(frame).toHaveAttribute('sandbox', '');
+    await expect(frame).toHaveAttribute('referrerpolicy', 'no-referrer');
+    await expect(
+      page
+        .frameLocator('[data-testid="email-template-preview"]')
+        .locator('body')
+    ).toHaveAttribute('data-email-theme', 'dark');
+    await expect(
+      page
+        .frameLocator('[data-testid="email-template-preview"]')
+        .getByRole('heading', {
+          name: strings.userManager.emailNotifications.previewHeading,
+        })
+    ).toBeVisible();
+    const save = page.waitForRequest(
+      request =>
+        request.method() === 'PUT' &&
+        request.url().endsWith('/api/email/settings')
+    );
+    await card.getByTestId('email-save-button').click();
+    expect((await save).postDataJSON().emailTheme).toBe('dark');
+    await expect(card.getByTestId('email-save-button')).toBeDisabled();
+    await page.reload();
+    await page.goto('/users');
+    await page
+      .getByRole('tab', { name: strings.userManager.sections.access })
+      .click();
+    await expect(page.getByTestId('email-template-theme')).toHaveValue('dark');
+    expect(testMessages).toBe(0);
+  });
+}
+
+test('a delayed email preview cannot replace a newer theme or load remote assets', async ({
+  page,
+}) => {
+  await prepare(page, { as: admin });
+  let releaseLight!: () => void;
+  const lightGate = new Promise<void>(resolve => {
+    releaseLight = resolve;
+  });
+  let lightStarted!: () => void;
+  const lightPending = new Promise<void>(resolve => {
+    lightStarted = resolve;
+  });
+  let remoteRequests = 0;
+  // CSP-blocked resource attempts emit request events, but never reach the
+  // network interceptor. Count actual outgoing requests instead.
+  await page.route('https://email-assets.example.test/**', async route => {
+    remoteRequests += 1;
+    await route.abort();
+  });
+  await page.route('**/api/email/preview', async route => {
+    const body = route.request().postDataJSON();
+    if (body.emailTheme === 'light') {
+      lightStarted();
+      await lightGate;
+    }
+    await route.fulfill({
+      json: {
+        success: true,
+        data: {
+          html: `<html><head><link rel="stylesheet" href="https://email-assets.example.test/fonts.css"></head><body data-email-theme="${body.emailTheme}"><img src="https://email-assets.example.test/logo.png" alt=""><h1>Preview</h1></body></html>`,
+          text: 'Preview',
+        },
+      },
+    });
+  });
+  try {
+    await page.goto('/users');
+    await page
+      .getByRole('tab', { name: en.userManager.sections.access })
+      .click();
+    await lightPending;
+    await page.getByTestId('email-template-theme').selectOption('dark');
+    const body = page
+      .frameLocator('[data-testid="email-template-preview"]')
+      .locator('body');
+    await expect(body).toHaveAttribute('data-email-theme', 'dark');
+    const oldResponse = page.waitForResponse(
+      response =>
+        response.url().endsWith('/api/email/preview') &&
+        response.request().postDataJSON().emailTheme === 'light'
+    );
+    releaseLight();
+    await (await oldResponse).finished();
+    await page.evaluate(
+      () =>
+        new Promise(resolve =>
+          requestAnimationFrame(() => requestAnimationFrame(resolve))
+        )
+    );
+    await expect(body).toHaveAttribute('data-email-theme', 'dark');
+    expect(remoteRequests).toBe(0);
+  } finally {
+    releaseLight();
+  }
+});
 
 /** SettingsToggle keeps its checkbox screen-reader-only; the label is the target. */
 const flip = (row: Locator) => row.locator('label').first().click();

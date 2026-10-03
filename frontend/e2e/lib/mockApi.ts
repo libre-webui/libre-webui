@@ -511,9 +511,17 @@ export interface MockEmailSettings {
   from: string;
   rejectUnauthorized: boolean;
   appUrl: string;
+  emailTheme: 'light' | 'dark';
   configured: boolean;
   sources: Record<
-    'host' | 'port' | 'security' | 'username' | 'password' | 'from' | 'appUrl',
+    | 'host'
+    | 'port'
+    | 'security'
+    | 'username'
+    | 'password'
+    | 'from'
+    | 'appUrl'
+    | 'emailTheme',
     'stored' | 'env' | 'default'
   >;
 }
@@ -529,6 +537,7 @@ const defaultEmailSettings: MockEmailSettings = {
   from: '',
   rejectUnauthorized: true,
   appUrl: '',
+  emailTheme: 'light',
   configured: false,
   sources: {
     host: 'default',
@@ -538,6 +547,7 @@ const defaultEmailSettings: MockEmailSettings = {
     password: 'default',
     from: 'default',
     appUrl: 'default',
+    emailTheme: 'default',
   },
 };
 
@@ -3103,7 +3113,11 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
         });
         return;
       }
-      if (path === '/email/settings' || path === '/email/test') {
+      if (
+        path === '/email/settings' ||
+        path === '/email/test' ||
+        path === '/email/preview'
+      ) {
         const emailUser = authUserForRoute(route) ?? options.currentUser;
         const isAdmin = emailUser?.role === 'admin';
         const view = () => ({
@@ -3120,6 +3134,7 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
                 from: emailSettings.from,
                 rejectUnauthorized: emailSettings.rejectUnauthorized,
                 appUrl: emailSettings.appUrl,
+                emailTheme: emailSettings.emailTheme,
                 configured: emailSettings.configured,
                 sources: emailSettings.sources,
               }
@@ -3141,6 +3156,36 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
           });
           return;
         }
+        if (method === 'POST' && path === '/email/preview') {
+          const body = route.request().postDataJSON() as {
+            emailTheme: 'light' | 'dark';
+            heading: string;
+          };
+          const dark = body.emailTheme === 'dark';
+          const heading = body.heading.replace(
+            /[&<>"']/g,
+            character =>
+              ({
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#39;',
+              })[character]!
+          );
+          await route.fulfill({
+            status: 200,
+            contentType: 'application/json',
+            body: JSON.stringify({
+              success: true,
+              data: {
+                html: `<!doctype html><html><head><meta charset="utf-8"></head><body data-email-theme="${body.emailTheme}" style="background:${dark ? '#161615' : '#f3f0ea'};color:${dark ? '#f3f0ea' : '#0a0a0b'}"><h1>${heading}</h1></body></html>`,
+                text: body.heading,
+              },
+            }),
+          });
+          return;
+        }
         if (method === 'PUT' && path === '/email/settings') {
           const body = JSON.parse(route.request().postData() || '{}') as Record<
             string,
@@ -3153,6 +3198,10 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
           }
           if (typeof body.appUrl === 'string')
             emailSettings.appUrl = body.appUrl;
+          if (body.emailTheme === 'light' || body.emailTheme === 'dark') {
+            emailSettings.emailTheme = body.emailTheme;
+            emailSettings.sources.emailTheme = 'stored';
+          }
           if (typeof body.security === 'string') {
             emailSettings.security =
               body.security as MockEmailSettings['security'];

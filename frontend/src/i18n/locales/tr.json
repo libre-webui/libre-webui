@@ -1964,7 +1964,19 @@
       "save": "Kaydet",
       "saving": "Kaydediliyor…",
       "saved": "E-posta ayarları kaydedildi.",
-      "saveFailed": "E-posta ayarları kaydedilemedi."
+      "saveFailed": "E-posta ayarları kaydedilemedi.",
+      "templateTitle": "E-posta görünümü",
+      "templateHint": "Haber özetleri ve bildirim e-postaları için açık veya koyu bir şablon seçin.",
+      "themeLabel": "E-posta şablonu",
+      "themeLight": "Açık",
+      "themeDark": "Koyu",
+      "previewTitle": "Şablon önizlemesi",
+      "previewLoading": "Önizleme yükleniyor…",
+      "previewFailed": "E-posta önizlemesi yüklenemedi.",
+      "previewHeading": "Haber özetiniz",
+      "previewIntro": "Günlük haber e-postanızın önizlemesi.",
+      "previewMarkdown": "## Bugünün öne çıkanları\n\n- Teknoloji ve araştırma güncellemeleri\n- Seçtiğiniz kaynaklardan haberler\n\n**Özet:** Günlük haberleriniz okumaya hazır.",
+      "previewLinkLabel": "Sonucu aç"
     },
     "strandsAccess": {
       "title": "Strands motoru",

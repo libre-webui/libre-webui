@@ -1964,7 +1964,19 @@
       "save": "Salvar",
       "saving": "Salvando…",
       "saved": "Configurações de e-mail salvas.",
-      "saveFailed": "Não foi possível salvar as configurações de e-mail."
+      "saveFailed": "Não foi possível salvar as configurações de e-mail.",
+      "templateTitle": "Aparência do e-mail",
+      "templateHint": "Escolha um modelo claro ou escuro para resumos de notícias e e-mails de notificação.",
+      "themeLabel": "Modelo de e-mail",
+      "themeLight": "Claro",
+      "themeDark": "Escuro",
+      "previewTitle": "Pré-visualização do modelo",
+      "previewLoading": "A carregar a pré-visualização…",
+      "previewFailed": "Não foi possível carregar a pré-visualização do e-mail.",
+      "previewHeading": "O seu resumo de notícias",
+      "previewIntro": "Uma pré-visualização do seu e-mail diário de notícias.",
+      "previewMarkdown": "## Destaques de hoje\n\n- Novidades sobre tecnologia e investigação\n- Notícias das fontes que selecionou\n\n**Resumo:** As suas notícias diárias estão prontas a ler.",
+      "previewLinkLabel": "Abrir o resultado"
     },
     "strandsAccess": {
       "title": "Motor Strands",

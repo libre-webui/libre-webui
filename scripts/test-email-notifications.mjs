@@ -78,7 +78,7 @@ eventsModule.initializeDurableEventGateway(runtime.service, getCoordinator());
 
 const [
   { getDatabase, closeDatabase },
-  { emailService, EmailSettingsError },
+  { emailService, EmailSettingsError, EmailService },
   { notificationService },
   { default: preferencesService },
   { userModel },
@@ -149,7 +149,9 @@ const call = (method, route, token, body) =>
 const startAcceptingSmtp = async () => {
   const messages = [];
   const sockets = new Set();
+  let connections = 0;
   const smtp = net.createServer(socket => {
+    connections += 1;
     sockets.add(socket);
     socket.on('close', () => sockets.delete(socket));
     let buffer = '';
@@ -195,6 +197,9 @@ const startAcceptingSmtp = async () => {
   return {
     port: smtp.address().port,
     messages,
+    get connections() {
+      return connections;
+    },
     close: () => {
       for (const socket of sockets) socket.destroy();
       return new Promise(resolve => smtp.close(resolve));
@@ -217,6 +222,8 @@ after(async () => {
 
 test('email settings resolve from the environment, override from the UI, and never return the password', async () => {
   const initial = await emailService.getSettings();
+  assert.equal(initial.emailTheme, 'light');
+  assert.equal(initial.sources.emailTheme, 'default');
   assert.equal(initial.host, 'env.mail.test');
   assert.equal(initial.sources.host, 'env');
   assert.equal(initial.from, 'Libre WebUI <env@example.test>');
@@ -291,6 +298,7 @@ test('the settings routes hide server details from users and reject their writes
   assert.equal(userView.recipient, 'subscriber@example.test');
   assert.equal('host' in userView, false);
   assert.equal('passwordConfigured' in userView, false);
+  assert.equal('emailTheme' in userView, false);
 
   const forbidden = await call(
     'PUT',
@@ -298,6 +306,7 @@ test('the settings routes hide server details from users and reject their writes
     tokens.subscriber,
     {
       enabled: false,
+      emailTheme: 'dark',
     }
   );
   assert.equal(forbidden.status, 403);
@@ -313,6 +322,24 @@ test('the settings routes hide server details from users and reject their writes
   assert.equal(adminView.host, 'env.mail.test');
   assert.equal(adminView.sources.host, 'env');
   assert.equal('password' in adminView, false);
+  assert.equal(adminView.emailTheme, 'light');
+  for (const emailTheme of ['auto', '', null, false, 42, {}, []]) {
+    const invalid = await call('PUT', '/api/email/settings', tokens.admin, {
+      emailTheme,
+    });
+    assert.equal(invalid.status, 400, JSON.stringify(emailTheme));
+  }
+  const themeSaved = await call('PUT', '/api/email/settings', tokens.admin, {
+    emailTheme: 'dark',
+  });
+  assert.equal(themeSaved.status, 200);
+  emailService.invalidate();
+  assert.equal((await emailService.getSettings()).emailTheme, 'dark');
+  assert.equal((await emailService.getSettings()).sources.emailTheme, 'stored');
+  const { getSystemSetting } = await distModule(
+    'services/systemSettingsService.js'
+  );
+  assert.equal(await getSystemSetting('email.template.theme'), 'dark');
 
   const rejected = await call('PUT', '/api/email/settings', tokens.admin, {
     port: 'abc',
@@ -335,6 +362,14 @@ test('the settings routes hide server details from users and reject their writes
     assert.equal(outcome.ok, true);
     assert.equal(outcome.sentTo, 'admin@example.test');
     assert.equal(smtp.messages.length, 1);
+    const htmlPart = smtp.messages[0].split(
+      'Content-Type: text/html; charset=utf-8'
+    )[1];
+    const encodedHtml = htmlPart.split('\r\n\r\n')[1].split('\r\n--')[0];
+    assert.match(
+      Buffer.from(encodedHtml.replace(/\s/g, ''), 'base64').toString(),
+      /background:#161615/
+    );
     assert.match(
       smtp.messages[0],
       /^From: "Libre WebUI" <env@example\.test>\r\n/
@@ -362,6 +397,141 @@ test('the settings routes hide server details from users and reject their writes
   const failed = await call('POST', '/api/email/test', tokens.admin, {});
   assert.equal(failed.status, 502);
   assert.equal((await failed.json()).code, 'ERR_SMTP_CONNECT');
+});
+
+test('admin draft previews are bounded, escape content, and never send or enqueue mail', async () => {
+  const smtp = await startAcceptingSmtp();
+  const draft = {
+    emailTheme: 'light',
+    heading: 'Localized <heading>',
+    lines: ['Plain <img src=x onerror=alert(1)>'],
+    markdown: '## Markdown\n\n`code` and [unsafe](javascript:alert)',
+    linkLabel: 'Open application',
+    href: 'https://untrusted.example/',
+    appUrl: 'https://untrusted.example/',
+  };
+  try {
+    await emailService.updateSettings({
+      host: '127.0.0.1',
+      port: smtp.port,
+      enabled: true,
+    });
+    const beforeJobs = enqueued.length;
+    const forbidden = await call(
+      'POST',
+      '/api/email/preview',
+      tokens.subscriber,
+      draft
+    );
+    assert.equal(forbidden.status, 403);
+    const anonymous = await call(
+      'POST',
+      '/api/email/preview',
+      undefined,
+      draft
+    );
+    assert.equal(anonymous.status, 401);
+    for (const emailTheme of ['light', 'dark']) {
+      const response = await call('POST', '/api/email/preview', tokens.admin, {
+        ...draft,
+        emailTheme,
+      });
+      assert.equal(response.status, 200);
+      const preview = (await response.json()).data;
+      assert.match(preview.html, /&lt;heading&gt;/);
+      assert.doesNotMatch(
+        preview.html,
+        /<img src=x|href="javascript:|untrusted\.example/
+      );
+      assert.match(
+        preview.html,
+        new RegExp(`name="color-scheme" content="${emailTheme}"`)
+      );
+      assert.match(preview.html, /<h2 style=/);
+      assert.match(
+        preview.text,
+        /Open application: https:\/\/ui\.example\.test\//
+      );
+    }
+    for (const change of [
+      { emailTheme: null },
+      { emailTheme: 'system' },
+      { heading: 5 },
+      { heading: 'a'.repeat(201) },
+      { lines: ['a'.repeat(1001)] },
+      { lines: [null] },
+      { lines: Array(21).fill('line') },
+      { markdown: 'a'.repeat(6001) },
+      { linkLabel: {} },
+    ]) {
+      const response = await call('POST', '/api/email/preview', tokens.admin, {
+        ...draft,
+        ...change,
+      });
+      assert.equal(response.status, 400, JSON.stringify(change).slice(0, 100));
+    }
+    assert.equal(smtp.connections, 0, 'preview never opens an SMTP session');
+    assert.equal(smtp.messages.length, 0);
+    assert.equal(enqueued.length, beforeJobs);
+    assert.equal(
+      (await emailService.getSettings()).emailTheme,
+      'dark',
+      'preview does not save the draft'
+    );
+  } finally {
+    await smtp.close();
+  }
+});
+
+test('a warm independent email service observes a preset saved by another replica', async () => {
+  await emailService.updateSettings({ emailTheme: 'light' });
+  const replicaSubscriber = await userModel.createUser({
+    username: 'replica-email-subscriber',
+    email: 'replica@example.test',
+    password: 'replica-password-123',
+    role: 'user',
+  });
+  const worker = new EmailService();
+  assert.equal((await worker.getSettings()).emailTheme, 'light');
+  await emailService.updateSettings({ emailTheme: 'dark' });
+  await preferencesService.updatePreferences(
+    { emailNotifications: { automationRuns: true } },
+    replicaSubscriber.id
+  );
+  for (const [replica, service] of [
+    ['app', emailService],
+    ['worker', worker],
+  ]) {
+    const settings = await service.getSettings();
+    assert.equal(settings.emailTheme, 'dark');
+    assert.equal(settings.sources.emailTheme, 'stored');
+    const preview = await service.preview({
+      emailTheme: settings.emailTheme,
+      heading: 'Preview',
+      lines: ['Body'],
+    });
+    assert.match(preview.html, /background:#161615/);
+    enqueued.length = 0;
+    assert.equal(
+      await service.notifyAutomationRun({
+        userId: replicaSubscriber.id,
+        runId: `replica-${replica}`,
+        automationName: 'Replicated preset',
+        status: 'succeeded',
+        result: '## Markdown',
+      }),
+      true
+    );
+    assert.match(enqueued[0].payload.value.html, /background:#161615/);
+    assert.match(
+      enqueued[0].payload.value.html,
+      /<h2 style="[^"]*color:#f3f0ea/
+    );
+  }
+  // Refreshes must keep following later writes, rather than warming once.
+  await emailService.updateSettings({ emailTheme: 'light' });
+  assert.equal((await worker.getSettings()).emailTheme, 'light');
+  await emailService.updateSettings({ emailTheme: 'dark' });
 });
 
 test('email preferences default off and merge partially', async () => {
@@ -421,6 +591,8 @@ test('a channel mention and an automation run are emailed only to users who opte
   const mention = mentionJobs[0].payload.value;
   assert.equal(mention.to, 'subscriber@example.test');
   assert.equal(mention.kind, 'channelMentions');
+  assert.match(mention.html, /background:#161615/);
+  assert.match(mention.html, /color:#f3f0ea/);
   assert.equal(mention.subject, 'alice mentioned you in #general');
   assert.match(mention.text, /can you look at the build\?/);
   assert.match(
@@ -464,6 +636,7 @@ test('a channel mention and an automation run are emailed only to users who opte
     'Automation finished: Morning digest'
   );
   assert.match(runJob.payload.value.text, /Three items need your attention/);
+  assert.match(runJob.payload.value.html, /<p style="[^"]*color:#f3f0ea/);
   assert.match(
     runJob.payload.value.text,
     /https:\/\/ui\.example\.test\/c\/session-1/

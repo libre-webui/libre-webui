@@ -1964,7 +1964,19 @@
       "save": "Lưu",
       "saving": "Đang lưu…",
       "saved": "Đã lưu cài đặt email.",
-      "saveFailed": "Không thể lưu cài đặt email."
+      "saveFailed": "Không thể lưu cài đặt email.",
+      "templateTitle": "Giao diện email",
+      "templateHint": "Chọn mẫu sáng hoặc tối cho bản tin tổng hợp và email thông báo.",
+      "themeLabel": "Mẫu email",
+      "themeLight": "Sáng",
+      "themeDark": "Tối",
+      "previewTitle": "Xem trước mẫu",
+      "previewLoading": "Đang tải bản xem trước…",
+      "previewFailed": "Không thể tải bản xem trước email.",
+      "previewHeading": "Bản tin của bạn",
+      "previewIntro": "Bản xem trước email tin tức hằng ngày của bạn.",
+      "previewMarkdown": "## Tin nổi bật hôm nay\n\n- Cập nhật về công nghệ và nghiên cứu\n- Tin tức từ các nguồn bạn đã chọn\n\n**Tóm tắt:** Tin tức hằng ngày của bạn đã sẵn sàng để đọc.",
+      "previewLinkLabel": "Mở kết quả"
     },
     "strandsAccess": {
       "title": "Công cụ Strands",

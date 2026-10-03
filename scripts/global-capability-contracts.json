@@ -1720,6 +1720,15 @@
             "only the opted-in user with an address",
             "automation-run:run-1"
           ]
+        },
+        {
+          "file": "scripts/test-email-notifications.mjs",
+          "runner": "test:package",
+          "name": "admin draft previews are bounded, escape content, and never send or enqueue mail",
+          "behaviorPatterns": [
+            "preview never opens an SMTP session",
+            "preview does not save the draft"
+          ]
         }
       ],
       "backendRoutes": [
@@ -1818,6 +1827,12 @@
           "mount": "/api/email",
           "method": "POST",
           "path": "/test"
+        },
+        {
+          "file": "backend/src/routes/email.ts",
+          "mount": "/api/email",
+          "method": "POST",
+          "path": "/preview"
         }
       ],
       "contractSurfaces": {

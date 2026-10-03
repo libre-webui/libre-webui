@@ -22,9 +22,21 @@ import { Mail } from 'lucide-react';
 import { Button, Input, Select } from '@/components/ui';
 import { SettingsToggle } from '@/components/settings/SettingsToggle';
 import { emailApi } from '@/utils/api';
-import type { EmailSettingsResponse, SmtpSecurity } from '@/utils/api/emailApi';
+import type {
+  EmailSettingsResponse,
+  EmailTheme,
+  SmtpSecurity,
+} from '@/utils/api/emailApi';
 
 const SECURITY_MODES: SmtpSecurity[] = ['starttls', 'tls', 'none'];
+
+// Inspect the email with local fallback fonts and blocked remote images. A
+// preview must not contact the template's external asset hosts on page load.
+const previewDocument = (html: string): string =>
+  html.replace(
+    /<head>/i,
+    `<head><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src data:; base-uri 'none'; form-action 'none'"><style>img { display: none; }</style>`
+  );
 
 interface Draft {
   host: string;
@@ -35,6 +47,7 @@ interface Draft {
   from: string;
   appUrl: string;
   rejectUnauthorized: boolean;
+  emailTheme: EmailTheme;
 }
 
 const draftFrom = (settings: EmailSettingsResponse): Draft => ({
@@ -46,6 +59,7 @@ const draftFrom = (settings: EmailSettingsResponse): Draft => ({
   from: settings.from ?? '',
   appUrl: settings.appUrl ?? '',
   rejectUnauthorized: settings.rejectUnauthorized !== false,
+  emailTheme: settings.emailTheme ?? 'light',
 });
 
 /**
@@ -56,7 +70,7 @@ const draftFrom = (settings: EmailSettingsResponse): Draft => ({
  * restores the environment default.
  */
 export const EmailNotificationSettings: React.FC = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [settings, setSettings] = useState<EmailSettingsResponse | null>(null);
   const [draft, setDraft] = useState<Draft | null>(null);
   const [testRecipient, setTestRecipient] = useState('');
@@ -65,6 +79,44 @@ export const EmailNotificationSettings: React.FC = () => {
   const [clearPassword, setClearPassword] = useState(false);
   const [loadFailed, setLoadFailed] = useState(false);
   const [loadAttempt, setLoadAttempt] = useState(0);
+  const [preview, setPreview] = useState<{
+    key: string;
+    html: string | null;
+  } | null>(null);
+  const [previewAttempt, setPreviewAttempt] = useState(0);
+  const emailTheme = draft?.emailTheme;
+  const previewKey = emailTheme
+    ? `${emailTheme}:${previewAttempt}:${i18n.resolvedLanguage}`
+    : null;
+  const currentPreview = preview?.key === previewKey ? preview : null;
+  const previewFailed = currentPreview?.html === null;
+
+  useEffect(() => {
+    if (!emailTheme || !previewKey) return;
+    let cancelled = false;
+    emailApi
+      .preview({
+        emailTheme,
+        heading: t('userManager.emailNotifications.previewHeading'),
+        lines: [t('userManager.emailNotifications.previewIntro')],
+        markdown: t('userManager.emailNotifications.previewMarkdown'),
+        linkLabel: t('userManager.emailNotifications.previewLinkLabel'),
+      })
+      .then(response => {
+        if (cancelled) return;
+        if (response.success && response.data) {
+          setPreview({ key: previewKey, html: response.data.html });
+        } else {
+          setPreview({ key: previewKey, html: null });
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setPreview({ key: previewKey, html: null });
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [emailTheme, previewKey, t]);
 
   useEffect(() => {
     let cancelled = false;
@@ -117,6 +169,7 @@ export const EmailNotificationSettings: React.FC = () => {
         from: draft.from.trim(),
         appUrl: draft.appUrl.trim(),
         rejectUnauthorized: draft.rejectUnauthorized,
+        emailTheme: draft.emailTheme,
         ...(draft.password
           ? { password: draft.password }
           : clearPassword
@@ -429,6 +482,70 @@ export const EmailNotificationSettings: React.FC = () => {
               />
             </label>
           </div>
+
+          <fieldset className='border-t border-gray-200 dark:border-dark-300 pt-3 space-y-3'>
+            <legend className='text-sm font-semibold text-gray-900 dark:text-gray-100'>
+              {t('userManager.emailNotifications.templateTitle')}
+            </legend>
+            <p className={fieldHint}>
+              {t('userManager.emailNotifications.templateHint')}
+            </p>
+            <label className='block sm:max-w-xs'>
+              <span className={fieldLabel}>
+                {t('userManager.emailNotifications.themeLabel')}
+              </span>
+              <Select
+                value={draft.emailTheme}
+                onChange={event =>
+                  update('emailTheme', event.target.value as EmailTheme)
+                }
+                disabled={saving}
+                data-testid='email-template-theme'
+                options={[
+                  {
+                    value: 'light',
+                    label: t('userManager.emailNotifications.themeLight'),
+                  },
+                  {
+                    value: 'dark',
+                    label: t('userManager.emailNotifications.themeDark'),
+                  },
+                ]}
+              />
+            </label>
+            <div aria-busy={!currentPreview}>
+              <h4 className={fieldLabel}>
+                {t('userManager.emailNotifications.previewTitle')}
+              </h4>
+              {previewFailed ? (
+                <div role='status' className='flex items-center gap-3'>
+                  <p className={fieldHint}>
+                    {t('userManager.emailNotifications.previewFailed')}
+                  </p>
+                  <Button
+                    size='sm'
+                    variant='outline'
+                    onClick={() => setPreviewAttempt(value => value + 1)}
+                  >
+                    {t('common.retry')}
+                  </Button>
+                </div>
+              ) : currentPreview?.html ? (
+                <iframe
+                  title={t('userManager.emailNotifications.previewTitle')}
+                  srcDoc={previewDocument(currentPreview.html)}
+                  sandbox=''
+                  referrerPolicy='no-referrer'
+                  className='h-96 w-full rounded-lg border border-gray-200 dark:border-dark-300 bg-white'
+                  data-testid='email-template-preview'
+                />
+              ) : (
+                <p role='status' className={fieldHint}>
+                  {t('userManager.emailNotifications.previewLoading')}
+                </p>
+              )}
+            </div>
+          </fieldset>
 
           <div className='flex flex-col gap-3 border-t border-gray-200 dark:border-dark-300 pt-3 sm:flex-row sm:items-end sm:justify-between'>
             <label className='block sm:max-w-xs sm:flex-1'>

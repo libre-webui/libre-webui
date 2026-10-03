@@ -61,7 +61,7 @@ const inline = (escaped: string, theme: EmailMarkdownTheme): string => {
   const codes: string[] = [];
   let out = escaped.replace(/`([^`\n]+)`/g, (_match, code: string) => {
     codes.push(
-      `<code style="font-family:${theme.fontMono};font-size:0.92em;background:${theme.codeBackground};border-radius:4px;padding:1px 5px">${code}</code>`
+      `<code style="font-family:${theme.fontMono};font-size:0.92em;color:${theme.text};background:${theme.codeBackground};border-radius:4px;padding:1px 5px">${code}</code>`
     );
     return `\uE000${codes.length - 1}\uE001`;
   });
@@ -150,7 +150,7 @@ export const renderMarkdownForEmail = (
     if (code) {
       if (/^\s*```/.test(raw)) {
         html.push(
-          `<pre style="margin:0 0 12px;padding:12px 14px;border-radius:8px;background:${theme.codeBackground};font-family:${theme.fontMono};font-size:13px;line-height:1.5;white-space:pre-wrap;word-break:break-word"${codeLanguage ? ` data-language="${escapeHtml(codeLanguage)}"` : ''}>${escapeHtml(code.join('\n'))}</pre>`
+          `<pre style="margin:0 0 12px;padding:12px 14px;border-radius:8px;color:${theme.text};background:${theme.codeBackground};font-family:${theme.fontMono};font-size:13px;line-height:1.5;white-space:pre-wrap;word-break:break-word"${codeLanguage ? ` data-language="${escapeHtml(codeLanguage)}"` : ''}>${escapeHtml(code.join('\n'))}</pre>`
         );
         code = null;
         codeLanguage = '';
@@ -232,7 +232,7 @@ export const renderMarkdownForEmail = (
   }
   if (code) {
     html.push(
-      `<pre style="margin:0 0 12px;padding:12px 14px;border-radius:8px;background:${theme.codeBackground};font-family:${theme.fontMono};font-size:13px;line-height:1.5;white-space:pre-wrap;word-break:break-word">${escapeHtml(code.join('\n'))}</pre>`
+      `<pre style="margin:0 0 12px;padding:12px 14px;border-radius:8px;color:${theme.text};background:${theme.codeBackground};font-family:${theme.fontMono};font-size:13px;line-height:1.5;white-space:pre-wrap;word-break:break-word">${escapeHtml(code.join('\n'))}</pre>`
     );
   }
   flushAll();

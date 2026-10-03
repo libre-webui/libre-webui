@@ -1964,7 +1964,19 @@
       "save": "保存",
       "saving": "保存中…",
       "saved": "邮件设置已保存。",
-      "saveFailed": "无法保存邮件设置。"
+      "saveFailed": "无法保存邮件设置。",
+      "templateTitle": "邮件外观",
+      "templateHint": "为新闻摘要和通知邮件选择浅色或深色模板。",
+      "themeLabel": "邮件模板",
+      "themeLight": "浅色",
+      "themeDark": "深色",
+      "previewTitle": "模板预览",
+      "previewLoading": "正在加载预览…",
+      "previewFailed": "无法加载邮件预览。",
+      "previewHeading": "你的新闻摘要",
+      "previewIntro": "每日新闻邮件的预览。",
+      "previewMarkdown": "## 今日要闻\n\n- 科技与研究动态\n- 来自你所选来源的新闻\n\n**摘要：** 每日新闻已准备好，供你阅读。",
+      "previewLinkLabel": "打开结果"
     },
     "strandsAccess": {
       "title": "Strands 引擎",

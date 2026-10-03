@@ -1964,7 +1964,19 @@
       "save": "Save",
       "saving": "Saving…",
       "saved": "Email settings saved.",
-      "saveFailed": "The email settings could not be saved."
+      "saveFailed": "The email settings could not be saved.",
+      "templateTitle": "Email appearance",
+      "templateHint": "Choose a light or dark template for news digests and notification emails.",
+      "themeLabel": "Email template",
+      "themeLight": "Light",
+      "themeDark": "Dark",
+      "previewTitle": "Template preview",
+      "previewLoading": "Loading preview…",
+      "previewFailed": "Could not load the email preview.",
+      "previewHeading": "Your news digest",
+      "previewIntro": "A preview of your daily news email.",
+      "previewMarkdown": "## Today’s highlights\n\n- Technology and research updates\n- News from your selected sources\n\n**Summary:** Your daily news, ready to read.",
+      "previewLinkLabel": "Open the result"
     },
     "strandsAccess": {
       "title": "Strands engine",

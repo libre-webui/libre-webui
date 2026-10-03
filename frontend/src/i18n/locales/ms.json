@@ -1964,7 +1964,19 @@
       "save": "Simpan",
       "saving": "Menyimpan…",
       "saved": "Tetapan e-mel disimpan.",
-      "saveFailed": "Tetapan e-mel tidak dapat disimpan."
+      "saveFailed": "Tetapan e-mel tidak dapat disimpan.",
+      "templateTitle": "Penampilan e-mel",
+      "templateHint": "Pilih templat cerah atau gelap untuk ringkasan berita dan e-mel pemberitahuan.",
+      "themeLabel": "Templat e-mel",
+      "themeLight": "Cerah",
+      "themeDark": "Gelap",
+      "previewTitle": "Pratonton templat",
+      "previewLoading": "Memuatkan pratonton…",
+      "previewFailed": "Pratonton e-mel tidak dapat dimuatkan.",
+      "previewHeading": "Ringkasan berita anda",
+      "previewIntro": "Pratonton e-mel berita harian anda.",
+      "previewMarkdown": "## Sorotan hari ini\n\n- Kemas kini teknologi dan penyelidikan\n- Berita daripada sumber pilihan anda\n\n**Ringkasan:** Berita harian anda sedia untuk dibaca.",
+      "previewLinkLabel": "Buka hasil"
     },
     "strandsAccess": {
       "title": "Enjin Strands",

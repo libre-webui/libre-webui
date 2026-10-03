@@ -20,6 +20,7 @@ import { isDemoMode } from '@/utils/demoMode';
 import { api, createDemoResponse } from './client';
 
 export type SmtpSecurity = 'tls' | 'starttls' | 'none';
+export type EmailTheme = 'light' | 'dark';
 export type EmailSettingSource = 'stored' | 'env' | 'default';
 
 export interface EmailSettingsResponse {
@@ -37,9 +38,17 @@ export interface EmailSettingsResponse {
   from?: string;
   rejectUnauthorized?: boolean;
   appUrl?: string;
+  emailTheme?: EmailTheme;
   configured?: boolean;
   sources?: Record<
-    'host' | 'port' | 'security' | 'username' | 'password' | 'from' | 'appUrl',
+    | 'host'
+    | 'port'
+    | 'security'
+    | 'username'
+    | 'password'
+    | 'from'
+    | 'appUrl'
+    | 'emailTheme',
     EmailSettingSource
   >;
 }
@@ -55,6 +64,20 @@ export interface EmailSettingsUpdate {
   from?: string;
   rejectUnauthorized?: boolean;
   appUrl?: string;
+  emailTheme?: EmailTheme;
+}
+
+export interface EmailPreviewInput {
+  emailTheme: EmailTheme;
+  heading: string;
+  lines: string[];
+  markdown?: string;
+  linkLabel?: string;
+}
+
+export interface EmailPreviewResponse {
+  html: string;
+  text: string;
 }
 
 export interface EmailTestResponse {
@@ -71,6 +94,30 @@ const demoSettings: EmailSettingsResponse = {
 };
 
 export const emailApi = {
+  preview: (
+    input: EmailPreviewInput
+  ): Promise<ApiResponse<EmailPreviewResponse>> => {
+    if (isDemoMode()) {
+      const escape = (value: string) =>
+        value.replace(
+          /[&<>"']/g,
+          character =>
+            ({
+              '&': '&amp;',
+              '<': '&lt;',
+              '>': '&gt;',
+              '"': '&quot;',
+              "'": '&#39;',
+            })[character]!
+        );
+      const dark = input.emailTheme === 'dark';
+      return createDemoResponse({
+        html: `<html><body style="background:${dark ? '#121211' : '#f4f4f0'};color:${dark ? '#f4f4f0' : '#0d0d0c'};padding:24px;font-family:system-ui"><h1>${escape(input.heading)}</h1>${input.lines.map(line => `<p>${escape(line)}</p>`).join('')}</body></html>`,
+        text: [input.heading, ...input.lines].join('\n\n'),
+      });
+    }
+    return api.post('/email/preview', input).then(res => res.data);
+  },
   getSettings: (): Promise<ApiResponse<EmailSettingsResponse>> => {
     if (isDemoMode()) {
       return createDemoResponse(demoSettings);

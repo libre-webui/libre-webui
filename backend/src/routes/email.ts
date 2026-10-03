@@ -22,6 +22,7 @@ import { userModel } from '../models/userModel.js';
 import {
   emailService,
   EmailSettingsError,
+  validateEmailTheme,
   type EmailSettingsUpdate,
 } from '../services/emailService.js';
 import { SmtpError } from '../utils/smtpClient.js';
@@ -66,6 +67,7 @@ router.get('/settings', async (req: Request, res: Response): Promise<void> => {
             from: settings.from,
             rejectUnauthorized: settings.rejectUnauthorized,
             appUrl: settings.appUrl,
+            emailTheme: settings.emailTheme,
             configured: settings.configured,
             sources: settings.sources,
           }
@@ -93,6 +95,9 @@ const readUpdate = (body: unknown): EmailSettingsUpdate => {
     }
     update[key] = value;
   };
+  if (record.emailTheme !== undefined) {
+    update.emailTheme = validateEmailTheme(record.emailTheme);
+  }
   text('host');
   text('security');
   text('username');
@@ -126,6 +131,63 @@ router.put(
       res.status(500).json({
         success: false,
         error: 'Could not update the email settings.',
+      });
+    }
+  }
+);
+
+/** Draft preview uses the delivery renderer without opening an SMTP session. */
+router.post(
+  '/preview',
+  requireAdmin,
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const body = req.body as Record<string, unknown> | undefined;
+      const emailTheme = validateEmailTheme(body?.emailTheme);
+      const boundedText = (key: string, max: number, required = false) => {
+        const value = body?.[key];
+        if (value === undefined && !required) return undefined;
+        if (
+          typeof value !== 'string' ||
+          value.length > max ||
+          (required && !value.trim())
+        ) {
+          throw new EmailSettingsError(
+            `The ${key} must be text up to ${max} characters.`
+          );
+        }
+        return value;
+      };
+      const heading = boundedText('heading', 200, true)!;
+      const lines = body?.lines;
+      if (
+        !Array.isArray(lines) ||
+        lines.length > 20 ||
+        lines.some(line => typeof line !== 'string' || line.length > 1000)
+      ) {
+        throw new EmailSettingsError(
+          'The lines must be up to 20 text paragraphs of 1000 characters each.'
+        );
+      }
+      const markdown = boundedText('markdown', 6000);
+      const linkLabel = boundedText('linkLabel', 200);
+      const preview = await emailService.preview({
+        emailTheme,
+        heading,
+        lines,
+        ...(markdown !== undefined ? { markdown } : {}),
+        ...(linkLabel !== undefined ? { linkLabel } : {}),
+      });
+      res.json({ success: true, data: preview });
+    } catch (error) {
+      if (error instanceof EmailSettingsError) {
+        res.status(400).json({ success: false, error: error.message });
+        return;
+      }
+      logger.error('Could not preview the email template', { error });
+      res.status(500).json({
+        success: false,
+        error: 'Could not preview the email template.',
       });
     }
   }

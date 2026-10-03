@@ -1964,7 +1964,19 @@
       "save": "Salva",
       "saving": "Salvataggio…",
       "saved": "Impostazioni email salvate.",
-      "saveFailed": "Impossibile salvare le impostazioni email."
+      "saveFailed": "Impossibile salvare le impostazioni email.",
+      "templateTitle": "Aspetto delle email",
+      "templateHint": "Scegli un modello chiaro o scuro per i riepiloghi delle notizie e le email di notifica.",
+      "themeLabel": "Modello email",
+      "themeLight": "Chiaro",
+      "themeDark": "Scuro",
+      "previewTitle": "Anteprima del modello",
+      "previewLoading": "Caricamento dell’anteprima…",
+      "previewFailed": "Impossibile caricare l’anteprima dell’email.",
+      "previewHeading": "Il tuo riepilogo delle notizie",
+      "previewIntro": "Un’anteprima della tua email quotidiana con le notizie.",
+      "previewMarkdown": "## Le notizie di oggi\n\n- Aggiornamenti su tecnologia e ricerca\n- Notizie dalle fonti che hai selezionato\n\n**Riepilogo:** Le tue notizie quotidiane sono pronte da leggere.",
+      "previewLinkLabel": "Apri il risultato"
     },
     "strandsAccess": {
       "title": "Motore Strands",

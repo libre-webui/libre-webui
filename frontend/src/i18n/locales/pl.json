@@ -1964,7 +1964,19 @@
       "save": "Zapisz",
       "saving": "Zapisywanie…",
       "saved": "Ustawienia poczty e-mail zapisane.",
-      "saveFailed": "Nie udało się zapisać ustawień poczty e-mail."
+      "saveFailed": "Nie udało się zapisać ustawień poczty e-mail.",
+      "templateTitle": "Wygląd wiadomości e-mail",
+      "templateHint": "Wybierz jasny lub ciemny szablon dla przeglądów wiadomości i e-maili z powiadomieniami.",
+      "themeLabel": "Szablon wiadomości e-mail",
+      "themeLight": "Jasny",
+      "themeDark": "Ciemny",
+      "previewTitle": "Podgląd szablonu",
+      "previewLoading": "Wczytywanie podglądu…",
+      "previewFailed": "Nie udało się wczytać podglądu wiadomości e-mail.",
+      "previewHeading": "Twój przegląd wiadomości",
+      "previewIntro": "Podgląd codziennej wiadomości z aktualnościami.",
+      "previewMarkdown": "## Najważniejsze dziś\n\n- Nowości z dziedziny technologii i badań\n- Wiadomości z wybranych źródeł\n\n**Podsumowanie:** Twoje codzienne wiadomości są gotowe do przeczytania.",
+      "previewLinkLabel": "Otwórz wynik"
     },
     "strandsAccess": {
       "title": "Silnik Strands",

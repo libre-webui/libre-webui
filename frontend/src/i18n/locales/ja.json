@@ -1964,7 +1964,19 @@
       "save": "保存",
       "saving": "保存中…",
       "saved": "メール設定を保存しました。",
-      "saveFailed": "メール設定を保存できませんでした。"
+      "saveFailed": "メール設定を保存できませんでした。",
+      "templateTitle": "メールの外観",
+      "templateHint": "ニュースダイジェストや通知メールに使う、ライトまたはダークのテンプレートを選択します。",
+      "themeLabel": "メールテンプレート",
+      "themeLight": "ライト",
+      "themeDark": "ダーク",
+      "previewTitle": "テンプレートのプレビュー",
+      "previewLoading": "プレビューを読み込み中…",
+      "previewFailed": "メールのプレビューを読み込めませんでした。",
+      "previewHeading": "ニュースダイジェスト",
+      "previewIntro": "毎日のニュースメールのプレビューです。",
+      "previewMarkdown": "## 今日の注目ニュース\n\n- テクノロジーと研究の最新情報\n- 選択したソースからのニュース\n\n**まとめ：** 毎日のニュースをすぐに読めます。",
+      "previewLinkLabel": "結果を開く"
     },
     "strandsAccess": {
       "title": "Strands エンジン",

@@ -1964,7 +1964,19 @@
       "save": "Opslaan",
       "saving": "Opslaan…",
       "saved": "E-mailinstellingen opgeslagen.",
-      "saveFailed": "De e-mailinstellingen konden niet worden opgeslagen."
+      "saveFailed": "De e-mailinstellingen konden niet worden opgeslagen.",
+      "templateTitle": "Uiterlijk van e-mails",
+      "templateHint": "Kies een licht of donker sjabloon voor nieuwsoverzichten en meldingsmails.",
+      "themeLabel": "E-mailsjabloon",
+      "themeLight": "Licht",
+      "themeDark": "Donker",
+      "previewTitle": "Voorbeeld van sjabloon",
+      "previewLoading": "Voorbeeld laden…",
+      "previewFailed": "Het e-mailvoorbeeld kon niet worden geladen.",
+      "previewHeading": "Je nieuwsoverzicht",
+      "previewIntro": "Een voorbeeld van je dagelijkse nieuwsmail.",
+      "previewMarkdown": "## Hoogtepunten van vandaag\n\n- Updates over technologie en onderzoek\n- Nieuws uit je geselecteerde bronnen\n\n**Samenvatting:** Je dagelijkse nieuws staat klaar om te lezen.",
+      "previewLinkLabel": "Resultaat openen"
     },
     "strandsAccess": {
       "title": "Strands-engine",

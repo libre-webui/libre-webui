@@ -1964,7 +1964,19 @@
       "save": "Enregistrer",
       "saving": "Enregistrement…",
       "saved": "Paramètres de messagerie enregistrés.",
-      "saveFailed": "Les paramètres de messagerie n'ont pas pu être enregistrés."
+      "saveFailed": "Les paramètres de messagerie n'ont pas pu être enregistrés.",
+      "templateTitle": "Apparence des e-mails",
+      "templateHint": "Choisissez un modèle clair ou sombre pour les résumés d’actualités et les e-mails de notification.",
+      "themeLabel": "Modèle d’e-mail",
+      "themeLight": "Clair",
+      "themeDark": "Sombre",
+      "previewTitle": "Aperçu du modèle",
+      "previewLoading": "Chargement de l’aperçu…",
+      "previewFailed": "Impossible de charger l’aperçu de l’e-mail.",
+      "previewHeading": "Votre résumé d’actualités",
+      "previewIntro": "Aperçu de votre e-mail d’actualités quotidien.",
+      "previewMarkdown": "## À la une aujourd’hui\n\n- Actualités sur la technologie et la recherche\n- Nouvelles de vos sources sélectionnées\n\n**En résumé :** vos actualités quotidiennes sont prêtes à être lues.",
+      "previewLinkLabel": "Ouvrir le résultat"
     },
     "strandsAccess": {
       "title": "Moteur Strands",

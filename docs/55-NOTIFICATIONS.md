@@ -122,6 +122,16 @@ password is stored encrypted and never returned to the browser. **Send
 test** delivers a message to the administrator's own address (or any address
 typed in) so the round trip is proven before users rely on it.
 
+Administrators also choose a **Light** or **Dark** email template and preview
+it before saving. Light is the default. The saved preset applies to every
+notification and test email on this instance, including Markdown results;
+it is independent of each user's interface theme. The preview renders draft
+sample content without contacting SMTP, sending mail, or queuing a job.
+Only administrators can read or change the preset or request a preview.
+The built-in presets keep text, links, code blocks, and buttons readable;
+custom HTML templates are not accepted. Email clients may still adjust colors
+according to their own display settings.
+
 Once the switch is on, each user chooses what reaches their inbox under
 **Settings → Notifications → Email notifications**:
 

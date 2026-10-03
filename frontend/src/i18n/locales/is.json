@@ -1964,7 +1964,19 @@
       "save": "Vista",
       "saving": "Vistar…",
       "saved": "Tölvupóststillingar vistaðar.",
-      "saveFailed": "Ekki tókst að vista tölvupóststillingarnar."
+      "saveFailed": "Ekki tókst að vista tölvupóststillingarnar.",
+      "templateTitle": "Útlit tölvupósts",
+      "templateHint": "Veldu ljóst eða dökkt sniðmát fyrir fréttayfirlit og tilkynningapósta.",
+      "themeLabel": "Sniðmát tölvupósts",
+      "themeLight": "Ljóst",
+      "themeDark": "Dökkt",
+      "previewTitle": "Forskoðun sniðmáts",
+      "previewLoading": "Hleð forskoðun…",
+      "previewFailed": "Ekki tókst að hlaða forskoðun tölvupóstsins.",
+      "previewHeading": "Fréttayfirlitið þitt",
+      "previewIntro": "Forskoðun á daglega fréttapóstinum þínum.",
+      "previewMarkdown": "## Helstu fréttir dagsins\n\n- Nýtt úr tækni og rannsóknum\n- Fréttir frá völdum miðlum\n\n**Samantekt:** Daglegu fréttirnar þínar eru tilbúnar til lestrar.",
+      "previewLinkLabel": "Opna niðurstöðuna"
     },
     "strandsAccess": {
       "title": "Strands-vél",

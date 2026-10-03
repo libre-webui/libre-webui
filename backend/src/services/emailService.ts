@@ -29,6 +29,7 @@
 
 import { encryptionService } from './encryptionService.js';
 import {
+  getSystemSetting,
   getSystemSettings,
   setSystemSettings,
 } from './systemSettingsService.js';
@@ -67,6 +68,7 @@ const KEYS = {
   from: 'email.smtp.from',
   rejectUnauthorized: 'email.smtp.reject_unauthorized',
   appUrl: 'email.app_url',
+  emailTheme: 'email.template.theme',
 } as const;
 
 const ENV = {
@@ -84,6 +86,15 @@ const SECURITY_MODES: readonly SmtpSecurity[] = ['tls', 'starttls', 'none'];
 const MAX_TEXT_LENGTH = 6_000;
 const MAX_SUBJECT_LENGTH = 200;
 
+export type EmailTheme = 'light' | 'dark';
+
+export const validateEmailTheme = (value: unknown): EmailTheme => {
+  if (value !== 'light' && value !== 'dark') {
+    throw new EmailSettingsError('The email theme must be light or dark.');
+  }
+  return value;
+};
+
 export type EmailSettingSource = 'stored' | 'env' | 'default';
 
 /** What administrators see: everything except the password itself. */
@@ -97,12 +108,20 @@ export interface EmailSettingsView {
   from: string;
   rejectUnauthorized: boolean;
   appUrl: string;
+  emailTheme: EmailTheme;
   /** Host, sender and port are present, whatever the enabled switch says. */
   configured: boolean;
   /** Enabled and configured: users may opt in. */
   available: boolean;
   sources: Record<
-    'host' | 'port' | 'security' | 'username' | 'password' | 'from' | 'appUrl',
+    | 'host'
+    | 'port'
+    | 'security'
+    | 'username'
+    | 'password'
+    | 'from'
+    | 'appUrl'
+    | 'emailTheme',
     EmailSettingSource
   >;
 }
@@ -118,6 +137,7 @@ export interface EmailSettingsUpdate {
   from?: string;
   rejectUnauthorized?: boolean;
   appUrl?: string;
+  emailTheme?: EmailTheme;
 }
 
 export interface EmailMessage {
@@ -213,7 +233,7 @@ interface ResolvedSettings {
   password: string;
 }
 
-class EmailService {
+export class EmailService {
   private cache: ResolvedSettings | null = null;
 
   /** Drops the memoized settings; called after every admin update. */
@@ -222,7 +242,24 @@ class EmailService {
   }
 
   private async resolve(): Promise<ResolvedSettings> {
-    if (this.cache) return this.cache;
+    if (this.cache) {
+      // Workers and app replicas keep their SMTP cache, but the instance preset
+      // must follow authoritative settings after another replica saves it.
+      const cached = this.cache;
+      const storedTheme = await getSystemSetting(KEYS.emailTheme);
+      const emailTheme: EmailTheme = storedTheme === 'dark' ? 'dark' : 'light';
+      return {
+        ...cached,
+        view: {
+          ...cached.view,
+          emailTheme,
+          sources: {
+            ...cached.view.sources,
+            emailTheme: storedTheme === emailTheme ? 'stored' : 'default',
+          },
+        },
+      };
+    }
     const stored = await getSystemSettings(Object.values(KEYS));
 
     const pick = <T>(
@@ -277,6 +314,8 @@ class EmailService {
       }
     }
 
+    const emailTheme: EmailTheme =
+      stored[KEYS.emailTheme] === 'dark' ? 'dark' : 'light';
     const enabled = stored[KEYS.enabled] === 'true';
     const configured = host.value.length > 0 && from.value.length > 0;
     const resolved: ResolvedSettings = {
@@ -291,6 +330,7 @@ class EmailService {
         from: from.value,
         rejectUnauthorized: rejectUnauthorized.value,
         appUrl: appUrl.value,
+        emailTheme,
         configured,
         available: enabled && configured,
         sources: {
@@ -301,6 +341,8 @@ class EmailService {
           password: passwordSource,
           from: from.source,
           appUrl: appUrl.source,
+          emailTheme:
+            stored[KEYS.emailTheme] === emailTheme ? 'stored' : 'default',
         },
       },
     };
@@ -310,6 +352,22 @@ class EmailService {
 
   async getSettings(): Promise<EmailSettingsView> {
     return (await this.resolve()).view;
+  }
+
+  async preview(input: {
+    emailTheme: EmailTheme;
+    heading: string;
+    lines: string[];
+    markdown?: string;
+    linkLabel?: string;
+  }): Promise<{ html: string; text: string }> {
+    const { appUrl } = await this.getSettings();
+    return renderNotificationEmail({
+      ...input,
+      emailTheme: validateEmailTheme(input.emailTheme),
+      appUrl,
+      href: '/',
+    });
   }
 
   /** Whether users may opt into email notifications right now. */
@@ -323,6 +381,9 @@ class EmailService {
     const current = await this.resolve();
     const values: Record<string, string> = {};
 
+    if (update.emailTheme !== undefined) {
+      values[KEYS.emailTheme] = validateEmailTheme(update.emailTheme);
+    }
     if (update.host !== undefined)
       values[KEYS.host] = normalizeHost(update.host);
     if (update.security !== undefined) {
@@ -449,6 +510,7 @@ class EmailService {
         'Notifications you opt into will arrive from this address.',
       ],
       appUrl: view.appUrl,
+      emailTheme: view.emailTheme,
     });
     await sendSmtpMail(config, {
       from: view.from,
@@ -517,6 +579,7 @@ class EmailService {
         lines: input.lines,
         ...(input.markdown ? { markdown: input.markdown } : {}),
         appUrl: view.appUrl,
+        emailTheme: view.emailTheme,
         ...(input.href ? { href: input.href } : {}),
         ...(input.linkLabel ? { linkLabel: input.linkLabel } : {}),
       });
@@ -622,17 +685,30 @@ export const absoluteAppLink = (
   return `${appUrl}${href.startsWith('/') ? '' : '/'}${href}`;
 };
 
-/** The website's light palette, inlined because mail clients drop stylesheets. */
-const BRAND = {
+/** Preset palettes, inlined because mail clients drop stylesheets. */
+const LIGHT_BRAND = {
   page: '#f3f0ea',
   surface: '#fffdf9',
   text: '#0a0a0b',
   muted: '#67635d',
-  accent: '#ff7b52',
   accentDeep: '#bd4225',
   border: 'rgba(10, 10, 11, 0.14)',
+  codeBackground: DEFAULT_EMAIL_MARKDOWN_THEME.codeBackground,
+  buttonText: '#ffffff',
   logo: 'https://librewebui.org/logo-dark.png',
   site: 'https://librewebui.org',
+} as const;
+
+const DARK_BRAND = {
+  ...LIGHT_BRAND,
+  page: '#161615',
+  surface: '#242422',
+  text: '#f3f0ea',
+  muted: '#c3bdb3',
+  accentDeep: '#ff9878',
+  border: '#5a5751',
+  codeBackground: '#353530',
+  buttonText: '#161615',
 } as const;
 
 /**
@@ -645,6 +721,7 @@ export const renderNotificationEmail = (input: {
   lines: string[];
   markdown?: string;
   appUrl: string;
+  emailTheme?: EmailTheme;
   href?: string;
   linkLabel?: string;
 }): { text: string; html: string } => {
@@ -657,7 +734,16 @@ export const renderNotificationEmail = (input: {
     'Sent by Libre WebUI. Change what you receive under Settings > Notifications.'
   );
 
-  const theme = DEFAULT_EMAIL_MARKDOWN_THEME;
+  const emailTheme = input.emailTheme ?? 'light';
+  const BRAND = emailTheme === 'dark' ? DARK_BRAND : LIGHT_BRAND;
+  const theme = {
+    ...DEFAULT_EMAIL_MARKDOWN_THEME,
+    text: BRAND.text,
+    muted: BRAND.muted,
+    accent: BRAND.accentDeep,
+    border: BRAND.border,
+    codeBackground: BRAND.codeBackground,
+  };
   const paragraphs = input.lines
     .map(
       line =>
@@ -668,19 +754,20 @@ export const renderNotificationEmail = (input: {
     ? renderMarkdownForEmail(input.markdown, theme)
     : '';
   const button = link
-    ? `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:22px 0 4px"><tr><td style="border-radius:999px;background:${BRAND.accentDeep}"><a href="${escapeHtml(link)}" style="display:inline-block;padding:11px 20px;border-radius:999px;font-family:${theme.fontBody};font-size:14px;font-weight:600;color:#ffffff;text-decoration:none">${escapeHtml(input.linkLabel ?? 'Open')}</a></td></tr></table>`
+    ? `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:22px 0 4px"><tr><td style="border-radius:999px;background:${BRAND.accentDeep}"><a href="${escapeHtml(link)}" style="display:inline-block;padding:11px 20px;border-radius:999px;font-family:${theme.fontBody};font-size:14px;font-weight:600;color:${BRAND.buttonText};text-decoration:none">${escapeHtml(input.linkLabel ?? 'Open')}</a></td></tr></table>`
     : '';
   const settingsLink = input.appUrl
     ? `<a href="${escapeHtml(input.appUrl)}" style="color:${BRAND.muted};text-decoration:underline">Settings &gt; Notifications</a>`
     : 'Settings &gt; Notifications';
   const html = [
     '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">',
+    `<meta name="color-scheme" content="${emailTheme}"><meta name="supported-color-schemes" content="${emailTheme}">`,
     '<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">',
     `<title>${escapeHtml(input.heading)}</title></head>`,
-    `<body style="margin:0;padding:0;background:${BRAND.page};color:${BRAND.text};font-family:${theme.fontBody}">`,
+    `<body style="margin:0;padding:0;color-scheme:${emailTheme};background:${BRAND.page};color:${BRAND.text};font-family:${theme.fontBody}">`,
     `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${BRAND.page}"><tr><td align="center" style="padding:32px 16px">`,
     `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px">`,
-    `<tr><td style="padding:0 4px 18px"><a href="${BRAND.site}" style="text-decoration:none;color:${BRAND.text}"><img src="${BRAND.logo}" width="28" height="28" alt="" style="vertical-align:middle;border:0;border-radius:6px"> <span style="vertical-align:middle;margin-left:8px;font-family:'Space Grotesk', ${theme.fontBody};font-size:17px;font-weight:700;letter-spacing:-0.01em">Libre WebUI</span></a></td></tr>`,
+    `<tr><td style="padding:0 4px 18px"><a href="${BRAND.site}" style="text-decoration:none;color:${BRAND.text}"><img src="${BRAND.logo}" width="28" height="28" alt="" style="vertical-align:middle;border:0;border-radius:6px;background:${LIGHT_BRAND.surface}"> <span style="vertical-align:middle;margin-left:8px;font-family:'Space Grotesk', ${theme.fontBody};font-size:17px;font-weight:700;letter-spacing:-0.01em">Libre WebUI</span></a></td></tr>`,
     `<tr><td style="background:${BRAND.surface};border:1px solid ${BRAND.border};border-radius:12px;padding:28px 28px 22px">`,
     `<h1 style="margin:0 0 16px;font-family:'Space Grotesk', ${theme.fontBody};font-size:22px;line-height:1.25;font-weight:700;letter-spacing:-0.01em;color:${BRAND.text}">${escapeHtml(input.heading)}</h1>`,
     paragraphs,
