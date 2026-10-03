@@ -396,10 +396,7 @@ export function WorkspaceGitPanel({
         role='status'
         className='flex h-full items-center justify-center text-ink-muted'
       >
-        <Loader2
-          aria-hidden='true'
-          className='h-5 w-5 animate-spin motion-reduce:animate-none'
-        />
+        <Loader2 className='h-5 w-5 animate-spin motion-reduce:animate-none' />
         <span className='sr-only'>{t('common.loading')}</span>
       </div>
     );

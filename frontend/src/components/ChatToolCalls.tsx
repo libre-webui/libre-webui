@@ -43,29 +43,16 @@ const StatusIcon: React.FC<{ status: ChatToolCall['status'] }> = ({
   status,
 }) => {
   if (status === 'running' || status === 'awaiting_approval') {
-    return <Loader2 className='h-3.5 w-3.5 animate-spin' aria-hidden='true' />;
+    return <Loader2 className='h-3.5 w-3.5 animate-spin' />;
   }
   if (status === 'succeeded') {
-    return (
-      <Check
-        className='h-3.5 w-3.5 text-green-600 dark:text-green-400'
-        aria-hidden='true'
-      />
-    );
+    return <Check className='h-3.5 w-3.5 text-green-600 dark:text-green-400' />;
   }
   if (status === 'denied') {
-    return (
-      <X
-        className='h-3.5 w-3.5 text-amber-600 dark:text-amber-400'
-        aria-hidden='true'
-      />
-    );
+    return <X className='h-3.5 w-3.5 text-amber-600 dark:text-amber-400' />;
   }
   return (
-    <AlertTriangle
-      className='h-3.5 w-3.5 text-red-500 dark:text-red-400'
-      aria-hidden='true'
-    />
+    <AlertTriangle className='h-3.5 w-3.5 text-red-500 dark:text-red-400' />
   );
 };
 
@@ -206,7 +193,7 @@ export const ChatToolApprovalCard: React.FC<{
         id={titleId}
         className='flex items-center gap-2 font-medium text-primary-800 dark:text-primary-200'
       >
-        <ShieldQuestion className='h-4 w-4 shrink-0' aria-hidden='true' />
+        <ShieldQuestion className='h-4 w-4 shrink-0' />
         {t('tools.approval.title')}
       </div>
       <p className='mt-1 text-primary-800/90 dark:text-primary-100/80'>

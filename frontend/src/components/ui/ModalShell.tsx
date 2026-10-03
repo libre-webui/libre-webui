@@ -138,7 +138,7 @@ const ModalHeader: React.FC<
         aria-label={t('common.close')}
         className='shrink-0 rounded-xl p-2 transition-colors text-ink-muted hover:bg-interactive-hover hover:text-ink focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary-500'
       >
-        <X size={20} aria-hidden='true' />
+        <X size={20} />
       </button>
     </div>
   );

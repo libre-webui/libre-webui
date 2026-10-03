@@ -229,7 +229,7 @@ export const SettingsNotificationsTab: React.FC = () => {
         className='mb-0'
         title={
           <span className='flex items-center gap-2'>
-            <BellRing className='h-5 w-5 text-primary-500' aria-hidden='true' />
+            <BellRing className='h-5 w-5 text-primary-500' />
             {t('settings.notifications.title')}
           </span>
         }

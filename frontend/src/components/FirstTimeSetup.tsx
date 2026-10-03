@@ -379,12 +379,9 @@ export const FirstTimeSetup: React.FC<FirstTimeSetupProps> = ({
                   aria-label={t('setup.encryptionKey.copyToClipboard')}
                 >
                   {keyCopied ? (
-                    <Check
-                      className='h-5 w-5 text-success-800 dark:text-success-400'
-                      aria-hidden='true'
-                    />
+                    <Check className='h-5 w-5 text-success-800 dark:text-success-400' />
                   ) : (
-                    <Copy className='h-5 w-5' aria-hidden='true' />
+                    <Copy className='h-5 w-5' />
                   )}
                 </button>
               </div>
@@ -523,11 +520,7 @@ export const FirstTimeSetup: React.FC<FirstTimeSetupProps> = ({
                   }
                   aria-pressed={showPassword}
                 >
-                  {showPassword ? (
-                    <EyeOff size={20} aria-hidden='true' />
-                  ) : (
-                    <Eye size={20} aria-hidden='true' />
-                  )}
+                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                 </button>
               </div>
               <PasswordStrengthMeter password={password} />
@@ -566,9 +559,9 @@ export const FirstTimeSetup: React.FC<FirstTimeSetupProps> = ({
                   aria-pressed={showConfirmPassword}
                 >
                   {showConfirmPassword ? (
-                    <EyeOff size={20} aria-hidden='true' />
+                    <EyeOff size={20} />
                   ) : (
-                    <Eye size={20} aria-hidden='true' />
+                    <Eye size={20} />
                   )}
                 </button>
               </div>

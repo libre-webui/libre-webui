@@ -630,7 +630,7 @@ export function SidebarWorkTasks({
               <>
                 {agentTasks.map(renderTaskRow)}
                 {adhocTasks.length > 0 && (
-                  <div className='mb-1 mt-4 flex items-center justify-between px-1'>
+                  <div className='mb-1 mt-4! flex items-center justify-between px-1'>
                     <h3 className='text-xs font-medium text-ink-subtle'>
                       {t('work.tasks.title', { defaultValue: 'Work tasks' })}
                     </h3>

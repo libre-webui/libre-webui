@@ -138,10 +138,7 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
           />
 
           <div className='flex flex-col items-center text-center'>
-            <Upload
-              className='h-8 w-8 text-gray-400 dark:text-gray-500 mb-2'
-              aria-hidden='true'
-            />
+            <Upload className='h-8 w-8 text-gray-400 dark:text-gray-500 mb-2' />
             <p className='text-sm text-gray-700 dark:text-gray-300 mb-2'>
               {t('chat.mediaUpload.dropImagesHere')}{' '}
               <button
@@ -182,7 +179,7 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
                   })}
                   className='opacity-0 group-hover:opacity-100 focus-visible:opacity-100 [@media(hover:none)]:opacity-100 transition-opacity bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 hover:bg-red-100 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400 p-1 rounded-full'
                 >
-                  <X className='h-4 w-4' aria-hidden='true' />
+                  <X className='h-4 w-4' />
                 </Button>
               </div>
             </div>
@@ -198,7 +195,7 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
           onClick={() => fileInputRef.current?.click()}
           className='w-full sm:w-auto'
         >
-          <ImageIcon className='h-4 w-4' aria-hidden='true' />
+          <ImageIcon className='h-4 w-4' />
           {t('chat.mediaUpload.addMore', {
             count: images.length,
             max: maxImages,

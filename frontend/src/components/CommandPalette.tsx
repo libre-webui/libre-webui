@@ -602,10 +602,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
         className='flex h-[min(34rem,76vh)] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-line bg-surface-overlay/95 shadow-overlay backdrop-blur-xl animate-scale-in motion-reduce:animate-none'
       >
         <div className='flex shrink-0 items-center gap-2.5 border-b border-line px-4'>
-          <Search
-            className='h-4 w-4 shrink-0 text-ink-muted'
-            aria-hidden='true'
-          />
+          <Search className='h-4 w-4 shrink-0 text-ink-muted' />
           <input
             data-testid='command-palette-input'
             role='combobox'

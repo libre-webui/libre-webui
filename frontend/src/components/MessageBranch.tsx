@@ -75,7 +75,7 @@ const MessageBranchBase: React.FC<MessageBranchProps> = ({
     <div className={cn('relative py-2', className)}>
       {/* Branch indicator - minimal */}
       <div className='flex items-center gap-1.5 pb-3 text-[10px] font-medium uppercase tracking-[0.12em] text-ink-muted'>
-        <GitBranch className='h-3 w-3' aria-hidden='true' />
+        <GitBranch className='h-3 w-3' />
         <span>{t('chat.branch.variants', { count: messages.length })}</span>
       </div>
 
@@ -149,7 +149,7 @@ const MessageBranchBase: React.FC<MessageBranchProps> = ({
                   )}
                 </div>
                 {isActive && !isThisMessageStreaming && (
-                  <Check className='h-3 w-3' aria-hidden='true' />
+                  <Check className='h-3 w-3' />
                 )}
                 {!isActive && !isThisMessageStreaming && (
                   <span className='text-[10px]'>{t('chat.branch.select')}</span>

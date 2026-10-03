@@ -289,7 +289,7 @@ function MediaPreview({
   if (isError) {
     return (
       <div className='flex aspect-video flex-col items-center justify-center gap-2 bg-surface-subtle px-3 text-center text-xs text-ink-muted'>
-        <ImageOff className='h-6 w-6' aria-hidden='true' />
+        <ImageOff className='h-6 w-6' />
         {t('mediaGallery.previewFailed')}
       </div>
     );
@@ -300,10 +300,7 @@ function MediaPreview({
         role='status'
         className='flex aspect-video items-center justify-center bg-gray-100 dark:bg-white/3'
       >
-        <Loader2
-          className='h-6 w-6 animate-spin text-gray-400'
-          aria-hidden='true'
-        />
+        <Loader2 className='h-6 w-6 animate-spin text-gray-400' />
         <span className='sr-only'>{t('common.loading')}</span>
       </div>
     );
@@ -340,7 +337,7 @@ function MediaPreview({
   }
   return (
     <div className='flex min-h-40 flex-col items-center justify-center gap-3 bg-surface-subtle p-4'>
-      <Volume2 className='h-9 w-9 text-ink-muted' aria-hidden='true' />
+      <Volume2 className='h-9 w-9 text-ink-muted' />
       <audio
         src={source}
         controls

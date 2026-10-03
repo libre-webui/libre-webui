@@ -888,7 +888,7 @@ export const ChatPage: React.FC = () => {
             aria-label={t('chat.controls.title')}
             aria-expanded={controlsOpen}
           >
-            <SlidersHorizontal className='h-4 w-4' aria-hidden='true' />
+            <SlidersHorizontal className='h-4 w-4' />
           </button>
 
           {/* Private Mode Button - Top Right Corner */}
@@ -901,7 +901,7 @@ export const ChatPage: React.FC = () => {
             className='absolute inset-e-15 top-4 z-10 flex items-center gap-2 rounded-full border border-black/[0.07] bg-surface/65 px-3 py-2 text-xs font-medium text-gray-500 backdrop-blur-md transition-colors duration-150 hover:bg-surface-raised hover:text-gray-950 disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/8 dark:bg-dark-200/65 dark:text-dark-600 dark:hover:bg-dark-200 dark:hover:text-dark-950 sm:inset-e-17 sm:top-6'
             title={t('chat.session.privateTooltip')}
           >
-            <Ghost className='h-3.5 w-3.5' aria-hidden='true' />
+            <Ghost className='h-3.5 w-3.5' />
             <span>{t('chat.session.incognito', 'Incognito Chat')}</span>
           </button>
 
@@ -970,15 +970,7 @@ export const ChatPage: React.FC = () => {
 
                 {/* Floating composer card: text row on top, controls below. */}
                 <form onSubmit={handleWelcomeSubmit}>
-                  <div
-                    data-composer-box=''
-                    className={cn(
-                      composerSurfaceClass,
-                      // The shared surface's focus cue is faint; the text
-                      // field inside has no outline of its own.
-                      'focus-within:border-primary-500 focus-within:ring-primary-500/30 dark:focus-within:border-primary-400 dark:focus-within:ring-primary-400/30'
-                    )}
-                  >
+                  <div data-composer-box='' className={composerSurfaceClass}>
                     <ComposerSuggestions
                       ref={welcomeSuggestionsRef}
                       message={welcomeMessage}
@@ -1023,13 +1015,13 @@ export const ChatPage: React.FC = () => {
                       >
                         {hasAdvancedFeatures ? (
                           <div className='relative flex items-center justify-center'>
-                            <Paperclip className='h-4 w-4' aria-hidden='true' />
+                            <Paperclip className='h-4 w-4' />
                             <div className='absolute -top-0.5 -inset-e-0.5 h-1.5 w-1.5 bg-primary-500 rounded-full' />
                           </div>
                         ) : showWelcomeAdvanced ? (
-                          <Minus className='h-4 w-4' aria-hidden='true' />
+                          <Minus className='h-4 w-4' />
                         ) : (
-                          <Plus className='h-4 w-4' aria-hidden='true' />
+                          <Plus className='h-4 w-4' />
                         )}
                       </Button>
 
@@ -1066,7 +1058,7 @@ export const ChatPage: React.FC = () => {
                           }
                           aria-pressed={welcomeWebSearch}
                         >
-                          <Globe className='h-4 w-4' aria-hidden='true' />
+                          <Globe className='h-4 w-4' />
                         </Button>
                       )}
 
@@ -1105,7 +1097,7 @@ export const ChatPage: React.FC = () => {
                         title={t('chat.input.sendMessage')}
                         aria-label={t('chat.input.sendMessage')}
                       >
-                        <ArrowUp className='h-4 w-4' aria-hidden='true' />
+                        <ArrowUp className='h-4 w-4' />
                       </Button>
                     </div>
                   </div>
@@ -1232,7 +1224,7 @@ export const ChatPage: React.FC = () => {
               aria-label={t('chat.controls.title')}
               aria-expanded={controlsOpen}
             >
-              <SlidersHorizontal className='h-3.5 w-3.5' aria-hidden='true' />
+              <SlidersHorizontal className='h-3.5 w-3.5' />
             </button>
             {currentSession.settings?.forkedFrom && (
               <button

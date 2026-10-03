@@ -670,10 +670,7 @@ const SystemPage: React.FC = () => {
           role='status'
           className='flex min-h-[50vh] items-center justify-center'
         >
-          <Loader2
-            className='h-7 w-7 animate-spin text-primary-500'
-            aria-hidden='true'
-          />
+          <Loader2 className='h-7 w-7 animate-spin text-primary-500' />
           <span className='sr-only'>{t('common.loading')}</span>
         </div>
       </PageShell>
@@ -715,7 +712,7 @@ const SystemPage: React.FC = () => {
           role='alert'
           className='mb-6 flex items-center gap-3 rounded-2xl border border-error-200 bg-error-50 px-4 py-3 text-sm text-error-700 dark:border-error-900/40 dark:bg-error-900/30 dark:text-error-300'
         >
-          <TriangleAlert className='h-4 w-4 shrink-0' aria-hidden='true' />
+          <TriangleAlert className='h-4 w-4 shrink-0' />
           <span>{errorMessage}</span>
         </div>
       )}

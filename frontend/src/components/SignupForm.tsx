@@ -293,11 +293,7 @@ export const SignupForm: React.FC<SignupFormProps> = ({
               }
               aria-pressed={showPassword}
             >
-              {showPassword ? (
-                <EyeOff size={20} aria-hidden='true' />
-              ) : (
-                <Eye size={20} aria-hidden='true' />
-              )}
+              {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
             </button>
           </div>
           <PasswordStrengthMeter password={password} />
@@ -339,11 +335,7 @@ export const SignupForm: React.FC<SignupFormProps> = ({
               }
               aria-pressed={showConfirmPassword}
             >
-              {showConfirmPassword ? (
-                <EyeOff size={20} aria-hidden='true' />
-              ) : (
-                <Eye size={20} aria-hidden='true' />
-              )}
+              {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
             </button>
           </div>
         </div>

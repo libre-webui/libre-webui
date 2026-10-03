@@ -1235,10 +1235,7 @@ export function WorkspacePane({
               role='status'
               className='m-auto flex items-center gap-2 text-xs text-ink-muted'
             >
-              <Loader2
-                aria-hidden='true'
-                className='h-4 w-4 animate-spin motion-reduce:animate-none'
-              />
+              <Loader2 className='h-4 w-4 animate-spin motion-reduce:animate-none' />
               {t('work.preview.starting', {
                 defaultValue: 'Starting preview…',
               })}

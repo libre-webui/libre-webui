@@ -415,7 +415,7 @@ export default function StrandsPage() {
             disabled={!!streaming}
             data-testid='strands-new-session'
           >
-            <MessageSquarePlus className='me-2 h-4 w-4' aria-hidden='true' />
+            <MessageSquarePlus className='me-2 h-4 w-4' />
             {t('strands.newSession')}
           </Button>
         }

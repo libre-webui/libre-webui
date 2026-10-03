@@ -172,7 +172,6 @@ function TeachNameDialog({
           >
             {saving && (
               <Loader2
-                aria-hidden='true'
                 size={12}
                 className='animate-spin motion-reduce:animate-none'
               />

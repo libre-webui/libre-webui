@@ -40,7 +40,6 @@ export const ImageLightbox: React.FC<ImageLightboxProps> = ({
 }) => {
   const { t } = useTranslation();
   const dialogRef = useRef<HTMLDivElement>(null);
-  // Focus trap, Escape and focus restore.
   useDialogFocus(dialogRef, { onClose });
 
   useEffect(() => {
@@ -114,7 +113,7 @@ export const ImageLightbox: React.FC<ImageLightboxProps> = ({
             'transition-colors'
           )}
         >
-          <X className='h-6 w-6 text-white' aria-hidden='true' />
+          <X className='h-6 w-6 text-white' />
         </button>
 
         {/* Image */}

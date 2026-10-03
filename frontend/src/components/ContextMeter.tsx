@@ -148,10 +148,7 @@ export const ContextMeter: React.FC<ContextMeterProps> = ({
         </svg>
         {/* Color alone must not carry the warning. */}
         {ratio >= 0.8 && (
-          <AlertTriangle
-            className='absolute inset-e-0 top-0 h-3 w-3'
-            aria-hidden='true'
-          />
+          <AlertTriangle className='absolute inset-e-0 top-0 h-3 w-3' />
         )}
       </span>
 

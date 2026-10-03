@@ -267,10 +267,7 @@ export function WorkspaceTerminal({
           role='status'
           className='pointer-events-none absolute inset-0 flex items-center justify-center gap-2 text-xs text-ink-muted'
         >
-          <Loader2
-            aria-hidden='true'
-            className='h-4 w-4 animate-spin motion-reduce:animate-none'
-          />
+          <Loader2 className='h-4 w-4 animate-spin motion-reduce:animate-none' />
           {t('work.terminal.connecting', {
             defaultValue: 'Opening a shell in the sandbox…',
           })}

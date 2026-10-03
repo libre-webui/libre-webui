@@ -221,15 +221,16 @@ export const HomePage: React.FC = () => {
                   <span className='min-w-0 flex-1 truncate'>
                     {session.title || t('tabs.chat', 'Chat')}
                   </span>
-                  <span className='hidden shrink-0 font-mono text-[10px] text-ink-subtle sm:inline'>
-                    {session.model.startsWith('persona:')
-                      ? chatModels.find(
-                          model =>
-                            model.isPersona && model.name === session.model
-                        )?.personaName || t('chat.persona.label', 'Persona')
-                      : session.model}
-                  </span>
                   <span className='shrink-0 font-mono text-[10px] text-ink-subtle'>
+                    <span className='hidden sm:inline'>
+                      {session.model.startsWith('persona:')
+                        ? chatModels.find(
+                            model =>
+                              model.isPersona && model.name === session.model
+                          )?.personaName || t('chat.persona.label', 'Persona')
+                        : session.model}
+                      {' · '}
+                    </span>
                     {formatTimestamp(session.updatedAt, i18n.language)}
                   </span>
                 </button>

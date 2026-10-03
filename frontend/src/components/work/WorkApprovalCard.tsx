@@ -91,7 +91,7 @@ export const WorkApprovalCard: React.FC<{
         role='alert'
         className='flex items-center gap-2 font-medium text-primary-800 dark:text-primary-200'
       >
-        <ShieldQuestion aria-hidden='true' className='h-4 w-4 shrink-0' />
+        <ShieldQuestion className='h-4 w-4 shrink-0' />
         {t('work.approval.title')}
       </div>
       <p className='mt-1 text-primary-800/90 dark:text-primary-100/80'>

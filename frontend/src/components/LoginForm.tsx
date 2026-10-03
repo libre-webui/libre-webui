@@ -574,11 +574,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
               }
               aria-pressed={showPassword}
             >
-              {showPassword ? (
-                <EyeOff size={20} aria-hidden='true' />
-              ) : (
-                <Eye size={20} aria-hidden='true' />
-              )}
+              {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
             </button>
           </div>
         </div>

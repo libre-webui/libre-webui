@@ -325,6 +325,22 @@ const RichMessageContentBase: React.FC<RichMessageContentProps> = ({
         </td>
       );
     },
+    a({ children, node: _node, href, ...props }) {
+      // Off-page links open in a new tab so following one keeps the chat.
+      const external = Boolean(href) && !href?.startsWith('#');
+      return (
+        <a
+          {...props}
+          href={href}
+          {...(external
+            ? { target: '_blank', rel: 'noopener noreferrer' }
+            : {})}
+          className='text-primary-600 underline decoration-primary-600/30 underline-offset-2 transition-colors hover:decoration-current dark:text-primary-400 dark:decoration-primary-400/40'
+        >
+          {children}
+        </a>
+      );
+    },
   };
 
   return (

@@ -82,7 +82,7 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({
             aria-label={t('notifications.markAllRead')}
             data-testid='notification-mark-all'
           >
-            <CheckCheck className='h-3.5 w-3.5' aria-hidden='true' />
+            <CheckCheck className='h-3.5 w-3.5' />
           </button>
           <button
             type='button'
@@ -91,7 +91,7 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({
             title={t('common.close')}
             aria-label={t('common.close')}
           >
-            <X className='h-3.5 w-3.5' aria-hidden='true' />
+            <X className='h-3.5 w-3.5' />
           </button>
         </div>
         <div className='min-h-0 flex-1 overflow-y-auto scrollbar-thin'>
@@ -111,10 +111,7 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({
             </div>
           ) : items === null ? (
             <div role='status' className='py-6'>
-              <Loader2
-                className='mx-auto h-4 w-4 animate-spin text-ink-muted motion-reduce:animate-none'
-                aria-hidden='true'
-              />
+              <Loader2 className='mx-auto h-4 w-4 animate-spin text-ink-muted motion-reduce:animate-none' />
               <span className='sr-only'>{t('common.loading')}</span>
             </div>
           ) : items.length === 0 ? (
@@ -171,7 +168,7 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({
                     aria-label={t('notifications.markRead')}
                     data-testid='notification-mark-read'
                   >
-                    <Check className='h-3.5 w-3.5' aria-hidden='true' />
+                    <Check className='h-3.5 w-3.5' />
                   </button>
                 )}
               </div>
@@ -293,7 +290,7 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({
         aria-label={bellLabel}
         data-testid='notification-bell'
       >
-        <Bell className='h-4 w-4 shrink-0' aria-hidden='true' />
+        <Bell className='h-4 w-4 shrink-0' />
         {!sidebarCompact && <span>{t('notifications.title')}</span>}
         {unread > 0 && (
           <span

@@ -241,10 +241,7 @@ export const MediaUpload: React.FC<MediaUploadProps> = ({
               aria-label={t('chat.mediaUpload.uploading')}
             />
           ) : (
-            <Upload
-              className='h-8 w-8 text-gray-400 dark:text-gray-500 mb-2'
-              aria-hidden='true'
-            />
+            <Upload className='h-8 w-8 text-gray-400 dark:text-gray-500 mb-2' />
           )}
           <p className='text-sm text-gray-700 dark:text-gray-300'>
             {t('chat.mediaUpload.dropImagesHere')}{' '}
@@ -283,7 +280,7 @@ export const MediaUpload: React.FC<MediaUploadProps> = ({
                 })}
                 className='absolute top-0.5 inset-e-0.5 p-0.5 rounded-full bg-black/60 hover:bg-black/80 text-white opacity-0 group-hover:opacity-100 focus-visible:opacity-100 [@media(hover:none)]:opacity-100 transition-opacity'
               >
-                <X className='h-3 w-3' aria-hidden='true' />
+                <X className='h-3 w-3' />
               </button>
             </div>
           ))}
@@ -318,7 +315,7 @@ export const MediaUpload: React.FC<MediaUploadProps> = ({
                 })}
                 className='p-0.5 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 hover:text-red-500 transition-colors'
               >
-                <X className='h-3 w-3' aria-hidden='true' />
+                <X className='h-3 w-3' />
               </button>
             </div>
           ))}

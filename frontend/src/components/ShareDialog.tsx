@@ -223,15 +223,9 @@ export const ShareDialog: React.FC<ShareDialogProps> = ({
               data-testid='share-item'
             >
               {grant.principalType === 'group' ? (
-                <Users
-                  className='h-3.5 w-3.5 shrink-0 text-ink-muted'
-                  aria-hidden='true'
-                />
+                <Users className='h-3.5 w-3.5 shrink-0 text-ink-muted' />
               ) : (
-                <Share2
-                  className='h-3.5 w-3.5 shrink-0 text-ink-muted'
-                  aria-hidden='true'
-                />
+                <Share2 className='h-3.5 w-3.5 shrink-0 text-ink-muted' />
               )}
               <span className='min-w-0 flex-1 truncate text-[13px] text-gray-800 dark:text-dark-800'>
                 {grant.principalName ?? grant.principalId}
@@ -250,7 +244,7 @@ export const ShareDialog: React.FC<ShareDialogProps> = ({
                 title={t('share.revoke')}
                 aria-label={t('share.revoke')}
               >
-                <X className='h-3.5 w-3.5' aria-hidden='true' />
+                <X className='h-3.5 w-3.5' />
               </button>
             </div>
           ))}

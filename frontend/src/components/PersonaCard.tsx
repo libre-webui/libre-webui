@@ -79,7 +79,6 @@ const PersonaCard: React.FC<PersonaCardProps> = ({
   const [shareOpen, setShareOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Move focus into the menu when it opens so it is keyboard operable.
   useEffect(() => {
     if (showMenu) {
       menuRef.current
@@ -326,7 +325,6 @@ const PersonaCard: React.FC<PersonaCardProps> = ({
               )}
             >
               <Star
-                aria-hidden='true'
                 className={cn(
                   'h-4 w-4',
                   persona.is_favorite
@@ -343,10 +341,7 @@ const PersonaCard: React.FC<PersonaCardProps> = ({
               title={t('personaCard.favorite')}
               className='rounded-full border border-white/30 bg-amber-500/80 p-1.5 backdrop-blur-sm'
             >
-              <Star
-                aria-hidden='true'
-                className='h-4 w-4 fill-ink text-ink dark:fill-ink-inverse dark:text-ink-inverse'
-              />
+              <Star className='h-4 w-4 fill-ink text-ink dark:fill-ink-inverse dark:text-ink-inverse' />
             </span>
           ) : (
             <span />

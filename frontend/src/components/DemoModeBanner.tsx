@@ -55,10 +55,7 @@ export const DemoModeBanner: React.FC<DemoModeBannerProps> = ({
       <div className='flex items-center justify-between max-w-6xl mx-auto gap-3'>
         <div className='flex items-center gap-2.5 min-w-0'>
           <div className='shrink-0'>
-            <Info
-              className='h-4 w-4 text-white/65 dark:text-gray-950/60'
-              aria-hidden='true'
-            />
+            <Info className='h-4 w-4 text-white/65 dark:text-gray-950/60' />
           </div>
           <div className='flex min-w-0 flex-col sm:flex-row sm:items-baseline sm:gap-2'>
             <p className='shrink-0 text-xs font-semibold tracking-wide'>
@@ -88,7 +85,7 @@ export const DemoModeBanner: React.FC<DemoModeBannerProps> = ({
             }
             title={t('demoMode.viewOnGithub')}
           >
-            <ExternalLink className='h-4 w-4' aria-hidden='true' />
+            <ExternalLink className='h-4 w-4' />
             <span className='sr-only sm:not-sr-only sm:ms-1'>
               {t('demoMode.github')}
             </span>
@@ -103,7 +100,7 @@ export const DemoModeBanner: React.FC<DemoModeBannerProps> = ({
             title={t('demoMode.dismiss')}
             aria-label={t('demoMode.dismiss')}
           >
-            <X className='h-4 w-4' aria-hidden='true' />
+            <X className='h-4 w-4' />
           </Button>
         </div>
       </div>

@@ -29,7 +29,7 @@ const NotFoundPage: React.FC = () => {
     <div className='flex h-full items-center justify-center p-6'>
       <div className='max-w-sm text-center' data-testid='not-found-page'>
         <div className='mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-surface-subtle text-ink-muted'>
-          <Compass className='h-6 w-6' aria-hidden='true' />
+          <Compass className='h-6 w-6' />
         </div>
         <h1 className='mb-2 text-xl font-semibold text-ink'>
           {t('notFound.title')}

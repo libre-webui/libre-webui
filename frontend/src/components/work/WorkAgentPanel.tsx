@@ -111,7 +111,6 @@ export function WorkAgentPanel({
       }
       setSkillsError(false);
     } catch {
-      // Same inline error as routines.
       setSkillsError(true);
     } finally {
       setSkillsLoaded(true);
@@ -124,7 +123,6 @@ export function WorkAgentPanel({
       if (response.success && response.data) setApprovals(response.data);
       setApprovalsError(false);
     } catch {
-      // Same inline error as routines.
       setApprovalsError(true);
     } finally {
       setApprovalsLoaded(true);

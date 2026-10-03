@@ -3,7 +3,7 @@
   "scope": {
     "uiSource": "frontend/src/App.tsx",
     "backendSource": "backend/src/index.ts",
-    "excludedUiRoutes": ["/*"],
+    "excludedUiRoutes": ["/*", "*"],
     "providerContract": "scripts/capability-contracts.json",
     "backendRouteDirectory": "backend/src/routes",
     "websocketSource": "backend/src/websocketServer.ts"

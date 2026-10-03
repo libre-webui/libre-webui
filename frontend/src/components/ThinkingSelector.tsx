@@ -124,7 +124,7 @@ export const ThinkingSelector: React.FC<ThinkingSelectorProps> = ({
         aria-expanded={open}
         aria-pressed={active}
       >
-        <Brain className='h-4 w-4' aria-hidden='true' />
+        <Brain className='h-4 w-4' />
         {active && (
           <span className='text-[11px] font-medium'>
             {t(`settings.generation.thinkingLevels.${effectiveChoice}`)}
@@ -191,9 +191,7 @@ export const ThinkingSelector: React.FC<ThinkingSelectorProps> = ({
                       })
                     : t(`settings.generation.thinkingLevels.${option}`)}
                 </span>
-                {selected && (
-                  <Check className='h-3.5 w-3.5 shrink-0' aria-hidden='true' />
-                )}
+                {selected && <Check className='h-3.5 w-3.5 shrink-0' />}
               </button>
             );
           })}

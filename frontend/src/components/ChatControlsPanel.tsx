@@ -320,7 +320,7 @@ export const ChatControlsPanel: React.FC<ChatControlsPanelProps> = ({
           title={t('common.close')}
           aria-label={t('common.close')}
         >
-          <X className='h-4 w-4' aria-hidden='true' />
+          <X className='h-4 w-4' />
         </button>
       </div>
 

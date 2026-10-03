@@ -220,10 +220,7 @@ export const SettingsMfaSection: React.FC = () => {
         className='mb-0'
         title={
           <span className='flex items-center gap-2'>
-            <ShieldCheck
-              className='h-5 w-5 text-primary-500'
-              aria-hidden='true'
-            />
+            <ShieldCheck className='h-5 w-5 text-primary-500' />
             {t('auth.mfa.sectionTitle')}
           </span>
         }

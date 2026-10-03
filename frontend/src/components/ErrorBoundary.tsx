@@ -54,7 +54,7 @@ const DefaultErrorFallback: React.FC<{ error?: Error }> = ({ error }) => {
       >
         <div className='p-6 text-center'>
           <div className='mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-error-500/10 text-error-600 dark:text-error-400'>
-            <AlertTriangle className='h-6 w-6' aria-hidden='true' />
+            <AlertTriangle className='h-6 w-6' />
           </div>
           <h1 className='mb-2 text-xl font-semibold text-ink'>
             {t('errorBoundary.title')}
@@ -64,7 +64,7 @@ const DefaultErrorFallback: React.FC<{ error?: Error }> = ({ error }) => {
           </p>
           <div className='flex flex-col gap-2 sm:flex-row sm:justify-center'>
             <Button type='button' onClick={() => window.location.reload()}>
-              <RefreshCw className='h-4 w-4' aria-hidden='true' />
+              <RefreshCw className='h-4 w-4' />
               {t('errorBoundary.tryAgain')}
             </Button>
             <Button
@@ -81,7 +81,7 @@ const DefaultErrorFallback: React.FC<{ error?: Error }> = ({ error }) => {
                 }
               }}
             >
-              <Home className='h-4 w-4' aria-hidden='true' />
+              <Home className='h-4 w-4' />
               {t('errorBoundary.goHome')}
             </Button>
           </div>

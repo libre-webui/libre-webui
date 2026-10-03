@@ -185,7 +185,7 @@ export const SettingsApiKeysTab: React.FC = () => {
         className='mb-0'
         title={
           <span className='flex items-center gap-2'>
-            <KeyRound className='h-5 w-5 text-primary-500' aria-hidden='true' />
+            <KeyRound className='h-5 w-5 text-primary-500' />
             {t('settings.apiKeys.title', 'API keys')}
           </span>
         }

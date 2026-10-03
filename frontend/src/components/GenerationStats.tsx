@@ -70,7 +70,7 @@ export const GenerationStats: React.FC<GenerationStatsProps> = ({
       {/* Summary Stats */}
       <div className='flex items-center gap-4 mb-1'>
         <span className='flex items-center gap-1 text-gray-600 dark:text-dark-600'>
-          <Info size={12} className='text-primary-500' aria-hidden='true' />
+          <Info size={12} className='text-primary-500' />
           {t('generationStats.tokenCount', {
             tokens: generatedTokens.toLocaleString(i18n.language),
           })}
@@ -95,13 +95,9 @@ export const GenerationStats: React.FC<GenerationStatsProps> = ({
         className='flex items-center gap-1 text-ink-muted hover:text-ink transition-colors'
       >
         {isExpanded ? (
-          <ChevronDown size={12} aria-hidden='true' />
+          <ChevronDown size={12} />
         ) : (
-          <ChevronRight
-            size={12}
-            className='rtl:rotate-180'
-            aria-hidden='true'
-          />
+          <ChevronRight size={12} className='rtl:rotate-180' />
         )}
         <span>{t('generationStats.details')}</span>
       </button>

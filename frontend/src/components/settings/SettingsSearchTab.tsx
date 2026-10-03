@@ -126,7 +126,7 @@ export const SettingsSearchTab: React.FC = () => {
         className='mb-0'
         title={
           <span className='flex items-center gap-2'>
-            <Globe className='h-5 w-5 text-primary-500' aria-hidden='true' />
+            <Globe className='h-5 w-5 text-primary-500' />
             {t('settings.search.title')}
           </span>
         }

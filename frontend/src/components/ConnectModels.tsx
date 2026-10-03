@@ -303,7 +303,6 @@ export const ConnectModels: React.FC<ConnectModelsProps> = ({
                     'h-4 w-4',
                     ollamaStatus === 'checking' && 'animate-spin'
                   )}
-                  aria-hidden='true'
                 />
               </Button>
             )}
@@ -315,7 +314,7 @@ export const ConnectModels: React.FC<ConnectModelsProps> = ({
                 title={t('connectModels.ollama.disable')}
                 aria-label={t('connectModels.ollama.disable')}
               >
-                <PowerOff className='h-4 w-4' aria-hidden='true' />
+                <PowerOff className='h-4 w-4' />
               </Button>
             )}
             {isAdmin && ollamaStatus === 'disabled' && (
@@ -367,7 +366,6 @@ export const ConnectModels: React.FC<ConnectModelsProps> = ({
               'h-4 w-4 text-gray-400 transition-transform rtl:rotate-180',
               openSection === 'local' && 'rotate-90 rtl:rotate-90'
             )}
-            aria-hidden='true'
           />
         </button>
 
@@ -507,7 +505,6 @@ export const ConnectModels: React.FC<ConnectModelsProps> = ({
               'h-4 w-4 text-gray-400 transition-transform rtl:rotate-180',
               openSection === 'cloud' && 'rotate-90 rtl:rotate-90'
             )}
-            aria-hidden='true'
           />
         </button>
 

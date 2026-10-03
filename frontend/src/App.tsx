@@ -534,7 +534,7 @@ const AppContent: React.FC = () => {
                 {t('appInitialization.backendUnreachableHint')}
               </p>
               <Button type='button' onClick={() => setRetryCount(0)}>
-                <RefreshCw className='h-4 w-4' aria-hidden='true' />
+                <RefreshCw className='h-4 w-4' />
                 {t('common.retry')}
               </Button>
             </div>
@@ -795,7 +795,7 @@ const AppContent: React.FC = () => {
             // accent color. Their alert role is applied where they render.
             duration: 7000,
             iconTheme: {
-              primary: 'rgb(var(--color-error-600))',
+              primary: '#ef4444',
               secondary: '#ffffff',
             },
           },

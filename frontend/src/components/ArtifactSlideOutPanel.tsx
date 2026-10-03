@@ -706,10 +706,7 @@ export const ArtifactSlideOutPanel: React.FC = () => {
                 title={t('artifacts.previousVersion')}
                 aria-label={t('artifacts.previousVersion')}
               >
-                <ChevronLeft
-                  className='h-3.5 w-3.5 rtl:rotate-180'
-                  aria-hidden='true'
-                />
+                <ChevronLeft className='h-3.5 w-3.5 rtl:rotate-180' />
               </Button>
               <span className='whitespace-nowrap text-xs tabular-nums text-gray-500 dark:text-dark-600'>
                 {t('artifacts.versionOf', {
@@ -726,10 +723,7 @@ export const ArtifactSlideOutPanel: React.FC = () => {
                 title={t('artifacts.nextVersion')}
                 aria-label={t('artifacts.nextVersion')}
               >
-                <ChevronRight
-                  className='h-3.5 w-3.5 rtl:rotate-180'
-                  aria-hidden='true'
-                />
+                <ChevronRight className='h-3.5 w-3.5 rtl:rotate-180' />
               </Button>
             </div>
           )}
@@ -771,12 +765,9 @@ export const ArtifactSlideOutPanel: React.FC = () => {
               aria-label={t('artifacts.copyContent')}
             >
               {copied ? (
-                <Check
-                  className='h-3.5 w-3.5 text-green-500'
-                  aria-hidden='true'
-                />
+                <Check className='h-3.5 w-3.5 text-green-500' />
               ) : (
-                <Copy className='h-3.5 w-3.5' aria-hidden='true' />
+                <Copy className='h-3.5 w-3.5' />
               )}
             </Button>
 
@@ -788,7 +779,7 @@ export const ArtifactSlideOutPanel: React.FC = () => {
               title={t('artifacts.download')}
               aria-label={t('artifacts.download')}
             >
-              <Download className='h-3.5 w-3.5' aria-hidden='true' />
+              <Download className='h-3.5 w-3.5' />
             </Button>
 
             <Button
@@ -803,7 +794,7 @@ export const ArtifactSlideOutPanel: React.FC = () => {
                 isDesktop ? t('common.close') : t('artifacts.closePanelEsc')
               }
             >
-              <X className='h-4 w-4' aria-hidden='true' />
+              <X className='h-4 w-4' />
             </Button>
           </div>
         </div>

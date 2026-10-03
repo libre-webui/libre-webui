@@ -443,10 +443,7 @@ export const EvaluationsPage: React.FC = () => {
                   <td className='py-1.5 pe-2'>
                     {index === 0 ? (
                       <>
-                        <Trophy
-                          className='h-4 w-4 text-amber-500'
-                          aria-hidden='true'
-                        />
+                        <Trophy className='h-4 w-4 text-amber-500' />
                         <span className='sr-only'>{index + 1}</span>
                       </>
                     ) : (

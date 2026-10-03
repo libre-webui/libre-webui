@@ -309,7 +309,7 @@ export const ChatSourcesPanel: React.FC<ChatSourcesPanelProps> = ({
       >
         {expanded ? (
           <>
-            <ChevronUp className='h-3 w-3' aria-hidden='true' />
+            <ChevronUp className='h-3 w-3' />
             {t('chatMessage.showLess', 'Show less')}
           </>
         ) : (
@@ -466,7 +466,7 @@ export const ChatSourcesPanel: React.FC<ChatSourcesPanelProps> = ({
         aria-haspopup='dialog'
         aria-expanded={sheetOpen}
       >
-        <BookOpen className='h-3.5 w-3.5' aria-hidden='true' />
+        <BookOpen className='h-3.5 w-3.5' />
         <span
           aria-hidden='true'
           className='absolute -inset-e-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-md bg-primary-500 px-1 text-[9px] font-semibold tabular-nums text-white shadow-xs'
@@ -503,7 +503,7 @@ export const ChatSourcesPanel: React.FC<ChatSourcesPanelProps> = ({
                   className='rounded-md p-1.5 text-ink-muted hover:text-ink'
                   aria-label={t('common.close')}
                 >
-                  <X className='h-4 w-4' aria-hidden='true' />
+                  <X className='h-4 w-4' />
                 </button>
               </div>
               <div className='flex flex-col gap-6'>{sections}</div>

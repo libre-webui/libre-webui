@@ -888,15 +888,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
             )}
           <form onSubmit={handleSubmit}>
             {/* Unified Input Container: text row above, controls row below. */}
-            <div
-              data-composer-box=''
-              className={cn(
-                composerSurfaceClass,
-                // The shared surface's focus cue is faint; the text field
-                // inside has no outline of its own.
-                'focus-within:border-primary-500 focus-within:ring-primary-500/30 dark:focus-within:border-primary-400 dark:focus-within:ring-primary-400/30'
-              )}
-            >
+            <div data-composer-box='' className={composerSurfaceClass}>
               {/* Text Input Area */}
               <ComposerSuggestions
                 ref={suggestionsRef}
@@ -950,19 +942,16 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                     aria-expanded={showAdvanced || attachMenuOpen}
                   >
                     {uploadingDocument || attachingWebpage ? (
-                      <Loader2
-                        className='h-4 w-4 animate-spin'
-                        aria-hidden='true'
-                      />
+                      <Loader2 className='h-4 w-4 animate-spin' />
                     ) : hasAdvancedFeatures ? (
                       <div className='relative flex items-center justify-center'>
-                        <Paperclip className='h-4 w-4' aria-hidden='true' />
+                        <Paperclip className='h-4 w-4' />
                         <div className='absolute -top-0.5 -inset-e-0.5 h-2 w-2 bg-primary-500 dark:bg-primary-400 rounded-full ring-2 ring-white dark:ring-dark-50' />
                       </div>
                     ) : showAdvanced ? (
-                      <Minus className='h-4 w-4' aria-hidden='true' />
+                      <Minus className='h-4 w-4' />
                     ) : (
-                      <Plus className='h-4 w-4' aria-hidden='true' />
+                      <Plus className='h-4 w-4' />
                     )}
                   </Button>
 
@@ -1205,7 +1194,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                       aria-label={webSearchLabel}
                       aria-pressed={webSearchActive}
                     >
-                      <Globe className='h-4 w-4' aria-hidden='true' />
+                      <Globe className='h-4 w-4' />
                     </Button>
                   )}
 
@@ -1284,16 +1273,13 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                       aria-pressed={speechStarting || listening || transcribing}
                     >
                       {speechStarting ? (
-                        <Loader2
-                          className='h-4 w-4 animate-spin'
-                          aria-hidden='true'
-                        />
+                        <Loader2 className='h-4 w-4 animate-spin' />
                       ) : transcribing || listening ? (
                         // A stop glyph, so the state is not carried by the
                         // red tint and pulse alone.
-                        <Square className='h-4 w-4' aria-hidden='true' />
+                        <Square className='h-4 w-4' />
                       ) : (
-                        <Mic className='h-4 w-4' aria-hidden='true' />
+                        <Mic className='h-4 w-4' />
                       )}
                     </Button>
                   )}
@@ -1317,7 +1303,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                       aria-label={t('voiceMode.open')}
                       data-testid='voice-mode-open'
                     >
-                      <AudioLines className='h-4 w-4' aria-hidden='true' />
+                      <AudioLines className='h-4 w-4' />
                     </Button>
                   )}
 
@@ -1367,7 +1353,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                       title={t('chat.input.stopGeneration')}
                       aria-label={t('chat.input.stopGeneration')}
                     >
-                      <Square className='h-4 w-4' aria-hidden='true' />
+                      <Square className='h-4 w-4' />
                     </Button>
                   ) : (
                     <Button
@@ -1381,7 +1367,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                       title={t('chat.input.sendMessage')}
                       aria-label={t('chat.input.sendMessage')}
                     >
-                      <ArrowUp className='h-4 w-4' aria-hidden='true' />
+                      <ArrowUp className='h-4 w-4' />
                     </Button>
                   )}
                 </div>

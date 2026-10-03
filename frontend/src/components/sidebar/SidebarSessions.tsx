@@ -413,7 +413,7 @@ export function SidebarSessions({
                   title={t('chat.session.folder.new')}
                   aria-label={t('chat.session.folder.new')}
                 >
-                  <FolderPlus className='h-3.5 w-3.5' aria-hidden='true' />
+                  <FolderPlus className='h-3.5 w-3.5' />
                 </button>
               )}
               <span className='text-[10px] tabular-nums text-ink-subtle font-medium'>
@@ -536,7 +536,7 @@ export function SidebarSessions({
                               title={t('chat.session.folder.rename')}
                               aria-label={t('chat.session.folder.rename')}
                             >
-                              <Edit3 className='h-3 w-3' aria-hidden='true' />
+                              <Edit3 className='h-3 w-3' />
                             </button>
                           )}
                           {onDeleteFolder && (
@@ -555,7 +555,7 @@ export function SidebarSessions({
                               title={t('chat.session.folder.delete')}
                               aria-label={t('chat.session.folder.delete')}
                             >
-                              <Trash2 className='h-3 w-3' aria-hidden='true' />
+                              <Trash2 className='h-3 w-3' />
                             </button>
                           )}
                         </div>

@@ -185,7 +185,6 @@ export const NoteToolsDrawer: React.FC<NoteToolsDrawerProps> = ({
       });
   }, [note.id, t]);
 
-  // Spinner while a list loads; retry when it failed.
   const renderPending = (key: keyof typeof loadFailed) =>
     loadFailed[key] ? (
       <ErrorState

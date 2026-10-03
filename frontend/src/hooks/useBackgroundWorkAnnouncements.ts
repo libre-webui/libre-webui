@@ -26,7 +26,7 @@ import {
 } from '@/utils/workAnnouncements';
 
 /** Slower than Work's own 1s poll: this only has to notice a finish. */
-export const BACKGROUND_WORK_POLL_MS = 5000;
+const BACKGROUND_WORK_POLL_MS = 5000;
 
 const openWorkTaskId = (pathname: string) => {
   const match = /^\/work\/([^/]+)/.exec(pathname);

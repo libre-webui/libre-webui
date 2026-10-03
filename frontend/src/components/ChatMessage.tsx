@@ -830,10 +830,7 @@ const ChatMessageBase: React.FC<ChatMessageProps> = ({
                         title={t('chatMessage.restoreCompacted')}
                         aria-label={t('chatMessage.restoreCompacted')}
                       >
-                        <Undo2
-                          className='h-3 w-3 text-gray-600 dark:text-gray-400'
-                          aria-hidden='true'
-                        />
+                        <Undo2 className='h-3 w-3 text-gray-600 dark:text-gray-400' />
                       </button>
                     ) : isEditing ? (
                       <>
@@ -844,10 +841,7 @@ const ChatMessageBase: React.FC<ChatMessageProps> = ({
                           title={t('chatMessage.saveChanges')}
                           aria-label={t('chatMessage.saveChanges')}
                         >
-                          <Save
-                            className='h-3 w-3 text-green-600 dark:text-green-400'
-                            aria-hidden='true'
-                          />
+                          <Save className='h-3 w-3 text-green-600 dark:text-green-400' />
                         </button>
                         <button
                           onClick={handleCancelEdit}
@@ -856,10 +850,7 @@ const ChatMessageBase: React.FC<ChatMessageProps> = ({
                           title={t('chatMessage.cancelEditing')}
                           aria-label={t('chatMessage.cancelEditing')}
                         >
-                          <X
-                            className='h-3 w-3 text-red-600 dark:text-red-400'
-                            aria-hidden='true'
-                          />
+                          <X className='h-3 w-3 text-red-600 dark:text-red-400' />
                         </button>
                       </>
                     ) : (
@@ -869,10 +860,7 @@ const ChatMessageBase: React.FC<ChatMessageProps> = ({
                         title={t('chatMessage.editSystemMessage')}
                         aria-label={t('chatMessage.editSystemMessage')}
                       >
-                        <Edit3
-                          className='h-3 w-3 text-gray-600 dark:text-gray-400'
-                          aria-hidden='true'
-                        />
+                        <Edit3 className='h-3 w-3 text-gray-600 dark:text-gray-400' />
                       </button>
                     )}
                   </div>
@@ -1142,7 +1130,7 @@ const ChatMessageBase: React.FC<ChatMessageProps> = ({
                     title={t('chatMessage.edit')}
                     aria-label={t('chatMessage.edit')}
                   >
-                    <Edit3 className='h-3.5 w-3.5' aria-hidden='true' />
+                    <Edit3 className='h-3.5 w-3.5' />
                   </button>
                 )}
                 <button
@@ -1161,12 +1149,9 @@ const ChatMessageBase: React.FC<ChatMessageProps> = ({
                   }
                 >
                   {isCopied ? (
-                    <Check
-                      className='h-3.5 w-3.5 text-green-500'
-                      aria-hidden='true'
-                    />
+                    <Check className='h-3.5 w-3.5 text-green-500' />
                   ) : (
-                    <Copy className='h-3.5 w-3.5' aria-hidden='true' />
+                    <Copy className='h-3.5 w-3.5' />
                   )}
                 </button>
                 {!isUser && (
@@ -1183,7 +1168,6 @@ const ChatMessageBase: React.FC<ChatMessageProps> = ({
                       aria-pressed={message.rating === 1}
                     >
                       <ThumbsUp
-                        aria-hidden='true'
                         className='h-3.5 w-3.5'
                         fill={message.rating === 1 ? 'currentColor' : 'none'}
                       />
@@ -1200,7 +1184,6 @@ const ChatMessageBase: React.FC<ChatMessageProps> = ({
                       aria-pressed={message.rating === -1}
                     >
                       <ThumbsDown
-                        aria-hidden='true'
                         className='h-3.5 w-3.5'
                         fill={message.rating === -1 ? 'currentColor' : 'none'}
                       />
@@ -1256,7 +1239,7 @@ const ChatMessageBase: React.FC<ChatMessageProps> = ({
                           aria-label={t('common.close')}
                           className='rounded-sm p-0.5 text-ink-muted hover:text-ink'
                         >
-                          <X className='h-3 w-3' aria-hidden='true' />
+                          <X className='h-3 w-3' />
                         </button>
                       </div>
                     )}
@@ -1269,7 +1252,7 @@ const ChatMessageBase: React.FC<ChatMessageProps> = ({
                     title={t('chatMessage.regenerateResponse')}
                     aria-label={t('chatMessage.regenerateResponse')}
                   >
-                    <RefreshCw className='h-3.5 w-3.5' aria-hidden='true' />
+                    <RefreshCw className='h-3.5 w-3.5' />
                   </button>
                 )}
                 {onFork && (
@@ -1280,7 +1263,7 @@ const ChatMessageBase: React.FC<ChatMessageProps> = ({
                     aria-label={t('chat.fork.action')}
                     data-testid='fork-from-message'
                   >
-                    <GitFork className='h-3.5 w-3.5' aria-hidden='true' />
+                    <GitFork className='h-3.5 w-3.5' />
                   </button>
                 )}
               </div>
@@ -1311,7 +1294,7 @@ const ChatMessageBase: React.FC<ChatMessageProps> = ({
                 setLightboxImage(null);
               }}
             >
-              <X className='h-7 w-7' aria-hidden='true' />
+              <X className='h-7 w-7' />
             </button>
             <img
               src={lightboxImage}
