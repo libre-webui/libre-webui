@@ -165,7 +165,7 @@ test('light and dark notification presets style all Markdown and preserve safe t
   assert.match(dark.html, /border-top:1px solid #5a5751/);
   assert.match(dark.html, /name="supported-color-schemes" content="dark"/);
   assert.match(dark.html, /&lt;script&gt;/);
-  assert.doesNotMatch(dark.html, /<script>/);
+  assert.doesNotMatch(dark.html, /<script/i);
   assert.match(dark.html, /&lt;Open&gt;/);
 });
 
