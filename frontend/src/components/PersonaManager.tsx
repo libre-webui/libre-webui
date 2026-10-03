@@ -18,7 +18,11 @@
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
+import { Users } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { ErrorState } from '@/components/ui/ErrorState';
+import { LoadingState } from '@/components/ui/LoadingState';
 import { personaApi } from '@/utils/api';
 import { Persona } from '@/types';
 import toast from 'react-hot-toast';
@@ -36,6 +40,7 @@ export const PersonaManager: React.FC = () => {
   const {
     data: personas = [],
     isLoading: loading,
+    isError: loadFailed,
     refetch: refetchPersonas,
   } = useQuery({
     queryKey: ['personas'],
@@ -76,18 +81,12 @@ export const PersonaManager: React.FC = () => {
         );
         await reloadPersonas();
       } else {
-        toast.error(
-          t('personaManager.failed', { action: 'delete' }) +
-            ': ' +
-            response.error
-        );
+        toast.error(t('personaManager.deleteFailed') + ': ' + response.error);
       }
     } catch (error: unknown) {
       const errorMessage =
         error instanceof Error ? error.message : String(error);
-      toast.error(
-        t('personaManager.failed', { action: 'delete' }) + ': ' + errorMessage
-      );
+      toast.error(t('personaManager.deleteFailed') + ': ' + errorMessage);
     }
   };
 
@@ -100,9 +99,7 @@ export const PersonaManager: React.FC = () => {
     } catch (error: unknown) {
       const errorMessage =
         error instanceof Error ? error.message : String(error);
-      toast.error(
-        t('personaManager.failed', { action: 'download' }) + ': ' + errorMessage
-      );
+      toast.error(t('personaManager.downloadFailed') + ': ' + errorMessage);
     }
   };
 
@@ -117,13 +114,7 @@ export const PersonaManager: React.FC = () => {
   };
 
   if (loading) {
-    return (
-      <div className='flex items-center justify-center p-8'>
-        <div className='text-gray-600 dark:text-dark-600'>
-          {t('personaManager.loading')}
-        </div>
-      </div>
-    );
+    return <LoadingState label={t('personaManager.loading')} />;
   }
 
   if (showCreateForm) {
@@ -170,34 +161,24 @@ export const PersonaManager: React.FC = () => {
       </div>
 
       {/* Personas Grid */}
-      {personas.length === 0 ? (
-        <div className='rounded-2xl border border-dashed border-gray-300 bg-white/40 p-12 text-center dark:border-white/15 dark:bg-white/[0.025]'>
-          <div className='text-gray-400 dark:text-dark-500 mb-4'>
-            <svg
-              className='w-16 h-16 mx-auto'
-              fill='none'
-              stroke='currentColor'
-              viewBox='0 0 24 24'
-              xmlns='http://www.w3.org/2000/svg'
-            >
-              <path
-                strokeLinecap='round'
-                strokeLinejoin='round'
-                strokeWidth={2}
-                d='M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z'
-              />
-            </svg>
-          </div>
-          <h3 className='text-lg font-semibold text-gray-900 dark:text-dark-800 mb-2'>
-            {t('personaManager.empty.title')}
-          </h3>
-          <p className='text-gray-600 dark:text-dark-600 mb-6'>
-            {t('personaManager.empty.description')}
-          </p>
-          <Button onClick={handleCreatePersona} className='px-6 py-2'>
-            {t('personaManager.empty.button')}
-          </Button>
-        </div>
+      {/* A failed load must not read as "create your first persona". */}
+      {loadFailed && personas.length === 0 ? (
+        <ErrorState
+          message={t('personaManager.loadFailed')}
+          onRetry={() => void refetchPersonas()}
+        />
+      ) : personas.length === 0 ? (
+        <EmptyState
+          icon={Users}
+          titleAs='h3'
+          title={t('personaManager.empty.title')}
+          description={t('personaManager.empty.description')}
+          action={
+            <Button onClick={handleCreatePersona} className='px-6 py-2'>
+              {t('personaManager.empty.button')}
+            </Button>
+          }
+        />
       ) : (
         <div className='grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3'>
           {personas.map(persona => (

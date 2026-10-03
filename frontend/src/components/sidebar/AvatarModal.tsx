@@ -15,10 +15,10 @@
  * limitations under the License.
  */
 
-import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
-import { X } from 'lucide-react';
 import { AvatarUpload } from '@/components/AvatarUpload';
+import { Button } from '@/components/ui/Button';
+import { ModalShell } from '@/components/ui/ModalShell';
 
 interface AvatarModalProps {
   open: boolean;
@@ -41,54 +41,24 @@ export function AvatarModal({
 
   if (!open) return null;
 
-  return createPortal(
-    <div
-      className='fixed inset-0 z-[2147483647] flex items-center justify-center bg-gray-950/55 p-4 backdrop-blur-md'
-      onClick={onClose}
+  return (
+    <ModalShell
+      titleId='avatar-modal-title'
+      title={t('user.avatar.title')}
+      widthClassName='max-w-md'
+      onClose={onClose}
+      footer={
+        <>
+          <Button type='button' variant='ghost' onClick={onClose}>
+            {t('common.cancel')}
+          </Button>
+          <Button type='button' onClick={onSave} disabled={saving}>
+            {saving ? t('common.saving') : t('common.save')}
+          </Button>
+        </>
+      }
     >
-      <div
-        role='dialog'
-        aria-modal='true'
-        aria-labelledby='avatar-modal-title'
-        className='bg-white dark:bg-dark-25 rounded-3xl shadow-[0_24px_80px_rgba(0,0,0,0.24)] p-6 w-full max-w-md border border-black/[0.07] dark:border-white/[0.08] animate-scale-in'
-        onClick={e => e.stopPropagation()}
-      >
-        <div className='flex items-center justify-between mb-4'>
-          <h3
-            id='avatar-modal-title'
-            className='text-lg font-medium tracking-[-0.02em] text-gray-950 dark:text-dark-950'
-          >
-            {t('user.avatar.title')}
-          </h3>
-          <button
-            onClick={onClose}
-            className='p-2 hover:bg-gray-100 dark:hover:bg-dark-200 rounded-xl transition-colors'
-          >
-            <X size={20} className='text-gray-500' />
-          </button>
-        </div>
-
-        <div className='space-y-4'>
-          <AvatarUpload value={value} onChange={onChange} />
-
-          <div className='flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-dark-300'>
-            <button
-              onClick={onClose}
-              className='px-4 py-2 text-sm font-medium text-gray-700 dark:text-dark-700 hover:bg-gray-100 dark:hover:bg-dark-200 rounded-xl transition-colors'
-            >
-              {t('common.cancel')}
-            </button>
-            <button
-              onClick={onSave}
-              disabled={saving}
-              className='px-4 py-2 text-sm font-medium text-white bg-gray-950 hover:bg-gray-800 dark:bg-white dark:text-gray-950 dark:hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl transition-colors'
-            >
-              {saving ? t('common.saving') : t('common.save')}
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>,
-    document.body
+      <AvatarUpload value={value} onChange={onChange} />
+    </ModalShell>
   );
 }

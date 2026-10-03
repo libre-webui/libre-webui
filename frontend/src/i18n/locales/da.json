@@ -41,7 +41,8 @@
     "remove": "Fjern",
     "home": "Hjem",
     "more": "Mere",
-    "reasoning": "Ræsonnement"
+    "reasoning": "Ræsonnement",
+    "skipToContent": "Gå til indhold"
   },
   "brand": {
     "name": "Libre WebUI",
@@ -49,7 +50,10 @@
   },
   "appInitialization": {
     "ollamaUnavailable": "Ollama-tjenesten er ikke tilgængelig. Pluginmodeller kan stadig bruges.",
-    "backendConnectionFailed": "Kunne ikke oprette forbindelse til backendtjenesten"
+    "backendConnectionFailed": "Kunne ikke oprette forbindelse til backendtjenesten",
+    "connecting": "Opretter forbindelse til backend… ({{attempt}}/{{total}})",
+    "startingUp": "Starter…",
+    "backendUnreachableHint": "Sørg for, at backend kører, og prøv igen."
   },
   "auth": {
     "login": {
@@ -189,7 +193,15 @@
       "removed": "Adgangsnøgle fjernet.",
       "removeFailed": "Adgangsnøglen kunne ikke fjernes.",
       "signInButton": "Log ind med en adgangsnøgle",
-      "signInFailed": "Login med adgangsnøgle mislykkedes."
+      "signInFailed": "Login med adgangsnøgle mislykkedes.",
+      "removeConfirmTitle": "Fjern denne adgangsnøgle?",
+      "removeConfirmDescription": "“{{name}}” kan ikke længere bruges til at logge ind. Du kan registrere den igen senere."
+    },
+    "password": {
+      "show": "Vis adgangskode",
+      "hide": "Skjul adgangskode",
+      "showConfirmation": "Vis bekræftelse af adgangskode",
+      "hideConfirmation": "Skjul bekræftelse af adgangskode"
     }
   },
   "setup": {
@@ -242,7 +254,8 @@
       "envNote": "Denne nøgle er også gemt i din backend/.env-fil som ENCRYPTION_KEY",
       "acknowledgment": "Jeg har gemt min krypteringsnøgle på et sikkert sted og forstår, at tab af den kan medføre datatab.",
       "confirmRequired": "Bekræft venligst, at du har gemt krypteringsnøglen",
-      "continue": "Fortsæt til Libre WebUI"
+      "continue": "Fortsæt til Libre WebUI",
+      "loadFailed": "Krypteringsnøglen kunne ikke indlæses. Prøv igen for at fortsætte."
     },
     "connectModels": {
       "title": "Forbind dine modeller",
@@ -336,7 +349,8 @@
       "toolsOn": "Værktøjer slået til — modellen kan kalde godkendte værktøjer",
       "toolsOff": "Lad modellen kalde værktøjer i denne besked",
       "thinkingOn": "Tænkning slået til ({{level}})",
-      "thinkingOff": "Tænk før svaret"
+      "thinkingOff": "Tænk før svaret",
+      "thinkingUpdateFailed": "Tænkeindstillingen kunne ikke opdateres"
     },
     "session": {
       "new": "Ny chat",
@@ -372,7 +386,8 @@
         "move": "Flyt til mappe",
         "remove": "Fjern fra mappe",
         "delete": "Slet mappe",
-        "deleteConfirm": "Slet denne mappe? Chats bevares."
+        "deleteConfirm": "Slet denne mappe? Chats bevares.",
+        "rename": "Omdøb mappe"
       },
       "shareChat": "Del chat…"
     },
@@ -405,7 +420,13 @@
       "browse": "gennemse",
       "unsupportedFileType": "Filtypen understøttes ikke: {{name}}",
       "maxImagesAllowed": "Der må højst være {{count}} billeder",
-      "imageTooLarge": "Billedet {{name}} er for stort (maks. 10 MB)"
+      "imageTooLarge": "Billedet {{name}} er for stort (maks. 10 MB)",
+      "readFailed": "{{name}} kunne ikke læses",
+      "uploadAlt": "Upload {{number}}",
+      "removeImage": "Fjern billede {{number}}",
+      "addMore": "Tilføj flere billeder ({{count}}/{{max}})",
+      "uploading": "Uploader",
+      "removeDocument": "Fjern {{name}}"
     },
     "structuredOutput": {
       "title": "Svarformat",
@@ -456,7 +477,8 @@
       "compactionOff": "Slået fra for denne chat"
     },
     "message": {
-      "sources": "Kilder"
+      "sources": "Kilder",
+      "copyFailed": "Kunne ikke kopiere til udklipsholderen"
     },
     "toasts": {
       "chatCreated": "Ny chat oprettet",
@@ -491,7 +513,8 @@
       "branchSwitched": "Skiftede til variant {{number}}",
       "branchSelectFailed": "Kunne ikke vælge gren",
       "editFailed": "Kunne ikke redigere beskeden",
-      "toolDecisionFailed": "Beslutningen om værktøjet kunne ikke registreres"
+      "toolDecisionFailed": "Beslutningen om værktøjet kunne ikke registreres",
+      "archiveFailed": "Chatten kunne ikke arkiveres"
     },
     "documents": {
       "title": "Dokumenter i kontekst"
@@ -521,7 +544,25 @@
       "origin": "Forgrenet fra {{title}}",
       "originUnknown": "en anden chat"
     },
-    "sharedReadOnly": "Delt af {{owner}} — kun visning"
+    "sharedReadOnly": "Delt af {{owner}} — kun visning",
+    "branch": {
+      "variants": "{{count}} variant",
+      "variants_plural": "{{count}} varianter",
+      "selectVariant": "Vælg variant {{number}}",
+      "generating": "genererer...",
+      "select": "vælg"
+    },
+    "sources": {
+      "fullContextFailed": "Indstillingen for fuldt dokument kunne ikke opdateres",
+      "usedByRetrieval": "Bruges i svar",
+      "triggerLabel": "Kilder ({{count}})"
+    },
+    "announce": {
+      "replyFinished": "{{name}} svarede: {{text}}",
+      "replyFinishedNoText": "{{name}} er færdig med at svare.",
+      "codeBlock": "kodeblok",
+      "generationStopped": "Generering stoppet"
+    }
   },
   "sidebar": {
     "navigation": {
@@ -546,7 +587,8 @@
       "strands": "Strands"
     },
     "toggleSize": "Skift sidebjælkestørrelse",
-    "expandSidebar": "Udvid sidebjælke"
+    "expandSidebar": "Udvid sidebjælke",
+    "ariaLabel": "Sidepanel"
   },
   "user": {
     "menu": {
@@ -821,7 +863,8 @@
         "removeFailed": "Kunne ikke fjerne API-nøgle",
         "enterKey": "Indtast venligst en API-nøgle"
       },
-      "variables": "Variables"
+      "variables": "Variables",
+      "dismissError": "Skjul fejl"
     },
     "generation": {
       "title": "Genereringsindstillinger",
@@ -924,7 +967,8 @@
         "deleteFailed": "Samlingen kunne ikke slettes",
         "assignFailed": "Dokumentet kunne ikke flyttes",
         "share": "Del samling",
-        "shared": "delt"
+        "shared": "delt",
+        "assignTo": "Samling for {{name}}"
       },
       "library": {
         "title": "Uploadede dokumenter",
@@ -1066,7 +1110,8 @@
         "title": "Arkiverede chats",
         "empty": "Ingen arkiverede chats",
         "unarchive": "Gendan"
-      }
+      },
+      "clearAllConfirm": "Er du sikker på, at du vil slette al chathistorik? Dette kan ikke fortrydes."
     },
     "about": {
       "title": "Om",
@@ -1186,7 +1231,11 @@
       "unknownDevice": "Ukendt enhed",
       "createdAt": "Logget ind",
       "lastSeenAt": "Sidst aktiv",
-      "expiresAt": "Udløber"
+      "expiresAt": "Udløber",
+      "signOutConfirmTitle": "Log denne session ud?",
+      "signOutConfirmDescription": "{{device}} logges ud med det samme og skal logge ind igen.",
+      "signOutOthersConfirmTitle": "Log andre sessioner ud?",
+      "signOutOthersConfirmDescription": "{{count}} andre sessioner logges ud med det samme. Denne session forbliver logget ind."
     },
     "apiKeys": {
       "title": "API-nøgler",
@@ -1220,7 +1269,9 @@
       "createdAt": "Oprettet",
       "lastUsedAt": "Senest brugt",
       "expiresAt": "Udløber",
-      "neverExpires": "Aldrig"
+      "neverExpires": "Aldrig",
+      "revokeConfirmTitle": "Tilbagekald “{{name}}”?",
+      "revokeConfirmDescription": "Alt, der bruger denne API-nøgle, holder straks op med at virke. Dette kan ikke fortrydes."
     },
     "notifications": {
       "title": "Notifikationer",
@@ -1294,7 +1345,8 @@
     "model": "Model",
     "size": "Størrelse",
     "quality": "Kvalitet",
-    "created": "Oprettet"
+    "created": "Oprettet",
+    "lightboxLabel": "Billedvisning"
   },
   "errors": {
     "generic": "Der opstod en fejl",
@@ -1389,7 +1441,9 @@
       "hide": "Skjul for brugere",
       "show": "Vis for brugere",
       "star": "Markér {{name}} med stjerne",
-      "unstar": "Fjern stjerne fra {{name}}"
+      "unstar": "Fjern stjerne fra {{name}}",
+      "filterLabel": "Filtrér modeller",
+      "displayName": "Visningsnavn for {{name}}"
     },
     "pull": {
       "placeholder": "Indtast modelnavn (f.eks. llama3.2:3b, deepseek-r1:14b)",
@@ -1550,7 +1604,10 @@
     "deleteConfirm": "Er du sikker på, at du vil slette \"{{name}}\"?",
     "deleteSuccess": "Persona \"{{name}}\" slettet",
     "downloadSuccess": "Persona \"{{name}}\" downloadet",
-    "failed": "Kunne ikke {{action}} persona"
+    "failed": "Kunne ikke {{action}} persona",
+    "loadFailed": "Dine personaer kunne ikke indlæses.",
+    "deleteFailed": "Personaen kunne ikke slettes",
+    "downloadFailed": "Personaen kunne ikke downloades"
   },
   "personaForm": {
     "title": {
@@ -1682,7 +1739,8 @@
       "promptHint": "En prompt, som hver ny chat med denne persona starter med.",
       "noPrompt": "Ingen prompt",
       "version": "Bindingsrevision {{version}}"
-    }
+    },
+    "sections": "Personasektioner"
   },
   "personaCard": {
     "enhanced": "Forbedret",
@@ -1699,7 +1757,16 @@
     "backupSuccess": "Persona-backup downloadet",
     "dnaSuccess": "Persona-DNA eksporteret",
     "failed": "Kunne ikke {{action}}",
-    "shareTooltip": "Del denne persona"
+    "shareTooltip": "Del denne persona",
+    "wipeFailed": "Minderne kunne ikke slettes",
+    "backupFailed": "Personaen kunne ikke sikkerhedskopieres",
+    "exportDnaFailed": "Personaens DNA kunne ikke eksporteres",
+    "favorite": "Favorit",
+    "memoryStatus": {
+      "active": "Aktiv",
+      "wiped": "Slettet",
+      "backed_up": "Sikkerhedskopieret"
+    }
   },
   "userManager": {
     "title": "Brugeradministration",
@@ -1865,7 +1932,28 @@
       "memberOf": "Grupper",
       "featuresLabel": "Funktionsadgang",
       "grantsLabel": "Tildelinger",
-      "grantVia": "via"
+      "grantVia": "via",
+      "deleteConfirmTitle": "Slet gruppen “{{name}}”?",
+      "deleteConfirmDescription": "Medlemmer mister den adgang, de kun havde via denne gruppe. Selve kontoerne slettes ikke.",
+      "statuses": {
+        "active": "Aktiv",
+        "pending": "Afventer godkendelse"
+      },
+      "features": {
+        "work": "Arbejde",
+        "model-download": "Modeldownload",
+        "web-search": "Websøgning",
+        "strands": "Strands-motor",
+        "tools": "Værktøjer",
+        "stt": "Tale til tekst",
+        "tts": "Tekst til tale",
+        "voice-mode": "Stemmetilstand",
+        "voice-cloning": "Stemmekloning"
+      },
+      "grantViaKinds": {
+        "user": "direkte tildeling",
+        "group": "gruppe"
+      }
     },
     "audit": {
       "title": "Sikkerhedsauditlog",
@@ -2298,7 +2386,11 @@
       "harmful": "Skadelig",
       "formatting": "Formatering"
     },
-    "feedbackComment": "Tilføj en kommentar…"
+    "feedbackComment": "Tilføj en kommentar…",
+    "user": "Bruger",
+    "feedbackFailed": "Din feedback kunne ikke gemmes",
+    "openImage": "Åbn billede {{number}}",
+    "uploadedImageAlt": "Uploadet billede {{number}}"
   },
   "imageGallery": {
     "title": "Billedgalleri",
@@ -2387,7 +2479,10 @@
       "image": "Billeder",
       "video": "Videoer",
       "audio": "Lyd"
-    }
+    },
+    "deleteConfirmTitle": "Slet dette element?",
+    "deleteConfirmDescription": "De genererede medier slettes permanent.",
+    "previewFailed": "Visning er ikke tilgængelig"
   },
   "errorBoundary": {
     "title": "Noget gik galt",
@@ -2463,7 +2558,8 @@
     "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source.",
     "versionOf": "Version {{current}} af {{total}}",
     "previousVersion": "Forrige version",
-    "nextVersion": "Næste version"
+    "nextVersion": "Næste version",
+    "resizePanel": "Tilpas panelets størrelse"
   },
   "personaImportExport": {
     "title": "Import og eksport af personaer",
@@ -2501,7 +2597,10 @@
     "generation": "Generering:",
     "modelLoad": "Model indlæsning:",
     "totalTime": "Samlet tid:",
-    "generatedAt": "Genereret kl.:"
+    "generatedAt": "Genereret kl.:",
+    "notAvailable": "I/T",
+    "tokenCount": "{{tokens}} tokens",
+    "tokensPerSecond": "{{value}} t/s"
   },
   "userMenu": {
     "loggedOut": "Logget ud",
@@ -2560,7 +2659,9 @@
       "httpWarning": "HTTP krypterer ikke legitimationsoplysninger eller trafik. Brug det kun på et betroet netværk.",
       "invalidBaseUrl": "Basis-URL'er må ikke indeholde en forespørgselsstreng eller fragment.",
       "invalidApiPath": "Skal starte med / og må ikke indeholde URL, forespørgsel, fragment eller ..-segment",
-      "tooLong": "Værdien er for lang"
+      "tooLong": "Værdien er for lang",
+      "resetConfirmTitle": "Nulstil til standardværdier?",
+      "resetConfirmDescription": "Dette sletter alle gemte værdier for {{name}}, inklusive API-nøgler og andre legitimationsoplysninger. Dette kan ikke fortrydes."
     }
   },
   "huggingface": {
@@ -2580,7 +2681,10 @@
   },
   "demoMode": {
     "title": "Demotilstand",
-    "github": "GitHub"
+    "github": "GitHub",
+    "defaultMessage": "Dette er en demoversion kun til præsentationsformål. Ollama-backend er ikke tilsluttet.",
+    "viewOnGithub": "Se på GitHub",
+    "dismiss": "Skjul"
   },
   "work": {
     "title": "Arbejde",
@@ -2671,8 +2775,18 @@
         "checksPending": "Afventende kontroller",
         "stallNudges": "Stilstandspåmindelser",
         "ambiguityNudges": "Genforankringspåmindelser",
-        "stoppedBy": "Stoppet af"
-      }
+        "stoppedBy": "Stoppet af",
+        "reasons": {
+          "round": "rundegrænse",
+          "toolCall": "grænse for værktøjskald",
+          "approvalTimeout": "godkendelsen fik timeout",
+          "computerStall": "computeren gik i stå"
+        }
+      },
+      "skillTraceSavedWorked": "Noteret: virkede",
+      "skillTraceSavedFailed": "Noteret: mislykkedes",
+      "connectionClosed": "Work-liveforbindelsen blev lukket.",
+      "reconnectingBackground": "Liveopdateringer genopretter forbindelsen i baggrunden."
     },
     "runtime": {
       "unavailable": "Kørselsmiljø ikke tilgængeligt",
@@ -2715,7 +2829,11 @@
       "changes": "Ændringer",
       "changesSince": "Hvad der er ændret siden sidste tur",
       "diffLabel": "Ændringer siden sidste tur: {{path}}",
-      "diffFolded": "{{count}} uændrede linjer"
+      "diffFolded": "{{count}} uændrede linjer",
+      "diffAdded": "Tilføjet",
+      "diffRemoved": "Fjernet",
+      "unsavedChanges": "ikke-gemte ændringer",
+      "editingLocked": "Redigering låses op, når turen er slut."
     },
     "activity": {
       "empty": "Kommandoer, filhandlinger og værktøjsresultater vises her.",
@@ -2726,7 +2844,9 @@
         "toolCall": "Værktøjskald",
         "toolResult": "Værktøjsresultat",
         "error": "Fejl"
-      }
+      },
+      "arguments": "Værktøjsargumenter",
+      "output": "Værktøjsoutput"
     },
     "preview": {
       "command": "Valgfri startkommando",
@@ -2755,7 +2875,8 @@
       "saveFailed": "Filen kunne ikke gemmes.",
       "saved": "Filen er gemt.",
       "previewFailed": "Forhåndsvisningen kunne ikke startes.",
-      "previewStopFailed": "Forhåndsvisningen kunne ikke stoppes."
+      "previewStopFailed": "Forhåndsvisningen kunne ikke stoppes.",
+      "sendFailed": "Beskeden kunne ikke sendes."
     },
     "terminal": {
       "connecting": "Åbner en shell i sandkassen…",
@@ -2807,7 +2928,18 @@
       "noFilterMatches": "Ingen ændrede filer matcher dette filter.",
       "allChanges": "Alle ændringer",
       "diffTruncated": "Denne diff er afkortet.",
-      "binaryFile": "Binær fil, ingen tekstdiff."
+      "binaryFile": "Binær fil, ingen tekstdiff.",
+      "statusLabels": {
+        "modified": "Ændret",
+        "added": "Tilføjet",
+        "deleted": "Slettet",
+        "renamed": "Omdøbt",
+        "copied": "Kopieret",
+        "typeChanged": "Type ændret",
+        "untracked": "Ikke sporet"
+      },
+      "stagedState": "klargjort",
+      "aheadBehind": "{{ahead}} foran, {{behind}} bagud"
     },
     "hostWorkspace": {
       "hint": "Lad stå tomt for et isoleret arbejdsområde, eller peg opgaven på en mappe på denne maskine.",
@@ -2834,7 +2966,8 @@
       "unmute": "Slå lyd til",
       "mute": "Slå lyd fra",
       "finished": "Denne opgave er afsluttet. Genåbn den for at få skærmen tilbage.",
-      "reopenOpen": "Genåbn opgave og åbn skærmen"
+      "reopenOpen": "Genåbn opgave og åbn skærmen",
+      "teachSaveFailed": "Denne demonstration kunne ikke gemmes."
     },
     "computerSetup": {
       "title": "Work Computer",
@@ -2871,7 +3004,11 @@
       "approvalsToggleFailed": "Godkendelserne kunne ikke opdateres.",
       "approvalRuleLine": "Altid tilladt",
       "approvalRuleDelete": "Fjern regel",
-      "approvalRuleDeleteFailed": "Reglen kunne ikke fjernes."
+      "approvalRuleDeleteFailed": "Reglen kunne ikke fjernes.",
+      "routinesLoadFailed": "Rutinerne kunne ikke indlæses.",
+      "skillsLoadFailed": "De lærte færdigheder kunne ikke indlæses.",
+      "approvalsLoadFailed": "Godkendelsesindstillingerne kunne ikke indlæses.",
+      "routinePaused": "Sat på pause"
     },
     "runs": {
       "title": "Kørsler",
@@ -2882,7 +3019,8 @@
         "needsInput": "Kræver input",
         "failed": "Mislykket",
         "cancelled": "Annulleret"
-      }
+      },
+      "loadFailed": "Kørselshistorikken kunne ikke indlæses."
     },
     "approval": {
       "title": "Godkendelse påkrævet",
@@ -2890,7 +3028,16 @@
       "allowOnce": "Tillad én gang",
       "allowAlways": "Tillad altid",
       "deny": "Afvis",
-      "failed": "Beslutningen kunne ikke sendes."
+      "failed": "Beslutningen kunne ikke sendes.",
+      "details": "Handlingsdetaljer",
+      "fields": {
+        "command": "Kommando",
+        "path": "Sti",
+        "from": "Fra",
+        "to": "Til",
+        "actions": "Handlinger",
+        "recursive": "Rekursiv"
+      }
     },
     "idleStopHint": "Stopper efter {{minutes}} minutter uden aktivitet.",
     "recovery": {
@@ -2903,6 +3050,17 @@
       "retrySucceeded": "Ryddede {{cleared}} af {{attempted}} afventende oprydninger.",
       "retryPending": "Prøver stadig {{attempted}} afventende oprydninger igen.",
       "retryFailed": "Kunne ikke prøve de afventende oprydninger igen."
+    },
+    "computer": {
+      "setupFailed": "Work Computer kunne ikke konfigureres."
+    },
+    "announce": {
+      "completed": "{{title}} er færdig.",
+      "needsInput": "{{title}} har brug for dit input eller din godkendelse.",
+      "failed": "{{title}} mislykkedes.",
+      "cancelled": "{{title}} blev stoppet.",
+      "approvalNeeded": "{{title}} har brug for din godkendelse til at køre {{tool}}.",
+      "untitledTask": "Denne opgave"
     }
   },
   "personaBackground": {
@@ -2947,7 +3105,8 @@
     "showAll": "Vis alle ({{total}})",
     "sources": "Modelkilder",
     "defaultModel": "Standardmodel",
-    "contextSize": "{{size}} kontekst"
+    "contextSize": "{{size}} kontekst",
+    "via": "via {{provider}}"
   },
   "whatsNew": {
     "title": "Nyheder",
@@ -3004,7 +3163,16 @@
     "unpin": "Frigør note",
     "pinned": "Fastgjort",
     "export": "Download som Markdown",
-    "sharedWithYou": "Delt med dig"
+    "sharedWithYou": "Delt med dig",
+    "titleLabel": "Notens titel",
+    "loadFailed": "Kunne ikke indlæses. Prøv igen.",
+    "restoreConfirmTitle": "Gendan denne version?",
+    "restoreConfirmDescription": "Notens tekst erstattes med denne tidligere version.",
+    "deleteAttachmentConfirmTitle": "Slet {{name}}?",
+    "deleteAttachmentConfirmDescription": "Vedhæftningen slettes permanent fra denne note.",
+    "attachmentDeleteFailed": "Vedhæftningen kunne ikke slettes",
+    "revokeFailed": "Adgangen kunne ikke tilbagekaldes",
+    "sharePermissionLabel": "Tilladelse"
   },
   "calendar": {
     "title": "Kalender",
@@ -3049,7 +3217,22 @@
     "importFailed": "Filen kunne ikke importeres",
     "importResult": "{{total}} begivenheder importeret",
     "importIcs": "Importér",
-    "exportIcs": "Eksportér"
+    "exportIcs": "Eksportér",
+    "chipStatus": {
+      "automation": "Planlagt automatisering",
+      "runSucceeded": "Automatiseringen blev kørt",
+      "runFailed": "Automatiseringen fejlede"
+    },
+    "newEventOn": "Ny begivenhed den {{date}}",
+    "showDay": "Vis alle begivenheder den {{date}}",
+    "deleteEventConfirmTitle": "Slet “{{title}}”?",
+    "deleteEventConfirmDescription": "Denne begivenhed slettes permanent.",
+    "deleteRecurringEventConfirmDescription": "Denne tilbagevendende begivenhed og alle dens forekomster slettes permanent.",
+    "shareCalendarNamed": "Del kalenderen {{name}}",
+    "deleteCalendarNamed": "Slet kalenderen {{name}}",
+    "deleteCalendarConfirmTitle": "Slet kalenderen “{{name}}”?",
+    "deleteCalendarConfirmDescription": "Kalenderen og dens begivenheder slettes permanent.",
+    "calendarDeleteFailed": "Kalenderen kunne ikke slettes"
   },
   "automations": {
     "title": "Automatiseringer",
@@ -3176,13 +3359,17 @@
         "work-approval": "en agent venter på din godkendelse",
         "system": "der kommer en systembesked"
       }
-    }
+    },
+    "deleteConfirmTitle": "Slet “{{name}}”?",
+    "deleteConfirmDescription": "Automatiseringen og dens tidsplan slettes permanent. Tidligere kørsler bliver i kørselshistorikken."
   },
   "home": {
     "active": "aktiv",
     "continue": "Fortsæt",
     "start": "Start",
-    "explore": "Udforsk"
+    "explore": "Udforsk",
+    "greeting": "{{greeting}}.",
+    "greetingWithName": "{{greeting}}, {{name}}."
   },
   "palette": {
     "empty": "Ingen match.",
@@ -3195,7 +3382,14 @@
     "work": "Arbejde",
     "messages": "Beskeder",
     "notes": "Noter",
-    "documents": "Dokumenter"
+    "documents": "Dokumenter",
+    "searching": "Søger…",
+    "searchFailed": "Søgningen i arbejdsområdet mislykkedes. Viser kun matchende chats og handlinger.",
+    "results": "Resultater",
+    "escKey": "esc",
+    "hintNavigate": "Naviger",
+    "hintOpen": "Åbn",
+    "hintClose": "Luk"
   },
   "tabs": {
     "actions": "Fanehandlinger",
@@ -3399,7 +3593,8 @@
       "button": "Fra mappe",
       "missingSkillMd": "Mappen skal indeholde en SKILL.md-fil",
       "done": "Færdighed importeret med {{count}} medfølgende filer"
-    }
+    },
+    "toggleLabel": "Aktivér færdigheden {{name}}"
   },
   "toolsPage": {
     "title": "Værktøjer",
@@ -3557,7 +3752,14 @@
     "added": "Delt med {{name}}",
     "failed": "Deling mislykkedes",
     "userNotFound": "Ingen bruger med det navn",
-    "groupNotFound": "Ingen gruppe med det navn"
+    "groupNotFound": "Ingen gruppe med det navn",
+    "principalKind": "Del med en bruger eller gruppe",
+    "principalName": "Brugernavn eller gruppenavn",
+    "permission": "Tilladelse",
+    "sharing": "Deling",
+    "loading": "Indlæser delinger",
+    "loadFailed": "Delingerne kunne ikke indlæses",
+    "revokeFailed": "Adgangen kunne ikke tilbagekaldes"
   },
   "channels": {
     "title": "Kanaler",
@@ -3616,13 +3818,44 @@
     "toolCalls": {
       "summary": "Værktøjer brugt ({{total}})",
       "deniedHint": "Værktøjer, der ændrer ting, afvises i kanaler. Kør dem fra en chat."
-    }
+    },
+    "confirmEdit": "Gem redigering",
+    "cancelEdit": "Annuller redigering",
+    "reactWith": "Reagér med {{emoji}}",
+    "deleteMessageConfirmTitle": "Slet denne besked?",
+    "deleteMessageConfirmDescription": "Beskeden fjernes for alle i denne kanal.",
+    "unreadCount": "{{total}} ulæste",
+    "send": "Send besked",
+    "invite": "Inviter medlem",
+    "closeThread": "Luk tråd",
+    "removeAttachment": "Fjern vedhæftning",
+    "loadFailed": "Kunne ikke indlæses. Prøv igen.",
+    "editFailed": "Beskeden kunne ikke redigeres",
+    "deleteMessageFailed": "Beskeden kunne ikke slettes",
+    "pinFailed": "Fastgørelsen kunne ikke ændres",
+    "reactFailed": "Reaktionen kunne ikke gemmes",
+    "downloadFailed": "Filen kunne ikke downloades",
+    "removeMemberConfirm": "Fjern {{name}} fra denne kanal?",
+    "removeMemberConfirmDescription": "Personen mister adgangen til kanalen og dens beskeder.",
+    "removeMemberNamed": "Fjern {{name}} fra kanalen",
+    "removeMemberFailed": "Medlemmet kunne ikke fjernes",
+    "leaveConfirm": "Forlad {{name}}?",
+    "leaveConfirmDescription": "Du skal inviteres igen for at deltage i en privat kanal igen.",
+    "leaveFailed": "Du kunne ikke forlade kanalen",
+    "joinFailed": "Du kunne ikke deltage i kanalen",
+    "deleteConfirm": "Slet {{name}}?",
+    "deleteConfirmDescription": "Kanalen og alle dens beskeder slettes permanent for alle medlemmer.",
+    "deleteFailed": "Kanalen kunne ikke slettes",
+    "saveFailed": "Kanalen kunne ikke gemmes"
   },
   "notifications": {
     "title": "Notifikationer",
     "empty": "Du er ajour.",
     "markAllRead": "Markér alle som læst",
-    "markRead": "Markér som læst"
+    "markRead": "Markér som læst",
+    "titleWithUnread": "Notifikationer ({{unread}} ulæste)",
+    "unread": "Ulæst",
+    "loadFailed": "Notifikationerne kunne ikke indlæses."
   },
   "voiceMode": {
     "title": "Stemmetilstand",
@@ -3757,7 +3990,12 @@
       "failed": "Mislykket",
       "cancelled": "Annulleret"
     },
-    "noFeedback": "Ingen feedback endnu — bedøm svar for at bygge dit datasæt."
+    "noFeedback": "Ingen feedback endnu — bedøm svar for at bygge dit datasæt.",
+    "deleteSetConfirmTitle": "Slet “{{name}}”?",
+    "deleteSetConfirmDescription": "Evalueringssættet og dets prompts slettes permanent.",
+    "deleteSetFailed": "Evalueringssættet kunne ikke slettes",
+    "runError": "Fejl: {{detail}}",
+    "cancelFailed": "Kørslen kunne ikke annulleres"
   },
   "passwordStrength": {
     "levels": {
@@ -3771,6 +4009,14 @@
       "hasCase": "Store og små bogstaver",
       "hasNumber": "Mindst ét tal",
       "tooLong": "Højst 72 bytes"
+    },
+    "requirements": "Brug mindst 12 tegn og højst 72 UTF-8-bytes, med store og små bogstaver og et tal.",
+    "errors": {
+      "minLength": "Adgangskoden skal være mindst 12 tegn.",
+      "tooLong": "Adgangskoden må højst være 72 UTF-8-bytes.",
+      "uppercase": "Adgangskoden skal indeholde et stort bogstav.",
+      "lowercase": "Adgangskoden skal indeholde et lille bogstav.",
+      "number": "Adgangskoden skal indeholde et tal."
     }
   },
   "connectModels": {
@@ -3804,7 +4050,8 @@
       "enable": "Aktivér udbyder",
       "enabling": "Aktiverer…",
       "enabled": "{{name}} forbundet — dens modeller er nu tilgængelige",
-      "enableFailed": "Kunne ikke aktivere udbyderen"
+      "enableFailed": "Kunne ikke aktivere udbyderen",
+      "urlLabel": "Server-URL"
     },
     "cloud": {
       "title": "Cloud-API",
@@ -3813,7 +4060,8 @@
       "connect": "Forbind",
       "connecting": "Forbinder…",
       "connected": "{{name}} forbundet — dens modeller er nu tilgængelige",
-      "saveFailed": "Kunne ikke gemme API-nøglen"
+      "saveFailed": "Kunne ikke gemme API-nøglen",
+      "keyLabel": "API-nøgle til {{name}}"
     }
   },
   "strands": {
@@ -3845,5 +4093,15 @@
     "deleteFailed": "Sessionen kunne ikke slettes.",
     "saveFailed": "Kunne ikke gemme sessionen.",
     "turnFailed": "Motoren kunne ikke fuldføre turen"
+  },
+  "notFound": {
+    "title": "Siden blev ikke fundet",
+    "description": "Denne side findes ikke eller er muligvis flyttet."
+  },
+  "themeToggle": {
+    "switchToLight": "Skift til lys tilstand",
+    "switchToDark": "Skift til mørk tilstand",
+    "switchToAmoled": "Skift til rent sort tilstand",
+    "switchToCelestial": "Skift til himmelsk tilstand"
   }
 }

@@ -28,7 +28,8 @@ import {
   X,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { Button } from '@/components/ui';
+import { Button, WorkspaceToolbar } from '@/components/ui';
+import { confirmAction } from '@/components/ui/confirmStore';
 import { MonthGrid } from '@/components/calendar/MonthGrid';
 import { WeekGrid } from '@/components/calendar/WeekGrid';
 import { EventModal, EventModalResult } from '@/components/calendar/EventModal';
@@ -95,9 +96,13 @@ const CalendarPage: React.FC = () => {
       .getCalendars()
       .then(response => {
         if (response.success && response.data) setCalendars(response.data);
+        else toast.error(t('calendar.loadFailed'));
       })
-      .catch(error => logger.error('Failed to load calendars:', error));
-  }, [refreshCounter]);
+      .catch(error => {
+        logger.error('Failed to load calendars:', error);
+        toast.error(t('calendar.loadFailed'));
+      });
+  }, [refreshCounter, t]);
 
   useEffect(() => {
     let cancelled = false;
@@ -285,6 +290,23 @@ const CalendarPage: React.FC = () => {
     }
   };
 
+  const handleDeleteCalendar = async (calendar: Calendar) => {
+    const confirmed = await confirmAction({
+      title: t('calendar.deleteCalendarConfirmTitle', { name: calendar.name }),
+      description: t('calendar.deleteCalendarConfirmDescription'),
+      destructive: true,
+    });
+    if (!confirmed) return;
+    try {
+      const response = await calendarApi.deleteCalendar(calendar.id);
+      if (!response.success) throw new Error(response.error);
+      refreshEvents();
+    } catch (error) {
+      logger.error('Failed to delete calendar:', error);
+      toast.error(t('calendar.calendarDeleteFailed'));
+    }
+  };
+
   const handleExport = async (calendarId?: string) => {
     try {
       const blob = await calendarApi.exportIcs(calendarId);
@@ -323,80 +345,78 @@ const CalendarPage: React.FC = () => {
       className='flex h-full min-h-0 flex-col overflow-hidden'
       data-testid='calendar-page'
     >
-      <div className='flex flex-wrap items-center justify-between gap-2 border-b border-black/[0.06] px-4 py-3 dark:border-white/[0.07]'>
-        <div className='flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1'>
-          <h1 className='text-sm font-semibold text-gray-900 dark:text-dark-900'>
-            {t('calendar.title')}
-          </h1>
-          <span
-            className='text-sm text-gray-500 dark:text-dark-500'
-            data-testid='calendar-range-label'
-          >
-            {title}
-          </span>
-        </div>
-        <div className='flex w-full min-w-0 flex-wrap items-center gap-2 sm:w-auto'>
-          <div className='flex items-center rounded-xl bg-black/[0.04] p-0.5 dark:bg-white/[0.06]'>
-            {(['month', 'week', 'day'] as const).map(choice => (
-              <button
-                key={choice}
-                type='button'
-                onClick={() => setView(choice)}
-                aria-pressed={view === choice}
-                data-testid={`calendar-view-${choice}`}
-                className={cn(
-                  'rounded-[10px] px-2.5 py-1 text-[12px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-canvas',
-                  view === choice
-                    ? 'bg-white text-gray-900 shadow-sm dark:bg-dark-200 dark:text-dark-900'
-                    : 'text-gray-500 hover:text-gray-800 dark:text-dark-500 dark:hover:text-dark-800'
-                )}
+      <WorkspaceToolbar
+        title={t('calendar.title')}
+        actions={
+          <>
+            <div className='flex items-center rounded-xl bg-black/[0.04] p-0.5 dark:bg-white/[0.06]'>
+              {(['month', 'week', 'day'] as const).map(choice => (
+                <button
+                  key={choice}
+                  type='button'
+                  onClick={() => setView(choice)}
+                  aria-pressed={view === choice}
+                  data-testid={`calendar-view-${choice}`}
+                  className={cn(
+                    'rounded-[10px] px-2.5 py-1 text-[12px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-canvas',
+                    view === choice
+                      ? 'bg-white text-gray-900 shadow-sm dark:bg-dark-200 dark:text-dark-900'
+                      : 'text-gray-500 hover:text-gray-800 dark:text-dark-500 dark:hover:text-dark-800'
+                  )}
+                >
+                  {t(`calendar.${choice}`)}
+                </button>
+              ))}
+            </div>
+            <div className='flex items-center gap-0.5'>
+              <Button
+                size='sm'
+                variant='ghost'
+                onClick={() => step(-1)}
+                className='h-7 w-7 p-0'
+                title={t('calendar.previous')}
+                aria-label={t('calendar.previous')}
               >
-                {t(`calendar.${choice}`)}
-              </button>
-            ))}
-          </div>
-          <div className='flex items-center gap-0.5'>
+                <ChevronLeft className='h-4 w-4 rtl:rotate-180' />
+              </Button>
+              <Button
+                size='sm'
+                variant='ghost'
+                onClick={() => setAnchor(new Date())}
+                className='h-7 px-2 text-[12px]'
+              >
+                {t('calendar.today')}
+              </Button>
+              <Button
+                size='sm'
+                variant='ghost'
+                onClick={() => step(1)}
+                className='h-7 w-7 p-0'
+                title={t('calendar.next')}
+                aria-label={t('calendar.next')}
+              >
+                <ChevronRight className='h-4 w-4 rtl:rotate-180' />
+              </Button>
+            </div>
             <Button
               size='sm'
-              variant='ghost'
-              onClick={() => step(-1)}
-              className='h-7 w-7 p-0'
-              title={t('calendar.previous')}
-              aria-label={t('calendar.previous')}
+              onClick={() => openCreate(anchor)}
+              data-testid='calendar-new-event'
+              className='h-7 gap-1 px-2.5 text-[12px]'
             >
-              <ChevronLeft className='h-4 w-4 rtl:rotate-180' />
+              <Plus className='h-3.5 w-3.5' />
+              {t('calendar.newEvent')}
             </Button>
-            <Button
-              size='sm'
-              variant='ghost'
-              onClick={() => setAnchor(new Date())}
-              className='h-7 px-2 text-[12px]'
-            >
-              {t('calendar.today')}
-            </Button>
-            <Button
-              size='sm'
-              variant='ghost'
-              onClick={() => step(1)}
-              className='h-7 w-7 p-0'
-              title={t('calendar.next')}
-              aria-label={t('calendar.next')}
-            >
-              <ChevronRight className='h-4 w-4 rtl:rotate-180' />
-            </Button>
-          </div>
-          <Button
-            size='sm'
-            onClick={() => openCreate(anchor)}
-            data-testid='calendar-new-event'
-            className='h-7 gap-1 px-2.5 text-[12px]'
-          >
-            <Plus className='h-3.5 w-3.5' />
-            {t('calendar.newEvent')}
-          </Button>
-        </div>
-      </div>
-
+          </>
+        }
+      >
+        <span
+          className='text-sm text-ink-muted'
+          data-testid='calendar-range-label'
+        >
+          {title}
+        </span>
+      </WorkspaceToolbar>
       <div className='flex flex-wrap items-center gap-1.5 border-b border-black/[0.06] px-4 py-2 dark:border-white/[0.07]'>
         {calendars.map(calendar => (
           <span
@@ -418,21 +438,25 @@ const CalendarPage: React.FC = () => {
             ) : (
               <>
                 <button
+                  type='button'
                   onClick={() => setShareCalendar(calendar)}
-                  className='shrink-0 text-gray-400 hover:text-primary-500 dark:text-dark-500'
+                  className='-my-1.5 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-ink-muted hover:text-ink'
                   title={t('calendar.shareCalendar')}
+                  aria-label={t('calendar.shareCalendarNamed', {
+                    name: calendar.name,
+                  })}
                   data-testid='calendar-share'
                 >
                   <Share2 className='h-3 w-3' />
                 </button>
                 <button
-                  onClick={() =>
-                    void calendarApi
-                      .deleteCalendar(calendar.id)
-                      .then(refreshEvents)
-                  }
-                  className='shrink-0 text-gray-400 hover:text-red-500 dark:text-dark-500'
+                  type='button'
+                  onClick={() => void handleDeleteCalendar(calendar)}
+                  className='-my-1.5 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-ink-muted hover:text-error-700'
                   title={t('common.delete')}
+                  aria-label={t('calendar.deleteCalendarNamed', {
+                    name: calendar.name,
+                  })}
                 >
                   <X className='h-3 w-3' />
                 </button>
@@ -511,6 +535,10 @@ const CalendarPage: React.FC = () => {
           events={displayEvents}
           onDayClick={day => openCreate(day)}
           onEventClick={openEdit}
+          onShowDay={day => {
+            setAnchor(day);
+            setView('day');
+          }}
         />
       ) : (
         <WeekGrid

@@ -15,13 +15,15 @@
  * limitations under the License.
  */
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
+import toast from 'react-hot-toast';
 import { BookOpen, ChevronUp, FileText, Globe, X } from 'lucide-react';
 import type { ChatSession } from '@/types';
 import { chatApi, documentsApi } from '@/utils/api';
 import { useChatStore } from '@/store/chatStore';
+import { useDialogFocus } from '@/hooks/useDialogFocus';
 import { createLogger } from '@/utils/logger';
 
 const logger = createLogger('components:chat-sources-panel');
@@ -73,7 +75,7 @@ const hostnameOf = (url: string): string => {
 export const ChatSourcesPanel: React.FC<ChatSourcesPanelProps> = ({
   session,
 }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   // Keyed by session so switching chats never shows another chat's
   // attachments; private sessions derive an empty list without state work.
   const [attached, setAttached] = useState<{
@@ -89,6 +91,11 @@ export const ChatSourcesPanel: React.FC<ChatSourcesPanelProps> = ({
   // Below xl the rail has no room; the same content opens as a bottom
   // sheet from a compact trigger, matching the app's mobile pattern.
   const [sheetOpen, setSheetOpen] = useState(false);
+  const sheetRef = useRef<HTMLDivElement>(null);
+  useDialogFocus(sheetRef, {
+    enabled: sheetOpen,
+    onClose: () => setSheetOpen(false),
+  });
 
   const { webSources, ragSources, fullContextSkipped } = useMemo(() => {
     const web = new Map<string, WebSource>();
@@ -224,6 +231,7 @@ export const ChatSourcesPanel: React.FC<ChatSourcesPanelProps> = ({
   );
 
   const toggleFullDocumentContext = async () => {
+    const previousValue = session.settings?.fullDocumentContext;
     const settings = {
       ...session.settings,
       fullDocumentContext: fullDocumentContext ? undefined : true,
@@ -244,6 +252,27 @@ export const ChatSourcesPanel: React.FC<ChatSourcesPanelProps> = ({
       } as Partial<ChatSession>);
     } catch (error) {
       logger.error('Failed to update the full-document setting:', error);
+      // Roll back only this field, on top of the latest settings, so the
+      // toggle matches the server without undoing later changes.
+      const revert = (current: ChatSession['settings']) => ({
+        ...current,
+        fullDocumentContext: previousValue,
+      });
+      useChatStore.setState(state => ({
+        currentSession:
+          state.currentSession?.id === session.id
+            ? {
+                ...state.currentSession,
+                settings: revert(state.currentSession.settings),
+              }
+            : state.currentSession,
+        sessions: state.sessions.map(existing =>
+          existing.id === session.id
+            ? { ...existing, settings: revert(existing.settings) }
+            : existing
+        ),
+      }));
+      toast.error(t('chat.sources.fullContextFailed'));
     }
   };
 
@@ -275,11 +304,12 @@ export const ChatSourcesPanel: React.FC<ChatSourcesPanelProps> = ({
       <button
         type='button'
         onClick={toggle}
-        className='mt-1 flex items-center gap-1 px-1 text-[12px] text-gray-400 transition-colors hover:text-gray-700 dark:text-dark-500 dark:hover:text-dark-800'
+        aria-expanded={expanded}
+        className='mt-1 flex items-center gap-1 px-1 text-[12px] text-ink-muted transition-colors hover:text-ink'
       >
         {expanded ? (
           <>
-            <ChevronUp className='h-3 w-3' />
+            <ChevronUp className='h-3 w-3' aria-hidden='true' />
             {t('chatMessage.showLess', 'Show less')}
           </>
         ) : (
@@ -292,7 +322,7 @@ export const ChatSourcesPanel: React.FC<ChatSourcesPanelProps> = ({
     <>
       {webSources.length > 0 && (
         <section>
-          <h3 className='mb-2 text-[13px] font-medium text-gray-500 dark:text-dark-500'>
+          <h3 className='mb-2 text-[13px] font-medium text-ink-muted'>
             {t('chat.message.sources', 'Sources')}
           </h3>
           <ul className='space-y-0.5'>
@@ -312,7 +342,7 @@ export const ChatSourcesPanel: React.FC<ChatSourcesPanelProps> = ({
                     </span>
                     <span
                       dir='ltr'
-                      className='block truncate text-[11px] text-gray-400 dark:text-dark-500'
+                      className='block truncate text-[11px] text-ink-muted'
                     >
                       {hostnameOf(source.url)}
                     </span>
@@ -329,7 +359,7 @@ export const ChatSourcesPanel: React.FC<ChatSourcesPanelProps> = ({
 
       {documents.length > 0 && (
         <section>
-          <h3 className='mb-2 text-[13px] font-medium text-gray-500 dark:text-dark-500'>
+          <h3 className='mb-2 text-[13px] font-medium text-ink-muted'>
             {t('settings.tabs.documents', 'Documents')}
           </h3>
           <ul className='space-y-0.5'>
@@ -348,22 +378,27 @@ export const ChatSourcesPanel: React.FC<ChatSourcesPanelProps> = ({
                     {doc.filename}
                   </span>
                   {doc.used && (
-                    <span
-                      aria-hidden='true'
-                      className='h-1.5 w-1.5 shrink-0 rounded-full bg-primary-500'
-                    />
+                    <>
+                      <span
+                        aria-hidden='true'
+                        className='h-1.5 w-1.5 shrink-0 rounded-full bg-primary-500'
+                      />
+                      <span className='sr-only'>
+                        {t('chat.sources.usedByRetrieval')}
+                      </span>
+                    </>
                   )}
                 </span>
                 {doc.full ? (
                   <span
-                    className='ms-[26px] block truncate text-[11px] text-gray-400 dark:text-dark-500'
+                    className='ms-[26px] block truncate text-[11px] text-ink-muted'
                     data-testid='chat-source-citation'
                   >
                     {t('documents.fullDocument', 'Full document')}
                   </span>
                 ) : doc.citations?.length ? (
                   <span
-                    className='ms-[26px] block truncate text-[11px] text-gray-400 dark:text-dark-500'
+                    className='ms-[26px] block truncate text-[11px] text-ink-muted'
                     data-testid='chat-source-citation'
                   >
                     {citationSummary(doc.citations)}
@@ -377,7 +412,7 @@ export const ChatSourcesPanel: React.FC<ChatSourcesPanelProps> = ({
             allDocuments,
             () => setAllDocuments(current => !current)
           )}
-          <label className='mt-3 flex cursor-pointer items-center gap-2 px-1 text-[12px] text-gray-500 dark:text-dark-500'>
+          <label className='mt-3 flex cursor-pointer items-center gap-2 px-1 text-[12px] text-ink-muted'>
             <input
               type='checkbox'
               checked={fullDocumentContext}
@@ -388,9 +423,9 @@ export const ChatSourcesPanel: React.FC<ChatSourcesPanelProps> = ({
             <span className='min-w-0 flex-1'>
               {t('documents.fullContextToggle', 'Send full documents')}
               {fullDocumentContext && estimatedTokens > 0 && (
-                <span className='ms-1 text-gray-400 dark:text-dark-500'>
+                <span className='ms-1 text-ink-muted'>
                   {t('documents.fullContextEstimate', {
-                    tokens: estimatedTokens.toLocaleString(),
+                    tokens: estimatedTokens.toLocaleString(i18n.language),
                   })}
                 </span>
               )}
@@ -425,11 +460,17 @@ export const ChatSourcesPanel: React.FC<ChatSourcesPanelProps> = ({
         data-testid='chat-sources-trigger'
         className='absolute end-3 top-[4.25rem] z-20 flex h-8 w-8 items-center justify-center rounded-full border border-black/[0.07] bg-surface/65 text-gray-500 backdrop-blur-md transition-colors duration-150 hover:bg-surface-raised hover:text-gray-950 dark:border-white/[0.08] dark:bg-dark-200/65 dark:text-dark-600 dark:hover:bg-dark-200 dark:hover:text-dark-950 xl:hidden'
         title={t('chat.message.sources', 'Sources')}
+        aria-label={t('chat.sources.triggerLabel', {
+          count: webSources.length + documents.length,
+        })}
         aria-haspopup='dialog'
         aria-expanded={sheetOpen}
       >
-        <BookOpen className='h-3.5 w-3.5' />
-        <span className='absolute -end-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-md bg-primary-500 px-1 text-[9px] font-semibold tabular-nums text-white shadow-sm'>
+        <BookOpen className='h-3.5 w-3.5' aria-hidden='true' />
+        <span
+          aria-hidden='true'
+          className='absolute -end-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-md bg-primary-500 px-1 text-[9px] font-semibold tabular-nums text-white shadow-sm'
+        >
           {webSources.length + documents.length}
         </span>
       </button>
@@ -444,8 +485,10 @@ export const ChatSourcesPanel: React.FC<ChatSourcesPanelProps> = ({
               aria-label={t('common.close')}
             />
             <div
+              ref={sheetRef}
               role='dialog'
               aria-modal='true'
+              tabIndex={-1}
               aria-label={t('chat.message.sources', 'Sources')}
               className='absolute inset-x-3 bottom-3 max-h-[75vh] overflow-y-auto rounded-2xl border border-black/[0.08] bg-surface p-5 shadow-[0_20px_70px_rgba(0,0,0,0.3)] scrollbar-thin dark:border-white/[0.09] dark:bg-dark-100'
               data-testid='chat-sources-sheet'
@@ -457,10 +500,10 @@ export const ChatSourcesPanel: React.FC<ChatSourcesPanelProps> = ({
                 <button
                   type='button'
                   onClick={() => setSheetOpen(false)}
-                  className='rounded-md p-1.5 text-gray-400 hover:text-gray-700 dark:text-dark-500 dark:hover:text-dark-800'
+                  className='rounded-md p-1.5 text-ink-muted hover:text-ink'
                   aria-label={t('common.close')}
                 >
-                  <X className='h-4 w-4' />
+                  <X className='h-4 w-4' aria-hidden='true' />
                 </button>
               </div>
               <div className='flex flex-col gap-6'>{sections}</div>

@@ -30,7 +30,14 @@ import {
   Upload,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { Button, IconAction, ModalShell, Switch } from '@/components/ui';
+import {
+  Button,
+  EmptyState,
+  IconAction,
+  LoadingState,
+  ModalShell,
+  Switch,
+} from '@/components/ui';
 import { SettingsTabHeader } from './SettingsTabHeader';
 import { SkillModal } from '@/components/skills/SkillModal';
 import { WorkspaceTemplateGrid } from './WorkspaceTemplateGrid';
@@ -392,16 +399,14 @@ export const SettingsSkillsTab: React.FC = () => {
         }
       />
 
-      {loading ? null : skills.length === 0 ? (
-        <div className='px-3 py-16 text-center'>
-          <GraduationCap className='mx-auto mb-3 h-6 w-6 text-gray-300 dark:text-dark-400' />
-          <p className='text-sm text-gray-500 dark:text-dark-500'>
-            {t('skillsPage.empty')}
-          </p>
-          <p className='mx-auto mt-2 max-w-md text-[13px] leading-6 text-gray-400 dark:text-dark-500'>
-            {t('skillsPage.emptyHint')}
-          </p>
-        </div>
+      {loading ? (
+        <LoadingState srOnly />
+      ) : skills.length === 0 ? (
+        <EmptyState
+          icon={GraduationCap}
+          title={t('skillsPage.empty')}
+          description={t('skillsPage.emptyHint')}
+        />
       ) : (
         <div className='space-y-2'>
           {skills.map(skill => (
@@ -437,6 +442,9 @@ export const SettingsSkillsTab: React.FC = () => {
                     checked={skill.enabled}
                     disabled={togglingId === skill.id}
                     onChange={checked => void handleToggle(skill, checked)}
+                    aria-label={t('skillsPage.toggleLabel', {
+                      name: skill.name,
+                    })}
                   />
                   <IconAction
                     icon={History}

@@ -22,12 +22,15 @@ interface LabelProps {
   children: React.ReactNode;
   htmlFor?: string;
   className?: string;
+  /** Shows a visual marker; the field itself must also be `required`. */
+  required?: boolean;
 }
 
 export const Label: React.FC<LabelProps> = ({
   children,
   htmlFor,
   className = '',
+  required = false,
 }) => {
   return (
     <label
@@ -38,6 +41,14 @@ export const Label: React.FC<LabelProps> = ({
       )}
     >
       {children}
+      {required && (
+        <span
+          aria-hidden='true'
+          className='ms-0.5 text-error-700 dark:text-error-400'
+        >
+          *
+        </span>
+      )}
     </label>
   );
 };

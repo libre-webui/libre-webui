@@ -34,6 +34,7 @@ import type {
   GenerationOptions,
   UserPreferences,
 } from '@/types';
+import { SettingsTabHeader } from './SettingsTabHeader';
 import { SettingsToggle } from './SettingsToggle';
 
 type EmbeddingSettings = UserPreferences['embeddingSettings'];
@@ -91,6 +92,10 @@ export function SettingsGenerationTab({
   const advancedPanelId = useId();
   const scopeSelectId = useId();
   const thinkingSelectId = useId();
+  const stopSequencesId = useId();
+  const embeddingTitleId = useId();
+  const embeddingEnableId = useId();
+  const embeddingModelId = useId();
 
   // A model can only be pinned when one is actually selected.
   const scopeOptions = [
@@ -108,12 +113,10 @@ export function SettingsGenerationTab({
   return (
     <div className='space-y-6'>
       <div>
-        <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4'>
-          {t('settings.generation.title')}
-        </h3>
-        <p className='text-sm text-gray-600 dark:text-gray-400 mb-4'>
-          {t('settings.generation.description')}
-        </p>
+        <SettingsTabHeader
+          title={t('settings.generation.title')}
+          description={t('settings.generation.description')}
+        />
 
         {/* Without this, a save silently pinned whatever model the chat was on,
             and the values every other model falls back to could not be reached. */}
@@ -145,7 +148,7 @@ export function SettingsGenerationTab({
             aria-expanded={advancedOpen}
             aria-controls={advancedPanelId}
             onClick={() => setAdvancedOpen(open => !open)}
-            className='flex w-full items-center justify-between gap-4 p-4 text-left'
+            className='flex w-full items-center justify-between gap-4 p-4 text-start'
           >
             <span>
               <span className='block text-sm font-medium text-gray-900 dark:text-gray-100'>
@@ -334,13 +337,17 @@ export function SettingsGenerationTab({
                 />
 
                 <div className='md:col-span-2'>
-                  <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                  <label
+                    htmlFor={stopSequencesId}
+                    className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'
+                  >
                     {t('settings.generation.stopSequences')}
                     <span className='text-xs text-gray-500 ms-1'>
                       ({t('settings.generation.commaSeparated')})
                     </span>
                   </label>
                   <input
+                    id={stopSequencesId}
                     type='text'
                     value={generationOptions.stop?.join(', ') ?? ''}
                     onChange={event =>
@@ -386,12 +393,22 @@ export function SettingsGenerationTab({
 
         <div className='mt-6'>
           <div className='bg-white dark:bg-dark-100 rounded-lg p-4 border border-gray-200 dark:border-dark-300'>
-            <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3'>
+            <h4
+              id={embeddingTitleId}
+              className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3'
+            >
               {t('settings.generation.embeddingSettings')}
-            </label>
-            <div className='space-y-4'>
+            </h4>
+            <div
+              role='group'
+              aria-labelledby={embeddingTitleId}
+              className='space-y-4'
+            >
               <div className='flex items-center justify-between'>
-                <span className='text-sm font-medium text-gray-700 dark:text-gray-300'>
+                <span
+                  id={embeddingEnableId}
+                  className='text-sm font-medium text-gray-700 dark:text-gray-300'
+                >
                   {t('settings.generation.enableEmbeddings')}
                 </span>
                 <SettingsToggle
@@ -399,14 +416,19 @@ export function SettingsGenerationTab({
                   onChange={checked =>
                     onEmbeddingSettingsChange('enabled', checked)
                   }
+                  aria-labelledby={embeddingEnableId}
                 />
               </div>
 
               <div>
-                <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                <label
+                  htmlFor={embeddingModelId}
+                  className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'
+                >
                   {t('settings.documents.embeddings.model')}
                 </label>
                 <Select
+                  id={embeddingModelId}
                   value={effectiveEmbeddingSettings.model}
                   onChange={event =>
                     onEmbeddingSettingsChange('model', event.target.value)
@@ -522,6 +544,11 @@ function ContextCompactionSection() {
   const [prompt, setPrompt] = useState('');
   const [loaded, setLoaded] = useState(false);
   const [saving, setSaving] = useState(false);
+  const titleId = useId();
+  const thresholdId = useId();
+  const keepRecentId = useId();
+  const modelId = useId();
+  const promptId = useId();
 
   useEffect(() => {
     if (!isAdmin) return;
@@ -617,10 +644,14 @@ function ContextCompactionSection() {
     <div className='mt-6'>
       <div className='bg-white dark:bg-dark-100 rounded-lg p-4 border border-gray-200 dark:border-dark-300'>
         <div className='flex items-center justify-between gap-4 mb-1'>
-          <label className='block text-sm font-medium text-gray-700 dark:text-gray-300'>
+          <h4
+            id={titleId}
+            className='block text-sm font-medium text-gray-700 dark:text-gray-300'
+          >
             {t('settings.compaction.title')}
-          </label>
+          </h4>
           <SettingsToggle
+            aria-labelledby={titleId}
             checked={enabled}
             // The toggle reflects the server's answer, not the click: a
             // rejected or invalid save must not leave it visually flipped.
@@ -637,10 +668,14 @@ function ContextCompactionSection() {
         <div className='space-y-4'>
           <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
             <div>
-              <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+              <label
+                htmlFor={thresholdId}
+                className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'
+              >
                 {t('settings.compaction.thresholdLabel')}
               </label>
               <input
+                id={thresholdId}
                 type='number'
                 min={500}
                 max={1000000}
@@ -654,10 +689,14 @@ function ContextCompactionSection() {
               </p>
             </div>
             <div>
-              <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+              <label
+                htmlFor={keepRecentId}
+                className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'
+              >
                 {t('settings.compaction.keepRecentLabel')}
               </label>
               <input
+                id={keepRecentId}
                 type='number'
                 min={2}
                 max={200}
@@ -672,10 +711,14 @@ function ContextCompactionSection() {
           </div>
 
           <div>
-            <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+            <label
+              htmlFor={modelId}
+              className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'
+            >
               {t('settings.compaction.modelLabel')}
             </label>
             <Select
+              id={modelId}
               value={model}
               onChange={event => setModel(event.target.value)}
               options={modelOptions}
@@ -686,10 +729,14 @@ function ContextCompactionSection() {
           </div>
 
           <div>
-            <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+            <label
+              htmlFor={promptId}
+              className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'
+            >
               {t('settings.compaction.promptLabel')}
             </label>
             <Textarea
+              id={promptId}
               value={prompt}
               onChange={event => setPrompt(event.target.value)}
               rows={5}
@@ -761,13 +808,18 @@ function NumberSetting({
   integer = false,
   onChange,
 }: NumberSettingProps) {
+  const inputId = useId();
   return (
     <div>
-      <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+      <label
+        htmlFor={inputId}
+        className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'
+      >
         {label}
         {hint && <span className='text-xs text-gray-500 ms-1'>{hint}</span>}
       </label>
       <input
+        id={inputId}
         type='number'
         min={min}
         max={max}
@@ -811,13 +863,18 @@ function EmbeddingNumberSetting({
   disabled,
   onChange,
 }: EmbeddingNumberSettingProps) {
+  const inputId = useId();
   return (
     <div>
-      <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+      <label
+        htmlFor={inputId}
+        className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'
+      >
         {label}
         {hint && <span className='text-xs text-gray-500 ms-1'>{hint}</span>}
       </label>
       <input
+        id={inputId}
         type='number'
         min={min}
         max={max}

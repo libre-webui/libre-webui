@@ -52,7 +52,7 @@ const greetingKeyForHour = (hour: number): string => {
 const sectionLabelClass = 'mb-2 text-xs font-medium text-ink-muted';
 
 const rowClass =
-  'group flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-start text-sm text-ink-muted transition-colors hover:bg-white hover:text-ink dark:hover:bg-dark-200 outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40';
+  'group flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-start text-sm text-ink-muted transition-colors hover:bg-white hover:text-ink dark:hover:bg-dark-200 outline-none focus-visible:ring-2 focus-visible:ring-primary-500';
 
 export const HomePage: React.FC = () => {
   const { t, i18n } = useTranslation();
@@ -99,7 +99,9 @@ export const HomePage: React.FC = () => {
     >
       <div className='mx-auto flex min-h-full w-full max-w-xl flex-col justify-center px-6 py-12'>
         <h1 className='text-2xl font-semibold tracking-tight text-ink'>
-          {name ? `${greeting}, ${name}.` : `${greeting}.`}
+          {name
+            ? t('home.greetingWithName', { greeting, name })
+            : t('home.greeting', { greeting })}
         </h1>
         <p
           data-testid='app-version'
@@ -120,7 +122,7 @@ export const HomePage: React.FC = () => {
             >
               <MessageSquare className='h-4 w-4 shrink-0 text-ink-subtle transition-colors group-hover:text-ink-muted' />
               <span className='flex-1'>{t('tabs.newChat', 'New Chat')}</span>
-              <span className='font-mono text-[10px] tracking-wide text-ink-subtle opacity-0 transition-opacity group-hover:opacity-100'>
+              <span className='font-mono text-[10px] tracking-wide text-ink-muted opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100'>
                 {mod}⇧O
               </span>
             </button>
@@ -144,7 +146,7 @@ export const HomePage: React.FC = () => {
               >
                 <Briefcase className='h-4 w-4 shrink-0 text-ink-subtle transition-colors group-hover:text-ink-muted' />
                 <span className='flex-1'>{t('tabs.newWork', 'New Work')}</span>
-                <span className='font-mono text-[10px] tracking-wide text-ink-subtle opacity-0 transition-opacity group-hover:opacity-100'>
+                <span className='font-mono text-[10px] tracking-wide text-ink-muted opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100'>
                   {mod}⇧U
                 </span>
               </button>
@@ -168,6 +170,7 @@ export const HomePage: React.FC = () => {
             <div className='-mx-2.5 flex flex-col'>
               {recentWork.map(task => {
                 const status = workStatusPresentation[task.status];
+                const statusLabel = t(status.labelKey, status.label);
                 return (
                   <button
                     key={task.id}
@@ -196,12 +199,12 @@ export const HomePage: React.FC = () => {
                       </span>
                     )}
                     <span className='shrink-0 font-mono text-[10px] text-ink-subtle'>
-                      {isWorkTaskActive(task)
-                        ? t(status.labelKey, status.label)
-                        : formatTimestamp(
-                            new Date(task.updatedAt).getTime(),
-                            i18n.language
-                          )}
+                      {statusLabel}
+                      {!isWorkTaskActive(task) &&
+                        ` · ${formatTimestamp(
+                          new Date(task.updatedAt).getTime(),
+                          i18n.language
+                        )}`}
                     </span>
                   </button>
                 );

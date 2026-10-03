@@ -15,19 +15,21 @@
  * limitations under the License.
  */
 
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ChevronDown, ChevronRight, RefreshCw, ScrollText } from 'lucide-react';
 import { Button, Input, Select } from '@/components/ui';
 import { adminSecurityApi } from '@/utils/api';
 import type { AuditEvent } from '@/utils/api';
 
+// Chips always carry a text label, so color only reinforces the result. The
+// warning palette is a single coral, so denied uses a tint with ink text.
 const RESULT_CHIP_CLASSES: Record<string, string> = {
   success:
-    'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300',
-  denied:
-    'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300',
-  failure: 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300',
+    'bg-success-100 text-success-800 dark:bg-success-900/30 dark:text-success-300',
+  denied: 'bg-warning-500/15 text-ink',
+  failure:
+    'bg-error-100 text-error-800 dark:bg-error-900/30 dark:text-error-200',
 };
 
 /**
@@ -35,7 +37,8 @@ const RESULT_CHIP_CLASSES: Record<string, string> = {
  * access events with simple server-side filters.
  */
 export const SecurityAuditLog: React.FC = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const filterFormId = useId();
   const [events, setEvents] = useState<AuditEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadFailed, setLoadFailed] = useState(false);
@@ -59,7 +62,7 @@ export const SecurityAuditLog: React.FC = () => {
             : undefined,
       });
       if (!response.success || !response.data) {
-        throw new Error(response.error || 'Failed to load audit events.');
+        throw new Error(response.error || t('userManager.audit.loadFailed'));
       }
       setEvents(response.data);
     } catch {
@@ -67,7 +70,7 @@ export const SecurityAuditLog: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [actionFilter, resultFilter, limit]);
+  }, [actionFilter, resultFilter, limit, t]);
 
   useEffect(() => {
     // Deferred by a tick so the loader's first setState lands after this
@@ -110,7 +113,8 @@ export const SecurityAuditLog: React.FC = () => {
         <Button
           size='sm'
           variant='outline'
-          onClick={() => void load()}
+          type='submit'
+          form={filterFormId}
           disabled={loading}
           className='gap-1.5'
         >
@@ -122,7 +126,14 @@ export const SecurityAuditLog: React.FC = () => {
         </Button>
       </div>
 
-      <div className='mt-4 grid gap-3 sm:grid-cols-3'>
+      <form
+        id={filterFormId}
+        onSubmit={event => {
+          event.preventDefault();
+          void load();
+        }}
+        className='mt-4 grid gap-3 sm:grid-cols-3'
+      >
         <label className='block'>
           <span className='mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400'>
             {t('userManager.audit.actionFilter', 'Action')}
@@ -175,7 +186,7 @@ export const SecurityAuditLog: React.FC = () => {
             dir='ltr'
           />
         </label>
-      </div>
+      </form>
 
       <div className='mt-4 space-y-2'>
         {loading ? (
@@ -231,14 +242,14 @@ export const SecurityAuditLog: React.FC = () => {
                       <span
                         className={`rounded-full px-2 py-0.5 text-xs font-medium ${
                           RESULT_CHIP_CLASSES[event.result] ||
-                          'bg-gray-100 dark:bg-dark-200 text-gray-600 dark:text-gray-300'
+                          'bg-surface-subtle text-ink-muted'
                         }`}
                       >
                         {resultLabel(event.result)}
                       </span>
                     </span>
                     <span className='mt-0.5 block truncate text-xs text-gray-500 dark:text-gray-400'>
-                      {new Date(event.occurredAt).toLocaleString()}
+                      {new Date(event.occurredAt).toLocaleString(i18n.language)}
                       {' · '}
                       {t('userManager.audit.actor', 'Actor')}:{' '}
                       {event.actorUserId || event.actorKind}

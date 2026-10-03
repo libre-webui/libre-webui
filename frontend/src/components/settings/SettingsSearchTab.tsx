@@ -15,11 +15,12 @@
  * limitations under the License.
  */
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'react-hot-toast';
 import { Globe } from 'lucide-react';
 import { Button, Input } from '@/components/ui';
+import { SettingsTabHeader } from '@/components/settings/SettingsTabHeader';
 import { SettingsToggle } from '@/components/settings/SettingsToggle';
 import { searchApi } from '@/utils/api';
 
@@ -31,6 +32,8 @@ import { searchApi } from '@/utils/api';
  */
 export const SettingsSearchTab: React.FC = () => {
   const { t } = useTranslation();
+  const enableTitleId = useId();
+  const safeSearchTitleId = useId();
   const [enabled, setEnabled] = useState(false);
   const [url, setUrl] = useState('');
   const [maxResults, setMaxResults] = useState('6');
@@ -119,20 +122,24 @@ export const SettingsSearchTab: React.FC = () => {
 
   return (
     <div className='space-y-6'>
-      <div>
-        <h3 className='flex items-center gap-2 text-lg font-semibold text-gray-900 dark:text-gray-100'>
-          <Globe className='h-5 w-5 text-primary-500' />
-          {t('settings.search.title')}
-        </h3>
-        <p className='mt-1 text-sm text-gray-500 dark:text-gray-400'>
-          {t('settings.search.description')}
-        </p>
-      </div>
+      <SettingsTabHeader
+        className='mb-0'
+        title={
+          <span className='flex items-center gap-2'>
+            <Globe className='h-5 w-5 text-primary-500' aria-hidden='true' />
+            {t('settings.search.title')}
+          </span>
+        }
+        description={t('settings.search.description')}
+      />
 
       <div className='rounded-lg border border-gray-200 dark:border-dark-300 bg-white dark:bg-dark-100 p-4'>
         <div className='flex items-center justify-between gap-4'>
           <div>
-            <h4 className='text-sm font-medium text-gray-900 dark:text-gray-100'>
+            <h4
+              id={enableTitleId}
+              className='text-sm font-medium text-gray-900 dark:text-gray-100'
+            >
               {t('settings.search.enableLabel')}
             </h4>
             <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
@@ -146,6 +153,7 @@ export const SettingsSearchTab: React.FC = () => {
               void save(checked);
             }}
             disabled={saving || !loaded || (!enabled && !url.trim())}
+            aria-labelledby={enableTitleId}
           />
         </div>
       </div>
@@ -185,7 +193,10 @@ export const SettingsSearchTab: React.FC = () => {
           </label>
           <div className='flex items-start justify-between gap-4 sm:pt-1'>
             <div>
-              <span className='mb-1 block text-sm font-medium text-gray-900 dark:text-gray-100'>
+              <span
+                id={safeSearchTitleId}
+                className='mb-1 block text-sm font-medium text-gray-900 dark:text-gray-100'
+              >
                 {t('settings.search.safeSearchLabel')}
               </span>
               <span className='block text-xs text-gray-500 dark:text-gray-400'>
@@ -196,6 +207,7 @@ export const SettingsSearchTab: React.FC = () => {
               checked={safeSearch}
               onChange={setSafeSearch}
               disabled={saving || !loaded}
+              aria-labelledby={safeSearchTitleId}
             />
           </div>
         </div>

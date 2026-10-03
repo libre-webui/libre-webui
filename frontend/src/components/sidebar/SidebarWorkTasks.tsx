@@ -29,6 +29,7 @@ import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui';
 import { SidebarHoverCard } from './SidebarHoverCard';
 import { SidebarScrollArea } from './SidebarScrollArea';
+import { SidebarSheetDialog } from './SidebarSheetDialog';
 import { compactSidebarButtonClass } from './compactSidebarStyles';
 import { useSidebarMenu } from './useSidebarMenu';
 import type { Persona } from '@/types';
@@ -368,6 +369,7 @@ export function SidebarWorkTasks({
                 aria-hidden='true'
                 data-testid='sidebar-work-task-status'
                 data-status-label={statusLabel}
+                title={statusLabel}
                 className={cn(
                   'absolute -bottom-0.5 -end-0.5 h-2.5 w-2.5 rounded-full border-2 border-gray-100 dark:border-dark-50',
                   status.animated && 'animate-pulse',
@@ -427,6 +429,7 @@ export function SidebarWorkTasks({
               aria-hidden='true'
               data-testid='sidebar-work-task-status'
               data-status-label={statusLabel}
+              title={statusLabel}
               className={cn(
                 'me-2 h-2 w-2 shrink-0 rounded-full',
                 status.animated && 'animate-pulse',
@@ -491,7 +494,7 @@ export function SidebarWorkTasks({
             >
               <Briefcase className='h-[18px] w-[18px]' />
               {tasks.length > 0 && (
-                <span className='absolute -end-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-md bg-primary-500 px-1 text-[9px] font-semibold tabular-nums text-white shadow-sm'>
+                <span className='absolute -end-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-md bg-primary-600 px-1 text-[9px] font-semibold tabular-nums text-white shadow-sm'>
                   {tasks.length > 99 ? '99+' : tasks.length}
                 </span>
               )}
@@ -709,9 +712,8 @@ export function SidebarWorkTasks({
               onClick={() => setMobileActionTaskId(null)}
               aria-label={t('common.close')}
             />
-            <div
-              role='dialog'
-              aria-modal='true'
+            <SidebarSheetDialog
+              onClose={() => setMobileActionTaskId(null)}
               aria-label={t('palette.actions')}
               className='absolute inset-x-3 bottom-3 rounded-2xl border border-black/[0.08] bg-surface p-2 shadow-[0_20px_70px_rgba(0,0,0,0.3)] dark:border-white/[0.09] dark:bg-dark-100'
               data-testid='sidebar-work-task-actions-sheet'
@@ -755,7 +757,7 @@ export function SidebarWorkTasks({
                 <Trash2 className='h-4 w-4 shrink-0' />
                 {t('work.tasks.delete', { defaultValue: 'Delete task' })}
               </button>
-            </div>
+            </SidebarSheetDialog>
           </div>,
           document.body
         )}

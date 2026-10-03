@@ -808,9 +808,17 @@ test('admin provider settings are collapsed, inherited, sparse, and retryable', 
   ).toBeVisible();
 
   await temperatureInput.fill('1.2');
+  // Resetting clears stored keys, so it asks first; cancelling sends nothing.
   await page
     .getByRole('button', { name: 'Reset to Defaults', exact: true })
     .click();
+  await page.getByTestId('confirm-dialog-cancel').click();
+  await expect(page.getByTestId('confirm-dialog')).toHaveCount(0);
+  expect(mockApi.pluginVariableResetRequests).toBe(0);
+  await page
+    .getByRole('button', { name: 'Reset to Defaults', exact: true })
+    .click();
+  await page.getByTestId('confirm-dialog-confirm').click();
   await expect.poll(() => mockApi.pluginVariableResetRequests).toBe(1);
   await expect(page.getByText('Failed to reset variables')).toBeVisible();
   await expect(temperatureInput).toHaveValue('1.2');
@@ -818,6 +826,7 @@ test('admin provider settings are collapsed, inherited, sparse, and retryable', 
   await page
     .getByRole('button', { name: 'Reset to Defaults', exact: true })
     .click();
+  await page.getByTestId('confirm-dialog-confirm').click();
   await expect.poll(() => mockApi.pluginVariableResetRequests).toBe(2);
   await expect(temperatureInput).toBeDisabled();
   await expect(temperatureInput).toBeEnabled();

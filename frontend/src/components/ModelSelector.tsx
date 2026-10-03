@@ -635,15 +635,14 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
           );
     }
     if (model.isPersona) {
-      return `via ${model.model}`;
+      return t('modelSelector.via', { provider: model.model });
     }
     if (model.isPlugin) {
       return model.isUnavailable
-        ? `via ${model.pluginName || model.pluginId} · ${t(
-            'modelSelector.providerUnavailable',
-            'provider unavailable'
-          )}`
-        : `via ${model.pluginName}`;
+        ? `${t('modelSelector.via', {
+            provider: model.pluginName || model.pluginId,
+          })} · ${t('modelSelector.providerUnavailable', 'provider unavailable')}`
+        : t('modelSelector.via', { provider: model.pluginName });
     }
     if (model.isUnavailable) {
       return t('modelSelector.providerUnavailable', 'provider unavailable');
@@ -703,7 +702,9 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
     if (group.kind === 'agent') {
       const parts = agentRowParts(model, group.label);
       if (parts.isDefault) return t('modelSelector.defaultModel');
-      return parts.provider ? `via ${parts.provider}` : null;
+      return parts.provider
+        ? t('modelSelector.via', { provider: parts.provider })
+        : null;
     }
     if (!isCatalogGroup(group)) return getModelSubLabel(model);
     const parts = rowNameParts(model);
@@ -859,7 +860,7 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
             ? 'flex h-9 w-full min-w-0 items-center justify-between gap-2 px-2.5 text-start'
             : 'w-full flex items-center justify-between gap-2 px-3 py-2.5 text-start',
           'rounded-xl border border-line bg-surface-subtle text-sm text-ink hover:bg-hover-solid',
-          'transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500/40',
+          'transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500',
           disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
         )}
         title={
@@ -910,8 +911,9 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
                     onClick={() => closeSelector()}
                     className='flex h-9 w-9 items-center justify-center rounded-full text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-950 dark:text-dark-500 dark:hover:bg-dark-200 dark:hover:text-dark-950'
                     title={t('common.close')}
+                    aria-label={t('common.close')}
                   >
-                    <X className='h-4 w-4' />
+                    <X className='h-4 w-4' aria-hidden='true' />
                   </button>
                 </div>
 
@@ -952,7 +954,7 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
                       }}
                       className={cn(
                         'w-full rounded-xl border border-black/[0.07] bg-gray-100/70 py-2.5 ps-10 pe-4 text-sm dark:border-white/[0.07] dark:bg-dark-200/70',
-                        'focus:outline-none focus:ring-2 focus:ring-primary-500/20',
+                        'focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/30',
                         'text-gray-900 dark:text-dark-900 placeholder:text-gray-400 dark:placeholder:text-dark-500'
                       )}
                     />

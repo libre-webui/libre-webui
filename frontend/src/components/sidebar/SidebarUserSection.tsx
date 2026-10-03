@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import type { RefObject } from 'react';
+import { useEffect, useRef, type KeyboardEvent, type RefObject } from 'react';
 import { Link } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import {
@@ -110,7 +110,68 @@ export function SidebarUserSection({
   onCloseUserMenu,
 }: SidebarUserSectionProps) {
   const { t } = useTranslation();
+  const menuPanelRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const menuFocusableSelector = 'a[href], button:not(:disabled)';
+
+  // Move focus into the menu when it opens so keyboard users land on it.
+  useEffect(() => {
+    if (userMenuOpen) {
+      menuPanelRef.current
+        ?.querySelector<HTMLElement>(menuFocusableSelector)
+        ?.focus();
+    }
+  }, [userMenuOpen]);
+
+  const handleMenuKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    if (!userMenuOpen) return;
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      event.stopPropagation();
+      triggerRef.current?.focus();
+      onCloseUserMenu();
+      return;
+    }
+    const panel = menuPanelRef.current;
+    if (!panel || !panel.contains(event.target as Node)) return;
+    const items = Array.from(
+      panel.querySelectorAll<HTMLElement>(menuFocusableSelector)
+    );
+    if (!items.length) return;
+    const index = items.indexOf(document.activeElement as HTMLElement);
+    let next: number;
+    switch (event.key) {
+      case 'ArrowDown':
+        next = (index + 1) % items.length;
+        break;
+      case 'ArrowUp':
+        next = (index - 1 + items.length) % items.length;
+        break;
+      case 'Home':
+        next = 0;
+        break;
+      case 'End':
+        next = items.length - 1;
+        break;
+      default:
+        return;
+    }
+    event.preventDefault();
+    items[next].focus();
+  };
+
   if (!requiresAuth || !user) return null;
+  // The badge is decorative for assistive tech, so its count has to live in
+  // the trigger's own accessible name.
+  const approvalLabel =
+    pendingApprovalCount > 0
+      ? t('userManager.approval.notificationBadge', {
+          count: pendingApprovalCount,
+        })
+      : null;
+  const triggerLabel = approvalLabel
+    ? `${user.username}, ${approvalLabel}`
+    : user.username;
 
   const pinnedItems = isAdmin
     ? ADMIN_SHORTCUTS.filter(shortcut => pinnedShortcuts.includes(shortcut.id))
@@ -175,6 +236,7 @@ export function SidebarUserSection({
         <div
           className='relative flex flex-col items-center gap-1'
           ref={userMenuRef}
+          onKeyDown={handleMenuKeyDown}
         >
           {pinnedItems.map(shortcut => (
             <Link
@@ -200,12 +262,14 @@ export function SidebarUserSection({
             <Settings className='h-[18px] w-[18px]' />
           </button>
           <button
+            ref={triggerRef}
             type='button'
             onClick={onToggleUserMenu}
-            className='relative flex h-9 w-9 items-center justify-center rounded-full outline-none transition-colors hover:bg-interactive-hover focus-visible:ring-2 focus-visible:ring-primary-500/30'
-            aria-label={user.username}
+            className='relative flex h-9 w-9 items-center justify-center rounded-full outline-none transition-colors hover:bg-interactive-hover focus-visible:ring-2 focus-visible:ring-primary-500'
+            aria-label={triggerLabel}
             aria-expanded={userMenuOpen}
-            title={user.username}
+            aria-haspopup='true'
+            title={triggerLabel}
             data-testid='sidebar-rail-user-menu-button'
           >
             <UserAvatar user={user} size='sm' />
@@ -213,10 +277,7 @@ export function SidebarUserSection({
               <span
                 data-testid='pending-user-notification-badge'
                 className='absolute -end-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-md bg-error-500 px-1 text-[9px] font-semibold text-white shadow-sm'
-                aria-label={t('userManager.approval.notificationBadge', {
-                  count: pendingApprovalCount,
-                  defaultValue: '{{count}} pending user approvals',
-                })}
+                aria-hidden='true'
               >
                 {pendingApprovalCount > 99 ? '99+' : pendingApprovalCount}
               </span>
@@ -225,6 +286,7 @@ export function SidebarUserSection({
 
           {userMenuOpen && (
             <div
+              ref={menuPanelRef}
               data-testid='sidebar-user-menu'
               className='scroll-region absolute bottom-0 start-full z-[70] ms-3 w-64 max-h-[calc(100dvh-1rem)] overflow-y-auto rounded-xl border border-black/[0.04] bg-surface-overlay py-1 shadow-lv3 animate-scale-in scrollbar-thin dark:border-white/[0.06]'
             >
@@ -278,7 +340,11 @@ export function SidebarUserSection({
           )}
         </div>
       ) : (
-        <div className='relative' ref={userMenuRef}>
+        <div
+          className='relative'
+          ref={userMenuRef}
+          onKeyDown={handleMenuKeyDown}
+        >
           {pinnedItems.map(shortcut => (
             <Link
               key={shortcut.id}
@@ -303,8 +369,13 @@ export function SidebarUserSection({
             {t('user.menu.settings')}
           </button>
           <button
+            ref={triggerRef}
+            type='button'
             onClick={onToggleUserMenu}
-            className='relative h-[38px] w-full rounded-xl px-2.5 hover:bg-interactive-hover transition-colors duration-150 text-start touch-manipulation outline-none focus-visible:ring-2 focus-visible:ring-primary-500/30'
+            aria-label={isAdmin ? triggerLabel : user.username}
+            aria-expanded={userMenuOpen}
+            aria-haspopup='true'
+            className='relative h-[38px] w-full rounded-xl px-2.5 hover:bg-interactive-hover transition-colors duration-150 text-start touch-manipulation outline-none focus-visible:ring-2 focus-visible:ring-primary-500'
           >
             <div className='flex items-center gap-2'>
               <UserAvatar user={user} size='sm' />
@@ -325,10 +396,7 @@ export function SidebarUserSection({
               <span
                 data-testid='pending-user-notification-badge'
                 className='absolute -end-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-error-500 px-1 text-[10px] font-semibold text-white shadow-subtle'
-                aria-label={t('userManager.approval.notificationBadge', {
-                  count: pendingApprovalCount,
-                  defaultValue: '{{count}} pending user approvals',
-                })}
+                aria-hidden='true'
               >
                 {pendingApprovalCount > 99 ? '99+' : pendingApprovalCount}
               </span>
@@ -337,6 +405,7 @@ export function SidebarUserSection({
 
           {userMenuOpen && (
             <div
+              ref={menuPanelRef}
               data-testid='sidebar-user-menu'
               className='scroll-region absolute bottom-full left-0 right-0 z-50 mb-2 max-h-[calc(100dvh-1rem)] rounded-xl border border-black/[0.04] bg-surface-overlay py-1 shadow-lv3 animate-scale-in scrollbar-thin dark:border-white/[0.06]'
             >
@@ -356,6 +425,7 @@ export function SidebarUserSection({
 
               <div className='py-1'>
                 <button
+                  type='button'
                   onClick={() => {
                     onOpenAvatar(user.avatar || '');
                     onCloseUserMenu();
@@ -371,6 +441,7 @@ export function SidebarUserSection({
                 <div className='border-t border-gray-100 dark:border-dark-200/50 my-1'></div>
 
                 <button
+                  type='button'
                   onClick={() => {
                     onOpenSettings();
                     onCloseUserMenu();
@@ -382,6 +453,7 @@ export function SidebarUserSection({
                 </button>
 
                 <button
+                  type='button'
                   onClick={() => {
                     onLogout();
                     onCloseUserMenu();

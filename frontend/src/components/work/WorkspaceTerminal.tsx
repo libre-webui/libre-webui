@@ -71,6 +71,9 @@ export function WorkspaceTerminal({
   const socketRef = useRef<WebSocket | null>(null);
   const terminalRef = useRef<import('@xterm/xterm').Terminal | null>(null);
   const fitRef = useRef<import('@xterm/addon-fit').FitAddon | null>(null);
+  // Read when the terminal is created, which happens after an async import, so
+  // the theme never reflects a stale render.
+  const isDarkRef = useRef(isDark);
   const [status, setStatus] = useState<TerminalStatus>('idle');
   const [error, setError] = useState<string | null>(null);
   const [generation, setGeneration] = useState(0);
@@ -96,6 +99,13 @@ export function WorkspaceTerminal({
     );
   }, []);
 
+  // Theming must not tear down the shell: apply it to the live instance.
+  useEffect(() => {
+    isDarkRef.current = isDark;
+    const terminal = terminalRef.current;
+    if (terminal) terminal.options.theme = isDark ? darkTheme() : lightTheme();
+  }, [isDark]);
+
   useEffect(() => {
     if (!active || disabledReason) return undefined;
     let disposed = false;
@@ -115,12 +125,13 @@ export function WorkspaceTerminal({
       terminal = new Terminal({
         allowProposedApi: true,
         convertEol: false,
-        cursorBlink: true,
+        cursorBlink: !window.matchMedia('(prefers-reduced-motion: reduce)')
+          .matches,
         fontFamily:
           'ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace',
         fontSize: 12,
         scrollback: 5_000,
-        theme: isDark ? darkTheme() : lightTheme(),
+        theme: isDarkRef.current ? darkTheme() : lightTheme(),
       });
       const fit = new FitAddon();
       terminal.loadAddon(fit);
@@ -203,7 +214,7 @@ export function WorkspaceTerminal({
       terminalRef.current = null;
       fitRef.current = null;
     };
-  }, [active, disabledReason, generation, isDark, sendResize, taskId]);
+  }, [active, disabledReason, generation, sendResize, taskId]);
 
   useEffect(() => {
     const mount = mountRef.current;
@@ -241,6 +252,8 @@ export function WorkspaceTerminal({
         <div
           ref={mountRef}
           data-testid='work-terminal-surface'
+          role='group'
+          aria-label={t('work.workspace.terminal')}
           dir='ltr'
           className={cn(
             'min-h-0 flex-1 overflow-hidden p-2 text-left',
@@ -250,8 +263,14 @@ export function WorkspaceTerminal({
       )}
 
       {status === 'connecting' && !disabledReason && (
-        <div className='pointer-events-none absolute inset-0 flex items-center justify-center gap-2 text-xs text-ink-muted'>
-          <Loader2 className='h-4 w-4 animate-spin' />
+        <div
+          role='status'
+          className='pointer-events-none absolute inset-0 flex items-center justify-center gap-2 text-xs text-ink-muted'
+        >
+          <Loader2
+            aria-hidden='true'
+            className='h-4 w-4 animate-spin motion-reduce:animate-none'
+          />
           {t('work.terminal.connecting', {
             defaultValue: 'Opening a shell in the sandbox…',
           })}
@@ -275,7 +294,7 @@ export function WorkspaceTerminal({
             <Button
               size='sm'
               data-testid='work-terminal-reconnect-button'
-              className='h-8 rounded-lg bg-primary-600 px-3 text-white hover:bg-primary-500'
+              className='h-8 rounded-lg px-3'
               onClick={reconnect}
             >
               {t('work.terminal.reconnect', { defaultValue: 'Reconnect' })}

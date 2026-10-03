@@ -27,6 +27,7 @@ import {
   UserMinus,
 } from 'lucide-react';
 import { Button, Input, Select } from '@/components/ui';
+import { confirmAction } from '@/components/ui/confirmStore';
 import { adminSecurityApi, usersApi } from '@/utils/api';
 import type { EffectiveAccess, UserGroup } from '@/utils/api';
 import type { User } from '@/types';
@@ -37,7 +38,7 @@ import type { User } from '@/types';
  * flags, and explicit grants).
  */
 export const GroupManager: React.FC = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [groups, setGroups] = useState<UserGroup[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [loadFailed, setLoadFailed] = useState(false);
@@ -71,7 +72,9 @@ export const GroupManager: React.FC = () => {
         usersApi.getUsers(),
       ]);
       if (!groupsResponse.success || !groupsResponse.data) {
-        throw new Error(groupsResponse.error || 'Failed to load groups.');
+        throw new Error(
+          groupsResponse.error || t('userManager.groups.loadFailed')
+        );
       }
       setGroups(groupsResponse.data);
       if (usersResponse.success && usersResponse.data) {
@@ -82,7 +85,7 @@ export const GroupManager: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     // Deferred by a tick so the loader's first setState lands after this
@@ -106,7 +109,7 @@ export const GroupManager: React.FC = () => {
         description: newDescription.trim() || undefined,
       });
       if (!response.success) {
-        throw new Error(response.error || 'Group creation failed.');
+        throw new Error(response.error || t('userManager.groups.createFailed'));
       }
       setNewName('');
       setNewDescription('');
@@ -128,11 +131,18 @@ export const GroupManager: React.FC = () => {
   };
 
   const handleDeleteGroup = async (group: UserGroup) => {
+    const confirmed = await confirmAction({
+      title: t('userManager.groups.deleteConfirmTitle', { name: group.name }),
+      description: t('userManager.groups.deleteConfirmDescription'),
+      confirmLabel: t('userManager.groups.deleteGroup'),
+      destructive: true,
+    });
+    if (!confirmed) return;
     setBusyGroupId(group.id);
     try {
       const response = await adminSecurityApi.deleteGroup(group.id);
       if (!response.success) {
-        throw new Error(response.error || 'Group delete failed.');
+        throw new Error(response.error || t('userManager.groups.deleteFailed'));
       }
       toast.success(t('userManager.groups.deleted', 'Group deleted.'));
       if (expandedGroupId === group.id) setExpandedGroupId(null);
@@ -160,7 +170,9 @@ export const GroupManager: React.FC = () => {
         memberToAdd
       );
       if (!response.success) {
-        throw new Error(response.error || 'Member add failed.');
+        throw new Error(
+          response.error || t('userManager.groups.memberAddFailed')
+        );
       }
       setMemberToAdd('');
       toast.success(t('userManager.groups.memberAdded', 'Member added.'));
@@ -187,7 +199,9 @@ export const GroupManager: React.FC = () => {
         userId
       );
       if (!response.success) {
-        throw new Error(response.error || 'Member remove failed.');
+        throw new Error(
+          response.error || t('userManager.groups.memberRemoveFailed')
+        );
       }
       toast.success(t('userManager.groups.memberRemoved', 'Member removed.'));
       await load();
@@ -213,7 +227,9 @@ export const GroupManager: React.FC = () => {
     try {
       const response = await adminSecurityApi.getEffectiveAccess(userId);
       if (!response.success || !response.data) {
-        throw new Error(response.error || 'Access lookup failed.');
+        throw new Error(
+          response.error || t('userManager.groups.accessLookupFailed')
+        );
       }
       setAccess(response.data);
     } catch (error) {
@@ -380,7 +396,7 @@ export const GroupManager: React.FC = () => {
                       'userManager.groups.deleteGroup',
                       'Delete group'
                     )}
-                    className='text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20'
+                    className='text-error-700 hover:border-error-500/40 hover:bg-error-500/10 hover:text-error-800 dark:text-error-400 dark:hover:text-error-300'
                   >
                     <Trash2 size={16} />
                   </Button>
@@ -406,7 +422,9 @@ export const GroupManager: React.FC = () => {
                               </p>
                               <p className='text-xs text-gray-500 dark:text-gray-400'>
                                 {t('userManager.groups.addedAt', 'Added')}:{' '}
-                                {new Date(member.added_at).toLocaleDateString()}
+                                {new Date(member.added_at).toLocaleDateString(
+                                  i18n.language
+                                )}
                               </p>
                             </div>
                             <Button
@@ -484,6 +502,10 @@ export const GroupManager: React.FC = () => {
           </p>
         </div>
         <Select
+          aria-label={t(
+            'userManager.groups.effectiveTitle',
+            'Effective access'
+          )}
           value={accessUserId}
           onChange={event => void handleAccessLookup(event.target.value)}
           options={[
@@ -505,9 +527,15 @@ export const GroupManager: React.FC = () => {
               <span className='font-medium'>{access.username}</span>
               <span className='text-gray-500 dark:text-gray-400'>
                 {' · '}
-                {t('userManager.groups.roleLabel', 'Role')}: {access.role}
+                {t('userManager.groups.roleLabel', 'Role')}:{' '}
+                {t(`userManager.roles.${access.role}`, {
+                  defaultValue: access.role,
+                })}
                 {' · '}
-                {t('userManager.groups.statusLabel', 'Status')}: {access.status}
+                {t('userManager.groups.statusLabel', 'Status')}:{' '}
+                {t(`userManager.groups.statuses.${access.status}`, {
+                  defaultValue: access.status,
+                })}
               </span>
             </p>
             <div>
@@ -541,11 +569,13 @@ export const GroupManager: React.FC = () => {
                     key={feature}
                     className={
                       allowed
-                        ? 'rounded-full bg-green-100 dark:bg-green-900/30 px-2 py-0.5 text-xs text-green-700 dark:text-green-300'
-                        : 'rounded-full bg-gray-100 dark:bg-dark-200 px-2 py-0.5 text-xs text-gray-500 dark:text-gray-400'
+                        ? 'rounded-full bg-success-100 px-2 py-0.5 text-xs text-success-800 dark:bg-success-900/30 dark:text-success-300'
+                        : 'rounded-full bg-surface-subtle px-2 py-0.5 text-xs text-ink-muted'
                     }
                   >
-                    {feature}
+                    {t(`userManager.groups.features.${feature}`, {
+                      defaultValue: feature,
+                    })}
                     {': '}
                     {allowed ? t('common.yes') : t('common.no')}
                   </span>
@@ -570,7 +600,11 @@ export const GroupManager: React.FC = () => {
                       {grant.resourceType}/{grant.resourceId} ·{' '}
                       {grant.permission}{' '}
                       <span className='text-gray-500 dark:text-gray-400'>
-                        ({t('userManager.groups.grantVia', 'via')} {grant.via})
+                        ({t('userManager.groups.grantVia', 'via')}{' '}
+                        {t(`userManager.groups.grantViaKinds.${grant.via}`, {
+                          defaultValue: grant.via,
+                        })}
+                        )
                       </span>
                     </p>
                   ))}

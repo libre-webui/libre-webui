@@ -15,13 +15,15 @@
  * limitations under the License.
  */
 
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'react-hot-toast';
 import { KeyRound, ShieldCheck, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui';
+import { confirmAction as askToConfirm } from '@/components/ui/confirmStore';
 import { authApi } from '@/utils/api';
 import type { MfaStatusResponse } from '@/utils/api';
+import { SettingsTabHeader } from './SettingsTabHeader';
 import {
   createPasskeyCredential,
   passkeysSupported,
@@ -40,6 +42,7 @@ const formatDate = (value: number | null): string =>
  */
 export const SettingsMfaSection: React.FC = () => {
   const { t } = useTranslation();
+  const confirmCodeId = useId();
   const [status, setStatus] = useState<MfaStatusResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -182,7 +185,14 @@ export const SettingsMfaSection: React.FC = () => {
     }
   };
 
-  const handleDeletePasskey = async (id: string) => {
+  const handleDeletePasskey = async (id: string, name: string) => {
+    const confirmed = await askToConfirm({
+      title: t('auth.passkeys.removeConfirmTitle'),
+      description: t('auth.passkeys.removeConfirmDescription', { name }),
+      confirmLabel: t('auth.passkeys.removeButton'),
+      destructive: true,
+    });
+    if (!confirmed) return;
     setBusy(true);
     try {
       const response = await authApi.deletePasskey(id);
@@ -206,15 +216,19 @@ export const SettingsMfaSection: React.FC = () => {
 
   return (
     <div className='space-y-6' data-testid='settings-mfa-section'>
-      <div>
-        <h3 className='flex items-center gap-2 text-lg font-semibold text-gray-900 dark:text-gray-100'>
-          <ShieldCheck className='h-5 w-5 text-primary-500' />
-          {t('auth.mfa.sectionTitle')}
-        </h3>
-        <p className='mt-1 text-sm text-gray-500 dark:text-gray-400'>
-          {t('auth.mfa.sectionDescription')}
-        </p>
-      </div>
+      <SettingsTabHeader
+        className='mb-0'
+        title={
+          <span className='flex items-center gap-2'>
+            <ShieldCheck
+              className='h-5 w-5 text-primary-500'
+              aria-hidden='true'
+            />
+            {t('auth.mfa.sectionTitle')}
+          </span>
+        }
+        description={t('auth.mfa.sectionDescription')}
+      />
 
       <div className='rounded-lg border border-gray-200 dark:border-dark-300 bg-white dark:bg-dark-100 p-4 space-y-4'>
         <div className='flex flex-wrap items-center justify-between gap-3'>
@@ -291,6 +305,7 @@ export const SettingsMfaSection: React.FC = () => {
                 value={code}
                 onChange={e => setCode(e.target.value)}
                 placeholder={t('auth.mfa.codePlaceholder')}
+                aria-label={t('auth.mfa.codeLabel')}
                 className={codeInputClass}
               />
               <Button size='sm' type='submit' disabled={busy || !code.trim()}>
@@ -313,10 +328,14 @@ export const SettingsMfaSection: React.FC = () => {
             onSubmit={handleConfirmedAction}
             className='flex flex-wrap items-center gap-2'
           >
-            <label className='text-xs text-gray-500 dark:text-gray-400'>
+            <label
+              htmlFor={confirmCodeId}
+              className='text-xs text-gray-500 dark:text-gray-400'
+            >
               {t('auth.mfa.confirmWithCode')}
             </label>
             <input
+              id={confirmCodeId}
               type='text'
               inputMode='numeric'
               autoComplete='one-time-code'
@@ -412,7 +431,12 @@ export const SettingsMfaSection: React.FC = () => {
                   size='sm'
                   variant='ghost'
                   disabled={busy}
-                  onClick={() => void handleDeletePasskey(passkey.id)}
+                  onClick={() =>
+                    void handleDeletePasskey(
+                      passkey.id,
+                      passkey.name || t('auth.passkeys.unnamed')
+                    )
+                  }
                   aria-label={t('auth.passkeys.removeButton')}
                 >
                   <Trash2 className='h-4 w-4' />

@@ -529,6 +529,25 @@ select,
     min-width: 44px;
   }
 }
+/* Touch tablets and touch laptops get desktop layouts, so the width rule
+   above never reaches them. Size primary controls for fingers wherever the
+   main pointer is coarse, at any width. Inline links are unaffected: min
+   sizes do not apply to non-replaced inline boxes. */
+@media (pointer: coarse) {
+  button,
+  select,
+  summary,
+  [role='button'],
+  [role='tab'],
+  [role='menuitem'],
+  [role='menuitemradio'],
+  [role='menuitemcheckbox'],
+  [role='option'],
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
 
 @media (prefers-reduced-motion: reduce) {
   html:focus-within {
@@ -808,15 +827,14 @@ html.celestial.dark
   :is([data-composer-box], [data-testid='work-composer-surface']):focus-within {
   border-color: rgb(var(--color-primary-400) / 0.65);
 }
+/* User turns become frosted glass over the sky, keeping ink text and the
+   same quiet hierarchy as the flat themes. */
 html.celestial [data-user-bubble] {
-  background-color: rgb(var(--color-surface-inverse) / 0.78);
+  background-color: rgb(var(--color-surface-raised) / 0.72);
   backdrop-filter: blur(10px);
 }
-/* After dark the inverse surface is pale, so the bubble becomes dark glass
-   with ink text and a hairline that catches the lamp. */
+/* After dark the hairline catches the lamp. */
 html.celestial.dark [data-user-bubble] {
-  background-color: rgb(var(--color-surface-raised) / 0.72);
-  color: rgb(var(--color-ink));
   border-color: rgb(255 255 255 / 0.14);
   box-shadow:
     inset 0 1px 0 rgb(255 255 255 / 0.06),

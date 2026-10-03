@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { CalendarDisplayEvent } from './EventChip';
 import { cn } from '@/utils';
@@ -40,7 +40,7 @@ export function WeekGrid({
   onDayClick,
   onEventClick,
 }: WeekGridProps) {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const days = useMemo(
     () =>
       dayCount === 1
@@ -53,6 +53,43 @@ export function WeekGrid({
     () => new Intl.DateTimeFormat(i18n.language, { hour: 'numeric' }),
     [i18n.language]
   );
+  const slotFormatter = useMemo(
+    () =>
+      new Intl.DateTimeFormat(i18n.language, {
+        weekday: 'long',
+        month: 'long',
+        day: 'numeric',
+        hour: 'numeric',
+      }),
+    [i18n.language]
+  );
+  const gridRef = useRef<HTMLDivElement>(null);
+  // One tab stop for the whole hour grid; arrow keys move between slots.
+  const [activeSlot, setActiveSlot] = useState('0-9');
+  const moveSlot = (
+    event: React.KeyboardEvent<HTMLButtonElement>,
+    dayIndex: number,
+    hour: number
+  ) => {
+    const rtl = i18n.dir() === 'rtl';
+    const horizontal = rtl ? -1 : 1;
+    const delta: Record<string, [number, number]> = {
+      ArrowRight: [horizontal, 0],
+      ArrowLeft: [-horizontal, 0],
+      ArrowDown: [0, 1],
+      ArrowUp: [0, -1],
+    };
+    const step = delta[event.key];
+    if (!step) return;
+    const nextDay = Math.min(days.length - 1, Math.max(0, dayIndex + step[0]));
+    const nextHour = Math.min(23, Math.max(0, hour + step[1]));
+    event.preventDefault();
+    const key = `${nextDay}-${nextHour}`;
+    setActiveSlot(key);
+    gridRef.current
+      ?.querySelector<HTMLElement>(`[data-slot="${key}"]`)
+      ?.focus();
+  };
   const dayFormatter = useMemo(
     () =>
       new Intl.DateTimeFormat(i18n.language, {
@@ -76,7 +113,7 @@ export function WeekGrid({
       className='scroll-region min-h-0 flex-1 overflow-y-auto scrollbar-thin'
       data-testid='calendar-week-grid'
     >
-      <div className='grid grid-cols-[3.5rem_repeat(7,1fr)]'>
+      <div ref={gridRef} className='grid grid-cols-[3.5rem_repeat(7,1fr)]'>
         {/* Day headers + all-day row */}
         <div className='sticky top-0 z-10 border-b border-black/[0.06] bg-surface dark:border-white/[0.07]' />
         {days.map(day => (
@@ -117,7 +154,8 @@ export function WeekGrid({
                   : ''}
               </span>
             </div>
-            {days.map(day => {
+            {days.map((day, dayIndex) => {
+              const slotKey = `${dayIndex}-${hour}`;
               const slotEvents = timedByDay(day).filter(
                 event => new Date(event.startAt).getHours() === hour
               );
@@ -126,15 +164,35 @@ export function WeekGrid({
                   key={`${day.toISOString()}-${hour}`}
                   onClick={() => onDayClick(day, hour)}
                   style={{ height: HOUR_HEIGHT_PX }}
-                  className='cursor-pointer space-y-0.5 overflow-hidden border-b border-e border-black/[0.04] p-0.5 transition-colors hover:bg-black/[0.02] dark:border-white/[0.04] dark:hover:bg-white/[0.03]'
+                  className='relative cursor-pointer space-y-0.5 overflow-hidden border-b border-e border-black/[0.04] p-0.5 transition-colors hover:bg-black/[0.02] dark:border-white/[0.04] dark:hover:bg-white/[0.03]'
                 >
+                  {/* The click bubbles to the slot handler above. */}
+                  <button
+                    type='button'
+                    data-slot={slotKey}
+                    tabIndex={activeSlot === slotKey ? 0 : -1}
+                    aria-label={t('calendar.newEventOn', {
+                      date: slotFormatter.format(
+                        new Date(
+                          day.getFullYear(),
+                          day.getMonth(),
+                          day.getDate(),
+                          hour
+                        )
+                      ),
+                    })}
+                    onFocus={() => setActiveSlot(slotKey)}
+                    onKeyDown={event => moveSlot(event, dayIndex, hour)}
+                    className='absolute inset-0 focus-visible:outline-offset-[-2px]'
+                  />
                   {slotEvents.map(event => (
-                    <EventChip
-                      key={event.id}
-                      event={event}
-                      label={`${timeLabel(event.startAt, i18n.language)} ${event.title}`}
-                      onClick={() => onEventClick(event)}
-                    />
+                    <div key={event.id} className='relative'>
+                      <EventChip
+                        event={event}
+                        label={`${timeLabel(event.startAt, i18n.language)} ${event.title}`}
+                        onClick={() => onEventClick(event)}
+                      />
+                    </div>
                   ))}
                 </div>
               );

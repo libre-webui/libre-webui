@@ -275,6 +275,8 @@ export function WorkComposer({
             .startsWith(mention.query.trimStart().toLowerCase())
         );
   const mentionOpen = mention !== null && mentionMatches.length > 0;
+  const mentionListId = `${useId()}-mention-list`;
+  const mentionOptionId = (index: number) => `${mentionListId}-${index}`;
   const applyMention = (agent: { id: string; name: string }) => {
     if (!mention) return;
     const next = `${message.slice(0, mention.start)}@${agent.name} ${message.slice(mention.end)}`;
@@ -414,6 +416,7 @@ export function WorkComposer({
       >
         {mentionOpen && (
           <div
+            id={mentionListId}
             data-testid='work-mention-menu'
             role='listbox'
             aria-label={t('work.composer.mentionAgents', {
@@ -424,7 +427,9 @@ export function WorkComposer({
             {mentionMatches.slice(0, 6).map((agent, index) => (
               <button
                 key={agent.id}
+                id={mentionOptionId(index)}
                 type='button'
+                tabIndex={-1}
                 role='option'
                 aria-selected={index === mentionIndex}
                 data-testid='work-mention-option'
@@ -454,6 +459,18 @@ export function WorkComposer({
             ref={textareaRef}
             data-testid='work-composer-input'
             dir='auto'
+            aria-label={t('work.composer.placeholder', {
+              defaultValue: 'Describe what you want to build or change…',
+            })}
+            // The combobox role only exists while the @-menu does, so the
+            // field stays a plain textbox the rest of the time.
+            role={mentionOpen ? 'combobox' : undefined}
+            aria-autocomplete={mentionOpen ? 'list' : undefined}
+            aria-expanded={mentionOpen ? true : undefined}
+            aria-controls={mentionOpen ? mentionListId : undefined}
+            aria-activedescendant={
+              mentionOpen ? mentionOptionId(mentionIndex) : undefined
+            }
             value={message}
             onChange={event => {
               setMessage(event.target.value);

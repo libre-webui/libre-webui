@@ -27,6 +27,7 @@ import {
   MoreHorizontal,
   SlidersHorizontal,
   Trash2,
+  X,
 } from 'lucide-react';
 import {
   useCallback,
@@ -61,6 +62,8 @@ import { cn, formatRelativeTime } from '@/utils';
 import { preferencesApi, workApi } from '@/utils/api';
 import { clearWorkDraft, clearWorkTaskDrafts } from '@/utils/workDrafts';
 import { workStatusPresentation } from '@/utils/workStatus';
+import { workStatusAnnouncement } from '@/utils/workAnnouncements';
+import { announce } from '@/components/ui/liveAnnouncerStore';
 import {
   baseWorkModel,
   selectWorkEngine,
@@ -101,6 +104,12 @@ const waitForReconnect = (
 
 export default function WorkPage() {
   const { t, i18n } = useTranslation();
+  // The live-run subscription must not restart when the language changes, so
+  // it reads the current translator through a ref.
+  const tRef = useRef(t);
+  useEffect(() => {
+    tRef.current = t;
+  }, [t]);
   const location = useLocation();
   const navigate = useNavigate();
   const { taskId } = useParams<{ taskId: string }>();
@@ -345,12 +354,12 @@ export default function WorkPage() {
       }
     } catch (setupError) {
       setComputerSetupError(
-        errorMessage(setupError, 'The Work Computer could not be set up.')
+        errorMessage(setupError, t('work.computer.setupFailed'))
       );
     } finally {
       setComputerSetupBusy(false);
     }
-  }, []);
+  }, [t]);
   // Idle-stop can end a preview server-side, and no live channel exists to
   // announce it (the SSE stream is run-scoped and idle-stop fires precisely
   // when nothing runs). Poll the open task while its preview is up so the
@@ -555,6 +564,59 @@ export default function WorkPage() {
     taskId && liveRuns[taskId]?.runId === selectedRunId
       ? liveRuns[taskId]
       : undefined;
+  // A run blocked on a tool approval stays "running", so the status change
+  // above never fires for it. Announce each pending approval once, but treat
+  // whatever the first caught-up state of a run already holds (opening the
+  // task, replayed history) as seen: a page load stays silent.
+  const pendingApprovalId =
+    liveRun?.pendingApproval?.status === 'pending'
+      ? liveRun.pendingApproval.approvalId
+      : null;
+  const pendingApprovalTool = liveRun?.pendingApproval?.name;
+  const liveRunCaughtUp = (liveRun?.lastEventId ?? 0) > 0;
+  const approvalAnnounceRef = useRef<{
+    runKey: string;
+    primed: boolean;
+    seen: string | null;
+  } | null>(null);
+  useEffect(() => {
+    if (!taskId || !selectedRunId) {
+      approvalAnnounceRef.current = null;
+      return;
+    }
+    const runKey = `${taskId}:${selectedRunId}`;
+    if (approvalAnnounceRef.current?.runKey !== runKey) {
+      approvalAnnounceRef.current = { runKey, primed: false, seen: null };
+    }
+    const tracker = approvalAnnounceRef.current;
+    if (!tracker.primed) {
+      if (!liveRunCaughtUp) return;
+      tracker.primed = true;
+      tracker.seen = pendingApprovalId;
+      return;
+    }
+    if (!pendingApprovalId || pendingApprovalId === tracker.seen) return;
+    tracker.seen = pendingApprovalId;
+    const state = useWorkStore.getState();
+    const title =
+      state.tasks.find(task => task.id === taskId)?.title ??
+      (state.selectedTask?.id === taskId
+        ? state.selectedTask.title
+        : undefined);
+    announce(
+      tRef.current('work.announce.approvalNeeded', {
+        title: title || tRef.current('work.announce.untitledTask'),
+        tool: pendingApprovalTool ?? '',
+      }),
+      'assertive'
+    );
+  }, [
+    taskId,
+    selectedRunId,
+    liveRunCaughtUp,
+    pendingApprovalId,
+    pendingApprovalTool,
+  ]);
   const summaryPollingActive =
     selectedStatus === 'preparing' || selectedStatus === 'running';
   const summaryPollingDelay = summaryPollingActive ? 1000 : 4000;
@@ -575,6 +637,19 @@ export default function WorkPage() {
     };
   }, [loadTasks, summaryPollingDelay]);
 
+  // Most failures already raise an assertive error toast with the same text;
+  // the persistent banner speaks only for errors nothing else announced.
+  useEffect(() => {
+    if (!error) return undefined;
+    const timer = window.setTimeout(() => {
+      const alreadyAlerted = Array.from(
+        document.querySelectorAll('[role="alert"]')
+      ).some(element => element.textContent?.trim() === error.trim());
+      if (!alreadyAlerted) announce(error, 'assertive');
+    }, 150);
+    return () => window.clearTimeout(timer);
+  }, [error]);
+
   const previousStatusRef = useRef<{
     taskId: string;
     status: WorkTask['status'];
@@ -592,6 +667,26 @@ export default function WorkPage() {
       selectedStatus !== 'preparing' &&
       selectedStatus !== 'running'
     ) {
+      // The one place a run is seen leaving the working states for the open
+      // task, so each finish is announced once and a page load never is.
+      const announcement = workStatusAnnouncement(
+        previous.status,
+        selectedStatus
+      );
+      if (announcement) {
+        const state = useWorkStore.getState();
+        const title =
+          state.tasks.find(task => task.id === taskId)?.title ??
+          (state.selectedTask?.id === taskId
+            ? state.selectedTask.title
+            : undefined);
+        announce(
+          tRef.current(announcement.key, {
+            title: title || tRef.current('work.announce.untitledTask'),
+          }),
+          announcement.politeness
+        );
+      }
       void loadTask(taskId, true).catch(() => undefined);
       void loadFiles(taskId, '').catch(() => undefined);
     }
@@ -663,7 +758,7 @@ export default function WorkPage() {
           });
           flushEvents();
           if (terminal || stopped || controller.signal.aborted) break;
-          throw new Error('The live Work connection closed.');
+          throw new Error(tRef.current('work.live.connectionClosed'));
         } catch (streamError) {
           flushEvents();
           if (stopped || controller.signal.aborted) return;
@@ -678,7 +773,7 @@ export default function WorkPage() {
             reconnectAttempt >= 3
               ? errorMessage(
                   streamError,
-                  'Live updates are reconnecting in the background.'
+                  tRef.current('work.live.reconnectingBackground')
                 )
               : undefined
           );
@@ -826,7 +921,7 @@ export default function WorkPage() {
         // at the next round boundary instead of requiring a stop.
         const sent = await workApi.sendRunMessage(selectedTask.id, message);
         if (!sent.success) {
-          throw new Error(sent.message || 'The message could not be sent.');
+          throw new Error(sent.message || t('work.toasts.sendFailed'));
         }
         await loadTask(selectedTask.id);
       } else if (selectedTask) {
@@ -1307,7 +1402,7 @@ export default function WorkPage() {
               className='hidden h-7 shrink-0 items-center gap-1.5 rounded-full border border-line bg-surface px-2.5 font-mono text-[11px] text-ink-muted sm:inline-flex'
             >
               <FolderOpen aria-hidden='true' className='h-3.5 w-3.5' />
-              <span className='max-w-[16rem] truncate'>
+              <span dir='ltr' className='max-w-[16rem] truncate'>
                 {selectedTask.hostPath}
               </span>
             </span>
@@ -1317,10 +1412,6 @@ export default function WorkPage() {
             <span
               data-testid='work-compact-status'
               className='inline-flex h-7 shrink-0 items-center gap-1.5 rounded-full border border-line bg-surface px-2 text-[11px] font-medium text-ink-muted xl:hidden'
-              aria-label={t('work.tasks.status', {
-                status: statusLabel,
-                defaultValue: 'Status: {{status}}',
-              })}
               title={t('work.tasks.status', {
                 status: statusLabel,
                 defaultValue: 'Status: {{status}}',
@@ -1337,7 +1428,17 @@ export default function WorkPage() {
                 )}
                 style={{ backgroundColor: status.color }}
               />
-              <span className='hidden md:inline'>{statusLabel}</span>
+              {/* Text, not aria-label: a label on a plain span is not reliably
+                  announced, and the visible label is hidden below md. */}
+              <span className='sr-only'>
+                {t('work.tasks.status', {
+                  status: statusLabel,
+                  defaultValue: 'Status: {{status}}',
+                })}
+              </span>
+              <span aria-hidden='true' className='hidden md:inline'>
+                {statusLabel}
+              </span>
             </span>
           )}
 
@@ -1424,8 +1525,8 @@ export default function WorkPage() {
               className={cn(
                 'inline-flex h-7 items-center gap-1.5 rounded-full border px-2.5 text-[11px] font-medium',
                 runtimeUnavailable
-                  ? 'border-transparent bg-error-500 text-[#0D0D0C]'
-                  : 'border-transparent bg-success-500 text-[#0D0D0C]'
+                  ? 'border-transparent bg-error-500 text-black'
+                  : 'border-transparent bg-success-500 text-black'
               )}
               title={
                 runtimeUnavailable
@@ -1524,7 +1625,8 @@ export default function WorkPage() {
         {recovering && recovery && (
           <div
             data-testid='work-recovery-notice'
-            className='flex shrink-0 flex-wrap items-center gap-2 border-b border-amber-500/20 bg-amber-500/10 px-4 py-2 text-xs text-ink'
+            role='status'
+            className='flex shrink-0 flex-wrap items-center gap-2 border-b border-warning-500/20 bg-warning-500/10 px-4 py-2 text-xs text-ink'
           >
             <CircleAlert className='h-4 w-4 shrink-0' />
             <span dir='auto' className='min-w-0 flex-1'>
@@ -1565,7 +1667,7 @@ export default function WorkPage() {
                 data-testid='work-recovery-notice-retry'
                 onClick={() => void retryRecovery()}
                 disabled={retryingRecovery}
-                className='shrink-0 rounded-md border border-amber-500/40 px-2 py-1 font-medium transition-colors hover:bg-amber-500/20 disabled:opacity-60'
+                className='shrink-0 rounded-md border border-warning-500/40 px-2 py-1 font-medium transition-colors hover:bg-warning-500/20 disabled:opacity-60'
               >
                 {retryingRecovery
                   ? t('work.recovery.retrying', { defaultValue: 'Retrying…' })
@@ -1577,11 +1679,15 @@ export default function WorkPage() {
 
         {(unavailableForConfiguration || error) && (
           <div
+            // The configuration notice interrupts; ordinary errors are
+            // announced by the effect that de-duplicates them with toasts.
+            role={unavailableForConfiguration ? 'alert' : undefined}
+            data-testid='work-error-banner'
             className={cn(
               'flex shrink-0 items-center gap-2 border-b px-4 py-2 text-xs',
               unavailableForConfiguration
                 ? 'border-error-500/20 bg-error-500/10 text-error-700'
-                : 'border-amber-500/20 bg-amber-500/10 text-ink'
+                : 'border-warning-500/20 bg-warning-500/10 text-ink'
             )}
           >
             <CircleAlert className='h-4 w-4 shrink-0' />
@@ -1597,11 +1703,11 @@ export default function WorkPage() {
             {error && !unavailableForConfiguration && (
               <button
                 type='button'
-                className='rounded-md p-1 hover:bg-black/5'
+                className='inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md transition-colors hover:bg-interactive-hover'
                 onClick={clearError}
                 aria-label={t('common.close')}
               >
-                ×
+                <X aria-hidden='true' className='h-4 w-4' />
               </button>
             )}
           </div>
@@ -1955,7 +2061,7 @@ export default function WorkPage() {
         ) : (
           <div className='flex min-h-0 flex-1 flex-col items-center justify-center px-6 text-center'>
             {loadingTask ? (
-              <div className='text-sm text-ink-muted'>
+              <div role='status' className='text-sm text-ink-muted'>
                 {t('work.tasks.loading', { defaultValue: 'Loading task…' })}
               </div>
             ) : (

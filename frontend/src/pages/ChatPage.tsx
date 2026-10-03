@@ -695,27 +695,49 @@ export const ChatPage: React.FC = () => {
     };
     sessionStorage.setItem('pendingMessage', JSON.stringify(pendingMessage));
 
-    // Clear local state
+    // Keep what was typed until the session exists, so a failed create does
+    // not throw the draft away.
+    const draft = {
+      message: welcomeMessage,
+      images: welcomeImages,
+      webSearch: welcomeWebSearch,
+      tools: welcomeTools,
+    };
     setWelcomeMessage('');
     setWelcomeImages([]);
     setWelcomeWebSearch(false);
     setWelcomeTools(DEFAULT_COMPOSER_TOOLS);
 
     // Create a new session and navigate to it
-    const newSession = await createSession(
-      selectedModel,
-      undefined,
-      selectedModel.startsWith('persona:')
-        ? selectedModel.slice('persona:'.length)
-        : undefined,
-      selectedProviderType,
-      selectedProviderId
-    );
-    if (newSession) {
-      // Carry the settings chosen before the session existed onto it.
-      await applyDraftSessionSettings(newSession);
-      navigate(`/c/${newSession.id}`, { replace: true });
+    let newSession: ChatSession | undefined;
+    try {
+      newSession = await createSession(
+        selectedModel,
+        undefined,
+        selectedModel.startsWith('persona:')
+          ? selectedModel.slice('persona:'.length)
+          : undefined,
+        selectedProviderType,
+        selectedProviderId
+      );
+    } catch {
+      newSession = undefined;
     }
+    if (!newSession) {
+      sessionStorage.removeItem('pendingMessage');
+      setWelcomeMessage(draft.message);
+      setWelcomeImages(draft.images);
+      setWelcomeWebSearch(draft.webSearch);
+      setWelcomeTools(draft.tools);
+      // The store reports thrown errors itself; a bare failure is silent.
+      if (!useChatStore.getState().error) {
+        toast.error(t('chat.toasts.createFailed'));
+      }
+      return;
+    }
+    // Carry the settings chosen before the session existed onto it.
+    await applyDraftSessionSettings(newSession);
+    navigate(`/c/${newSession.id}`, { replace: true });
   };
 
   /**
@@ -861,10 +883,12 @@ export const ChatPage: React.FC = () => {
               'absolute end-4 top-4 z-10 flex h-9 w-9 items-center justify-center rounded-full border border-black/[0.07] bg-surface/65 text-gray-500 backdrop-blur-md transition-colors duration-150 hover:bg-surface-raised hover:text-gray-950 dark:border-white/[0.08] dark:bg-dark-200/65 dark:text-dark-600 dark:hover:bg-dark-200 dark:hover:text-dark-950 sm:end-6 sm:top-6',
               controlsOpen && 'text-primary-600 dark:text-primary-400'
             )}
+            type='button'
             title={t('chat.controls.title')}
+            aria-label={t('chat.controls.title')}
             aria-expanded={controlsOpen}
           >
-            <SlidersHorizontal className='h-4 w-4' />
+            <SlidersHorizontal className='h-4 w-4' aria-hidden='true' />
           </button>
 
           {/* Private Mode Button - Top Right Corner */}
@@ -877,7 +901,7 @@ export const ChatPage: React.FC = () => {
             className='absolute end-[3.75rem] top-4 z-10 flex items-center gap-2 rounded-full border border-black/[0.07] bg-surface/65 px-3 py-2 text-xs font-medium text-gray-500 backdrop-blur-md transition-colors duration-150 hover:bg-surface-raised hover:text-gray-950 disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/[0.08] dark:bg-dark-200/65 dark:text-dark-600 dark:hover:bg-dark-200 dark:hover:text-dark-950 sm:end-[4.25rem] sm:top-6'
             title={t('chat.session.privateTooltip')}
           >
-            <Ghost className='h-3.5 w-3.5' />
+            <Ghost className='h-3.5 w-3.5' aria-hidden='true' />
             <span>{t('chat.session.incognito', 'Incognito Chat')}</span>
           </button>
 
@@ -913,7 +937,7 @@ export const ChatPage: React.FC = () => {
                       maxImages={5}
                     />
                     <div className='mt-3 flex items-center justify-between gap-3 border-t border-black/[0.06] pt-3 dark:border-white/[0.07]'>
-                      <span className='text-xs text-gray-500 dark:text-dark-500'>
+                      <span className='text-xs text-ink-muted'>
                         {t('chat.input.menu.attachDocument')}
                       </span>
                       <Button
@@ -946,7 +970,15 @@ export const ChatPage: React.FC = () => {
 
                 {/* Floating composer card: text row on top, controls below. */}
                 <form onSubmit={handleWelcomeSubmit}>
-                  <div data-composer-box='' className={composerSurfaceClass}>
+                  <div
+                    data-composer-box=''
+                    className={cn(
+                      composerSurfaceClass,
+                      // The shared surface's focus cue is faint; the text
+                      // field inside has no outline of its own.
+                      'focus-within:border-primary-500 focus-within:ring-primary-500/30 dark:focus-within:border-primary-400 dark:focus-within:ring-primary-400/30'
+                    )}
+                  >
                     <ComposerSuggestions
                       ref={welcomeSuggestionsRef}
                       message={welcomeMessage}
@@ -964,6 +996,7 @@ export const ChatPage: React.FC = () => {
                       }
                       onKeyDown={handleWelcomeKeyDown}
                       placeholder={t('chat.input.messagePlaceholder')}
+                      aria-label={t('chat.input.messagePlaceholder')}
                       className='!m-0 block w-full min-h-9 max-h-[160px] resize-none !rounded-none !border-0 !bg-transparent !px-2 !pt-1.5 !pb-2 !shadow-none scrollbar-thin scrollbar-thumb-gray-300 placeholder:text-ink-subtle focus:!border-0 focus:!bg-transparent focus:!shadow-none focus:!ring-0 dark:scrollbar-thumb-dark-400 text-[0.9375rem] leading-relaxed touch-manipulation'
                       rows={1}
                     />
@@ -985,16 +1018,18 @@ export const ChatPage: React.FC = () => {
                           showWelcomeAdvanced && 'bg-hover-solid text-ink'
                         )}
                         title={t('chat.input.attachImages')}
+                        aria-label={t('chat.input.attachImages')}
+                        aria-expanded={showWelcomeAdvanced}
                       >
                         {hasAdvancedFeatures ? (
                           <div className='relative flex items-center justify-center'>
-                            <Paperclip className='h-4 w-4' />
+                            <Paperclip className='h-4 w-4' aria-hidden='true' />
                             <div className='absolute -top-0.5 -end-0.5 h-1.5 w-1.5 bg-primary-500 rounded-full' />
                           </div>
                         ) : showWelcomeAdvanced ? (
-                          <Minus className='h-4 w-4' />
+                          <Minus className='h-4 w-4' aria-hidden='true' />
                         ) : (
-                          <Plus className='h-4 w-4' />
+                          <Plus className='h-4 w-4' aria-hidden='true' />
                         )}
                       </Button>
 
@@ -1024,9 +1059,14 @@ export const ChatPage: React.FC = () => {
                               ? t('chat.input.webSearchOn')
                               : t('chat.input.webSearchOff')
                           }
+                          aria-label={
+                            welcomeWebSearch
+                              ? t('chat.input.webSearchOn')
+                              : t('chat.input.webSearchOff')
+                          }
                           aria-pressed={welcomeWebSearch}
                         >
-                          <Globe className='h-4 w-4' />
+                          <Globe className='h-4 w-4' aria-hidden='true' />
                         </Button>
                       )}
 
@@ -1063,8 +1103,9 @@ export const ChatPage: React.FC = () => {
                         }
                         className={composerSendButtonClass}
                         title={t('chat.input.sendMessage')}
+                        aria-label={t('chat.input.sendMessage')}
                       >
-                        <ArrowUp className='h-4 w-4' />
+                        <ArrowUp className='h-4 w-4' aria-hidden='true' />
                       </Button>
                     </div>
                   </div>
@@ -1186,10 +1227,12 @@ export const ChatPage: React.FC = () => {
                 'absolute end-3 top-3 z-20 flex h-8 w-8 items-center justify-center rounded-full border border-black/[0.07] bg-surface/65 text-gray-500 backdrop-blur-md transition-colors duration-150 hover:bg-surface-raised hover:text-gray-950 dark:border-white/[0.08] dark:bg-dark-200/65 dark:text-dark-600 dark:hover:bg-dark-200 dark:hover:text-dark-950',
                 controlsOpen && 'text-primary-600 dark:text-primary-400'
               )}
+              type='button'
               title={t('chat.controls.title')}
+              aria-label={t('chat.controls.title')}
               aria-expanded={controlsOpen}
             >
-              <SlidersHorizontal className='h-3.5 w-3.5' />
+              <SlidersHorizontal className='h-3.5 w-3.5' aria-hidden='true' />
             </button>
             {currentSession.settings?.forkedFrom && (
               <button

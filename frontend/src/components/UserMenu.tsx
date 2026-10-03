@@ -33,6 +33,7 @@ import {
 } from 'lucide-react';
 import { AvatarUpload } from '@/components/AvatarUpload';
 import { createLogger } from '@/utils/logger';
+import { noteExplicitLogout } from '@/utils/postLoginPath';
 
 const logger = createLogger('components:user-menu');
 
@@ -84,6 +85,7 @@ export const UserMenu: React.FC<UserMenuProps> = ({ onSettingsClick }) => {
   }, []);
 
   const handleLogout = async () => {
+    noteExplicitLogout();
     try {
       await authApi.logout();
       logout();

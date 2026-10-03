@@ -30,25 +30,32 @@ export const GenerationStats: React.FC<GenerationStatsProps> = ({
   className = '',
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const formatNumber = (value: number, digits: number): string =>
+    value.toLocaleString(i18n.language, {
+      minimumFractionDigits: digits,
+      maximumFractionDigits: digits,
+    });
 
   // Helper function to format duration from nanoseconds
   const formatDuration = (nanoseconds?: number): string => {
-    if (nanoseconds == null) return 'N/A';
+    if (nanoseconds == null) return t('generationStats.notAvailable');
 
     const milliseconds = nanoseconds / 1e6;
     if (milliseconds < 1000) {
-      return `${Math.round(milliseconds)}ms`;
+      return `${Math.round(milliseconds).toLocaleString(i18n.language)}ms`;
     }
 
     const seconds = milliseconds / 1000;
-    return `${seconds.toFixed(2)}s`;
+    return `${formatNumber(seconds, 2)}s`;
   };
 
   // Helper function to format tokens per second
   const formatTokensPerSecond = (tokensPerSecond?: number): string => {
-    if (!tokensPerSecond) return 'N/A';
-    return `${tokensPerSecond.toFixed(1)} t/s`;
+    if (!tokensPerSecond) return t('generationStats.notAvailable');
+    return t('generationStats.tokensPerSecond', {
+      value: formatNumber(tokensPerSecond, 1),
+    });
   };
 
   // Calculate some derived metrics
@@ -59,24 +66,20 @@ export const GenerationStats: React.FC<GenerationStatsProps> = ({
   const tokensPerSecond = formatTokensPerSecond(statistics.tokens_per_second);
 
   return (
-    <div
-      className={`text-xs text-gray-500 dark:text-dark-500 mt-2 ${className}`}
-    >
+    <div className={`text-xs text-ink-muted mt-2 ${className}`}>
       {/* Summary Stats */}
       <div className='flex items-center gap-4 mb-1'>
         <span className='flex items-center gap-1 text-gray-600 dark:text-dark-600'>
-          <Info size={12} className='text-primary-500' />
-          {generatedTokens} tokens
+          <Info size={12} className='text-primary-500' aria-hidden='true' />
+          {t('generationStats.tokenCount', {
+            tokens: generatedTokens.toLocaleString(i18n.language),
+          })}
         </span>
-        <span className='text-gray-500 dark:text-dark-500'>
-          {tokensPerSecond}
-        </span>
-        <span className='text-gray-500 dark:text-dark-500'>
-          {totalDuration}
-        </span>
+        <span className='text-ink-muted'>{tokensPerSecond}</span>
+        <span className='text-ink-muted'>{totalDuration}</span>
         {statistics.model && (
           <span
-            className='text-gray-400 dark:text-dark-400 bg-gray-100 dark:bg-dark-200 px-2 py-0.5 rounded-full truncate max-w-32 sm:max-w-48'
+            className='text-ink-muted bg-gray-100 dark:bg-dark-200 px-2 py-0.5 rounded-full truncate max-w-32 sm:max-w-48'
             title={statistics.model}
           >
             {statistics.model}
@@ -86,13 +89,19 @@ export const GenerationStats: React.FC<GenerationStatsProps> = ({
 
       {/* Expandable Detailed Stats */}
       <button
+        type='button'
         onClick={() => setIsExpanded(!isExpanded)}
-        className='flex items-center gap-1 text-gray-400 dark:text-dark-400 hover:text-gray-600 dark:hover:text-dark-600 transition-colors'
+        aria-expanded={isExpanded}
+        className='flex items-center gap-1 text-ink-muted hover:text-ink transition-colors'
       >
         {isExpanded ? (
-          <ChevronDown size={12} />
+          <ChevronDown size={12} aria-hidden='true' />
         ) : (
-          <ChevronRight size={12} className='rtl:rotate-180' />
+          <ChevronRight
+            size={12}
+            className='rtl:rotate-180'
+            aria-hidden='true'
+          />
         )}
         <span>{t('generationStats.details')}</span>
       </button>
@@ -155,7 +164,9 @@ export const GenerationStats: React.FC<GenerationStatsProps> = ({
               <span className='font-medium text-gray-800 dark:text-dark-800'>
                 {t('generationStats.generatedAt')}
               </span>{' '}
-              {new Date(statistics.created_at).toLocaleTimeString()}
+              {new Date(statistics.created_at).toLocaleTimeString(
+                i18n.language
+              )}
             </div>
           )}
         </div>

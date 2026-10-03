@@ -313,7 +313,7 @@ test('incognito chat starts from Home without creating a saved session', async (
   await page.getByTestId('command-palette-input').fill('garden');
   await page
     .getByTestId('command-palette')
-    .getByRole('button', { name: /Garden planning notes/ })
+    .getByRole('option', { name: /Garden planning notes/ })
     .click();
   await expect(page).toHaveURL(/\/c\/tab-session$/);
   await expect(page.getByText('Private Mode')).toHaveCount(0);
@@ -474,7 +474,7 @@ test('the command palette opens with the keyboard and jumps to a chat', async ({
 
   await page.getByTestId('command-palette-input').fill('garden');
   await expect(
-    palette.getByRole('button', { name: /Garden planning notes/ })
+    palette.getByRole('option', { name: /Garden planning notes/ })
   ).toBeVisible();
   await page.keyboard.press('Enter');
 

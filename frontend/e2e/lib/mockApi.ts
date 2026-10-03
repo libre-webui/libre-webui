@@ -320,6 +320,8 @@ type MockChatStream = {
   completionDelayMs?: number;
   holdOpen?: boolean;
   duplicateCompletion?: boolean;
+  /** End the stream with this generation error instead of a completion. */
+  failWith?: string;
 };
 
 type MockWorkRecoveryItem = {
@@ -905,6 +907,7 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
         completionDelayMs: options.chatStream.completionDelayMs ?? 40,
         holdOpen: options.chatStream.holdOpen ?? false,
         duplicateCompletion: options.chatStream.duplicateCompletion ?? false,
+        failWith: options.chatStream.failWith,
       }
     : null;
   const pullStreamUrls: string[] = [];
@@ -1352,13 +1355,19 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
                 settled = true;
                 generation.completed = true;
                 signal?.removeEventListener('abort', abort);
-                const completion = {
-                  type: 'done',
-                  messageId: assistantMessageId,
-                  content: finalContent,
-                  role: 'assistant',
-                  timestamp: Date.now(),
-                };
+                const completion = streamConfig?.failWith
+                  ? {
+                      type: 'error',
+                      messageId: assistantMessageId,
+                      error: streamConfig.failWith,
+                    }
+                  : {
+                      type: 'done',
+                      messageId: assistantMessageId,
+                      content: finalContent,
+                      role: 'assistant',
+                      timestamp: Date.now(),
+                    };
                 const block = `id: ${pieces.length + 1}\ndata: ${JSON.stringify(completion)}\n\n`;
                 controller.enqueue(
                   encoder.encode(
@@ -1533,6 +1542,13 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
         if (streamConfig.holdOpen) return;
         window.setTimeout(
           () => {
+            if (streamConfig.failWith) {
+              dispatch('error', {
+                error: streamConfig.failWith,
+                sessionId: message.data?.sessionId,
+              });
+              return;
+            }
             const completion = {
               content: cumulativeChunks[cumulativeChunks.length - 1].total,
               role: 'assistant',

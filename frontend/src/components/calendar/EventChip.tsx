@@ -16,6 +16,8 @@
  */
 
 import React from 'react';
+import { useTranslation } from 'react-i18next';
+import { AlertTriangle, CheckCircle2, Clock } from 'lucide-react';
 import type { CalendarEvent } from '@/types';
 import { cn } from '@/utils';
 
@@ -39,8 +41,7 @@ interface EventChipProps {
 const VARIANT_CLASSES: Record<string, string> = {
   event:
     'bg-primary-500/15 text-primary-700 hover:bg-primary-500/25 dark:text-primary-300',
-  automation:
-    'bg-amber-500/15 text-amber-700 hover:bg-amber-500/25 dark:text-amber-300',
+  automation: 'bg-warning-500/15 text-ink hover:bg-warning-500/25',
   runSucceeded:
     'bg-emerald-500/15 text-emerald-700 hover:bg-emerald-500/25 dark:text-emerald-300',
   runFailed: 'bg-red-500/15 text-red-700 hover:bg-red-500/25 dark:text-red-300',
@@ -51,6 +52,17 @@ const VARIANT_CLASSES: Record<string, string> = {
  * translucent so the source event stands out from its projections.
  */
 export function EventChip({ event, label, onClick }: EventChipProps) {
+  const { t } = useTranslation();
+  // Color alone must not carry the status, so each projection gets an icon
+  // plus a spoken label.
+  const status =
+    event.variant === 'automation'
+      ? { Icon: Clock, label: t('calendar.chipStatus.automation') }
+      : event.variant === 'runSucceeded'
+        ? { Icon: CheckCircle2, label: t('calendar.chipStatus.runSucceeded') }
+        : event.variant === 'runFailed'
+          ? { Icon: AlertTriangle, label: t('calendar.chipStatus.runFailed') }
+          : null;
   return (
     <button
       type='button'
@@ -62,12 +74,18 @@ export function EventChip({ event, label, onClick }: EventChipProps) {
         onClick();
       }}
       className={cn(
-        'w-full truncate rounded-md px-1.5 py-0.5 text-start text-[11px] leading-4 transition-colors',
+        'flex w-full items-center gap-1 rounded-md px-1.5 py-0.5 text-start text-[11px] leading-4 transition-colors',
         VARIANT_CLASSES[event.variant ?? 'event'],
         event.baseEventId && 'opacity-75'
       )}
     >
-      {label}
+      {status && (
+        <>
+          <status.Icon className='h-3 w-3 shrink-0' aria-hidden='true' />
+          <span className='sr-only'>{status.label}</span>
+        </>
+      )}
+      <span className='min-w-0 truncate'>{label}</span>
     </button>
   );
 }

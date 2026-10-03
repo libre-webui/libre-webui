@@ -17,8 +17,10 @@
 
 import React from 'react';
 import { Sun, Moon, MoonStar, Sunrise } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { useAppStore } from '@/store/appStore';
 import { Button } from '@/components/ui';
+import { isMac } from '@/utils';
 import { getNextThemeMode } from '@/utils/theme';
 
 const ICON_CLASS =
@@ -32,19 +34,21 @@ const NEXT_MODE_ICON = {
   celestial: Sunrise,
 } as const;
 
-const NEXT_MODE_LABEL = {
-  light: 'light',
-  dark: 'dark',
-  amoled: 'pure black',
-  celestial: 'celestial',
+const NEXT_MODE_LABEL_KEY = {
+  light: 'themeToggle.switchToLight',
+  dark: 'themeToggle.switchToDark',
+  amoled: 'themeToggle.switchToAmoled',
+  celestial: 'themeToggle.switchToCelestial',
 } as const;
 
 export const ThemeToggle: React.FC = () => {
+  const { t } = useTranslation();
   const { theme, toggleTheme } = useAppStore();
 
   const nextMode = getNextThemeMode(theme.mode);
   const Icon = NEXT_MODE_ICON[nextMode];
-  const label = `Switch to ${NEXT_MODE_LABEL[nextMode]} mode`;
+  const label = t(NEXT_MODE_LABEL_KEY[nextMode]);
+  const shortcut = isMac() ? '⌘D' : 'Ctrl+D';
 
   return (
     <Button
@@ -53,7 +57,7 @@ export const ThemeToggle: React.FC = () => {
       onClick={toggleTheme}
       className='h-9 w-9 rounded-full p-0'
       aria-label={label}
-      title={`${label} (⌘D)`}
+      title={`${label} (${shortcut})`}
     >
       <Icon className={ICON_CLASS} strokeWidth={1.75} aria-hidden='true' />
     </Button>

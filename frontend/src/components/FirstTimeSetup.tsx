@@ -38,7 +38,7 @@ import { LogoMark } from '@/components/LogoMark';
 import { ConnectModels } from '@/components/ConnectModels';
 import { TurnstileWidget } from '@/components/TurnstileWidget';
 import { createLogger } from '@/utils/logger';
-import { getPasswordPolicyError } from '@/utils/passwordPolicy';
+import { getPasswordPolicyErrorKey } from '@/utils/passwordPolicy';
 import { PasswordStrengthMeter } from '@/components/PasswordStrengthMeter';
 
 const logger = createLogger('components:first-time-setup');
@@ -63,6 +63,8 @@ export const FirstTimeSetup: React.FC<FirstTimeSetupProps> = ({
   const [encryptionKey, setEncryptionKey] = useState<string | null>(null);
   const [keyCopied, setKeyCopied] = useState(false);
   const [keyAcknowledged, setKeyAcknowledged] = useState(false);
+  const [keyLoadFailed, setKeyLoadFailed] = useState(false);
+  const [keyAttempt, setKeyAttempt] = useState(0);
   const [turnstileToken, setTurnstileToken] = useState('');
   const { login, systemInfo } = useAuthStore();
   const turnstileSiteKey = systemInfo?.turnstile?.siteKey;
@@ -79,14 +81,31 @@ export const FirstTimeSetup: React.FC<FirstTimeSetupProps> = ({
 
   // Fetch encryption key when entering that step
   useEffect(() => {
-    if (step === 'encryption-key' && !encryptionKey) {
-      authApi.getEncryptionKey().then(response => {
+    if (step !== 'encryption-key' || encryptionKey) return;
+    let cancelled = false;
+    authApi
+      .getEncryptionKey()
+      .then(response => {
+        if (cancelled) return;
         if (response.success && response.data) {
           setEncryptionKey(response.data.encryptionKey);
+        } else {
+          setKeyLoadFailed(true);
         }
+      })
+      .catch(error => {
+        logger.error('Failed to load encryption key:', error);
+        if (!cancelled) setKeyLoadFailed(true);
       });
-    }
-  }, [step, encryptionKey]);
+    return () => {
+      cancelled = true;
+    };
+  }, [step, encryptionKey, keyAttempt]);
+
+  const retryLoadKey = () => {
+    setKeyLoadFailed(false);
+    setKeyAttempt(attempt => attempt + 1);
+  };
 
   const handleCreateAdmin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -101,9 +120,9 @@ export const FirstTimeSetup: React.FC<FirstTimeSetupProps> = ({
       return;
     }
 
-    const passwordError = getPasswordPolicyError(password);
-    if (passwordError) {
-      toast.error(passwordError);
+    const passwordErrorKey = getPasswordPolicyErrorKey(password);
+    if (passwordErrorKey) {
+      toast.error(t(passwordErrorKey));
       return;
     }
 
@@ -166,6 +185,8 @@ export const FirstTimeSetup: React.FC<FirstTimeSetupProps> = ({
   };
 
   const handleComplete = () => {
+    // Never move on without the key the user is asked to save.
+    if (!encryptionKey) return;
     if (!keyAcknowledged) {
       toast.error(t('setup.encryptionKey.confirmRequired'));
       return;
@@ -252,8 +273,9 @@ export const FirstTimeSetup: React.FC<FirstTimeSetupProps> = ({
             </div>
 
             <button
+              type='button'
               onClick={() => setStep('create-admin')}
-              className='flex min-h-11 w-full items-center justify-center rounded-xl border border-transparent bg-primary-600 px-4 py-2.5 text-sm font-medium text-white transition-colors duration-200 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2'
+              className='flex min-h-11 w-full items-center justify-center rounded-xl px-4 py-2.5 text-sm font-medium border border-transparent bg-ink text-ink-inverse shadow-subtle transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-canvas motion-reduce:transition-none'
             >
               <div className='flex items-center'>
                 <span>{t('setup.welcome.createAdmin')}</span>
@@ -332,12 +354,21 @@ export const FirstTimeSetup: React.FC<FirstTimeSetupProps> = ({
 
             {/* Encryption Key Display */}
             <div className='mb-6'>
-              <label className='block text-sm font-medium text-gray-700 dark:text-dark-700 mb-2'>
+              <p
+                id='encryption-key-label'
+                className='block text-sm font-medium text-gray-700 dark:text-dark-700 mb-2'
+              >
                 {t('setup.encryptionKey.label')}
-              </label>
+              </p>
               <div className='relative'>
-                <div className='w-full break-all rounded-xl border border-gray-200 bg-gray-50 px-3 py-3 pe-12 font-mono text-sm text-gray-900 dark:border-white/10 dark:bg-white/[0.035] dark:text-dark-800'>
-                  {encryptionKey || t('setup.encryptionKey.loading')}
+                <div
+                  role='group'
+                  aria-labelledby='encryption-key-label'
+                  data-testid='encryption-key-value'
+                  className='w-full break-all rounded-xl border border-gray-200 bg-gray-50 px-3 py-3 pe-12 font-mono text-sm text-gray-900 dark:border-white/10 dark:bg-white/[0.035] dark:text-dark-800'
+                >
+                  {encryptionKey ||
+                    (keyLoadFailed ? '' : t('setup.encryptionKey.loading'))}
                 </div>
                 <button
                   type='button'
@@ -345,14 +376,36 @@ export const FirstTimeSetup: React.FC<FirstTimeSetupProps> = ({
                   disabled={!encryptionKey}
                   className='absolute end-2 top-1/2 -translate-y-1/2 p-2 text-gray-500 hover:text-gray-700 disabled:opacity-50 dark:text-dark-500 dark:hover:text-dark-700'
                   title={t('setup.encryptionKey.copyToClipboard')}
+                  aria-label={t('setup.encryptionKey.copyToClipboard')}
                 >
                   {keyCopied ? (
-                    <Check className='h-5 w-5 text-green-500' />
+                    <Check
+                      className='h-5 w-5 text-success-800 dark:text-success-400'
+                      aria-hidden='true'
+                    />
                   ) : (
-                    <Copy className='h-5 w-5' />
+                    <Copy className='h-5 w-5' aria-hidden='true' />
                   )}
                 </button>
               </div>
+              {keyLoadFailed && !encryptionKey && (
+                <div
+                  role='alert'
+                  className='mt-3 flex items-center gap-3 rounded-xl border border-error-700/30 bg-error-500/10 px-3 py-2 text-sm text-error-700 dark:text-error-400'
+                >
+                  <span className='min-w-0 flex-1'>
+                    {t('setup.encryptionKey.loadFailed')}
+                  </span>
+                  <button
+                    type='button'
+                    onClick={retryLoadKey}
+                    data-testid='encryption-key-retry'
+                    className='shrink-0 rounded-lg px-2 py-1 font-medium underline underline-offset-2 hover:bg-black/[0.05] dark:hover:bg-white/[0.08]'
+                  >
+                    {t('common.retry')}
+                  </button>
+                </div>
+              )}
               <p className='mt-2 text-xs text-gray-500 dark:text-dark-500'>
                 {t('setup.encryptionKey.envNote')}
               </p>
@@ -364,6 +417,7 @@ export const FirstTimeSetup: React.FC<FirstTimeSetupProps> = ({
                 <input
                   type='checkbox'
                   checked={keyAcknowledged}
+                  disabled={!encryptionKey}
                   onChange={e => setKeyAcknowledged(e.target.checked)}
                   className='mt-1 h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 dark:border-dark-300 rounded'
                 />
@@ -374,9 +428,10 @@ export const FirstTimeSetup: React.FC<FirstTimeSetupProps> = ({
             </div>
 
             <button
+              type='button'
               onClick={handleComplete}
-              disabled={!keyAcknowledged}
-              className='flex min-h-11 w-full items-center justify-center rounded-xl border border-transparent bg-primary-600 px-4 py-2.5 text-sm font-medium text-white transition-colors duration-200 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50'
+              disabled={!keyAcknowledged || !encryptionKey}
+              className='flex min-h-11 w-full items-center justify-center rounded-xl px-4 py-2.5 text-sm font-medium border border-transparent bg-ink text-ink-inverse shadow-subtle transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-canvas motion-reduce:transition-none disabled:cursor-not-allowed disabled:opacity-50'
             >
               <div className='flex items-center'>
                 <span>{t('setup.encryptionKey.continue')}</span>
@@ -423,10 +478,13 @@ export const FirstTimeSetup: React.FC<FirstTimeSetupProps> = ({
               <input
                 id='username'
                 type='text'
+                autoComplete='username'
+                autoCapitalize='none'
+                spellCheck={false}
                 value={username}
                 onChange={e => setUsername(e.target.value)}
                 onKeyDown={handleKeyDown}
-                className='w-full rounded-xl border border-gray-200 bg-white/80 px-3 py-2.5 text-gray-900 transition-colors duration-200 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 dark:border-white/10 dark:bg-white/[0.04] dark:text-dark-800'
+                className='w-full rounded-xl border border-gray-200 bg-white/80 px-3 py-2.5 text-gray-900 transition-colors duration-200 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 dark:border-white/10 dark:bg-white/[0.04] dark:text-dark-800'
                 placeholder={t('setup.admin.usernamePlaceholder')}
                 required
                 disabled={isLoading}
@@ -444,10 +502,11 @@ export const FirstTimeSetup: React.FC<FirstTimeSetupProps> = ({
                 <input
                   id='password'
                   type={showPassword ? 'text' : 'password'}
+                  autoComplete='new-password'
                   value={password}
                   onChange={e => setPassword(e.target.value)}
                   onKeyDown={handleKeyDown}
-                  className='w-full rounded-xl border border-gray-200 bg-white/80 px-3 py-2.5 pe-10 text-gray-900 transition-colors duration-200 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 dark:border-white/10 dark:bg-white/[0.04] dark:text-dark-800'
+                  className='w-full rounded-xl border border-gray-200 bg-white/80 px-3 py-2.5 pe-10 text-gray-900 transition-colors duration-200 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 dark:border-white/10 dark:bg-white/[0.04] dark:text-dark-800'
                   placeholder={t('setup.admin.passwordPlaceholder')}
                   required
                   disabled={isLoading}
@@ -457,8 +516,18 @@ export const FirstTimeSetup: React.FC<FirstTimeSetupProps> = ({
                   onClick={() => setShowPassword(!showPassword)}
                   className='absolute inset-y-0 end-0 flex items-center pe-3 text-gray-400 hover:text-gray-600 dark:text-dark-500 dark:hover:text-dark-700'
                   disabled={isLoading}
+                  aria-label={
+                    showPassword
+                      ? t('auth.password.hide')
+                      : t('auth.password.show')
+                  }
+                  aria-pressed={showPassword}
                 >
-                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                  {showPassword ? (
+                    <EyeOff size={20} aria-hidden='true' />
+                  ) : (
+                    <Eye size={20} aria-hidden='true' />
+                  )}
                 </button>
               </div>
               <PasswordStrengthMeter password={password} />
@@ -475,10 +544,11 @@ export const FirstTimeSetup: React.FC<FirstTimeSetupProps> = ({
                 <input
                   id='confirmPassword'
                   type={showConfirmPassword ? 'text' : 'password'}
+                  autoComplete='new-password'
                   value={confirmPassword}
                   onChange={e => setConfirmPassword(e.target.value)}
                   onKeyDown={handleKeyDown}
-                  className='w-full rounded-xl border border-gray-200 bg-white/80 px-3 py-2.5 pe-10 text-gray-900 transition-colors duration-200 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 dark:border-white/10 dark:bg-white/[0.04] dark:text-dark-800'
+                  className='w-full rounded-xl border border-gray-200 bg-white/80 px-3 py-2.5 pe-10 text-gray-900 transition-colors duration-200 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 dark:border-white/10 dark:bg-white/[0.04] dark:text-dark-800'
                   placeholder={t('setup.admin.confirmPlaceholder')}
                   required
                   disabled={isLoading}
@@ -488,11 +558,17 @@ export const FirstTimeSetup: React.FC<FirstTimeSetupProps> = ({
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                   className='absolute inset-y-0 end-0 flex items-center pe-3 text-gray-400 hover:text-gray-600 dark:text-dark-500 dark:hover:text-dark-700'
                   disabled={isLoading}
+                  aria-label={
+                    showConfirmPassword
+                      ? t('auth.password.hideConfirmation')
+                      : t('auth.password.showConfirmation')
+                  }
+                  aria-pressed={showConfirmPassword}
                 >
                   {showConfirmPassword ? (
-                    <EyeOff size={20} />
+                    <EyeOff size={20} aria-hidden='true' />
                   ) : (
-                    <Eye size={20} />
+                    <Eye size={20} aria-hidden='true' />
                   )}
                 </button>
               </div>
@@ -520,11 +596,11 @@ export const FirstTimeSetup: React.FC<FirstTimeSetupProps> = ({
               <button
                 type='submit'
                 disabled={createAdminDisabled}
-                className='flex min-h-11 flex-1 items-center justify-center rounded-xl border border-transparent bg-primary-600 px-4 py-2.5 text-sm font-medium text-white transition-colors duration-200 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50'
+                className='flex min-h-11 flex-1 items-center justify-center rounded-xl px-4 py-2.5 text-sm font-medium border border-transparent bg-ink text-ink-inverse shadow-subtle transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-canvas motion-reduce:transition-none disabled:cursor-not-allowed disabled:opacity-50'
               >
                 {isLoading ? (
                   <div className='flex items-center'>
-                    <div className='me-2 h-4 w-4 animate-spin rounded-full border-b-2 border-white'></div>
+                    <div className='me-2 h-4 w-4 animate-spin rounded-full border-b-2 border-current'></div>
                     {t('setup.admin.creating')}
                   </div>
                 ) : (

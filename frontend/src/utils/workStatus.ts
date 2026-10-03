@@ -75,3 +75,14 @@ export const workStatusPresentation: Record<
 /** Finished tasks need an explicit reopen before a preview or screen starts. */
 export const isFinishedWorkStatus = (status: WorkTaskStatus): boolean =>
   status === 'completed' || status === 'failed' || status === 'cancelled';
+
+/**
+ * Presentation for a status string that may not be a task status (run
+ * statuses such as `queued`), so callers can fall back to the raw value.
+ */
+export const findWorkStatusPresentation = (
+  status: string
+): WorkStatusPresentation | undefined =>
+  Object.prototype.hasOwnProperty.call(workStatusPresentation, status)
+    ? workStatusPresentation[status as WorkTaskStatus]
+    : undefined;

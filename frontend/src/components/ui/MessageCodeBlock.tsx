@@ -26,6 +26,7 @@ import {
   Eye,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import toast from 'react-hot-toast';
 import { useAppStore } from '@/store/appStore';
 import { generateId } from '@/utils';
 import { createLogger } from '@/utils/logger';
@@ -153,6 +154,7 @@ export function MessageCodeBlock({
       }, 2000);
     } catch (error) {
       logger.error('Failed to copy code:', error);
+      toast.error(t('chat.message.copyFailed'));
     }
   };
 

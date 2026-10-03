@@ -32,3 +32,7 @@ export { Switch } from './Switch';
 export { PageHeader, PageShell } from './PageShell';
 export { ModalShell, modalFieldClass, modalLabelClass } from './ModalShell';
 export { IconAction } from './IconAction';
+export { WorkspaceToolbar } from './WorkspaceToolbar';
+export { EmptyState } from './EmptyState';
+export { LoadingState } from './LoadingState';
+export { ErrorState } from './ErrorState';

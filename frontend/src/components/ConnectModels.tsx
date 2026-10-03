@@ -253,7 +253,7 @@ export const ConnectModels: React.FC<ConnectModelsProps> = ({
   const cardClass =
     'rounded-2xl border border-gray-200/80 bg-white/80 p-4 dark:border-white/10 dark:bg-white/[0.04]';
   const inputClass =
-    'w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:border-primary-400 focus:outline-none dark:border-white/10 dark:bg-white/[0.035] dark:text-dark-800 dark:placeholder-dark-500';
+    'w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 dark:border-white/10 dark:bg-white/[0.035] dark:text-dark-800 dark:placeholder-dark-500';
 
   const statusDot = {
     checking: 'bg-gray-400 animate-pulse',
@@ -296,12 +296,14 @@ export const ConnectModels: React.FC<ConnectModelsProps> = ({
                   void checkOllama();
                 }}
                 title={t('connectModels.ollama.recheck')}
+                aria-label={t('connectModels.ollama.recheck')}
               >
                 <RefreshCw
                   className={cn(
                     'h-4 w-4',
                     ollamaStatus === 'checking' && 'animate-spin'
                   )}
+                  aria-hidden='true'
                 />
               </Button>
             )}
@@ -311,8 +313,9 @@ export const ConnectModels: React.FC<ConnectModelsProps> = ({
                 size='sm'
                 onClick={() => void setOllamaEnabled(false)}
                 title={t('connectModels.ollama.disable')}
+                aria-label={t('connectModels.ollama.disable')}
               >
-                <PowerOff className='h-4 w-4' />
+                <PowerOff className='h-4 w-4' aria-hidden='true' />
               </Button>
             )}
             {isAdmin && ollamaStatus === 'disabled' && (
@@ -332,7 +335,7 @@ export const ConnectModels: React.FC<ConnectModelsProps> = ({
           </p>
         )}
         {ollamaStatus === 'healthy' && (
-          <p className='mt-3 text-xs leading-relaxed text-green-600 dark:text-green-400'>
+          <p className='mt-3 text-xs leading-relaxed text-success-800 dark:text-success-400'>
             {t('connectModels.ollama.healthyHint')}
           </p>
         )}
@@ -343,6 +346,7 @@ export const ConnectModels: React.FC<ConnectModelsProps> = ({
         <button
           type='button'
           className='flex w-full items-center gap-3 text-start'
+          aria-expanded={openSection === 'local'}
           onClick={() =>
             setOpenSection(openSection === 'local' ? null : 'local')
           }
@@ -360,9 +364,10 @@ export const ConnectModels: React.FC<ConnectModelsProps> = ({
           </div>
           <ChevronRight
             className={cn(
-              'h-4 w-4 text-gray-400 transition-transform',
-              openSection === 'local' && 'rotate-90'
+              'h-4 w-4 text-gray-400 transition-transform rtl:rotate-180',
+              openSection === 'local' && 'rotate-90 rtl:rotate-90'
             )}
+            aria-hidden='true'
           />
         </button>
 
@@ -384,6 +389,7 @@ export const ConnectModels: React.FC<ConnectModelsProps> = ({
                         setLocalUrl(candidate.baseUrl);
                         setProbedModels(null);
                       }}
+                      aria-pressed={preset.id === candidate.id}
                       className={cn(
                         'rounded-full border px-3 py-1 text-xs transition-colors',
                         preset.id === candidate.id
@@ -397,6 +403,9 @@ export const ConnectModels: React.FC<ConnectModelsProps> = ({
                 </div>
                 <input
                   className={inputClass}
+                  type='url'
+                  aria-label={t('connectModels.local.urlLabel')}
+                  autoCapitalize='none'
                   value={localUrl}
                   onChange={event => {
                     setLocalUrl(event.target.value);
@@ -410,6 +419,7 @@ export const ConnectModels: React.FC<ConnectModelsProps> = ({
                   value={localKey}
                   onChange={event => setLocalKey(event.target.value)}
                   placeholder={t('connectModels.local.keyPlaceholder')}
+                  aria-label={t('connectModels.local.keyPlaceholder')}
                   type='password'
                   autoComplete='off'
                 />
@@ -458,7 +468,10 @@ export const ConnectModels: React.FC<ConnectModelsProps> = ({
                   </div>
                 )}
                 {probedModels && probedModels.length === 0 && (
-                  <p className='text-xs text-red-500'>
+                  <p
+                    role='alert'
+                    className='text-xs text-error-700 dark:text-error-400'
+                  >
                     {t('connectModels.local.noModels')}
                   </p>
                 )}
@@ -473,6 +486,7 @@ export const ConnectModels: React.FC<ConnectModelsProps> = ({
         <button
           type='button'
           className='flex w-full items-center gap-3 text-start'
+          aria-expanded={openSection === 'cloud'}
           onClick={() =>
             setOpenSection(openSection === 'cloud' ? null : 'cloud')
           }
@@ -490,9 +504,10 @@ export const ConnectModels: React.FC<ConnectModelsProps> = ({
           </div>
           <ChevronRight
             className={cn(
-              'h-4 w-4 text-gray-400 transition-transform',
-              openSection === 'cloud' && 'rotate-90'
+              'h-4 w-4 text-gray-400 transition-transform rtl:rotate-180',
+              openSection === 'cloud' && 'rotate-90 rtl:rotate-90'
             )}
+            aria-hidden='true'
           />
         </button>
 
@@ -510,6 +525,7 @@ export const ConnectModels: React.FC<ConnectModelsProps> = ({
                       key={candidate.id}
                       type='button'
                       onClick={() => setCloudProvider(candidate)}
+                      aria-pressed={cloudProvider?.id === candidate.id}
                       className={cn(
                         'rounded-full border px-3 py-1 text-xs transition-colors',
                         cloudProvider?.id === candidate.id
@@ -530,6 +546,9 @@ export const ConnectModels: React.FC<ConnectModelsProps> = ({
                         value={cloudKey}
                         onChange={event => setCloudKey(event.target.value)}
                         placeholder={t('connectModels.cloud.keyPlaceholder', {
+                          name: cloudProvider.name,
+                        })}
+                        aria-label={t('connectModels.cloud.keyLabel', {
                           name: cloudProvider.name,
                         })}
                         type='password'

@@ -80,7 +80,7 @@ export const ChatControlsPanel: React.FC<ChatControlsPanelProps> = ({
   open,
   onClose,
 }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const draftSettings = useChatStore(state => state.draftSessionSettings);
   const setDraftSessionSettings = useChatStore(
     state => state.setDraftSessionSettings
@@ -314,25 +314,31 @@ export const ChatControlsPanel: React.FC<ChatControlsPanelProps> = ({
           {t('chat.controls.title')}
         </h2>
         <button
+          type='button'
           onClick={onClose}
           className='rounded-full p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-900 dark:text-dark-600 dark:hover:bg-dark-200 dark:hover:text-dark-900'
           title={t('common.close')}
+          aria-label={t('common.close')}
         >
-          <X className='h-4 w-4' />
+          <X className='h-4 w-4' aria-hidden='true' />
         </button>
       </div>
 
       <div className='scroll-region min-h-0 flex-1 space-y-5 overflow-y-auto px-4 py-2 scrollbar-thin'>
         <div>
-          <label className='mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.08em] text-gray-500 dark:text-dark-500'>
+          <label
+            htmlFor='chat-control-system-prompt'
+            className='mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.08em] text-gray-500 dark:text-dark-500'
+          >
             {t('chat.controls.systemPrompt')}
           </label>
           <textarea
+            id='chat-control-system-prompt'
             dir='auto'
             value={systemPrompt}
             onChange={event => setSystemPrompt(event.target.value)}
             placeholder={t('chat.controls.systemPromptPlaceholder')}
-            className='min-h-[110px] w-full resize-y rounded-xl border border-black/[0.08] bg-white p-2.5 text-[13px] leading-relaxed text-gray-900 placeholder:text-gray-400 focus:border-primary-500/40 focus:outline-none dark:border-white/[0.08] dark:bg-dark-50 dark:text-dark-900 dark:placeholder:text-dark-500'
+            className='min-h-[110px] w-full resize-y rounded-xl border border-black/[0.08] bg-white p-2.5 text-[13px] leading-relaxed text-gray-900 placeholder:text-gray-400 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 dark:border-white/[0.08] dark:bg-dark-50 dark:text-dark-900 dark:placeholder:text-dark-500'
           />
         </div>
 
@@ -350,7 +356,7 @@ export const ChatControlsPanel: React.FC<ChatControlsPanelProps> = ({
             // so the inherited value is named inside the Default option.
             value={thinkingChoiceOf(overrides.think)}
             onChange={event => setThinkingOverride(event.target.value)}
-            className='w-full rounded-xl border border-black/[0.08] bg-white px-2.5 py-2 text-[13px] text-gray-900 focus:border-primary-500/40 focus:outline-none dark:border-white/[0.08] dark:bg-dark-50 dark:text-dark-900'
+            className='w-full rounded-xl border border-black/[0.08] bg-white px-2.5 py-2 text-[13px] text-gray-900 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 dark:border-white/[0.08] dark:bg-dark-50 dark:text-dark-900'
           >
             {THINKING_CHOICES.map(choice => (
               <option key={choice} value={choice}>
@@ -366,7 +372,7 @@ export const ChatControlsPanel: React.FC<ChatControlsPanelProps> = ({
               </option>
             ))}
           </select>
-          <p className='mt-1.5 text-[11px] leading-snug text-gray-400 dark:text-dark-500'>
+          <p className='mt-1.5 text-[11px] leading-snug text-ink-muted'>
             {t('chat.controls.thinkingDescription')}
           </p>
         </div>
@@ -385,14 +391,14 @@ export const ChatControlsPanel: React.FC<ChatControlsPanelProps> = ({
               onChange={event =>
                 setCompactionAllowed(event.target.value !== 'off')
               }
-              className='w-full rounded-xl border border-black/[0.08] bg-white px-2.5 py-2 text-[13px] text-gray-900 focus:border-primary-500/40 focus:outline-none dark:border-white/[0.08] dark:bg-dark-50 dark:text-dark-900'
+              className='w-full rounded-xl border border-black/[0.08] bg-white px-2.5 py-2 text-[13px] text-gray-900 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 dark:border-white/[0.08] dark:bg-dark-50 dark:text-dark-900'
             >
               <option value='default'>
                 {t('chat.controls.compactionDefault')}
               </option>
               <option value='off'>{t('chat.controls.compactionOff')}</option>
             </select>
-            <p className='mt-1.5 text-[11px] leading-snug text-gray-400 dark:text-dark-500'>
+            <p className='mt-1.5 text-[11px] leading-snug text-ink-muted'>
               {t('chat.controls.compactionDescription')}
             </p>
           </div>
@@ -402,15 +408,19 @@ export const ChatControlsPanel: React.FC<ChatControlsPanelProps> = ({
           <p className='mb-1.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-gray-500 dark:text-dark-500'>
             {t('chat.controls.advancedParams')}
           </p>
-          <p className='mb-2.5 text-[11px] leading-snug text-gray-400 dark:text-dark-500'>
+          <p className='mb-2.5 text-[11px] leading-snug text-ink-muted'>
             {t('chat.controls.advancedParamsDescription')}
           </p>
           {modelDefaults.contextCapped &&
             modelDefaults.trainedContextLength && (
               <p className='mb-2.5 text-[11px] leading-snug text-gray-500 dark:text-dark-600'>
                 {t('chat.controls.contextCapped', {
-                  context: effectiveDefaults.num_ctx?.toLocaleString(),
-                  trained: modelDefaults.trainedContextLength.toLocaleString(),
+                  context: effectiveDefaults.num_ctx?.toLocaleString(
+                    i18n.language
+                  ),
+                  trained: modelDefaults.trainedContextLength.toLocaleString(
+                    i18n.language
+                  ),
                 })}
               </p>
             )}
@@ -434,7 +444,7 @@ export const ChatControlsPanel: React.FC<ChatControlsPanelProps> = ({
                     {fromModel && (
                       <span
                         title={t('chat.controls.fromModelHint')}
-                        className='ms-1.5 text-[10px] uppercase tracking-wide text-gray-400 dark:text-dark-500'
+                        className='ms-1.5 text-[10px] uppercase tracking-wide text-ink-muted'
                       >
                         {t('chat.controls.fromModel')}
                       </span>
@@ -456,7 +466,7 @@ export const ChatControlsPanel: React.FC<ChatControlsPanelProps> = ({
                     onChange={event =>
                       setNumericOverride(option.key, event.target.value)
                     }
-                    className='w-24 rounded-lg border border-black/[0.08] bg-white px-2 py-1 text-end text-[12px] tabular-nums text-gray-900 placeholder:text-gray-400 focus:border-primary-500/40 focus:outline-none dark:border-white/[0.08] dark:bg-dark-50 dark:text-dark-900 dark:placeholder:text-dark-500'
+                    className='w-24 rounded-lg border border-black/[0.08] bg-white px-2 py-1 text-end text-[12px] tabular-nums text-gray-900 placeholder:text-gray-400 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 dark:border-white/[0.08] dark:bg-dark-50 dark:text-dark-900 dark:placeholder:text-dark-500'
                   />
                 </div>
               );

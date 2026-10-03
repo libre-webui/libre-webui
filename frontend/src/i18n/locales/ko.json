@@ -41,7 +41,8 @@
     "remove": "제거",
     "home": "홈",
     "more": "많음",
-    "reasoning": "추론"
+    "reasoning": "추론",
+    "skipToContent": "본문으로 건너뛰기"
   },
   "brand": {
     "name": "Libre WebUI",
@@ -49,7 +50,10 @@
   },
   "appInitialization": {
     "ollamaUnavailable": "Ollama 서비스를 사용할 수 없습니다. 플러그인 모델은 계속 사용할 수도 있습니다.",
-    "backendConnectionFailed": "백엔드 서비스에 연결하지 못했습니다"
+    "backendConnectionFailed": "백엔드 서비스에 연결하지 못했습니다",
+    "connecting": "백엔드에 연결하는 중… ({{attempt}}/{{total}})",
+    "startingUp": "시작하는 중…",
+    "backendUnreachableHint": "백엔드가 실행 중인지 확인한 후 다시 시도하세요."
   },
   "auth": {
     "login": {
@@ -189,7 +193,15 @@
       "removed": "패스키가 삭제되었습니다.",
       "removeFailed": "패스키를 삭제할 수 없습니다.",
       "signInButton": "패스키로 로그인",
-      "signInFailed": "패스키 로그인에 실패했습니다."
+      "signInFailed": "패스키 로그인에 실패했습니다.",
+      "removeConfirmTitle": "이 패스키를 제거할까요?",
+      "removeConfirmDescription": "\"{{name}}\"(으)로 더 이상 로그인할 수 없습니다. 나중에 다시 등록할 수 있습니다."
+    },
+    "password": {
+      "show": "비밀번호 표시",
+      "hide": "비밀번호 숨기기",
+      "showConfirmation": "비밀번호 확인 표시",
+      "hideConfirmation": "비밀번호 확인 숨기기"
     }
   },
   "setup": {
@@ -242,7 +254,8 @@
       "envNote": "이 키는 backend/.env 파일에 ENCRYPTION_KEY로도 저장됩니다",
       "acknowledgment": "암호화 키를 안전한 장소에 저장했으며, 분실 시 데이터 손실이 발생할 수 있음을 이해합니다.",
       "confirmRequired": "암호화 키를 저장했음을 확인하세요",
-      "continue": "Libre WebUI로 계속"
+      "continue": "Libre WebUI로 계속",
+      "loadFailed": "암호화 키를 불러오지 못했습니다. 다시 시도하여 계속하세요."
     },
     "connectModels": {
       "title": "모델 연결하기",
@@ -336,7 +349,8 @@
       "toolsOn": "도구 켜짐 — 모델이 승인된 도구를 호출할 수 있습니다",
       "toolsOff": "이 메시지에서 모델이 도구를 호출하도록 허용",
       "thinkingOn": "사고 켜짐 ({{level}})",
-      "thinkingOff": "답하기 전에 생각하기"
+      "thinkingOff": "답하기 전에 생각하기",
+      "thinkingUpdateFailed": "생각 설정을 업데이트하지 못했습니다"
     },
     "session": {
       "new": "새 채팅",
@@ -372,7 +386,8 @@
         "move": "폴더로 이동",
         "remove": "폴더에서 제거",
         "delete": "폴더 삭제",
-        "deleteConfirm": "이 폴더를 삭제할까요? 안의 채팅은 유지됩니다."
+        "deleteConfirm": "이 폴더를 삭제할까요? 안의 채팅은 유지됩니다.",
+        "rename": "폴더 이름 변경"
       },
       "shareChat": "채팅 공유…"
     },
@@ -405,7 +420,13 @@
       "browse": "찾아보기",
       "unsupportedFileType": "지원되지 않는 파일 형식: {{name}}",
       "maxImagesAllowed": "이미지는 최대 {{count}}개까지 허용됩니다",
-      "imageTooLarge": "이미지 {{name}}의 크기가 너무 큽니다(최대 10MB)"
+      "imageTooLarge": "이미지 {{name}}의 크기가 너무 큽니다(최대 10MB)",
+      "readFailed": "{{name}}을(를) 읽지 못했습니다",
+      "uploadAlt": "업로드 {{number}}",
+      "removeImage": "이미지 {{number}} 제거",
+      "addMore": "이미지 더 추가 ({{count}}/{{max}})",
+      "uploading": "업로드 중",
+      "removeDocument": "{{name}} 제거"
     },
     "structuredOutput": {
       "title": "응답 형식",
@@ -456,7 +477,8 @@
       "compactionOff": "이 채팅에서는 끔"
     },
     "message": {
-      "sources": "출처"
+      "sources": "출처",
+      "copyFailed": "클립보드에 복사하지 못했습니다"
     },
     "toasts": {
       "chatCreated": "새 채팅이 생성되었습니다",
@@ -491,7 +513,8 @@
       "branchSwitched": "변형 {{number}}(으)로 전환했습니다",
       "branchSelectFailed": "분기를 선택하지 못했습니다",
       "editFailed": "메시지를 수정하지 못했습니다",
-      "toolDecisionFailed": "도구 결정을 기록하지 못했습니다"
+      "toolDecisionFailed": "도구 결정을 기록하지 못했습니다",
+      "archiveFailed": "이 채팅을 보관하지 못했습니다"
     },
     "documents": {
       "title": "컨텍스트의 문서"
@@ -521,7 +544,25 @@
       "origin": "{{title}}에서 분기됨",
       "originUnknown": "다른 채팅"
     },
-    "sharedReadOnly": "{{owner}} 님이 공유 — 보기 전용"
+    "sharedReadOnly": "{{owner}} 님이 공유 — 보기 전용",
+    "branch": {
+      "variants": "변형 {{count}}개",
+      "variants_plural": "변형 {{count}}개",
+      "selectVariant": "변형 {{number}} 선택",
+      "generating": "생성 중...",
+      "select": "선택"
+    },
+    "sources": {
+      "fullContextFailed": "전체 문서 설정을 업데이트하지 못했습니다",
+      "usedByRetrieval": "답변에 사용됨",
+      "triggerLabel": "출처 ({{count}})"
+    },
+    "announce": {
+      "replyFinished": "{{name}}의 답변: {{text}}",
+      "replyFinishedNoText": "{{name}}이(가) 답변을 마쳤습니다.",
+      "codeBlock": "코드 블록",
+      "generationStopped": "생성이 중지되었습니다"
+    }
   },
   "sidebar": {
     "navigation": {
@@ -546,7 +587,8 @@
       "strands": "Strands"
     },
     "toggleSize": "사이드바 크기 전환",
-    "expandSidebar": "사이드바 확장"
+    "expandSidebar": "사이드바 확장",
+    "ariaLabel": "사이드바"
   },
   "user": {
     "menu": {
@@ -821,7 +863,8 @@
         "removeFailed": "API 키 제거 실패",
         "enterKey": "API 키를 입력하세요"
       },
-      "variables": "Variables"
+      "variables": "Variables",
+      "dismissError": "오류 닫기"
     },
     "generation": {
       "title": "생성 옵션",
@@ -924,7 +967,8 @@
         "deleteFailed": "컬렉션을 삭제하지 못했습니다",
         "assignFailed": "문서를 이동하지 못했습니다",
         "share": "컬렉션 공유",
-        "shared": "공유됨"
+        "shared": "공유됨",
+        "assignTo": "{{name}}의 컬렉션"
       },
       "library": {
         "title": "업로드된 문서",
@@ -1066,7 +1110,8 @@
         "title": "보관된 채팅",
         "empty": "보관된 채팅이 없습니다",
         "unarchive": "보관 해제"
-      }
+      },
+      "clearAllConfirm": "모든 채팅 기록을 삭제할까요? 이 작업은 되돌릴 수 없습니다."
     },
     "about": {
       "title": "정보",
@@ -1186,7 +1231,11 @@
       "unknownDevice": "알 수 없는 기기",
       "createdAt": "로그인 시각",
       "lastSeenAt": "마지막 활동",
-      "expiresAt": "만료"
+      "expiresAt": "만료",
+      "signOutConfirmTitle": "이 세션을 로그아웃할까요?",
+      "signOutConfirmDescription": "{{device}}이(가) 즉시 로그아웃되며 다시 로그인해야 합니다.",
+      "signOutOthersConfirmTitle": "다른 세션을 로그아웃할까요?",
+      "signOutOthersConfirmDescription": "다른 세션 {{count}}개가 즉시 로그아웃됩니다. 이 세션은 로그인 상태로 유지됩니다."
     },
     "apiKeys": {
       "title": "API 키",
@@ -1220,7 +1269,9 @@
       "createdAt": "생성됨",
       "lastUsedAt": "마지막 사용",
       "expiresAt": "만료",
-      "neverExpires": "만료 없음"
+      "neverExpires": "만료 없음",
+      "revokeConfirmTitle": "\"{{name}}\"을(를) 폐기할까요?",
+      "revokeConfirmDescription": "이 API 키를 사용하는 모든 것이 즉시 작동을 멈춥니다. 이 작업은 되돌릴 수 없습니다."
     },
     "notifications": {
       "title": "알림",
@@ -1294,7 +1345,8 @@
     "model": "모델",
     "size": "크기",
     "quality": "품질",
-    "created": "생성됨"
+    "created": "생성됨",
+    "lightboxLabel": "이미지 미리보기"
   },
   "errors": {
     "generic": "오류가 발생했습니다",
@@ -1389,7 +1441,9 @@
       "hide": "사용자에게 숨기기",
       "show": "사용자에게 표시",
       "star": "{{name}}에 별표 표시",
-      "unstar": "{{name}}에서 별표 제거"
+      "unstar": "{{name}}에서 별표 제거",
+      "filterLabel": "모델 필터",
+      "displayName": "{{name}}의 표시 이름"
     },
     "pull": {
       "placeholder": "모델 이름 입력 (예: llama3.2:3b, deepseek-r1:14b)",
@@ -1550,7 +1604,10 @@
     "deleteConfirm": "\"{{name}}\"을(를) 삭제하시겠습니까?",
     "deleteSuccess": "페르소나 \"{{name}}\"이(가) 성공적으로 삭제되었습니다",
     "downloadSuccess": "페르소나 \"{{name}}\"이(가) 성공적으로 다운로드되었습니다",
-    "failed": "페르소나 {{action}} 실패"
+    "failed": "페르소나 {{action}} 실패",
+    "loadFailed": "페르소나를 불러오지 못했습니다.",
+    "deleteFailed": "페르소나를 삭제하지 못했습니다",
+    "downloadFailed": "페르소나를 다운로드하지 못했습니다"
   },
   "personaForm": {
     "title": {
@@ -1682,7 +1739,8 @@
       "promptHint": "이 페르소나로 시작하는 모든 새 대화에 넣을 프롬프트입니다.",
       "noPrompt": "프롬프트 없음",
       "version": "바인딩 리비전 {{version}}"
-    }
+    },
+    "sections": "페르소나 섹션"
   },
   "personaCard": {
     "enhanced": "향상됨",
@@ -1699,7 +1757,16 @@
     "backupSuccess": "페르소나 백업이 성공적으로 다운로드되었습니다",
     "dnaSuccess": "페르소나 DNA가 성공적으로 내보내졌습니다",
     "failed": "{{action}} 실패",
-    "shareTooltip": "이 페르소나 공유"
+    "shareTooltip": "이 페르소나 공유",
+    "wipeFailed": "메모리를 지우지 못했습니다",
+    "backupFailed": "페르소나를 백업하지 못했습니다",
+    "exportDnaFailed": "페르소나 DNA를 내보내지 못했습니다",
+    "favorite": "즐겨찾기",
+    "memoryStatus": {
+      "active": "활성",
+      "wiped": "삭제됨",
+      "backed_up": "백업됨"
+    }
   },
   "userManager": {
     "title": "사용자 관리",
@@ -1865,7 +1932,28 @@
       "memberOf": "그룹",
       "featuresLabel": "기능 액세스",
       "grantsLabel": "권한 부여",
-      "grantVia": "경유"
+      "grantVia": "경유",
+      "deleteConfirmTitle": "그룹 \"{{name}}\"을(를) 삭제할까요?",
+      "deleteConfirmDescription": "멤버는 이 그룹을 통해서만 가졌던 접근 권한을 잃습니다. 계정 자체는 삭제되지 않습니다.",
+      "statuses": {
+        "active": "활성",
+        "pending": "승인 대기 중"
+      },
+      "features": {
+        "work": "작업",
+        "model-download": "모델 다운로드",
+        "web-search": "웹 검색",
+        "strands": "Strands 엔진",
+        "tools": "도구",
+        "stt": "음성 인식",
+        "tts": "음성 합성",
+        "voice-mode": "음성 모드",
+        "voice-cloning": "음성 복제"
+      },
+      "grantViaKinds": {
+        "user": "직접 부여",
+        "group": "그룹"
+      }
     },
     "audit": {
       "title": "보안 감사 로그",
@@ -2298,7 +2386,11 @@
       "harmful": "유해함",
       "formatting": "서식"
     },
-    "feedbackComment": "댓글 추가…"
+    "feedbackComment": "댓글 추가…",
+    "user": "사용자",
+    "feedbackFailed": "피드백을 저장하지 못했습니다",
+    "openImage": "이미지 {{number}} 열기",
+    "uploadedImageAlt": "업로드한 이미지 {{number}}"
   },
   "imageGallery": {
     "title": "이미지 갤러리",
@@ -2387,7 +2479,10 @@
       "image": "이미지",
       "video": "동영상",
       "audio": "오디오"
-    }
+    },
+    "deleteConfirmTitle": "이 항목을 삭제할까요?",
+    "deleteConfirmDescription": "생성된 미디어가 영구적으로 삭제됩니다.",
+    "previewFailed": "미리보기를 사용할 수 없습니다"
   },
   "errorBoundary": {
     "title": "문제가 발생했습니다",
@@ -2463,7 +2558,8 @@
     "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source.",
     "versionOf": "버전 {{current}} / {{total}}",
     "previousVersion": "이전 버전",
-    "nextVersion": "다음 버전"
+    "nextVersion": "다음 버전",
+    "resizePanel": "패널 크기 조정"
   },
   "personaImportExport": {
     "title": "페르소나 가져오기 및 내보내기",
@@ -2501,7 +2597,10 @@
     "generation": "생성:",
     "modelLoad": "모델 로드:",
     "totalTime": "총 시간:",
-    "generatedAt": "생성 시각:"
+    "generatedAt": "생성 시각:",
+    "notAvailable": "해당 없음",
+    "tokenCount": "토큰 {{tokens}}개",
+    "tokensPerSecond": "{{value}} t/s"
   },
   "userMenu": {
     "loggedOut": "로그아웃되었습니다",
@@ -2560,7 +2659,9 @@
       "httpWarning": "HTTP는 자격 증명이나 트래픽을 암호화하지 않습니다. 신뢰할 수 있는 네트워크에서만 사용하세요.",
       "invalidBaseUrl": "기본 URL에는 쿼리 문자열이나 프래그먼트가 포함될 수 없습니다.",
       "invalidApiPath": "/로 시작해야 하며 URL, 쿼리, 프래그먼트 또는 .. 세그먼트를 포함할 수 없습니다.",
-      "tooLong": "값이 너무 깁니다"
+      "tooLong": "값이 너무 깁니다",
+      "resetConfirmTitle": "기본값으로 재설정할까요?",
+      "resetConfirmDescription": "API 키와 기타 자격 증명을 포함해 {{name}}에 저장된 모든 값이 지워집니다. 이 작업은 되돌릴 수 없습니다."
     }
   },
   "huggingface": {
@@ -2580,7 +2681,10 @@
   },
   "demoMode": {
     "title": "데모 모드",
-    "github": "GitHub"
+    "github": "GitHub",
+    "defaultMessage": "소개용 데모 버전입니다. Ollama 백엔드는 연결되어 있지 않습니다.",
+    "viewOnGithub": "GitHub에서 보기",
+    "dismiss": "닫기"
   },
   "work": {
     "title": "작업",
@@ -2671,8 +2775,18 @@
         "checksPending": "검증 대기",
         "stallNudges": "정체 알림",
         "ambiguityNudges": "재정렬 알림",
-        "stoppedBy": "중지 사유"
-      }
+        "stoppedBy": "중지 사유",
+        "reasons": {
+          "round": "라운드 한도",
+          "toolCall": "도구 호출 한도",
+          "approvalTimeout": "승인 시간 초과",
+          "computerStall": "컴퓨터 멈춤"
+        }
+      },
+      "skillTraceSavedWorked": "기록됨: 성공",
+      "skillTraceSavedFailed": "기록됨: 실패",
+      "connectionClosed": "작업 실시간 연결이 닫혔습니다.",
+      "reconnectingBackground": "실시간 업데이트를 백그라운드에서 다시 연결하는 중입니다."
     },
     "runtime": {
       "unavailable": "런타임을 사용할 수 없습니다",
@@ -2715,7 +2829,11 @@
       "changes": "변경 사항",
       "changesSince": "마지막 턴 이후 변경된 내용",
       "diffLabel": "마지막 턴 이후 변경 사항: {{path}}",
-      "diffFolded": "변경되지 않은 줄 {{count}}개"
+      "diffFolded": "변경되지 않은 줄 {{count}}개",
+      "diffAdded": "추가됨",
+      "diffRemoved": "제거됨",
+      "unsavedChanges": "저장되지 않은 변경 사항",
+      "editingLocked": "턴이 끝나면 편집할 수 있습니다."
     },
     "activity": {
       "empty": "명령, 파일 작업 및 도구 결과가 여기에 표시됩니다.",
@@ -2726,7 +2844,9 @@
         "toolCall": "도구 호출",
         "toolResult": "도구 결과",
         "error": "오류"
-      }
+      },
+      "arguments": "도구 인수",
+      "output": "도구 출력"
     },
     "preview": {
       "command": "선택적 시작 명령",
@@ -2755,7 +2875,8 @@
       "saveFailed": "이 파일을 저장할 수 없습니다.",
       "saved": "파일을 저장했습니다.",
       "previewFailed": "미리보기를 시작할 수 없습니다.",
-      "previewStopFailed": "미리보기를 중지할 수 없습니다."
+      "previewStopFailed": "미리보기를 중지할 수 없습니다.",
+      "sendFailed": "메시지를 보내지 못했습니다."
     },
     "terminal": {
       "connecting": "샌드박스에서 셸을 여는 중…",
@@ -2807,7 +2928,18 @@
       "noFilterMatches": "이 필터와 일치하는 변경된 파일이 없습니다.",
       "allChanges": "모든 변경 사항",
       "diffTruncated": "이 diff는 잘렸습니다.",
-      "binaryFile": "바이너리 파일이므로 텍스트 diff가 없습니다."
+      "binaryFile": "바이너리 파일이므로 텍스트 diff가 없습니다.",
+      "statusLabels": {
+        "modified": "수정됨",
+        "added": "추가됨",
+        "deleted": "삭제됨",
+        "renamed": "이름 변경됨",
+        "copied": "복사됨",
+        "typeChanged": "유형 변경됨",
+        "untracked": "추적되지 않음"
+      },
+      "stagedState": "스테이징됨",
+      "aheadBehind": "{{ahead}} 앞섬, {{behind}} 뒤처짐"
     },
     "hostWorkspace": {
       "hint": "격리된 작업 공간을 쓰려면 비워 두고, 아니면 이 컴퓨터의 폴더를 지정하세요.",
@@ -2834,7 +2966,8 @@
       "unmute": "소리 켜기",
       "mute": "음소거",
       "finished": "이 태스크는 완료되었습니다. 다시 열어 화면을 불러오세요.",
-      "reopenOpen": "태스크를 다시 열고 화면 열기"
+      "reopenOpen": "태스크를 다시 열고 화면 열기",
+      "teachSaveFailed": "이 시연을 저장하지 못했습니다."
     },
     "computerSetup": {
       "title": "Work Computer",
@@ -2871,7 +3004,11 @@
       "approvalsToggleFailed": "승인 설정을 업데이트할 수 없습니다.",
       "approvalRuleLine": "항상 허용됨",
       "approvalRuleDelete": "규칙 삭제",
-      "approvalRuleDeleteFailed": "규칙을 삭제할 수 없습니다."
+      "approvalRuleDeleteFailed": "규칙을 삭제할 수 없습니다.",
+      "routinesLoadFailed": "루틴을 불러오지 못했습니다.",
+      "skillsLoadFailed": "가르친 스킬을 불러오지 못했습니다.",
+      "approvalsLoadFailed": "승인 설정을 불러오지 못했습니다.",
+      "routinePaused": "일시중지됨"
     },
     "approval": {
       "title": "승인이 필요합니다",
@@ -2879,7 +3016,16 @@
       "allowOnce": "한 번만 허용",
       "allowAlways": "항상 허용",
       "deny": "거부",
-      "failed": "결정을 보낼 수 없습니다."
+      "failed": "결정을 보낼 수 없습니다.",
+      "details": "동작 세부 정보",
+      "fields": {
+        "command": "명령",
+        "path": "경로",
+        "from": "출발",
+        "to": "도착",
+        "actions": "동작",
+        "recursive": "재귀"
+      }
     },
     "idleStopHint": "{{minutes}}분 동안 활동이 없으면 중지됩니다.",
     "runs": {
@@ -2891,7 +3037,8 @@
         "needsInput": "입력 필요",
         "failed": "실패",
         "cancelled": "취소됨"
-      }
+      },
+      "loadFailed": "실행 내역을 불러오지 못했습니다."
     },
     "recovery": {
       "pending": "Work가 새 작업을 허용하기 전에 샌드박스 정리 {{pending}}건을 확인하고 있습니다.",
@@ -2903,6 +3050,17 @@
       "retrySucceeded": "대기 중인 정리 작업 {{attempted}}개 중 {{cleared}}개를 완료했습니다.",
       "retryPending": "대기 중인 정리 작업 {{attempted}}개를 계속 다시 시도하는 중입니다.",
       "retryFailed": "대기 중인 정리 작업을 다시 시도할 수 없습니다."
+    },
+    "computer": {
+      "setupFailed": "Work Computer를 설정하지 못했습니다."
+    },
+    "announce": {
+      "completed": "{{title}}: 완료되었습니다.",
+      "needsInput": "{{title}}에 입력 또는 승인이 필요합니다.",
+      "failed": "{{title}}: 실패했습니다.",
+      "cancelled": "{{title}}: 중지되었습니다.",
+      "approvalNeeded": "{{tool}}을(를) 실행하려면 {{title}}의 승인이 필요합니다.",
+      "untitledTask": "이 작업"
     }
   },
   "personaBackground": {
@@ -2947,7 +3105,8 @@
     "showAll": "모두 보기 ({{total}})",
     "sources": "모델 출처",
     "defaultModel": "기본 모델",
-    "contextSize": "컨텍스트 {{size}}"
+    "contextSize": "컨텍스트 {{size}}",
+    "via": "{{provider}} 경유"
   },
   "whatsNew": {
     "title": "새로운 기능",
@@ -3004,7 +3163,16 @@
     "unpin": "노트 고정 해제",
     "pinned": "고정됨",
     "export": "Markdown으로 다운로드",
-    "sharedWithYou": "나와 공유됨"
+    "sharedWithYou": "나와 공유됨",
+    "titleLabel": "노트 제목",
+    "loadFailed": "불러오지 못했습니다. 다시 시도하세요.",
+    "restoreConfirmTitle": "이 버전을 복원할까요?",
+    "restoreConfirmDescription": "노트 본문이 이 이전 버전으로 바뀝니다.",
+    "deleteAttachmentConfirmTitle": "{{name}}을(를) 삭제할까요?",
+    "deleteAttachmentConfirmDescription": "첨부 파일이 이 노트에서 영구적으로 삭제됩니다.",
+    "attachmentDeleteFailed": "첨부 파일을 삭제하지 못했습니다",
+    "revokeFailed": "접근을 취소하지 못했습니다",
+    "sharePermissionLabel": "권한"
   },
   "calendar": {
     "title": "캘린더",
@@ -3049,7 +3217,22 @@
     "importFailed": "파일을 가져오지 못했습니다",
     "importResult": "{{total}}개의 일정을 가져왔습니다",
     "importIcs": "가져오기",
-    "exportIcs": "내보내기"
+    "exportIcs": "내보내기",
+    "chipStatus": {
+      "automation": "예약된 자동화",
+      "runSucceeded": "자동화 실행 성공",
+      "runFailed": "자동화 실행 실패"
+    },
+    "newEventOn": "{{date}}에 새 일정",
+    "showDay": "{{date}}의 모든 일정 보기",
+    "deleteEventConfirmTitle": "\"{{title}}\"을(를) 삭제할까요?",
+    "deleteEventConfirmDescription": "이 일정이 영구적으로 삭제됩니다.",
+    "deleteRecurringEventConfirmDescription": "이 반복 일정과 모든 회차가 영구적으로 삭제됩니다.",
+    "shareCalendarNamed": "캘린더 {{name}} 공유",
+    "deleteCalendarNamed": "캘린더 {{name}} 삭제",
+    "deleteCalendarConfirmTitle": "캘린더 \"{{name}}\"을(를) 삭제할까요?",
+    "deleteCalendarConfirmDescription": "캘린더와 그 안의 일정이 영구적으로 삭제됩니다.",
+    "calendarDeleteFailed": "캘린더를 삭제하지 못했습니다"
   },
   "automations": {
     "title": "자동화",
@@ -3176,13 +3359,17 @@
         "work-approval": "에이전트의 승인 대기",
         "system": "시스템 알림 도착"
       }
-    }
+    },
+    "deleteConfirmTitle": "\"{{name}}\"을(를) 삭제할까요?",
+    "deleteConfirmDescription": "자동화와 그 일정이 영구적으로 삭제됩니다. 이전 실행 기록은 실행 내역에 남습니다."
   },
   "home": {
     "active": "활성",
     "continue": "계속",
     "start": "시작",
-    "explore": "둘러보기"
+    "explore": "둘러보기",
+    "greeting": "{{greeting}}.",
+    "greetingWithName": "{{greeting}}, {{name}}님."
   },
   "palette": {
     "empty": "일치 항목 없음.",
@@ -3195,7 +3382,14 @@
     "work": "작업",
     "messages": "메시지",
     "notes": "노트",
-    "documents": "문서"
+    "documents": "문서",
+    "searching": "검색 중…",
+    "searchFailed": "워크스페이스 검색에 실패했습니다. 일치하는 채팅과 동작만 표시합니다.",
+    "results": "결과",
+    "escKey": "esc",
+    "hintNavigate": "이동",
+    "hintOpen": "열기",
+    "hintClose": "닫기"
   },
   "tabs": {
     "actions": "탭 작업",
@@ -3399,7 +3593,8 @@
       "button": "폴더에서",
       "missingSkillMd": "폴더에 SKILL.md 파일이 필요합니다",
       "done": "번들 파일 {{count}}개와 함께 스킬을 가져왔습니다"
-    }
+    },
+    "toggleLabel": "스킬 {{name}} 사용"
   },
   "toolsPage": {
     "title": "도구",
@@ -3557,7 +3752,14 @@
     "added": "{{name}} 님과 공유했습니다",
     "failed": "공유하지 못했습니다",
     "userNotFound": "해당 이름의 사용자가 없습니다",
-    "groupNotFound": "해당 이름의 그룹이 없습니다"
+    "groupNotFound": "해당 이름의 그룹이 없습니다",
+    "principalKind": "사용자 또는 그룹과 공유",
+    "principalName": "사용자 이름 또는 그룹 이름",
+    "permission": "권한",
+    "sharing": "공유",
+    "loading": "공유 불러오는 중",
+    "loadFailed": "공유를 불러오지 못했습니다",
+    "revokeFailed": "접근을 취소하지 못했습니다"
   },
   "channels": {
     "title": "채널",
@@ -3616,13 +3818,44 @@
     "toolCalls": {
       "summary": "사용한 도구 ({{total}}개)",
       "deniedHint": "채널에서는 상태를 변경하는 도구가 거부됩니다. 대화에서 실행하세요."
-    }
+    },
+    "confirmEdit": "수정 저장",
+    "cancelEdit": "수정 취소",
+    "reactWith": "{{emoji}}(으)로 반응",
+    "deleteMessageConfirmTitle": "이 메시지를 삭제할까요?",
+    "deleteMessageConfirmDescription": "이 채널의 모든 사람에게서 메시지가 삭제됩니다.",
+    "unreadCount": "읽지 않음 {{total}}개",
+    "send": "메시지 보내기",
+    "invite": "멤버 초대",
+    "closeThread": "스레드 닫기",
+    "removeAttachment": "첨부 파일 제거",
+    "loadFailed": "불러오지 못했습니다. 다시 시도하세요.",
+    "editFailed": "메시지를 수정하지 못했습니다",
+    "deleteMessageFailed": "메시지를 삭제하지 못했습니다",
+    "pinFailed": "고정 상태를 변경하지 못했습니다",
+    "reactFailed": "반응을 저장하지 못했습니다",
+    "downloadFailed": "파일을 다운로드하지 못했습니다",
+    "removeMemberConfirm": "이 채널에서 {{name}}을(를) 제거할까요?",
+    "removeMemberConfirmDescription": "채널과 메시지에 접근할 수 없게 됩니다.",
+    "removeMemberNamed": "채널에서 {{name}} 제거",
+    "removeMemberFailed": "멤버를 제거하지 못했습니다",
+    "leaveConfirm": "{{name}}을(를) 나갈까요?",
+    "leaveConfirmDescription": "비공개 채널에 다시 참여하려면 다시 초대받아야 합니다.",
+    "leaveFailed": "채널을 나가지 못했습니다",
+    "joinFailed": "채널에 참여하지 못했습니다",
+    "deleteConfirm": "{{name}}을(를) 삭제할까요?",
+    "deleteConfirmDescription": "채널과 모든 메시지가 모든 멤버에게서 영구적으로 삭제됩니다.",
+    "deleteFailed": "채널을 삭제하지 못했습니다",
+    "saveFailed": "채널을 저장하지 못했습니다"
   },
   "notifications": {
     "title": "알림",
     "empty": "모두 확인했습니다.",
     "markAllRead": "모두 읽음으로 표시",
-    "markRead": "읽음으로 표시"
+    "markRead": "읽음으로 표시",
+    "titleWithUnread": "알림 (읽지 않음 {{unread}}개)",
+    "unread": "읽지 않음",
+    "loadFailed": "알림을 불러오지 못했습니다."
   },
   "voiceMode": {
     "title": "음성 모드",
@@ -3757,7 +3990,12 @@
       "failed": "실패",
       "cancelled": "취소됨"
     },
-    "noFeedback": "아직 피드백이 없습니다. 응답을 평가해 데이터셋을 만들어 보세요."
+    "noFeedback": "아직 피드백이 없습니다. 응답을 평가해 데이터셋을 만들어 보세요.",
+    "deleteSetConfirmTitle": "\"{{name}}\"을(를) 삭제할까요?",
+    "deleteSetConfirmDescription": "평가 세트와 그 프롬프트가 영구적으로 삭제됩니다.",
+    "deleteSetFailed": "평가 세트를 삭제하지 못했습니다",
+    "runError": "오류: {{detail}}",
+    "cancelFailed": "실행을 취소하지 못했습니다"
   },
   "passwordStrength": {
     "levels": {
@@ -3771,6 +4009,14 @@
       "hasCase": "대문자와 소문자",
       "hasNumber": "숫자 1개 이상",
       "tooLong": "72바이트 이하"
+    },
+    "requirements": "12자 이상, 72 UTF-8 바이트 이하로 입력하고 대문자, 소문자, 숫자를 포함하세요.",
+    "errors": {
+      "minLength": "비밀번호는 12자 이상이어야 합니다.",
+      "tooLong": "비밀번호는 72 UTF-8 바이트 이하여야 합니다.",
+      "uppercase": "비밀번호에 대문자가 포함되어야 합니다.",
+      "lowercase": "비밀번호에 소문자가 포함되어야 합니다.",
+      "number": "비밀번호에 숫자가 포함되어야 합니다."
     }
   },
   "connectModels": {
@@ -3804,7 +4050,8 @@
       "enable": "제공자 사용",
       "enabling": "사용 설정 중…",
       "enabled": "{{name}}이(가) 연결되었습니다 — 이제 모델을 사용할 수 있습니다",
-      "enableFailed": "제공자를 사용 설정할 수 없습니다"
+      "enableFailed": "제공자를 사용 설정할 수 없습니다",
+      "urlLabel": "서버 URL"
     },
     "cloud": {
       "title": "클라우드 API",
@@ -3813,7 +4060,8 @@
       "connect": "연결",
       "connecting": "연결 중…",
       "connected": "{{name}}이(가) 연결되었습니다 — 이제 모델을 사용할 수 있습니다",
-      "saveFailed": "API 키를 저장할 수 없습니다"
+      "saveFailed": "API 키를 저장할 수 없습니다",
+      "keyLabel": "{{name}} API 키"
     }
   },
   "strands": {
@@ -3845,5 +4093,15 @@
     "deleteFailed": "세션을 삭제하지 못했습니다.",
     "saveFailed": "세션을 저장할 수 없습니다.",
     "turnFailed": "엔진이 턴을 완료하지 못했습니다"
+  },
+  "notFound": {
+    "title": "페이지를 찾을 수 없습니다",
+    "description": "이 페이지가 없거나 이동되었을 수 있습니다."
+  },
+  "themeToggle": {
+    "switchToLight": "라이트 모드로 전환",
+    "switchToDark": "다크 모드로 전환",
+    "switchToAmoled": "퓨어 블랙 모드로 전환",
+    "switchToCelestial": "셀레스티얼 모드로 전환"
   }
 }

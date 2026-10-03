@@ -163,18 +163,27 @@ test('the command palette keeps focus above Settings and restores its opener', a
   const input = palette.getByTestId('command-palette-input');
   await expect(palette).toHaveAttribute('aria-modal', 'true');
   await expect(input).toBeFocused();
+  await expect(input).toHaveAttribute('role', 'combobox');
 
-  const firstAction = palette.getByRole('button').first();
-  const lastAction = palette.getByRole('button').last();
-  await page.keyboard.press('Tab');
-  await expect(firstAction).toBeFocused();
-  await input.focus();
-  await page.keyboard.press('Shift+Tab');
-  await expect(lastAction).toBeFocused();
+  const firstOption = palette.getByRole('option').first();
+  await expect(firstOption).toHaveAttribute('aria-selected', 'true');
+  await expect(input).toHaveAttribute(
+    'aria-activedescendant',
+    (await firstOption.getAttribute('id')) ?? ''
+  );
+  await page.keyboard.press('ArrowDown');
+  await expect(palette.getByRole('option').nth(1)).toHaveAttribute(
+    'aria-selected',
+    'true'
+  );
+
+  // Results are reached with the arrow keys, so the input is the only tab
+  // stop and the trap must keep Tab and Shift+Tab inside the palette.
   await page.keyboard.press('Tab');
   await expect(input).toBeFocused();
+  await page.keyboard.press('Shift+Tab');
+  await expect(input).toBeFocused();
 
-  await firstAction.focus();
   await page.keyboard.press('Escape');
   await expect(palette).toHaveCount(0);
   await expect(settings).toBeVisible();

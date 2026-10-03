@@ -967,7 +967,7 @@ test('conversation file chips open the written file in the workspace', async ({
   await page.getByTestId('command-palette-input').fill('Other landing page');
   await page
     .getByTestId('command-palette')
-    .getByRole('button', { name: /Other landing page/ })
+    .getByRole('option', { name: /Other landing page/ })
     .click();
   await expect(page).toHaveURL(/\/work\/other-chip-task$/);
   await expect(page.getByText('No file has been opened here.')).toBeVisible();
@@ -1777,9 +1777,14 @@ test('surfaces an initial list failure after a later silent poll fails', async (
   await page.goto('/work/list-error-workspace');
 
   await expect(page.getByText('Task detail loaded')).toBeVisible();
-  await expect(page.getByText('Initial Work task list failed')).toBeVisible({
-    timeout: 3_000,
-  });
+  await expect(page.getByTestId('work-error-banner')).toContainText(
+    'Initial Work task list failed',
+    { timeout: 3_000 }
+  );
+  // No toast covers a list failure, so the banner's text is announced.
+  await expect(page.getByTestId('live-announcer-assertive')).toHaveText(
+    'Initial Work task list failed'
+  );
 });
 
 test('loads bounded Work history pages without polling full task details', async ({
@@ -2232,16 +2237,19 @@ test('shows tool activity, saves files, and isolates preview content', async ({
   await expect(
     previewToolbar.getByRole('textbox', { name: 'Optional start command' })
   ).toBeVisible();
-  const accent600 = await page.evaluate(
-    () =>
-      `rgb(${getComputedStyle(document.documentElement)
-        .getPropertyValue('--color-primary-600')
-        .trim()
-        .split(/\s+/)
-        .join(', ')})`
+  // Primary actions use the neutral inverse treatment, not the accent.
+  const [inkFill, inkText] = await page.evaluate(() =>
+    ['--color-ink', '--color-ink-inverse'].map(
+      name =>
+        `rgb(${getComputedStyle(document.documentElement)
+          .getPropertyValue(name)
+          .trim()
+          .split(/\s+/)
+          .join(', ')})`
+    )
   );
-  await expect(startPreviewButton).toHaveCSS('background-color', accent600);
-  await expect(startPreviewButton).toHaveCSS('color', 'rgb(255, 255, 255)');
+  await expect(startPreviewButton).toHaveCSS('background-color', inkFill);
+  await expect(startPreviewButton).toHaveCSS('color', inkText);
   await startPreviewButton.click();
   const frame = page.getByTestId('work-preview-frame');
   // Same-origin proxying means the origin varies by environment; the
@@ -2647,21 +2655,24 @@ test('formats and highlights workspace code in dark and light mode', async ({
   await expect(editor).toHaveValue(
     'export function Card() {\n  return <article>Calm</article>;\n}\n'
   );
-  const accent600 = await page.evaluate(
-    () =>
-      `rgb(${getComputedStyle(document.documentElement)
-        .getPropertyValue('--color-primary-600')
-        .trim()
-        .split(/\s+/)
-        .join(', ')})`
+  // Primary actions use the neutral inverse treatment, not the accent.
+  const [inkFill, inkText] = await page.evaluate(() =>
+    ['--color-ink', '--color-ink-inverse'].map(
+      name =>
+        `rgb(${getComputedStyle(document.documentElement)
+          .getPropertyValue(name)
+          .trim()
+          .split(/\s+/)
+          .join(', ')})`
+    )
   );
   await expect(page.getByTestId('work-save-file-button')).toHaveCSS(
     'background-color',
-    accent600
+    inkFill
   );
   await expect(page.getByTestId('work-save-file-button')).toHaveCSS(
     'color',
-    'rgb(255, 255, 255)'
+    inkText
   );
   await editor.press('Control+s');
   await expect
@@ -2809,9 +2820,16 @@ test('keeps the current workspace draft editable when saving fails', async ({
   await saveButton.click();
   expect((await failedSaveResponsePromise).status()).toBe(500);
 
+  // The toast interrupts; the banner keeps the failure visible without
+  // reading it a second time.
   await expect(
-    page.getByRole('status').filter({ hasText: 'Current save failed.' })
+    page.getByRole('alert').filter({ hasText: 'Current save failed.' })
   ).toBeVisible();
+  await expect(page.getByTestId('work-error-banner')).toContainText(
+    'Current save failed.'
+  );
+  await page.waitForTimeout(300);
+  await expect(page.getByTestId('live-announcer-assertive')).toHaveText('');
   await expect(editor).toHaveValue('export const value = 2;');
   await expect(editor).toBeEnabled();
   await expect(saveButton).toBeEnabled();

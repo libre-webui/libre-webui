@@ -41,7 +41,8 @@
     "remove": "Odstranit",
     "home": "Domů",
     "more": "Více",
-    "reasoning": "Zdůvodnění"
+    "reasoning": "Zdůvodnění",
+    "skipToContent": "Přeskočit na obsah"
   },
   "brand": {
     "name": "Libre WebUI",
@@ -49,7 +50,10 @@
   },
   "appInitialization": {
     "ollamaUnavailable": "Služba Ollama není dostupná. Modely pluginů lze stále používat.",
-    "backendConnectionFailed": "Nepodařilo se připojit k backendové službě"
+    "backendConnectionFailed": "Nepodařilo se připojit k backendové službě",
+    "connecting": "Připojování k backendu… ({{attempt}}/{{total}})",
+    "startingUp": "Spouštění…",
+    "backendUnreachableHint": "Ujistěte se, že backend běží, a zkuste to znovu."
   },
   "auth": {
     "login": {
@@ -189,7 +193,15 @@
       "removed": "Přístupový klíč odebrán.",
       "removeFailed": "Přístupový klíč se nepodařilo odebrat.",
       "signInButton": "Přihlásit se přístupovým klíčem",
-      "signInFailed": "Přihlášení přístupovým klíčem se nezdařilo."
+      "signInFailed": "Přihlášení přístupovým klíčem se nezdařilo.",
+      "removeConfirmTitle": "Odebrat tento přístupový klíč?",
+      "removeConfirmDescription": "Klíč „{{name}}“ už nebude možné použít k přihlášení. Později ho můžete zaregistrovat znovu."
+    },
+    "password": {
+      "show": "Zobrazit heslo",
+      "hide": "Skrýt heslo",
+      "showConfirmation": "Zobrazit potvrzení hesla",
+      "hideConfirmation": "Skrýt potvrzení hesla"
     }
   },
   "setup": {
@@ -242,7 +254,8 @@
       "envNote": "Tento klíč je také uložen v souboru backend/.env jako ENCRYPTION_KEY",
       "acknowledgment": "Uložil jsem šifrovací klíč na bezpečné místo a chápu, že jeho ztráta může vést ke ztrátě dat.",
       "confirmRequired": "Potvrďte, že jste uložili šifrovací klíč",
-      "continue": "Pokračovat do Libre WebUI"
+      "continue": "Pokračovat do Libre WebUI",
+      "loadFailed": "Šifrovací klíč se nepodařilo načíst. Pro pokračování to zkuste znovu."
     },
     "connectModels": {
       "title": "Připojte své modely",
@@ -336,7 +349,8 @@
       "toolsOn": "Nástroje zapnuté — model může volat schválené nástroje",
       "toolsOff": "Nechat model u této zprávy volat nástroje",
       "thinkingOn": "Přemýšlení zapnuto ({{level}})",
-      "thinkingOff": "Přemýšlet před odpovědí"
+      "thinkingOff": "Přemýšlet před odpovědí",
+      "thinkingUpdateFailed": "Nastavení přemýšlení se nepodařilo aktualizovat"
     },
     "session": {
       "new": "Nový chat",
@@ -372,7 +386,8 @@
         "move": "Přesunout do složky",
         "remove": "Odebrat ze složky",
         "delete": "Smazat složku",
-        "deleteConfirm": "Smazat tuto složku? Chaty uvnitř zůstanou."
+        "deleteConfirm": "Smazat tuto složku? Chaty uvnitř zůstanou.",
+        "rename": "Přejmenovat složku"
       },
       "shareChat": "Sdílet chat…"
     },
@@ -405,7 +420,13 @@
       "browse": "procházet",
       "unsupportedFileType": "Typ souboru není podporován: {{name}}",
       "maxImagesAllowed": "Je povoleno nejvýše {{count}} obrázků",
-      "imageTooLarge": "Obrázek {{name}} je příliš velký (max. 10 MB)"
+      "imageTooLarge": "Obrázek {{name}} je příliš velký (max. 10 MB)",
+      "readFailed": "Soubor {{name}} se nepodařilo přečíst",
+      "uploadAlt": "Nahrání {{number}}",
+      "removeImage": "Odebrat obrázek {{number}}",
+      "addMore": "Přidat další obrázky ({{count}}/{{max}})",
+      "uploading": "Nahrávání",
+      "removeDocument": "Odebrat {{name}}"
     },
     "structuredOutput": {
       "title": "Formát odpovědi",
@@ -456,7 +477,8 @@
       "compactionOff": "Vypnuto pro tento chat"
     },
     "message": {
-      "sources": "Zdroje"
+      "sources": "Zdroje",
+      "copyFailed": "Kopírování do schránky se nepodařilo"
     },
     "toasts": {
       "chatCreated": "Nový chat vytvořen",
@@ -491,7 +513,8 @@
       "branchSwitched": "Přepnuto na variantu {{number}}",
       "branchSelectFailed": "Výběr větve se nezdařil",
       "editFailed": "Úprava zprávy se nezdařila",
-      "toolDecisionFailed": "Rozhodnutí o použití nástroje se nepodařilo zaznamenat"
+      "toolDecisionFailed": "Rozhodnutí o použití nástroje se nepodařilo zaznamenat",
+      "archiveFailed": "Chat se nepodařilo archivovat"
     },
     "documents": {
       "title": "Dokumenty v kontextu"
@@ -521,7 +544,25 @@
       "origin": "Odbočeno z {{title}}",
       "originUnknown": "jiného chatu"
     },
-    "sharedReadOnly": "Sdílí {{owner}} — pouze ke čtení"
+    "sharedReadOnly": "Sdílí {{owner}} — pouze ke čtení",
+    "branch": {
+      "variants": "{{count}} varianta",
+      "variants_plural": "Varianty: {{count}}",
+      "selectVariant": "Vybrat variantu {{number}}",
+      "generating": "generuje se...",
+      "select": "vybrat"
+    },
+    "sources": {
+      "fullContextFailed": "Nastavení celého dokumentu se nepodařilo aktualizovat",
+      "usedByRetrieval": "Použito v odpovědích",
+      "triggerLabel": "Zdroje ({{count}})"
+    },
+    "announce": {
+      "replyFinished": "Odpověď od {{name}}: {{text}}",
+      "replyFinishedNoText": "Odpověď od {{name}} je hotová.",
+      "codeBlock": "blok kódu",
+      "generationStopped": "Generování zastaveno"
+    }
   },
   "sidebar": {
     "navigation": {
@@ -546,7 +587,8 @@
       "strands": "Strands"
     },
     "toggleSize": "Změnit velikost postranního panelu",
-    "expandSidebar": "Rozbalit postranní panel"
+    "expandSidebar": "Rozbalit postranní panel",
+    "ariaLabel": "Boční panel"
   },
   "user": {
     "menu": {
@@ -821,7 +863,8 @@
         "removeFailed": "Nepodařilo se odstranit API klíč",
         "enterKey": "Zadejte API klíč"
       },
-      "variables": "Variables"
+      "variables": "Variables",
+      "dismissError": "Skrýt chybu"
     },
     "generation": {
       "title": "Možnosti generování",
@@ -924,7 +967,8 @@
         "deleteFailed": "Kolekci se nepodařilo smazat",
         "assignFailed": "Dokument se nepodařilo přesunout",
         "share": "Sdílet kolekci",
-        "shared": "sdílená"
+        "shared": "sdílená",
+        "assignTo": "Kolekce pro {{name}}"
       },
       "library": {
         "title": "Nahrané dokumenty",
@@ -1066,7 +1110,8 @@
         "title": "Archivované chaty",
         "empty": "Žádné archivované chaty",
         "unarchive": "Obnovit z archivu"
-      }
+      },
+      "clearAllConfirm": "Opravdu chcete smazat celou historii chatů? Tuto akci nelze vrátit zpět."
     },
     "about": {
       "title": "O aplikaci",
@@ -1186,7 +1231,11 @@
       "unknownDevice": "Neznámé zařízení",
       "createdAt": "Přihlášeno",
       "lastSeenAt": "Naposledy aktivní",
-      "expiresAt": "Vyprší"
+      "expiresAt": "Vyprší",
+      "signOutConfirmTitle": "Odhlásit tuto relaci?",
+      "signOutConfirmDescription": "Zařízení {{device}} bude okamžitě odhlášeno a bude se muset přihlásit znovu.",
+      "signOutOthersConfirmTitle": "Odhlásit ostatní relace?",
+      "signOutOthersConfirmDescription": "Ostatní relace ({{count}}) budou okamžitě odhlášeny. Tato relace zůstane přihlášena."
     },
     "apiKeys": {
       "title": "API klíče",
@@ -1220,7 +1269,9 @@
       "createdAt": "Vytvořen",
       "lastUsedAt": "Naposledy použit",
       "expiresAt": "Vyprší",
-      "neverExpires": "Nikdy"
+      "neverExpires": "Nikdy",
+      "revokeConfirmTitle": "Odvolat „{{name}}“?",
+      "revokeConfirmDescription": "Vše, co tento API klíč používá, přestane okamžitě fungovat. Tuto akci nelze vrátit zpět."
     },
     "notifications": {
       "title": "Oznámení",
@@ -1294,7 +1345,8 @@
     "model": "Model",
     "size": "Velikost",
     "quality": "Kvalita",
-    "created": "Vytvořeno"
+    "created": "Vytvořeno",
+    "lightboxLabel": "Náhled obrázku"
   },
   "errors": {
     "generic": "Došlo k chybě",
@@ -1389,7 +1441,9 @@
       "hide": "Skrýt uživatelům",
       "show": "Zobrazit uživatelům",
       "star": "Označit {{name}} hvězdičkou",
-      "unstar": "Odebrat hvězdičku z modelu {{name}}"
+      "unstar": "Odebrat hvězdičku z modelu {{name}}",
+      "filterLabel": "Filtrovat modely",
+      "displayName": "Zobrazovaný název pro {{name}}"
     },
     "pull": {
       "placeholder": "Zadejte název modelu (např. llama3.2:3b, deepseek-r1:14b)",
@@ -1550,7 +1604,10 @@
     "deleteConfirm": "Opravdu chcete smazat \"{{name}}\"?",
     "deleteSuccess": "Persona \"{{name}}\" úspěšně smazána",
     "downloadSuccess": "Persona \"{{name}}\" úspěšně stažena",
-    "failed": "Nepodařilo se {{action}} personu"
+    "failed": "Nepodařilo se {{action}} personu",
+    "loadFailed": "Vaše persony se nepodařilo načíst.",
+    "deleteFailed": "Personu se nepodařilo smazat",
+    "downloadFailed": "Personu se nepodařilo stáhnout"
   },
   "personaForm": {
     "title": {
@@ -1682,7 +1739,8 @@
       "promptHint": "Prompt, kterým začne každý nový chat s touto personou.",
       "noPrompt": "Žádný prompt",
       "version": "Revize vazeb {{version}}"
-    }
+    },
+    "sections": "Sekce persony"
   },
   "personaCard": {
     "enhanced": "Vylepšená",
@@ -1699,7 +1757,16 @@
     "backupSuccess": "Záloha persony úspěšně stažena",
     "dnaSuccess": "DNA persony úspěšně exportováno",
     "failed": "Nepodařilo se {{action}}",
-    "shareTooltip": "Sdílet tuto personu"
+    "shareTooltip": "Sdílet tuto personu",
+    "wipeFailed": "Vzpomínky se nepodařilo vymazat",
+    "backupFailed": "Personu se nepodařilo zálohovat",
+    "exportDnaFailed": "DNA persony se nepodařilo exportovat",
+    "favorite": "Oblíbená",
+    "memoryStatus": {
+      "active": "Aktivní",
+      "wiped": "Vymazané",
+      "backed_up": "Zálohované"
+    }
   },
   "userManager": {
     "title": "Správa uživatelů",
@@ -1865,7 +1932,28 @@
       "memberOf": "Skupiny",
       "featuresLabel": "Přístup k funkcím",
       "grantsLabel": "Oprávnění",
-      "grantVia": "přes"
+      "grantVia": "přes",
+      "deleteConfirmTitle": "Smazat skupinu „{{name}}“?",
+      "deleteConfirmDescription": "Členové přijdou o přístup, který měli jen díky této skupině. Samotné účty se nemažou.",
+      "statuses": {
+        "active": "Aktivní",
+        "pending": "Čeká na schválení"
+      },
+      "features": {
+        "work": "Práce",
+        "model-download": "Stahování modelů",
+        "web-search": "Vyhledávání na webu",
+        "strands": "Engine Strands",
+        "tools": "Nástroje",
+        "stt": "Řeč na text",
+        "tts": "Text na řeč",
+        "voice-mode": "Hlasový režim",
+        "voice-cloning": "Klonování hlasu"
+      },
+      "grantViaKinds": {
+        "user": "přímé udělení",
+        "group": "skupina"
+      }
     },
     "audit": {
       "title": "Bezpečnostní auditní protokol",
@@ -2298,7 +2386,11 @@
       "harmful": "Škodlivá",
       "formatting": "Formátování"
     },
-    "feedbackComment": "Přidat komentář…"
+    "feedbackComment": "Přidat komentář…",
+    "user": "Uživatel",
+    "feedbackFailed": "Vaši zpětnou vazbu se nepodařilo uložit",
+    "openImage": "Otevřít obrázek {{number}}",
+    "uploadedImageAlt": "Nahraný obrázek {{number}}"
   },
   "imageGallery": {
     "title": "Galerie obrázků",
@@ -2387,7 +2479,10 @@
       "image": "Obrázky",
       "video": "Videa",
       "audio": "Audio"
-    }
+    },
+    "deleteConfirmTitle": "Smazat tuto položku?",
+    "deleteConfirmDescription": "Vygenerovaná média budou trvale smazána.",
+    "previewFailed": "Náhled není k dispozici"
   },
   "errorBoundary": {
     "title": "Něco se pokazilo",
@@ -2463,7 +2558,8 @@
     "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source.",
     "versionOf": "Verze {{current}} z {{total}}",
     "previousVersion": "Předchozí verze",
-    "nextVersion": "Další verze"
+    "nextVersion": "Další verze",
+    "resizePanel": "Změnit velikost panelu"
   },
   "personaImportExport": {
     "title": "Import a export person",
@@ -2501,7 +2597,10 @@
     "generation": "Generování:",
     "modelLoad": "Načtení modelu:",
     "totalTime": "Celkový čas:",
-    "generatedAt": "Vygenerováno v:"
+    "generatedAt": "Vygenerováno v:",
+    "notAvailable": "Nedostupné",
+    "tokenCount": "Tokenů: {{tokens}}",
+    "tokensPerSecond": "{{value}} tok./s"
   },
   "userMenu": {
     "loggedOut": "Úspěšně odhlášeno",
@@ -2560,7 +2659,9 @@
       "httpWarning": "HTTP nešifruje přihlašovací údaje ani provoz. Používejte jej pouze v důvěryhodné síti.",
       "invalidBaseUrl": "Základní URL nesmí obsahovat řetězec dotazu ani fragment.",
       "invalidApiPath": "Musí začínat znakem / a nesmí obsahovat URL, dotaz, fragment ani segment ..",
-      "tooLong": "Hodnota je příliš dlouhá"
+      "tooLong": "Hodnota je příliš dlouhá",
+      "resetConfirmTitle": "Obnovit výchozí hodnoty?",
+      "resetConfirmDescription": "Tím se vymažou všechny uložené hodnoty pro {{name}}, včetně API klíčů a dalších přihlašovacích údajů. Tuto akci nelze vrátit zpět."
     }
   },
   "huggingface": {
@@ -2580,7 +2681,10 @@
   },
   "demoMode": {
     "title": "Demo režim",
-    "github": "GitHub"
+    "github": "GitHub",
+    "defaultMessage": "Toto je ukázková verze určená pouze pro prezentaci. Backend Ollama není připojen.",
+    "viewOnGithub": "Zobrazit na GitHubu",
+    "dismiss": "Skrýt"
   },
   "work": {
     "title": "Práce",
@@ -2671,8 +2775,18 @@
         "checksPending": "Čekající kontroly",
         "stallNudges": "Upozornění na zaseknutí",
         "ambiguityNudges": "Upozornění na přeorientování",
-        "stoppedBy": "Zastaveno kvůli"
-      }
+        "stoppedBy": "Zastaveno kvůli",
+        "reasons": {
+          "round": "limit kol",
+          "toolCall": "limit volání nástrojů",
+          "approvalTimeout": "vypršel čas schválení",
+          "computerStall": "počítač se zasekl"
+        }
+      },
+      "skillTraceSavedWorked": "Zaznamenáno: fungovalo",
+      "skillTraceSavedFailed": "Zaznamenáno: selhalo",
+      "connectionClosed": "Živé připojení k Work bylo ukončeno.",
+      "reconnectingBackground": "Živé aktualizace se na pozadí znovu připojují."
     },
     "runtime": {
       "unavailable": "Běhové prostředí není dostupné",
@@ -2715,7 +2829,11 @@
       "changes": "Změny",
       "changesSince": "Co se změnilo od posledního tahu",
       "diffLabel": "Změny od posledního tahu: {{path}}",
-      "diffFolded": "{{count}} nezměněných řádků"
+      "diffFolded": "{{count}} nezměněných řádků",
+      "diffAdded": "Přidáno",
+      "diffRemoved": "Odebráno",
+      "unsavedChanges": "neuložené změny",
+      "editingLocked": "Úpravy se odemknou po dokončení kola."
     },
     "activity": {
       "empty": "Zde se zobrazí příkazy, operace se soubory a výsledky nástrojů.",
@@ -2726,7 +2844,9 @@
         "toolCall": "Volání nástroje",
         "toolResult": "Výsledek nástroje",
         "error": "Chyba"
-      }
+      },
+      "arguments": "Argumenty nástroje",
+      "output": "Výstup nástroje"
     },
     "preview": {
       "command": "Volitelný spouštěcí příkaz",
@@ -2755,7 +2875,8 @@
       "saveFailed": "Tento soubor se nepodařilo uložit.",
       "saved": "Soubor byl uložen.",
       "previewFailed": "Náhled se nepodařilo spustit.",
-      "previewStopFailed": "Náhled se nepodařilo zastavit."
+      "previewStopFailed": "Náhled se nepodařilo zastavit.",
+      "sendFailed": "Zprávu se nepodařilo odeslat."
     },
     "terminal": {
       "connecting": "Otevírá se shell v sandboxu…",
@@ -2807,7 +2928,18 @@
       "noFilterMatches": "Tomuto filtru neodpovídají žádné změněné soubory.",
       "allChanges": "Všechny změny",
       "diffTruncated": "Tento diff je zkrácen.",
-      "binaryFile": "Binární soubor, bez textového diffu."
+      "binaryFile": "Binární soubor, bez textového diffu.",
+      "statusLabels": {
+        "modified": "Upraveno",
+        "added": "Přidáno",
+        "deleted": "Smazáno",
+        "renamed": "Přejmenováno",
+        "copied": "Zkopírováno",
+        "typeChanged": "Změněn typ",
+        "untracked": "Nesledováno"
+      },
+      "stagedState": "připraveno",
+      "aheadBehind": "{{ahead}} napřed, {{behind}} pozadu"
     },
     "hostWorkspace": {
       "hint": "Nechte prázdné pro izolovaný pracovní prostor, nebo nasměrujte úlohu na složku na tomto počítači.",
@@ -2834,7 +2966,8 @@
       "unmute": "Zapnout zvuk",
       "mute": "Ztlumit",
       "finished": "Tato úloha je dokončena. Znovu ji otevřete, abyste obnovili její obrazovku.",
-      "reopenOpen": "Znovu otevřít úlohu a otevřít obrazovku"
+      "reopenOpen": "Znovu otevřít úlohu a otevřít obrazovku",
+      "teachSaveFailed": "Tuto ukázku se nepodařilo uložit."
     },
     "computerSetup": {
       "title": "Work Computer",
@@ -2871,7 +3004,11 @@
       "approvalsToggleFailed": "Schvalování se nepodařilo aktualizovat.",
       "approvalRuleLine": "Vždy povoleno",
       "approvalRuleDelete": "Odebrat pravidlo",
-      "approvalRuleDeleteFailed": "Pravidlo se nepodařilo odebrat."
+      "approvalRuleDeleteFailed": "Pravidlo se nepodařilo odebrat.",
+      "routinesLoadFailed": "Rutiny se nepodařilo načíst.",
+      "skillsLoadFailed": "Naučené dovednosti se nepodařilo načíst.",
+      "approvalsLoadFailed": "Nastavení schvalování se nepodařilo načíst.",
+      "routinePaused": "Pozastaveno"
     },
     "runs": {
       "title": "Běhy",
@@ -2882,7 +3019,8 @@
         "needsInput": "Vyžaduje vstup",
         "failed": "Selhalo",
         "cancelled": "Zrušeno"
-      }
+      },
+      "loadFailed": "Historii spuštění se nepodařilo načíst."
     },
     "approval": {
       "title": "Je potřeba schválení",
@@ -2890,7 +3028,16 @@
       "allowOnce": "Povolit jednou",
       "allowAlways": "Povolit vždy",
       "deny": "Odmítnout",
-      "failed": "Rozhodnutí se nepodařilo odeslat."
+      "failed": "Rozhodnutí se nepodařilo odeslat.",
+      "details": "Podrobnosti akce",
+      "fields": {
+        "command": "Příkaz",
+        "path": "Cesta",
+        "from": "Z",
+        "to": "Do",
+        "actions": "Akce",
+        "recursive": "Rekurzivně"
+      }
     },
     "idleStopHint": "Zastaví se po {{minutes}} minutách bez aktivity.",
     "recovery": {
@@ -2903,6 +3050,17 @@
       "retrySucceeded": "Vyčištěno {{cleared}} z {{attempted}} čekajících úklidů.",
       "retryPending": "Stále probíhá nový pokus u {{attempted}} čekajících úklidů.",
       "retryFailed": "Čekající úklidy se nepodařilo zopakovat."
+    },
+    "computer": {
+      "setupFailed": "Work Computer se nepodařilo nastavit."
+    },
+    "announce": {
+      "completed": "{{title}}: dokončeno.",
+      "needsInput": "{{title}} potřebuje váš vstup nebo schválení.",
+      "failed": "{{title}}: selhalo.",
+      "cancelled": "{{title}}: zastaveno.",
+      "approvalNeeded": "{{title}} potřebuje vaše schválení ke spuštění {{tool}}.",
+      "untitledTask": "Tato úloha"
     }
   },
   "personaBackground": {
@@ -2947,7 +3105,8 @@
     "showAll": "Zobrazit vše ({{total}})",
     "sources": "Zdroje modelů",
     "defaultModel": "Výchozí model",
-    "contextSize": "kontext {{size}}"
+    "contextSize": "kontext {{size}}",
+    "via": "přes {{provider}}"
   },
   "whatsNew": {
     "title": "Co je nového",
@@ -3004,7 +3163,16 @@
     "unpin": "Odepnout poznámku",
     "pinned": "Připnuto",
     "export": "Stáhnout jako Markdown",
-    "sharedWithYou": "Sdíleno s vámi"
+    "sharedWithYou": "Sdíleno s vámi",
+    "titleLabel": "Název poznámky",
+    "loadFailed": "Načtení se nepodařilo. Zkuste to znovu.",
+    "restoreConfirmTitle": "Obnovit tuto verzi?",
+    "restoreConfirmDescription": "Text poznámky bude nahrazen touto starší verzí.",
+    "deleteAttachmentConfirmTitle": "Smazat {{name}}?",
+    "deleteAttachmentConfirmDescription": "Příloha bude z této poznámky trvale smazána.",
+    "attachmentDeleteFailed": "Přílohu se nepodařilo smazat",
+    "revokeFailed": "Přístup se nepodařilo odvolat",
+    "sharePermissionLabel": "Oprávnění"
   },
   "calendar": {
     "title": "Kalendář",
@@ -3049,7 +3217,22 @@
     "importFailed": "Soubor se nepodařilo importovat",
     "importResult": "Importováno událostí: {{total}}",
     "importIcs": "Import",
-    "exportIcs": "Export"
+    "exportIcs": "Export",
+    "chipStatus": {
+      "automation": "Naplánovaná automatizace",
+      "runSucceeded": "Spuštění automatizace bylo úspěšné",
+      "runFailed": "Spuštění automatizace selhalo"
+    },
+    "newEventOn": "Nová událost dne {{date}}",
+    "showDay": "Zobrazit všechny události dne {{date}}",
+    "deleteEventConfirmTitle": "Smazat „{{title}}“?",
+    "deleteEventConfirmDescription": "Tato událost bude trvale smazána.",
+    "deleteRecurringEventConfirmDescription": "Tato opakovaná událost a všechny její výskyty budou trvale smazány.",
+    "shareCalendarNamed": "Sdílet kalendář {{name}}",
+    "deleteCalendarNamed": "Smazat kalendář {{name}}",
+    "deleteCalendarConfirmTitle": "Smazat kalendář „{{name}}“?",
+    "deleteCalendarConfirmDescription": "Kalendář a jeho události budou trvale smazány.",
+    "calendarDeleteFailed": "Kalendář se nepodařilo smazat"
   },
   "automations": {
     "title": "Automatizace",
@@ -3176,13 +3359,17 @@
         "work-approval": "agent čeká na vaše schválení",
         "system": "přijde systémové oznámení"
       }
-    }
+    },
+    "deleteConfirmTitle": "Smazat „{{name}}“?",
+    "deleteConfirmDescription": "Automatizace a její plán budou trvale smazány. Dřívější spuštění zůstanou v historii."
   },
   "home": {
     "active": "aktivní",
     "continue": "Pokračovat",
     "start": "Začít",
-    "explore": "Prozkoumat"
+    "explore": "Prozkoumat",
+    "greeting": "{{greeting}}.",
+    "greetingWithName": "{{greeting}}, {{name}}."
   },
   "palette": {
     "empty": "Žádné shody.",
@@ -3195,7 +3382,14 @@
     "work": "Práce",
     "messages": "Zprávy",
     "notes": "Poznámky",
-    "documents": "Dokumenty"
+    "documents": "Dokumenty",
+    "searching": "Hledání…",
+    "searchFailed": "Vyhledávání v pracovním prostoru selhalo. Zobrazují se jen odpovídající chaty a akce.",
+    "results": "Výsledky",
+    "escKey": "esc",
+    "hintNavigate": "Procházet",
+    "hintOpen": "Otevřít",
+    "hintClose": "Zavřít"
   },
   "tabs": {
     "actions": "Akce karty",
@@ -3399,7 +3593,8 @@
       "button": "Ze složky",
       "missingSkillMd": "Složka musí obsahovat soubor SKILL.md",
       "done": "Dovednost importována s {{count}} přiloženými soubory"
-    }
+    },
+    "toggleLabel": "Zapnout dovednost {{name}}"
   },
   "toolsPage": {
     "title": "Nástroje",
@@ -3557,7 +3752,14 @@
     "added": "Sdíleno s {{name}}",
     "failed": "Sdílení se nezdařilo",
     "userNotFound": "Žádný uživatel s tímto jménem",
-    "groupNotFound": "Žádná skupina s tímto názvem"
+    "groupNotFound": "Žádná skupina s tímto názvem",
+    "principalKind": "Sdílet s uživatelem nebo skupinou",
+    "principalName": "Uživatelské jméno nebo název skupiny",
+    "permission": "Oprávnění",
+    "sharing": "Sdílení",
+    "loading": "Načítání sdílení",
+    "loadFailed": "Sdílení se nepodařilo načíst",
+    "revokeFailed": "Přístup se nepodařilo odvolat"
   },
   "channels": {
     "title": "Kanály",
@@ -3616,13 +3818,44 @@
     "toolCalls": {
       "summary": "Použité nástroje ({{total}})",
       "deniedHint": "Nástroje, které něco mění, se v kanálech odmítají. Spusťte je z chatu."
-    }
+    },
+    "confirmEdit": "Uložit úpravu",
+    "cancelEdit": "Zrušit úpravu",
+    "reactWith": "Reagovat pomocí {{emoji}}",
+    "deleteMessageConfirmTitle": "Smazat tuto zprávu?",
+    "deleteMessageConfirmDescription": "Zpráva bude odstraněna pro všechny v tomto kanálu.",
+    "unreadCount": "Nepřečtené: {{total}}",
+    "send": "Odeslat zprávu",
+    "invite": "Pozvat člena",
+    "closeThread": "Zavřít vlákno",
+    "removeAttachment": "Odebrat přílohu",
+    "loadFailed": "Načtení se nepodařilo. Zkuste to znovu.",
+    "editFailed": "Zprávu se nepodařilo upravit",
+    "deleteMessageFailed": "Zprávu se nepodařilo smazat",
+    "pinFailed": "Připnutí se nepodařilo změnit",
+    "reactFailed": "Reakci se nepodařilo uložit",
+    "downloadFailed": "Soubor se nepodařilo stáhnout",
+    "removeMemberConfirm": "Odebrat uživatele {{name}} z tohoto kanálu?",
+    "removeMemberConfirmDescription": "Ztratí přístup ke kanálu a jeho zprávám.",
+    "removeMemberNamed": "Odebrat uživatele {{name}} z kanálu",
+    "removeMemberFailed": "Člena se nepodařilo odebrat",
+    "leaveConfirm": "Opustit kanál {{name}}?",
+    "leaveConfirmDescription": "Pro návrat do soukromého kanálu budete muset být znovu pozváni.",
+    "leaveFailed": "Kanál se nepodařilo opustit",
+    "joinFailed": "Ke kanálu se nepodařilo připojit",
+    "deleteConfirm": "Smazat kanál {{name}}?",
+    "deleteConfirmDescription": "Kanál a všechny jeho zprávy budou pro všechny členy trvale smazány.",
+    "deleteFailed": "Kanál se nepodařilo smazat",
+    "saveFailed": "Kanál se nepodařilo uložit"
   },
   "notifications": {
     "title": "Oznámení",
     "empty": "Vše přečteno.",
     "markAllRead": "Označit vše jako přečtené",
-    "markRead": "Označit jako přečtené"
+    "markRead": "Označit jako přečtené",
+    "titleWithUnread": "Oznámení (nepřečtené: {{unread}})",
+    "unread": "Nepřečtené",
+    "loadFailed": "Oznámení se nepodařilo načíst."
   },
   "voiceMode": {
     "title": "Hlasový režim",
@@ -3757,7 +3990,12 @@
       "failed": "Selhalo",
       "cancelled": "Zrušeno"
     },
-    "noFeedback": "Zatím žádná zpětná vazba — hodnoť odpovědi a vybuduj svůj dataset."
+    "noFeedback": "Zatím žádná zpětná vazba — hodnoť odpovědi a vybuduj svůj dataset.",
+    "deleteSetConfirmTitle": "Smazat „{{name}}“?",
+    "deleteSetConfirmDescription": "Sada vyhodnocení a její prompty budou trvale smazány.",
+    "deleteSetFailed": "Sadu vyhodnocení se nepodařilo smazat",
+    "runError": "Chyba: {{detail}}",
+    "cancelFailed": "Spuštění se nepodařilo zrušit"
   },
   "passwordStrength": {
     "levels": {
@@ -3771,6 +4009,14 @@
       "hasCase": "Velká a malá písmena",
       "hasNumber": "Alespoň jedna číslice",
       "tooLong": "Nejvýše 72 bajtů"
+    },
+    "requirements": "Použijte alespoň 12 znaků, nejvýše 72 bajtů UTF-8, s velkým a malým písmenem a číslicí.",
+    "errors": {
+      "minLength": "Heslo musí mít alespoň 12 znaků.",
+      "tooLong": "Heslo nesmí mít více než 72 bajtů UTF-8.",
+      "uppercase": "Heslo musí obsahovat velké písmeno.",
+      "lowercase": "Heslo musí obsahovat malé písmeno.",
+      "number": "Heslo musí obsahovat číslici."
     }
   },
   "connectModels": {
@@ -3804,7 +4050,8 @@
       "enable": "Povolit poskytovatele",
       "enabling": "Povolování…",
       "enabled": "{{name}} připojen — jeho modely jsou nyní dostupné",
-      "enableFailed": "Nepodařilo se povolit poskytovatele"
+      "enableFailed": "Nepodařilo se povolit poskytovatele",
+      "urlLabel": "URL serveru"
     },
     "cloud": {
       "title": "Cloudové API",
@@ -3813,7 +4060,8 @@
       "connect": "Připojit",
       "connecting": "Připojování…",
       "connected": "{{name}} připojen — jeho modely jsou nyní dostupné",
-      "saveFailed": "Nepodařilo se uložit API klíč"
+      "saveFailed": "Nepodařilo se uložit API klíč",
+      "keyLabel": "API klíč {{name}}"
     }
   },
   "strands": {
@@ -3845,5 +4093,15 @@
     "deleteFailed": "Relaci se nepodařilo odstranit.",
     "saveFailed": "Relaci se nepodařilo uložit.",
     "turnFailed": "Modul nedokázal dokončit tah"
+  },
+  "notFound": {
+    "title": "Stránka nenalezena",
+    "description": "Tato stránka neexistuje nebo byla přesunuta."
+  },
+  "themeToggle": {
+    "switchToLight": "Přepnout na světlý režim",
+    "switchToDark": "Přepnout na tmavý režim",
+    "switchToAmoled": "Přepnout na čistě černý režim",
+    "switchToCelestial": "Přepnout na nebeský režim"
   }
 }

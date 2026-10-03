@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ShieldQuestion } from 'lucide-react';
 import { Button } from '@/components/ui';
@@ -24,19 +24,29 @@ import { cn } from '@/utils';
 import { workApi } from '@/utils/api/workApi';
 import toast from 'react-hot-toast';
 
-/** The summary lines worth showing for each gated tool. */
-const summaryText = (approval: WorkLiveApproval): string => {
+type SummaryField =
+  'command' | 'path' | 'from' | 'to' | 'actions' | 'recursive';
+
+interface SummaryRow {
+  field: SummaryField;
+  value: string;
+}
+
+/** The summary rows worth showing for each gated tool. */
+const summaryRows = (approval: WorkLiveApproval): SummaryRow[] => {
   const summary = approval.summary ?? {};
-  const lines: string[] = [];
-  for (const key of ['command', 'path', 'from', 'to', 'actions'] as const) {
-    const value = summary[key];
-    if (typeof value === 'string' && value) lines.push(`${key}: ${value}`);
+  const rows: SummaryRow[] = [];
+  for (const field of ['command', 'path', 'from', 'to', 'actions'] as const) {
+    const value = summary[field];
+    if (typeof value === 'string' && value) rows.push({ field, value });
   }
   if (typeof summary.actionCount === 'number') {
-    lines.push(`actions: ${summary.actionCount}`);
+    rows.push({ field: 'actions', value: String(summary.actionCount) });
   }
-  if (summary.recursive === true) lines.push('recursive: true');
-  return lines.join('\n') || approval.name;
+  if (summary.recursive === true) {
+    rows.push({ field: 'recursive', value: '' });
+  }
+  return rows;
 };
 
 /**
@@ -51,6 +61,8 @@ export const WorkApprovalCard: React.FC<{
 }> = ({ taskId, approval, className }) => {
   const { t } = useTranslation();
   const [deciding, setDeciding] = useState(false);
+  const titleId = useId();
+  const rows = summaryRows(approval);
 
   const decide = async (approve: boolean, scope: 'once' | 'always') => {
     setDeciding(true);
@@ -64,27 +76,51 @@ export const WorkApprovalCard: React.FC<{
 
   return (
     <div
-      role='alertdialog'
-      aria-label={t('work.approval.title')}
+      role='group'
+      aria-labelledby={titleId}
       data-testid='work-approval-card'
       className={cn(
         'rounded-lg border border-primary-300/70 bg-primary-50 p-3 text-sm dark:border-primary-700/60 dark:bg-primary-900/20',
         className
       )}
     >
-      <div className='flex items-center gap-2 font-medium text-primary-800 dark:text-primary-200'>
-        <ShieldQuestion className='h-4 w-4 shrink-0' />
+      {/* role=alert announces the request when it appears without stealing
+          focus from the composer. */}
+      <div
+        id={titleId}
+        role='alert'
+        className='flex items-center gap-2 font-medium text-primary-800 dark:text-primary-200'
+      >
+        <ShieldQuestion aria-hidden='true' className='h-4 w-4 shrink-0' />
         {t('work.approval.title')}
       </div>
       <p className='mt-1 text-primary-800/90 dark:text-primary-100/80'>
         {t('work.approval.description', { tool: approval.name })}
       </p>
-      <pre
-        dir='ltr'
+      <div
+        role='region'
+        tabIndex={0}
+        aria-label={t('work.approval.details')}
         className='mt-2 max-h-32 overflow-auto whitespace-pre-wrap rounded bg-white/70 p-2 font-mono text-xs text-gray-700 dark:bg-dark-100 dark:text-gray-300'
       >
-        {summaryText(approval)}
-      </pre>
+        {rows.length === 0 ? (
+          <bdi dir='ltr'>{approval.name}</bdi>
+        ) : (
+          rows.map((row, index) => (
+            <div key={`${row.field}-${index}`}>
+              <span>{t(`work.approval.fields.${row.field}`)}</span>
+              {row.field === 'recursive' ? (
+                <> {t('common.yes')}</>
+              ) : (
+                <>
+                  {': '}
+                  <bdi dir='ltr'>{row.value}</bdi>
+                </>
+              )}
+            </div>
+          ))
+        )}
+      </div>
       <div className='mt-3 flex flex-wrap gap-2'>
         <Button
           size='sm'

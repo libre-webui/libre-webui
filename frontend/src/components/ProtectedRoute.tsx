@@ -17,7 +17,9 @@
 
 import React from 'react';
 import { Navigate, useLocation } from 'react-router';
+import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/store/authStore';
+import { endedByExplicitLogout } from '@/utils/postLoginPath';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -42,13 +44,18 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     canUseWork,
     canUseStrands,
   } = useAuthStore();
-  const _location = useLocation();
+  const location = useLocation();
+  const { t } = useTranslation();
 
   // Show loading spinner while checking auth
   if (isLoading) {
     return (
-      <div className='min-h-screen flex items-center justify-center bg-gray-50 dark:bg-dark-50'>
-        <div className='w-8 h-8 border-4 border-gray-200 dark:border-dark-300 border-t-primary-500 dark:border-t-primary-400 rounded-full animate-spin'></div>
+      <div
+        role='status'
+        className='min-h-screen flex items-center justify-center bg-gray-50 dark:bg-dark-50'
+      >
+        <div className='w-8 h-8 border-4 border-gray-200 dark:border-dark-300 border-t-primary-500 dark:border-t-primary-400 rounded-full animate-spin motion-reduce:animate-none'></div>
+        <span className='sr-only'>{t('common.loading')}</span>
       </div>
     );
   }
@@ -66,7 +73,15 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 
   // If auth is required but user is not authenticated
   if (requireAuth && !isAuthenticated) {
-    return <Navigate to='/login' replace />;
+    // Remember the destination so signing in can return to it — except after
+    // a deliberate sign-out, where the next account must start fresh.
+    return (
+      <Navigate
+        to='/login'
+        replace
+        state={endedByExplicitLogout() ? undefined : { from: location }}
+      />
+    );
   }
 
   // If admin is required but user is not admin

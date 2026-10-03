@@ -41,7 +41,8 @@
     "remove": "সরান",
     "home": "হোম",
     "more": "বেশি",
-    "reasoning": "যুক্তি"
+    "reasoning": "যুক্তি",
+    "skipToContent": "মূল কনটেন্টে যান"
   },
   "brand": {
     "name": "Libre WebUI",
@@ -49,7 +50,10 @@
   },
   "appInitialization": {
     "ollamaUnavailable": "Ollama পরিষেবা উপলব্ধ নয়। প্লাগইন মডেলগুলি এখনও ব্যবহার করা যেতে পারে।",
-    "backendConnectionFailed": "ব্যাকএন্ড পরিষেবার সাথে সংযোগ করা যায়নি"
+    "backendConnectionFailed": "ব্যাকএন্ড পরিষেবার সাথে সংযোগ করা যায়নি",
+    "connecting": "ব্যাকএন্ডে সংযোগ হচ্ছে… ({{attempt}}/{{total}})",
+    "startingUp": "চালু হচ্ছে…",
+    "backendUnreachableHint": "ব্যাকএন্ড চলছে কি না দেখে নিন, তারপর আবার চেষ্টা করুন।"
   },
   "auth": {
     "login": {
@@ -189,7 +193,15 @@
       "removed": "পাসকি সরানো হয়েছে।",
       "removeFailed": "পাসকি সরানো যায়নি।",
       "signInButton": "পাসকি দিয়ে সাইন ইন করুন",
-      "signInFailed": "পাসকি দিয়ে সাইন ইন ব্যর্থ হয়েছে।"
+      "signInFailed": "পাসকি দিয়ে সাইন ইন ব্যর্থ হয়েছে।",
+      "removeConfirmTitle": "এই পাসকি সরাবেন?",
+      "removeConfirmDescription": "“{{name}}” দিয়ে আর সাইন ইন করা যাবে না। আপনি পরে আবার এটি নিবন্ধন করতে পারবেন।"
+    },
+    "password": {
+      "show": "পাসওয়ার্ড দেখান",
+      "hide": "পাসওয়ার্ড লুকান",
+      "showConfirmation": "পাসওয়ার্ড নিশ্চিতকরণ দেখান",
+      "hideConfirmation": "পাসওয়ার্ড নিশ্চিতকরণ লুকান"
     }
   },
   "setup": {
@@ -242,7 +254,8 @@
       "envNote": "এই কী আপনার backend/.env ফাইলে ENCRYPTION_KEY হিসাবে সংরক্ষিত আছে",
       "acknowledgment": "আমি আমার এনক্রিপশন কী একটি নিরাপদ স্থানে সংরক্ষণ করেছি এবং বুঝতে পারছি যে এটি হারালে ডেটা ক্ষতি হতে পারে।",
       "confirmRequired": "অনুগ্রহ করে নিশ্চিত করুন যে আপনি এনক্রিপশন কী সংরক্ষণ করেছেন",
-      "continue": "Libre WebUI তে চালিয়ে যান"
+      "continue": "Libre WebUI তে চালিয়ে যান",
+      "loadFailed": "এনক্রিপশন কী লোড করা যায়নি। চালিয়ে যেতে আবার চেষ্টা করুন।"
     },
     "connectModels": {
       "title": "আপনার মডেল সংযুক্ত করুন",
@@ -336,7 +349,8 @@
       "toolsOn": "টুল চালু — মডেল অনুমোদিত টুল ব্যবহার করতে পারে",
       "toolsOff": "এই বার্তার জন্য মডেলকে টুল ব্যবহার করতে দিন",
       "thinkingOn": "চিন্তা চালু ({{level}})",
-      "thinkingOff": "উত্তরের আগে চিন্তা করুন"
+      "thinkingOff": "উত্তরের আগে চিন্তা করুন",
+      "thinkingUpdateFailed": "চিন্তার সেটিং আপডেট করা যায়নি"
     },
     "session": {
       "new": "নতুন চ্যাট",
@@ -372,7 +386,8 @@
         "move": "ফোল্ডারে সরান",
         "remove": "ফোল্ডার থেকে সরান",
         "delete": "ফোল্ডার মুছুন",
-        "deleteConfirm": "এই ফোল্ডারটি মুছবেন? ভিতরের চ্যাটগুলি থাকবে।"
+        "deleteConfirm": "এই ফোল্ডারটি মুছবেন? ভিতরের চ্যাটগুলি থাকবে।",
+        "rename": "ফোল্ডারের নাম পরিবর্তন করুন"
       },
       "shareChat": "চ্যাট শেয়ার করুন…"
     },
@@ -405,7 +420,13 @@
       "browse": "ব্রাউজ করুন",
       "unsupportedFileType": "ফাইলের ধরন সমর্থিত নয়: {{name}}",
       "maxImagesAllowed": "সর্বোচ্চ {{count}}টি ছবি অনুমোদিত",
-      "imageTooLarge": "{{name}} ছবিটি খুব বড় (সর্বোচ্চ 10MB)"
+      "imageTooLarge": "{{name}} ছবিটি খুব বড় (সর্বোচ্চ 10MB)",
+      "readFailed": "{{name}} পড়া যায়নি",
+      "uploadAlt": "আপলোড {{number}}",
+      "removeImage": "ছবি {{number}} সরান",
+      "addMore": "আরও ছবি যোগ করুন ({{count}}/{{max}})",
+      "uploading": "আপলোড হচ্ছে",
+      "removeDocument": "{{name}} সরান"
     },
     "structuredOutput": {
       "title": "রেসপন্স ফরম্যাট",
@@ -456,7 +477,8 @@
       "compactionOff": "এই চ্যাটে বন্ধ"
     },
     "message": {
-      "sources": "উৎস"
+      "sources": "উৎস",
+      "copyFailed": "ক্লিপবোর্ডে কপি করা যায়নি"
     },
     "toasts": {
       "chatCreated": "নতুন চ্যাট তৈরি হয়েছে",
@@ -491,7 +513,8 @@
       "branchSwitched": "{{number}} নম্বর বিকল্পে পরিবর্তন করা হয়েছে",
       "branchSelectFailed": "শাখা নির্বাচন করা যায়নি",
       "editFailed": "বার্তা সম্পাদনা করা যায়নি",
-      "toolDecisionFailed": "টুলের সিদ্ধান্ত রেকর্ড করা যায়নি"
+      "toolDecisionFailed": "টুলের সিদ্ধান্ত রেকর্ড করা যায়নি",
+      "archiveFailed": "এই চ্যাটটি সংরক্ষণাগারে রাখা যায়নি"
     },
     "documents": {
       "title": "প্রসঙ্গে থাকা নথি"
@@ -521,7 +544,25 @@
       "origin": "{{title}} থেকে ফর্ক করা",
       "originUnknown": "অন্য একটি চ্যাট"
     },
-    "sharedReadOnly": "{{owner}} শেয়ার করেছেন — শুধুমাত্র দেখা যাবে"
+    "sharedReadOnly": "{{owner}} শেয়ার করেছেন — শুধুমাত্র দেখা যাবে",
+    "branch": {
+      "variants": "{{count}}টি ভ্যারিয়েন্ট",
+      "variants_plural": "{{count}}টি ভ্যারিয়েন্ট",
+      "selectVariant": "ভ্যারিয়েন্ট {{number}} বেছে নিন",
+      "generating": "তৈরি হচ্ছে...",
+      "select": "বেছে নিন"
+    },
+    "sources": {
+      "fullContextFailed": "সম্পূর্ণ ডকুমেন্টের সেটিং আপডেট করা যায়নি",
+      "usedByRetrieval": "উত্তরে ব্যবহৃত",
+      "triggerLabel": "উৎস ({{count}})"
+    },
+    "announce": {
+      "replyFinished": "{{name}} উত্তর দিয়েছে: {{text}}",
+      "replyFinishedNoText": "{{name}} উত্তর দেওয়া শেষ করেছে।",
+      "codeBlock": "কোড ব্লক",
+      "generationStopped": "জেনারেশন বন্ধ করা হয়েছে"
+    }
   },
   "sidebar": {
     "navigation": {
@@ -546,7 +587,8 @@
       "strands": "Strands"
     },
     "toggleSize": "সাইডবার সাইজ টগল করুন",
-    "expandSidebar": "সাইডবার প্রসারিত করুন"
+    "expandSidebar": "সাইডবার প্রসারিত করুন",
+    "ariaLabel": "সাইডবার"
   },
   "user": {
     "menu": {
@@ -821,7 +863,8 @@
         "removeFailed": "API কী সরাতে ব্যর্থ",
         "enterKey": "অনুগ্রহ করে একটি API কী লিখুন"
       },
-      "variables": "Variables"
+      "variables": "Variables",
+      "dismissError": "ত্রুটি খারিজ করুন"
     },
     "generation": {
       "title": "জেনারেশন অপশন",
@@ -924,7 +967,8 @@
         "deleteFailed": "সংগ্রহ মুছে ফেলা যায়নি",
         "assignFailed": "নথি সরানো যায়নি",
         "share": "সংগ্রহ শেয়ার করুন",
-        "shared": "শেয়ার করা"
+        "shared": "শেয়ার করা",
+        "assignTo": "{{name}} এর জন্য সংগ্রহ"
       },
       "library": {
         "title": "আপলোড করা নথি",
@@ -1066,7 +1110,8 @@
         "title": "সংরক্ষণাগারভুক্ত চ্যাট",
         "empty": "কোনো সংরক্ষণাগারভুক্ত চ্যাট নেই",
         "unarchive": "সংরক্ষণাগার থেকে সরান"
-      }
+      },
+      "clearAllConfirm": "আপনি কি সব চ্যাট ইতিহাস মুছে ফেলতে চান? এটি পূর্বাবস্থায় ফেরানো যাবে না।"
     },
     "about": {
       "title": "সম্পর্কে",
@@ -1186,7 +1231,11 @@
       "unknownDevice": "অজানা ডিভাইস",
       "createdAt": "লগ ইন",
       "lastSeenAt": "সর্বশেষ সক্রিয়",
-      "expiresAt": "মেয়াদ শেষ"
+      "expiresAt": "মেয়াদ শেষ",
+      "signOutConfirmTitle": "এই সেশন লগ আউট করবেন?",
+      "signOutConfirmDescription": "{{device}} সঙ্গে সঙ্গে লগ আউট হবে এবং আবার সাইন ইন করতে হবে।",
+      "signOutOthersConfirmTitle": "অন্যান্য সেশন লগ আউট করবেন?",
+      "signOutOthersConfirmDescription": "অন্য {{count}}টি সেশন সঙ্গে সঙ্গে লগ আউট হবে। এই সেশন সাইন ইন থাকবে।"
     },
     "apiKeys": {
       "title": "API কী",
@@ -1220,7 +1269,9 @@
       "createdAt": "তৈরি",
       "lastUsedAt": "সর্বশেষ ব্যবহৃত",
       "expiresAt": "মেয়াদ শেষ",
-      "neverExpires": "কখনও না"
+      "neverExpires": "কখনও না",
+      "revokeConfirmTitle": "“{{name}}” প্রত্যাহার করবেন?",
+      "revokeConfirmDescription": "এই API কী ব্যবহার করে এমন সবকিছু সঙ্গে সঙ্গে কাজ করা বন্ধ করবে। এটি পূর্বাবস্থায় ফেরানো যাবে না।"
     },
     "notifications": {
       "title": "বিজ্ঞপ্তি",
@@ -1294,7 +1345,8 @@
     "model": "মডেল",
     "size": "সাইজ",
     "quality": "কোয়ালিটি",
-    "created": "তৈরি করা হয়েছে"
+    "created": "তৈরি করা হয়েছে",
+    "lightboxLabel": "ছবির প্রিভিউ"
   },
   "errors": {
     "generic": "একটি ত্রুটি ঘটেছে",
@@ -1389,7 +1441,9 @@
       "hide": "ব্যবহারকারীদের থেকে লুকান",
       "show": "ব্যবহারকারীদের দেখান",
       "star": "{{name}}-কে তারকা দিন",
-      "unstar": "{{name}} থেকে তারকা সরান"
+      "unstar": "{{name}} থেকে তারকা সরান",
+      "filterLabel": "মডেল ফিল্টার করুন",
+      "displayName": "{{name}} এর প্রদর্শন নাম"
     },
     "pull": {
       "placeholder": "মডেলের নাম লিখুন (যেমন llama3.2:3b, deepseek-r1:14b)",
@@ -1550,7 +1604,10 @@
     "deleteConfirm": "আপনি কি \"{{name}}\" মুছতে চান?",
     "deleteSuccess": "পার্সোনা \"{{name}}\" সফলভাবে মোছা হয়েছে",
     "downloadSuccess": "পার্সোনা \"{{name}}\" সফলভাবে ডাউনলোড হয়েছে",
-    "failed": "পার্সোনা {{action}} করতে ব্যর্থ"
+    "failed": "পার্সোনা {{action}} করতে ব্যর্থ",
+    "loadFailed": "আপনার পার্সোনাগুলো লোড করা যায়নি।",
+    "deleteFailed": "পার্সোনা মুছতে ব্যর্থ হয়েছে",
+    "downloadFailed": "পার্সোনা ডাউনলোড করতে ব্যর্থ হয়েছে"
   },
   "personaForm": {
     "title": {
@@ -1682,7 +1739,8 @@
       "promptHint": "এই পার্সোনার সঙ্গে প্রতিটি নতুন চ্যাট যে প্রম্পট দিয়ে শুরু হবে।",
       "noPrompt": "কোনো প্রম্পট নেই",
       "version": "সংযুক্তির সংশোধন {{version}}"
-    }
+    },
+    "sections": "পার্সোনার বিভাগ"
   },
   "personaCard": {
     "enhanced": "উন্নত",
@@ -1699,7 +1757,16 @@
     "backupSuccess": "পার্সোনা ব্যাকআপ সফলভাবে ডাউনলোড হয়েছে",
     "dnaSuccess": "পার্সোনা DNA সফলভাবে এক্সপোর্ট হয়েছে",
     "failed": "{{action}} করতে ব্যর্থ",
-    "shareTooltip": "এই পারসোনা শেয়ার করুন"
+    "shareTooltip": "এই পারসোনা শেয়ার করুন",
+    "wipeFailed": "স্মৃতি মুছতে ব্যর্থ হয়েছে",
+    "backupFailed": "পার্সোনার ব্যাকআপ নিতে ব্যর্থ হয়েছে",
+    "exportDnaFailed": "পার্সোনা DNA এক্সপোর্ট করতে ব্যর্থ হয়েছে",
+    "favorite": "প্রিয়",
+    "memoryStatus": {
+      "active": "সক্রিয়",
+      "wiped": "মুছে ফেলা",
+      "backed_up": "ব্যাকআপ নেওয়া"
+    }
   },
   "userManager": {
     "title": "ব্যবহারকারী ব্যবস্থাপনা",
@@ -1865,7 +1932,28 @@
       "memberOf": "গ্রুপ",
       "featuresLabel": "ফিচার অ্যাক্সেস",
       "grantsLabel": "অনুমোদন",
-      "grantVia": "মাধ্যমে"
+      "grantVia": "মাধ্যমে",
+      "deleteConfirmTitle": "গ্রুপ “{{name}}” মুছবেন?",
+      "deleteConfirmDescription": "যে অ্যাক্সেস সদস্যরা শুধু এই গ্রুপের মাধ্যমে পেয়েছিলেন তা হারাবেন। অ্যাকাউন্টগুলো মুছবে না।",
+      "statuses": {
+        "active": "সক্রিয়",
+        "pending": "অনুমোদনের অপেক্ষায়"
+      },
+      "features": {
+        "work": "কাজ",
+        "model-download": "মডেল ডাউনলোড",
+        "web-search": "ওয়েব অনুসন্ধান",
+        "strands": "Strands ইঞ্জিন",
+        "tools": "টুল",
+        "stt": "স্পিচ টু টেক্সট",
+        "tts": "টেক্সট টু স্পিচ",
+        "voice-mode": "ভয়েস মোড",
+        "voice-cloning": "ভয়েস ক্লোনিং"
+      },
+      "grantViaKinds": {
+        "user": "সরাসরি অনুমতি",
+        "group": "গ্রুপ"
+      }
     },
     "audit": {
       "title": "নিরাপত্তা অডিট লগ",
@@ -2298,7 +2386,11 @@
       "harmful": "ক্ষতিকর",
       "formatting": "বিন্যাস"
     },
-    "feedbackComment": "মন্তব্য যোগ করুন…"
+    "feedbackComment": "মন্তব্য যোগ করুন…",
+    "user": "ব্যবহারকারী",
+    "feedbackFailed": "আপনার মতামত সংরক্ষণ করা যায়নি",
+    "openImage": "ছবি {{number}} খুলুন",
+    "uploadedImageAlt": "আপলোড করা ছবি {{number}}"
   },
   "imageGallery": {
     "title": "ইমেজ গ্যালারি",
@@ -2387,7 +2479,10 @@
       "image": "ছবি",
       "video": "ভিডিও",
       "audio": "অডিও"
-    }
+    },
+    "deleteConfirmTitle": "এই আইটেমটি মুছবেন?",
+    "deleteConfirmDescription": "তৈরি করা মিডিয়া স্থায়ীভাবে মুছে যাবে।",
+    "previewFailed": "প্রিভিউ পাওয়া যাচ্ছে না"
   },
   "errorBoundary": {
     "title": "কিছু ভুল হয়েছে",
@@ -2463,7 +2558,8 @@
     "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source.",
     "versionOf": "সংস্করণ {{current}} / {{total}}",
     "previousVersion": "পূর্ববর্তী সংস্করণ",
-    "nextVersion": "পরবর্তী সংস্করণ"
+    "nextVersion": "পরবর্তী সংস্করণ",
+    "resizePanel": "প্যানেলের আকার পরিবর্তন করুন"
   },
   "personaImportExport": {
     "title": "পার্সোনা ইম্পোর্ট এবং এক্সপোর্ট",
@@ -2501,7 +2597,10 @@
     "generation": "জেনারেশন:",
     "modelLoad": "মডেল লোড:",
     "totalTime": "মোট সময়:",
-    "generatedAt": "তৈরির সময়:"
+    "generatedAt": "তৈরির সময়:",
+    "notAvailable": "প্রযোজ্য নয়",
+    "tokenCount": "{{tokens}} টোকেন",
+    "tokensPerSecond": "{{value}} টোকেন/সে."
   },
   "userMenu": {
     "loggedOut": "সফলভাবে লগ আউট হয়েছে",
@@ -2560,7 +2659,9 @@
       "httpWarning": "HTTP ক্রেডেনশিয়াল বা ট্রাফিক এনক্রিপ্ট করে না। এটি শুধুমাত্র একটি বিশ্বস্ত নেটওয়ার্কে ব্যবহার করুন।",
       "invalidBaseUrl": "বেস URL-এ কোনো কোয়েরি স্ট্রিং বা ফ্র্যাগমেন্ট থাকতে পারে না।",
       "invalidApiPath": "অবশ্যই / দিয়ে শুরু হতে হবে এবং কোনো URL, কোয়েরি, ফ্র্যাগমেন্ট বা .. সেগমেন্ট থাকতে পারবে না",
-      "tooLong": "মানটি অনেক বেশি দীর্ঘ"
+      "tooLong": "মানটি অনেক বেশি দীর্ঘ",
+      "resetConfirmTitle": "ডিফল্টে ফিরিয়ে আনবেন?",
+      "resetConfirmDescription": "এতে {{name}} এর সব সংরক্ষিত মান মুছে যাবে, API কী ও অন্যান্য ক্রেডেনশিয়াল সহ। এটি পূর্বাবস্থায় ফেরানো যাবে না।"
     }
   },
   "huggingface": {
@@ -2580,7 +2681,10 @@
   },
   "demoMode": {
     "title": "ডেমো মোড",
-    "github": "GitHub"
+    "github": "GitHub",
+    "defaultMessage": "এটি শুধু উপস্থাপনার জন্য একটি ডেমো সংস্করণ। Ollama ব্যাকএন্ড সংযুক্ত নেই।",
+    "viewOnGithub": "GitHub-এ দেখুন",
+    "dismiss": "খারিজ করুন"
   },
   "work": {
     "title": "কাজ",
@@ -2671,8 +2775,18 @@
         "checksPending": "অমীমাংসিত যাচাই",
         "stallNudges": "স্থবিরতা সংকেত",
         "ambiguityNudges": "পুনঃনির্ধারণ সংকেত",
-        "stoppedBy": "বন্ধ হওয়ার কারণ"
-      }
+        "stoppedBy": "বন্ধ হওয়ার কারণ",
+        "reasons": {
+          "round": "রাউন্ড সীমা",
+          "toolCall": "টুল কল সীমা",
+          "approvalTimeout": "অনুমোদনের সময় শেষ",
+          "computerStall": "কম্পিউটার আটকে গেছে"
+        }
+      },
+      "skillTraceSavedWorked": "নোট করা হয়েছে: কাজ করেছে",
+      "skillTraceSavedFailed": "নোট করা হয়েছে: ব্যর্থ হয়েছে",
+      "connectionClosed": "লাইভ Work সংযোগ বন্ধ হয়ে গেছে।",
+      "reconnectingBackground": "লাইভ আপডেট ব্যাকগ্রাউন্ডে আবার সংযুক্ত হচ্ছে।"
     },
     "runtime": {
       "unavailable": "রানটাইম পাওয়া যাচ্ছে না",
@@ -2715,7 +2829,11 @@
       "changes": "পরিবর্তনসমূহ",
       "changesSince": "গত পালার পর থেকে কী পরিবর্তিত হয়েছে",
       "diffLabel": "গত পালার পর থেকে পরিবর্তন: {{path}}",
-      "diffFolded": "{{count}}টি অপরিবর্তিত লাইন"
+      "diffFolded": "{{count}}টি অপরিবর্তিত লাইন",
+      "diffAdded": "যোগ করা হয়েছে",
+      "diffRemoved": "সরানো হয়েছে",
+      "unsavedChanges": "অসংরক্ষিত পরিবর্তন",
+      "editingLocked": "টার্ন শেষ হলে সম্পাদনা চালু হবে।"
     },
     "activity": {
       "empty": "কমান্ড, ফাইল অপারেশন ও টুলের ফলাফল এখানে দেখা যাবে।",
@@ -2726,7 +2844,9 @@
         "toolCall": "টুল কল",
         "toolResult": "টুলের ফলাফল",
         "error": "ত্রুটি"
-      }
+      },
+      "arguments": "টুলের আর্গুমেন্ট",
+      "output": "টুলের আউটপুট"
     },
     "preview": {
       "command": "ঐচ্ছিক স্টার্ট কমান্ড",
@@ -2755,7 +2875,8 @@
       "saveFailed": "এই ফাইল সংরক্ষণ করা যায়নি।",
       "saved": "ফাইল সংরক্ষণ করা হয়েছে।",
       "previewFailed": "প্রিভিউ শুরু করা যায়নি।",
-      "previewStopFailed": "প্রিভিউ থামানো যায়নি।"
+      "previewStopFailed": "প্রিভিউ থামানো যায়নি।",
+      "sendFailed": "বার্তাটি পাঠানো যায়নি।"
     },
     "terminal": {
       "connecting": "স্যান্ডবক্সে একটি শেল খোলা হচ্ছে…",
@@ -2807,7 +2928,18 @@
       "noFilterMatches": "এই ফিল্টারের সাথে মেলে এমন কোনো পরিবর্তিত ফাইল নেই।",
       "allChanges": "সব পরিবর্তন",
       "diffTruncated": "এই ডিফটি সংক্ষিপ্ত করা হয়েছে।",
-      "binaryFile": "বাইনারি ফাইল, কোনো টেক্সট ডিফ নেই।"
+      "binaryFile": "বাইনারি ফাইল, কোনো টেক্সট ডিফ নেই।",
+      "statusLabels": {
+        "modified": "পরিবর্তিত",
+        "added": "যোগ করা হয়েছে",
+        "deleted": "মুছে ফেলা হয়েছে",
+        "renamed": "নাম পরিবর্তিত",
+        "copied": "কপি করা হয়েছে",
+        "typeChanged": "টাইপ পরিবর্তিত",
+        "untracked": "ট্র্যাক করা নয়"
+      },
+      "stagedState": "স্টেজ করা",
+      "aheadBehind": "{{ahead}}টি এগিয়ে, {{behind}}টি পিছিয়ে"
     },
     "hostWorkspace": {
       "hint": "বিচ্ছিন্ন ওয়ার্কস্পেসের জন্য খালি রাখুন, অথবা এই মেশিনের একটি ফোল্ডারে টাস্ক নির্দেশ করুন।",
@@ -2834,7 +2966,8 @@
       "unmute": "শব্দ চালু করুন",
       "mute": "শব্দ বন্ধ করুন",
       "finished": "এই টাস্কটি শেষ। এর স্ক্রিন ফিরিয়ে আনতে এটি আবার খুলুন।",
-      "reopenOpen": "টাস্ক আবার খুলুন এবং স্ক্রিন খুলুন"
+      "reopenOpen": "টাস্ক আবার খুলুন এবং স্ক্রিন খুলুন",
+      "teachSaveFailed": "এই ডেমোনস্ট্রেশন সংরক্ষণ করা যায়নি।"
     },
     "computerSetup": {
       "title": "Work Computer",
@@ -2871,7 +3004,11 @@
       "approvalsToggleFailed": "অনুমোদনের সেটিং আপডেট করা যায়নি।",
       "approvalRuleLine": "সবসময় অনুমোদিত",
       "approvalRuleDelete": "নিয়ম সরান",
-      "approvalRuleDeleteFailed": "নিয়মটি সরানো যায়নি।"
+      "approvalRuleDeleteFailed": "নিয়মটি সরানো যায়নি।",
+      "routinesLoadFailed": "রুটিন লোড করা যায়নি।",
+      "skillsLoadFailed": "শেখানো দক্ষতা লোড করা যায়নি।",
+      "approvalsLoadFailed": "অনুমোদন সেটিংস লোড করা যায়নি।",
+      "routinePaused": "বিরতিতে"
     },
     "runs": {
       "title": "রান",
@@ -2882,7 +3019,8 @@
         "needsInput": "ইনপুট প্রয়োজন",
         "failed": "ব্যর্থ",
         "cancelled": "বাতিল"
-      }
+      },
+      "loadFailed": "রান ইতিহাস লোড করা যায়নি।"
     },
     "approval": {
       "title": "অনুমোদন দরকার",
@@ -2890,7 +3028,16 @@
       "allowOnce": "একবার অনুমতি দিন",
       "allowAlways": "সবসময় অনুমতি দিন",
       "deny": "প্রত্যাখ্যান করুন",
-      "failed": "সিদ্ধান্তটি পাঠানো যায়নি।"
+      "failed": "সিদ্ধান্তটি পাঠানো যায়নি।",
+      "details": "অ্যাকশনের বিবরণ",
+      "fields": {
+        "command": "কমান্ড",
+        "path": "পাথ",
+        "from": "থেকে",
+        "to": "প্রতি",
+        "actions": "অ্যাকশন",
+        "recursive": "রিকার্সিভ"
+      }
     },
     "idleStopHint": "{{minutes}} মিনিট কোনো কার্যকলাপ না হলে বন্ধ হয়ে যায়।",
     "recovery": {
@@ -2903,6 +3050,17 @@
       "retrySucceeded": "{{attempted}}টির মধ্যে {{cleared}}টি অমীমাংসিত ক্লিনআপ সাফ হয়েছে।",
       "retryPending": "{{attempted}}টি অমীমাংসিত ক্লিনআপে এখনও আবার চেষ্টা চলছে।",
       "retryFailed": "অমীমাংসিত ক্লিনআপগুলো আবার চেষ্টা করা যায়নি।"
+    },
+    "computer": {
+      "setupFailed": "Work Computer সেট আপ করা যায়নি।"
+    },
+    "announce": {
+      "completed": "{{title}} শেষ হয়েছে।",
+      "needsInput": "{{title}}-এর জন্য আপনার ইনপুট বা অনুমোদন প্রয়োজন।",
+      "failed": "{{title}} ব্যর্থ হয়েছে।",
+      "cancelled": "{{title}} বন্ধ করা হয়েছে।",
+      "approvalNeeded": "{{tool}} চালানোর জন্য {{title}}-এর আপনার অনুমোদন প্রয়োজন।",
+      "untitledTask": "এই টাস্কটি"
     }
   },
   "personaBackground": {
@@ -2947,7 +3105,8 @@
     "showAll": "সব দেখুন ({{total}})",
     "sources": "মডেলের উৎস",
     "defaultModel": "ডিফল্ট মডেল",
-    "contextSize": "{{size}} কনটেক্সট"
+    "contextSize": "{{size}} কনটেক্সট",
+    "via": "{{provider}} এর মাধ্যমে"
   },
   "whatsNew": {
     "title": "নতুন কী আছে",
@@ -3004,7 +3163,16 @@
     "unpin": "নোট আনপিন করুন",
     "pinned": "পিন করা",
     "export": "Markdown হিসেবে ডাউনলোড করুন",
-    "sharedWithYou": "আপনার সাথে শেয়ার করা"
+    "sharedWithYou": "আপনার সাথে শেয়ার করা",
+    "titleLabel": "নোটের শিরোনাম",
+    "loadFailed": "লোড করা যায়নি। আবার চেষ্টা করুন।",
+    "restoreConfirmTitle": "এই সংস্করণ পুনরুদ্ধার করবেন?",
+    "restoreConfirmDescription": "নোটের লেখা এই আগের সংস্করণ দিয়ে প্রতিস্থাপিত হবে।",
+    "deleteAttachmentConfirmTitle": "{{name}} মুছবেন?",
+    "deleteAttachmentConfirmDescription": "এই নোট থেকে সংযুক্তিটি স্থায়ীভাবে মুছে যাবে।",
+    "attachmentDeleteFailed": "সংযুক্তিটি মুছে ফেলা যায়নি",
+    "revokeFailed": "অ্যাক্সেস প্রত্যাহার করা যায়নি",
+    "sharePermissionLabel": "অনুমতি"
   },
   "calendar": {
     "title": "ক্যালেন্ডার",
@@ -3049,7 +3217,22 @@
     "importFailed": "ফাইল আমদানি করা যায়নি",
     "importResult": "{{total}}টি ইভেন্ট আমদানি হয়েছে",
     "importIcs": "আমদানি",
-    "exportIcs": "রপ্তানি"
+    "exportIcs": "রপ্তানি",
+    "chipStatus": {
+      "automation": "নির্ধারিত অটোমেশন",
+      "runSucceeded": "অটোমেশন সফলভাবে চলেছে",
+      "runFailed": "অটোমেশন চালানো ব্যর্থ হয়েছে"
+    },
+    "newEventOn": "{{date}} তারিখে নতুন ইভেন্ট",
+    "showDay": "{{date}} তারিখের সব ইভেন্ট দেখান",
+    "deleteEventConfirmTitle": "“{{title}}” মুছবেন?",
+    "deleteEventConfirmDescription": "এই ইভেন্টটি স্থায়ীভাবে মুছে যাবে।",
+    "deleteRecurringEventConfirmDescription": "এই পুনরাবৃত্ত ইভেন্ট ও এর সব পুনরাবৃত্তি স্থায়ীভাবে মুছে যাবে।",
+    "shareCalendarNamed": "ক্যালেন্ডার {{name}} শেয়ার করুন",
+    "deleteCalendarNamed": "ক্যালেন্ডার {{name}} মুছুন",
+    "deleteCalendarConfirmTitle": "ক্যালেন্ডার “{{name}}” মুছবেন?",
+    "deleteCalendarConfirmDescription": "ক্যালেন্ডার ও এর ইভেন্টগুলো স্থায়ীভাবে মুছে যাবে।",
+    "calendarDeleteFailed": "ক্যালেন্ডারটি মুছে ফেলা যায়নি"
   },
   "automations": {
     "title": "অটোমেশন",
@@ -3176,13 +3359,17 @@
         "work-approval": "একটি এজেন্ট আপনার অনুমোদনের অপেক্ষায় আছে",
         "system": "একটি সিস্টেম বিজ্ঞপ্তি আসে"
       }
-    }
+    },
+    "deleteConfirmTitle": "“{{name}}” মুছবেন?",
+    "deleteConfirmDescription": "অটোমেশন ও এর সময়সূচি স্থায়ীভাবে মুছে যাবে। আগের রানগুলো রান ইতিহাসে থাকবে।"
   },
   "home": {
     "active": "সক্রিয়",
     "continue": "চালিয়ে যান",
     "start": "শুরু",
-    "explore": "অন্বেষণ"
+    "explore": "অন্বেষণ",
+    "greeting": "{{greeting}}।",
+    "greetingWithName": "{{greeting}}, {{name}}।"
   },
   "palette": {
     "empty": "কোনো মিল নেই।",
@@ -3195,7 +3382,14 @@
     "work": "কাজ",
     "messages": "বার্তা",
     "notes": "নোট",
-    "documents": "নথি"
+    "documents": "নথি",
+    "searching": "অনুসন্ধান চলছে…",
+    "searchFailed": "ওয়ার্কস্পেস অনুসন্ধান ব্যর্থ হয়েছে। শুধু মিলে যাওয়া চ্যাট ও অ্যাকশন দেখানো হচ্ছে।",
+    "results": "ফলাফল",
+    "escKey": "esc",
+    "hintNavigate": "নেভিগেট করুন",
+    "hintOpen": "খুলুন",
+    "hintClose": "বন্ধ করুন"
   },
   "tabs": {
     "actions": "ট্যাব অ্যাকশন",
@@ -3399,7 +3593,8 @@
       "button": "ফোল্ডার থেকে",
       "missingSkillMd": "ফোল্ডারে একটি SKILL.md ফাইল থাকা দরকার",
       "done": "{{count}}টি সংযুক্ত ফাইলসহ দক্ষতা আমদানি হয়েছে"
-    }
+    },
+    "toggleLabel": "দক্ষতা {{name}} চালু করুন"
   },
   "toolsPage": {
     "title": "টুল",
@@ -3557,7 +3752,14 @@
     "added": "{{name}}-এর সাথে শেয়ার হয়েছে",
     "failed": "শেয়ার করা যায়নি",
     "userNotFound": "এই নামে কোনো ব্যবহারকারী নেই",
-    "groupNotFound": "এই নামে কোনো গোষ্ঠী নেই"
+    "groupNotFound": "এই নামে কোনো গোষ্ঠী নেই",
+    "principalKind": "কোনো ব্যবহারকারী বা গ্রুপের সাথে শেয়ার করুন",
+    "principalName": "ব্যবহারকারীর নাম বা গ্রুপের নাম",
+    "permission": "অনুমতি",
+    "sharing": "শেয়ারিং",
+    "loading": "শেয়ার লোড হচ্ছে",
+    "loadFailed": "শেয়ার লোড করা যায়নি",
+    "revokeFailed": "অ্যাক্সেস প্রত্যাহার করা যায়নি"
   },
   "channels": {
     "title": "চ্যানেল",
@@ -3616,13 +3818,44 @@
     "toolCalls": {
       "summary": "ব্যবহৃত টুল ({{total}})",
       "deniedHint": "যেসব টুল কিছু বদলে দেয় সেগুলো চ্যানেলে প্রত্যাখ্যাত হয়। চ্যাট থেকে সেগুলো চালান।"
-    }
+    },
+    "confirmEdit": "সম্পাদনা সংরক্ষণ করুন",
+    "cancelEdit": "সম্পাদনা বাতিল করুন",
+    "reactWith": "{{emoji}} দিয়ে প্রতিক্রিয়া জানান",
+    "deleteMessageConfirmTitle": "এই বার্তাটি মুছবেন?",
+    "deleteMessageConfirmDescription": "এই চ্যানেলের সবার জন্য বার্তাটি সরিয়ে দেওয়া হবে।",
+    "unreadCount": "{{total}}টি অপঠিত",
+    "send": "বার্তা পাঠান",
+    "invite": "সদস্যকে আমন্ত্রণ জানান",
+    "closeThread": "থ্রেড বন্ধ করুন",
+    "removeAttachment": "সংযুক্তি সরান",
+    "loadFailed": "লোড করা যায়নি। আবার চেষ্টা করুন।",
+    "editFailed": "বার্তাটি সম্পাদনা করা যায়নি",
+    "deleteMessageFailed": "বার্তাটি মুছে ফেলা যায়নি",
+    "pinFailed": "পিন পরিবর্তন করা যায়নি",
+    "reactFailed": "প্রতিক্রিয়া সংরক্ষণ করা যায়নি",
+    "downloadFailed": "ফাইলটি ডাউনলোড করা যায়নি",
+    "removeMemberConfirm": "{{name}} কে এই চ্যানেল থেকে সরাবেন?",
+    "removeMemberConfirmDescription": "তিনি চ্যানেল ও তার বার্তাগুলোর অ্যাক্সেস হারাবেন।",
+    "removeMemberNamed": "চ্যানেল থেকে {{name}} কে সরান",
+    "removeMemberFailed": "সদস্যকে সরানো যায়নি",
+    "leaveConfirm": "{{name}} ছেড়ে যাবেন?",
+    "leaveConfirmDescription": "প্রাইভেট চ্যানেলে আবার যোগ দিতে হলে আপনাকে নতুন করে আমন্ত্রণ জানাতে হবে।",
+    "leaveFailed": "চ্যানেল ছেড়ে যাওয়া যায়নি",
+    "joinFailed": "চ্যানেলে যোগ দেওয়া যায়নি",
+    "deleteConfirm": "{{name}} মুছবেন?",
+    "deleteConfirmDescription": "চ্যানেল ও তার সব বার্তা সব সদস্যের জন্য স্থায়ীভাবে মুছে যাবে।",
+    "deleteFailed": "চ্যানেলটি মুছে ফেলা যায়নি",
+    "saveFailed": "চ্যানেলটি সংরক্ষণ করা যায়নি"
   },
   "notifications": {
     "title": "বিজ্ঞপ্তি",
     "empty": "সব পড়া হয়ে গেছে।",
     "markAllRead": "সব পঠিত হিসেবে চিহ্নিত করুন",
-    "markRead": "পঠিত হিসেবে চিহ্নিত করুন"
+    "markRead": "পঠিত হিসেবে চিহ্নিত করুন",
+    "titleWithUnread": "বিজ্ঞপ্তি ({{unread}}টি অপঠিত)",
+    "unread": "অপঠিত",
+    "loadFailed": "বিজ্ঞপ্তি লোড করা যায়নি।"
   },
   "voiceMode": {
     "title": "ভয়েস মোড",
@@ -3757,7 +3990,12 @@
       "failed": "ব্যর্থ",
       "cancelled": "বাতিল"
     },
-    "noFeedback": "এখনও কোনো প্রতিক্রিয়া নেই — ডেটাসেট গড়তে উত্তরগুলিকে রেট করুন।"
+    "noFeedback": "এখনও কোনো প্রতিক্রিয়া নেই — ডেটাসেট গড়তে উত্তরগুলিকে রেট করুন।",
+    "deleteSetConfirmTitle": "“{{name}}” মুছবেন?",
+    "deleteSetConfirmDescription": "মূল্যায়ন সেট ও এর প্রম্পটগুলো স্থায়ীভাবে মুছে যাবে।",
+    "deleteSetFailed": "মূল্যায়ন সেট মুছে ফেলা যায়নি",
+    "runError": "ত্রুটি: {{detail}}",
+    "cancelFailed": "রানটি বাতিল করা যায়নি"
   },
   "passwordStrength": {
     "levels": {
@@ -3771,6 +4009,14 @@
       "hasCase": "বড় ও ছোট হাতের অক্ষর",
       "hasNumber": "কমপক্ষে একটি সংখ্যা",
       "tooLong": "সর্বোচ্চ ৭২ বাইট"
+    },
+    "requirements": "কমপক্ষে ১২টি অক্ষর ব্যবহার করুন, ৭২ UTF-8 বাইটের বেশি নয়, বড় হাতের ও ছোট হাতের অক্ষর এবং একটি সংখ্যা সহ।",
+    "errors": {
+      "minLength": "পাসওয়ার্ড কমপক্ষে ১২ অক্ষরের হতে হবে।",
+      "tooLong": "পাসওয়ার্ড ৭২ UTF-8 বাইটের বেশি হতে পারবে না।",
+      "uppercase": "পাসওয়ার্ডে একটি বড় হাতের অক্ষর থাকতে হবে।",
+      "lowercase": "পাসওয়ার্ডে একটি ছোট হাতের অক্ষর থাকতে হবে।",
+      "number": "পাসওয়ার্ডে একটি সংখ্যা থাকতে হবে।"
     }
   },
   "connectModels": {
@@ -3804,7 +4050,8 @@
       "enable": "প্রোভাইডার সক্রিয় করুন",
       "enabling": "সক্রিয় করা হচ্ছে…",
       "enabled": "{{name}} সংযুক্ত হয়েছে — এর মডেলগুলো এখন উপলব্ধ",
-      "enableFailed": "প্রোভাইডার সক্রিয় করা যায়নি"
+      "enableFailed": "প্রোভাইডার সক্রিয় করা যায়নি",
+      "urlLabel": "সার্ভার URL"
     },
     "cloud": {
       "title": "ক্লাউড API",
@@ -3813,7 +4060,8 @@
       "connect": "সংযুক্ত করুন",
       "connecting": "সংযুক্ত করা হচ্ছে…",
       "connected": "{{name}} সংযুক্ত হয়েছে — এর মডেলগুলো এখন উপলব্ধ",
-      "saveFailed": "API কী সংরক্ষণ করা যায়নি"
+      "saveFailed": "API কী সংরক্ষণ করা যায়নি",
+      "keyLabel": "{{name}} API কী"
     }
   },
   "strands": {
@@ -3845,5 +4093,15 @@
     "deleteFailed": "সেশন মুছে ফেলা যায়নি।",
     "saveFailed": "সেশন সংরক্ষণ করা যায়নি।",
     "turnFailed": "ইঞ্জিন পালা সম্পূর্ণ করতে পারেনি"
+  },
+  "notFound": {
+    "title": "পেজ পাওয়া যায়নি",
+    "description": "এই পেজটি নেই অথবা সরানো হয়ে থাকতে পারে।"
+  },
+  "themeToggle": {
+    "switchToLight": "লাইট মোডে যান",
+    "switchToDark": "ডার্ক মোডে যান",
+    "switchToAmoled": "পিউর ব্ল্যাক মোডে যান",
+    "switchToCelestial": "আকাশ মোডে যান"
   }
 }

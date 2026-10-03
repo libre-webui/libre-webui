@@ -277,9 +277,8 @@ export const TTSButton: React.FC<TTSButtonProps> = ({
         setPlaybackState('blocked');
         return;
       }
-      const errorMessage =
-        err instanceof Error ? err.message : t('ttsButton.generateFailed');
-      setError(errorMessage);
+      // Raw server/browser messages are not translated; log them, show ours.
+      setError(t('ttsButton.generateFailed'));
       logger.error('TTS error:', err);
       setPlaybackState('error');
     }

@@ -148,6 +148,7 @@ function WorkAvatar({
   persona,
   size = 'message',
 }: WorkAvatarProps) {
+  const { t } = useTranslation();
   const [failedAvatar, setFailedAvatar] = useState<string | null>(null);
 
   if (role === 'assistant') {
@@ -187,7 +188,7 @@ function WorkAvatar({
     );
   }
 
-  const label = user?.username || 'User';
+  const label = user?.username || t('chatMessage.you');
   const avatar = user?.avatar?.trim() || '';
   const hasAvatar = Boolean(avatar) && avatar !== failedAvatar;
 
@@ -609,10 +610,11 @@ export function WorkConversation({
                       persona={isUserMessage ? undefined : taskPersona}
                     />
                     <div
+                      data-user-bubble={isUserMessage ? '' : undefined}
                       className={cn(
                         'min-w-0 max-w-[88%]',
                         isUserMessage &&
-                          'rounded-2xl rounded-se-md bg-ink px-4 py-2.5 text-ink-inverse'
+                          'rounded-2xl rounded-se-md border border-line bg-surface-subtle px-4 py-2.5 text-ink'
                       )}
                     >
                       {isUserMessage ? (
@@ -620,7 +622,7 @@ export function WorkConversation({
                           {(delegatedBy || reportFrom) && (
                             <p
                               data-testid='work-delegation-label'
-                              className='mb-1 text-[11px] font-medium uppercase tracking-wide opacity-70'
+                              className='mb-1 text-[11px] font-medium uppercase tracking-wide opacity-70 rtl:tracking-normal'
                             >
                               {delegatedBy
                                 ? t('work.conversation.delegatedBy', {

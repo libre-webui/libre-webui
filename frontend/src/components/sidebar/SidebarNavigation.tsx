@@ -122,7 +122,7 @@ export function SidebarNavigation({
               {path === '/automations' && unseenRunCount > 0 && (
                 <span
                   data-testid='automations-unseen-badge'
-                  className='absolute -end-0.5 -top-0.5 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-primary-500 px-0.5 text-[9px] font-semibold leading-none text-white'
+                  className='absolute -end-0.5 -top-0.5 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-primary-600 px-0.5 text-[9px] font-semibold leading-none text-white'
                 >
                   {unseenRunCount > 9 ? '9+' : unseenRunCount}
                 </span>

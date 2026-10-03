@@ -41,7 +41,8 @@
     "remove": "Xóa",
     "home": "Trang chủ",
     "more": "Nhiều",
-    "reasoning": "Lý luận"
+    "reasoning": "Lý luận",
+    "skipToContent": "Chuyển đến nội dung"
   },
   "brand": {
     "name": "Libre WebUI",
@@ -49,7 +50,10 @@
   },
   "appInitialization": {
     "ollamaUnavailable": "Dịch vụ Ollama không khả dụng. Vẫn có thể sử dụng các mô hình plugin.",
-    "backendConnectionFailed": "Không thể kết nối với dịch vụ backend"
+    "backendConnectionFailed": "Không thể kết nối với dịch vụ backend",
+    "connecting": "Đang kết nối tới backend… ({{attempt}}/{{total}})",
+    "startingUp": "Đang khởi động…",
+    "backendUnreachableHint": "Hãy đảm bảo backend đang chạy, rồi thử lại."
   },
   "auth": {
     "login": {
@@ -189,7 +193,15 @@
       "removed": "Đã xóa khóa truy cập.",
       "removeFailed": "Không thể xóa khóa truy cập.",
       "signInButton": "Đăng nhập bằng khóa truy cập",
-      "signInFailed": "Đăng nhập bằng khóa truy cập thất bại."
+      "signInFailed": "Đăng nhập bằng khóa truy cập thất bại.",
+      "removeConfirmTitle": "Xóa khóa truy cập này?",
+      "removeConfirmDescription": "\"{{name}}\" sẽ không dùng để đăng nhập được nữa. Bạn có thể đăng ký lại sau."
+    },
+    "password": {
+      "show": "Hiện mật khẩu",
+      "hide": "Ẩn mật khẩu",
+      "showConfirmation": "Hiện mật khẩu xác nhận",
+      "hideConfirmation": "Ẩn mật khẩu xác nhận"
     }
   },
   "setup": {
@@ -242,7 +254,8 @@
       "envNote": "Khóa này cũng được lưu trong tệp backend/.env của bạn dưới dạng ENCRYPTION_KEY",
       "acknowledgment": "Tôi đã lưu khóa mã hóa của tôi ở nơi an toàn và hiểu rằng việc mất nó có thể dẫn đến mất dữ liệu.",
       "confirmRequired": "Vui lòng xác nhận rằng bạn đã lưu khóa mã hóa",
-      "continue": "Tiếp tục đến Libre WebUI"
+      "continue": "Tiếp tục đến Libre WebUI",
+      "loadFailed": "Không thể tải khóa mã hóa. Hãy thử lại để tiếp tục."
     },
     "connectModels": {
       "title": "Kết nối mô hình của bạn",
@@ -336,7 +349,8 @@
       "toolsOn": "Công cụ đang bật — mô hình có thể gọi các công cụ đã được phê duyệt",
       "toolsOff": "Cho phép mô hình gọi công cụ trong tin nhắn này",
       "thinkingOn": "Suy luận đang bật ({{level}})",
-      "thinkingOff": "Suy luận trước khi trả lời"
+      "thinkingOff": "Suy luận trước khi trả lời",
+      "thinkingUpdateFailed": "Không thể cập nhật cài đặt suy luận"
     },
     "session": {
       "new": "Cuộc trò chuyện mới",
@@ -372,7 +386,8 @@
         "move": "Chuyển vào thư mục",
         "remove": "Gỡ khỏi thư mục",
         "delete": "Xóa thư mục",
-        "deleteConfirm": "Xóa thư mục này? Các cuộc trò chuyện bên trong vẫn giữ nguyên."
+        "deleteConfirm": "Xóa thư mục này? Các cuộc trò chuyện bên trong vẫn giữ nguyên.",
+        "rename": "Đổi tên thư mục"
       },
       "shareChat": "Chia sẻ cuộc trò chuyện…"
     },
@@ -405,7 +420,13 @@
       "browse": "duyệt",
       "unsupportedFileType": "Loại tệp không được hỗ trợ: {{name}}",
       "maxImagesAllowed": "Cho phép tối đa {{count}} hình ảnh",
-      "imageTooLarge": "Hình ảnh {{name}} quá lớn (tối đa 10MB)"
+      "imageTooLarge": "Hình ảnh {{name}} quá lớn (tối đa 10MB)",
+      "readFailed": "Không thể đọc {{name}}",
+      "uploadAlt": "Tải lên {{number}}",
+      "removeImage": "Xóa hình ảnh {{number}}",
+      "addMore": "Thêm hình ảnh ({{count}}/{{max}})",
+      "uploading": "Đang tải lên",
+      "removeDocument": "Xóa {{name}}"
     },
     "structuredOutput": {
       "title": "Định dạng phản hồi",
@@ -456,7 +477,8 @@
       "compactionOff": "Tắt cho cuộc trò chuyện này"
     },
     "message": {
-      "sources": "Nguồn"
+      "sources": "Nguồn",
+      "copyFailed": "Không thể sao chép vào bộ nhớ tạm"
     },
     "toasts": {
       "chatCreated": "Đã tạo cuộc trò chuyện mới",
@@ -491,7 +513,8 @@
       "branchSwitched": "Đã chuyển sang biến thể {{number}}",
       "branchSelectFailed": "Không thể chọn nhánh",
       "editFailed": "Không thể chỉnh sửa tin nhắn",
-      "toolDecisionFailed": "Không thể ghi lại quyết định của công cụ"
+      "toolDecisionFailed": "Không thể ghi lại quyết định của công cụ",
+      "archiveFailed": "Không thể lưu trữ cuộc trò chuyện này"
     },
     "documents": {
       "title": "Tài liệu trong ngữ cảnh"
@@ -521,7 +544,25 @@
       "origin": "Tách nhánh từ {{title}}",
       "originUnknown": "cuộc trò chuyện khác"
     },
-    "sharedReadOnly": "Được {{owner}} chia sẻ — chỉ xem"
+    "sharedReadOnly": "Được {{owner}} chia sẻ — chỉ xem",
+    "branch": {
+      "variants": "{{count}} biến thể",
+      "variants_plural": "{{count}} biến thể",
+      "selectVariant": "Chọn biến thể {{number}}",
+      "generating": "đang tạo...",
+      "select": "chọn"
+    },
+    "sources": {
+      "fullContextFailed": "Không thể cập nhật cài đặt tài liệu đầy đủ",
+      "usedByRetrieval": "Được dùng trong câu trả lời",
+      "triggerLabel": "Nguồn ({{count}})"
+    },
+    "announce": {
+      "replyFinished": "{{name}} đã trả lời: {{text}}",
+      "replyFinishedNoText": "{{name}} đã trả lời xong.",
+      "codeBlock": "khối mã",
+      "generationStopped": "Đã dừng tạo"
+    }
   },
   "sidebar": {
     "navigation": {
@@ -546,7 +587,8 @@
       "strands": "Strands"
     },
     "toggleSize": "Chuyển đổi kích thước thanh bên",
-    "expandSidebar": "Mở rộng thanh bên"
+    "expandSidebar": "Mở rộng thanh bên",
+    "ariaLabel": "Thanh bên"
   },
   "user": {
     "menu": {
@@ -821,7 +863,8 @@
         "removeFailed": "Không thể xóa khóa API",
         "enterKey": "Vui lòng nhập khóa API"
       },
-      "variables": "Variables"
+      "variables": "Variables",
+      "dismissError": "Đóng lỗi"
     },
     "generation": {
       "title": "Tùy chọn tạo nội dung",
@@ -924,7 +967,8 @@
         "deleteFailed": "Không thể xóa bộ sưu tập",
         "assignFailed": "Không thể di chuyển tài liệu",
         "share": "Chia sẻ bộ sưu tập",
-        "shared": "đã chia sẻ"
+        "shared": "đã chia sẻ",
+        "assignTo": "Bộ sưu tập cho {{name}}"
       },
       "library": {
         "title": "Tài liệu đã tải lên",
@@ -1066,7 +1110,8 @@
         "title": "Cuộc trò chuyện đã lưu trữ",
         "empty": "Không có cuộc trò chuyện nào được lưu trữ",
         "unarchive": "Bỏ lưu trữ"
-      }
+      },
+      "clearAllConfirm": "Bạn có chắc muốn xóa toàn bộ lịch sử trò chuyện? Không thể hoàn tác."
     },
     "about": {
       "title": "Giới thiệu",
@@ -1186,7 +1231,11 @@
       "unknownDevice": "Thiết bị không xác định",
       "createdAt": "Đăng nhập lúc",
       "lastSeenAt": "Hoạt động gần nhất",
-      "expiresAt": "Hết hạn"
+      "expiresAt": "Hết hạn",
+      "signOutConfirmTitle": "Đăng xuất phiên này?",
+      "signOutConfirmDescription": "{{device}} sẽ bị đăng xuất ngay và phải đăng nhập lại.",
+      "signOutOthersConfirmTitle": "Đăng xuất các phiên khác?",
+      "signOutOthersConfirmDescription": "{{count}} phiên khác sẽ bị đăng xuất ngay. Phiên này vẫn đăng nhập."
     },
     "apiKeys": {
       "title": "Khóa API",
@@ -1220,7 +1269,9 @@
       "createdAt": "Đã tạo",
       "lastUsedAt": "Dùng lần cuối",
       "expiresAt": "Hết hạn",
-      "neverExpires": "Không bao giờ"
+      "neverExpires": "Không bao giờ",
+      "revokeConfirmTitle": "Thu hồi \"{{name}}\"?",
+      "revokeConfirmDescription": "Mọi thứ dùng khóa API này sẽ ngừng hoạt động ngay lập tức. Không thể hoàn tác."
     },
     "notifications": {
       "title": "Thông báo",
@@ -1294,7 +1345,8 @@
     "model": "Mô hình",
     "size": "Kích thước",
     "quality": "Chất lượng",
-    "created": "Đã tạo"
+    "created": "Đã tạo",
+    "lightboxLabel": "Xem trước hình ảnh"
   },
   "errors": {
     "generic": "Đã xảy ra lỗi",
@@ -1389,7 +1441,9 @@
       "hide": "Ẩn với người dùng",
       "show": "Hiện với người dùng",
       "star": "Gắn sao cho {{name}}",
-      "unstar": "Bỏ sao khỏi {{name}}"
+      "unstar": "Bỏ sao khỏi {{name}}",
+      "filterLabel": "Lọc mô hình",
+      "displayName": "Tên hiển thị cho {{name}}"
     },
     "pull": {
       "placeholder": "Nhập tên mô hình (vd: llama3.2:3b, deepseek-r1:14b)",
@@ -1550,7 +1604,10 @@
     "deleteConfirm": "Bạn có chắc chắn muốn xóa \"{{name}}\"?",
     "deleteSuccess": "Đã xóa persona \"{{name}}\" thành công",
     "downloadSuccess": "Đã tải xuống persona \"{{name}}\" thành công",
-    "failed": "Không thể {{action}} persona"
+    "failed": "Không thể {{action}} persona",
+    "loadFailed": "Không thể tải các persona của bạn.",
+    "deleteFailed": "Xóa persona thất bại",
+    "downloadFailed": "Tải persona xuống thất bại"
   },
   "personaForm": {
     "title": {
@@ -1682,7 +1739,8 @@
       "promptHint": "Một prompt để mở đầu mọi cuộc trò chuyện mới với persona này.",
       "noPrompt": "Không có prompt",
       "version": "Bản sửa đổi ràng buộc {{version}}"
-    }
+    },
+    "sections": "Các phần của persona"
   },
   "personaCard": {
     "enhanced": "Nâng cao",
@@ -1699,7 +1757,16 @@
     "backupSuccess": "Đã tải xuống bản sao lưu persona thành công",
     "dnaSuccess": "Đã xuất DNA persona thành công",
     "failed": "Không thể {{action}}",
-    "shareTooltip": "Chia sẻ persona này"
+    "shareTooltip": "Chia sẻ persona này",
+    "wipeFailed": "Xóa ký ức thất bại",
+    "backupFailed": "Sao lưu persona thất bại",
+    "exportDnaFailed": "Xuất DNA persona thất bại",
+    "favorite": "Yêu thích",
+    "memoryStatus": {
+      "active": "Đang hoạt động",
+      "wiped": "Đã xóa",
+      "backed_up": "Đã sao lưu"
+    }
   },
   "userManager": {
     "title": "Quản lý người dùng",
@@ -1865,7 +1932,28 @@
       "memberOf": "Nhóm",
       "featuresLabel": "Quyền truy cập tính năng",
       "grantsLabel": "Quyền được cấp",
-      "grantVia": "qua"
+      "grantVia": "qua",
+      "deleteConfirmTitle": "Xóa nhóm \"{{name}}\"?",
+      "deleteConfirmDescription": "Thành viên sẽ mất quyền truy cập mà họ chỉ có qua nhóm này. Bản thân tài khoản không bị xóa.",
+      "statuses": {
+        "active": "Đang hoạt động",
+        "pending": "Chờ phê duyệt"
+      },
+      "features": {
+        "work": "Công việc",
+        "model-download": "Tải mô hình",
+        "web-search": "Tìm kiếm web",
+        "strands": "Công cụ Strands",
+        "tools": "Công cụ",
+        "stt": "Chuyển giọng nói thành văn bản",
+        "tts": "Chuyển văn bản thành giọng nói",
+        "voice-mode": "Chế độ giọng nói",
+        "voice-cloning": "Nhân bản giọng nói"
+      },
+      "grantViaKinds": {
+        "user": "cấp trực tiếp",
+        "group": "nhóm"
+      }
     },
     "audit": {
       "title": "Nhật ký kiểm tra bảo mật",
@@ -2298,7 +2386,11 @@
       "harmful": "Có hại",
       "formatting": "Định dạng"
     },
-    "feedbackComment": "Thêm bình luận…"
+    "feedbackComment": "Thêm bình luận…",
+    "user": "Người dùng",
+    "feedbackFailed": "Không thể lưu phản hồi của bạn",
+    "openImage": "Mở hình ảnh {{number}}",
+    "uploadedImageAlt": "Hình ảnh đã tải lên {{number}}"
   },
   "imageGallery": {
     "title": "Thư viện hình ảnh",
@@ -2387,7 +2479,10 @@
       "image": "Hình ảnh",
       "video": "Video",
       "audio": "Âm thanh"
-    }
+    },
+    "deleteConfirmTitle": "Xóa mục này?",
+    "deleteConfirmDescription": "Phương tiện đã tạo sẽ bị xóa vĩnh viễn.",
+    "previewFailed": "Không có bản xem trước"
   },
   "errorBoundary": {
     "title": "Đã xảy ra lỗi",
@@ -2463,7 +2558,8 @@
     "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source.",
     "versionOf": "Phiên bản {{current}} / {{total}}",
     "previousVersion": "Phiên bản trước",
-    "nextVersion": "Phiên bản sau"
+    "nextVersion": "Phiên bản sau",
+    "resizePanel": "Đổi kích thước bảng"
   },
   "personaImportExport": {
     "title": "Nhập & Xuất Personas",
@@ -2501,7 +2597,10 @@
     "generation": "Tạo:",
     "modelLoad": "Tải mô hình:",
     "totalTime": "Tổng thời gian:",
-    "generatedAt": "Tạo lúc:"
+    "generatedAt": "Tạo lúc:",
+    "notAvailable": "Không có",
+    "tokenCount": "{{tokens}} token",
+    "tokensPerSecond": "{{value}} t/s"
   },
   "userMenu": {
     "loggedOut": "Đăng xuất thành công",
@@ -2560,7 +2659,9 @@
       "httpWarning": "HTTP không mã hóa thông tin xác thực hoặc lưu lượng truy cập. Chỉ sử dụng trên mạng đáng tin cậy.",
       "invalidBaseUrl": "URL cơ sở không được chứa chuỗi truy vấn hoặc phân đoạn.",
       "invalidApiPath": "Phải bắt đầu bằng / và không chứa URL, truy vấn, phân đoạn hoặc phân đoạn ..",
-      "tooLong": "Giá trị quá dài"
+      "tooLong": "Giá trị quá dài",
+      "resetConfirmTitle": "Đặt lại về mặc định?",
+      "resetConfirmDescription": "Thao tác này xóa mọi giá trị đã lưu của {{name}}, gồm khóa API và thông tin xác thực khác. Không thể hoàn tác."
     }
   },
   "huggingface": {
@@ -2580,7 +2681,10 @@
   },
   "demoMode": {
     "title": "Chế độ demo",
-    "github": "GitHub"
+    "github": "GitHub",
+    "defaultMessage": "Đây là bản demo chỉ dùng để trình bày. Backend Ollama chưa được kết nối.",
+    "viewOnGithub": "Xem trên GitHub",
+    "dismiss": "Đóng"
   },
   "work": {
     "title": "Công việc",
@@ -2671,8 +2775,18 @@
         "checksPending": "Kiểm tra đang chờ",
         "stallNudges": "Nhắc kẹt tiến độ",
         "ambiguityNudges": "Nhắc định hướng lại",
-        "stoppedBy": "Dừng bởi"
-      }
+        "stoppedBy": "Dừng bởi",
+        "reasons": {
+          "round": "giới hạn số vòng",
+          "toolCall": "giới hạn lệnh gọi công cụ",
+          "approvalTimeout": "hết thời gian phê duyệt",
+          "computerStall": "máy tính bị treo"
+        }
+      },
+      "skillTraceSavedWorked": "Đã ghi chú: hiệu quả",
+      "skillTraceSavedFailed": "Đã ghi chú: thất bại",
+      "connectionClosed": "Kết nối trực tiếp của Công việc đã đóng.",
+      "reconnectingBackground": "Cập nhật trực tiếp đang kết nối lại ở nền."
     },
     "runtime": {
       "unavailable": "Môi trường chạy không khả dụng",
@@ -2715,7 +2829,11 @@
       "changes": "Thay đổi",
       "changesSince": "Những gì đã thay đổi kể từ lượt trước",
       "diffLabel": "Thay đổi kể từ lượt trước: {{path}}",
-      "diffFolded": "{{count}} dòng không thay đổi"
+      "diffFolded": "{{count}} dòng không thay đổi",
+      "diffAdded": "Đã thêm",
+      "diffRemoved": "Đã xóa",
+      "unsavedChanges": "thay đổi chưa lưu",
+      "editingLocked": "Chỉnh sửa sẽ mở khóa khi lượt này kết thúc."
     },
     "activity": {
       "empty": "Lệnh, thao tác tệp và kết quả công cụ sẽ xuất hiện ở đây.",
@@ -2726,7 +2844,9 @@
         "toolCall": "Lệnh gọi công cụ",
         "toolResult": "Kết quả công cụ",
         "error": "Lỗi"
-      }
+      },
+      "arguments": "Tham số công cụ",
+      "output": "Kết quả công cụ"
     },
     "preview": {
       "command": "Lệnh khởi động không bắt buộc",
@@ -2755,7 +2875,8 @@
       "saveFailed": "Không thể lưu tệp này.",
       "saved": "Đã lưu tệp.",
       "previewFailed": "Không thể bắt đầu bản xem trước.",
-      "previewStopFailed": "Không thể dừng bản xem trước."
+      "previewStopFailed": "Không thể dừng bản xem trước.",
+      "sendFailed": "Không thể gửi tin nhắn."
     },
     "terminal": {
       "connecting": "Đang mở shell trong hộp cát…",
@@ -2807,7 +2928,18 @@
       "noFilterMatches": "Không có tệp thay đổi nào khớp với bộ lọc này.",
       "allChanges": "Tất cả thay đổi",
       "diffTruncated": "Diff này đã bị cắt bớt.",
-      "binaryFile": "Tệp nhị phân, không có diff văn bản."
+      "binaryFile": "Tệp nhị phân, không có diff văn bản.",
+      "statusLabels": {
+        "modified": "Đã sửa đổi",
+        "added": "Đã thêm",
+        "deleted": "Đã xóa",
+        "renamed": "Đã đổi tên",
+        "copied": "Đã sao chép",
+        "typeChanged": "Đã đổi kiểu",
+        "untracked": "Chưa theo dõi"
+      },
+      "stagedState": "đã stage",
+      "aheadBehind": "Trước {{ahead}}, sau {{behind}}"
     },
     "hostWorkspace": {
       "hint": "Để trống cho không gian làm việc cô lập, hoặc trỏ tác vụ tới một thư mục trên máy này.",
@@ -2834,7 +2966,8 @@
       "unmute": "Bật tiếng",
       "mute": "Tắt tiếng",
       "finished": "Tác vụ này đã kết thúc. Mở lại để lấy lại màn hình của nó.",
-      "reopenOpen": "Mở lại tác vụ và mở màn hình"
+      "reopenOpen": "Mở lại tác vụ và mở màn hình",
+      "teachSaveFailed": "Không thể lưu bản trình diễn này."
     },
     "computerSetup": {
       "title": "Work Computer",
@@ -2871,7 +3004,11 @@
       "approvalsToggleFailed": "Không thể cập nhật phê duyệt.",
       "approvalRuleLine": "Luôn được phép",
       "approvalRuleDelete": "Xóa quy tắc",
-      "approvalRuleDeleteFailed": "Không thể xóa quy tắc."
+      "approvalRuleDeleteFailed": "Không thể xóa quy tắc.",
+      "routinesLoadFailed": "Không thể tải các thói quen.",
+      "skillsLoadFailed": "Không thể tải các kỹ năng đã dạy.",
+      "approvalsLoadFailed": "Không thể tải cài đặt phê duyệt.",
+      "routinePaused": "Đã tạm dừng"
     },
     "approval": {
       "title": "Cần phê duyệt",
@@ -2879,7 +3016,16 @@
       "allowOnce": "Cho phép một lần",
       "allowAlways": "Luôn cho phép",
       "deny": "Từ chối",
-      "failed": "Không thể gửi quyết định."
+      "failed": "Không thể gửi quyết định.",
+      "details": "Chi tiết hành động",
+      "fields": {
+        "command": "Lệnh",
+        "path": "Đường dẫn",
+        "from": "Từ",
+        "to": "Đến",
+        "actions": "Hành động",
+        "recursive": "Đệ quy"
+      }
     },
     "idleStopHint": "Dừng sau {{minutes}} phút không hoạt động.",
     "runs": {
@@ -2891,7 +3037,8 @@
         "needsInput": "Cần nhập liệu",
         "failed": "Thất bại",
         "cancelled": "Đã hủy"
-      }
+      },
+      "loadFailed": "Không thể tải lịch sử chạy."
     },
     "recovery": {
       "pending": "Work đang xác nhận {{pending}} lượt dọn dẹp sandbox trước khi chấp nhận thao tác mới.",
@@ -2903,6 +3050,17 @@
       "retrySucceeded": "Đã dọn {{cleared}} trong số {{attempted}} mục đang chờ.",
       "retryPending": "Vẫn đang thử lại {{attempted}} mục dọn dẹp đang chờ.",
       "retryFailed": "Không thể thử lại các mục dọn dẹp đang chờ."
+    },
+    "computer": {
+      "setupFailed": "Không thể thiết lập Máy tính Công việc."
+    },
+    "announce": {
+      "completed": "{{title}} đã hoàn tất.",
+      "needsInput": "{{title}} cần nhập liệu hoặc phê duyệt của bạn.",
+      "failed": "{{title}} đã thất bại.",
+      "cancelled": "{{title}} đã bị dừng.",
+      "approvalNeeded": "{{title}} cần bạn phê duyệt để chạy {{tool}}.",
+      "untitledTask": "Tác vụ này"
     }
   },
   "personaBackground": {
@@ -2947,7 +3105,8 @@
     "showAll": "Hiện tất cả ({{total}})",
     "sources": "Nguồn mô hình",
     "defaultModel": "Mô hình mặc định",
-    "contextSize": "ngữ cảnh {{size}}"
+    "contextSize": "ngữ cảnh {{size}}",
+    "via": "qua {{provider}}"
   },
   "whatsNew": {
     "title": "Có gì mới",
@@ -3004,7 +3163,16 @@
     "unpin": "Bỏ ghim ghi chú",
     "pinned": "Đã ghim",
     "export": "Tải xuống dạng Markdown",
-    "sharedWithYou": "Được chia sẻ với bạn"
+    "sharedWithYou": "Được chia sẻ với bạn",
+    "titleLabel": "Tiêu đề ghi chú",
+    "loadFailed": "Không thể tải. Hãy thử lại.",
+    "restoreConfirmTitle": "Khôi phục phiên bản này?",
+    "restoreConfirmDescription": "Nội dung ghi chú sẽ được thay bằng phiên bản cũ hơn này.",
+    "deleteAttachmentConfirmTitle": "Xóa {{name}}?",
+    "deleteAttachmentConfirmDescription": "Tệp đính kèm sẽ bị xóa vĩnh viễn khỏi ghi chú này.",
+    "attachmentDeleteFailed": "Không thể xóa tệp đính kèm",
+    "revokeFailed": "Không thể thu hồi quyền truy cập",
+    "sharePermissionLabel": "Quyền"
   },
   "calendar": {
     "title": "Lịch",
@@ -3049,7 +3217,22 @@
     "importFailed": "Không thể nhập tệp",
     "importResult": "Đã nhập {{total}} sự kiện",
     "importIcs": "Nhập",
-    "exportIcs": "Xuất"
+    "exportIcs": "Xuất",
+    "chipStatus": {
+      "automation": "Tự động hóa theo lịch",
+      "runSucceeded": "Lần chạy tự động hóa thành công",
+      "runFailed": "Lần chạy tự động hóa thất bại"
+    },
+    "newEventOn": "Sự kiện mới vào {{date}}",
+    "showDay": "Hiện tất cả sự kiện vào {{date}}",
+    "deleteEventConfirmTitle": "Xóa \"{{title}}\"?",
+    "deleteEventConfirmDescription": "Sự kiện này sẽ bị xóa vĩnh viễn.",
+    "deleteRecurringEventConfirmDescription": "Sự kiện lặp lại này và tất cả lần lặp sẽ bị xóa vĩnh viễn.",
+    "shareCalendarNamed": "Chia sẻ lịch {{name}}",
+    "deleteCalendarNamed": "Xóa lịch {{name}}",
+    "deleteCalendarConfirmTitle": "Xóa lịch \"{{name}}\"?",
+    "deleteCalendarConfirmDescription": "Lịch và các sự kiện trong lịch sẽ bị xóa vĩnh viễn.",
+    "calendarDeleteFailed": "Không thể xóa lịch"
   },
   "automations": {
     "title": "Tự động hóa",
@@ -3176,13 +3359,17 @@
         "work-approval": "một tác nhân đang chờ bạn phê duyệt",
         "system": "có thông báo hệ thống"
       }
-    }
+    },
+    "deleteConfirmTitle": "Xóa \"{{name}}\"?",
+    "deleteConfirmDescription": "Tự động hóa và lịch chạy của nó sẽ bị xóa vĩnh viễn. Các lần chạy trước vẫn còn trong lịch sử chạy."
   },
   "home": {
     "active": "đang hoạt động",
     "continue": "Tiếp tục",
     "start": "Bắt đầu",
-    "explore": "Khám phá"
+    "explore": "Khám phá",
+    "greeting": "{{greeting}}.",
+    "greetingWithName": "{{greeting}}, {{name}}."
   },
   "palette": {
     "empty": "Không có kết quả.",
@@ -3195,7 +3382,14 @@
     "work": "Công việc",
     "messages": "Tin nhắn",
     "notes": "Ghi chú",
-    "documents": "Tài liệu"
+    "documents": "Tài liệu",
+    "searching": "Đang tìm kiếm…",
+    "searchFailed": "Tìm kiếm không gian làm việc thất bại. Chỉ hiện các cuộc trò chuyện và hành động khớp.",
+    "results": "Kết quả",
+    "escKey": "esc",
+    "hintNavigate": "Di chuyển",
+    "hintOpen": "Mở",
+    "hintClose": "Đóng"
   },
   "tabs": {
     "actions": "Hành động thẻ",
@@ -3399,7 +3593,8 @@
       "button": "Từ thư mục",
       "missingSkillMd": "Thư mục cần có tệp SKILL.md",
       "done": "Đã nhập kỹ năng với {{count}} tệp đi kèm"
-    }
+    },
+    "toggleLabel": "Bật kỹ năng {{name}}"
   },
   "toolsPage": {
     "title": "Công cụ",
@@ -3557,7 +3752,14 @@
     "added": "Đã chia sẻ với {{name}}",
     "failed": "Chia sẻ thất bại",
     "userNotFound": "Không có người dùng nào với tên đó",
-    "groupNotFound": "Không có nhóm nào với tên đó"
+    "groupNotFound": "Không có nhóm nào với tên đó",
+    "principalKind": "Chia sẻ với người dùng hoặc nhóm",
+    "principalName": "Tên người dùng hoặc tên nhóm",
+    "permission": "Quyền",
+    "sharing": "Chia sẻ",
+    "loading": "Đang tải danh sách chia sẻ",
+    "loadFailed": "Không thể tải danh sách chia sẻ",
+    "revokeFailed": "Không thể thu hồi quyền truy cập"
   },
   "channels": {
     "title": "Kênh",
@@ -3616,13 +3818,44 @@
     "toolCalls": {
       "summary": "Công cụ đã dùng ({{total}})",
       "deniedHint": "Các công cụ làm thay đổi dữ liệu bị từ chối trong kênh. Hãy chạy chúng từ một cuộc trò chuyện."
-    }
+    },
+    "confirmEdit": "Lưu chỉnh sửa",
+    "cancelEdit": "Hủy chỉnh sửa",
+    "reactWith": "Thả cảm xúc {{emoji}}",
+    "deleteMessageConfirmTitle": "Xóa tin nhắn này?",
+    "deleteMessageConfirmDescription": "Tin nhắn sẽ bị xóa với mọi người trong kênh này.",
+    "unreadCount": "{{total}} chưa đọc",
+    "send": "Gửi tin nhắn",
+    "invite": "Mời thành viên",
+    "closeThread": "Đóng chuỗi",
+    "removeAttachment": "Xóa tệp đính kèm",
+    "loadFailed": "Không thể tải. Hãy thử lại.",
+    "editFailed": "Không thể chỉnh sửa tin nhắn",
+    "deleteMessageFailed": "Không thể xóa tin nhắn",
+    "pinFailed": "Không thể thay đổi ghim",
+    "reactFailed": "Không thể lưu cảm xúc",
+    "downloadFailed": "Không thể tải tệp xuống",
+    "removeMemberConfirm": "Xóa {{name}} khỏi kênh này?",
+    "removeMemberConfirmDescription": "Họ sẽ mất quyền truy cập vào kênh và các tin nhắn trong kênh.",
+    "removeMemberNamed": "Xóa {{name}} khỏi kênh",
+    "removeMemberFailed": "Không thể xóa thành viên",
+    "leaveConfirm": "Rời khỏi {{name}}?",
+    "leaveConfirmDescription": "Bạn sẽ cần được mời lại để tham gia lại kênh riêng tư.",
+    "leaveFailed": "Không thể rời khỏi kênh",
+    "joinFailed": "Không thể tham gia kênh",
+    "deleteConfirm": "Xóa {{name}}?",
+    "deleteConfirmDescription": "Kênh và toàn bộ tin nhắn trong kênh sẽ bị xóa vĩnh viễn với mọi thành viên.",
+    "deleteFailed": "Không thể xóa kênh",
+    "saveFailed": "Không thể lưu kênh"
   },
   "notifications": {
     "title": "Thông báo",
     "empty": "Bạn đã xem hết.",
     "markAllRead": "Đánh dấu tất cả đã đọc",
-    "markRead": "Đánh dấu đã đọc"
+    "markRead": "Đánh dấu đã đọc",
+    "titleWithUnread": "Thông báo ({{unread}} chưa đọc)",
+    "unread": "Chưa đọc",
+    "loadFailed": "Không thể tải thông báo."
   },
   "voiceMode": {
     "title": "Chế độ giọng nói",
@@ -3757,7 +3990,12 @@
       "failed": "Thất bại",
       "cancelled": "Đã hủy"
     },
-    "noFeedback": "Chưa có phản hồi — hãy đánh giá các câu trả lời để xây dựng tập dữ liệu."
+    "noFeedback": "Chưa có phản hồi — hãy đánh giá các câu trả lời để xây dựng tập dữ liệu.",
+    "deleteSetConfirmTitle": "Xóa \"{{name}}\"?",
+    "deleteSetConfirmDescription": "Bộ đánh giá và các prompt trong bộ sẽ bị xóa vĩnh viễn.",
+    "deleteSetFailed": "Không thể xóa bộ đánh giá",
+    "runError": "Lỗi: {{detail}}",
+    "cancelFailed": "Không thể hủy lần chạy"
   },
   "passwordStrength": {
     "levels": {
@@ -3771,6 +4009,14 @@
       "hasCase": "Chữ hoa và chữ thường",
       "hasNumber": "Ít nhất một chữ số",
       "tooLong": "Tối đa 72 byte"
+    },
+    "requirements": "Dùng ít nhất 12 ký tự, tối đa 72 byte UTF-8, gồm chữ hoa, chữ thường và một chữ số.",
+    "errors": {
+      "minLength": "Mật khẩu phải có ít nhất 12 ký tự.",
+      "tooLong": "Mật khẩu không được quá 72 byte UTF-8.",
+      "uppercase": "Mật khẩu phải có một chữ hoa.",
+      "lowercase": "Mật khẩu phải có một chữ thường.",
+      "number": "Mật khẩu phải có một chữ số."
     }
   },
   "connectModels": {
@@ -3804,7 +4050,8 @@
       "enable": "Bật nhà cung cấp",
       "enabling": "Đang bật…",
       "enabled": "{{name}} đã kết nối — các mô hình của nó hiện đã khả dụng",
-      "enableFailed": "Không thể bật nhà cung cấp"
+      "enableFailed": "Không thể bật nhà cung cấp",
+      "urlLabel": "URL máy chủ"
     },
     "cloud": {
       "title": "API đám mây",
@@ -3813,7 +4060,8 @@
       "connect": "Kết nối",
       "connecting": "Đang kết nối…",
       "connected": "{{name}} đã kết nối — các mô hình của nó hiện đã khả dụng",
-      "saveFailed": "Không thể lưu khóa API"
+      "saveFailed": "Không thể lưu khóa API",
+      "keyLabel": "Khóa API {{name}}"
     }
   },
   "strands": {
@@ -3845,5 +4093,15 @@
     "deleteFailed": "Không thể xóa phiên.",
     "saveFailed": "Không thể lưu phiên.",
     "turnFailed": "Công cụ không thể hoàn tất lượt"
+  },
+  "notFound": {
+    "title": "Không tìm thấy trang",
+    "description": "Trang này không tồn tại hoặc có thể đã được di chuyển."
+  },
+  "themeToggle": {
+    "switchToLight": "Chuyển sang chế độ sáng",
+    "switchToDark": "Chuyển sang chế độ tối",
+    "switchToAmoled": "Chuyển sang chế độ đen thuần",
+    "switchToCelestial": "Chuyển sang chế độ thiên thể"
   }
 }

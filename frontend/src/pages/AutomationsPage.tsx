@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import {
@@ -33,7 +33,13 @@ import {
   Zap,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { Button } from '@/components/ui';
+import {
+  Button,
+  EmptyState,
+  LoadingState,
+  WorkspaceToolbar,
+} from '@/components/ui';
+import { confirmAction } from '@/components/ui/confirmStore';
 import { AutomationModal } from '@/components/automations/AutomationModal';
 import { RunHistoryStrip } from '@/components/automations/RunHistoryStrip';
 import { automationsApi } from '@/utils/api';
@@ -71,6 +77,8 @@ const AutomationsPage: React.FC = () => {
     useState<Partial<AutomationPayload> | null>(null);
   const [saving, setSaving] = useState(false);
   const [menuFor, setMenuFor] = useState<string | null>(null);
+  // Only one row's menu is open at a time, so a single ref tracks it.
+  const menuWrapRef = useRef<HTMLDivElement | null>(null);
 
   const [refreshCounter, setRefreshCounter] = useState(0);
   const refresh = useCallback(
@@ -126,6 +134,47 @@ const AutomationsPage: React.FC = () => {
       .catch(() => undefined);
   }, [tab, runs.length]);
 
+  // Outside click and Escape close the menu; Escape returns focus to its trigger.
+  useEffect(() => {
+    if (!menuFor) return;
+    menuWrapRef.current
+      ?.querySelector<HTMLElement>('[role="menuitem"]')
+      ?.focus();
+    const onPointerDown = (event: MouseEvent) => {
+      if (!menuWrapRef.current?.contains(event.target as Node)) {
+        setMenuFor(null);
+      }
+    };
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return;
+      menuWrapRef.current
+        ?.querySelector<HTMLElement>('[aria-haspopup="menu"]')
+        ?.focus();
+      setMenuFor(null);
+    };
+    document.addEventListener('mousedown', onPointerDown);
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', onPointerDown);
+      document.removeEventListener('keydown', onKeyDown);
+    };
+  }, [menuFor]);
+
+  const handleMenuKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') return;
+    const items = Array.from(
+      event.currentTarget.querySelectorAll<HTMLElement>('[role="menuitem"]')
+    );
+    if (items.length === 0) return;
+    event.preventDefault();
+    const current = items.indexOf(document.activeElement as HTMLElement);
+    const next =
+      event.key === 'ArrowDown'
+        ? (current + 1) % items.length
+        : (current - 1 + items.length) % items.length;
+    items[next]?.focus();
+  };
+
   const openCreate = () => {
     setEditing(null);
     setTemplatePrefill(null);
@@ -173,7 +222,20 @@ const AutomationsPage: React.FC = () => {
     automation: Automation,
     action: 'pause' | 'resume' | 'run' | 'delete'
   ) => {
+    // Hand focus back to the row's trigger before the menu unmounts, so the
+    // confirm dialog (and keyboard users) return somewhere meaningful.
+    menuWrapRef.current
+      ?.querySelector<HTMLElement>('[aria-haspopup="menu"]')
+      ?.focus();
     setMenuFor(null);
+    if (action === 'delete') {
+      const confirmed = await confirmAction({
+        title: t('automations.deleteConfirmTitle', { name: automation.name }),
+        description: t('automations.deleteConfirmDescription'),
+        destructive: true,
+      });
+      if (!confirmed) return;
+    }
     try {
       if (action === 'pause') {
         await automationsApi.pauseAutomation(automation.id);
@@ -211,49 +273,67 @@ const AutomationsPage: React.FC = () => {
       className='flex h-full min-h-0 flex-col overflow-hidden'
       data-testid='automations-page'
     >
-      <div className='flex flex-wrap items-center justify-between gap-2 border-b border-black/[0.06] px-4 py-3 dark:border-white/[0.07]'>
-        <div className='flex items-center gap-3'>
-          <h1 className='text-sm font-semibold text-gray-900 dark:text-dark-900'>
-            {t('automations.title')}
-          </h1>
-          <div className='flex items-center rounded-xl bg-black/[0.04] p-0.5 dark:bg-white/[0.06]'>
-            {(['automations', 'runs'] as const).map(choice => (
-              <button
-                key={choice}
-                onClick={() => setTab(choice)}
-                data-testid={`automations-tab-${choice}`}
-                className={cn(
-                  'rounded-[10px] px-2.5 py-1 text-[12px] font-medium transition-colors',
-                  tab === choice
-                    ? 'bg-white text-gray-900 shadow-sm dark:bg-dark-200 dark:text-dark-900'
-                    : 'text-gray-500 hover:text-gray-800 dark:text-dark-500 dark:hover:text-dark-800'
-                )}
-              >
-                {t(`automations.tab.${choice}`)}
-              </button>
-            ))}
-          </div>
-        </div>
-        <Button
-          size='sm'
-          onClick={openCreate}
-          data-testid='automation-new'
-          className='h-7 gap-1 px-2.5 text-[12px]'
+      <WorkspaceToolbar
+        title={t('automations.title')}
+        actions={
+          <Button
+            size='sm'
+            onClick={openCreate}
+            data-testid='automation-new'
+            className='h-7 gap-1 px-2.5 text-[12px]'
+          >
+            <Plus className='h-3.5 w-3.5' />
+            {t('automations.newAutomation')}
+          </Button>
+        }
+      >
+        <div
+          role='tablist'
+          aria-label={t('automations.title')}
+          className='flex items-center rounded-xl bg-black/[0.04] p-0.5 dark:bg-white/[0.06]'
+          onKeyDown={event => {
+            if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') {
+              return;
+            }
+            // Two tabs: either arrow moves to the other one.
+            const next = tab === 'automations' ? 'runs' : 'automations';
+            event.preventDefault();
+            setTab(next);
+            document.getElementById(`automations-tab-${next}`)?.focus();
+          }}
         >
-          <Plus className='h-3.5 w-3.5' />
-          {t('automations.newAutomation')}
-        </Button>
-      </div>
-
-      <div className='scroll-region min-h-0 flex-1 overflow-y-auto px-4 py-4 scrollbar-thin'>
+          {(['automations', 'runs'] as const).map(choice => (
+            <button
+              key={choice}
+              id={`automations-tab-${choice}`}
+              type='button'
+              role='tab'
+              aria-selected={tab === choice}
+              tabIndex={tab === choice ? 0 : -1}
+              onClick={() => setTab(choice)}
+              data-testid={`automations-tab-${choice}`}
+              className={cn(
+                'rounded-[10px] px-2.5 py-1 text-[12px] font-medium transition-colors',
+                tab === choice
+                  ? 'bg-white text-gray-900 shadow-sm dark:bg-dark-200 dark:text-dark-900'
+                  : 'text-gray-500 hover:text-gray-800 dark:text-dark-500 dark:hover:text-dark-800'
+              )}
+            >
+              {t(`automations.tab.${choice}`)}
+            </button>
+          ))}
+        </div>
+      </WorkspaceToolbar>
+      <div
+        role='tabpanel'
+        aria-labelledby={`automations-tab-${tab}`}
+        className='scroll-region min-h-0 flex-1 overflow-y-auto px-4 py-4 scrollbar-thin'
+      >
         {tab === 'automations' ? (
-          loading ? null : automations.length === 0 ? (
-            <div className='px-3 py-16 text-center'>
-              <Zap className='mx-auto mb-2 h-6 w-6 text-gray-300 dark:text-dark-400' />
-              <p className='text-sm text-gray-400 dark:text-dark-500'>
-                {t('automations.empty')}
-              </p>
-            </div>
+          loading ? (
+            <LoadingState srOnly />
+          ) : automations.length === 0 ? (
+            <EmptyState icon={Zap} title={t('automations.empty')} />
           ) : (
             <div className='mx-auto w-full max-w-3xl space-y-2'>
               {automations.map(automation => (
@@ -305,8 +385,14 @@ const AutomationsPage: React.FC = () => {
                           )}
                       </p>
                     </div>
-                    <div className='relative shrink-0'>
+                    <div
+                      ref={menuFor === automation.id ? menuWrapRef : undefined}
+                      className='relative shrink-0'
+                    >
                       <button
+                        type='button'
+                        aria-haspopup='menu'
+                        aria-expanded={menuFor === automation.id}
                         onClick={() =>
                           setMenuFor(current =>
                             current === automation.id ? null : automation.id
@@ -319,7 +405,11 @@ const AutomationsPage: React.FC = () => {
                         <MoreHorizontal className='h-4 w-4' />
                       </button>
                       {menuFor === automation.id && (
-                        <div className='absolute end-0 top-8 z-20 w-44 rounded-xl border border-black/[0.07] bg-white p-1 shadow-lg dark:border-white/[0.08] dark:bg-dark-100'>
+                        <div
+                          role='menu'
+                          onKeyDown={handleMenuKeyDown}
+                          className='absolute end-0 top-8 z-20 w-44 rounded-xl border border-black/[0.07] bg-white p-1 shadow-lg dark:border-white/[0.08] dark:bg-dark-100'
+                        >
                           <MenuItem
                             icon={Pencil}
                             label={t('common.edit')}
@@ -392,12 +482,11 @@ const AutomationsPage: React.FC = () => {
               <RunHistoryStrip days={summary.days} locale={i18n.language} />
             )}
             {runs.length === 0 ? (
-              <div className='px-3 py-12 text-center'>
-                <CircleSlash className='mx-auto mb-2 h-6 w-6 text-gray-300 dark:text-dark-400' />
-                <p className='text-sm text-gray-400 dark:text-dark-500'>
-                  {t('automations.noRuns')}
-                </p>
-              </div>
+              <EmptyState
+                icon={CircleSlash}
+                size='sm'
+                title={t('automations.noRuns')}
+              />
             ) : (
               <div className='space-y-1' data-testid='automation-run-list'>
                 {runs.map(run => (
@@ -469,6 +558,8 @@ interface MenuItemProps {
 function MenuItem({ icon: Icon, label, destructive, onClick }: MenuItemProps) {
   return (
     <button
+      type='button'
+      role='menuitem'
       onClick={onClick}
       className={cn(
         'flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-start text-[13px] transition-colors',

@@ -41,7 +41,8 @@
     "remove": "Remove",
     "home": "Home",
     "more": "More",
-    "reasoning": "Reasoning"
+    "reasoning": "Reasoning",
+    "skipToContent": "Skip to content"
   },
   "brand": {
     "name": "Libre WebUI",
@@ -49,7 +50,10 @@
   },
   "appInitialization": {
     "ollamaUnavailable": "Ollama service is not available. Plugin models may still be used.",
-    "backendConnectionFailed": "Failed to connect to the backend service"
+    "backendConnectionFailed": "Failed to connect to the backend service",
+    "connecting": "Connecting to the backend… ({{attempt}}/{{total}})",
+    "startingUp": "Starting up…",
+    "backendUnreachableHint": "Make sure the backend is running, then try again."
   },
   "auth": {
     "login": {
@@ -189,7 +193,15 @@
       "removed": "Passkey removed.",
       "removeFailed": "The passkey could not be removed.",
       "signInButton": "Sign in with a passkey",
-      "signInFailed": "Passkey sign-in failed."
+      "signInFailed": "Passkey sign-in failed.",
+      "removeConfirmTitle": "Remove this passkey?",
+      "removeConfirmDescription": "“{{name}}” will no longer work for signing in. You can register it again later."
+    },
+    "password": {
+      "show": "Reveal characters",
+      "hide": "Hide characters",
+      "showConfirmation": "Reveal confirmation",
+      "hideConfirmation": "Hide confirmation"
     }
   },
   "setup": {
@@ -242,7 +254,8 @@
       "envNote": "This key is also saved in your backend/.env file as ENCRYPTION_KEY",
       "acknowledgment": "I have saved my encryption key in a secure location and understand that losing it may result in data loss.",
       "confirmRequired": "Please confirm that you have saved the encryption key",
-      "continue": "Continue to Libre WebUI"
+      "continue": "Continue to Libre WebUI",
+      "loadFailed": "Could not load the encryption key. Retry to continue."
     },
     "connectModels": {
       "title": "Connect your models",
@@ -336,7 +349,8 @@
       "toolsOn": "Tools on — the model can call approved tools",
       "toolsOff": "Let the model call tools for this message",
       "thinkingOn": "Thinking on ({{level}})",
-      "thinkingOff": "Think before answering"
+      "thinkingOff": "Think before answering",
+      "thinkingUpdateFailed": "Could not update the thinking setting"
     },
     "session": {
       "new": "New Chat",
@@ -372,7 +386,8 @@
         "move": "Move to folder",
         "remove": "Remove from folder",
         "delete": "Delete folder",
-        "deleteConfirm": "Delete this folder? Chats inside are kept."
+        "deleteConfirm": "Delete this folder? Chats inside are kept.",
+        "rename": "Rename folder"
       },
       "shareChat": "Share chat…"
     },
@@ -405,7 +420,13 @@
       "browse": "browse",
       "unsupportedFileType": "File type not supported: {{name}}",
       "maxImagesAllowed": "Maximum {{count}} images allowed",
-      "imageTooLarge": "Image {{name}} is too large (max 10MB)"
+      "imageTooLarge": "Image {{name}} is too large (max 10MB)",
+      "readFailed": "Could not read {{name}}",
+      "uploadAlt": "Upload {{number}}",
+      "removeImage": "Remove image {{number}}",
+      "addMore": "Add more images ({{count}}/{{max}})",
+      "uploading": "Uploading",
+      "removeDocument": "Remove {{name}}"
     },
     "structuredOutput": {
       "title": "Response Format",
@@ -456,7 +477,8 @@
       "compactionOff": "Off for this chat"
     },
     "message": {
-      "sources": "Sources"
+      "sources": "Sources",
+      "copyFailed": "Could not copy to the clipboard"
     },
     "toasts": {
       "chatCreated": "New chat created",
@@ -491,7 +513,8 @@
       "branchSwitched": "Switched to variant {{number}}",
       "branchSelectFailed": "Failed to select branch",
       "editFailed": "Failed to edit message",
-      "toolDecisionFailed": "The tool decision could not be recorded"
+      "toolDecisionFailed": "The tool decision could not be recorded",
+      "archiveFailed": "Could not archive this chat"
     },
     "documents": {
       "title": "Documents in context"
@@ -521,7 +544,25 @@
       "origin": "Forked from {{title}}",
       "originUnknown": "another chat"
     },
-    "sharedReadOnly": "Shared by {{owner}} — view only"
+    "sharedReadOnly": "Shared by {{owner}} — view only",
+    "branch": {
+      "variants": "{{count}} variant",
+      "variants_plural": "{{count}} variants",
+      "selectVariant": "Select variant {{number}}",
+      "generating": "generating...",
+      "select": "select"
+    },
+    "sources": {
+      "fullContextFailed": "Could not update the full-document setting",
+      "usedByRetrieval": "Used in replies",
+      "triggerLabel": "Sources ({{count}})"
+    },
+    "announce": {
+      "replyFinished": "{{name}} replied: {{text}}",
+      "replyFinishedNoText": "{{name}} finished replying.",
+      "codeBlock": "code block",
+      "generationStopped": "Generation stopped"
+    }
   },
   "sidebar": {
     "navigation": {
@@ -546,7 +587,8 @@
       "strands": "Strands"
     },
     "toggleSize": "Toggle sidebar size",
-    "expandSidebar": "Expand sidebar"
+    "expandSidebar": "Expand sidebar",
+    "ariaLabel": "Sidebar"
   },
   "user": {
     "menu": {
@@ -821,7 +863,8 @@
         "removeFailed": "Failed to remove API key",
         "enterKey": "Please enter an API key"
       },
-      "variables": "Variables"
+      "variables": "Variables",
+      "dismissError": "Dismiss error"
     },
     "generation": {
       "title": "Generation Options",
@@ -924,7 +967,8 @@
         "deleteFailed": "Failed to delete the collection",
         "assignFailed": "Failed to move the document",
         "share": "Share collection",
-        "shared": "shared"
+        "shared": "shared",
+        "assignTo": "Collection for {{name}}"
       },
       "library": {
         "title": "Uploaded documents",
@@ -1066,7 +1110,8 @@
         "title": "Archived chats",
         "empty": "No archived chats",
         "unarchive": "Unarchive"
-      }
+      },
+      "clearAllConfirm": "Are you sure you want to delete all chat history? This action cannot be undone."
     },
     "about": {
       "title": "About",
@@ -1186,7 +1231,11 @@
       "unknownDevice": "Unknown device",
       "createdAt": "Signed in",
       "lastSeenAt": "Last active",
-      "expiresAt": "Expires"
+      "expiresAt": "Expires",
+      "signOutConfirmTitle": "Sign out this session?",
+      "signOutConfirmDescription": "{{device}} will be signed out immediately and must sign in again.",
+      "signOutOthersConfirmTitle": "Sign out other sessions?",
+      "signOutOthersConfirmDescription": "{{count}} other sessions will be signed out immediately. This session stays signed in."
     },
     "apiKeys": {
       "title": "API keys",
@@ -1220,7 +1269,9 @@
       "createdAt": "Created",
       "lastUsedAt": "Last used",
       "expiresAt": "Expires",
-      "neverExpires": "Never"
+      "neverExpires": "Never",
+      "revokeConfirmTitle": "Revoke “{{name}}”?",
+      "revokeConfirmDescription": "Anything using this API key stops working immediately. This cannot be undone."
     },
     "notifications": {
       "title": "Notifications",
@@ -1294,7 +1345,8 @@
     "model": "Model",
     "size": "Size",
     "quality": "Quality",
-    "created": "Created"
+    "created": "Created",
+    "lightboxLabel": "Image preview"
   },
   "errors": {
     "generic": "An error occurred",
@@ -1389,7 +1441,9 @@
       "hide": "Hide from users",
       "show": "Show to users",
       "star": "Star {{name}}",
-      "unstar": "Remove star from {{name}}"
+      "unstar": "Remove star from {{name}}",
+      "filterLabel": "Filter models",
+      "displayName": "Display name for {{name}}"
     },
     "pull": {
       "placeholder": "Enter model name (e.g., llama3.2:3b, deepseek-r1:14b)",
@@ -1550,7 +1604,10 @@
     "deleteConfirm": "Are you sure you want to delete \"{{name}}\"?",
     "deleteSuccess": "Persona \"{{name}}\" deleted successfully",
     "downloadSuccess": "Persona \"{{name}}\" downloaded successfully",
-    "failed": "Failed to {{action}} persona"
+    "failed": "Failed to {{action}} persona",
+    "loadFailed": "Your personas could not be loaded.",
+    "deleteFailed": "Failed to delete persona",
+    "downloadFailed": "Failed to download persona"
   },
   "personaForm": {
     "title": {
@@ -1682,7 +1739,8 @@
       "promptHint": "A prompt to seed every new chat with this persona.",
       "noPrompt": "No prompt",
       "version": "Bindings revision {{version}}"
-    }
+    },
+    "sections": "Persona sections"
   },
   "personaCard": {
     "enhanced": "Enhanced",
@@ -1699,7 +1757,16 @@
     "backupSuccess": "Persona backup downloaded successfully",
     "dnaSuccess": "Persona DNA exported successfully",
     "failed": "Failed to {{action}}",
-    "shareTooltip": "Share this persona"
+    "shareTooltip": "Share this persona",
+    "wipeFailed": "Failed to wipe memories",
+    "backupFailed": "Failed to back up persona",
+    "exportDnaFailed": "Failed to export persona DNA",
+    "favorite": "Favorite",
+    "memoryStatus": {
+      "active": "Active",
+      "wiped": "Wiped",
+      "backed_up": "Backed up"
+    }
   },
   "userManager": {
     "title": "User Management",
@@ -1865,7 +1932,28 @@
       "memberOf": "Groups",
       "featuresLabel": "Feature access",
       "grantsLabel": "Grants",
-      "grantVia": "via"
+      "grantVia": "via",
+      "deleteConfirmTitle": "Delete group “{{name}}”?",
+      "deleteConfirmDescription": "Members lose any access they only had through this group. The accounts themselves are not deleted.",
+      "statuses": {
+        "active": "Active",
+        "pending": "Pending approval"
+      },
+      "features": {
+        "work": "Work",
+        "model-download": "Model download",
+        "web-search": "Web search",
+        "strands": "Strands engine",
+        "tools": "Tools",
+        "stt": "Speech to text",
+        "tts": "Text to speech",
+        "voice-mode": "Voice mode",
+        "voice-cloning": "Voice cloning"
+      },
+      "grantViaKinds": {
+        "user": "direct grant",
+        "group": "group"
+      }
     },
     "audit": {
       "title": "Security audit log",
@@ -2298,7 +2386,11 @@
       "harmful": "Harmful",
       "formatting": "Formatting"
     },
-    "feedbackComment": "Add a comment…"
+    "feedbackComment": "Add a comment…",
+    "user": "User",
+    "feedbackFailed": "Could not save your feedback",
+    "openImage": "Open image {{number}}",
+    "uploadedImageAlt": "Uploaded image {{number}}"
   },
   "imageGallery": {
     "title": "Image Gallery",
@@ -2387,7 +2479,10 @@
       "image": "Images",
       "video": "Videos",
       "audio": "Audio"
-    }
+    },
+    "deleteConfirmTitle": "Delete this item?",
+    "deleteConfirmDescription": "The generated media will be permanently deleted.",
+    "previewFailed": "Preview unavailable"
   },
   "errorBoundary": {
     "title": "Something went wrong",
@@ -2463,7 +2558,8 @@
     "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source.",
     "versionOf": "Version {{current}} of {{total}}",
     "previousVersion": "Previous version",
-    "nextVersion": "Next version"
+    "nextVersion": "Next version",
+    "resizePanel": "Resize panel"
   },
   "personaImportExport": {
     "title": "Import & Export Personas",
@@ -2501,7 +2597,10 @@
     "generation": "Generation:",
     "modelLoad": "Model load:",
     "totalTime": "Total time:",
-    "generatedAt": "Generated at:"
+    "generatedAt": "Generated at:",
+    "notAvailable": "N/A",
+    "tokenCount": "{{tokens}} tokens",
+    "tokensPerSecond": "{{value}} t/s"
   },
   "userMenu": {
     "loggedOut": "Logged out successfully",
@@ -2560,7 +2659,9 @@
       "httpWarning": "HTTP does not encrypt credentials or traffic. Use it only on a trusted network.",
       "invalidBaseUrl": "Base URLs cannot contain a query string or fragment.",
       "invalidApiPath": "Must start with / and contain no URL, query, fragment, or .. segment",
-      "tooLong": "Value is too long"
+      "tooLong": "Value is too long",
+      "resetConfirmTitle": "Reset to defaults?",
+      "resetConfirmDescription": "This clears every stored value for {{name}}, including API keys and other credentials. This cannot be undone."
     }
   },
   "huggingface": {
@@ -2580,7 +2681,10 @@
   },
   "demoMode": {
     "title": "Demo Mode",
-    "github": "GitHub"
+    "github": "GitHub",
+    "defaultMessage": "This is a demo version for presentation purposes only. The Ollama backend is not connected.",
+    "viewOnGithub": "View on GitHub",
+    "dismiss": "Dismiss"
   },
   "work": {
     "title": "Work",
@@ -2671,8 +2775,18 @@
         "checksPending": "Checks pending",
         "stallNudges": "Stall nudges",
         "ambiguityNudges": "Re-grounding nudges",
-        "stoppedBy": "Stopped by"
-      }
+        "stoppedBy": "Stopped by",
+        "reasons": {
+          "round": "round limit",
+          "toolCall": "tool-call limit",
+          "approvalTimeout": "approval timeout",
+          "computerStall": "computer stalled"
+        }
+      },
+      "skillTraceSavedWorked": "Noted: worked",
+      "skillTraceSavedFailed": "Noted: failed",
+      "connectionClosed": "The live Work connection closed.",
+      "reconnectingBackground": "Live updates are reconnecting in the background."
     },
     "runtime": {
       "unavailable": "Runtime unavailable",
@@ -2715,7 +2829,11 @@
       "changes": "Changes",
       "changesSince": "What changed since the last turn",
       "diffLabel": "Changes since the last turn: {{path}}",
-      "diffFolded": "{{count}} unchanged lines"
+      "diffFolded": "{{count}} unchanged lines",
+      "diffAdded": "Added",
+      "diffRemoved": "Removed",
+      "unsavedChanges": "unsaved changes",
+      "editingLocked": "Editing unlocks when the turn finishes."
     },
     "activity": {
       "empty": "Commands, file operations, and tool results will appear here.",
@@ -2726,7 +2844,9 @@
         "toolCall": "Tool call",
         "toolResult": "Tool result",
         "error": "Error"
-      }
+      },
+      "arguments": "Tool arguments",
+      "output": "Tool output"
     },
     "preview": {
       "command": "Optional start command",
@@ -2755,7 +2875,8 @@
       "saveFailed": "Could not save this file.",
       "saved": "File saved.",
       "previewFailed": "Could not start the preview.",
-      "previewStopFailed": "Could not stop the preview."
+      "previewStopFailed": "Could not stop the preview.",
+      "sendFailed": "The message could not be sent."
     },
     "terminal": {
       "connecting": "Opening a shell in the sandbox…",
@@ -2807,7 +2928,18 @@
       "noFilterMatches": "No changed files match this filter.",
       "allChanges": "All changes",
       "diffTruncated": "This diff is truncated.",
-      "binaryFile": "Binary file, no text diff."
+      "binaryFile": "Binary file, no text diff.",
+      "statusLabels": {
+        "modified": "Modified",
+        "added": "Added",
+        "deleted": "Deleted",
+        "renamed": "Renamed",
+        "copied": "Copied",
+        "typeChanged": "Type changed",
+        "untracked": "Untracked"
+      },
+      "stagedState": "staged",
+      "aheadBehind": "{{ahead}} ahead, {{behind}} behind"
     },
     "hostWorkspace": {
       "hint": "Leave blank for an isolated workspace, or point the task at a folder on this machine.",
@@ -2834,7 +2966,8 @@
       "unmute": "Unmute",
       "mute": "Mute",
       "finished": "This task is finished. Reopen it to bring its screen back.",
-      "reopenOpen": "Reopen task and open the screen"
+      "reopenOpen": "Reopen task and open the screen",
+      "teachSaveFailed": "Could not save this demonstration."
     },
     "computerSetup": {
       "title": "Work Computer",
@@ -2871,7 +3004,11 @@
       "approvalsToggleFailed": "Could not update approvals.",
       "approvalRuleLine": "Always allowed",
       "approvalRuleDelete": "Remove rule",
-      "approvalRuleDeleteFailed": "Could not remove the rule."
+      "approvalRuleDeleteFailed": "Could not remove the rule.",
+      "routinesLoadFailed": "Could not load routines.",
+      "skillsLoadFailed": "Could not load taught skills.",
+      "approvalsLoadFailed": "Could not load approval settings.",
+      "routinePaused": "Paused"
     },
     "runs": {
       "title": "Runs",
@@ -2882,7 +3019,8 @@
         "needsInput": "Needs input",
         "failed": "Failed",
         "cancelled": "Cancelled"
-      }
+      },
+      "loadFailed": "Could not load run history."
     },
     "approval": {
       "title": "Approval needed",
@@ -2890,7 +3028,16 @@
       "allowOnce": "Allow once",
       "allowAlways": "Always allow",
       "deny": "Deny",
-      "failed": "Could not send the decision."
+      "failed": "Could not send the decision.",
+      "details": "Action details",
+      "fields": {
+        "command": "Command",
+        "path": "Path",
+        "from": "From",
+        "to": "To",
+        "actions": "Actions",
+        "recursive": "Recursive"
+      }
     },
     "idleStopHint": "Stops after {{minutes}} minutes without activity.",
     "recovery": {
@@ -2903,6 +3050,17 @@
       "retrySucceeded": "Cleared {{cleared}} of {{attempted}} pending cleanups.",
       "retryPending": "Still retrying {{attempted}} pending cleanups.",
       "retryFailed": "Could not retry the pending cleanups."
+    },
+    "computer": {
+      "setupFailed": "The Work Computer could not be set up."
+    },
+    "announce": {
+      "completed": "{{title}} finished.",
+      "needsInput": "{{title}} needs your input or approval.",
+      "failed": "{{title}} failed.",
+      "cancelled": "{{title}} was stopped.",
+      "approvalNeeded": "{{title}} needs your approval to run {{tool}}.",
+      "untitledTask": "This task"
     }
   },
   "personaBackground": {
@@ -2947,7 +3105,8 @@
     "showAll": "Show all ({{total}})",
     "sources": "Model sources",
     "defaultModel": "Default model",
-    "contextSize": "{{size}} context"
+    "contextSize": "{{size}} context",
+    "via": "via {{provider}}"
   },
   "whatsNew": {
     "title": "What's new",
@@ -3004,7 +3163,16 @@
     "unpin": "Unpin note",
     "pinned": "Pinned",
     "export": "Download as Markdown",
-    "sharedWithYou": "Shared with you"
+    "sharedWithYou": "Shared with you",
+    "titleLabel": "Note title",
+    "loadFailed": "Could not load this. Try again.",
+    "restoreConfirmTitle": "Restore this version?",
+    "restoreConfirmDescription": "The note's text will be replaced with this earlier version.",
+    "deleteAttachmentConfirmTitle": "Delete {{name}}?",
+    "deleteAttachmentConfirmDescription": "The attachment will be permanently deleted from this note.",
+    "attachmentDeleteFailed": "Could not delete the attachment",
+    "revokeFailed": "Could not revoke access",
+    "sharePermissionLabel": "Permission"
   },
   "calendar": {
     "title": "Calendar",
@@ -3049,7 +3217,22 @@
     "importFailed": "The file could not be imported",
     "importResult": "Imported {{total}} events",
     "importIcs": "Import",
-    "exportIcs": "Export"
+    "exportIcs": "Export",
+    "chipStatus": {
+      "automation": "Scheduled automation",
+      "runSucceeded": "Automation run succeeded",
+      "runFailed": "Automation run failed"
+    },
+    "newEventOn": "New event on {{date}}",
+    "showDay": "Show all events on {{date}}",
+    "deleteEventConfirmTitle": "Delete \"{{title}}\"?",
+    "deleteEventConfirmDescription": "This event will be permanently deleted.",
+    "deleteRecurringEventConfirmDescription": "This repeating event and all of its occurrences will be permanently deleted.",
+    "shareCalendarNamed": "Share calendar {{name}}",
+    "deleteCalendarNamed": "Delete calendar {{name}}",
+    "deleteCalendarConfirmTitle": "Delete calendar \"{{name}}\"?",
+    "deleteCalendarConfirmDescription": "The calendar and the events in it will be permanently deleted.",
+    "calendarDeleteFailed": "The calendar could not be deleted"
   },
   "automations": {
     "title": "Automations",
@@ -3176,13 +3359,17 @@
         "work-approval": "an agent is waiting for your approval",
         "system": "a system notice arrives"
       }
-    }
+    },
+    "deleteConfirmTitle": "Delete \"{{name}}\"?",
+    "deleteConfirmDescription": "The automation and its schedule will be permanently deleted. Past runs stay in the run history."
   },
   "home": {
     "active": "active",
     "continue": "Continue",
     "start": "Start",
-    "explore": "Explore"
+    "explore": "Explore",
+    "greeting": "{{greeting}}.",
+    "greetingWithName": "{{greeting}}, {{name}}."
   },
   "palette": {
     "empty": "No matches.",
@@ -3195,7 +3382,14 @@
     "work": "Work",
     "messages": "Messages",
     "notes": "Notes",
-    "documents": "Documents"
+    "documents": "Documents",
+    "searching": "Searching…",
+    "searchFailed": "Workspace search failed. Showing matching chats and actions only.",
+    "results": "Results",
+    "escKey": "esc",
+    "hintNavigate": "Navigate",
+    "hintOpen": "Open",
+    "hintClose": "Close"
   },
   "tabs": {
     "actions": "Tab actions",
@@ -3399,7 +3593,8 @@
       "button": "From folder",
       "missingSkillMd": "The folder needs a SKILL.md file",
       "done": "Skill imported with {{count}} bundled files"
-    }
+    },
+    "toggleLabel": "Enable skill {{name}}"
   },
   "toolsPage": {
     "title": "Tools",
@@ -3557,7 +3752,14 @@
     "added": "Shared with {{name}}",
     "failed": "Sharing failed",
     "userNotFound": "No user with that name",
-    "groupNotFound": "No group with that name"
+    "groupNotFound": "No group with that name",
+    "principalKind": "Share with a user or group",
+    "principalName": "Username or group name",
+    "permission": "Permission",
+    "sharing": "Sharing",
+    "loading": "Loading shares",
+    "loadFailed": "Could not load shares",
+    "revokeFailed": "Could not revoke access"
   },
   "channels": {
     "title": "Channels",
@@ -3616,13 +3818,44 @@
     "toolCalls": {
       "summary": "Tools used ({{total}})",
       "deniedHint": "Tools that change things are declined in channels. Run them from a chat."
-    }
+    },
+    "confirmEdit": "Save edit",
+    "cancelEdit": "Cancel edit",
+    "reactWith": "React with {{emoji}}",
+    "deleteMessageConfirmTitle": "Delete this message?",
+    "deleteMessageConfirmDescription": "The message will be removed for everyone in this channel.",
+    "unreadCount": "{{total}} unread",
+    "send": "Send message",
+    "invite": "Invite member",
+    "closeThread": "Close thread",
+    "removeAttachment": "Remove attachment",
+    "loadFailed": "Could not load this. Try again.",
+    "editFailed": "The message could not be edited",
+    "deleteMessageFailed": "The message could not be deleted",
+    "pinFailed": "The pin could not be changed",
+    "reactFailed": "The reaction could not be saved",
+    "downloadFailed": "The file could not be downloaded",
+    "removeMemberConfirm": "Remove {{name}} from this channel?",
+    "removeMemberConfirmDescription": "They will lose access to the channel and its messages.",
+    "removeMemberNamed": "Remove {{name}} from channel",
+    "removeMemberFailed": "The member could not be removed",
+    "leaveConfirm": "Leave {{name}}?",
+    "leaveConfirmDescription": "You will need to be invited again to rejoin a private channel.",
+    "leaveFailed": "You could not leave the channel",
+    "joinFailed": "The channel could not be joined",
+    "deleteConfirm": "Delete {{name}}?",
+    "deleteConfirmDescription": "The channel and all of its messages will be permanently deleted for every member.",
+    "deleteFailed": "The channel could not be deleted",
+    "saveFailed": "The channel could not be saved"
   },
   "notifications": {
     "title": "Notifications",
     "empty": "You are all caught up.",
     "markAllRead": "Mark all as read",
-    "markRead": "Mark as read"
+    "markRead": "Mark as read",
+    "titleWithUnread": "Notifications ({{unread}} unread)",
+    "unread": "Unread",
+    "loadFailed": "Could not load notifications."
   },
   "voiceMode": {
     "title": "Voice mode",
@@ -3757,7 +3990,12 @@
       "failed": "Failed",
       "cancelled": "Cancelled"
     },
-    "noFeedback": "No feedback yet — rate assistant replies to build your dataset."
+    "noFeedback": "No feedback yet — rate assistant replies to build your dataset.",
+    "deleteSetConfirmTitle": "Delete \"{{name}}\"?",
+    "deleteSetConfirmDescription": "The evaluation set and its prompts will be permanently deleted.",
+    "deleteSetFailed": "The evaluation set could not be deleted",
+    "runError": "Error: {{detail}}",
+    "cancelFailed": "The run could not be cancelled"
   },
   "passwordStrength": {
     "levels": {
@@ -3771,6 +4009,14 @@
       "hasCase": "Uppercase and lowercase letters",
       "hasNumber": "At least one number",
       "tooLong": "No more than 72 bytes"
+    },
+    "requirements": "Use at least 12 characters, no more than 72 UTF-8 bytes, with uppercase, lowercase, and a number.",
+    "errors": {
+      "minLength": "Password must be at least 12 characters.",
+      "tooLong": "Password must be no more than 72 UTF-8 bytes.",
+      "uppercase": "Password must contain an uppercase letter.",
+      "lowercase": "Password must contain a lowercase letter.",
+      "number": "Password must contain a number."
     }
   },
   "connectModels": {
@@ -3804,7 +4050,8 @@
       "enable": "Enable provider",
       "enabling": "Enabling…",
       "enabled": "{{name}} connected — its models are now available",
-      "enableFailed": "Could not enable the provider"
+      "enableFailed": "Could not enable the provider",
+      "urlLabel": "Server URL"
     },
     "cloud": {
       "title": "Cloud API",
@@ -3813,7 +4060,8 @@
       "connect": "Connect",
       "connecting": "Connecting…",
       "connected": "{{name}} connected — its models are now available",
-      "saveFailed": "Could not save the API key"
+      "saveFailed": "Could not save the API key",
+      "keyLabel": "{{name}} API key"
     }
   },
   "strands": {
@@ -3845,5 +4093,15 @@
     "deleteFailed": "Could not delete the session.",
     "saveFailed": "Could not save the session.",
     "turnFailed": "The engine could not complete the turn"
+  },
+  "notFound": {
+    "title": "Page not found",
+    "description": "This page doesn't exist or may have moved."
+  },
+  "themeToggle": {
+    "switchToLight": "Switch to light mode",
+    "switchToDark": "Switch to dark mode",
+    "switchToAmoled": "Switch to pure black mode",
+    "switchToCelestial": "Switch to celestial mode"
   }
 }

@@ -19,6 +19,14 @@ import { useTranslation } from 'react-i18next';
 import type { WorkRunLoopStats } from '@/types/work';
 import { cn } from '@/utils';
 
+/** Reason codes the agent loop emits; anything else shows as the raw code. */
+const BUDGET_REASON_KEYS: Record<string, string> = {
+  round: 'work.live.stats.reasons.round',
+  'tool-call': 'work.live.stats.reasons.toolCall',
+  'approval-timeout': 'work.live.stats.reasons.approvalTimeout',
+  'computer-stall': 'work.live.stats.reasons.computerStall',
+};
+
 /**
  * How the run spent its budget, as a calm row of labeled counts. Zero
  * counts stay hidden: a run that never nudged or fenced should not carry
@@ -34,6 +42,12 @@ export function WorkRunStats({
   className?: string;
 }) {
   const { t } = useTranslation();
+  const reasonKey =
+    budgetReason &&
+    Object.prototype.hasOwnProperty.call(BUDGET_REASON_KEYS, budgetReason)
+      ? BUDGET_REASON_KEYS[budgetReason]
+      : undefined;
+  const reasonLabel = reasonKey ? t(reasonKey) : budgetReason;
   const chips: Array<{ key: string; label: string; value: number }> = (
     [
       ['rounds', t('work.live.stats.rounds', { defaultValue: 'Rounds' })],
@@ -80,7 +94,7 @@ export function WorkRunStats({
         className
       )}
     >
-      <span className='font-medium uppercase tracking-wide'>
+      <span className='font-medium uppercase tracking-wide rtl:tracking-normal'>
         {t('work.live.stats.title', { defaultValue: 'Run summary' })}
       </span>
       {chips.map(chip => (
@@ -92,7 +106,7 @@ export function WorkRunStats({
       {budgetReason && (
         <span className='whitespace-nowrap'>
           {t('work.live.stats.stoppedBy', { defaultValue: 'Stopped by' })}{' '}
-          <span className='font-medium text-ink-muted'>{budgetReason}</span>
+          <span className='font-medium text-ink-muted'>{reasonLabel}</span>
         </span>
       )}
     </div>

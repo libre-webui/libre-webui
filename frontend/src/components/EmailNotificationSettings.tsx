@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useId, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { Mail } from 'lucide-react';
@@ -71,6 +71,8 @@ const draftFrom = (settings: EmailSettingsResponse): Draft => ({
  */
 export const EmailNotificationSettings: React.FC = () => {
   const { t, i18n } = useTranslation();
+  const titleId = useId();
+  const verifyLabelId = useId();
   const [settings, setSettings] = useState<EmailSettingsResponse | null>(null);
   const [draft, setDraft] = useState<Draft | null>(null);
   const [testRecipient, setTestRecipient] = useState('');
@@ -275,7 +277,10 @@ export const EmailNotificationSettings: React.FC = () => {
     >
       <div className='flex items-start justify-between gap-4'>
         <div>
-          <h3 className='flex items-center gap-2 text-sm font-semibold text-gray-900 dark:text-gray-100'>
+          <h3
+            id={titleId}
+            className='flex items-center gap-2 text-sm font-semibold text-gray-900 dark:text-gray-100'
+          >
             <Mail className='h-4 w-4 text-primary-500' />
             {t('userManager.emailNotifications.title')}
           </h3>
@@ -285,6 +290,7 @@ export const EmailNotificationSettings: React.FC = () => {
         </div>
         <div data-testid='email-notifications-enabled'>
           <SettingsToggle
+            aria-labelledby={titleId}
             checked={settings?.enabled === true}
             onChange={checked => void toggleEnabled(checked)}
             disabled={
@@ -376,7 +382,7 @@ export const EmailNotificationSettings: React.FC = () => {
             </label>
             <div className='flex items-start justify-between gap-4 sm:pt-1'>
               <div>
-                <span className={fieldLabel}>
+                <span id={verifyLabelId} className={fieldLabel}>
                   {t('userManager.emailNotifications.verifyLabel')}
                 </span>
                 <span className='block text-xs text-gray-500 dark:text-gray-400'>
@@ -384,6 +390,7 @@ export const EmailNotificationSettings: React.FC = () => {
                 </span>
               </div>
               <SettingsToggle
+                aria-labelledby={verifyLabelId}
                 checked={draft.rejectUnauthorized}
                 onChange={checked => update('rejectUnauthorized', checked)}
                 disabled={saving || draft.security === 'none'}

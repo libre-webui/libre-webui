@@ -98,6 +98,41 @@ const splitPath = (path: string): { name: string; directory: string } => {
   };
 };
 
+const LETTER_LABEL_KEYS: Record<string, string> = {
+  M: 'work.git.statusLabels.modified',
+  A: 'work.git.statusLabels.added',
+  D: 'work.git.statusLabels.deleted',
+  R: 'work.git.statusLabels.renamed',
+  C: 'work.git.statusLabels.copied',
+  T: 'work.git.statusLabels.typeChanged',
+  U: 'work.git.statusLabels.untracked',
+};
+
+/**
+ * The one-letter badge plus its meaning. Color and underline alone cannot
+ * carry state, so the words travel as screen-reader text and a tooltip.
+ */
+function GitStatusLetter({
+  letter,
+  staged = false,
+  className,
+}: {
+  letter: string;
+  staged?: boolean;
+  className?: string;
+}) {
+  const { t } = useTranslation();
+  const key = LETTER_LABEL_KEYS[letter];
+  const meaning = key ? t(key) : letter;
+  const label = staged ? `${meaning}, ${t('work.git.stagedState')}` : meaning;
+  return (
+    <span title={label} className={className}>
+      <span aria-hidden='true'>{letter}</span>
+      <span className='sr-only'>{label}</span>
+    </span>
+  );
+}
+
 function DiffStatsBadge({
   added,
   removed,
@@ -134,15 +169,13 @@ function FileDiffHeader({
 }) {
   return (
     <div className='sticky top-0 z-10 flex items-center gap-2 border-b border-line bg-surface-raised/95 px-3 py-1.5 backdrop-blur'>
-      <span
-        aria-hidden='true'
+      <GitStatusLetter
+        letter={letter}
         className={cn(
           'w-4 shrink-0 text-center font-mono text-[11px] font-semibold',
           letterClass(letter)
         )}
-      >
-        {letter}
-      </span>
+      />
       <span
         dir='ltr'
         className='min-w-0 flex-1 truncate text-start font-mono text-[11px] text-ink'
@@ -160,7 +193,7 @@ export function WorkspaceGitPanel({
   mutationsDisabled = false,
   disabledReason,
 }: WorkspaceGitPanelProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [status, setStatus] = useState<WorkGitStatus | null>(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -359,8 +392,15 @@ export function WorkspaceGitPanel({
 
   if (loading && !status) {
     return (
-      <div className='flex h-full items-center justify-center text-ink-muted'>
-        <Loader2 className='h-5 w-5 animate-spin' />
+      <div
+        role='status'
+        className='flex h-full items-center justify-center text-ink-muted'
+      >
+        <Loader2
+          aria-hidden='true'
+          className='h-5 w-5 animate-spin motion-reduce:animate-none'
+        />
+        <span className='sr-only'>{t('common.loading')}</span>
       </div>
     );
   }
@@ -369,7 +409,10 @@ export function WorkspaceGitPanel({
     return (
       <div className='flex h-full flex-col items-center justify-center px-6 text-center'>
         <GitBranch className='mb-3 h-8 w-8 text-error-500' />
-        <p className='max-w-sm text-xs leading-relaxed text-error-600'>
+        <p
+          role='alert'
+          className='max-w-sm text-xs leading-relaxed text-error-600'
+        >
           {error ||
             t('work.git.loadFailed', {
               defaultValue: 'Could not load Git status.',
@@ -403,11 +446,15 @@ export function WorkspaceGitPanel({
               'Create a local repository for status, diffs, branches, and commits. No remote credentials are connected.',
           })}
         </p>
-        {error && <p className='mt-3 text-xs text-error-600'>{error}</p>}
+        {error && (
+          <p role='alert' className='mt-3 text-xs text-error-600'>
+            {error}
+          </p>
+        )}
         <Button
           data-testid='work-git-init-button'
           size='sm'
-          className='mt-4 bg-primary-600 text-white hover:bg-primary-500'
+          className='mt-4'
           disabled={mutationsDisabled || busy}
           onClick={() =>
             void runMutation(
@@ -463,8 +510,22 @@ export function WorkspaceGitPanel({
           </span>
         )}
         {(status.ahead > 0 || status.behind > 0) && (
-          <span className='text-[10px] text-ink-muted'>
-            ↑{status.ahead} ↓{status.behind}
+          <span
+            title={t('work.git.aheadBehind', {
+              ahead: status.ahead,
+              behind: status.behind,
+            })}
+            className='text-[10px] text-ink-muted'
+          >
+            <span aria-hidden='true'>
+              ↑{status.ahead} ↓{status.behind}
+            </span>
+            <span className='sr-only'>
+              {t('work.git.aheadBehind', {
+                ahead: status.ahead,
+                behind: status.behind,
+              })}
+            </span>
           </span>
         )}
         <select
@@ -472,6 +533,7 @@ export function WorkspaceGitPanel({
           aria-label={t('work.git.switchBranch', {
             defaultValue: 'Switch local branch',
           })}
+          dir='ltr'
           value={status.branch || ''}
           disabled={mutationsDisabled || busy || dirty}
           onChange={event => {
@@ -485,7 +547,7 @@ export function WorkspaceGitPanel({
               })
             );
           }}
-          className='h-7 max-w-44 rounded-lg border border-line bg-surface px-2 text-[11px] text-ink outline-none disabled:opacity-50'
+          className='h-7 max-w-44 rounded-lg border border-line bg-surface px-2 text-[11px] text-ink outline-none focus-visible:border-primary-500 focus-visible:ring-2 focus-visible:ring-primary-500/30 disabled:opacity-50'
         >
           {status.detached && (
             <option value='' disabled>
@@ -501,13 +563,14 @@ export function WorkspaceGitPanel({
         <div className='flex min-w-44 flex-1 items-center gap-1'>
           <input
             data-testid='work-git-branch-input'
+            dir='ltr'
             value={branchName}
             maxLength={200}
             onChange={event => setBranchName(event.target.value)}
             placeholder={t('work.git.newBranch', {
               defaultValue: 'New local branch',
             })}
-            className='h-7 min-w-0 flex-1 rounded-lg border border-line bg-surface px-2 font-mono text-[11px] text-ink outline-none placeholder:text-ink-subtle focus:border-primary-500'
+            className='h-7 min-w-0 flex-1 rounded-lg border border-line bg-surface px-2 font-mono text-[11px] text-ink outline-none placeholder:text-ink-subtle focus:border-primary-500 focus:ring-2 focus:ring-primary-500/30'
           />
           <Button
             data-testid='work-git-create-branch-button'
@@ -548,7 +611,10 @@ export function WorkspaceGitPanel({
       </div>
 
       {error && (
-        <div className='border-b border-error-200 bg-error-50 px-3 py-2 text-xs text-error-700 dark:border-error-900/60 dark:bg-error-900/30 dark:text-error-300'>
+        <div
+          role='alert'
+          className='border-b border-error-200 bg-error-50 px-3 py-2 text-xs text-error-700 dark:border-error-900/60 dark:bg-error-900/30 dark:text-error-300'
+        >
           {error}
         </div>
       )}
@@ -609,7 +675,7 @@ export function WorkspaceGitPanel({
                 aria-label={t('work.git.filterFiles', {
                   defaultValue: 'Filter changed files',
                 })}
-                className='h-7 w-full rounded-lg border border-line bg-surface pe-2 ps-7 text-[11px] text-ink outline-none placeholder:text-ink-subtle focus:border-primary-500'
+                className='h-7 w-full rounded-lg border border-line bg-surface pe-2 ps-7 text-[11px] text-ink outline-none placeholder:text-ink-subtle focus:border-primary-500 focus:ring-2 focus:ring-primary-500/30'
               />
             </div>
           )}
@@ -662,16 +728,15 @@ export function WorkspaceGitPanel({
                       className='flex min-w-0 flex-1 items-center gap-2 px-1.5 py-2 text-start'
                       title={change.path}
                     >
-                      <span
-                        aria-hidden='true'
+                      <GitStatusLetter
+                        letter={letter}
+                        staged={change.staged}
                         className={cn(
                           'w-3.5 shrink-0 text-center font-mono text-[10px] font-semibold',
                           letterClass(letter),
                           change.staged && 'underline underline-offset-2'
                         )}
-                      >
-                        {letter}
-                      </span>
+                      />
                       <span
                         dir='ltr'
                         className='min-w-0 flex-1 truncate text-start font-mono text-[11px]'
@@ -705,12 +770,12 @@ export function WorkspaceGitPanel({
               placeholder={t('work.git.commitMessage', {
                 defaultValue: 'Commit message',
               })}
-              className='w-full resize-none rounded-lg border border-line bg-surface px-2.5 py-2 text-xs text-ink outline-none placeholder:text-ink-subtle focus:border-primary-500'
+              className='w-full resize-none rounded-lg border border-line bg-surface px-2.5 py-2 text-xs text-ink outline-none placeholder:text-ink-subtle focus:border-primary-500 focus:ring-2 focus:ring-primary-500/30'
             />
             <Button
               data-testid='work-git-commit-button'
               size='sm'
-              className='mt-1.5 w-full bg-primary-600 text-white hover:bg-primary-500'
+              className='mt-1.5 w-full'
               disabled={
                 mutationsDisabled ||
                 busy ||
@@ -758,7 +823,9 @@ export function WorkspaceGitPanel({
                       </span>
                       <span dir='auto'>{commit.author}</span>
                       <time dateTime={commit.authoredAt}>
-                        {new Date(commit.authoredAt).toLocaleDateString()}
+                        {new Date(commit.authoredAt).toLocaleDateString(
+                          i18n.language
+                        )}
                       </time>
                     </p>
                   </li>
@@ -793,15 +860,13 @@ export function WorkspaceGitPanel({
                 </button>
                 {selected && (
                   <>
-                    <span
-                      aria-hidden='true'
+                    <GitStatusLetter
+                      letter={statusLetter(selected.status)}
                       className={cn(
                         'w-4 shrink-0 text-center font-mono text-[11px] font-semibold',
                         letterClass(statusLetter(selected.status))
                       )}
-                    >
-                      {statusLetter(selected.status)}
-                    </span>
+                    />
                     <span
                       dir='ltr'
                       className='min-w-0 flex-1 truncate font-mono text-[11px] text-ink'
@@ -829,6 +894,9 @@ export function WorkspaceGitPanel({
               ) : selected ? (
                 <div
                   data-testid='work-git-diff'
+                  role='region'
+                  tabIndex={0}
+                  aria-label={t('work.git.diff')}
                   dir='ltr'
                   className='min-h-0 flex-1 overflow-auto bg-surface font-mono text-[12px] leading-5'
                 >
@@ -867,6 +935,9 @@ export function WorkspaceGitPanel({
           ) : (
             <div
               data-testid='work-git-review'
+              role='region'
+              tabIndex={0}
+              aria-label={t('work.git.diff')}
               dir='ltr'
               className='min-h-0 flex-1 overflow-auto bg-surface font-mono text-[12px] leading-5'
             >
@@ -905,12 +976,10 @@ export function WorkspaceGitPanel({
                     title={change.path}
                     className='flex w-full items-center gap-2 border-b border-line px-3 py-1.5 text-start hover:bg-surface-subtle'
                   >
-                    <span
-                      aria-hidden='true'
+                    <GitStatusLetter
+                      letter='U'
                       className='w-4 shrink-0 text-center font-mono text-[11px] font-semibold text-[rgb(46,164,79)]'
-                    >
-                      U
-                    </span>
+                    />
                     <span
                       dir='ltr'
                       className='min-w-0 flex-1 truncate font-mono text-[11px] text-ink'

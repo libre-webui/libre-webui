@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'react-hot-toast';
 import { Button } from '@/components/ui';
@@ -29,6 +29,7 @@ import { authApi } from '@/utils/api';
  */
 export const MfaPolicySettings: React.FC = () => {
   const { t } = useTranslation();
+  const requireAllId = useId();
   const [policy, setPolicy] = useState<{
     mode: 'optional' | 'required';
     locked: boolean;
@@ -100,7 +101,10 @@ export const MfaPolicySettings: React.FC = () => {
       </div>
       <div className='mt-3 flex items-center justify-between gap-4'>
         <div>
-          <p className='text-sm text-gray-900 dark:text-gray-100'>
+          <p
+            id={requireAllId}
+            className='text-sm text-gray-900 dark:text-gray-100'
+          >
             {t('userManager.mfaPolicy.requireAll')}
           </p>
           <p className='text-xs text-gray-500 dark:text-gray-400'>
@@ -110,6 +114,7 @@ export const MfaPolicySettings: React.FC = () => {
           </p>
         </div>
         <SettingsToggle
+          aria-labelledby={requireAllId}
           checked={policy?.mode === 'required'}
           disabled={policy === null || policy.locked || saving}
           onChange={handleChange}

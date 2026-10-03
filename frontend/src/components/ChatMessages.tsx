@@ -566,6 +566,7 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
       <div
         ref={scrollContainerRef}
         data-testid='chat-scroll-viewport'
+        aria-busy={isStreaming}
         data-scroll-fade-top='40'
         data-scroll-fade-bottom='72'
         onScroll={handleScroll}

@@ -41,7 +41,8 @@
     "remove": "Usuń",
     "home": "Strona główna",
     "more": "Więcej",
-    "reasoning": "Rozumowanie"
+    "reasoning": "Rozumowanie",
+    "skipToContent": "Przejdź do treści"
   },
   "brand": {
     "name": "Libre WebUI",
@@ -49,7 +50,10 @@
   },
   "appInitialization": {
     "ollamaUnavailable": "Usługa Ollama jest niedostępna. Nadal można korzystać z modeli wtyczek.",
-    "backendConnectionFailed": "Nie udało się połączyć z usługą backendu"
+    "backendConnectionFailed": "Nie udało się połączyć z usługą backendu",
+    "connecting": "Łączenie z backendem… ({{attempt}}/{{total}})",
+    "startingUp": "Uruchamianie…",
+    "backendUnreachableHint": "Upewnij się, że backend działa, i spróbuj ponownie."
   },
   "auth": {
     "login": {
@@ -189,7 +193,15 @@
       "removed": "Usunięto klucz dostępu.",
       "removeFailed": "Nie udało się usunąć klucza dostępu.",
       "signInButton": "Zaloguj się kluczem dostępu",
-      "signInFailed": "Logowanie kluczem dostępu nie powiodło się."
+      "signInFailed": "Logowanie kluczem dostępu nie powiodło się.",
+      "removeConfirmTitle": "Usunąć ten klucz dostępu?",
+      "removeConfirmDescription": "Klucz „{{name}}” nie będzie już działać przy logowaniu. Możesz zarejestrować go ponownie później."
+    },
+    "password": {
+      "show": "Pokaż hasło",
+      "hide": "Ukryj hasło",
+      "showConfirmation": "Pokaż potwierdzenie hasła",
+      "hideConfirmation": "Ukryj potwierdzenie hasła"
     }
   },
   "setup": {
@@ -242,7 +254,8 @@
       "envNote": "Ten klucz jest również zapisany w pliku backend/.env jako ENCRYPTION_KEY",
       "acknowledgment": "Zapisałem klucz szyfrowania w bezpiecznym miejscu i rozumiem, że jego utrata może spowodować utratę danych.",
       "confirmRequired": "Potwierdź, że zapisałeś klucz szyfrowania",
-      "continue": "Kontynuuj do Libre WebUI"
+      "continue": "Kontynuuj do Libre WebUI",
+      "loadFailed": "Nie udało się załadować klucza szyfrowania. Ponów próbę, aby kontynuować."
     },
     "connectModels": {
       "title": "Podłącz swoje modele",
@@ -336,7 +349,8 @@
       "toolsOn": "Narzędzia włączone — model może wywoływać zatwierdzone narzędzia",
       "toolsOff": "Pozwól modelowi wywołać narzędzia w tej wiadomości",
       "thinkingOn": "Myślenie włączone ({{level}})",
-      "thinkingOff": "Pomyśl przed odpowiedzią"
+      "thinkingOff": "Pomyśl przed odpowiedzią",
+      "thinkingUpdateFailed": "Nie udało się zaktualizować ustawienia myślenia"
     },
     "session": {
       "new": "Nowy czat",
@@ -372,7 +386,8 @@
         "move": "Przenieś do folderu",
         "remove": "Usuń z folderu",
         "delete": "Usuń folder",
-        "deleteConfirm": "Usunąć ten folder? Czaty w nim pozostaną."
+        "deleteConfirm": "Usunąć ten folder? Czaty w nim pozostaną.",
+        "rename": "Zmień nazwę folderu"
       },
       "shareChat": "Udostępnij czat…"
     },
@@ -405,7 +420,13 @@
       "browse": "przeglądaj",
       "unsupportedFileType": "Nieobsługiwany typ pliku: {{name}}",
       "maxImagesAllowed": "Dozwolona maksymalna liczba obrazów: {{count}}",
-      "imageTooLarge": "Obraz {{name}} jest zbyt duży (maks. 10 MB)"
+      "imageTooLarge": "Obraz {{name}} jest zbyt duży (maks. 10 MB)",
+      "readFailed": "Nie udało się odczytać pliku {{name}}",
+      "uploadAlt": "Przesłany plik {{number}}",
+      "removeImage": "Usuń obraz {{number}}",
+      "addMore": "Dodaj więcej obrazów ({{count}}/{{max}})",
+      "uploading": "Przesyłanie",
+      "removeDocument": "Usuń {{name}}"
     },
     "structuredOutput": {
       "title": "Format odpowiedzi",
@@ -456,7 +477,8 @@
       "compactionOff": "Wyłączone dla tego czatu"
     },
     "message": {
-      "sources": "Źródła"
+      "sources": "Źródła",
+      "copyFailed": "Nie udało się skopiować do schowka"
     },
     "toasts": {
       "chatCreated": "Utworzono nowy czat",
@@ -491,7 +513,8 @@
       "branchSwitched": "Przełączono na wariant {{number}}",
       "branchSelectFailed": "Nie udało się wybrać gałęzi",
       "editFailed": "Nie udało się edytować wiadomości",
-      "toolDecisionFailed": "Nie udało się zapisać decyzji dotyczącej narzędzia"
+      "toolDecisionFailed": "Nie udało się zapisać decyzji dotyczącej narzędzia",
+      "archiveFailed": "Nie udało się zarchiwizować tego czatu"
     },
     "documents": {
       "title": "Dokumenty w kontekście"
@@ -521,7 +544,25 @@
       "origin": "Rozgałęziony z {{title}}",
       "originUnknown": "innego czatu"
     },
-    "sharedReadOnly": "Udostępnione przez {{owner}} — tylko podgląd"
+    "sharedReadOnly": "Udostępnione przez {{owner}} — tylko podgląd",
+    "branch": {
+      "variants": "{{count}} wariant",
+      "variants_plural": "{{count}} wariantów",
+      "selectVariant": "Wybierz wariant {{number}}",
+      "generating": "generowanie...",
+      "select": "wybierz"
+    },
+    "sources": {
+      "fullContextFailed": "Nie udało się zaktualizować ustawienia pełnego dokumentu",
+      "usedByRetrieval": "Użyte w odpowiedziach",
+      "triggerLabel": "Źródła ({{count}})"
+    },
+    "announce": {
+      "replyFinished": "Odpowiedź od {{name}}: {{text}}",
+      "replyFinishedNoText": "Odpowiedź od {{name}} jest gotowa.",
+      "codeBlock": "blok kodu",
+      "generationStopped": "Generowanie zatrzymane"
+    }
   },
   "sidebar": {
     "navigation": {
@@ -546,7 +587,8 @@
       "strands": "Strands"
     },
     "toggleSize": "Zmień rozmiar panelu bocznego",
-    "expandSidebar": "Rozwiń panel boczny"
+    "expandSidebar": "Rozwiń panel boczny",
+    "ariaLabel": "Panel boczny"
   },
   "user": {
     "menu": {
@@ -821,7 +863,8 @@
         "removeFailed": "Nie udało się usunąć klucza API",
         "enterKey": "Wprowadź klucz API"
       },
-      "variables": "Variables"
+      "variables": "Variables",
+      "dismissError": "Zamknij błąd"
     },
     "generation": {
       "title": "Opcje generowania",
@@ -924,7 +967,8 @@
         "deleteFailed": "Nie udało się usunąć kolekcji",
         "assignFailed": "Nie udało się przenieść dokumentu",
         "share": "Udostępnij kolekcję",
-        "shared": "udostępniona"
+        "shared": "udostępniona",
+        "assignTo": "Kolekcja dla {{name}}"
       },
       "library": {
         "title": "Przesłane dokumenty",
@@ -1066,7 +1110,8 @@
         "title": "Zarchiwizowane czaty",
         "empty": "Brak zarchiwizowanych czatów",
         "unarchive": "Przywróć"
-      }
+      },
+      "clearAllConfirm": "Czy na pewno chcesz usunąć całą historię czatów? Tej operacji nie można cofnąć."
     },
     "about": {
       "title": "O programie",
@@ -1186,7 +1231,11 @@
       "unknownDevice": "Nieznane urządzenie",
       "createdAt": "Zalogowano",
       "lastSeenAt": "Ostatnia aktywność",
-      "expiresAt": "Wygasa"
+      "expiresAt": "Wygasa",
+      "signOutConfirmTitle": "Wylogować tę sesję?",
+      "signOutConfirmDescription": "Urządzenie {{device}} zostanie natychmiast wylogowane i będzie musiało zalogować się ponownie.",
+      "signOutOthersConfirmTitle": "Wylogować pozostałe sesje?",
+      "signOutOthersConfirmDescription": "Pozostałe sesje ({{count}}) zostaną natychmiast wylogowane. Ta sesja pozostanie zalogowana."
     },
     "apiKeys": {
       "title": "Klucze API",
@@ -1220,7 +1269,9 @@
       "createdAt": "Utworzono",
       "lastUsedAt": "Ostatnio użyty",
       "expiresAt": "Wygasa",
-      "neverExpires": "Nigdy"
+      "neverExpires": "Nigdy",
+      "revokeConfirmTitle": "Unieważnić „{{name}}”?",
+      "revokeConfirmDescription": "Wszystko, co używa tego klucza API, natychmiast przestanie działać. Tej operacji nie można cofnąć."
     },
     "notifications": {
       "title": "Powiadomienia",
@@ -1294,7 +1345,8 @@
     "model": "Model",
     "size": "Rozmiar",
     "quality": "Jakość",
-    "created": "Utworzono"
+    "created": "Utworzono",
+    "lightboxLabel": "Podgląd obrazu"
   },
   "errors": {
     "generic": "Wystąpił błąd",
@@ -1389,7 +1441,9 @@
       "hide": "Ukryj przed użytkownikami",
       "show": "Pokaż użytkownikom",
       "star": "Oznacz {{name}} gwiazdką",
-      "unstar": "Usuń gwiazdkę z {{name}}"
+      "unstar": "Usuń gwiazdkę z {{name}}",
+      "filterLabel": "Filtruj modele",
+      "displayName": "Nazwa wyświetlana dla {{name}}"
     },
     "pull": {
       "placeholder": "Wprowadź nazwę modelu (np. llama3.2:3b, deepseek-r1:14b)",
@@ -1550,7 +1604,10 @@
     "deleteConfirm": "Czy na pewno chcesz usunąć \"{{name}}\"?",
     "deleteSuccess": "Persona \"{{name}}\" usunięta pomyślnie",
     "downloadSuccess": "Persona \"{{name}}\" pobrana pomyślnie",
-    "failed": "Nie udało się {{action}} persony"
+    "failed": "Nie udało się {{action}} persony",
+    "loadFailed": "Nie udało się załadować twoich person.",
+    "deleteFailed": "Nie udało się usunąć persony",
+    "downloadFailed": "Nie udało się pobrać persony"
   },
   "personaForm": {
     "title": {
@@ -1682,7 +1739,8 @@
       "promptHint": "Prompt, od którego zaczyna się każdy nowy czat z tą personą.",
       "noPrompt": "Brak promptu",
       "version": "Wersja powiązań {{version}}"
-    }
+    },
+    "sections": "Sekcje persony"
   },
   "personaCard": {
     "enhanced": "Ulepszona",
@@ -1699,7 +1757,16 @@
     "backupSuccess": "Kopia zapasowa persony pobrana pomyślnie",
     "dnaSuccess": "DNA persony wyeksportowane pomyślnie",
     "failed": "Nie udało się {{action}}",
-    "shareTooltip": "Udostępnij tę personę"
+    "shareTooltip": "Udostępnij tę personę",
+    "wipeFailed": "Nie udało się wyczyścić wspomnień",
+    "backupFailed": "Nie udało się utworzyć kopii zapasowej persony",
+    "exportDnaFailed": "Nie udało się wyeksportować DNA persony",
+    "favorite": "Ulubiona",
+    "memoryStatus": {
+      "active": "Aktywna",
+      "wiped": "Wyczyszczona",
+      "backed_up": "Kopia zapasowa gotowa"
+    }
   },
   "userManager": {
     "title": "Zarządzanie użytkownikami",
@@ -1865,7 +1932,28 @@
       "memberOf": "Grupy",
       "featuresLabel": "Dostęp do funkcji",
       "grantsLabel": "Uprawnienia",
-      "grantVia": "przez"
+      "grantVia": "przez",
+      "deleteConfirmTitle": "Usunąć grupę „{{name}}”?",
+      "deleteConfirmDescription": "Członkowie stracą dostęp, który mieli tylko przez tę grupę. Same konta nie zostaną usunięte.",
+      "statuses": {
+        "active": "Aktywna",
+        "pending": "Oczekuje na zatwierdzenie"
+      },
+      "features": {
+        "work": "Praca",
+        "model-download": "Pobieranie modeli",
+        "web-search": "Wyszukiwanie w sieci",
+        "strands": "Silnik Strands",
+        "tools": "Narzędzia",
+        "stt": "Mowa na tekst",
+        "tts": "Tekst na mowę",
+        "voice-mode": "Tryb głosowy",
+        "voice-cloning": "Klonowanie głosu"
+      },
+      "grantViaKinds": {
+        "user": "bezpośrednie przyznanie",
+        "group": "grupa"
+      }
     },
     "audit": {
       "title": "Dziennik audytu bezpieczeństwa",
@@ -2298,7 +2386,11 @@
       "harmful": "Szkodliwa",
       "formatting": "Formatowanie"
     },
-    "feedbackComment": "Dodaj komentarz…"
+    "feedbackComment": "Dodaj komentarz…",
+    "user": "Użytkownik",
+    "feedbackFailed": "Nie udało się zapisać twojej opinii",
+    "openImage": "Otwórz obraz {{number}}",
+    "uploadedImageAlt": "Przesłany obraz {{number}}"
   },
   "imageGallery": {
     "title": "Galeria obrazów",
@@ -2387,7 +2479,10 @@
       "image": "Obrazy",
       "video": "Wideo",
       "audio": "Audio"
-    }
+    },
+    "deleteConfirmTitle": "Usunąć ten element?",
+    "deleteConfirmDescription": "Wygenerowane multimedia zostaną trwale usunięte.",
+    "previewFailed": "Podgląd niedostępny"
   },
   "errorBoundary": {
     "title": "Coś poszło nie tak",
@@ -2463,7 +2558,8 @@
     "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source.",
     "versionOf": "Wersja {{current}} z {{total}}",
     "previousVersion": "Poprzednia wersja",
-    "nextVersion": "Następna wersja"
+    "nextVersion": "Następna wersja",
+    "resizePanel": "Zmień rozmiar panelu"
   },
   "personaImportExport": {
     "title": "Import i eksport person",
@@ -2501,7 +2597,10 @@
     "generation": "Generowanie:",
     "modelLoad": "Ładowanie modelu:",
     "totalTime": "Łączny czas:",
-    "generatedAt": "Wygenerowano o:"
+    "generatedAt": "Wygenerowano o:",
+    "notAvailable": "b/d",
+    "tokenCount": "{{tokens}} tokenów",
+    "tokensPerSecond": "{{value}} t/s"
   },
   "userMenu": {
     "loggedOut": "Wylogowano pomyślnie",
@@ -2560,7 +2659,9 @@
       "httpWarning": "HTTP nie szyfruje poświadczeń ani ruchu. Używaj tylko w zaufanej sieci.",
       "invalidBaseUrl": "Bazowe URL nie mogą zawierać ciągu zapytania ani fragmentu.",
       "invalidApiPath": "Musi zaczynać się od / i nie zawierać URL, zapytania, fragmentu ani segmentu ..",
-      "tooLong": "Wartość jest za długa"
+      "tooLong": "Wartość jest za długa",
+      "resetConfirmTitle": "Przywrócić domyślne?",
+      "resetConfirmDescription": "Spowoduje to usunięcie wszystkich zapisanych wartości dla {{name}}, w tym kluczy API i innych poświadczeń. Tej operacji nie można cofnąć."
     }
   },
   "huggingface": {
@@ -2580,7 +2681,10 @@
   },
   "demoMode": {
     "title": "Tryb demo",
-    "github": "GitHub"
+    "github": "GitHub",
+    "defaultMessage": "To wersja demonstracyjna, przeznaczona wyłącznie do prezentacji. Backend Ollama nie jest połączony.",
+    "viewOnGithub": "Zobacz na GitHubie",
+    "dismiss": "Zamknij"
   },
   "work": {
     "title": "Praca",
@@ -2671,8 +2775,18 @@
         "checksPending": "Kontrole oczekujące",
         "stallNudges": "Powiadomienia o zastoju",
         "ambiguityNudges": "Powiadomienia o ponownym ukierunkowaniu",
-        "stoppedBy": "Zatrzymane przez"
-      }
+        "stoppedBy": "Zatrzymane przez",
+        "reasons": {
+          "round": "limit rund",
+          "toolCall": "limit wywołań narzędzi",
+          "approvalTimeout": "przekroczono czas zatwierdzenia",
+          "computerStall": "komputer zawiesił się"
+        }
+      },
+      "skillTraceSavedWorked": "Zapisano: zadziałało",
+      "skillTraceSavedFailed": "Zapisano: nie powiodło się",
+      "connectionClosed": "Połączenie na żywo z Pracą zostało zamknięte.",
+      "reconnectingBackground": "Aktualizacje na żywo łączą się ponownie w tle."
     },
     "runtime": {
       "unavailable": "Środowisko uruchomieniowe niedostępne",
@@ -2715,7 +2829,11 @@
       "changes": "Zmiany",
       "changesSince": "Co się zmieniło od ostatniej tury",
       "diffLabel": "Zmiany od ostatniej tury: {{path}}",
-      "diffFolded": "{{count}} niezmienionych wierszy"
+      "diffFolded": "{{count}} niezmienionych wierszy",
+      "diffAdded": "Dodano",
+      "diffRemoved": "Usunięto",
+      "unsavedChanges": "niezapisane zmiany",
+      "editingLocked": "Edycja odblokuje się po zakończeniu tury."
     },
     "activity": {
       "empty": "Tutaj pojawią się polecenia, operacje na plikach i wyniki narzędzi.",
@@ -2726,7 +2844,9 @@
         "toolCall": "Wywołanie narzędzia",
         "toolResult": "Wynik narzędzia",
         "error": "Błąd"
-      }
+      },
+      "arguments": "Argumenty narzędzia",
+      "output": "Wynik narzędzia"
     },
     "preview": {
       "command": "Opcjonalne polecenie startowe",
@@ -2755,7 +2875,8 @@
       "saveFailed": "Nie udało się zapisać tego pliku.",
       "saved": "Plik zapisany.",
       "previewFailed": "Nie udało się uruchomić podglądu.",
-      "previewStopFailed": "Nie udało się zatrzymać podglądu."
+      "previewStopFailed": "Nie udało się zatrzymać podglądu.",
+      "sendFailed": "Nie udało się wysłać wiadomości."
     },
     "terminal": {
       "connecting": "Otwieranie powłoki w piaskownicy…",
@@ -2807,7 +2928,18 @@
       "noFilterMatches": "Żadne zmienione pliki nie pasują do tego filtra.",
       "allChanges": "Wszystkie zmiany",
       "diffTruncated": "Ten diff został skrócony.",
-      "binaryFile": "Plik binarny, brak diffu tekstowego."
+      "binaryFile": "Plik binarny, brak diffu tekstowego.",
+      "statusLabels": {
+        "modified": "Zmodyfikowano",
+        "added": "Dodano",
+        "deleted": "Usunięto",
+        "renamed": "Zmieniono nazwę",
+        "copied": "Skopiowano",
+        "typeChanged": "Zmieniono typ",
+        "untracked": "Nieśledzone"
+      },
+      "stagedState": "w poczekalni",
+      "aheadBehind": "{{ahead}} do przodu, {{behind}} do tyłu"
     },
     "hostWorkspace": {
       "hint": "Zostaw puste dla izolowanej przestrzeni, albo wskaż zadaniu folder na tej maszynie.",
@@ -2834,7 +2966,8 @@
       "unmute": "Włącz dźwięk",
       "mute": "Wycisz",
       "finished": "To zadanie zostało zakończone. Otwórz je ponownie, aby przywrócić jego ekran.",
-      "reopenOpen": "Otwórz zadanie ponownie i otwórz ekran"
+      "reopenOpen": "Otwórz zadanie ponownie i otwórz ekran",
+      "teachSaveFailed": "Nie udało się zapisać tej demonstracji."
     },
     "computerSetup": {
       "title": "Work Computer",
@@ -2871,7 +3004,11 @@
       "approvalsToggleFailed": "Nie udało się zaktualizować ustawień zgody.",
       "approvalRuleLine": "Zawsze dozwolone",
       "approvalRuleDelete": "Usuń regułę",
-      "approvalRuleDeleteFailed": "Nie udało się usunąć reguły."
+      "approvalRuleDeleteFailed": "Nie udało się usunąć reguły.",
+      "routinesLoadFailed": "Nie udało się załadować rutyn.",
+      "skillsLoadFailed": "Nie udało się załadować nauczonych umiejętności.",
+      "approvalsLoadFailed": "Nie udało się załadować ustawień zatwierdzeń.",
+      "routinePaused": "Wstrzymana"
     },
     "approval": {
       "title": "Wymagana zgoda",
@@ -2879,7 +3016,16 @@
       "allowOnce": "Pozwól raz",
       "allowAlways": "Pozwalaj zawsze",
       "deny": "Odmów",
-      "failed": "Nie udało się wysłać decyzji."
+      "failed": "Nie udało się wysłać decyzji.",
+      "details": "Szczegóły akcji",
+      "fields": {
+        "command": "Polecenie",
+        "path": "Ścieżka",
+        "from": "Z",
+        "to": "Do",
+        "actions": "Akcje",
+        "recursive": "Rekurencyjnie"
+      }
     },
     "idleStopHint": "Zatrzymuje się po {{minutes}} minutach bez aktywności.",
     "runs": {
@@ -2891,7 +3037,8 @@
         "needsInput": "Wymaga danych",
         "failed": "Niepowodzenie",
         "cancelled": "Anulowano"
-      }
+      },
+      "loadFailed": "Nie udało się załadować historii uruchomień."
     },
     "recovery": {
       "pending": "Work potwierdza {{pending}} porządków piaskownicy, zanim zaakceptuje nowe operacje.",
@@ -2903,6 +3050,17 @@
       "retrySucceeded": "Ukończono {{cleared}} z {{attempted}} oczekujących porządków.",
       "retryPending": "Wciąż ponawiane: {{attempted}} oczekujących porządków.",
       "retryFailed": "Nie udało się ponowić oczekujących porządków."
+    },
+    "computer": {
+      "setupFailed": "Nie udało się skonfigurować Work Computer."
+    },
+    "announce": {
+      "completed": "{{title}}: zakończono.",
+      "needsInput": "{{title}} wymaga Twoich danych lub zatwierdzenia.",
+      "failed": "{{title}}: niepowodzenie.",
+      "cancelled": "{{title}}: zatrzymano.",
+      "approvalNeeded": "{{title}} wymaga Twojego zatwierdzenia, aby uruchomić {{tool}}.",
+      "untitledTask": "To zadanie"
     }
   },
   "personaBackground": {
@@ -2947,7 +3105,8 @@
     "showAll": "Pokaż wszystkie ({{total}})",
     "sources": "Źródła modeli",
     "defaultModel": "Model domyślny",
-    "contextSize": "kontekst {{size}}"
+    "contextSize": "kontekst {{size}}",
+    "via": "przez {{provider}}"
   },
   "whatsNew": {
     "title": "Co nowego",
@@ -3004,7 +3163,16 @@
     "unpin": "Odepnij notatkę",
     "pinned": "Przypięta",
     "export": "Pobierz jako Markdown",
-    "sharedWithYou": "Udostępniona tobie"
+    "sharedWithYou": "Udostępniona tobie",
+    "titleLabel": "Tytuł notatki",
+    "loadFailed": "Nie udało się tego załadować. Spróbuj ponownie.",
+    "restoreConfirmTitle": "Przywrócić tę wersję?",
+    "restoreConfirmDescription": "Tekst notatki zostanie zastąpiony tą wcześniejszą wersją.",
+    "deleteAttachmentConfirmTitle": "Usunąć {{name}}?",
+    "deleteAttachmentConfirmDescription": "Załącznik zostanie trwale usunięty z tej notatki.",
+    "attachmentDeleteFailed": "Nie udało się usunąć załącznika",
+    "revokeFailed": "Nie udało się cofnąć dostępu",
+    "sharePermissionLabel": "Uprawnienie"
   },
   "calendar": {
     "title": "Kalendarz",
@@ -3049,7 +3217,22 @@
     "importFailed": "Nie udało się zaimportować pliku",
     "importResult": "Zaimportowano wydarzeń: {{total}}",
     "importIcs": "Importuj",
-    "exportIcs": "Eksportuj"
+    "exportIcs": "Eksportuj",
+    "chipStatus": {
+      "automation": "Zaplanowana automatyzacja",
+      "runSucceeded": "Uruchomienie automatyzacji zakończone sukcesem",
+      "runFailed": "Uruchomienie automatyzacji nie powiodło się"
+    },
+    "newEventOn": "Nowe wydarzenie: {{date}}",
+    "showDay": "Pokaż wszystkie wydarzenia: {{date}}",
+    "deleteEventConfirmTitle": "Usunąć „{{title}}”?",
+    "deleteEventConfirmDescription": "To wydarzenie zostanie trwale usunięte.",
+    "deleteRecurringEventConfirmDescription": "To wydarzenie cykliczne i wszystkie jego wystąpienia zostaną trwale usunięte.",
+    "shareCalendarNamed": "Udostępnij kalendarz {{name}}",
+    "deleteCalendarNamed": "Usuń kalendarz {{name}}",
+    "deleteCalendarConfirmTitle": "Usunąć kalendarz „{{name}}”?",
+    "deleteCalendarConfirmDescription": "Kalendarz i jego wydarzenia zostaną trwale usunięte.",
+    "calendarDeleteFailed": "Nie udało się usunąć kalendarza"
   },
   "automations": {
     "title": "Automatyzacje",
@@ -3176,13 +3359,17 @@
         "work-approval": "agent będzie czekał na Twoją zgodę",
         "system": "pojawi się powiadomienie systemowe"
       }
-    }
+    },
+    "deleteConfirmTitle": "Usunąć „{{name}}”?",
+    "deleteConfirmDescription": "Automatyzacja i jej harmonogram zostaną trwale usunięte. Poprzednie uruchomienia pozostaną w historii."
   },
   "home": {
     "active": "aktywny",
     "continue": "Kontynuuj",
     "start": "Start",
-    "explore": "Odkrywaj"
+    "explore": "Odkrywaj",
+    "greeting": "{{greeting}}.",
+    "greetingWithName": "{{greeting}}, {{name}}."
   },
   "palette": {
     "empty": "Brak wyników.",
@@ -3195,7 +3382,14 @@
     "work": "Praca",
     "messages": "Wiadomości",
     "notes": "Notatki",
-    "documents": "Dokumenty"
+    "documents": "Dokumenty",
+    "searching": "Wyszukiwanie…",
+    "searchFailed": "Wyszukiwanie w przestrzeni roboczej nie powiodło się. Pokazano tylko pasujące czaty i akcje.",
+    "results": "Wyniki",
+    "escKey": "esc",
+    "hintNavigate": "Nawiguj",
+    "hintOpen": "Otwórz",
+    "hintClose": "Zamknij"
   },
   "tabs": {
     "actions": "Akcje karty",
@@ -3399,7 +3593,8 @@
       "button": "Z folderu",
       "missingSkillMd": "Folder musi zawierać plik SKILL.md",
       "done": "Zaimportowano umiejętność z {{count}} dołączonymi plikami"
-    }
+    },
+    "toggleLabel": "Włącz umiejętność {{name}}"
   },
   "toolsPage": {
     "title": "Narzędzia",
@@ -3557,7 +3752,14 @@
     "added": "Udostępniono {{name}}",
     "failed": "Udostępnianie nie powiodło się",
     "userNotFound": "Brak użytkownika o tej nazwie",
-    "groupNotFound": "Brak grupy o tej nazwie"
+    "groupNotFound": "Brak grupy o tej nazwie",
+    "principalKind": "Udostępnij użytkownikowi lub grupie",
+    "principalName": "Nazwa użytkownika lub grupy",
+    "permission": "Uprawnienie",
+    "sharing": "Udostępnianie",
+    "loading": "Ładowanie udostępnień",
+    "loadFailed": "Nie udało się załadować udostępnień",
+    "revokeFailed": "Nie udało się cofnąć dostępu"
   },
   "channels": {
     "title": "Kanały",
@@ -3616,13 +3818,44 @@
     "toolCalls": {
       "summary": "Użyte narzędzia ({{total}})",
       "deniedHint": "Narzędzia, które coś zmieniają, są odrzucane w kanałach. Uruchom je z czatu."
-    }
+    },
+    "confirmEdit": "Zapisz edycję",
+    "cancelEdit": "Anuluj edycję",
+    "reactWith": "Zareaguj: {{emoji}}",
+    "deleteMessageConfirmTitle": "Usunąć tę wiadomość?",
+    "deleteMessageConfirmDescription": "Wiadomość zostanie usunięta dla wszystkich na tym kanale.",
+    "unreadCount": "Nieprzeczytane: {{total}}",
+    "send": "Wyślij wiadomość",
+    "invite": "Zaproś członka",
+    "closeThread": "Zamknij wątek",
+    "removeAttachment": "Usuń załącznik",
+    "loadFailed": "Nie udało się tego załadować. Spróbuj ponownie.",
+    "editFailed": "Nie udało się edytować wiadomości",
+    "deleteMessageFailed": "Nie udało się usunąć wiadomości",
+    "pinFailed": "Nie udało się zmienić przypięcia",
+    "reactFailed": "Nie udało się zapisać reakcji",
+    "downloadFailed": "Nie udało się pobrać pliku",
+    "removeMemberConfirm": "Usunąć {{name}} z tego kanału?",
+    "removeMemberConfirmDescription": "Ta osoba straci dostęp do kanału i jego wiadomości.",
+    "removeMemberNamed": "Usuń {{name}} z kanału",
+    "removeMemberFailed": "Nie udało się usunąć członka",
+    "leaveConfirm": "Opuścić {{name}}?",
+    "leaveConfirmDescription": "Aby ponownie dołączyć do kanału prywatnego, musisz zostać ponownie zaproszony.",
+    "leaveFailed": "Nie udało się opuścić kanału",
+    "joinFailed": "Nie udało się dołączyć do kanału",
+    "deleteConfirm": "Usunąć {{name}}?",
+    "deleteConfirmDescription": "Kanał i wszystkie jego wiadomości zostaną trwale usunięte dla wszystkich członków.",
+    "deleteFailed": "Nie udało się usunąć kanału",
+    "saveFailed": "Nie udało się zapisać kanału"
   },
   "notifications": {
     "title": "Powiadomienia",
     "empty": "Wszystko przeczytane.",
     "markAllRead": "Oznacz wszystkie jako przeczytane",
-    "markRead": "Oznacz jako przeczytane"
+    "markRead": "Oznacz jako przeczytane",
+    "titleWithUnread": "Powiadomienia (nieprzeczytane: {{unread}})",
+    "unread": "Nieprzeczytane",
+    "loadFailed": "Nie udało się załadować powiadomień."
   },
   "voiceMode": {
     "title": "Tryb głosowy",
@@ -3757,7 +3990,12 @@
       "failed": "Niepowodzenie",
       "cancelled": "Anulowano"
     },
-    "noFeedback": "Brak opinii — oceniaj odpowiedzi, aby zbudować swój zbiór danych."
+    "noFeedback": "Brak opinii — oceniaj odpowiedzi, aby zbudować swój zbiór danych.",
+    "deleteSetConfirmTitle": "Usunąć „{{name}}”?",
+    "deleteSetConfirmDescription": "Zestaw ewaluacji i jego prompty zostaną trwale usunięte.",
+    "deleteSetFailed": "Nie udało się usunąć zestawu ewaluacji",
+    "runError": "Błąd: {{detail}}",
+    "cancelFailed": "Nie udało się anulować uruchomienia"
   },
   "passwordStrength": {
     "levels": {
@@ -3771,6 +4009,14 @@
       "hasCase": "Wielkie i małe litery",
       "hasNumber": "Co najmniej jedna cyfra",
       "tooLong": "Najwyżej 72 bajty"
+    },
+    "requirements": "Użyj co najmniej 12 znaków, nie więcej niż 72 bajty UTF-8, z wielką literą, małą literą i cyfrą.",
+    "errors": {
+      "minLength": "Hasło musi mieć co najmniej 12 znaków.",
+      "tooLong": "Hasło może mieć najwyżej 72 bajty UTF-8.",
+      "uppercase": "Hasło musi zawierać wielką literę.",
+      "lowercase": "Hasło musi zawierać małą literę.",
+      "number": "Hasło musi zawierać cyfrę."
     }
   },
   "connectModels": {
@@ -3804,7 +4050,8 @@
       "enable": "Włącz dostawcę",
       "enabling": "Włączanie…",
       "enabled": "{{name}} połączony — jego modele są teraz dostępne",
-      "enableFailed": "Nie udało się włączyć dostawcy"
+      "enableFailed": "Nie udało się włączyć dostawcy",
+      "urlLabel": "Adres URL serwera"
     },
     "cloud": {
       "title": "API w chmurze",
@@ -3813,7 +4060,8 @@
       "connect": "Połącz",
       "connecting": "Łączenie…",
       "connected": "{{name}} połączony — jego modele są teraz dostępne",
-      "saveFailed": "Nie udało się zapisać klucza API"
+      "saveFailed": "Nie udało się zapisać klucza API",
+      "keyLabel": "Klucz API {{name}}"
     }
   },
   "strands": {
@@ -3845,5 +4093,15 @@
     "deleteFailed": "Nie udało się usunąć sesji.",
     "saveFailed": "Nie udało się zapisać sesji.",
     "turnFailed": "Silnik nie zdołał ukończyć tury"
+  },
+  "notFound": {
+    "title": "Nie znaleziono strony",
+    "description": "Ta strona nie istnieje lub została przeniesiona."
+  },
+  "themeToggle": {
+    "switchToLight": "Przełącz na tryb jasny",
+    "switchToDark": "Przełącz na tryb ciemny",
+    "switchToAmoled": "Przełącz na tryb czystej czerni",
+    "switchToCelestial": "Przełącz na tryb niebiański"
   }
 }

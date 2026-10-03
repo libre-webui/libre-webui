@@ -392,26 +392,57 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
 
       <form onSubmit={e => e.preventDefault()} className='space-y-6'>
         <div className='bg-white dark:bg-dark-100 rounded-lg shadow-sm border border-gray-200 dark:border-dark-300'>
-          <div className='flex border-b border-gray-200 dark:border-dark-300'>
+          <div
+            role='tablist'
+            aria-label={t('personaForm.sections')}
+            className='flex overflow-x-auto border-b border-gray-200 dark:border-dark-300'
+            onKeyDown={event => {
+              const index = tabs.findIndex(tab => tab.id === activeTab);
+              const rtl = document.documentElement.dir === 'rtl';
+              const forward = rtl ? 'ArrowLeft' : 'ArrowRight';
+              const backward = rtl ? 'ArrowRight' : 'ArrowLeft';
+              let next = -1;
+              if (event.key === forward) next = (index + 1) % tabs.length;
+              else if (event.key === backward)
+                next = (index - 1 + tabs.length) % tabs.length;
+              else if (event.key === 'Home') next = 0;
+              else if (event.key === 'End') next = tabs.length - 1;
+              const target = tabs[next];
+              if (!target) return;
+              event.preventDefault();
+              setActiveTab(target.id);
+              document.getElementById(`persona-tab-${target.id}`)?.focus();
+            }}
+          >
             {tabs.map(tab => (
               <button
                 key={tab.id}
+                id={`persona-tab-${tab.id}`}
                 type='button'
+                role='tab'
+                aria-selected={activeTab === tab.id}
+                aria-controls='persona-tabpanel'
+                tabIndex={activeTab === tab.id ? 0 : -1}
                 onClick={() => setActiveTab(tab.id)}
                 className={cn(
-                  'flex items-center gap-2 px-6 py-4 text-sm font-medium transition-colors',
+                  'flex shrink-0 items-center gap-2 whitespace-nowrap px-6 py-4 text-sm font-medium transition-colors',
                   activeTab === tab.id
                     ? 'border-b-2 border-primary-500 text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/20'
                     : 'text-gray-500 dark:text-dark-600 hover:text-gray-700 dark:hover:text-dark-800'
                 )}
               >
-                <tab.icon className='h-4 w-4' />
+                <tab.icon className='h-4 w-4' aria-hidden='true' />
                 {tab.label}
               </button>
             ))}
           </div>
 
-          <div className='p-6'>
+          <div
+            id='persona-tabpanel'
+            role='tabpanel'
+            aria-labelledby={`persona-tab-${activeTab}`}
+            className='p-6'
+          >
             {activeTab === 'basic' && (
               <PersonaBasicTab
                 formData={formData}

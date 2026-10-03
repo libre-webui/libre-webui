@@ -14,29 +14,42 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 import React from 'react';
 import { cn } from '@/utils';
-
 interface SwitchProps {
   checked: boolean;
   onChange: (checked: boolean) => void;
   disabled?: boolean;
   className?: string;
+  id?: string;
+  /** A switch has no visible text of its own; callers must name it. */
+  'aria-label'?: string;
+  'aria-labelledby'?: string;
+  'aria-describedby'?: string;
+  'data-testid'?: string;
 }
-
 export const Switch: React.FC<SwitchProps> = ({
   checked,
   onChange,
   disabled = false,
   className = '',
+  id,
+  'aria-label': ariaLabel,
+  'aria-labelledby': ariaLabelledBy,
+  'aria-describedby': ariaDescribedBy,
+  'data-testid': testId,
 }) => {
   return (
     <button
       type='button'
       role='switch'
+      id={id}
       aria-checked={checked}
+      aria-label={ariaLabel}
+      aria-labelledby={ariaLabelledBy}
+      aria-describedby={ariaDescribedBy}
       aria-disabled={disabled || undefined}
+      data-testid={testId}
       disabled={disabled}
       onClick={() => onChange(!checked)}
       className={cn(

@@ -606,21 +606,22 @@ export function WorkspacePane({
                     ? `work-workspace-panel-${item.id}`
                     : undefined
                 }
-                aria-label={item.label}
                 tabIndex={tab === item.id ? 0 : -1}
                 title={item.label}
                 data-testid={item.testId}
                 onClick={() => setTab(item.id)}
                 onKeyDown={event => handleTabKeyDown(event, index)}
                 className={cn(
-                  'flex h-7 items-center gap-1.5 rounded-lg px-2 text-[11px] font-medium transition-[background-color,color,box-shadow]',
+                  // The strip scrolls (overflow-x-auto) and would clip an outer
+                  // focus ring, so the ring is drawn inside the tab.
+                  'flex h-7 items-center gap-1.5 rounded-lg px-2 text-[11px] font-medium transition-[background-color,color,box-shadow] focus-visible:outline-offset-[-2px]',
                   tab === item.id
                     ? 'bg-surface-raised text-ink shadow-subtle'
                     : 'text-ink-muted hover:text-ink'
                 )}
               >
-                <Icon className='h-3.5 w-3.5 shrink-0' />
-                <span className='hidden xs:inline'>{item.label}</span>
+                <Icon aria-hidden='true' className='h-3.5 w-3.5 shrink-0' />
+                <span className='max-xs:sr-only'>{item.label}</span>
                 {item.id === 'activity' && activityCount > 0 && (
                   <span className='rounded-full bg-surface px-1.5 text-[10px] text-ink-muted'>
                     {activityCount}
@@ -656,7 +657,15 @@ export function WorkspacePane({
               >
                 {selectedFile?.path ??
                   `/workspace${currentPath ? `/${currentPath}` : ''}`}
-                {dirty && ' •'}
+                {dirty && (
+                  <>
+                    <span aria-hidden='true'> •</span>
+                    <span className='sr-only'>
+                      {' '}
+                      {t('work.files.unsavedChanges')}
+                    </span>
+                  </>
+                )}
               </span>
             </div>
 
@@ -769,7 +778,7 @@ export function WorkspacePane({
                   <Button
                     data-testid='work-save-file-button'
                     size='sm'
-                    className='h-8 w-8 rounded-lg bg-primary-600 px-0 text-white hover:bg-primary-500 sm:w-auto sm:px-2.5'
+                    className='h-8 w-8 rounded-lg px-0 sm:w-auto sm:px-2.5'
                     disabled={
                       !dirty || taskActive || formatting || actionLoading
                     }
@@ -829,7 +838,7 @@ export function WorkspacePane({
               aria-label={t('work.preview.command', {
                 defaultValue: 'Optional start command',
               })}
-              className='h-8 min-w-0 flex-1 rounded-lg border border-line bg-surface px-2.5 font-mono text-[11px] text-ink outline-none placeholder:text-ink-subtle focus:border-primary-500'
+              className='h-8 min-w-0 flex-1 rounded-lg border border-line bg-surface px-2.5 font-mono text-[11px] text-ink outline-none placeholder:text-ink-subtle focus:border-primary-500 focus:ring-2 focus:ring-primary-500/30'
             />
             <div className='flex shrink-0 items-center gap-1'>
               {task.previewStatus === 'running' ||
@@ -859,7 +868,7 @@ export function WorkspacePane({
                 <Button
                   data-testid='work-start-preview-button'
                   size='sm'
-                  className='h-8 w-8 rounded-lg bg-primary-600 px-0 text-white hover:bg-primary-500 sm:w-auto sm:px-2.5'
+                  className='h-8 w-8 rounded-lg px-0 sm:w-auto sm:px-2.5'
                   disabled={actionLoading}
                   onClick={() =>
                     void onStartPreview(
@@ -951,6 +960,9 @@ export function WorkspacePane({
                       type='button'
                       data-testid='work-file-item'
                       data-path={entry.path}
+                      aria-current={
+                        selectedFile?.path === entry.path ? 'true' : undefined
+                      }
                       onClick={() => {
                         if (entry.type === 'directory') {
                           void openDirectory(entry.path);
@@ -970,7 +982,7 @@ export function WorkspacePane({
                       ) : (
                         <File className='h-3.5 w-3.5 shrink-0' />
                       )}
-                      <span dir='auto' className='truncate'>
+                      <span dir='ltr' className='truncate'>
                         {entry.name}
                       </span>
                     </button>
@@ -994,22 +1006,29 @@ export function WorkspacePane({
                 })}
               />
             ) : selectedFile ? (
-              <WorkspaceCodeEditor
-                path={selectedFile.path}
-                value={editorContent}
-                ariaLabel={t('work.files.editorLabel', {
-                  path: selectedFile.path,
-                  defaultValue: 'File editor: {{path}}',
-                })}
-                onChange={updateEditorContent}
-                onSaveShortcut={() => {
-                  if (dirty && !taskActive && !actionLoading && !formatting) {
-                    void saveFile();
-                  }
-                }}
-                onFormatShortcut={() => void formatCurrentFile()}
-                disabled={taskActive || formatting}
-              />
+              <>
+                {taskActive && (
+                  <p className='shrink-0 border-b border-line bg-surface-subtle/70 px-3 py-1.5 text-[11px] text-ink-muted'>
+                    {t('work.files.editingLocked')}
+                  </p>
+                )}
+                <WorkspaceCodeEditor
+                  path={selectedFile.path}
+                  value={editorContent}
+                  ariaLabel={t('work.files.editorLabel', {
+                    path: selectedFile.path,
+                    defaultValue: 'File editor: {{path}}',
+                  })}
+                  onChange={updateEditorContent}
+                  onSaveShortcut={() => {
+                    if (dirty && !taskActive && !actionLoading && !formatting) {
+                      void saveFile();
+                    }
+                  }}
+                  onFormatShortcut={() => void formatCurrentFile()}
+                  disabled={taskActive || formatting}
+                />
+              </>
             ) : (
               <div className='m-auto px-6 text-center text-xs text-ink-muted'>
                 <File className='mx-auto mb-3 h-7 w-7 text-ink-subtle' />
@@ -1061,7 +1080,7 @@ export function WorkspacePane({
                 >
                   <div className='flex items-center justify-between gap-2'>
                     <span
-                      dir='auto'
+                      dir='ltr'
                       className='truncate font-mono text-xs font-medium text-ink'
                     >
                       {toolName(
@@ -1096,6 +1115,9 @@ export function WorkspacePane({
                   {message.content && (
                     <pre
                       dir='ltr'
+                      role='region'
+                      tabIndex={0}
+                      aria-label={t('work.activity.output')}
                       className='mt-2 max-h-56 overflow-auto whitespace-pre-wrap break-words text-left font-mono text-[11px] leading-relaxed text-ink-muted'
                     >
                       {message.content}
@@ -1209,8 +1231,14 @@ export function WorkspacePane({
           className='flex min-h-0 flex-1 flex-col'
         >
           {task.previewStatus === 'starting' ? (
-            <div className='m-auto flex items-center gap-2 text-xs text-ink-muted'>
-              <Loader2 className='h-4 w-4 animate-spin' />
+            <div
+              role='status'
+              className='m-auto flex items-center gap-2 text-xs text-ink-muted'
+            >
+              <Loader2
+                aria-hidden='true'
+                className='h-4 w-4 animate-spin motion-reduce:animate-none'
+              />
               {t('work.preview.starting', {
                 defaultValue: 'Starting preview…',
               })}
@@ -1251,10 +1279,12 @@ export function WorkspacePane({
                   </Button>
                 </>
               ) : task.previewStatus === 'failed' ? (
-                t('work.preview.failed', {
-                  defaultValue:
-                    'The preview could not start. Check Activity, then try another command.',
-                })
+                <p role='alert'>
+                  {t('work.preview.failed', {
+                    defaultValue:
+                      'The preview could not start. Check Activity, then try another command.',
+                  })}
+                </p>
               ) : (
                 t('work.preview.empty', {
                   defaultValue:

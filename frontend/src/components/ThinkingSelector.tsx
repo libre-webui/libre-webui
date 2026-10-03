@@ -62,6 +62,27 @@ export const ThinkingSelector: React.FC<ThinkingSelectorProps> = ({
       ? undefined
       : thinkingChoiceOf(inheritedValue);
 
+  const menuRef = useRef<HTMLDivElement>(null);
+  const triggerLabel = active
+    ? t('chat.input.thinkingOn', {
+        level: t(`settings.generation.thinkingLevels.${effectiveChoice}`),
+      })
+    : t('chat.input.thinkingOff');
+  const focusTrigger = () =>
+    containerRef.current?.querySelector<HTMLElement>('button')?.focus();
+
+  useEffect(() => {
+    if (!open) return;
+    const items = menuRef.current?.querySelectorAll<HTMLElement>(
+      '[role="menuitemradio"]'
+    );
+    const target =
+      Array.from(items ?? []).find(
+        item => item.getAttribute('aria-checked') === 'true'
+      ) ?? items?.[0];
+    target?.focus();
+  }, [open]);
+
   useEffect(() => {
     if (!open) return;
     const handleClickOutside = (event: MouseEvent) => {
@@ -70,7 +91,10 @@ export const ThinkingSelector: React.FC<ThinkingSelectorProps> = ({
       }
     };
     const handleEscape = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setOpen(false);
+      if (event.key === 'Escape') {
+        setOpen(false);
+        focusTrigger();
+      }
     };
     window.addEventListener('mousedown', handleClickOutside);
     window.addEventListener('keydown', handleEscape);
@@ -94,20 +118,13 @@ export const ThinkingSelector: React.FC<ThinkingSelectorProps> = ({
           active &&
             'bg-primary-50 text-primary-600 dark:bg-primary-900/25 dark:text-primary-400'
         )}
-        title={
-          active
-            ? t('chat.input.thinkingOn', {
-                level: t(
-                  `settings.generation.thinkingLevels.${effectiveChoice}`
-                ),
-              })
-            : t('chat.input.thinkingOff')
-        }
+        title={triggerLabel}
+        aria-label={triggerLabel}
         aria-haspopup='menu'
         aria-expanded={open}
         aria-pressed={active}
       >
-        <Brain className='h-4 w-4' />
+        <Brain className='h-4 w-4' aria-hidden='true' />
         {active && (
           <span className='text-[11px] font-medium'>
             {t(`settings.generation.thinkingLevels.${effectiveChoice}`)}
@@ -117,10 +134,33 @@ export const ThinkingSelector: React.FC<ThinkingSelectorProps> = ({
 
       {open && (
         <div
+          ref={menuRef}
           role='menu'
+          aria-label={t('chat.controls.thinking')}
+          onKeyDown={event => {
+            const keys = ['ArrowDown', 'ArrowUp', 'Home', 'End'];
+            if (!keys.includes(event.key)) return;
+            const items = Array.from(
+              event.currentTarget.querySelectorAll<HTMLElement>(
+                '[role="menuitemradio"]'
+              )
+            );
+            if (items.length === 0) return;
+            event.preventDefault();
+            const index = items.indexOf(document.activeElement as HTMLElement);
+            const next =
+              event.key === 'Home'
+                ? 0
+                : event.key === 'End'
+                  ? items.length - 1
+                  : event.key === 'ArrowDown'
+                    ? (index + 1) % items.length
+                    : (index - 1 + items.length) % items.length;
+            items[next].focus();
+          }}
           className='absolute bottom-full end-0 z-30 mb-2 w-48 rounded-2xl border border-black/[0.08] bg-surface/95 p-1.5 shadow-[0_16px_48px_rgba(15,23,42,0.16)] backdrop-blur-xl animate-scale-in dark:border-white/[0.09] dark:bg-dark-100/95'
         >
-          <p className='mb-1 px-2 pt-1 text-[11px] font-medium text-gray-500 dark:text-dark-600'>
+          <p className='mb-1 px-2 pt-1 text-[11px] font-medium text-ink-muted'>
             {t('chat.controls.thinking')}
           </p>
           {THINKING_CHOICES.map(option => {
@@ -131,9 +171,11 @@ export const ThinkingSelector: React.FC<ThinkingSelectorProps> = ({
                 type='button'
                 role='menuitemradio'
                 aria-checked={selected}
+                tabIndex={-1}
                 onClick={() => {
                   onChange(thinkingPreferenceOf(option));
                   setOpen(false);
+                  focusTrigger();
                 }}
                 className={cn(
                   'flex w-full items-center justify-between gap-2 rounded-xl px-2.5 py-2 text-start text-[13px] text-gray-700 hover:bg-gray-100 dark:text-dark-800 dark:hover:bg-dark-200',
@@ -149,7 +191,9 @@ export const ThinkingSelector: React.FC<ThinkingSelectorProps> = ({
                       })
                     : t(`settings.generation.thinkingLevels.${option}`)}
                 </span>
-                {selected && <Check className='h-3.5 w-3.5 shrink-0' />}
+                {selected && (
+                  <Check className='h-3.5 w-3.5 shrink-0' aria-hidden='true' />
+                )}
               </button>
             );
           })}

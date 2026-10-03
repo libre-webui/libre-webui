@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'react-hot-toast';
 import { Button } from '@/components/ui';
@@ -30,6 +30,7 @@ import { searchApi, type WebSearchAccessMode } from '@/utils/api/searchApi';
  */
 export const WebSearchAccessSettings: React.FC = () => {
   const { t } = useTranslation();
+  const titleId = useId();
   const [mode, setMode] = useState<WebSearchAccessMode | null>(null);
   const [saving, setSaving] = useState(false);
   // A failed initial fetch would otherwise leave the toggle disabled for
@@ -78,7 +79,10 @@ export const WebSearchAccessSettings: React.FC = () => {
     <div className='rounded-lg border border-gray-200 dark:border-dark-300 bg-white dark:bg-dark-100 p-4'>
       <div className='flex items-center justify-between gap-4'>
         <div>
-          <h4 className='text-sm font-medium text-gray-900 dark:text-gray-100'>
+          <h4
+            id={titleId}
+            className='text-sm font-medium text-gray-900 dark:text-gray-100'
+          >
             {t('userManager.webSearchAccess.title')}
           </h4>
           <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
@@ -98,6 +102,7 @@ export const WebSearchAccessSettings: React.FC = () => {
           </Button>
         ) : (
           <SettingsToggle
+            aria-labelledby={titleId}
             checked={mode === 'all-users'}
             onChange={handleChange}
             disabled={saving || mode === null}

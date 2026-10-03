@@ -15,10 +15,12 @@
  * limitations under the License.
  */
 
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { Trash2, X } from 'lucide-react';
+import { confirmAction } from '@/components/ui/confirmStore';
+import { useDialogFocus } from '@/hooks/useDialogFocus';
 import type { AutomationTrigger, Calendar, CalendarEvent } from '@/types';
 import {
   fromInputValues,
@@ -95,7 +97,7 @@ const triggerFor = (
 };
 
 const fieldClass =
-  'w-full rounded-lg border border-black/[0.08] bg-white px-2.5 py-1.5 text-[13px] text-gray-900 focus:border-primary-500/40 focus:outline-none dark:border-white/[0.08] dark:bg-dark-100 dark:text-dark-900';
+  'w-full rounded-lg border border-black/[0.08] bg-white px-2.5 py-1.5 text-[13px] text-gray-900 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 dark:border-white/[0.08] dark:bg-dark-100 dark:text-dark-900';
 const labelClass =
   'mb-1 block text-[11px] font-medium uppercase tracking-wide text-gray-400 dark:text-dark-500';
 
@@ -136,6 +138,8 @@ function EventModalForm({
   onDelete,
 }: Omit<EventModalProps, 'open'>) {
   const { t } = useTranslation();
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useDialogFocus(dialogRef, { onClose });
   const startSeed = event?.startAt ?? initialStartAt;
   const [title, setTitle] = useState(event?.title ?? '');
   const [notes, setNotes] = useState(event?.notes ?? '');
@@ -195,6 +199,7 @@ function EventModalForm({
       onClick={onClose}
     >
       <div
+        ref={dialogRef}
         role='dialog'
         aria-modal='true'
         aria-labelledby='calendar-event-modal-title'
@@ -210,6 +215,7 @@ function EventModalForm({
             {event ? t('calendar.editEvent') : t('calendar.newEvent')}
           </h3>
           <button
+            type='button'
             onClick={onClose}
             aria-label={t('common.close')}
             className='rounded-xl p-2 transition-colors hover:bg-gray-100 dark:hover:bg-dark-200'
@@ -325,10 +331,11 @@ function EventModalForm({
 
           <div className='grid grid-cols-2 gap-3'>
             <div>
-              <label className={labelClass}>
+              <label htmlFor='calendar-event-calendar' className={labelClass}>
                 {t('calendar.calendarLabel')}
               </label>
               <select
+                id='calendar-event-calendar'
                 value={calendarId}
                 onChange={changeEvent =>
                   setCalendarId(changeEvent.target.value)
@@ -345,10 +352,11 @@ function EventModalForm({
               </select>
             </div>
             <div>
-              <label className={labelClass}>
+              <label htmlFor='calendar-event-reminder' className={labelClass}>
                 {t('calendar.reminderLabel')}
               </label>
               <select
+                id='calendar-event-reminder'
                 value={reminder}
                 onChange={changeEvent => setReminder(changeEvent.target.value)}
                 className={fieldClass}
@@ -366,7 +374,19 @@ function EventModalForm({
           <div className='flex items-center justify-between gap-3 border-t border-gray-200 pt-4 dark:border-dark-300'>
             {event && onDelete ? (
               <button
-                onClick={onDelete}
+                type='button'
+                onClick={async () => {
+                  const confirmed = await confirmAction({
+                    title: t('calendar.deleteEventConfirmTitle', {
+                      title: event.title,
+                    }),
+                    description: event.recurrence
+                      ? t('calendar.deleteRecurringEventConfirmDescription')
+                      : t('calendar.deleteEventConfirmDescription'),
+                    destructive: true,
+                  });
+                  if (confirmed) onDelete();
+                }}
                 data-testid='calendar-event-delete'
                 className='flex items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20'
               >
@@ -378,12 +398,14 @@ function EventModalForm({
             )}
             <div className='flex gap-3'>
               <button
+                type='button'
                 onClick={onClose}
                 className='rounded-xl px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 dark:text-dark-700 dark:hover:bg-dark-200'
               >
                 {t('common.cancel')}
               </button>
               <button
+                type='button'
                 onClick={handleSave}
                 disabled={saving || !title.trim()}
                 data-testid='calendar-event-save'

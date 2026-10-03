@@ -15,12 +15,20 @@
  * limitations under the License.
  */
 
-import { GraduationCap, Pause, Play, Plus, ShieldCheck, X } from 'lucide-react';
+import {
+  CalendarClock,
+  GraduationCap,
+  Pause,
+  Play,
+  Plus,
+  ShieldCheck,
+  X,
+} from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { AutomationModal } from '@/components/automations/AutomationModal';
-import { Switch } from '@/components/ui';
+import { EmptyState, ErrorState, LoadingState, Switch } from '@/components/ui';
 import type { Automation, Persona } from '@/types';
 import type { WorkApprovalsState, WorkTask } from '@/types/work';
 import { cn } from '@/utils';
@@ -50,7 +58,7 @@ interface WorkAgentPanelProps {
 }
 
 const sectionTitle =
-  'mb-2 text-[11px] font-medium uppercase tracking-wide text-ink-subtle';
+  'mb-2 text-[11px] font-medium uppercase tracking-wide text-ink-subtle rtl:tracking-normal';
 
 export function WorkAgentPanel({
   task,
@@ -65,13 +73,16 @@ export function WorkAgentPanel({
 
   const [routines, setRoutines] = useState<Automation[]>([]);
   const [routinesLoaded, setRoutinesLoaded] = useState(false);
+  const [routinesError, setRoutinesError] = useState(false);
   const [routineBusyId, setRoutineBusyId] = useState<string | null>(null);
   const [routineModalOpen, setRoutineModalOpen] = useState(false);
   const [routineSaving, setRoutineSaving] = useState(false);
   const [skills, setSkills] = useState<Skill[]>([]);
   const [skillsLoaded, setSkillsLoaded] = useState(false);
+  const [skillsError, setSkillsError] = useState(false);
   const [approvals, setApprovals] = useState<WorkApprovalsState | null>(null);
   const [approvalsLoaded, setApprovalsLoaded] = useState(false);
+  const [approvalsError, setApprovalsError] = useState(false);
 
   const loadRoutines = useCallback(async () => {
     try {
@@ -79,8 +90,10 @@ export function WorkAgentPanel({
       if (response.success && Array.isArray(response.data)) {
         setRoutines(response.data.filter(item => item.workTaskId === task.id));
       }
+      setRoutinesError(false);
     } catch {
-      // The section shows its empty state; a toast per poll would be noise.
+      // An inline error row with Retry; a toast per poll would be noise.
+      setRoutinesError(true);
     } finally {
       setRoutinesLoaded(true);
     }
@@ -96,8 +109,10 @@ export function WorkAgentPanel({
           )
         );
       }
+      setSkillsError(false);
     } catch {
-      // Same quiet degradation as routines.
+      // Same inline error as routines.
+      setSkillsError(true);
     } finally {
       setSkillsLoaded(true);
     }
@@ -107,8 +122,10 @@ export function WorkAgentPanel({
     try {
       const response = await workApi.getApprovals(task.id);
       if (response.success && response.data) setApprovals(response.data);
+      setApprovalsError(false);
     } catch {
-      // Same quiet degradation as routines.
+      // Same inline error as routines.
+      setApprovalsError(true);
     } finally {
       setApprovalsLoaded(true);
     }
@@ -247,7 +264,7 @@ export function WorkAgentPanel({
           <span
             aria-hidden='true'
             className={cn(
-              'absolute -bottom-0.5 -end-0.5 h-3 w-3 rounded-full border-2 border-surface',
+              'absolute -bottom-0.5 -end-0.5 h-3 w-3 rounded-full border-2 border-surface ring-1 ring-black/20 dark:ring-white/20',
               status.animated && 'animate-pulse'
             )}
             style={{ backgroundColor: status.color }}
@@ -269,6 +286,7 @@ export function WorkAgentPanel({
                 })
               : statusLabel}
           </p>
+          {persona && <p className='text-xs text-ink-muted'>{statusLabel}</p>}
           {task.statusBlurb && (
             <p
               dir='auto'
@@ -313,14 +331,24 @@ export function WorkAgentPanel({
           </button>
         </div>
         {routines.length === 0 ? (
-          <p className='text-xs leading-relaxed text-ink-subtle'>
-            {routinesLoaded
-              ? t('work.agent.noRoutines', {
-                  defaultValue:
-                    'No routines yet. A routine runs an instruction on a schedule, inside this agent’s workspace.',
-                })
-              : '…'}
-          </p>
+          !routinesLoaded ? (
+            <LoadingState size='sm' />
+          ) : routinesError ? (
+            <ErrorState
+              size='sm'
+              message={t('work.agent.routinesLoadFailed')}
+              onRetry={() => void loadRoutines()}
+            />
+          ) : (
+            <EmptyState
+              icon={CalendarClock}
+              size='sm'
+              title={t('work.agent.noRoutines', {
+                defaultValue:
+                  'No routines yet. A routine runs an instruction on a schedule, inside this agent’s workspace.',
+              })}
+            />
+          )
         ) : (
           <ul className='space-y-1'>
             {routines.map(routine => (
@@ -343,6 +371,12 @@ export function WorkAgentPanel({
                     {routine.name}
                   </p>
                   <p className='truncate text-[11px] text-ink-subtle'>
+                    {routine.status !== 'active' && (
+                      <span className='font-medium text-ink-muted'>
+                        {t('work.agent.routinePaused')}
+                        {' · '}
+                      </span>
+                    )}
                     {describeTriggers(routine.triggers, i18n.language, t)}
                   </p>
                 </div>
@@ -381,7 +415,14 @@ export function WorkAgentPanel({
               approvals?.policyRequired === true ||
               approvals?.approvalsEnabled === true
             }
-            disabled={!approvalsLoaded || approvals?.policyRequired === true}
+            disabled={
+              !approvalsLoaded ||
+              approvalsError ||
+              approvals?.policyRequired === true
+            }
+            aria-label={t('work.agent.approvals', {
+              defaultValue: 'Auto Review',
+            })}
             onChange={enabled => void toggleApprovals(enabled)}
           />
         </div>
@@ -396,6 +437,14 @@ export function WorkAgentPanel({
                   'When on, commands, file deletions and moves, and computer actions pause until you approve them.',
               })}
         </p>
+        {approvalsError && (
+          <ErrorState
+            size='sm'
+            className='mt-2 py-3'
+            message={t('work.agent.approvalsLoadFailed')}
+            onRetry={() => void loadApprovals()}
+          />
+        )}
         {approvals && approvals.rules.length > 0 && (
           <ul className='mt-2 space-y-1'>
             {approvals.rules.map(rule => (
@@ -444,14 +493,24 @@ export function WorkAgentPanel({
           {t('work.agent.skills', { defaultValue: 'Taught skills' })}
         </h4>
         {skills.length === 0 ? (
-          <p className='text-xs leading-relaxed text-ink-subtle'>
-            {skillsLoaded
-              ? t('work.agent.noSkills', {
-                  defaultValue:
-                    'Nothing taught yet. Use Teach on the Screen tab to demonstrate a procedure once; it becomes a replayable skill.',
-                })
-              : '…'}
-          </p>
+          !skillsLoaded ? (
+            <LoadingState size='sm' />
+          ) : skillsError ? (
+            <ErrorState
+              size='sm'
+              message={t('work.agent.skillsLoadFailed')}
+              onRetry={() => void loadSkills()}
+            />
+          ) : (
+            <EmptyState
+              icon={GraduationCap}
+              size='sm'
+              title={t('work.agent.noSkills', {
+                defaultValue:
+                  'Nothing taught yet. Use Teach on the Screen tab to demonstrate a procedure once; it becomes a replayable skill.',
+              })}
+            />
+          )
         ) : (
           <ul className='space-y-1'>
             {skills.map(skill => (
@@ -477,6 +536,7 @@ export function WorkAgentPanel({
                 </div>
                 <Switch
                   checked={skill.enabled}
+                  aria-label={skill.name}
                   onChange={enabled => void toggleSkill(skill, enabled)}
                 />
               </li>

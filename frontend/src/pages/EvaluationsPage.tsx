@@ -20,15 +20,18 @@ import { useTranslation } from 'react-i18next';
 import { toast } from 'react-hot-toast';
 import {
   Download,
+  ListChecks,
   Loader2,
   Play,
   Plus,
   Swords,
+  ThumbsUp,
   Trash2,
   Trophy,
   X,
 } from 'lucide-react';
-import { Button, PageHeader, PageShell } from '@/components/ui';
+import { Button, EmptyState, PageHeader, PageShell } from '@/components/ui';
+import { confirmAction } from '@/components/ui/confirmStore';
 import { useChatStore } from '@/store/chatStore';
 import {
   evaluationsApi,
@@ -43,7 +46,7 @@ import { cn } from '@/utils';
 type EvaluationsTab = 'arena' | 'leaderboard' | 'sets' | 'feedback';
 
 const inputClass =
-  'w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-dark-300 dark:bg-dark-50';
+  'w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 dark:border-dark-300 dark:bg-dark-50';
 
 /**
  * Evaluation platform (ADMIN-02): blind arena matches with an Elo
@@ -51,7 +54,7 @@ const inputClass =
  * and the caller's feedback dataset.
  */
 export const EvaluationsPage: React.FC = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const models = useChatStore(state => state.models);
   const loadModels = useChatStore(state => state.loadModels);
   const [tab, setTab] = useState<EvaluationsTab>('arena');
@@ -240,11 +243,37 @@ export const EvaluationsPage: React.FC = () => {
         title={t('evaluations.title')}
         description={t('evaluations.description')}
       />
-      <div className='mb-4 inline-flex rounded-xl border border-gray-200 bg-white/70 p-1 dark:border-white/[0.08] dark:bg-dark-100/70'>
+      <div
+        role='tablist'
+        aria-label={t('evaluations.title')}
+        className='mb-4 inline-flex rounded-xl border border-gray-200 bg-white/70 p-1 dark:border-white/[0.08] dark:bg-dark-100/70'
+        onKeyDown={event => {
+          const index = tabs.findIndex(entry => entry.id === tab);
+          const rtl = i18n.dir() === 'rtl';
+          const forward = rtl ? 'ArrowLeft' : 'ArrowRight';
+          const backward = rtl ? 'ArrowRight' : 'ArrowLeft';
+          let next = -1;
+          if (event.key === forward) next = (index + 1) % tabs.length;
+          else if (event.key === backward) {
+            next = (index - 1 + tabs.length) % tabs.length;
+          } else if (event.key === 'Home') next = 0;
+          else if (event.key === 'End') next = tabs.length - 1;
+          const target = tabs[next];
+          if (!target) return;
+          event.preventDefault();
+          setTab(target.id);
+          document.getElementById(`evaluations-tab-${target.id}`)?.focus();
+        }}
+      >
         {tabs.map(entry => (
           <button
             key={entry.id}
+            id={`evaluations-tab-${entry.id}`}
             type='button'
+            role='tab'
+            aria-selected={tab === entry.id}
+            aria-controls='evaluations-tabpanel'
+            tabIndex={tab === entry.id ? 0 : -1}
             onClick={() => setTab(entry.id)}
             className={cn(
               'rounded-lg px-3 py-1.5 text-xs font-medium transition-colors',
@@ -259,7 +288,13 @@ export const EvaluationsPage: React.FC = () => {
       </div>
 
       {tab === 'arena' && (
-        <div className='space-y-4' data-testid='arena-tab'>
+        <div
+          id='evaluations-tabpanel'
+          role='tabpanel'
+          aria-labelledby='evaluations-tab-arena'
+          className='space-y-4'
+          data-testid='arena-tab'
+        >
           <div className='rounded-xl border border-gray-200 bg-white p-4 dark:border-dark-300 dark:bg-dark-100'>
             <div className='grid gap-2 sm:grid-cols-2'>
               <label className='text-xs text-gray-600 dark:text-gray-300'>
@@ -297,6 +332,7 @@ export const EvaluationsPage: React.FC = () => {
               className={`${inputClass} mt-2`}
               rows={3}
               placeholder={t('evaluations.arenaPrompt')}
+              aria-label={t('evaluations.arenaPrompt')}
               value={arenaPrompt}
               onChange={event => setArenaPrompt(event.target.value)}
               data-testid='arena-prompt'
@@ -314,9 +350,9 @@ export const EvaluationsPage: React.FC = () => {
               data-testid='arena-start'
             >
               {arenaBusy ? (
-                <Loader2 className='mr-1 h-4 w-4 animate-spin' />
+                <Loader2 className='me-1 h-4 w-4 animate-spin' />
               ) : (
-                <Swords className='mr-1 h-4 w-4' />
+                <Swords className='me-1 h-4 w-4' />
               )}
               {t('evaluations.startMatch')}
             </Button>
@@ -382,14 +418,19 @@ export const EvaluationsPage: React.FC = () => {
       )}
 
       {tab === 'leaderboard' && (
-        <div className='rounded-xl border border-gray-200 bg-white p-4 dark:border-dark-300 dark:bg-dark-100'>
-          <table className='w-full text-left text-sm'>
+        <div
+          id='evaluations-tabpanel'
+          role='tabpanel'
+          aria-labelledby='evaluations-tab-leaderboard'
+          className='rounded-xl border border-gray-200 bg-white p-4 dark:border-dark-300 dark:bg-dark-100'
+        >
+          <table className='w-full text-start text-sm'>
             <thead className='text-xs text-gray-500'>
               <tr>
-                <th className='py-1 pr-2'>#</th>
-                <th className='py-1 pr-2'>{t('evaluations.model')}</th>
-                <th className='py-1 pr-2'>{t('evaluations.rating')}</th>
-                <th className='py-1 pr-2'>{t('evaluations.record')}</th>
+                <th className='py-1 pe-2'>#</th>
+                <th className='py-1 pe-2'>{t('evaluations.model')}</th>
+                <th className='py-1 pe-2'>{t('evaluations.rating')}</th>
+                <th className='py-1 pe-2'>{t('evaluations.record')}</th>
                 <th className='py-1'>{t('evaluations.votes')}</th>
               </tr>
             </thead>
@@ -399,16 +440,22 @@ export const EvaluationsPage: React.FC = () => {
                   key={row.model}
                   className='border-t border-gray-100 dark:border-dark-300'
                 >
-                  <td className='py-1.5 pr-2'>
+                  <td className='py-1.5 pe-2'>
                     {index === 0 ? (
-                      <Trophy className='h-4 w-4 text-amber-500' />
+                      <>
+                        <Trophy
+                          className='h-4 w-4 text-amber-500'
+                          aria-hidden='true'
+                        />
+                        <span className='sr-only'>{index + 1}</span>
+                      </>
                     ) : (
                       index + 1
                     )}
                   </td>
-                  <td className='py-1.5 pr-2 font-medium'>{row.model}</td>
-                  <td className='py-1.5 pr-2'>{row.rating}</td>
-                  <td className='py-1.5 pr-2 text-xs text-gray-500'>
+                  <td className='py-1.5 pe-2 font-medium'>{row.model}</td>
+                  <td className='py-1.5 pe-2'>{row.rating}</td>
+                  <td className='py-1.5 pe-2 text-xs text-gray-500'>
                     {row.wins}W · {row.losses}L · {row.ties}T
                   </td>
                   <td className='py-1.5'>{row.votes}</td>
@@ -416,8 +463,12 @@ export const EvaluationsPage: React.FC = () => {
               ))}
               {leaderboard.length === 0 && (
                 <tr>
-                  <td colSpan={5} className='py-3 text-sm text-gray-500'>
-                    {t('evaluations.noVotes')}
+                  <td colSpan={5}>
+                    <EmptyState
+                      icon={Trophy}
+                      size='sm'
+                      title={t('evaluations.noVotes')}
+                    />
                   </td>
                 </tr>
               )}
@@ -427,7 +478,12 @@ export const EvaluationsPage: React.FC = () => {
       )}
 
       {tab === 'sets' && (
-        <div className='space-y-4'>
+        <div
+          id='evaluations-tabpanel'
+          role='tabpanel'
+          aria-labelledby='evaluations-tab-sets'
+          className='space-y-4'
+        >
           <div className='rounded-xl border border-gray-200 bg-white p-4 dark:border-dark-300 dark:bg-dark-100'>
             <h3 className='mb-2 text-sm font-semibold'>
               {t('evaluations.newSet')}
@@ -435,6 +491,7 @@ export const EvaluationsPage: React.FC = () => {
             <input
               className={inputClass}
               placeholder={t('evaluations.setName')}
+              aria-label={t('evaluations.setName')}
               value={setName}
               onChange={event => setSetName(event.target.value)}
             />
@@ -442,6 +499,7 @@ export const EvaluationsPage: React.FC = () => {
               className={`${inputClass} mt-2`}
               rows={4}
               placeholder={t('evaluations.setPrompts')}
+              aria-label={t('evaluations.setPrompts')}
               value={setPrompts}
               onChange={event => setSetPrompts(event.target.value)}
             />
@@ -451,7 +509,7 @@ export const EvaluationsPage: React.FC = () => {
               onClick={() => void handleSaveSet()}
               disabled={!setName.trim() || !setPrompts.trim()}
             >
-              <Plus className='mr-1 h-3.5 w-3.5' />
+              <Plus className='me-1 h-3.5 w-3.5' />
               {t('evaluations.saveSet')}
             </Button>
           </div>
@@ -462,7 +520,8 @@ export const EvaluationsPage: React.FC = () => {
                 {t('evaluations.yourSets')}
               </h3>
               <select
-                className='rounded-lg border border-gray-300 bg-white px-2 py-1 text-xs dark:border-dark-300 dark:bg-dark-50'
+                className='rounded-lg border border-gray-300 bg-white px-2 py-1 text-xs focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 dark:border-dark-300 dark:bg-dark-50'
+                aria-label={t('evaluations.pickModel')}
                 value={runModel}
                 onChange={event => setRunModel(event.target.value)}
               >
@@ -475,7 +534,11 @@ export const EvaluationsPage: React.FC = () => {
               </select>
             </div>
             {sets.length === 0 && (
-              <p className='text-sm text-gray-500'>{t('evaluations.noSets')}</p>
+              <EmptyState
+                icon={ListChecks}
+                size='sm'
+                title={t('evaluations.noSets')}
+              />
             )}
             <div className='space-y-2'>
               {sets.map(set => (
@@ -486,7 +549,7 @@ export const EvaluationsPage: React.FC = () => {
                   <div className='flex items-center justify-between gap-2'>
                     <span className='min-w-0 truncate text-sm font-medium'>
                       {set.name}
-                      <span className='ml-2 text-xs font-normal text-gray-500'>
+                      <span className='ms-2 text-xs font-normal text-gray-500'>
                         {t('evaluations.itemCount', {
                           total: set.items.length,
                         })}
@@ -498,17 +561,28 @@ export const EvaluationsPage: React.FC = () => {
                         variant='outline'
                         onClick={() => void handleStartRun(set.id)}
                       >
-                        <Play className='mr-1 h-3 w-3' />
+                        <Play className='me-1 h-3 w-3' />
                         {t('evaluations.run')}
                       </Button>
                       <button
-                        onClick={() => {
-                          void evaluationsApi
-                            .deleteSet(set.id)
-                            .then(() => setRefresh(value => value + 1))
-                            .catch(() =>
-                              toast.error(t('evaluations.saveFailed'))
-                            );
+                        type='button'
+                        onClick={async () => {
+                          const confirmed = await confirmAction({
+                            title: t('evaluations.deleteSetConfirmTitle', {
+                              name: set.name,
+                            }),
+                            description: t(
+                              'evaluations.deleteSetConfirmDescription'
+                            ),
+                            destructive: true,
+                          });
+                          if (!confirmed) return;
+                          try {
+                            await evaluationsApi.deleteSet(set.id);
+                            setRefresh(value => value + 1);
+                          } catch {
+                            toast.error(t('evaluations.deleteSetFailed'));
+                          }
                         }}
                         className='rounded p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30'
                         aria-label={t('evaluations.deleteSet')}
@@ -527,17 +601,22 @@ export const EvaluationsPage: React.FC = () => {
                       >
                         <span className='min-w-0 truncate'>
                           {run.model} · {t(`evaluations.status.${run.status}`)}
-                          {run.error ? ` — ${run.error}` : ''}
+                          {run.error
+                            ? ` — ${t('evaluations.runError', { detail: run.error })}`
+                            : ''}
                         </span>
                         <div className='flex shrink-0 gap-1'>
                           {(run.status === 'queued' ||
                             run.status === 'running') && (
                             <button
+                              type='button'
                               onClick={() => {
                                 void evaluationsApi
                                   .cancelRun(run.id)
                                   .then(() => setRefresh(value => value + 1))
-                                  .catch(() => undefined);
+                                  .catch(() =>
+                                    toast.error(t('evaluations.cancelFailed'))
+                                  );
                               }}
                               className='rounded p-1 text-gray-500 hover:bg-gray-200 dark:hover:bg-dark-200'
                               aria-label={t('evaluations.cancelRun')}
@@ -547,6 +626,7 @@ export const EvaluationsPage: React.FC = () => {
                           )}
                           {run.status === 'completed' && (
                             <button
+                              type='button'
                               onClick={() => void handleExportRun(run.id)}
                               className='rounded p-1 text-gray-500 hover:bg-gray-200 dark:hover:bg-dark-200'
                               aria-label={t('evaluations.exportRun')}
@@ -565,11 +645,18 @@ export const EvaluationsPage: React.FC = () => {
       )}
 
       {tab === 'feedback' && (
-        <div className='rounded-xl border border-gray-200 bg-white p-4 dark:border-dark-300 dark:bg-dark-100'>
+        <div
+          id='evaluations-tabpanel'
+          role='tabpanel'
+          aria-labelledby='evaluations-tab-feedback'
+          className='rounded-xl border border-gray-200 bg-white p-4 dark:border-dark-300 dark:bg-dark-100'
+        >
           {feedback.length === 0 && (
-            <p className='text-sm text-gray-500'>
-              {t('evaluations.noFeedback')}
-            </p>
+            <EmptyState
+              icon={ThumbsUp}
+              size='sm'
+              title={t('evaluations.noFeedback')}
+            />
           )}
           <div className='space-y-2'>
             {feedback.map(entry => (
@@ -583,7 +670,7 @@ export const EvaluationsPage: React.FC = () => {
                     {entry.tags.length > 0 && ` · ${entry.tags.join(', ')}`}
                   </span>
                   <span>
-                    {new Intl.DateTimeFormat(undefined, {
+                    {new Intl.DateTimeFormat(i18n.language, {
                       dateStyle: 'medium',
                     }).format(entry.createdAt)}
                   </span>

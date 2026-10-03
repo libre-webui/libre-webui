@@ -45,11 +45,16 @@ import {
 import toast from 'react-hot-toast';
 import {
   Button,
+  EmptyState,
+  ErrorState,
+  LoadingState,
   ModalShell,
+  WorkspaceToolbar,
   modalFieldClass,
   modalLabelClass,
 } from '@/components/ui';
 import { ChannelMessageItem } from '@/components/channels/ChannelMessageItem';
+import { confirmAction } from '@/components/ui/confirmStore';
 import { channelsApi } from '@/utils/api';
 import { streamTeamEvents } from '@/utils/api/teamEventStream';
 import { useAuthStore } from '@/store/authStore';
@@ -83,6 +88,7 @@ const ChannelsPage: React.FC = () => {
     null
   );
   const [browsing, setBrowsing] = useState(false);
+  const [browseFailed, setBrowseFailed] = useState(false);
   const [loading, setLoading] = useState(true);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [messages, setMessages] = useState<ChannelMessage[] | null>(null);
@@ -161,23 +167,30 @@ const ChannelsPage: React.FC = () => {
     };
   }, [selectedId]);
 
-  const loadTimeline = useCallback((channelId: string) => {
-    const scope = timelineScopeRef.current;
-    if (!scope || scope.channelId !== channelId) return;
-    const requestId = ++scope.requestId;
-    channelsApi
-      .listMessages(channelId, { limit: 100 })
-      .then(response => {
-        if (
-          timelineScopeRef.current !== scope ||
-          scope.requestId !== requestId
-        ) {
-          return;
-        }
-        if (response.success && response.data) setMessages(response.data);
-      })
-      .catch(error => logger.error('Failed to load messages:', error));
-  }, []);
+  const loadTimeline = useCallback(
+    (channelId: string) => {
+      const scope = timelineScopeRef.current;
+      if (!scope || scope.channelId !== channelId) return;
+      const requestId = ++scope.requestId;
+      channelsApi
+        .listMessages(channelId, { limit: 100 })
+        .then(response => {
+          if (
+            timelineScopeRef.current !== scope ||
+            scope.requestId !== requestId
+          ) {
+            return;
+          }
+          if (response.success && response.data) setMessages(response.data);
+        })
+        .catch(error => {
+          logger.error('Failed to load messages:', error);
+          // Fixed id: live events re-read often, so one toast is enough.
+          toast.error(t('channels.loadFailed'), { id: 'channels-load-failed' });
+        });
+    },
+    [t]
+  );
 
   const threadRootRef = useRef<string | null>(null);
   useEffect(() => {
@@ -192,11 +205,14 @@ const ChannelsPage: React.FC = () => {
       void channelsApi.markRead(channelId);
       const openThread = threadRootRef.current;
       if (openThread) {
-        void channelsApi.thread(openThread).then(response => {
-          if (response.success && response.data) {
-            setThreadMessages(response.data);
-          }
-        });
+        void channelsApi
+          .thread(openThread)
+          .then(response => {
+            if (response.success && response.data) {
+              setThreadMessages(response.data);
+            }
+          })
+          .catch(error => logger.error('Failed to refresh thread:', error));
       }
     },
     [loadTimeline]
@@ -225,29 +241,59 @@ const ChannelsPage: React.FC = () => {
 
   useEffect(() => {
     if (!selectedId || !sidePanel) return;
+    const failed = (error: unknown) => {
+      logger.error('Failed to load channel panel:', error);
+      toast.error(t('channels.loadFailed'));
+    };
     if (sidePanel === 'members') {
-      channelsApi.listMembers(selectedId).then(response => {
-        if (response.success && response.data) setMembers(response.data);
-      });
+      channelsApi
+        .listMembers(selectedId)
+        .then(response => {
+          if (response.success && response.data) setMembers(response.data);
+          else failed(response.error);
+        })
+        .catch(failed);
     } else {
-      channelsApi.listPins(selectedId).then(response => {
-        if (response.success && response.data) setPins(response.data);
-      });
+      channelsApi
+        .listPins(selectedId)
+        .then(response => {
+          if (response.success && response.data) setPins(response.data);
+          else failed(response.error);
+        })
+        .catch(failed);
     }
-  }, [selectedId, sidePanel]);
+  }, [selectedId, sidePanel, t]);
 
   useEffect(() => {
     if (!threadRootId) return;
-    channelsApi.thread(threadRootId).then(response => {
-      if (response.success && response.data) setThreadMessages(response.data);
-    });
-  }, [threadRootId]);
+    channelsApi
+      .thread(threadRootId)
+      .then(response => {
+        if (response.success && response.data) {
+          setThreadMessages(response.data);
+        } else {
+          toast.error(t('channels.loadFailed'));
+        }
+      })
+      .catch(error => {
+        logger.error('Failed to load thread:', error);
+        toast.error(t('channels.loadFailed'));
+      });
+  }, [threadRootId, t]);
 
   const openBrowse = () => {
     setBrowsing(true);
-    channelsApi.listPublic().then(response => {
-      if (response.success && response.data) setPublicChannels(response.data);
-    });
+    setBrowseFailed(false);
+    channelsApi
+      .listPublic()
+      .then(response => {
+        if (response.success && response.data) setPublicChannels(response.data);
+        else setBrowseFailed(true);
+      })
+      .catch(error => {
+        logger.error('Failed to load public channels:', error);
+        setBrowseFailed(true);
+      });
   };
 
   const handleSend = async (parentId?: string) => {
@@ -307,8 +353,10 @@ const ChannelsPage: React.FC = () => {
       .catch(() => undefined);
     if (response?.success) {
       setInviteName('');
-      const refreshed = await channelsApi.listMembers(selectedId);
-      if (refreshed.success && refreshed.data) setMembers(refreshed.data);
+      const refreshed = await channelsApi
+        .listMembers(selectedId)
+        .catch(() => undefined);
+      if (refreshed?.success && refreshed.data) setMembers(refreshed.data);
       toast.success(t('channels.memberAdded'));
     } else {
       toast.error(t('channels.memberAddFailed'));
@@ -321,28 +369,36 @@ const ChannelsPage: React.FC = () => {
       const response = await channelsApi
         .editMessage(message.id, content)
         .catch(() => undefined);
-      if (response?.success && selectedId) loadTimeline(selectedId);
+      if (response?.success) {
+        if (selectedId) loadTimeline(selectedId);
+      } else {
+        toast.error(t('channels.editFailed'));
+      }
     },
     onDelete: async (message: ChannelMessage) => {
       const response = await channelsApi
         .deleteMessage(message.id)
         .catch(() => undefined);
-      if (response?.success && selectedId) loadTimeline(selectedId);
+      if (response?.success) {
+        if (selectedId) loadTimeline(selectedId);
+      } else {
+        toast.error(t('channels.deleteMessageFailed'));
+      }
     },
     onPin: async (message: ChannelMessage) => {
-      await channelsApi
+      const response = await channelsApi
         .setPinned(message.id, !message.pinnedAt)
         .catch(() => undefined);
+      if (!response?.success) toast.error(t('channels.pinFailed'));
       if (selectedId) loadTimeline(selectedId);
     },
     onReact: async (message: ChannelMessage, emoji: string, mine: boolean) => {
-      if (mine) {
-        await channelsApi
-          .removeReaction(message.id, emoji)
-          .catch(() => undefined);
-      } else {
-        await channelsApi.addReaction(message.id, emoji).catch(() => undefined);
-      }
+      const response = await (
+        mine
+          ? channelsApi.removeReaction(message.id, emoji)
+          : channelsApi.addReaction(message.id, emoji)
+      ).catch(() => undefined);
+      if (!response?.success) toast.error(t('channels.reactFailed'));
       if (selectedId) loadTimeline(selectedId);
     },
     onDownload: async (attachmentId: string, filename: string) => {
@@ -356,6 +412,7 @@ const ChannelsPage: React.FC = () => {
         URL.revokeObjectURL(url);
       } catch (error) {
         logger.error('Failed to download attachment:', error);
+        toast.error(t('channels.downloadFailed'));
       }
     },
   };
@@ -367,50 +424,54 @@ const ChannelsPage: React.FC = () => {
       {/* Channel rail */}
       <aside
         className={cn(
-          'flex w-64 shrink-0 flex-col border-r border-black/[0.06] dark:border-white/[0.06]',
+          'flex w-64 shrink-0 flex-col border-e border-black/[0.06] dark:border-white/[0.06]',
           selectedId ? 'hidden md:flex' : 'flex'
         )}
         data-testid='channel-rail'
       >
-        <div className='flex items-center gap-1 px-3 py-2.5'>
-          <h1 className='min-w-0 flex-1 truncate text-sm font-semibold text-gray-900 dark:text-dark-900'>
-            {t('channels.title')}
-          </h1>
-          <button
-            type='button'
-            onClick={openBrowse}
-            title={t('channels.browsePublic')}
-            className='rounded-md p-1.5 text-gray-500 hover:bg-black/[0.04] dark:text-dark-600 dark:hover:bg-white/[0.06]'
-            data-testid='channels-browse'
-          >
-            <Compass className='h-4 w-4' />
-          </button>
-          <button
-            type='button'
-            onClick={() => setDmOpen(true)}
-            title={t('channels.newDm')}
-            className='rounded-md p-1.5 text-gray-500 hover:bg-black/[0.04] dark:text-dark-600 dark:hover:bg-white/[0.06]'
-            data-testid='channels-new-dm'
-          >
-            <MessageCircle className='h-4 w-4' />
-          </button>
-          <button
-            type='button'
-            onClick={() => setCreateOpen(true)}
-            title={t('channels.newChannel')}
-            className='rounded-md p-1.5 text-gray-500 hover:bg-black/[0.04] dark:text-dark-600 dark:hover:bg-white/[0.06]'
-            data-testid='channels-new'
-          >
-            <Plus className='h-4 w-4' />
-          </button>
-        </div>
+        <WorkspaceToolbar
+          title={t('channels.title')}
+          className='gap-y-1 px-3'
+          actions={
+            <>
+              <button
+                type='button'
+                onClick={openBrowse}
+                title={t('channels.browsePublic')}
+                aria-label={t('channels.browsePublic')}
+                className='rounded-md p-1.5 text-gray-500 hover:bg-black/[0.04] dark:text-dark-600 dark:hover:bg-white/[0.06]'
+                data-testid='channels-browse'
+              >
+                <Compass className='h-4 w-4' />
+              </button>
+              <button
+                type='button'
+                onClick={() => setDmOpen(true)}
+                title={t('channels.newDm')}
+                aria-label={t('channels.newDm')}
+                className='rounded-md p-1.5 text-gray-500 hover:bg-black/[0.04] dark:text-dark-600 dark:hover:bg-white/[0.06]'
+                data-testid='channels-new-dm'
+              >
+                <MessageCircle className='h-4 w-4' />
+              </button>
+              <button
+                type='button'
+                onClick={() => setCreateOpen(true)}
+                title={t('channels.newChannel')}
+                aria-label={t('channels.newChannel')}
+                className='rounded-md p-1.5 text-gray-500 hover:bg-black/[0.04] dark:text-dark-600 dark:hover:bg-white/[0.06]'
+                data-testid='channels-new'
+              >
+                <Plus className='h-4 w-4' />
+              </button>
+            </>
+          }
+        />
         <div className='min-h-0 flex-1 overflow-y-auto px-2 pb-3 scrollbar-thin'>
           {loading ? (
-            <Loader2 className='mx-auto mt-6 h-4 w-4 animate-spin text-gray-400' />
+            <LoadingState size='sm' srOnly />
           ) : channels.length === 0 ? (
-            <p className='px-2 pt-6 text-center text-xs text-gray-400 dark:text-dark-500'>
-              {t('channels.empty')}
-            </p>
+            <EmptyState icon={Hash} size='sm' title={t('channels.empty')} />
           ) : (
             channels.map(channel => (
               <button
@@ -418,7 +479,7 @@ const ChannelsPage: React.FC = () => {
                 type='button'
                 onClick={() => setSelectedId(channel.id)}
                 className={cn(
-                  'flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-[13px]',
+                  'flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-start text-[13px]',
                   selectedId === channel.id
                     ? 'bg-black/[0.05] text-gray-900 dark:bg-white/[0.08] dark:text-dark-900'
                     : 'text-gray-600 hover:bg-black/[0.03] dark:text-dark-700 dark:hover:bg-white/[0.04]'
@@ -430,12 +491,20 @@ const ChannelsPage: React.FC = () => {
                   {channelLabel(channel)}
                 </span>
                 {(channel.unreadCount ?? 0) > 0 && (
-                  <span
-                    className='rounded-full bg-primary-500 px-1.5 text-[10px] font-semibold leading-4 text-white'
-                    data-testid='channel-unread'
-                  >
-                    {channel.unreadCount}
-                  </span>
+                  <>
+                    <span
+                      className='rounded-full bg-primary-600 px-1.5 text-[10px] font-semibold leading-4 text-white'
+                      data-testid='channel-unread'
+                      aria-hidden='true'
+                    >
+                      {channel.unreadCount}
+                    </span>
+                    <span className='sr-only'>
+                      {t('channels.unreadCount', {
+                        total: channel.unreadCount,
+                      })}
+                    </span>
+                  </>
                 )}
               </button>
             ))
@@ -446,19 +515,22 @@ const ChannelsPage: React.FC = () => {
       {/* Conversation */}
       <main className='flex min-w-0 flex-1 flex-col'>
         {!selectedChannel ? (
-          <div className='flex flex-1 flex-col items-center justify-center gap-2 text-gray-400 dark:text-dark-500'>
-            <MessageSquareText className='h-8 w-8' />
-            <p className='text-sm'>{t('channels.selectPrompt')}</p>
-          </div>
+          <EmptyState
+            icon={MessageSquareText}
+            title={t('channels.selectPrompt')}
+            className='flex-1 justify-center'
+          />
         ) : (
           <>
             <header className='flex items-center gap-2 border-b border-black/[0.06] px-4 py-2.5 dark:border-white/[0.06]'>
               <button
                 type='button'
                 onClick={() => setSelectedId(null)}
+                aria-label={t('common.back')}
+                title={t('common.back')}
                 className='rounded-md p-1 text-gray-500 hover:bg-black/[0.04] md:hidden dark:text-dark-600'
               >
-                <ArrowLeft className='h-4 w-4' />
+                <ArrowLeft className='h-4 w-4 rtl:rotate-180' />
               </button>
               {channelIcon(selectedChannel)}
               <h2
@@ -473,6 +545,8 @@ const ChannelsPage: React.FC = () => {
                   setSidePanel(sidePanel === 'pins' ? null : 'pins')
                 }
                 title={t('channels.pins')}
+                aria-label={t('channels.pins')}
+                aria-pressed={sidePanel === 'pins'}
                 className='rounded-md p-1.5 text-gray-500 hover:bg-black/[0.04] dark:text-dark-600 dark:hover:bg-white/[0.06]'
                 data-testid='channel-pins-toggle'
               >
@@ -484,6 +558,8 @@ const ChannelsPage: React.FC = () => {
                   setSidePanel(sidePanel === 'members' ? null : 'members')
                 }
                 title={t('channels.members')}
+                aria-label={t('channels.members')}
+                aria-pressed={sidePanel === 'members'}
                 className='rounded-md p-1.5 text-gray-500 hover:bg-black/[0.04] dark:text-dark-600 dark:hover:bg-white/[0.06]'
                 data-testid='channel-members-toggle'
               >
@@ -494,6 +570,7 @@ const ChannelsPage: React.FC = () => {
                   type='button'
                   onClick={() => setShareOpen(true)}
                   title={t('channels.settings')}
+                  aria-label={t('channels.settings')}
                   className='rounded-md p-1.5 text-gray-500 hover:bg-black/[0.04] dark:text-dark-600 dark:hover:bg-white/[0.06]'
                   data-testid='channel-settings'
                 >
@@ -510,11 +587,13 @@ const ChannelsPage: React.FC = () => {
                   data-testid='channel-timeline'
                 >
                   {messages === null ? (
-                    <Loader2 className='mx-auto mt-6 h-4 w-4 animate-spin text-gray-400' />
+                    <LoadingState size='sm' srOnly />
                   ) : messages.length === 0 ? (
-                    <p className='pt-8 text-center text-xs text-gray-400 dark:text-dark-500'>
-                      {t('channels.noMessages')}
-                    </p>
+                    <EmptyState
+                      icon={MessageSquareText}
+                      size='sm'
+                      title={t('channels.noMessages')}
+                    />
                   ) : (
                     messages.map(message => (
                       <ChannelMessageItem
@@ -538,7 +617,9 @@ const ChannelsPage: React.FC = () => {
                       <button
                         type='button'
                         onClick={() => setPendingAttachment(null)}
-                        className='text-gray-400 hover:text-red-500'
+                        aria-label={t('channels.removeAttachment')}
+                        title={t('channels.removeAttachment')}
+                        className='rounded p-0.5 text-gray-500 hover:text-red-500'
                       >
                         <X className='h-3.5 w-3.5' />
                       </button>
@@ -559,6 +640,7 @@ const ChannelsPage: React.FC = () => {
                       type='button'
                       onClick={() => fileInputRef.current?.click()}
                       title={t('channels.attach')}
+                      aria-label={t('channels.attach')}
                       className='rounded-md p-2 text-gray-500 hover:bg-black/[0.04] dark:text-dark-600 dark:hover:bg-white/[0.06]'
                       data-testid='channel-attach'
                     >
@@ -576,8 +658,9 @@ const ChannelsPage: React.FC = () => {
                       <select
                         value={mentionModel}
                         onChange={event => setMentionModel(event.target.value)}
-                        className='max-w-[130px] rounded-md border border-black/[0.08] bg-transparent px-1 py-1 text-[11px] text-gray-600 focus:outline-none dark:border-white/[0.1] dark:bg-dark-100 dark:text-dark-700'
+                        className='max-w-[130px] rounded-md border border-black/[0.08] bg-transparent px-1 py-1 text-[11px] text-gray-600 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 dark:border-white/[0.1] dark:bg-dark-100 dark:text-dark-700'
                         title={t('channels.askModel')}
+                        aria-label={t('channels.askModel')}
                         data-testid='channel-mention-model'
                       >
                         <option value=''>{t('channels.noModel')}</option>
@@ -592,14 +675,19 @@ const ChannelsPage: React.FC = () => {
                       value={draft}
                       onChange={event => setDraft(event.target.value)}
                       onKeyDown={event => {
-                        if (event.key === 'Enter' && !event.shiftKey) {
+                        if (
+                          event.key === 'Enter' &&
+                          !event.shiftKey &&
+                          !event.nativeEvent.isComposing
+                        ) {
                           event.preventDefault();
                           void handleSend();
                         }
                       }}
                       rows={1}
                       placeholder={t('channels.composerPlaceholder')}
-                      className='max-h-32 min-w-0 flex-1 resize-none rounded-xl border border-black/[0.08] bg-transparent px-3 py-2 text-[13px] text-gray-900 placeholder:text-gray-400 focus:border-primary-500/40 focus:outline-none dark:border-white/[0.1] dark:text-dark-900'
+                      aria-label={t('channels.composerPlaceholder')}
+                      className='max-h-32 min-w-0 flex-1 resize-none rounded-xl border border-black/[0.08] bg-transparent px-3 py-2 text-[13px] text-gray-900 placeholder:text-gray-400 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 dark:border-white/[0.1] dark:text-dark-900'
                       data-testid='channel-composer'
                     />
                     <Button
@@ -608,6 +696,8 @@ const ChannelsPage: React.FC = () => {
                         sending || (!draft.trim() && !pendingAttachment)
                       }
                       onClick={() => void handleSend()}
+                      aria-label={t('channels.send')}
+                      title={t('channels.send')}
                       data-testid='channel-send'
                     >
                       {sending ? (
@@ -623,7 +713,7 @@ const ChannelsPage: React.FC = () => {
               {/* Thread panel */}
               {threadRootId && (
                 <aside
-                  className='flex w-80 shrink-0 flex-col border-l border-black/[0.06] dark:border-white/[0.06]'
+                  className='flex w-80 shrink-0 flex-col border-s border-black/[0.06] dark:border-white/[0.06]'
                   data-testid='channel-thread'
                 >
                   <div className='flex items-center gap-2 border-b border-black/[0.06] px-3 py-2 dark:border-white/[0.06]'>
@@ -633,6 +723,8 @@ const ChannelsPage: React.FC = () => {
                     <button
                       type='button'
                       onClick={() => setThreadRootId(null)}
+                      aria-label={t('channels.closeThread')}
+                      title={t('channels.closeThread')}
                       className='rounded-md p-1 text-gray-400 hover:bg-black/[0.04] dark:hover:bg-white/[0.06]'
                     >
                       <X className='h-3.5 w-3.5' />
@@ -655,14 +747,19 @@ const ChannelsPage: React.FC = () => {
                       value={draft}
                       onChange={event => setDraft(event.target.value)}
                       onKeyDown={event => {
-                        if (event.key === 'Enter' && !event.shiftKey) {
+                        if (
+                          event.key === 'Enter' &&
+                          !event.shiftKey &&
+                          !event.nativeEvent.isComposing
+                        ) {
                           event.preventDefault();
                           if (threadRoot) void handleSend(threadRoot.id);
                         }
                       }}
                       rows={1}
                       placeholder={t('channels.replyPlaceholder')}
-                      className='min-w-0 flex-1 resize-none rounded-lg border border-black/[0.08] bg-transparent px-2.5 py-1.5 text-[13px] text-gray-900 focus:outline-none dark:border-white/[0.1] dark:text-dark-900'
+                      aria-label={t('channels.replyPlaceholder')}
+                      className='min-w-0 flex-1 resize-none rounded-lg border border-black/[0.08] bg-transparent px-2.5 py-1.5 text-[13px] text-gray-900 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 dark:border-white/[0.1] dark:text-dark-900'
                       data-testid='channel-thread-composer'
                     />
                     <Button
@@ -671,6 +768,8 @@ const ChannelsPage: React.FC = () => {
                       onClick={() =>
                         threadRoot && void handleSend(threadRoot.id)
                       }
+                      aria-label={t('channels.send')}
+                      title={t('channels.send')}
                     >
                       <Send className='h-3.5 w-3.5' />
                     </Button>
@@ -681,7 +780,7 @@ const ChannelsPage: React.FC = () => {
               {/* Members / pins panel */}
               {sidePanel && (
                 <aside
-                  className='flex w-72 shrink-0 flex-col border-l border-black/[0.06] dark:border-white/[0.06]'
+                  className='flex w-72 shrink-0 flex-col border-s border-black/[0.06] dark:border-white/[0.06]'
                   data-testid={`channel-${sidePanel}-panel`}
                 >
                   <div className='flex items-center gap-2 border-b border-black/[0.06] px-3 py-2 dark:border-white/[0.06]'>
@@ -693,6 +792,8 @@ const ChannelsPage: React.FC = () => {
                     <button
                       type='button'
                       onClick={() => setSidePanel(null)}
+                      aria-label={t('common.close')}
+                      title={t('common.close')}
                       className='rounded-md p-1 text-gray-400 hover:bg-black/[0.04] dark:hover:bg-white/[0.06]'
                     >
                       <X className='h-3.5 w-3.5' />
@@ -710,16 +811,24 @@ const ChannelsPage: React.FC = () => {
                                 setInviteName(event.target.value)
                               }
                               onKeyDown={event => {
-                                if (event.key === 'Enter') void handleInvite();
+                                if (
+                                  event.key === 'Enter' &&
+                                  !event.nativeEvent.isComposing
+                                ) {
+                                  void handleInvite();
+                                }
                               }}
                               placeholder={t('channels.invitePlaceholder')}
-                              className='min-w-0 flex-1 rounded-lg border border-black/[0.08] bg-transparent px-2 py-1 text-xs focus:outline-none dark:border-white/[0.1] dark:text-dark-800'
+                              aria-label={t('channels.invitePlaceholder')}
+                              className='min-w-0 flex-1 rounded-lg border border-black/[0.08] bg-transparent px-2 py-1 text-xs focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 dark:border-white/[0.1] dark:text-dark-800'
                               data-testid='channel-invite-name'
                             />
                             <Button
                               size='sm'
                               disabled={!inviteName.trim()}
                               onClick={() => void handleInvite()}
+                              aria-label={t('channels.invite')}
+                              title={t('channels.invite')}
                               data-testid='channel-invite-submit'
                             >
                               <Plus className='h-3.5 w-3.5' />
@@ -745,23 +854,42 @@ const ChannelsPage: React.FC = () => {
                               selectedChannel.type !== 'dm' && (
                                 <button
                                   type='button'
-                                  onClick={() =>
-                                    void channelsApi
+                                  onClick={async () => {
+                                    const confirmed = await confirmAction({
+                                      title: t('channels.removeMemberConfirm', {
+                                        name: member.username,
+                                      }),
+                                      description: t(
+                                        'channels.removeMemberConfirmDescription'
+                                      ),
+                                      confirmLabel: t('common.remove'),
+                                      destructive: true,
+                                    });
+                                    if (!confirmed) return;
+                                    const response = await channelsApi
                                       .removeMember(
                                         selectedChannel.id,
                                         member.userId
                                       )
-                                      .then(() =>
-                                        setMembers(current =>
-                                          current.filter(
-                                            entry =>
-                                              entry.userId !== member.userId
-                                          )
+                                      .catch(() => undefined);
+                                    if (response?.success) {
+                                      setMembers(current =>
+                                        current.filter(
+                                          entry =>
+                                            entry.userId !== member.userId
                                         )
-                                      )
-                                  }
-                                  className='rounded p-0.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20'
+                                      );
+                                    } else {
+                                      toast.error(
+                                        t('channels.removeMemberFailed')
+                                      );
+                                    }
+                                  }}
+                                  className='rounded p-1 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20'
                                   title={t('channels.removeMember')}
+                                  aria-label={t('channels.removeMemberNamed', {
+                                    name: member.username,
+                                  })}
                                 >
                                   <X className='h-3 w-3' />
                                 </button>
@@ -773,17 +901,31 @@ const ChannelsPage: React.FC = () => {
                             size='sm'
                             variant='ghost'
                             className='mt-2 w-full text-red-500'
-                            onClick={() =>
-                              void channelsApi
+                            onClick={async () => {
+                              const confirmed = await confirmAction({
+                                title: t('channels.leaveConfirm', {
+                                  name: channelLabel(selectedChannel),
+                                }),
+                                description: t(
+                                  'channels.leaveConfirmDescription'
+                                ),
+                                confirmLabel: t('channels.leave'),
+                                destructive: true,
+                              });
+                              if (!confirmed) return;
+                              const response = await channelsApi
                                 .removeMember(
                                   selectedChannel.id,
                                   currentUser?.id ?? ''
                                 )
-                                .then(() => {
-                                  setSelectedId(null);
-                                  refreshChannels();
-                                })
-                            }
+                                .catch(() => undefined);
+                              if (response?.success) {
+                                setSelectedId(null);
+                                refreshChannels();
+                              } else {
+                                toast.error(t('channels.leaveFailed'));
+                              }
+                            }}
                             data-testid='channel-leave'
                           >
                             {t('channels.leave')}
@@ -838,6 +980,8 @@ const ChannelsPage: React.FC = () => {
       {browsing && (
         <BrowseChannelsModal
           channels={publicChannels}
+          failed={browseFailed}
+          onRetry={openBrowse}
           onClose={() => setBrowsing(false)}
           onJoined={channelId => {
             setBrowsing(false);
@@ -911,8 +1055,11 @@ const CreateChannelModal: React.FC<{
       }
     >
       <div>
-        <label className={modalLabelClass}>{t('channels.nameLabel')}</label>
+        <label htmlFor='create-channel-name' className={modalLabelClass}>
+          {t('channels.nameLabel')}
+        </label>
         <input
+          id='create-channel-name'
           className={modalFieldClass}
           value={name}
           onChange={event => setName(event.target.value)}
@@ -920,8 +1067,11 @@ const CreateChannelModal: React.FC<{
         />
       </div>
       <div>
-        <label className={modalLabelClass}>{t('channels.typeLabel')}</label>
+        <label htmlFor='create-channel-type' className={modalLabelClass}>
+          {t('channels.typeLabel')}
+        </label>
         <select
+          id='create-channel-type'
           className={modalFieldClass}
           value={type}
           onChange={event =>
@@ -934,10 +1084,11 @@ const CreateChannelModal: React.FC<{
         </select>
       </div>
       <div>
-        <label className={modalLabelClass}>
+        <label htmlFor='create-channel-description' className={modalLabelClass}>
           {t('channels.descriptionLabel')}
         </label>
         <textarea
+          id='create-channel-description'
           className={modalFieldClass}
           rows={2}
           value={description}
@@ -996,6 +1147,7 @@ const OpenDmModal: React.FC<{
           if (event.key === 'Enter') open();
         }}
         placeholder={t('channels.dmPlaceholder')}
+        aria-label={t('channels.dmPlaceholder')}
         data-testid='open-dm-username'
       />
     </ModalShell>
@@ -1004,9 +1156,11 @@ const OpenDmModal: React.FC<{
 
 const BrowseChannelsModal: React.FC<{
   channels: ChannelSummary[] | null;
+  failed: boolean;
+  onRetry: () => void;
   onClose: () => void;
   onJoined: (channelId: string) => void;
-}> = ({ channels, onClose, onJoined }) => {
+}> = ({ channels, failed, onRetry, onClose, onJoined }) => {
   const { t } = useTranslation();
   return (
     <ModalShell
@@ -1015,12 +1169,16 @@ const BrowseChannelsModal: React.FC<{
       onClose={onClose}
       testId='browse-channels-modal'
     >
-      {channels === null ? (
-        <Loader2 className='mx-auto h-4 w-4 animate-spin text-gray-400' />
+      {failed && channels === null ? (
+        <ErrorState
+          size='sm'
+          message={t('channels.loadFailed')}
+          onRetry={onRetry}
+        />
+      ) : channels === null ? (
+        <LoadingState size='sm' srOnly />
       ) : channels.length === 0 ? (
-        <p className='text-center text-xs text-gray-400 dark:text-dark-500'>
-          {t('channels.noPublic')}
-        </p>
+        <EmptyState icon={Compass} size='sm' title={t('channels.noPublic')} />
       ) : (
         channels.map(channel => (
           <div
@@ -1042,7 +1200,11 @@ const BrowseChannelsModal: React.FC<{
                 onClick={() =>
                   void channelsApi
                     .join(channel.id)
-                    .then(() => onJoined(channel.id))
+                    .then(response => {
+                      if (response.success) onJoined(channel.id);
+                      else toast.error(t('channels.joinFailed'));
+                    })
+                    .catch(() => toast.error(t('channels.joinFailed')))
                 }
                 data-testid='browse-channel-join'
               >
@@ -1078,11 +1240,20 @@ const ChannelSettingsModal: React.FC<{
             size='sm'
             variant='ghost'
             className='text-red-500'
-            onClick={() =>
-              void channelsApi.delete(channel.id).then(response => {
-                if (response.success) onDeleted();
-              })
-            }
+            onClick={async () => {
+              const confirmed = await confirmAction({
+                title: t('channels.deleteConfirm', { name: channel.name }),
+                description: t('channels.deleteConfirmDescription'),
+                confirmLabel: t('channels.delete'),
+                destructive: true,
+              });
+              if (!confirmed) return;
+              const response = await channelsApi
+                .delete(channel.id)
+                .catch(() => undefined);
+              if (response?.success) onDeleted();
+              else toast.error(t('channels.deleteFailed'));
+            }}
             data-testid='channel-delete'
           >
             {t('channels.delete')}
@@ -1099,7 +1270,9 @@ const ChannelSettingsModal: React.FC<{
                 })
                 .then(response => {
                   if (response.success) onChanged();
+                  else toast.error(t('channels.saveFailed'));
                 })
+                .catch(() => toast.error(t('channels.saveFailed')))
                 .finally(() => setSaving(false));
             }}
             data-testid='channel-settings-save'
@@ -1110,18 +1283,25 @@ const ChannelSettingsModal: React.FC<{
       }
     >
       <div>
-        <label className={modalLabelClass}>{t('channels.nameLabel')}</label>
+        <label htmlFor='channel-settings-name' className={modalLabelClass}>
+          {t('channels.nameLabel')}
+        </label>
         <input
+          id='channel-settings-name'
           className={modalFieldClass}
           value={name}
           onChange={event => setName(event.target.value)}
         />
       </div>
       <div>
-        <label className={modalLabelClass}>
+        <label
+          htmlFor='channel-settings-description'
+          className={modalLabelClass}
+        >
           {t('channels.descriptionLabel')}
         </label>
         <textarea
+          id='channel-settings-description'
           className={modalFieldClass}
           rows={2}
           value={description}

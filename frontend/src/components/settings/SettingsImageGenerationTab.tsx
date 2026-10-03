@@ -16,6 +16,7 @@
  */
 
 import { Check, ImageIcon, Loader2, RotateCcw } from 'lucide-react';
+import { useId } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button, Select } from '@/components/ui';
 import {
@@ -25,6 +26,7 @@ import {
   type ImageGenPlugin,
 } from '@/utils/api';
 import type { ImageGenSettings } from '@/types';
+import { SettingsTabHeader } from './SettingsTabHeader';
 import { SettingsToggle } from './SettingsToggle';
 
 interface SettingsImageGenerationTabProps {
@@ -60,6 +62,11 @@ export function SettingsImageGenerationTab({
   onSave,
 }: SettingsImageGenerationTabProps) {
   const { t } = useTranslation();
+  const enableTitleId = useId();
+  const modelId = useId();
+  const sizeId = useId();
+  const qualityId = useId();
+  const styleId = useId();
   const selectedModel = findImageGenModel(
     models,
     effectiveSettings.model,
@@ -69,12 +76,10 @@ export function SettingsImageGenerationTab({
   return (
     <div className='space-y-6'>
       <div>
-        <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4'>
-          {t('settings.imageGen.title')}
-        </h3>
-        <p className='text-sm text-gray-600 dark:text-gray-400 mb-6'>
-          {t('settings.imageGen.description')}
-        </p>
+        <SettingsTabHeader
+          title={t('settings.imageGen.title')}
+          description={t('settings.imageGen.description')}
+        />
 
         {loading ? (
           <div className='flex items-center justify-center py-8'>
@@ -102,7 +107,10 @@ export function SettingsImageGenerationTab({
             <div className='bg-white dark:bg-dark-100 rounded-lg p-4 border border-gray-200 dark:border-dark-300'>
               <div className='flex items-center justify-between'>
                 <div>
-                  <h4 className='text-sm font-medium text-gray-900 dark:text-gray-100'>
+                  <h4
+                    id={enableTitleId}
+                    className='text-sm font-medium text-gray-900 dark:text-gray-100'
+                  >
                     {t('settings.imageGen.enable')}
                   </h4>
                   <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
@@ -112,6 +120,7 @@ export function SettingsImageGenerationTab({
                 <SettingsToggle
                   checked={settings.enabled}
                   onChange={checked => onSettingChange('enabled', checked)}
+                  aria-labelledby={enableTitleId}
                 />
               </div>
             </div>
@@ -122,10 +131,14 @@ export function SettingsImageGenerationTab({
               </h4>
               <div className='space-y-4'>
                 <div>
-                  <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                  <label
+                    htmlFor={modelId}
+                    className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'
+                  >
                     {t('settings.imageGen.model')}
                   </label>
                   <Select
+                    id={modelId}
                     value={
                       selectedModel
                         ? getImageGenModelOptionValue(selectedModel)
@@ -158,11 +171,15 @@ export function SettingsImageGenerationTab({
                 </div>
 
                 <div>
-                  <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                  <label
+                    htmlFor={sizeId}
+                    className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'
+                  >
                     {selectedModel?.config?.size_label ||
                       t('settings.imageGen.size')}
                   </label>
                   <Select
+                    id={sizeId}
                     value={effectiveSettings.size}
                     onChange={event =>
                       onSettingChange('size', event.target.value)
@@ -188,10 +205,14 @@ export function SettingsImageGenerationTab({
 
                 {qualities.length > 0 && (
                   <div>
-                    <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                    <label
+                      htmlFor={qualityId}
+                      className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'
+                    >
                       {t('settings.imageGen.quality')}
                     </label>
                     <Select
+                      id={qualityId}
                       value={effectiveSettings.quality}
                       onChange={event =>
                         onSettingChange('quality', event.target.value)
@@ -211,10 +232,14 @@ export function SettingsImageGenerationTab({
 
                 {styles.length > 0 && (
                   <div>
-                    <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                    <label
+                      htmlFor={styleId}
+                      className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'
+                    >
                       {t('settings.imageGen.style')}
                     </label>
                     <Select
+                      id={styleId}
                       value={effectiveSettings.style}
                       onChange={event =>
                         onSettingChange('style', event.target.value)

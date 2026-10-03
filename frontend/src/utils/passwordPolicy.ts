@@ -15,8 +15,8 @@
  * limitations under the License.
  */
 
-export const PASSWORD_REQUIREMENTS =
-  'Use at least 12 characters, no more than 72 UTF-8 bytes, with uppercase, lowercase, and a number.';
+/** Translation key for the one-sentence policy summary. */
+export const PASSWORD_REQUIREMENTS_KEY = 'passwordStrength.requirements';
 
 export interface PasswordStrength {
   checks: {
@@ -73,17 +73,17 @@ export const evaluatePasswordStrength = (
   return { checks, satisfied, score, level };
 };
 
-export const getPasswordPolicyError = (password: string): string | null => {
-  if (password.length < 12) return 'Password must be at least 12 characters.';
+/**
+ * The first policy violation as a translation key, or null when the password
+ * passes. Callers translate it, since this module has no i18n context.
+ */
+export const getPasswordPolicyErrorKey = (password: string): string | null => {
+  if (password.length < 12) return 'passwordStrength.errors.minLength';
   if (new TextEncoder().encode(password).length > 72) {
-    return 'Password must be no more than 72 UTF-8 bytes.';
+    return 'passwordStrength.errors.tooLong';
   }
-  if (!/[A-Z]/.test(password)) {
-    return 'Password must contain an uppercase letter.';
-  }
-  if (!/[a-z]/.test(password)) {
-    return 'Password must contain a lowercase letter.';
-  }
-  if (!/[0-9]/.test(password)) return 'Password must contain a number.';
+  if (!/[A-Z]/.test(password)) return 'passwordStrength.errors.uppercase';
+  if (!/[a-z]/.test(password)) return 'passwordStrength.errors.lowercase';
+  if (!/[0-9]/.test(password)) return 'passwordStrength.errors.number';
   return null;
 };

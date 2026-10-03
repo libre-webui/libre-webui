@@ -340,6 +340,7 @@ export function SettingsAppearanceTab({
                 checked={weatherEnabled}
                 onChange={setWeatherEnabled}
                 disabled={!celestialLocation}
+                aria-label={t('settings.appearance.celestial.weather')}
               />
             </div>
           </div>

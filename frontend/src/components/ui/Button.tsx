@@ -65,7 +65,7 @@ export const Button: React.FC<ButtonProps> = ({
     >
       {loading && (
         <svg
-          className='mr-2 h-4 w-4 animate-spin'
+          className='h-4 w-4 animate-spin'
           aria-hidden='true'
           fill='none'
           viewBox='0 0 24 24'

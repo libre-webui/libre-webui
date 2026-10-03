@@ -703,8 +703,15 @@ const PluginUsagePage: React.FC = () => {
   if (isLoading && !analytics) {
     return (
       <PageShell width='wide'>
-        <div className='flex min-h-[50vh] items-center justify-center'>
-          <Loader2 className='h-7 w-7 motion-safe:animate-spin text-primary-500' />
+        <div
+          role='status'
+          className='flex min-h-[50vh] items-center justify-center'
+        >
+          <Loader2
+            className='h-7 w-7 motion-safe:animate-spin text-primary-500'
+            aria-hidden='true'
+          />
+          <span className='sr-only'>{t('common.loading')}</span>
         </div>
       </PageShell>
     );
@@ -764,8 +771,11 @@ const PluginUsagePage: React.FC = () => {
       />
 
       {errorMessage && (
-        <div className='mb-6 flex items-center gap-3 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900/40 dark:bg-red-950/30 dark:text-red-300'>
-          <TriangleAlert className='h-4 w-4 shrink-0' />
+        <div
+          role='alert'
+          className='mb-6 flex items-center gap-3 rounded-2xl border border-error-200 bg-error-50 px-4 py-3 text-sm text-error-700 dark:border-error-900/40 dark:bg-error-900/30 dark:text-error-300'
+        >
+          <TriangleAlert className='h-4 w-4 shrink-0' aria-hidden='true' />
           <span>{errorMessage}</span>
         </div>
       )}

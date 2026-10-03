@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import type { WorkRun } from '@/types/work';
 import { workApi } from '@/utils/api/workApi';
 
@@ -33,12 +33,17 @@ interface UseWorkRunsOptions {
 interface UseWorkRunsResult {
   runs: WorkRun[];
   loaded: boolean;
+  /** The last request failed; `runs` is empty rather than stale. */
+  error: boolean;
+  /** Refetches now, for a Retry action. */
+  reload: () => void;
 }
 
 /**
  * Persisted run history for one Work task, newest first. The list degrades
- * to empty on failure: run history is context, never the reason a task view
- * fails to render.
+ * to empty on failure, with `error` set so a surface can offer Retry instead
+ * of claiming there is no history. Run history is context, never the reason
+ * a task view fails to render.
  */
 export function useWorkRuns(
   taskId: string | undefined,
@@ -48,11 +53,14 @@ export function useWorkRuns(
     taskId: string | undefined;
     runs: WorkRun[];
     loaded: boolean;
-  }>({ taskId, runs: [], loaded: false });
+    error: boolean;
+  }>({ taskId, runs: [], loaded: false, error: false });
+  const [reloadKey, setReloadKey] = useState(0);
+  const reload = useCallback(() => setReloadKey(key => key + 1), []);
   // A different task starts from nothing, adjusted during render so the
   // previous task's runs never flash in the new one's history.
   if (state.taskId !== taskId) {
-    setState({ taskId, runs: [], loaded: false });
+    setState({ taskId, runs: [], loaded: false, error: false });
   }
 
   useEffect(() => {
@@ -69,18 +77,21 @@ export function useWorkRuns(
               ? response.data
               : [],
           loaded: true,
+          error: !response.success,
         });
       } catch {
-        if (alive) setState({ taskId, runs: [], loaded: true });
+        if (alive) setState({ taskId, runs: [], loaded: true, error: true });
       }
     })();
     return () => {
       alive = false;
     };
-  }, [taskId, enabled, limit, refreshToken]);
+  }, [taskId, enabled, limit, refreshToken, reloadKey]);
 
   return {
     runs: state.taskId === taskId ? state.runs : [],
     loaded: state.taskId === taskId && state.loaded,
+    error: state.taskId === taskId && state.error,
+    reload,
   };
 }

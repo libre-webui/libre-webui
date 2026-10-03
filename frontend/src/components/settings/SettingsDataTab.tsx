@@ -22,6 +22,7 @@ import { Button } from '@/components/ui';
 import { useChatStore } from '@/store/chatStore';
 import { formatTimestamp } from '@/utils';
 import type { DataArchivePreflight } from '@/utils/api/preferencesApi';
+import { SettingsTabHeader } from './SettingsTabHeader';
 import type {
   ImportMergeStrategy,
   SettingsImportResult,
@@ -34,9 +35,7 @@ function ArchivedChatsSection() {
 
   return (
     <div>
-      <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4'>
-        {t('settings.data.archivedChats.title')}
-      </h3>
+      <SettingsTabHeader title={t('settings.data.archivedChats.title')} />
       {archivedSessions.length === 0 ? (
         <p className='text-xs text-gray-500 dark:text-gray-400'>
           {t('settings.data.archivedChats.empty')}
@@ -75,8 +74,9 @@ function ArchivedChatsSection() {
                       void deleteSession(session.id);
                     }
                   }}
-                  className='h-8 w-8 p-0 text-red-500 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20'
+                  className='h-8 w-8 p-0 text-error-600 hover:bg-error-500/10 hover:text-error-700 dark:text-error-400 dark:hover:text-error-300'
                   title={t('chat.session.deleteChat')}
+                  aria-label={t('chat.session.deleteChat')}
                 >
                   <Trash2 className='h-3.5 w-3.5' />
                 </Button>
@@ -131,9 +131,7 @@ export function SettingsDataTab({
   return (
     <div className='space-y-6'>
       <div>
-        <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4'>
-          {t('settings.data.title')}
-        </h3>
+        <SettingsTabHeader title={t('settings.data.title')} />
         <div className='space-y-4'>
           <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
             <div className='flex flex-col'>
@@ -195,9 +193,9 @@ export function SettingsDataTab({
               </p>
               <Button
                 onClick={onClearAllHistory}
-                variant='outline'
+                variant='danger'
                 size='sm'
-                className='w-full text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 border-red-200 hover:border-red-300 dark:border-red-800 dark:hover:border-red-700'
+                className='w-full'
                 disabled={sessionCount === 0 || loading}
               >
                 {loading

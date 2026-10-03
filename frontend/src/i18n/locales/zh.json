@@ -41,7 +41,8 @@
     "remove": "移除",
     "home": "主页",
     "more": "多",
-    "reasoning": "推理"
+    "reasoning": "推理",
+    "skipToContent": "跳到内容"
   },
   "brand": {
     "name": "Libre WebUI",
@@ -49,7 +50,10 @@
   },
   "appInitialization": {
     "ollamaUnavailable": "Ollama 服务不可用。仍可使用插件模型。",
-    "backendConnectionFailed": "无法连接后端服务"
+    "backendConnectionFailed": "无法连接后端服务",
+    "connecting": "正在连接后端…（{{attempt}}/{{total}}）",
+    "startingUp": "正在启动…",
+    "backendUnreachableHint": "请确认后端正在运行，然后重试。"
   },
   "auth": {
     "login": {
@@ -189,7 +193,15 @@
       "removed": "已移除通行密钥。",
       "removeFailed": "无法移除通行密钥。",
       "signInButton": "使用通行密钥登录",
-      "signInFailed": "通行密钥登录失败。"
+      "signInFailed": "通行密钥登录失败。",
+      "removeConfirmTitle": "移除此通行密钥？",
+      "removeConfirmDescription": "“{{name}}”将不能再用于登录。你可以稍后重新注册。"
+    },
+    "password": {
+      "show": "显示密码",
+      "hide": "隐藏密码",
+      "showConfirmation": "显示确认密码",
+      "hideConfirmation": "隐藏确认密码"
     }
   },
   "setup": {
@@ -242,7 +254,8 @@
       "envNote": "此密钥也保存在您的 backend/.env 文件中，名为 ENCRYPTION_KEY",
       "acknowledgment": "我已将加密密钥保存在安全的位置，并了解丢失它可能导致数据丢失。",
       "confirmRequired": "请确认您已保存加密密钥",
-      "continue": "继续使用 Libre WebUI"
+      "continue": "继续使用 Libre WebUI",
+      "loadFailed": "无法加载加密密钥。请重试以继续。"
     },
     "connectModels": {
       "title": "连接您的模型",
@@ -336,7 +349,8 @@
       "toolsOn": "工具已开启 — 模型可以调用已批准的工具",
       "toolsOff": "允许模型在这条消息中调用工具",
       "thinkingOn": "思考已开启 ({{level}})",
-      "thinkingOff": "回答前先思考"
+      "thinkingOff": "回答前先思考",
+      "thinkingUpdateFailed": "无法更新思考设置"
     },
     "session": {
       "new": "新对话",
@@ -372,7 +386,8 @@
         "move": "移动到文件夹",
         "remove": "从文件夹中移除",
         "delete": "删除文件夹",
-        "deleteConfirm": "删除此文件夹？其中的聊天会保留。"
+        "deleteConfirm": "删除此文件夹？其中的聊天会保留。",
+        "rename": "重命名文件夹"
       },
       "shareChat": "共享聊天…"
     },
@@ -405,7 +420,13 @@
       "browse": "浏览",
       "unsupportedFileType": "不支持的文件类型：{{name}}",
       "maxImagesAllowed": "最多允许 {{count}} 张图片",
-      "imageTooLarge": "图片 {{name}} 过大（最大 10MB）"
+      "imageTooLarge": "图片 {{name}} 过大（最大 10MB）",
+      "readFailed": "无法读取 {{name}}",
+      "uploadAlt": "上传 {{number}}",
+      "removeImage": "移除图片 {{number}}",
+      "addMore": "添加更多图片（{{count}}/{{max}}）",
+      "uploading": "正在上传",
+      "removeDocument": "移除 {{name}}"
     },
     "structuredOutput": {
       "title": "响应格式",
@@ -456,7 +477,8 @@
       "compactionOff": "此对话中关闭"
     },
     "message": {
-      "sources": "来源"
+      "sources": "来源",
+      "copyFailed": "无法复制到剪贴板"
     },
     "toasts": {
       "chatCreated": "已创建新聊天",
@@ -491,7 +513,8 @@
       "branchSwitched": "已切换到变体 {{number}}",
       "branchSelectFailed": "选择分支失败",
       "editFailed": "编辑消息失败",
-      "toolDecisionFailed": "无法记录工具决策"
+      "toolDecisionFailed": "无法记录工具决策",
+      "archiveFailed": "无法归档此对话"
     },
     "documents": {
       "title": "上下文中的文档"
@@ -521,7 +544,25 @@
       "origin": "分叉自 {{title}}",
       "originUnknown": "另一个聊天"
     },
-    "sharedReadOnly": "由 {{owner}} 共享 — 仅可查看"
+    "sharedReadOnly": "由 {{owner}} 共享 — 仅可查看",
+    "branch": {
+      "variants": "{{count}} 个变体",
+      "variants_plural": "{{count}} 个变体",
+      "selectVariant": "选择变体 {{number}}",
+      "generating": "生成中...",
+      "select": "选择"
+    },
+    "sources": {
+      "fullContextFailed": "无法更新完整文档设置",
+      "usedByRetrieval": "用于回复",
+      "triggerLabel": "来源（{{count}}）"
+    },
+    "announce": {
+      "replyFinished": "{{name}} 回复:{{text}}",
+      "replyFinishedNoText": "{{name}} 已回复完毕。",
+      "codeBlock": "代码块",
+      "generationStopped": "已停止生成"
+    }
   },
   "sidebar": {
     "navigation": {
@@ -546,7 +587,8 @@
       "strands": "Strands"
     },
     "toggleSize": "切换侧边栏大小",
-    "expandSidebar": "展开侧边栏"
+    "expandSidebar": "展开侧边栏",
+    "ariaLabel": "侧边栏"
   },
   "user": {
     "menu": {
@@ -821,7 +863,8 @@
         "removeFailed": "移除 API 密钥失败",
         "enterKey": "请输入 API 密钥"
       },
-      "variables": "Variables"
+      "variables": "Variables",
+      "dismissError": "关闭错误提示"
     },
     "generation": {
       "title": "生成选项",
@@ -924,7 +967,8 @@
         "deleteFailed": "无法删除集合",
         "assignFailed": "无法移动文档",
         "share": "共享合集",
-        "shared": "已共享"
+        "shared": "已共享",
+        "assignTo": "{{name}} 的集合"
       },
       "library": {
         "title": "已上传的文档",
@@ -1066,7 +1110,8 @@
         "title": "已归档的聊天",
         "empty": "没有已归档的聊天",
         "unarchive": "取消归档"
-      }
+      },
+      "clearAllConfirm": "确定要删除所有对话历史吗？此操作无法撤销。"
     },
     "about": {
       "title": "关于",
@@ -1186,7 +1231,11 @@
       "unknownDevice": "未知设备",
       "createdAt": "登录时间",
       "lastSeenAt": "最近活动",
-      "expiresAt": "过期时间"
+      "expiresAt": "过期时间",
+      "signOutConfirmTitle": "退出此登录会话？",
+      "signOutConfirmDescription": "{{device}} 将立即退出登录，需要重新登录。",
+      "signOutOthersConfirmTitle": "退出其他登录会话？",
+      "signOutOthersConfirmDescription": "其他 {{count}} 个会话将立即退出登录。当前会话保持登录。"
     },
     "apiKeys": {
       "title": "API 密钥",
@@ -1220,7 +1269,9 @@
       "createdAt": "创建时间",
       "lastUsedAt": "最近使用",
       "expiresAt": "过期时间",
-      "neverExpires": "永不"
+      "neverExpires": "永不",
+      "revokeConfirmTitle": "撤销“{{name}}”？",
+      "revokeConfirmDescription": "所有使用此 API 密钥的内容将立即停止工作。此操作无法撤销。"
     },
     "notifications": {
       "title": "通知",
@@ -1294,7 +1345,8 @@
     "model": "模型",
     "size": "尺寸",
     "quality": "质量",
-    "created": "创建时间"
+    "created": "创建时间",
+    "lightboxLabel": "图片预览"
   },
   "errors": {
     "generic": "发生错误",
@@ -1389,7 +1441,9 @@
       "hide": "对用户隐藏",
       "show": "对用户显示",
       "star": "为 {{name}} 加星",
-      "unstar": "取消 {{name}} 的星标"
+      "unstar": "取消 {{name}} 的星标",
+      "filterLabel": "筛选模型",
+      "displayName": "{{name}} 的显示名称"
     },
     "pull": {
       "placeholder": "输入模型名称（例如：llama3.2:3b、deepseek-r1:14b）",
@@ -1550,7 +1604,10 @@
     "deleteConfirm": "确定要删除 \"{{name}}\" 吗？",
     "deleteSuccess": "角色 \"{{name}}\" 删除成功",
     "downloadSuccess": "角色 \"{{name}}\" 下载成功",
-    "failed": "{{action}}角色失败"
+    "failed": "{{action}}角色失败",
+    "loadFailed": "无法加载你的角色。",
+    "deleteFailed": "删除角色失败",
+    "downloadFailed": "下载角色失败"
   },
   "personaForm": {
     "title": {
@@ -1682,7 +1739,8 @@
       "promptHint": "用这个提示词开启与该角色的每一次新对话。",
       "noPrompt": "不使用提示词",
       "version": "绑定修订 {{version}}"
-    }
+    },
+    "sections": "角色分区"
   },
   "personaCard": {
     "enhanced": "增强",
@@ -1699,7 +1757,16 @@
     "backupSuccess": "角色备份下载成功",
     "dnaSuccess": "角色 DNA 导出成功",
     "failed": "{{action}}失败",
-    "shareTooltip": "共享此角色"
+    "shareTooltip": "共享此角色",
+    "wipeFailed": "清除记忆失败",
+    "backupFailed": "备份角色失败",
+    "exportDnaFailed": "导出角色 DNA 失败",
+    "favorite": "收藏",
+    "memoryStatus": {
+      "active": "活跃",
+      "wiped": "已清除",
+      "backed_up": "已备份"
+    }
   },
   "userManager": {
     "title": "用户管理",
@@ -1865,7 +1932,28 @@
       "memberOf": "所属用户组",
       "featuresLabel": "功能权限",
       "grantsLabel": "授权",
-      "grantVia": "来自"
+      "grantVia": "来自",
+      "deleteConfirmTitle": "删除用户组“{{name}}”？",
+      "deleteConfirmDescription": "成员将失去仅通过此用户组获得的访问权限。账户本身不会被删除。",
+      "statuses": {
+        "active": "活跃",
+        "pending": "待审批"
+      },
+      "features": {
+        "work": "工作",
+        "model-download": "模型下载",
+        "web-search": "网络搜索",
+        "strands": "Strands 引擎",
+        "tools": "工具",
+        "stt": "语音转文字",
+        "tts": "文字转语音",
+        "voice-mode": "语音模式",
+        "voice-cloning": "语音克隆"
+      },
+      "grantViaKinds": {
+        "user": "直接授权",
+        "group": "用户组"
+      }
     },
     "audit": {
       "title": "安全审计日志",
@@ -2298,7 +2386,11 @@
       "harmful": "有害",
       "formatting": "格式"
     },
-    "feedbackComment": "添加评论…"
+    "feedbackComment": "添加评论…",
+    "user": "用户",
+    "feedbackFailed": "无法保存你的反馈",
+    "openImage": "打开图片 {{number}}",
+    "uploadedImageAlt": "已上传的图片 {{number}}"
   },
   "imageGallery": {
     "title": "图像库",
@@ -2387,7 +2479,10 @@
       "image": "图像",
       "video": "视频",
       "audio": "音频"
-    }
+    },
+    "deleteConfirmTitle": "删除此项目？",
+    "deleteConfirmDescription": "生成的媒体将被永久删除。",
+    "previewFailed": "无法预览"
   },
   "errorBoundary": {
     "title": "出错了",
@@ -2463,7 +2558,8 @@
     "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source.",
     "versionOf": "第 {{current}} 版，共 {{total}} 版",
     "previousVersion": "上一版本",
-    "nextVersion": "下一版本"
+    "nextVersion": "下一版本",
+    "resizePanel": "调整面板大小"
   },
   "personaImportExport": {
     "title": "导入和导出角色",
@@ -2501,7 +2597,10 @@
     "generation": "生成:",
     "modelLoad": "模型加载:",
     "totalTime": "总时间:",
-    "generatedAt": "生成于:"
+    "generatedAt": "生成于:",
+    "notAvailable": "不适用",
+    "tokenCount": "{{tokens}} 个 token",
+    "tokensPerSecond": "{{value}} t/s"
   },
   "userMenu": {
     "loggedOut": "已成功退出",
@@ -2560,7 +2659,9 @@
       "httpWarning": "HTTP 不会加密凭据或流量。仅在受信任的网络中使用。",
       "invalidBaseUrl": "基础 URL 不能包含查询字符串或片段。",
       "invalidApiPath": "必须以 / 开头，且不包含 URL、查询、片段或 .. 段",
-      "tooLong": "值过长"
+      "tooLong": "值过长",
+      "resetConfirmTitle": "重置为默认值？",
+      "resetConfirmDescription": "这将清除 {{name}} 的所有已存储值，包括 API 密钥和其他凭据。此操作无法撤销。"
     }
   },
   "huggingface": {
@@ -2580,7 +2681,10 @@
   },
   "demoMode": {
     "title": "演示模式",
-    "github": "GitHub"
+    "github": "GitHub",
+    "defaultMessage": "这是仅用于演示的版本。Ollama 后端未连接。",
+    "viewOnGithub": "在 GitHub 上查看",
+    "dismiss": "关闭"
   },
   "work": {
     "title": "工作",
@@ -2671,8 +2775,18 @@
         "checksPending": "检查待定",
         "stallNudges": "停滞提醒",
         "ambiguityNudges": "重新定位提醒",
-        "stoppedBy": "停止原因"
-      }
+        "stoppedBy": "停止原因",
+        "reasons": {
+          "round": "轮数上限",
+          "toolCall": "工具调用上限",
+          "approvalTimeout": "审批超时",
+          "computerStall": "计算机停滞"
+        }
+      },
+      "skillTraceSavedWorked": "已记录：有效",
+      "skillTraceSavedFailed": "已记录：失败",
+      "connectionClosed": "“工作”的实时连接已关闭。",
+      "reconnectingBackground": "实时更新正在后台重新连接。"
     },
     "runtime": {
       "unavailable": "运行时不可用",
@@ -2715,7 +2829,11 @@
       "changes": "更改",
       "changesSince": "自上一轮以来的更改",
       "diffLabel": "自上一轮以来的更改：{{path}}",
-      "diffFolded": "{{count}} 行未更改"
+      "diffFolded": "{{count}} 行未更改",
+      "diffAdded": "已添加",
+      "diffRemoved": "已移除",
+      "unsavedChanges": "未保存的更改",
+      "editingLocked": "本轮结束后才能编辑。"
     },
     "activity": {
       "empty": "命令、文件操作和工具结果将显示在这里。",
@@ -2726,7 +2844,9 @@
         "toolCall": "工具调用",
         "toolResult": "工具结果",
         "error": "错误"
-      }
+      },
+      "arguments": "工具参数",
+      "output": "工具输出"
     },
     "preview": {
       "command": "可选启动命令",
@@ -2755,7 +2875,8 @@
       "saveFailed": "无法保存此文件。",
       "saved": "文件已保存。",
       "previewFailed": "无法启动预览。",
-      "previewStopFailed": "无法停止预览。"
+      "previewStopFailed": "无法停止预览。",
+      "sendFailed": "无法发送该消息。"
     },
     "terminal": {
       "connecting": "正在沙箱中打开 Shell…",
@@ -2807,7 +2928,18 @@
       "noFilterMatches": "没有与此筛选条件匹配的已更改文件。",
       "allChanges": "全部更改",
       "diffTruncated": "此差异已被截断。",
-      "binaryFile": "二进制文件，无文本差异。"
+      "binaryFile": "二进制文件，无文本差异。",
+      "statusLabels": {
+        "modified": "已修改",
+        "added": "已添加",
+        "deleted": "已删除",
+        "renamed": "已重命名",
+        "copied": "已复制",
+        "typeChanged": "类型已更改",
+        "untracked": "未跟踪"
+      },
+      "stagedState": "已暂存",
+      "aheadBehind": "领先 {{ahead}}，落后 {{behind}}"
     },
     "hostWorkspace": {
       "hint": "留空以使用隔离工作区，或将任务指向本机的一个文件夹。",
@@ -2834,7 +2966,8 @@
       "unmute": "取消静音",
       "mute": "静音",
       "finished": "此任务已结束。重新打开它以恢复其屏幕。",
-      "reopenOpen": "重新打开任务并打开屏幕"
+      "reopenOpen": "重新打开任务并打开屏幕",
+      "teachSaveFailed": "无法保存此演示。"
     },
     "computerSetup": {
       "title": "Work Computer",
@@ -2871,7 +3004,11 @@
       "approvalsToggleFailed": "无法更新审批设置。",
       "approvalRuleLine": "始终允许",
       "approvalRuleDelete": "移除规则",
-      "approvalRuleDeleteFailed": "无法移除该规则。"
+      "approvalRuleDeleteFailed": "无法移除该规则。",
+      "routinesLoadFailed": "无法加载例行任务。",
+      "skillsLoadFailed": "无法加载已教授的技能。",
+      "approvalsLoadFailed": "无法加载审批设置。",
+      "routinePaused": "已暂停"
     },
     "approval": {
       "title": "需要批准",
@@ -2879,7 +3016,16 @@
       "allowOnce": "允许一次",
       "allowAlways": "始终允许",
       "deny": "拒绝",
-      "failed": "无法发送该决定。"
+      "failed": "无法发送该决定。",
+      "details": "操作详情",
+      "fields": {
+        "command": "命令",
+        "path": "路径",
+        "from": "从",
+        "to": "到",
+        "actions": "操作",
+        "recursive": "递归"
+      }
     },
     "idleStopHint": "无活动 {{minutes}} 分钟后停止。",
     "runs": {
@@ -2891,7 +3037,8 @@
         "needsInput": "需要输入",
         "failed": "失败",
         "cancelled": "已取消"
-      }
+      },
+      "loadFailed": "无法加载运行历史。"
     },
     "recovery": {
       "pending": "Work 正在确认 {{pending}} 项沙箱清理，之后才会接受新操作。",
@@ -2903,6 +3050,17 @@
       "retrySucceeded": "已清理 {{attempted}} 项中的 {{cleared}} 项待处理清理。",
       "retryPending": "仍在重试 {{attempted}} 项待处理清理。",
       "retryFailed": "无法重试待处理的清理项。"
+    },
+    "computer": {
+      "setupFailed": "无法设置工作计算机。"
+    },
+    "announce": {
+      "completed": "{{title}} 已完成。",
+      "needsInput": "{{title}} 需要您输入或批准。",
+      "failed": "{{title}} 失败。",
+      "cancelled": "{{title}} 已停止。",
+      "approvalNeeded": "{{title}} 需要您批准才能运行 {{tool}}。",
+      "untitledTask": "此任务"
     }
   },
   "personaBackground": {
@@ -2947,7 +3105,8 @@
     "showAll": "显示全部 ({{total}})",
     "sources": "模型来源",
     "defaultModel": "默认模型",
-    "contextSize": "{{size}} 上下文"
+    "contextSize": "{{size}} 上下文",
+    "via": "通过 {{provider}}"
   },
   "whatsNew": {
     "title": "新功能",
@@ -3004,7 +3163,16 @@
     "unpin": "取消置顶",
     "pinned": "已置顶",
     "export": "下载为 Markdown",
-    "sharedWithYou": "与你共享"
+    "sharedWithYou": "与你共享",
+    "titleLabel": "笔记标题",
+    "loadFailed": "无法加载。请重试。",
+    "restoreConfirmTitle": "恢复此版本？",
+    "restoreConfirmDescription": "笔记内容将被替换为此较早版本。",
+    "deleteAttachmentConfirmTitle": "删除 {{name}}？",
+    "deleteAttachmentConfirmDescription": "该附件将从此笔记中永久删除。",
+    "attachmentDeleteFailed": "无法删除附件",
+    "revokeFailed": "无法撤销访问权限",
+    "sharePermissionLabel": "权限"
   },
   "calendar": {
     "title": "日历",
@@ -3049,7 +3217,22 @@
     "importFailed": "文件导入失败",
     "importResult": "已导入 {{total}} 个日程",
     "importIcs": "导入",
-    "exportIcs": "导出"
+    "exportIcs": "导出",
+    "chipStatus": {
+      "automation": "定时自动化",
+      "runSucceeded": "自动化运行成功",
+      "runFailed": "自动化运行失败"
+    },
+    "newEventOn": "{{date}} 的新事件",
+    "showDay": "显示 {{date}} 的所有事件",
+    "deleteEventConfirmTitle": "删除“{{title}}”？",
+    "deleteEventConfirmDescription": "此事件将被永久删除。",
+    "deleteRecurringEventConfirmDescription": "此重复事件及其所有重复项将被永久删除。",
+    "shareCalendarNamed": "共享日历 {{name}}",
+    "deleteCalendarNamed": "删除日历 {{name}}",
+    "deleteCalendarConfirmTitle": "删除日历“{{name}}”？",
+    "deleteCalendarConfirmDescription": "该日历及其中的事件将被永久删除。",
+    "calendarDeleteFailed": "无法删除该日历"
   },
   "automations": {
     "title": "自动化",
@@ -3176,13 +3359,17 @@
         "work-approval": "智能体正在等待你的批准",
         "system": "系统通知到达"
       }
-    }
+    },
+    "deleteConfirmTitle": "删除“{{name}}”？",
+    "deleteConfirmDescription": "该自动化及其计划将被永久删除。过往运行记录仍保留在运行历史中。"
   },
   "home": {
     "active": "活跃",
     "continue": "继续",
     "start": "开始",
-    "explore": "探索"
+    "explore": "探索",
+    "greeting": "{{greeting}}。",
+    "greetingWithName": "{{greeting}}，{{name}}。"
   },
   "palette": {
     "empty": "没有匹配项。",
@@ -3195,7 +3382,14 @@
     "work": "工作",
     "messages": "消息",
     "notes": "笔记",
-    "documents": "文档"
+    "documents": "文档",
+    "searching": "正在搜索…",
+    "searchFailed": "工作区搜索失败。仅显示匹配的对话和操作。",
+    "results": "结果",
+    "escKey": "esc",
+    "hintNavigate": "导航",
+    "hintOpen": "打开",
+    "hintClose": "关闭"
   },
   "tabs": {
     "actions": "标签页操作",
@@ -3399,7 +3593,8 @@
       "button": "从文件夹导入",
       "missingSkillMd": "文件夹中需要包含 SKILL.md 文件",
       "done": "技能已导入，包含 {{count}} 个随附文件"
-    }
+    },
+    "toggleLabel": "启用技能 {{name}}"
   },
   "toolsPage": {
     "title": "工具",
@@ -3557,7 +3752,14 @@
     "added": "已与 {{name}} 共享",
     "failed": "共享失败",
     "userNotFound": "没有该用户名的用户",
-    "groupNotFound": "没有该名称的群组"
+    "groupNotFound": "没有该名称的群组",
+    "principalKind": "与用户或用户组共享",
+    "principalName": "用户名或用户组名称",
+    "permission": "权限",
+    "sharing": "共享",
+    "loading": "正在加载共享",
+    "loadFailed": "无法加载共享",
+    "revokeFailed": "无法撤销访问权限"
   },
   "channels": {
     "title": "频道",
@@ -3616,13 +3818,44 @@
     "toolCalls": {
       "summary": "已使用的工具（{{total}}）",
       "deniedHint": "会更改内容的工具在频道中会被拒绝。请在聊天中运行它们。"
-    }
+    },
+    "confirmEdit": "保存编辑",
+    "cancelEdit": "取消编辑",
+    "reactWith": "用 {{emoji}} 回应",
+    "deleteMessageConfirmTitle": "删除这条消息？",
+    "deleteMessageConfirmDescription": "该消息将对此频道中的所有人移除。",
+    "unreadCount": "{{total}} 条未读",
+    "send": "发送消息",
+    "invite": "邀请成员",
+    "closeThread": "关闭话题",
+    "removeAttachment": "移除附件",
+    "loadFailed": "无法加载。请重试。",
+    "editFailed": "无法编辑该消息",
+    "deleteMessageFailed": "无法删除该消息",
+    "pinFailed": "无法更改置顶状态",
+    "reactFailed": "无法保存回应",
+    "downloadFailed": "无法下载该文件",
+    "removeMemberConfirm": "将 {{name}} 移出此频道？",
+    "removeMemberConfirmDescription": "对方将无法再访问该频道及其消息。",
+    "removeMemberNamed": "将 {{name}} 移出频道",
+    "removeMemberFailed": "无法移除该成员",
+    "leaveConfirm": "退出 {{name}}？",
+    "leaveConfirmDescription": "退出后需要再次受邀才能重新加入私有频道。",
+    "leaveFailed": "无法退出频道",
+    "joinFailed": "无法加入频道",
+    "deleteConfirm": "删除 {{name}}？",
+    "deleteConfirmDescription": "该频道及其所有消息将对每位成员永久删除。",
+    "deleteFailed": "无法删除该频道",
+    "saveFailed": "无法保存该频道"
   },
   "notifications": {
     "title": "通知",
     "empty": "没有未读通知。",
     "markAllRead": "全部标为已读",
-    "markRead": "标为已读"
+    "markRead": "标为已读",
+    "titleWithUnread": "通知（{{unread}} 条未读）",
+    "unread": "未读",
+    "loadFailed": "无法加载通知。"
   },
   "voiceMode": {
     "title": "语音模式",
@@ -3757,7 +3990,12 @@
       "failed": "失败",
       "cancelled": "已取消"
     },
-    "noFeedback": "还没有反馈——为回复评分以构建你的数据集。"
+    "noFeedback": "还没有反馈——为回复评分以构建你的数据集。",
+    "deleteSetConfirmTitle": "删除“{{name}}”？",
+    "deleteSetConfirmDescription": "该评测集及其提示词将被永久删除。",
+    "deleteSetFailed": "无法删除评测集",
+    "runError": "错误：{{detail}}",
+    "cancelFailed": "无法取消此次运行"
   },
   "passwordStrength": {
     "levels": {
@@ -3771,6 +4009,14 @@
       "hasCase": "大写和小写字母",
       "hasNumber": "至少一个数字",
       "tooLong": "不超过 72 字节"
+    },
+    "requirements": "至少 12 个字符，不超过 72 个 UTF-8 字节，并包含大写字母、小写字母和数字。",
+    "errors": {
+      "minLength": "密码至少需要 12 个字符。",
+      "tooLong": "密码不能超过 72 个 UTF-8 字节。",
+      "uppercase": "密码必须包含大写字母。",
+      "lowercase": "密码必须包含小写字母。",
+      "number": "密码必须包含数字。"
     }
   },
   "connectModels": {
@@ -3804,7 +4050,8 @@
       "enable": "启用提供商",
       "enabling": "正在启用…",
       "enabled": "{{name}} 已连接 — 其模型现已可用",
-      "enableFailed": "无法启用该提供商"
+      "enableFailed": "无法启用该提供商",
+      "urlLabel": "服务器 URL"
     },
     "cloud": {
       "title": "云端 API",
@@ -3813,7 +4060,8 @@
       "connect": "连接",
       "connecting": "连接中…",
       "connected": "{{name}} 已连接 — 其模型现已可用",
-      "saveFailed": "无法保存 API 密钥"
+      "saveFailed": "无法保存 API 密钥",
+      "keyLabel": "{{name}} API 密钥"
     }
   },
   "strands": {
@@ -3845,5 +4093,15 @@
     "deleteFailed": "无法删除会话。",
     "saveFailed": "无法保存会话。",
     "turnFailed": "引擎无法完成本轮对话"
+  },
+  "notFound": {
+    "title": "页面未找到",
+    "description": "此页面不存在或已被移动。"
+  },
+  "themeToggle": {
+    "switchToLight": "切换到浅色模式",
+    "switchToDark": "切换到深色模式",
+    "switchToAmoled": "切换到纯黑模式",
+    "switchToCelestial": "切换到星空模式"
   }
 }

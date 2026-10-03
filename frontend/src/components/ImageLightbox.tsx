@@ -15,10 +15,12 @@
  * limitations under the License.
  */
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { createPortal } from 'react-dom';
 import { X, Download, Trash2, Clock, Cpu, Maximize2 } from 'lucide-react';
+import { confirmAction } from '@/components/ui/confirmStore';
+import { useDialogFocus } from '@/hooks/useDialogFocus';
 import { cn } from '@/utils';
 import { GeneratedImage } from '@/types';
 import { getImageGenImageFileExtension } from '@/utils/api';
@@ -37,24 +39,26 @@ export const ImageLightbox: React.FC<ImageLightboxProps> = ({
   onDownload,
 }) => {
   const { t } = useTranslation();
+  const dialogRef = useRef<HTMLDivElement>(null);
+  // Focus trap, Escape and focus restore.
+  useDialogFocus(dialogRef, { onClose });
 
-  // Close on escape key
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        onClose();
-      }
-    };
-
-    document.addEventListener('keydown', handleKeyDown);
     // Prevent body scroll when lightbox is open
     document.body.style.overflow = 'hidden';
-
     return () => {
-      document.removeEventListener('keydown', handleKeyDown);
       document.body.style.overflow = '';
     };
-  }, [onClose]);
+  }, []);
+
+  const handleDelete = async () => {
+    if (!onDelete) return;
+    const confirmed = await confirmAction({
+      title: t('imageGallery.deleteConfirm'),
+      destructive: true,
+    });
+    if (confirmed) onDelete(image.id);
+  };
 
   const formatDate = (timestamp: number) => {
     return new Date(timestamp).toLocaleString(undefined, {
@@ -91,20 +95,26 @@ export const ImageLightbox: React.FC<ImageLightboxProps> = ({
 
       {/* Content */}
       <div
+        ref={dialogRef}
+        role='dialog'
+        aria-modal='true'
+        aria-label={t('gallery.lightboxLabel')}
         className='relative flex flex-col lg:flex-row max-w-7xl max-h-[95vh] w-full mx-4 gap-4'
         onClick={e => e.stopPropagation()}
       >
         {/* Close Button */}
         <button
+          type='button'
           onClick={onClose}
+          aria-label={t('common.close')}
           className={cn(
-            'absolute -top-12 right-0 lg:top-0 lg:-right-12 z-10',
+            'absolute -top-12 end-0 lg:top-0 lg:-end-12 z-10',
             'p-2 rounded-full',
             'bg-white/10 hover:bg-white/20',
             'transition-colors'
           )}
         >
-          <X className='h-6 w-6 text-white' />
+          <X className='h-6 w-6 text-white' aria-hidden='true' />
         </button>
 
         {/* Image */}
@@ -187,13 +197,13 @@ export const ImageLightbox: React.FC<ImageLightboxProps> = ({
           {/* Actions */}
           <div className='flex gap-2 pt-4 border-t border-gray-200 dark:border-dark-300'>
             <button
+              type='button'
               onClick={handleDownload}
               className={cn(
                 'flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg',
-                'bg-primary-600 dark:bg-primary-600',
-                'hover:bg-primary-700 dark:hover:bg-primary-500',
-                'text-white font-medium text-sm',
-                'transition-colors'
+                'bg-ink text-ink-inverse hover:opacity-90',
+                'font-medium text-sm',
+                'transition-opacity'
               )}
             >
               <Download className='h-4 w-4' />
@@ -202,7 +212,8 @@ export const ImageLightbox: React.FC<ImageLightboxProps> = ({
 
             {onDelete && (
               <button
-                onClick={() => onDelete(image.id)}
+                type='button'
+                onClick={() => void handleDelete()}
                 className={cn(
                   'p-2.5 rounded-lg',
                   'bg-gray-100 dark:bg-dark-200',
@@ -211,7 +222,8 @@ export const ImageLightbox: React.FC<ImageLightboxProps> = ({
                   'hover:text-red-600 dark:hover:text-red-400',
                   'transition-colors'
                 )}
-                title='Delete image'
+                title={t('imageGallery.delete')}
+                aria-label={t('imageGallery.delete')}
               >
                 <Trash2 className='h-4 w-4' />
               </button>

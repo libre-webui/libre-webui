@@ -27,7 +27,13 @@ import {
   Upload,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { Button, IconAction, ModalShell } from '@/components/ui';
+import {
+  Button,
+  EmptyState,
+  IconAction,
+  LoadingState,
+  ModalShell,
+} from '@/components/ui';
 import { SettingsTabHeader } from './SettingsTabHeader';
 import { PromptModal } from '@/components/prompts/PromptModal';
 import { WorkspaceTemplateGrid } from './WorkspaceTemplateGrid';
@@ -237,16 +243,14 @@ export const SettingsPromptsTab: React.FC = () => {
         }
       />
 
-      {loading ? null : prompts.length === 0 ? (
-        <div className='px-3 py-16 text-center'>
-          <BookText className='mx-auto mb-3 h-6 w-6 text-gray-300 dark:text-dark-400' />
-          <p className='text-sm text-gray-500 dark:text-dark-500'>
-            {t('promptsPage.empty')}
-          </p>
-          <p className='mx-auto mt-2 max-w-md text-[13px] leading-6 text-gray-400 dark:text-dark-500'>
-            {t('promptsPage.emptyHint')}
-          </p>
-        </div>
+      {loading ? (
+        <LoadingState srOnly />
+      ) : prompts.length === 0 ? (
+        <EmptyState
+          icon={BookText}
+          title={t('promptsPage.empty')}
+          description={t('promptsPage.emptyHint')}
+        />
       ) : (
         <div className='space-y-2'>
           {prompts.map(prompt => (

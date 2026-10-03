@@ -26,7 +26,8 @@ import type {
   GeneratedMedia,
   GeneratedMediaKind,
 } from '@/types';
-import { Button } from '@/components/ui';
+import { Button, EmptyState, ErrorState, LoadingState } from '@/components/ui';
+import { confirmAction } from '@/components/ui/confirmStore';
 import { mediaApi } from '@/utils/api';
 import ImageLightbox from './ImageLightbox';
 
@@ -94,37 +95,53 @@ export function MediaGallery({
     }
   };
 
+  const confirmRemove = async (item: GeneratedMedia) => {
+    const confirmed = await confirmAction({
+      title: t('mediaGallery.deleteConfirmTitle'),
+      description: t('mediaGallery.deleteConfirmDescription'),
+      destructive: true,
+    });
+    if (confirmed) await remove(item);
+  };
+
   const download = async (item: GeneratedMedia) => {
-    const blob = await mediaApi.getGalleryContent(item.id);
-    const source = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = source;
-    link.download = `generated-${item.id}.${extensionFor(item.mimeType)}`;
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    URL.revokeObjectURL(source);
+    try {
+      const blob = await mediaApi.getGalleryContent(item.id);
+      const source = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = source;
+      link.download = `generated-${item.id}.${extensionFor(item.mimeType)}`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(source);
+    } catch {
+      toast.error(t('imageGallery.downloadFailed'));
+    }
   };
 
   if (query.isLoading) {
+    return <LoadingState srOnly />;
+  }
+  // A failed load must not read as an empty library.
+  if (query.isError && media.length === 0) {
     return (
-      <div className='flex justify-center py-12'>
-        <Loader2 className='h-8 w-8 animate-spin text-gray-400' />
-      </div>
+      <ErrorState
+        message={t('imageGallery.loadFailed')}
+        onRetry={() => void query.refetch()}
+      />
     );
   }
   if (media.length === 0) {
     return (
-      <div className='flex flex-col items-center justify-center rounded-2xl border border-dashed border-gray-300 bg-white/30 px-6 py-12 text-center dark:border-white/15 dark:bg-white/[0.02]'>
-        <ImageOff className='mb-4 h-10 w-10 text-gray-300 dark:text-gray-600' />
-        <h3 className='text-lg font-medium'>{t('mediaGallery.empty')}</h3>
-        <p className='mt-2 max-w-sm text-gray-500 dark:text-gray-400'>
-          {t('mediaGallery.emptyHint')}
-        </p>
-      </div>
+      <EmptyState
+        icon={ImageOff}
+        titleAs='h3'
+        title={t('mediaGallery.empty')}
+        description={t('mediaGallery.emptyHint')}
+      />
     );
   }
-
   return (
     <>
       <div className='grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'>
@@ -148,26 +165,32 @@ export function MediaGallery({
                 <div className='flex shrink-0 gap-1'>
                   {item.kind === 'image' && onEditImage && (
                     <button
+                      type='button'
                       onClick={() => onEditImage(item)}
                       className='rounded-lg p-1.5 hover:bg-gray-100 dark:hover:bg-white/10'
                       title={t('imageEdit.title')}
+                      aria-label={t('imageEdit.title')}
                       data-testid={`edit-image-${item.id}`}
                     >
                       <Wand2 className='h-4 w-4' />
                     </button>
                   )}
                   <button
+                    type='button'
                     onClick={() => void download(item)}
                     className='rounded-lg p-1.5 hover:bg-gray-100 dark:hover:bg-white/10'
                     title={t('imageGallery.download')}
+                    aria-label={t('imageGallery.download')}
                   >
                     <Download className='h-4 w-4' />
                   </button>
                   <button
-                    onClick={() => void remove(item)}
+                    type='button'
+                    onClick={() => void confirmRemove(item)}
                     disabled={deletingId === item.id}
                     className='rounded-lg p-1.5 hover:bg-red-500/15 hover:text-red-500'
                     title={t('imageGallery.delete')}
+                    aria-label={t('imageGallery.delete')}
                   >
                     {deletingId === item.id ? (
                       <Loader2 className='h-4 w-4 animate-spin' />
@@ -181,6 +204,13 @@ export function MediaGallery({
           </article>
         ))}
       </div>
+      {query.isFetchNextPageError && (
+        <ErrorState
+          size='sm'
+          message={t('imageGallery.loadFailed')}
+          className='mt-6 py-0'
+        />
+      )}
       {query.hasNextPage && (
         <div className='mt-8 flex justify-center'>
           <Button
@@ -219,7 +249,12 @@ function MediaPreview({
   item: GeneratedMedia;
   onOpenImage: (source: string) => void;
 }) {
-  const { data: blob, isLoading } = useQuery({
+  const { t } = useTranslation();
+  const {
+    data: blob,
+    isLoading,
+    isError,
+  } = useQuery({
     queryKey: ['media-gallery-content', item.id],
     queryFn: () => mediaApi.getGalleryContent(item.id),
     staleTime: 5 * 60_000,
@@ -251,10 +286,25 @@ function MediaPreview({
     };
   }, [source]);
 
+  if (isError) {
+    return (
+      <div className='flex aspect-video flex-col items-center justify-center gap-2 bg-surface-subtle px-3 text-center text-xs text-ink-muted'>
+        <ImageOff className='h-6 w-6' aria-hidden='true' />
+        {t('mediaGallery.previewFailed')}
+      </div>
+    );
+  }
   if (isLoading || !source) {
     return (
-      <div className='flex aspect-video items-center justify-center bg-gray-100 dark:bg-white/[0.03]'>
-        <Loader2 className='h-6 w-6 animate-spin text-gray-400' />
+      <div
+        role='status'
+        className='flex aspect-video items-center justify-center bg-gray-100 dark:bg-white/[0.03]'
+      >
+        <Loader2
+          className='h-6 w-6 animate-spin text-gray-400'
+          aria-hidden='true'
+        />
+        <span className='sr-only'>{t('common.loading')}</span>
       </div>
     );
   }
@@ -262,6 +312,7 @@ function MediaPreview({
   if (item.kind === 'image') {
     return (
       <button
+        type='button'
         className='block aspect-square w-full overflow-hidden'
         onClick={() => onOpenImage(source)}
       >
@@ -281,15 +332,22 @@ function MediaPreview({
           src={source}
           controls
           preload='metadata'
+          aria-label={item.prompt}
           className='h-full w-full object-contain'
         />
       </div>
     );
   }
   return (
-    <div className='flex min-h-40 flex-col items-center justify-center gap-3 bg-gradient-to-br from-primary-500/10 to-cyan-500/10 p-4'>
-      <Volume2 className='h-9 w-9 text-primary-500' />
-      <audio src={source} controls preload='metadata' className='w-full' />
+    <div className='flex min-h-40 flex-col items-center justify-center gap-3 bg-surface-subtle p-4'>
+      <Volume2 className='h-9 w-9 text-ink-muted' aria-hidden='true' />
+      <audio
+        src={source}
+        controls
+        preload='metadata'
+        aria-label={item.prompt}
+        className='w-full'
+      />
     </div>
   );
 }

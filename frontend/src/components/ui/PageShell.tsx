@@ -84,22 +84,22 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
 }) => (
   <header
     className={cn(
-      'mb-8 flex flex-col gap-6 border-b border-gray-200/70 pb-7 text-start dark:border-white/[0.08] sm:mb-10 sm:pb-9 md:flex-row md:items-end md:justify-between',
+      'mb-8 flex flex-col gap-6 border-b border-line pb-7 text-start sm:mb-10 sm:pb-9 md:flex-row md:items-end md:justify-between',
       className
     )}
     {...props}
   >
     <div className='min-w-0 max-w-3xl'>
       {eyebrow && (
-        <div className='mb-3 text-[11px] font-medium uppercase tracking-[0.18em] text-gray-500 dark:text-dark-500 rtl:tracking-normal'>
+        <div className='mb-3 text-[11px] font-medium uppercase tracking-[0.18em] text-ink-muted rtl:tracking-normal'>
           {eyebrow}
         </div>
       )}
-      <h1 className='text-balance text-3xl font-normal leading-[1.02] tracking-[-0.04em] text-gray-950 dark:text-dark-950 sm:text-5xl rtl:leading-[1.15] rtl:tracking-normal'>
+      <h1 className='text-balance text-3xl font-normal leading-[1.02] tracking-[-0.04em] text-ink sm:text-5xl rtl:leading-[1.15] rtl:tracking-normal'>
         {title}
       </h1>
       {description && (
-        <p className='mt-4 max-w-2xl text-sm leading-6 text-gray-600 dark:text-dark-600 sm:text-base sm:leading-7'>
+        <p className='mt-4 max-w-2xl text-sm leading-6 text-ink-muted sm:text-base sm:leading-7'>
           {description}
         </p>
       )}

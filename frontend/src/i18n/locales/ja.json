@@ -41,7 +41,8 @@
     "remove": "削除",
     "home": "ホーム",
     "more": "多",
-    "reasoning": "推論"
+    "reasoning": "推論",
+    "skipToContent": "コンテンツへスキップ"
   },
   "brand": {
     "name": "Libre WebUI",
@@ -49,7 +50,10 @@
   },
   "appInitialization": {
     "ollamaUnavailable": "Ollama サービスを利用できません。プラグインモデルは引き続き使用できる場合があります。",
-    "backendConnectionFailed": "バックエンドサービスへの接続に失敗しました"
+    "backendConnectionFailed": "バックエンドサービスへの接続に失敗しました",
+    "connecting": "バックエンドに接続中… ({{attempt}}/{{total}})",
+    "startingUp": "起動中…",
+    "backendUnreachableHint": "バックエンドが実行中であることを確認して、もう一度お試しください。"
   },
   "auth": {
     "login": {
@@ -189,7 +193,15 @@
       "removed": "パスキーを削除しました。",
       "removeFailed": "パスキーを削除できませんでした。",
       "signInButton": "パスキーでサインイン",
-      "signInFailed": "パスキーでのサインインに失敗しました。"
+      "signInFailed": "パスキーでのサインインに失敗しました。",
+      "removeConfirmTitle": "このパスキーを削除しますか？",
+      "removeConfirmDescription": "「{{name}}」ではサインインできなくなります。あとで再登録できます。"
+    },
+    "password": {
+      "show": "パスワードを表示",
+      "hide": "パスワードを非表示",
+      "showConfirmation": "確認用パスワードを表示",
+      "hideConfirmation": "確認用パスワードを非表示"
     }
   },
   "setup": {
@@ -242,7 +254,8 @@
       "envNote": "このキーはbackend/.envファイルにENCRYPTION_KEYとして保存されています",
       "acknowledgment": "暗号化キーを安全な場所に保存しました。紛失するとデータ損失の可能性があることを理解しています。",
       "confirmRequired": "暗号化キーを保存したことを確認してください",
-      "continue": "Libre WebUIを開始"
+      "continue": "Libre WebUIを開始",
+      "loadFailed": "暗号化キーを読み込めませんでした。再試行して続行してください。"
     },
     "connectModels": {
       "title": "モデルを接続",
@@ -336,7 +349,8 @@
       "toolsOn": "ツールは有効 — モデルは承認済みのツールを呼び出せます",
       "toolsOff": "このメッセージでモデルにツールを呼び出させる",
       "thinkingOn": "思考オン ({{level}})",
-      "thinkingOff": "回答前に考える"
+      "thinkingOff": "回答前に考える",
+      "thinkingUpdateFailed": "思考の設定を更新できませんでした"
     },
     "session": {
       "new": "新しいチャット",
@@ -372,7 +386,8 @@
         "move": "フォルダーへ移動",
         "remove": "フォルダーから外す",
         "delete": "フォルダーを削除",
-        "deleteConfirm": "このフォルダーを削除しますか？中のチャットは残ります。"
+        "deleteConfirm": "このフォルダーを削除しますか？中のチャットは残ります。",
+        "rename": "フォルダー名を変更"
       },
       "shareChat": "チャットを共有…"
     },
@@ -405,7 +420,13 @@
       "browse": "参照",
       "unsupportedFileType": "サポートされていないファイル形式です: {{name}}",
       "maxImagesAllowed": "画像は最大 {{count}} 枚まで追加できます",
-      "imageTooLarge": "画像 {{name}} は大きすぎます（最大 10 MB）"
+      "imageTooLarge": "画像 {{name}} は大きすぎます（最大 10 MB）",
+      "readFailed": "{{name}} を読み込めませんでした",
+      "uploadAlt": "アップロード {{number}}",
+      "removeImage": "画像 {{number}} を削除",
+      "addMore": "画像を追加 ({{count}}/{{max}})",
+      "uploading": "アップロード中",
+      "removeDocument": "{{name}} を削除"
     },
     "structuredOutput": {
       "title": "レスポンス形式",
@@ -456,7 +477,8 @@
       "compactionOff": "このチャットでは無効"
     },
     "message": {
-      "sources": "出典"
+      "sources": "出典",
+      "copyFailed": "クリップボードにコピーできませんでした"
     },
     "toasts": {
       "chatCreated": "新しいチャットが作成されました",
@@ -491,7 +513,8 @@
       "branchSwitched": "バリエーション {{number}} に切り替えました",
       "branchSelectFailed": "分岐の選択に失敗しました",
       "editFailed": "メッセージの編集に失敗しました",
-      "toolDecisionFailed": "ツールの判断を記録できませんでした"
+      "toolDecisionFailed": "ツールの判断を記録できませんでした",
+      "archiveFailed": "このチャットをアーカイブできませんでした"
     },
     "documents": {
       "title": "コンテキスト内のドキュメント"
@@ -521,7 +544,25 @@
       "origin": "{{title}} からフォーク",
       "originUnknown": "別のチャット"
     },
-    "sharedReadOnly": "{{owner}} が共有 — 閲覧のみ"
+    "sharedReadOnly": "{{owner}} が共有 — 閲覧のみ",
+    "branch": {
+      "variants": "{{count}}件のバリアント",
+      "variants_plural": "{{count}}件のバリアント",
+      "selectVariant": "バリアント {{number}} を選択",
+      "generating": "生成中...",
+      "select": "選択"
+    },
+    "sources": {
+      "fullContextFailed": "ドキュメント全体の設定を更新できませんでした",
+      "usedByRetrieval": "返信で使用",
+      "triggerLabel": "出典 ({{count}})"
+    },
+    "announce": {
+      "replyFinished": "{{name}}の返信: {{text}}",
+      "replyFinishedNoText": "{{name}}が返信を完了しました。",
+      "codeBlock": "コードブロック",
+      "generationStopped": "生成を停止しました"
+    }
   },
   "sidebar": {
     "navigation": {
@@ -546,7 +587,8 @@
       "strands": "Strands"
     },
     "toggleSize": "サイドバーのサイズを切り替え",
-    "expandSidebar": "サイドバーを展開"
+    "expandSidebar": "サイドバーを展開",
+    "ariaLabel": "サイドバー"
   },
   "user": {
     "menu": {
@@ -821,7 +863,8 @@
         "removeFailed": "APIキーの削除に失敗しました",
         "enterKey": "APIキーを入力してください"
       },
-      "variables": "Variables"
+      "variables": "Variables",
+      "dismissError": "エラーを閉じる"
     },
     "generation": {
       "title": "生成オプション",
@@ -924,7 +967,8 @@
         "deleteFailed": "コレクションを削除できませんでした",
         "assignFailed": "ドキュメントを移動できませんでした",
         "share": "コレクションを共有",
-        "shared": "共有"
+        "shared": "共有",
+        "assignTo": "{{name}} のコレクション"
       },
       "library": {
         "title": "アップロード済みドキュメント",
@@ -1066,7 +1110,8 @@
         "title": "アーカイブ済みチャット",
         "empty": "アーカイブ済みのチャットはありません",
         "unarchive": "アーカイブ解除"
-      }
+      },
+      "clearAllConfirm": "すべてのチャット履歴を削除してもよろしいですか？この操作は元に戻せません。"
     },
     "about": {
       "title": "概要",
@@ -1186,7 +1231,11 @@
       "unknownDevice": "不明なデバイス",
       "createdAt": "サインイン",
       "lastSeenAt": "最終アクティブ",
-      "expiresAt": "有効期限"
+      "expiresAt": "有効期限",
+      "signOutConfirmTitle": "このセッションをサインアウトしますか？",
+      "signOutConfirmDescription": "{{device}} はすぐにサインアウトされ、再度サインインが必要になります。",
+      "signOutOthersConfirmTitle": "他のセッションをサインアウトしますか？",
+      "signOutOthersConfirmDescription": "他の {{count}} 件のセッションがすぐにサインアウトされます。このセッションはサインインしたままです。"
     },
     "apiKeys": {
       "title": "APIキー",
@@ -1220,7 +1269,9 @@
       "createdAt": "作成日",
       "lastUsedAt": "最終使用",
       "expiresAt": "有効期限",
-      "neverExpires": "無期限"
+      "neverExpires": "無期限",
+      "revokeConfirmTitle": "「{{name}}」を失効させますか？",
+      "revokeConfirmDescription": "この API キーを使用しているものはすべて、すぐに動作しなくなります。この操作は元に戻せません。"
     },
     "notifications": {
       "title": "通知",
@@ -1294,7 +1345,8 @@
     "model": "モデル",
     "size": "サイズ",
     "quality": "品質",
-    "created": "作成日"
+    "created": "作成日",
+    "lightboxLabel": "画像プレビュー"
   },
   "errors": {
     "generic": "エラーが発生しました",
@@ -1389,7 +1441,9 @@
       "hide": "ユーザーに非表示にする",
       "show": "ユーザーに表示する",
       "star": "{{name}}にスターを付ける",
-      "unstar": "{{name}}のスターを外す"
+      "unstar": "{{name}}のスターを外す",
+      "filterLabel": "モデルを絞り込む",
+      "displayName": "{{name}} の表示名"
     },
     "pull": {
       "placeholder": "モデル名を入力（例: llama3.2:3b, deepseek-r1:14b）",
@@ -1550,7 +1604,10 @@
     "deleteConfirm": "「{{name}}」を削除してもよろしいですか？",
     "deleteSuccess": "ペルソナ「{{name}}」が正常に削除されました",
     "downloadSuccess": "ペルソナ「{{name}}」が正常にダウンロードされました",
-    "failed": "ペルソナの{{action}}に失敗しました"
+    "failed": "ペルソナの{{action}}に失敗しました",
+    "loadFailed": "ペルソナを読み込めませんでした。",
+    "deleteFailed": "ペルソナを削除できませんでした",
+    "downloadFailed": "ペルソナをダウンロードできませんでした"
   },
   "personaForm": {
     "title": {
@@ -1682,7 +1739,8 @@
       "promptHint": "このペルソナでの新しいチャットを毎回このプロンプトで始めます。",
       "noPrompt": "プロンプトなし",
       "version": "バインディングのリビジョン {{version}}"
-    }
+    },
+    "sections": "ペルソナのセクション"
   },
   "personaCard": {
     "enhanced": "拡張",
@@ -1699,7 +1757,16 @@
     "backupSuccess": "ペルソナのバックアップが正常にダウンロードされました",
     "dnaSuccess": "ペルソナDNAが正常にエクスポートされました",
     "failed": "{{action}}に失敗しました",
-    "shareTooltip": "このペルソナを共有"
+    "shareTooltip": "このペルソナを共有",
+    "wipeFailed": "メモリを消去できませんでした",
+    "backupFailed": "ペルソナをバックアップできませんでした",
+    "exportDnaFailed": "ペルソナ DNA をエクスポートできませんでした",
+    "favorite": "お気に入り",
+    "memoryStatus": {
+      "active": "有効",
+      "wiped": "消去済み",
+      "backed_up": "バックアップ済み"
+    }
   },
   "userManager": {
     "title": "ユーザー管理",
@@ -1865,7 +1932,28 @@
       "memberOf": "所属グループ",
       "featuresLabel": "機能アクセス",
       "grantsLabel": "付与された権限",
-      "grantVia": "経由"
+      "grantVia": "経由",
+      "deleteConfirmTitle": "グループ「{{name}}」を削除しますか？",
+      "deleteConfirmDescription": "メンバーは、このグループ経由でのみ得ていたアクセス権を失います。アカウント自体は削除されません。",
+      "statuses": {
+        "active": "有効",
+        "pending": "承認待ち"
+      },
+      "features": {
+        "work": "作業",
+        "model-download": "モデルのダウンロード",
+        "web-search": "ウェブ検索",
+        "strands": "Strands エンジン",
+        "tools": "ツール",
+        "stt": "音声認識",
+        "tts": "音声合成",
+        "voice-mode": "音声モード",
+        "voice-cloning": "音声クローン"
+      },
+      "grantViaKinds": {
+        "user": "直接付与",
+        "group": "グループ"
+      }
     },
     "audit": {
       "title": "セキュリティ監査ログ",
@@ -2298,7 +2386,11 @@
       "harmful": "有害",
       "formatting": "書式"
     },
-    "feedbackComment": "コメントを追加…"
+    "feedbackComment": "コメントを追加…",
+    "user": "ユーザー",
+    "feedbackFailed": "フィードバックを保存できませんでした",
+    "openImage": "画像 {{number}} を開く",
+    "uploadedImageAlt": "アップロードした画像 {{number}}"
   },
   "imageGallery": {
     "title": "画像ギャラリー",
@@ -2387,7 +2479,10 @@
       "image": "画像",
       "video": "動画",
       "audio": "オーディオ"
-    }
+    },
+    "deleteConfirmTitle": "この項目を削除しますか？",
+    "deleteConfirmDescription": "生成されたメディアは完全に削除されます。",
+    "previewFailed": "プレビューを表示できません"
   },
   "errorBoundary": {
     "title": "エラーが発生しました",
@@ -2463,7 +2558,8 @@
     "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source.",
     "versionOf": "バージョン {{current}} / {{total}}",
     "previousVersion": "前のバージョン",
-    "nextVersion": "次のバージョン"
+    "nextVersion": "次のバージョン",
+    "resizePanel": "パネルのサイズを変更"
   },
   "personaImportExport": {
     "title": "ペルソナのインポート＆エクスポート",
@@ -2501,7 +2597,10 @@
     "generation": "生成:",
     "modelLoad": "モデル読み込み:",
     "totalTime": "合計時間:",
-    "generatedAt": "生成日時:"
+    "generatedAt": "生成日時:",
+    "notAvailable": "なし",
+    "tokenCount": "{{tokens}} トークン",
+    "tokensPerSecond": "{{value}} t/s"
   },
   "userMenu": {
     "loggedOut": "ログアウトしました",
@@ -2560,7 +2659,9 @@
       "httpWarning": "HTTPは認証情報やトラフィックを暗号化しません。信頼できるネットワークでのみ使用してください。",
       "invalidBaseUrl": "ベースURLにクエリ文字列やフラグメントを含めることはできません。",
       "invalidApiPath": "/で始まり、URL、クエリ、フラグメント、または..セグメントを含まない必要があります",
-      "tooLong": "値が長すぎます"
+      "tooLong": "値が長すぎます",
+      "resetConfirmTitle": "デフォルトに戻しますか？",
+      "resetConfirmDescription": "API キーやその他の認証情報を含め、{{name}} に保存されているすべての値が消去されます。この操作は元に戻せません。"
     }
   },
   "huggingface": {
@@ -2580,7 +2681,10 @@
   },
   "demoMode": {
     "title": "デモモード",
-    "github": "GitHub"
+    "github": "GitHub",
+    "defaultMessage": "これは紹介用のデモ版です。Ollama バックエンドには接続されていません。",
+    "viewOnGithub": "GitHub で見る",
+    "dismiss": "閉じる"
   },
   "work": {
     "title": "作業",
@@ -2671,8 +2775,18 @@
         "checksPending": "検証保留",
         "stallNudges": "停滞通知",
         "ambiguityNudges": "再確認通知",
-        "stoppedBy": "停止理由"
-      }
+        "stoppedBy": "停止理由",
+        "reasons": {
+          "round": "ラウンド上限",
+          "toolCall": "ツール呼び出し上限",
+          "approvalTimeout": "承認タイムアウト",
+          "computerStall": "コンピューターが停止"
+        }
+      },
+      "skillTraceSavedWorked": "記録: 成功",
+      "skillTraceSavedFailed": "記録: 失敗",
+      "connectionClosed": "作業のライブ接続が閉じられました。",
+      "reconnectingBackground": "ライブ更新をバックグラウンドで再接続しています。"
     },
     "runtime": {
       "unavailable": "ランタイムを利用できません",
@@ -2715,7 +2829,11 @@
       "changes": "変更",
       "changesSince": "前のターン以降の変更点",
       "diffLabel": "前のターン以降の変更: {{path}}",
-      "diffFolded": "変更のない行 {{count}} 行"
+      "diffFolded": "変更のない行 {{count}} 行",
+      "diffAdded": "追加",
+      "diffRemoved": "削除",
+      "unsavedChanges": "未保存の変更",
+      "editingLocked": "ターンの完了後に編集できるようになります。"
     },
     "activity": {
       "empty": "コマンド、ファイル操作、ツールの結果がここに表示されます。",
@@ -2726,7 +2844,9 @@
         "toolCall": "ツール呼び出し",
         "toolResult": "ツール結果",
         "error": "エラー"
-      }
+      },
+      "arguments": "ツールの引数",
+      "output": "ツールの出力"
     },
     "preview": {
       "command": "任意の起動コマンド",
@@ -2755,7 +2875,8 @@
       "saveFailed": "このファイルを保存できませんでした。",
       "saved": "ファイルを保存しました。",
       "previewFailed": "プレビューを開始できませんでした。",
-      "previewStopFailed": "プレビューを停止できませんでした。"
+      "previewStopFailed": "プレビューを停止できませんでした。",
+      "sendFailed": "メッセージを送信できませんでした。"
     },
     "terminal": {
       "connecting": "サンドボックスでシェルを開いています…",
@@ -2807,7 +2928,18 @@
       "noFilterMatches": "このフィルターに一致する変更ファイルはありません。",
       "allChanges": "すべての変更",
       "diffTruncated": "この差分は省略されています。",
-      "binaryFile": "バイナリファイルのため、テキスト差分はありません。"
+      "binaryFile": "バイナリファイルのため、テキスト差分はありません。",
+      "statusLabels": {
+        "modified": "変更",
+        "added": "追加",
+        "deleted": "削除",
+        "renamed": "名前変更",
+        "copied": "コピー",
+        "typeChanged": "タイプ変更",
+        "untracked": "未追跡"
+      },
+      "stagedState": "ステージ済み",
+      "aheadBehind": "{{ahead}} 先行、{{behind}} 遅れ"
     },
     "hostWorkspace": {
       "hint": "分離ワークスペースの場合は空欄のまま、またはこのマシンのフォルダーをタスクに指定します。",
@@ -2834,7 +2966,8 @@
       "unmute": "ミュート解除",
       "mute": "ミュート",
       "finished": "このタスクは完了しています。画面を戻すには再度開いてください。",
-      "reopenOpen": "タスクを再度開いて画面を開く"
+      "reopenOpen": "タスクを再度開いて画面を開く",
+      "teachSaveFailed": "このデモンストレーションを保存できませんでした。"
     },
     "computerSetup": {
       "title": "Work Computer",
@@ -2871,7 +3004,11 @@
       "approvalsToggleFailed": "承認の設定を更新できませんでした。",
       "approvalRuleLine": "常に許可",
       "approvalRuleDelete": "ルールを削除",
-      "approvalRuleDeleteFailed": "ルールを削除できませんでした。"
+      "approvalRuleDeleteFailed": "ルールを削除できませんでした。",
+      "routinesLoadFailed": "ルーティンを読み込めませんでした。",
+      "skillsLoadFailed": "教えたスキルを読み込めませんでした。",
+      "approvalsLoadFailed": "承認設定を読み込めませんでした。",
+      "routinePaused": "一時停止中"
     },
     "approval": {
       "title": "承認が必要です",
@@ -2879,7 +3016,16 @@
       "allowOnce": "一度許可する",
       "allowAlways": "常に許可する",
       "deny": "拒否",
-      "failed": "判断を送信できませんでした。"
+      "failed": "判断を送信できませんでした。",
+      "details": "アクションの詳細",
+      "fields": {
+        "command": "コマンド",
+        "path": "パス",
+        "from": "元",
+        "to": "先",
+        "actions": "アクション",
+        "recursive": "再帰"
+      }
     },
     "idleStopHint": "{{minutes}} 分間操作がないと停止します。",
     "runs": {
@@ -2891,7 +3037,8 @@
         "needsInput": "入力待ち",
         "failed": "失敗",
         "cancelled": "キャンセル済み"
-      }
+      },
+      "loadFailed": "実行履歴を読み込めませんでした。"
     },
     "recovery": {
       "pending": "Work は新しい操作を受け付ける前に、{{pending}} 件のサンドボックスのクリーンアップを確認しています。",
@@ -2903,6 +3050,17 @@
       "retrySucceeded": "保留中のクリーンアップ {{attempted}} 件中 {{cleared}} 件を完了しました。",
       "retryPending": "保留中のクリーンアップ {{attempted}} 件を再試行中です。",
       "retryFailed": "保留中のクリーンアップを再試行できませんでした。"
+    },
+    "computer": {
+      "setupFailed": "Work Computer をセットアップできませんでした。"
+    },
+    "announce": {
+      "completed": "{{title}}が完了しました。",
+      "needsInput": "{{title}}には入力または承認が必要です。",
+      "failed": "{{title}}が失敗しました。",
+      "cancelled": "{{title}}を停止しました。",
+      "approvalNeeded": "{{tool}}を実行するには、{{title}}の承認が必要です。",
+      "untitledTask": "このタスク"
     }
   },
   "personaBackground": {
@@ -2947,7 +3105,8 @@
     "showAll": "すべて表示 ({{total}})",
     "sources": "モデルの提供元",
     "defaultModel": "デフォルトモデル",
-    "contextSize": "コンテキスト {{size}}"
+    "contextSize": "コンテキスト {{size}}",
+    "via": "{{provider}} 経由"
   },
   "whatsNew": {
     "title": "新機能",
@@ -3004,7 +3163,16 @@
     "unpin": "ピン留めを解除",
     "pinned": "ピン留め済み",
     "export": "Markdownでダウンロード",
-    "sharedWithYou": "共有されています"
+    "sharedWithYou": "共有されています",
+    "titleLabel": "ノートのタイトル",
+    "loadFailed": "読み込めませんでした。もう一度お試しください。",
+    "restoreConfirmTitle": "このバージョンを復元しますか？",
+    "restoreConfirmDescription": "ノートの本文がこの以前のバージョンに置き換えられます。",
+    "deleteAttachmentConfirmTitle": "{{name}} を削除しますか？",
+    "deleteAttachmentConfirmDescription": "添付ファイルはこのノートから完全に削除されます。",
+    "attachmentDeleteFailed": "添付ファイルを削除できませんでした",
+    "revokeFailed": "アクセスを取り消せませんでした",
+    "sharePermissionLabel": "権限"
   },
   "calendar": {
     "title": "カレンダー",
@@ -3049,7 +3217,22 @@
     "importFailed": "ファイルをインポートできませんでした",
     "importResult": "{{total}} 件の予定をインポートしました",
     "importIcs": "インポート",
-    "exportIcs": "エクスポート"
+    "exportIcs": "エクスポート",
+    "chipStatus": {
+      "automation": "スケジュール済みの自動化",
+      "runSucceeded": "自動化の実行が成功しました",
+      "runFailed": "自動化の実行が失敗しました"
+    },
+    "newEventOn": "{{date}} に新しい予定",
+    "showDay": "{{date}} の予定をすべて表示",
+    "deleteEventConfirmTitle": "「{{title}}」を削除しますか？",
+    "deleteEventConfirmDescription": "この予定は完全に削除されます。",
+    "deleteRecurringEventConfirmDescription": "この繰り返しの予定と、すべての回が完全に削除されます。",
+    "shareCalendarNamed": "カレンダー {{name}} を共有",
+    "deleteCalendarNamed": "カレンダー {{name}} を削除",
+    "deleteCalendarConfirmTitle": "カレンダー「{{name}}」を削除しますか？",
+    "deleteCalendarConfirmDescription": "カレンダーとその予定は完全に削除されます。",
+    "calendarDeleteFailed": "カレンダーを削除できませんでした"
   },
   "automations": {
     "title": "自動化",
@@ -3176,13 +3359,17 @@
         "work-approval": "エージェントが承認を待っている",
         "system": "システム通知が届く"
       }
-    }
+    },
+    "deleteConfirmTitle": "「{{name}}」を削除しますか？",
+    "deleteConfirmDescription": "自動化とそのスケジュールは完全に削除されます。過去の実行は実行履歴に残ります。"
   },
   "home": {
     "active": "アクティブ",
     "continue": "続行",
     "start": "開始",
-    "explore": "探索"
+    "explore": "探索",
+    "greeting": "{{greeting}}。",
+    "greetingWithName": "{{greeting}}、{{name}}さん。"
   },
   "palette": {
     "empty": "一致なし。",
@@ -3195,7 +3382,14 @@
     "work": "作業",
     "messages": "メッセージ",
     "notes": "ノート",
-    "documents": "ドキュメント"
+    "documents": "ドキュメント",
+    "searching": "検索中…",
+    "searchFailed": "ワークスペースの検索に失敗しました。一致するチャットとアクションのみ表示しています。",
+    "results": "結果",
+    "escKey": "esc",
+    "hintNavigate": "移動",
+    "hintOpen": "開く",
+    "hintClose": "閉じる"
   },
   "tabs": {
     "actions": "タブ操作",
@@ -3399,7 +3593,8 @@
       "button": "フォルダーから",
       "missingSkillMd": "フォルダーには SKILL.md ファイルが必要です",
       "done": "{{count}} 個の同梱ファイル付きでスキルをインポートしました"
-    }
+    },
+    "toggleLabel": "スキル {{name}} を有効にする"
   },
   "toolsPage": {
     "title": "ツール",
@@ -3557,7 +3752,14 @@
     "added": "{{name}} と共有しました",
     "failed": "共有に失敗しました",
     "userNotFound": "その名前のユーザーは見つかりません",
-    "groupNotFound": "その名前のグループは見つかりません"
+    "groupNotFound": "その名前のグループは見つかりません",
+    "principalKind": "ユーザーまたはグループと共有",
+    "principalName": "ユーザー名またはグループ名",
+    "permission": "権限",
+    "sharing": "共有",
+    "loading": "共有を読み込み中",
+    "loadFailed": "共有を読み込めませんでした",
+    "revokeFailed": "アクセスを取り消せませんでした"
   },
   "channels": {
     "title": "チャンネル",
@@ -3616,13 +3818,44 @@
     "toolCalls": {
       "summary": "使用したツール ({{total}})",
       "deniedHint": "変更を伴うツールはチャンネルでは拒否されます。チャットから実行してください。"
-    }
+    },
+    "confirmEdit": "編集を保存",
+    "cancelEdit": "編集をキャンセル",
+    "reactWith": "{{emoji}} でリアクション",
+    "deleteMessageConfirmTitle": "このメッセージを削除しますか？",
+    "deleteMessageConfirmDescription": "このチャンネルの全員からメッセージが削除されます。",
+    "unreadCount": "未読 {{total}} 件",
+    "send": "メッセージを送信",
+    "invite": "メンバーを招待",
+    "closeThread": "スレッドを閉じる",
+    "removeAttachment": "添付ファイルを削除",
+    "loadFailed": "読み込めませんでした。もう一度お試しください。",
+    "editFailed": "メッセージを編集できませんでした",
+    "deleteMessageFailed": "メッセージを削除できませんでした",
+    "pinFailed": "ピン留めを変更できませんでした",
+    "reactFailed": "リアクションを保存できませんでした",
+    "downloadFailed": "ファイルをダウンロードできませんでした",
+    "removeMemberConfirm": "{{name}} をこのチャンネルから削除しますか？",
+    "removeMemberConfirmDescription": "チャンネルとそのメッセージにアクセスできなくなります。",
+    "removeMemberNamed": "{{name}} をチャンネルから削除",
+    "removeMemberFailed": "メンバーを削除できませんでした",
+    "leaveConfirm": "{{name}} から退出しますか？",
+    "leaveConfirmDescription": "プライベートチャンネルに再参加するには、もう一度招待される必要があります。",
+    "leaveFailed": "チャンネルから退出できませんでした",
+    "joinFailed": "チャンネルに参加できませんでした",
+    "deleteConfirm": "{{name}} を削除しますか？",
+    "deleteConfirmDescription": "チャンネルとすべてのメッセージが、全メンバーに対して完全に削除されます。",
+    "deleteFailed": "チャンネルを削除できませんでした",
+    "saveFailed": "チャンネルを保存できませんでした"
   },
   "notifications": {
     "title": "通知",
     "empty": "未読の通知はありません。",
     "markAllRead": "すべて既読にする",
-    "markRead": "既読にする"
+    "markRead": "既読にする",
+    "titleWithUnread": "通知 (未読 {{unread}} 件)",
+    "unread": "未読",
+    "loadFailed": "通知を読み込めませんでした。"
   },
   "voiceMode": {
     "title": "ボイスモード",
@@ -3757,7 +3990,12 @@
       "failed": "失敗",
       "cancelled": "キャンセル"
     },
-    "noFeedback": "まだフィードバックがありません。返答を評価してデータセットを作りましょう。"
+    "noFeedback": "まだフィードバックがありません。返答を評価してデータセットを作りましょう。",
+    "deleteSetConfirmTitle": "「{{name}}」を削除しますか？",
+    "deleteSetConfirmDescription": "評価セットとそのプロンプトは完全に削除されます。",
+    "deleteSetFailed": "評価セットを削除できませんでした",
+    "runError": "エラー: {{detail}}",
+    "cancelFailed": "実行をキャンセルできませんでした"
   },
   "passwordStrength": {
     "levels": {
@@ -3771,6 +4009,14 @@
       "hasCase": "大文字と小文字",
       "hasNumber": "数字を1つ以上",
       "tooLong": "72バイト以内"
+    },
+    "requirements": "12 文字以上、72 UTF-8 バイト以内で、大文字、小文字、数字を含めてください。",
+    "errors": {
+      "minLength": "パスワードは 12 文字以上にしてください。",
+      "tooLong": "パスワードは 72 UTF-8 バイト以内にしてください。",
+      "uppercase": "パスワードには大文字を含めてください。",
+      "lowercase": "パスワードには小文字を含めてください。",
+      "number": "パスワードには数字を含めてください。"
     }
   },
   "connectModels": {
@@ -3804,7 +4050,8 @@
       "enable": "プロバイダーを有効にする",
       "enabling": "有効にしています…",
       "enabled": "{{name}}が接続されました — そのモデルが利用可能になりました",
-      "enableFailed": "プロバイダーを有効にできませんでした"
+      "enableFailed": "プロバイダーを有効にできませんでした",
+      "urlLabel": "サーバー URL"
     },
     "cloud": {
       "title": "クラウドAPI",
@@ -3813,7 +4060,8 @@
       "connect": "接続",
       "connecting": "接続中…",
       "connected": "{{name}}が接続されました — そのモデルが利用可能になりました",
-      "saveFailed": "APIキーを保存できませんでした"
+      "saveFailed": "APIキーを保存できませんでした",
+      "keyLabel": "{{name}} API キー"
     }
   },
   "strands": {
@@ -3845,5 +4093,15 @@
     "deleteFailed": "セッションを削除できませんでした。",
     "saveFailed": "セッションを保存できませんでした。",
     "turnFailed": "エンジンがターンを完了できませんでした"
+  },
+  "notFound": {
+    "title": "ページが見つかりません",
+    "description": "このページは存在しないか、移動した可能性があります。"
+  },
+  "themeToggle": {
+    "switchToLight": "ライトモードに切り替え",
+    "switchToDark": "ダークモードに切り替え",
+    "switchToAmoled": "ピュアブラックモードに切り替え",
+    "switchToCelestial": "セレスティアルモードに切り替え"
   }
 }

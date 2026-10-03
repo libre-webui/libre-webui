@@ -35,7 +35,8 @@ import {
   X,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { Button } from '@/components/ui';
+import { Button, EmptyState, ErrorState, LoadingState } from '@/components/ui';
+import { confirmAction } from '@/components/ui/confirmStore';
 import { accessApi, notesApi } from '@/utils/api';
 import type { ResourceGrant } from '@/utils/api/accessApi';
 import { useChatStore } from '@/store/chatStore';
@@ -98,6 +99,14 @@ export const NoteToolsDrawer: React.FC<NoteToolsDrawerProps> = ({
   const { t, i18n } = useTranslation();
   const [tab, setTab] = useState<NoteToolsTab>(initialTab);
 
+  // Which lists failed to load, so a dead request shows a retry instead of
+  // spinning forever.
+  const [loadFailed, setLoadFailed] = useState({
+    revisions: false,
+    attachments: false,
+    share: false,
+  });
+
   // Revisions
   const [revisions, setRevisions] = useState<NoteRevision[] | null>(null);
   const [openRevisionId, setOpenRevisionId] = useState<string | null>(null);
@@ -131,10 +140,16 @@ export const NoteToolsDrawer: React.FC<NoteToolsDrawerProps> = ({
       .then(response => {
         if (response.success && Array.isArray(response.data)) {
           setRevisions(response.data);
+        } else {
+          throw new Error(response.error);
         }
       })
-      .catch(error => logger.error('Failed to load revisions:', error));
-  }, [note.id]);
+      .catch(error => {
+        logger.error('Failed to load revisions:', error);
+        toast.error(t('notes.loadFailed'));
+        setLoadFailed(current => ({ ...current, revisions: true }));
+      });
+  }, [note.id, t]);
 
   const loadAttachments = useCallback(() => {
     notesApi
@@ -142,10 +157,16 @@ export const NoteToolsDrawer: React.FC<NoteToolsDrawerProps> = ({
       .then(response => {
         if (response.success && Array.isArray(response.data)) {
           setAttachments(response.data);
+        } else {
+          throw new Error(response.error);
         }
       })
-      .catch(error => logger.error('Failed to load attachments:', error));
-  }, [note.id]);
+      .catch(error => {
+        logger.error('Failed to load attachments:', error);
+        toast.error(t('notes.loadFailed'));
+        setLoadFailed(current => ({ ...current, attachments: true }));
+      });
+  }, [note.id, t]);
 
   const loadGrants = useCallback(() => {
     accessApi
@@ -153,20 +174,49 @@ export const NoteToolsDrawer: React.FC<NoteToolsDrawerProps> = ({
       .then(response => {
         if (response.success && Array.isArray(response.data)) {
           setGrants(response.data);
+        } else {
+          throw new Error(response.error);
         }
       })
-      .catch(error => logger.error('Failed to load shares:', error));
-  }, [note.id]);
+      .catch(error => {
+        logger.error('Failed to load shares:', error);
+        toast.error(t('notes.loadFailed'));
+        setLoadFailed(current => ({ ...current, share: true }));
+      });
+  }, [note.id, t]);
 
+  // Spinner while a list loads; retry when it failed.
+  const renderPending = (key: keyof typeof loadFailed) =>
+    loadFailed[key] ? (
+      <ErrorState
+        size='sm'
+        message={t('notes.loadFailed')}
+        // Clearing the flag lets the loading effect run again.
+        onRetry={() => setLoadFailed(current => ({ ...current, [key]: false }))}
+      />
+    ) : (
+      <LoadingState size='sm' srOnly />
+    );
   useEffect(() => {
-    if (tab === 'revisions' && revisions === null) loadRevisions();
-    if (tab === 'attachments' && attachments === null) loadAttachments();
-    if (tab === 'share' && isOwner && grants === null) loadGrants();
+    if (tab === 'revisions' && revisions === null && !loadFailed.revisions) {
+      loadRevisions();
+    }
+    if (
+      tab === 'attachments' &&
+      attachments === null &&
+      !loadFailed.attachments
+    ) {
+      loadAttachments();
+    }
+    if (tab === 'share' && isOwner && grants === null && !loadFailed.share) {
+      loadGrants();
+    }
   }, [
     tab,
     revisions,
     attachments,
     grants,
+    loadFailed,
     isOwner,
     loadRevisions,
     loadAttachments,
@@ -174,6 +224,13 @@ export const NoteToolsDrawer: React.FC<NoteToolsDrawerProps> = ({
   ]);
 
   const handleRestore = async (revisionId: string) => {
+    const confirmed = await confirmAction({
+      title: t('notes.restoreConfirmTitle'),
+      description: t('notes.restoreConfirmDescription'),
+      confirmLabel: t('notes.restore'),
+      destructive: true,
+    });
+    if (!confirmed) return;
     try {
       const response = await notesApi.restoreRevision(note.id, revisionId);
       if (response.success && response.data) {
@@ -225,12 +282,22 @@ export const NoteToolsDrawer: React.FC<NoteToolsDrawerProps> = ({
     }
   };
 
-  const handleDeleteAttachment = async (attachmentId: string) => {
+  const handleDeleteAttachment = async (attachment: NoteAttachment) => {
+    const confirmed = await confirmAction({
+      title: t('notes.deleteAttachmentConfirmTitle', {
+        name: attachment.filename,
+      }),
+      description: t('notes.deleteAttachmentConfirmDescription'),
+      destructive: true,
+    });
+    if (!confirmed) return;
     try {
-      const response = await notesApi.deleteAttachment(note.id, attachmentId);
+      const response = await notesApi.deleteAttachment(note.id, attachment.id);
       if (response.success) loadAttachments();
+      else toast.error(t('notes.attachmentDeleteFailed'));
     } catch (error) {
       logger.error('Failed to delete attachment:', error);
+      toast.error(t('notes.attachmentDeleteFailed'));
     }
   };
 
@@ -270,8 +337,10 @@ export const NoteToolsDrawer: React.FC<NoteToolsDrawerProps> = ({
     try {
       const response = await accessApi.deleteGrant(grantId);
       if (response.success) loadGrants();
+      else toast.error(t('notes.revokeFailed'));
     } catch (error) {
       logger.error('Failed to revoke share:', error);
+      toast.error(t('notes.revokeFailed'));
     }
   };
 
@@ -342,27 +411,29 @@ export const NoteToolsDrawer: React.FC<NoteToolsDrawerProps> = ({
       aria-label={t('notes.tools')}
     >
       <div className='flex items-center gap-1 border-b border-black/[0.06] px-3 py-2 dark:border-white/[0.07]'>
-        {tabs
-          .filter(entry => !entry.hidden)
-          .map(entry => (
-            <button
-              key={entry.id}
-              type='button'
-              role='tab'
-              aria-selected={tab === entry.id}
-              onClick={() => setTab(entry.id)}
-              data-testid={`note-tools-tab-${entry.id}`}
-              className={cn(
-                'flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[12px] transition-colors',
-                tab === entry.id
-                  ? 'bg-black/[0.06] text-gray-900 dark:bg-white/[0.08] dark:text-dark-900'
-                  : 'text-gray-500 hover:text-gray-800 dark:text-dark-500 dark:hover:text-dark-800'
-              )}
-            >
-              {entry.icon}
-              {entry.label}
-            </button>
-          ))}
+        <div role='tablist' className='flex items-center gap-1'>
+          {tabs
+            .filter(entry => !entry.hidden)
+            .map(entry => (
+              <button
+                key={entry.id}
+                type='button'
+                role='tab'
+                aria-selected={tab === entry.id}
+                onClick={() => setTab(entry.id)}
+                data-testid={`note-tools-tab-${entry.id}`}
+                className={cn(
+                  'flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[12px] transition-colors',
+                  tab === entry.id
+                    ? 'bg-black/[0.06] text-gray-900 dark:bg-white/[0.08] dark:text-dark-900'
+                    : 'text-gray-500 hover:text-gray-800 dark:text-dark-500 dark:hover:text-dark-800'
+                )}
+              >
+                {entry.icon}
+                {entry.label}
+              </button>
+            ))}
+        </div>
         <button
           type='button'
           onClick={onClose}
@@ -378,11 +449,13 @@ export const NoteToolsDrawer: React.FC<NoteToolsDrawerProps> = ({
         {tab === 'revisions' && (
           <div className='space-y-2'>
             {revisions === null ? (
-              <Loader2 className='mx-auto h-4 w-4 animate-spin text-gray-400' />
+              renderPending('revisions')
             ) : revisions.length === 0 ? (
-              <p className='text-center text-xs text-gray-400 dark:text-dark-500'>
-                {t('notes.noRevisions')}
-              </p>
+              <EmptyState
+                icon={History}
+                size='sm'
+                title={t('notes.noRevisions')}
+              />
             ) : (
               revisions.map(revision => (
                 <div
@@ -462,11 +535,13 @@ export const NoteToolsDrawer: React.FC<NoteToolsDrawerProps> = ({
               </>
             )}
             {attachments === null ? (
-              <Loader2 className='mx-auto h-4 w-4 animate-spin text-gray-400' />
+              renderPending('attachments')
             ) : attachments.length === 0 ? (
-              <p className='text-center text-xs text-gray-400 dark:text-dark-500'>
-                {t('notes.noAttachments')}
-              </p>
+              <EmptyState
+                icon={Paperclip}
+                size='sm'
+                title={t('notes.noAttachments')}
+              />
             ) : (
               attachments.map(attachment => (
                 <div
@@ -487,17 +562,19 @@ export const NoteToolsDrawer: React.FC<NoteToolsDrawerProps> = ({
                   <button
                     type='button'
                     onClick={() => void handleDownload(attachment)}
-                    className='rounded-md p-1 text-gray-400 hover:text-gray-700 dark:text-dark-500 dark:hover:text-dark-800'
+                    className='rounded-md p-1.5 text-gray-500 hover:text-gray-700 dark:text-dark-500 dark:hover:text-dark-800'
                     title={t('common.download')}
+                    aria-label={`${t('common.download')}: ${attachment.filename}`}
                   >
                     <Download className='h-3.5 w-3.5' />
                   </button>
                   {canWrite && (
                     <button
                       type='button'
-                      onClick={() => void handleDeleteAttachment(attachment.id)}
-                      className='rounded-md p-1 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20'
+                      onClick={() => void handleDeleteAttachment(attachment)}
+                      className='rounded-md p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20'
                       title={t('common.delete')}
+                      aria-label={`${t('common.delete')}: ${attachment.filename}`}
                     >
                       <Trash2 className='h-3.5 w-3.5' />
                     </button>
@@ -519,7 +596,8 @@ export const NoteToolsDrawer: React.FC<NoteToolsDrawerProps> = ({
                   if (event.key === 'Enter') void handleShare();
                 }}
                 placeholder={t('notes.shareUsernamePlaceholder')}
-                className='min-w-0 flex-1 rounded-lg border border-black/[0.08] bg-transparent px-2.5 py-1.5 text-[13px] text-gray-900 placeholder:text-gray-400 focus:border-primary-500/40 focus:outline-none dark:border-white/[0.1] dark:text-dark-900'
+                aria-label={t('notes.shareUsernamePlaceholder')}
+                className='min-w-0 flex-1 rounded-lg border border-black/[0.08] bg-transparent px-2.5 py-1.5 text-[13px] text-gray-900 placeholder:text-gray-400 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 dark:border-white/[0.1] dark:text-dark-900'
                 data-testid='note-share-username'
               />
               <select
@@ -527,7 +605,8 @@ export const NoteToolsDrawer: React.FC<NoteToolsDrawerProps> = ({
                 onChange={event =>
                   setSharePermission(event.target.value as 'read' | 'write')
                 }
-                className='rounded-lg border border-black/[0.08] bg-transparent px-2 py-1.5 text-[12px] text-gray-700 focus:outline-none dark:border-white/[0.1] dark:bg-dark-100 dark:text-dark-800'
+                className='rounded-lg border border-black/[0.08] bg-transparent px-2 py-1.5 text-[12px] text-gray-700 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 dark:border-white/[0.1] dark:bg-dark-100 dark:text-dark-800'
+                aria-label={t('notes.sharePermissionLabel')}
                 data-testid='note-share-permission'
               >
                 <option value='read'>{t('notes.permissionRead')}</option>
@@ -547,11 +626,13 @@ export const NoteToolsDrawer: React.FC<NoteToolsDrawerProps> = ({
               </Button>
             </div>
             {grants === null ? (
-              <Loader2 className='mx-auto h-4 w-4 animate-spin text-gray-400' />
+              renderPending('share')
             ) : grants.length === 0 ? (
-              <p className='text-center text-xs text-gray-400 dark:text-dark-500'>
-                {t('notes.notShared')}
-              </p>
+              <EmptyState
+                icon={Share2}
+                size='sm'
+                title={t('notes.notShared')}
+              />
             ) : (
               grants.map(grant => (
                 <div
@@ -569,8 +650,9 @@ export const NoteToolsDrawer: React.FC<NoteToolsDrawerProps> = ({
                   <button
                     type='button'
                     onClick={() => void handleRevoke(grant.id)}
-                    className='rounded-md p-1 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20'
+                    className='rounded-md p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20'
                     title={t('notes.revokeShare')}
+                    aria-label={t('notes.revokeShare')}
                   >
                     <X className='h-3.5 w-3.5' />
                   </button>
@@ -590,7 +672,8 @@ export const NoteToolsDrawer: React.FC<NoteToolsDrawerProps> = ({
               onChange={event => setInstruction(event.target.value)}
               placeholder={t('notes.assistPlaceholder')}
               rows={3}
-              className='w-full resize-none rounded-lg border border-black/[0.08] bg-transparent px-2.5 py-2 text-[13px] text-gray-900 placeholder:text-gray-400 focus:border-primary-500/40 focus:outline-none dark:border-white/[0.1] dark:text-dark-900'
+              className='w-full resize-none rounded-lg border border-black/[0.08] bg-transparent px-2.5 py-2 text-[13px] text-gray-900 placeholder:text-gray-400 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 dark:border-white/[0.1] dark:text-dark-900'
+              aria-label={t('notes.assistPlaceholder')}
               data-testid='note-assist-instruction'
             />
             <Button

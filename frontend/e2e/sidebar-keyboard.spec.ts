@@ -172,7 +172,7 @@ test('folder actions remain visible when navigating with the keyboard', async ({
   await page.getByTestId('sidebar-search-button').focus();
   await tabTo(page, folder);
   await page.keyboard.press('Tab');
-  const rename = sidebar.getByRole('button', { name: 'Rename chat' });
+  const rename = sidebar.getByRole('button', { name: 'Rename folder' });
   await expect(rename).toBeFocused();
   await expect(rename.locator('..')).toHaveCSS('opacity', '1');
   await page.keyboard.press('Tab');

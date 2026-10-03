@@ -45,6 +45,7 @@ import { SidebarWorkTasks } from '@/components/sidebar/SidebarWorkTasks';
 import { isDefaultSessionTitle } from '@/hooks/useChat';
 import { usePendingUserApprovals } from '@/hooks/usePendingUserApprovals';
 import { useAutomationRunNotifications } from '@/hooks/useAutomationRunNotifications';
+import { noteExplicitLogout } from '@/utils/postLoginPath';
 
 const logger = createLogger('components:sidebar');
 const SettingsModal = React.lazy(() =>
@@ -125,7 +126,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const [avatarValue, setAvatarValue] = useState('');
   const [isSavingAvatar, setIsSavingAvatar] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
-  const sidebarRef = useRef<HTMLDivElement>(null);
+  const sidebarRef = useRef<HTMLElement>(null);
 
   const currentSessionIdFromUrl =
     location.pathname.match(/^\/c\/([^/]+)$/)?.[1] || null;
@@ -181,10 +182,25 @@ export const Sidebar: React.FC<SidebarProps> = ({
       }
     };
 
+    // The expanded sidebar is a modal-style overlay below 768px, so Escape
+    // collapses it back to the rail.
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape' || event.defaultPrevented) return;
+      // Dialogs opened from the sidebar register their Escape later; let
+      // them close first instead of collapsing the list behind them.
+      if (document.querySelector('[role="dialog"][aria-modal="true"]')) {
+        return;
+      }
+      toggleSidebarCompact();
+    };
+
     if (isOpen && !sidebarCompact && window.innerWidth < 768) {
       document.addEventListener('mousedown', handleClickOutside);
-      return () =>
+      document.addEventListener('keydown', handleEscape);
+      return () => {
         document.removeEventListener('mousedown', handleClickOutside);
+        document.removeEventListener('keydown', handleEscape);
+      };
     }
   }, [isOpen, sidebarCompact, toggleSidebarCompact]);
 
@@ -285,6 +301,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
         const isCurrentSession = currentSessionId === sessionId;
 
         await deleteSession(sessionId);
+        // The store reports its own failure and resolves, so a surviving
+        // session means nothing was deleted: stay put.
+        if (useChatStore.getState().sessions.some(s => s.id === sessionId)) {
+          return;
+        }
         logger.debug('Session deleted successfully');
         useTabStore.getState().closeTab(`chat:${sessionId}`);
 
@@ -298,6 +319,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         }
       } catch (_error) {
         logger.error('Error deleting session:', _error);
+        toast.error(t('chat.toasts.deleteFailed'));
       }
     }
   };
@@ -311,17 +333,30 @@ export const Sidebar: React.FC<SidebarProps> = ({
     e: React.MouseEvent
   ) => {
     e.stopPropagation();
-    await setSessionArchived(sessionId, true);
-    useTabStore.getState().closeTab(`chat:${sessionId}`);
-    if (currentSessionId === sessionId) {
-      const remainingSessions = sessions.filter(
-        s => s.id !== sessionId && !s.archived
-      );
-      if (remainingSessions.length > 0) {
-        navigate(`/c/${remainingSessions[0].id}`, { replace: true });
-      } else {
-        navigate('/', { replace: true });
+    try {
+      await setSessionArchived(sessionId, true);
+      // The store rolls back and resolves on failure instead of throwing.
+      const archived = useChatStore
+        .getState()
+        .sessions.find(s => s.id === sessionId)?.archived;
+      if (!archived) {
+        toast.error(t('chat.toasts.archiveFailed'));
+        return;
       }
+      useTabStore.getState().closeTab(`chat:${sessionId}`);
+      if (currentSessionId === sessionId) {
+        const remainingSessions = sessions.filter(
+          s => s.id !== sessionId && !s.archived
+        );
+        if (remainingSessions.length > 0) {
+          navigate(`/c/${remainingSessions[0].id}`, { replace: true });
+        } else {
+          navigate('/', { replace: true });
+        }
+      }
+    } catch (error) {
+      logger.error('Error archiving session:', error);
+      toast.error(t('chat.toasts.archiveFailed'));
     }
   };
 
@@ -349,6 +384,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   };
 
   const handleLogout = async () => {
+    noteExplicitLogout();
     try {
       await authApi.logout();
       const { logout } = useAuthStore.getState();
@@ -386,8 +422,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   return (
     <>
-      <div
+      <aside
         ref={sidebarRef}
+        aria-label={t('sidebar.ariaLabel')}
+        // Off-screen is not hidden: keep the collapsed sidebar out of the
+        // tab order and accessibility tree.
+        inert={!isOpen}
         data-testid='sidebar'
         data-app-sidebar=''
         className={cn(
@@ -516,7 +556,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             />
           </div>
         </div>
-      </div>
+      </aside>
 
       {settingsOpen && (
         <React.Suspense fallback={null}>

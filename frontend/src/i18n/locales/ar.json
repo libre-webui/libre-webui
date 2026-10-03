@@ -41,7 +41,8 @@
     "remove": "إزالة",
     "home": "الرئيسية",
     "more": "أكثر",
-    "reasoning": "المنطق"
+    "reasoning": "المنطق",
+    "skipToContent": "انتقل إلى المحتوى"
   },
   "brand": {
     "name": "Libre WebUI",
@@ -49,7 +50,10 @@
   },
   "appInitialization": {
     "ollamaUnavailable": "خدمة Ollama غير متاحة. لا يزال من الممكن استخدام نماذج الإضافات.",
-    "backendConnectionFailed": "تعذّر الاتصال بخدمة الواجهة الخلفية"
+    "backendConnectionFailed": "تعذّر الاتصال بخدمة الواجهة الخلفية",
+    "connecting": "جارٍ الاتصال بالخادم الخلفي… ({{attempt}}/{{total}})",
+    "startingUp": "جارٍ التشغيل…",
+    "backendUnreachableHint": "تأكد من أن الخادم الخلفي يعمل ثم حاول مرة أخرى."
   },
   "auth": {
     "login": {
@@ -189,7 +193,15 @@
       "removed": "تمت إزالة مفتاح المرور.",
       "removeFailed": "تعذّرت إزالة مفتاح المرور.",
       "signInButton": "تسجيل الدخول بمفتاح مرور",
-      "signInFailed": "فشل تسجيل الدخول بمفتاح المرور."
+      "signInFailed": "فشل تسجيل الدخول بمفتاح المرور.",
+      "removeConfirmTitle": "إزالة مفتاح المرور هذا؟",
+      "removeConfirmDescription": "لن يعمل «{{name}}» لتسجيل الدخول بعد الآن. يمكنك تسجيله مرة أخرى لاحقًا."
+    },
+    "password": {
+      "show": "إظهار كلمة المرور",
+      "hide": "إخفاء كلمة المرور",
+      "showConfirmation": "إظهار تأكيد كلمة المرور",
+      "hideConfirmation": "إخفاء تأكيد كلمة المرور"
     }
   },
   "setup": {
@@ -242,7 +254,8 @@
       "envNote": "هذا المفتاح محفوظ أيضاً في ملف backend/.env كـ ENCRYPTION_KEY",
       "acknowledgment": "لقد حفظت مفتاح التشفير في مكان آمن وأفهم أن فقدانه قد يؤدي إلى فقدان البيانات.",
       "confirmRequired": "يرجى التأكيد على أنك حفظت مفتاح التشفير",
-      "continue": "المتابعة إلى Libre WebUI"
+      "continue": "المتابعة إلى Libre WebUI",
+      "loadFailed": "تعذّر تحميل مفتاح التشفير. أعد المحاولة للمتابعة."
     },
     "connectModels": {
       "title": "قم بتوصيل نماذجك",
@@ -336,7 +349,8 @@
       "toolsOn": "الأدوات مفعّلة — يمكن للنموذج استدعاء الأدوات المعتمدة",
       "toolsOff": "اسمح للنموذج باستدعاء الأدوات في هذه الرسالة",
       "thinkingOn": "التفكير مفعّل ({{level}})",
-      "thinkingOff": "فكّر قبل الإجابة"
+      "thinkingOff": "فكّر قبل الإجابة",
+      "thinkingUpdateFailed": "تعذّر تحديث إعداد التفكير"
     },
     "session": {
       "new": "محادثة جديدة",
@@ -372,7 +386,8 @@
         "move": "نقل إلى مجلد",
         "remove": "إزالة من المجلد",
         "delete": "حذف المجلد",
-        "deleteConfirm": "حذف هذا المجلد؟ ستبقى المحادثات بداخله."
+        "deleteConfirm": "حذف هذا المجلد؟ ستبقى المحادثات بداخله.",
+        "rename": "إعادة تسمية المجلد"
       },
       "shareChat": "مشاركة المحادثة…"
     },
@@ -405,7 +420,13 @@
       "browse": "تصفح",
       "unsupportedFileType": "نوع الملف غير مدعوم: {{name}}",
       "maxImagesAllowed": "الحد الأقصى المسموح به هو {{count}} صور",
-      "imageTooLarge": "الصورة {{name}} كبيرة جداً (الحد الأقصى 10 ميغابايت)"
+      "imageTooLarge": "الصورة {{name}} كبيرة جداً (الحد الأقصى 10 ميغابايت)",
+      "readFailed": "تعذّرت قراءة {{name}}",
+      "uploadAlt": "الرفع {{number}}",
+      "removeImage": "إزالة الصورة {{number}}",
+      "addMore": "إضافة المزيد من الصور ({{count}}/{{max}})",
+      "uploading": "جارٍ الرفع",
+      "removeDocument": "إزالة {{name}}"
     },
     "structuredOutput": {
       "title": "تنسيق الاستجابة",
@@ -456,7 +477,8 @@
       "compactionOff": "معطّل لهذه المحادثة"
     },
     "message": {
-      "sources": "المصادر"
+      "sources": "المصادر",
+      "copyFailed": "تعذّر النسخ إلى الحافظة"
     },
     "toasts": {
       "chatCreated": "تم إنشاء محادثة جديدة",
@@ -491,7 +513,8 @@
       "branchSwitched": "تم التبديل إلى البديل {{number}}",
       "branchSelectFailed": "تعذّر تحديد الفرع",
       "editFailed": "تعذّر تعديل الرسالة",
-      "toolDecisionFailed": "تعذّر تسجيل قرار الأداة"
+      "toolDecisionFailed": "تعذّر تسجيل قرار الأداة",
+      "archiveFailed": "تعذّرت أرشفة هذه المحادثة"
     },
     "documents": {
       "title": "مستندات في السياق"
@@ -521,7 +544,25 @@
       "origin": "تفريع من {{title}}",
       "originUnknown": "محادثة أخرى"
     },
-    "sharedReadOnly": "مشاركة من {{owner}} — عرض فقط"
+    "sharedReadOnly": "مشاركة من {{owner}} — عرض فقط",
+    "branch": {
+      "variants": "{{count}} نسخة",
+      "variants_plural": "{{count}} نسخ",
+      "selectVariant": "اختيار النسخة {{number}}",
+      "generating": "جارٍ الإنشاء...",
+      "select": "اختيار"
+    },
+    "sources": {
+      "fullContextFailed": "تعذّر تحديث إعداد المستند الكامل",
+      "usedByRetrieval": "مستخدم في الردود",
+      "triggerLabel": "المصادر ({{count}})"
+    },
+    "announce": {
+      "replyFinished": "{{name}} ردّ: {{text}}",
+      "replyFinishedNoText": "أنهى {{name}} الرد.",
+      "codeBlock": "كتلة شيفرة",
+      "generationStopped": "تم إيقاف التوليد"
+    }
   },
   "sidebar": {
     "navigation": {
@@ -546,7 +587,8 @@
       "strands": "Strands"
     },
     "toggleSize": "تبديل حجم الشريط الجانبي",
-    "expandSidebar": "توسيع الشريط الجانبي"
+    "expandSidebar": "توسيع الشريط الجانبي",
+    "ariaLabel": "الشريط الجانبي"
   },
   "user": {
     "menu": {
@@ -821,7 +863,8 @@
         "removeFailed": "فشل إزالة مفتاح API",
         "enterKey": "يرجى إدخال مفتاح API"
       },
-      "variables": "Variables"
+      "variables": "Variables",
+      "dismissError": "تجاهل الخطأ"
     },
     "generation": {
       "title": "خيارات التوليد",
@@ -924,7 +967,8 @@
         "deleteFailed": "فشل حذف المجموعة",
         "assignFailed": "فشل نقل المستند",
         "share": "مشاركة المجموعة",
-        "shared": "مشتركة"
+        "shared": "مشتركة",
+        "assignTo": "المجموعة الخاصة بـ {{name}}"
       },
       "library": {
         "title": "المستندات المرفوعة",
@@ -1066,7 +1110,8 @@
         "title": "المحادثات المؤرشفة",
         "empty": "لا توجد محادثات مؤرشفة",
         "unarchive": "إلغاء الأرشفة"
-      }
+      },
+      "clearAllConfirm": "هل تريد حذف سجل المحادثات بالكامل؟ لا يمكن التراجع عن هذا الإجراء."
     },
     "about": {
       "title": "حول",
@@ -1186,7 +1231,11 @@
       "unknownDevice": "جهاز غير معروف",
       "createdAt": "تاريخ تسجيل الدخول",
       "lastSeenAt": "آخر نشاط",
-      "expiresAt": "تنتهي في"
+      "expiresAt": "تنتهي في",
+      "signOutConfirmTitle": "تسجيل الخروج من هذه الجلسة؟",
+      "signOutConfirmDescription": "سيتم تسجيل خروج {{device}} فورًا وسيحتاج إلى تسجيل الدخول مرة أخرى.",
+      "signOutOthersConfirmTitle": "تسجيل الخروج من الجلسات الأخرى؟",
+      "signOutOthersConfirmDescription": "سيتم تسجيل الخروج من {{count}} جلسات أخرى فورًا. ستبقى هذه الجلسة مسجّلة."
     },
     "apiKeys": {
       "title": "مفاتيح API",
@@ -1220,7 +1269,9 @@
       "createdAt": "تاريخ الإنشاء",
       "lastUsedAt": "آخر استخدام",
       "expiresAt": "تنتهي في",
-      "neverExpires": "أبدًا"
+      "neverExpires": "أبدًا",
+      "revokeConfirmTitle": "إلغاء «{{name}}»؟",
+      "revokeConfirmDescription": "سيتوقف فورًا كل ما يستخدم مفتاح API هذا. لا يمكن التراجع عن ذلك."
     },
     "notifications": {
       "title": "الإشعارات",
@@ -1294,7 +1345,8 @@
     "model": "النموذج",
     "size": "الحجم",
     "quality": "الجودة",
-    "created": "تم الإنشاء"
+    "created": "تم الإنشاء",
+    "lightboxLabel": "معاينة الصورة"
   },
   "errors": {
     "generic": "حدث خطأ",
@@ -1389,7 +1441,9 @@
       "hide": "إخفاؤه عن المستخدمين",
       "show": "إظهاره للمستخدمين",
       "star": "تمييز {{name}} بنجمة",
-      "unstar": "إزالة النجمة من {{name}}"
+      "unstar": "إزالة النجمة من {{name}}",
+      "filterLabel": "تصفية النماذج",
+      "displayName": "الاسم المعروض لـ {{name}}"
     },
     "pull": {
       "placeholder": "أدخل اسم النموذج (مثل llama3.2:3b، deepseek-r1:14b)",
@@ -1550,7 +1604,10 @@
     "deleteConfirm": "هل أنت متأكد من حذف \"{{name}}\"؟",
     "deleteSuccess": "تم حذف الشخصية \"{{name}}\" بنجاح",
     "downloadSuccess": "تم تحميل الشخصية \"{{name}}\" بنجاح",
-    "failed": "فشل {{action}} الشخصية"
+    "failed": "فشل {{action}} الشخصية",
+    "loadFailed": "تعذّر تحميل شخصياتك.",
+    "deleteFailed": "تعذّر حذف الشخصية",
+    "downloadFailed": "تعذّر تنزيل الشخصية"
   },
   "personaForm": {
     "title": {
@@ -1682,7 +1739,8 @@
       "promptHint": "موجه يبدأ به كل محادثة جديدة مع هذه الشخصية.",
       "noPrompt": "بلا موجه",
       "version": "مراجعة الارتباطات {{version}}"
-    }
+    },
+    "sections": "أقسام الشخصية"
   },
   "personaCard": {
     "enhanced": "محسّن",
@@ -1699,7 +1757,16 @@
     "backupSuccess": "تم تحميل نسخة الشخصية الاحتياطية بنجاح",
     "dnaSuccess": "تم تصدير DNA الشخصية بنجاح",
     "failed": "فشل {{action}}",
-    "shareTooltip": "مشاركة هذه الشخصية"
+    "shareTooltip": "مشاركة هذه الشخصية",
+    "wipeFailed": "تعذّر مسح الذكريات",
+    "backupFailed": "تعذّر نسخ الشخصية احتياطيًا",
+    "exportDnaFailed": "تعذّر تصدير الحمض النووي للشخصية",
+    "favorite": "مفضلة",
+    "memoryStatus": {
+      "active": "نشطة",
+      "wiped": "ممسوحة",
+      "backed_up": "لها نسخة احتياطية"
+    }
   },
   "userManager": {
     "title": "إدارة المستخدمين",
@@ -1865,7 +1932,28 @@
       "memberOf": "المجموعات",
       "featuresLabel": "الوصول إلى الميزات",
       "grantsLabel": "الصلاحيات الممنوحة",
-      "grantVia": "عبر"
+      "grantVia": "عبر",
+      "deleteConfirmTitle": "حذف المجموعة «{{name}}»؟",
+      "deleteConfirmDescription": "يفقد الأعضاء أي وصول كان عبر هذه المجموعة فقط. لا يتم حذف الحسابات نفسها.",
+      "statuses": {
+        "active": "نشطة",
+        "pending": "بانتظار الموافقة"
+      },
+      "features": {
+        "work": "العمل",
+        "model-download": "تنزيل النماذج",
+        "web-search": "البحث في الويب",
+        "strands": "محرك Strands",
+        "tools": "الأدوات",
+        "stt": "تحويل الكلام إلى نص",
+        "tts": "تحويل النص إلى كلام",
+        "voice-mode": "الوضع الصوتي",
+        "voice-cloning": "استنساخ الصوت"
+      },
+      "grantViaKinds": {
+        "user": "منح مباشر",
+        "group": "مجموعة"
+      }
     },
     "audit": {
       "title": "سجل التدقيق الأمني",
@@ -2298,7 +2386,11 @@
       "harmful": "ضار",
       "formatting": "التنسيق"
     },
-    "feedbackComment": "أضف تعليقًا…"
+    "feedbackComment": "أضف تعليقًا…",
+    "user": "المستخدم",
+    "feedbackFailed": "تعذّر حفظ ملاحظاتك",
+    "openImage": "فتح الصورة {{number}}",
+    "uploadedImageAlt": "الصورة المرفوعة {{number}}"
   },
   "imageGallery": {
     "title": "معرض الصور",
@@ -2387,7 +2479,10 @@
       "image": "الصور",
       "video": "مقاطع الفيديو",
       "audio": "الصوت"
-    }
+    },
+    "deleteConfirmTitle": "حذف هذا العنصر؟",
+    "deleteConfirmDescription": "سيتم حذف الوسائط المُنشأة نهائيًا.",
+    "previewFailed": "المعاينة غير متاحة"
   },
   "errorBoundary": {
     "title": "حدث خطأ ما",
@@ -2463,7 +2558,8 @@
     "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source.",
     "versionOf": "الإصدار {{current}} من {{total}}",
     "previousVersion": "الإصدار السابق",
-    "nextVersion": "الإصدار التالي"
+    "nextVersion": "الإصدار التالي",
+    "resizePanel": "تغيير حجم اللوحة"
   },
   "personaImportExport": {
     "title": "استيراد وتصدير الشخصيات",
@@ -2501,7 +2597,10 @@
     "generation": "التوليد:",
     "modelLoad": "تحميل النموذج:",
     "totalTime": "الوقت الإجمالي:",
-    "generatedAt": "تم التوليد في:"
+    "generatedAt": "تم التوليد في:",
+    "notAvailable": "غير متاح",
+    "tokenCount": "{{tokens}} رمز",
+    "tokensPerSecond": "{{value}} رمز/ث"
   },
   "userMenu": {
     "loggedOut": "تم تسجيل الخروج بنجاح",
@@ -2560,7 +2659,9 @@
       "httpWarning": "لا يقوم HTTP بتشفير بيانات الاعتماد أو حركة المرور. استخدمه فقط على شبكة موثوقة.",
       "invalidBaseUrl": "لا يمكن أن تحتوي عناوين URL الأساسية على سلسلة استعلام أو جزء.",
       "invalidApiPath": "يجب أن يبدأ بـ / وألا يحتوي على URL أو استعلام أو جزء أو مقطع ..",
-      "tooLong": "القيمة طويلة جدًا"
+      "tooLong": "القيمة طويلة جدًا",
+      "resetConfirmTitle": "إعادة التعيين إلى الإعدادات الافتراضية؟",
+      "resetConfirmDescription": "سيؤدي هذا إلى مسح كل القيم المخزّنة لـ {{name}}، بما في ذلك مفاتيح API وبيانات الاعتماد الأخرى. لا يمكن التراجع عن ذلك."
     }
   },
   "huggingface": {
@@ -2580,7 +2681,10 @@
   },
   "demoMode": {
     "title": "وضع تجريبي",
-    "github": "GitHub"
+    "github": "GitHub",
+    "defaultMessage": "هذه نسخة تجريبية لأغراض العرض فقط. خادم Ollama الخلفي غير متصل.",
+    "viewOnGithub": "عرض على GitHub",
+    "dismiss": "تجاهل"
   },
   "work": {
     "title": "العمل",
@@ -2671,8 +2775,18 @@
         "checksPending": "فحوصات معلقة",
         "stallNudges": "تنبيهات التوقف",
         "ambiguityNudges": "تنبيهات إعادة التثبيت",
-        "stoppedBy": "توقف بسبب"
-      }
+        "stoppedBy": "توقف بسبب",
+        "reasons": {
+          "round": "حد الجولات",
+          "toolCall": "حد استدعاءات الأدوات",
+          "approvalTimeout": "انتهت مهلة الموافقة",
+          "computerStall": "توقف الكمبيوتر عن الاستجابة"
+        }
+      },
+      "skillTraceSavedWorked": "تم التدوين: نجحت",
+      "skillTraceSavedFailed": "تم التدوين: فشلت",
+      "connectionClosed": "أُغلق اتصال العمل المباشر.",
+      "reconnectingBackground": "تتم إعادة الاتصال بالتحديثات المباشرة في الخلفية."
     },
     "runtime": {
       "unavailable": "بيئة التشغيل غير متاحة",
@@ -2715,7 +2829,11 @@
       "changes": "التغييرات",
       "changesSince": "ما تغيّر منذ الدور الأخير",
       "diffLabel": "التغييرات منذ الدور الأخير: {{path}}",
-      "diffFolded": "{{count}} سطرًا دون تغيير"
+      "diffFolded": "{{count}} سطرًا دون تغيير",
+      "diffAdded": "مضاف",
+      "diffRemoved": "محذوف",
+      "unsavedChanges": "تغييرات غير محفوظة",
+      "editingLocked": "يُتاح التعديل عند انتهاء الدور."
     },
     "activity": {
       "empty": "ستظهر الأوامر وعمليات الملفات ونتائج الأدوات هنا.",
@@ -2726,7 +2844,9 @@
         "toolCall": "استدعاء أداة",
         "toolResult": "نتيجة أداة",
         "error": "خطأ"
-      }
+      },
+      "arguments": "وسائط الأداة",
+      "output": "مخرجات الأداة"
     },
     "preview": {
       "command": "أمر تشغيل اختياري",
@@ -2755,7 +2875,8 @@
       "saveFailed": "تعذّر حفظ هذا الملف.",
       "saved": "تم حفظ الملف.",
       "previewFailed": "تعذّر بدء المعاينة.",
-      "previewStopFailed": "تعذّر إيقاف المعاينة."
+      "previewStopFailed": "تعذّر إيقاف المعاينة.",
+      "sendFailed": "تعذّر إرسال الرسالة."
     },
     "terminal": {
       "connecting": "جارٍ فتح صدفة داخل بيئة العزل…",
@@ -2807,7 +2928,18 @@
       "noFilterMatches": "لا توجد ملفات متغيّرة تطابق هذا الفلتر.",
       "allChanges": "كل التغييرات",
       "diffTruncated": "هذا الفرق مقتطع.",
-      "binaryFile": "ملف ثنائي، لا يوجد فرق نصي."
+      "binaryFile": "ملف ثنائي، لا يوجد فرق نصي.",
+      "statusLabels": {
+        "modified": "تم التعديل",
+        "added": "تمت الإضافة",
+        "deleted": "تم الحذف",
+        "renamed": "تمت إعادة التسمية",
+        "copied": "تم النسخ",
+        "typeChanged": "تغيّر النوع",
+        "untracked": "غير متتبَّع"
+      },
+      "stagedState": "مُجهَّز",
+      "aheadBehind": "{{ahead}} متقدم، {{behind}} متأخر"
     },
     "hostWorkspace": {
       "hint": "اتركه فارغًا لمساحة عمل معزولة، أو وجّه المهمة إلى مجلد على هذا الجهاز.",
@@ -2834,7 +2966,8 @@
       "unmute": "تشغيل الصوت",
       "mute": "كتم الصوت",
       "finished": "انتهت هذه المهمة. أعد فتحها لإرجاع شاشتها.",
-      "reopenOpen": "إعادة فتح المهمة وفتح الشاشة"
+      "reopenOpen": "إعادة فتح المهمة وفتح الشاشة",
+      "teachSaveFailed": "تعذّر حفظ هذا الشرح العملي."
     },
     "computerSetup": {
       "title": "Work Computer",
@@ -2871,7 +3004,11 @@
       "approvalsToggleFailed": "تعذّر تحديث إعدادات الموافقة.",
       "approvalRuleLine": "مسموح دائمًا",
       "approvalRuleDelete": "إزالة القاعدة",
-      "approvalRuleDeleteFailed": "تعذّرت إزالة القاعدة."
+      "approvalRuleDeleteFailed": "تعذّرت إزالة القاعدة.",
+      "routinesLoadFailed": "تعذّر تحميل الروتينات.",
+      "skillsLoadFailed": "تعذّر تحميل المهارات المعلَّمة.",
+      "approvalsLoadFailed": "تعذّر تحميل إعدادات الموافقة.",
+      "routinePaused": "متوقف مؤقتًا"
     },
     "runs": {
       "title": "عمليات التشغيل",
@@ -2882,7 +3019,8 @@
         "needsInput": "بحاجة إلى إدخال",
         "failed": "فشل",
         "cancelled": "أُلغي"
-      }
+      },
+      "loadFailed": "تعذّر تحميل سجل التشغيل."
     },
     "approval": {
       "title": "الموافقة مطلوبة",
@@ -2890,7 +3028,16 @@
       "allowOnce": "السماح مرة واحدة",
       "allowAlways": "السماح دائمًا",
       "deny": "رفض",
-      "failed": "تعذّر إرسال القرار."
+      "failed": "تعذّر إرسال القرار.",
+      "details": "تفاصيل الإجراء",
+      "fields": {
+        "command": "الأمر",
+        "path": "المسار",
+        "from": "من",
+        "to": "إلى",
+        "actions": "الإجراءات",
+        "recursive": "تكراري"
+      }
     },
     "idleStopHint": "يتوقف بعد {{minutes}} دقيقة من دون نشاط.",
     "recovery": {
@@ -2903,6 +3050,17 @@
       "retrySucceeded": "تم مسح {{cleared}} من أصل {{attempted}} من عمليات التنظيف المعلقة.",
       "retryPending": "ما زالت إعادة المحاولة جارية لـ {{attempted}} من عمليات التنظيف المعلقة.",
       "retryFailed": "تعذّرت إعادة محاولة عمليات التنظيف المعلقة."
+    },
+    "computer": {
+      "setupFailed": "تعذّر إعداد Work Computer."
+    },
+    "announce": {
+      "completed": "انتهت المهمة {{title}}.",
+      "needsInput": "{{title}} تحتاج إلى إدخالك أو موافقتك.",
+      "failed": "فشلت المهمة {{title}}.",
+      "cancelled": "تم إيقاف {{title}}.",
+      "approvalNeeded": "{{title}} تحتاج إلى موافقتك لتشغيل {{tool}}.",
+      "untitledTask": "هذه المهمة"
     }
   },
   "personaBackground": {
@@ -2947,7 +3105,8 @@
     "showAll": "عرض الكل ({{total}})",
     "sources": "مصادر النماذج",
     "defaultModel": "النموذج الافتراضي",
-    "contextSize": "سياق {{size}}"
+    "contextSize": "سياق {{size}}",
+    "via": "عبر {{provider}}"
   },
   "whatsNew": {
     "title": "ما الجديد",
@@ -3004,7 +3163,16 @@
     "unpin": "إلغاء تثبيت الملاحظة",
     "pinned": "مثبّتة",
     "export": "تنزيل كـ Markdown",
-    "sharedWithYou": "مشتركة معك"
+    "sharedWithYou": "مشتركة معك",
+    "titleLabel": "عنوان الملاحظة",
+    "loadFailed": "تعذّر التحميل. حاول مرة أخرى.",
+    "restoreConfirmTitle": "استعادة هذه النسخة؟",
+    "restoreConfirmDescription": "سيُستبدل نص الملاحظة بهذه النسخة الأقدم.",
+    "deleteAttachmentConfirmTitle": "حذف {{name}}؟",
+    "deleteAttachmentConfirmDescription": "سيتم حذف المرفق نهائيًا من هذه الملاحظة.",
+    "attachmentDeleteFailed": "تعذّر حذف المرفق",
+    "revokeFailed": "تعذّر إلغاء الوصول",
+    "sharePermissionLabel": "الإذن"
   },
   "calendar": {
     "title": "التقويم",
@@ -3049,7 +3217,22 @@
     "importFailed": "تعذر استيراد الملف",
     "importResult": "تم استيراد {{total}} أحداث",
     "importIcs": "استيراد",
-    "exportIcs": "تصدير"
+    "exportIcs": "تصدير",
+    "chipStatus": {
+      "automation": "أتمتة مجدولة",
+      "runSucceeded": "نجح تشغيل الأتمتة",
+      "runFailed": "فشل تشغيل الأتمتة"
+    },
+    "newEventOn": "حدث جديد في {{date}}",
+    "showDay": "عرض كل الأحداث في {{date}}",
+    "deleteEventConfirmTitle": "حذف «{{title}}»؟",
+    "deleteEventConfirmDescription": "سيتم حذف هذا الحدث نهائيًا.",
+    "deleteRecurringEventConfirmDescription": "سيتم حذف هذا الحدث المتكرر وجميع تكراراته نهائيًا.",
+    "shareCalendarNamed": "مشاركة التقويم {{name}}",
+    "deleteCalendarNamed": "حذف التقويم {{name}}",
+    "deleteCalendarConfirmTitle": "حذف التقويم «{{name}}»؟",
+    "deleteCalendarConfirmDescription": "سيتم حذف التقويم والأحداث التي فيه نهائيًا.",
+    "calendarDeleteFailed": "تعذّر حذف التقويم"
   },
   "automations": {
     "title": "الأتمتة",
@@ -3176,13 +3359,17 @@
         "work-approval": "ينتظر وكيل موافقتك",
         "system": "يصل إشعار نظام"
       }
-    }
+    },
+    "deleteConfirmTitle": "حذف «{{name}}»؟",
+    "deleteConfirmDescription": "ستُحذف الأتمتة وجدولها نهائيًا. تبقى عمليات التشغيل السابقة في سجل التشغيل."
   },
   "home": {
     "active": "نشط",
     "continue": "متابعة",
     "start": "ابدأ",
-    "explore": "استكشاف"
+    "explore": "استكشاف",
+    "greeting": "{{greeting}}.",
+    "greetingWithName": "{{greeting}}، {{name}}."
   },
   "palette": {
     "empty": "لا توجد نتائج.",
@@ -3195,7 +3382,14 @@
     "work": "العمل",
     "messages": "الرسائل",
     "notes": "الملاحظات",
-    "documents": "المستندات"
+    "documents": "المستندات",
+    "searching": "جارٍ البحث…",
+    "searchFailed": "فشل البحث في مساحة العمل. يتم عرض المحادثات والإجراءات المطابقة فقط.",
+    "results": "النتائج",
+    "escKey": "Esc",
+    "hintNavigate": "تنقّل",
+    "hintOpen": "فتح",
+    "hintClose": "إغلاق"
   },
   "tabs": {
     "actions": "إجراءات التبويب",
@@ -3399,7 +3593,8 @@
       "button": "من مجلد",
       "missingSkillMd": "يجب أن يحتوي المجلد على ملف SKILL.md",
       "done": "تم استيراد المهارة مع {{count}} من الملفات المرفقة"
-    }
+    },
+    "toggleLabel": "تفعيل المهارة {{name}}"
   },
   "toolsPage": {
     "title": "الأدوات",
@@ -3557,7 +3752,14 @@
     "added": "تمت المشاركة مع {{name}}",
     "failed": "فشلت المشاركة",
     "userNotFound": "لا يوجد مستخدم بهذا الاسم",
-    "groupNotFound": "لا توجد مجموعة بهذا الاسم"
+    "groupNotFound": "لا توجد مجموعة بهذا الاسم",
+    "principalKind": "مشاركة مع مستخدم أو مجموعة",
+    "principalName": "اسم المستخدم أو اسم المجموعة",
+    "permission": "الإذن",
+    "sharing": "المشاركة",
+    "loading": "جارٍ تحميل المشاركات",
+    "loadFailed": "تعذّر تحميل المشاركات",
+    "revokeFailed": "تعذّر إلغاء الوصول"
   },
   "channels": {
     "title": "القنوات",
@@ -3616,13 +3818,44 @@
     "toolCalls": {
       "summary": "الأدوات المستخدمة ({{total}})",
       "deniedHint": "تُرفض الأدوات التي تغيّر البيانات في القنوات. شغّلها من محادثة."
-    }
+    },
+    "confirmEdit": "حفظ التعديل",
+    "cancelEdit": "إلغاء التعديل",
+    "reactWith": "التفاعل بـ {{emoji}}",
+    "deleteMessageConfirmTitle": "حذف هذه الرسالة؟",
+    "deleteMessageConfirmDescription": "ستتم إزالة الرسالة للجميع في هذه القناة.",
+    "unreadCount": "{{total}} غير مقروءة",
+    "send": "إرسال الرسالة",
+    "invite": "دعوة عضو",
+    "closeThread": "إغلاق السلسلة",
+    "removeAttachment": "إزالة المرفق",
+    "loadFailed": "تعذّر التحميل. حاول مرة أخرى.",
+    "editFailed": "تعذّر تعديل الرسالة",
+    "deleteMessageFailed": "تعذّر حذف الرسالة",
+    "pinFailed": "تعذّر تغيير التثبيت",
+    "reactFailed": "تعذّر حفظ التفاعل",
+    "downloadFailed": "تعذّر تنزيل الملف",
+    "removeMemberConfirm": "إزالة {{name}} من هذه القناة؟",
+    "removeMemberConfirmDescription": "سيفقد وصوله إلى القناة ورسائلها.",
+    "removeMemberNamed": "إزالة {{name}} من القناة",
+    "removeMemberFailed": "تعذّرت إزالة العضو",
+    "leaveConfirm": "مغادرة {{name}}؟",
+    "leaveConfirmDescription": "ستحتاج إلى دعوة جديدة للانضمام إلى قناة خاصة مرة أخرى.",
+    "leaveFailed": "تعذّرت مغادرة القناة",
+    "joinFailed": "تعذّر الانضمام إلى القناة",
+    "deleteConfirm": "حذف {{name}}؟",
+    "deleteConfirmDescription": "سيتم حذف القناة وجميع رسائلها نهائيًا لدى كل الأعضاء.",
+    "deleteFailed": "تعذّر حذف القناة",
+    "saveFailed": "تعذّر حفظ القناة"
   },
   "notifications": {
     "title": "الإشعارات",
     "empty": "لا إشعارات جديدة.",
     "markAllRead": "تحديد الكل كمقروء",
-    "markRead": "تحديد كمقروء"
+    "markRead": "تحديد كمقروء",
+    "titleWithUnread": "الإشعارات ({{unread}} غير مقروءة)",
+    "unread": "غير مقروءة",
+    "loadFailed": "تعذّر تحميل الإشعارات."
   },
   "voiceMode": {
     "title": "الوضع الصوتي",
@@ -3757,7 +3990,12 @@
       "failed": "فشل",
       "cancelled": "أُلغي"
     },
-    "noFeedback": "لا توجد ملاحظات بعد — قيّم الردود لبناء مجموعة بياناتك."
+    "noFeedback": "لا توجد ملاحظات بعد — قيّم الردود لبناء مجموعة بياناتك.",
+    "deleteSetConfirmTitle": "حذف «{{name}}»؟",
+    "deleteSetConfirmDescription": "ستُحذف مجموعة التقييم ومطالباتها نهائيًا.",
+    "deleteSetFailed": "تعذّر حذف مجموعة التقييم",
+    "runError": "خطأ: {{detail}}",
+    "cancelFailed": "تعذّر إلغاء التشغيل"
   },
   "passwordStrength": {
     "levels": {
@@ -3771,6 +4009,14 @@
       "hasCase": "أحرف كبيرة وصغيرة",
       "hasNumber": "رقم واحد على الأقل",
       "tooLong": "لا تتجاوز 72 بايت"
+    },
+    "requirements": "استخدم 12 حرفًا على الأقل وبحد أقصى 72 بايت UTF-8، مع أحرف كبيرة وصغيرة ورقم.",
+    "errors": {
+      "minLength": "يجب أن تتكون كلمة المرور من 12 حرفًا على الأقل.",
+      "tooLong": "يجب ألا تتجاوز كلمة المرور 72 بايت UTF-8.",
+      "uppercase": "يجب أن تحتوي كلمة المرور على حرف كبير.",
+      "lowercase": "يجب أن تحتوي كلمة المرور على حرف صغير.",
+      "number": "يجب أن تحتوي كلمة المرور على رقم."
     }
   },
   "connectModels": {
@@ -3804,7 +4050,8 @@
       "enable": "تفعيل المزود",
       "enabling": "جارٍ التفعيل…",
       "enabled": "تم توصيل {{name}} — نماذجه متاحة الآن",
-      "enableFailed": "تعذّر تفعيل المزود"
+      "enableFailed": "تعذّر تفعيل المزود",
+      "urlLabel": "عنوان URL للخادم"
     },
     "cloud": {
       "title": "API سحابي",
@@ -3813,7 +4060,8 @@
       "connect": "اتصال",
       "connecting": "جارٍ الاتصال…",
       "connected": "تم توصيل {{name}} — نماذجه متاحة الآن",
-      "saveFailed": "تعذّر حفظ مفتاح API"
+      "saveFailed": "تعذّر حفظ مفتاح API",
+      "keyLabel": "مفتاح API لـ {{name}}"
     }
   },
   "strands": {
@@ -3845,5 +4093,15 @@
     "deleteFailed": "تعذّر حذف الجلسة.",
     "saveFailed": "تعذر حفظ الجلسة.",
     "turnFailed": "لم يتمكن المحرك من إكمال الدور"
+  },
+  "notFound": {
+    "title": "الصفحة غير موجودة",
+    "description": "هذه الصفحة غير موجودة أو ربما نُقلت."
+  },
+  "themeToggle": {
+    "switchToLight": "التبديل إلى الوضع الفاتح",
+    "switchToDark": "التبديل إلى الوضع الداكن",
+    "switchToAmoled": "التبديل إلى وضع الأسود الحالك",
+    "switchToCelestial": "التبديل إلى الوضع السماوي"
   }
 }

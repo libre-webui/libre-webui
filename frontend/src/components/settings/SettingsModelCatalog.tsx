@@ -294,6 +294,7 @@ export const SettingsModelCatalog: React.FC = () => {
             value={search}
             onChange={event => setSearch(event.target.value)}
             placeholder={t('modelManager.catalog.searchPlaceholder')}
+            aria-label={t('modelManager.catalog.searchPlaceholder')}
             className='ps-9'
           />
         </div>
@@ -301,7 +302,7 @@ export const SettingsModelCatalog: React.FC = () => {
           value={filter}
           onChange={event => setFilter(event.target.value as CatalogFilter)}
           className='h-9 rounded-lg border border-gray-200 bg-white px-2 text-xs text-gray-700 dark:border-dark-300 dark:bg-dark-100 dark:text-gray-200'
-          aria-label={t('modelManager.catalog.filterAll')}
+          aria-label={t('modelManager.catalog.filterLabel')}
         >
           {filters.map(entry => (
             <option key={entry.id} value={entry.id}>
@@ -406,6 +407,7 @@ export const SettingsModelCatalog: React.FC = () => {
                   type='button'
                   onClick={() => handleAvatarPick(key)}
                   title={t('modelManager.catalog.setPicture')}
+                  aria-label={t('modelManager.catalog.setPicture')}
                   className='flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-full border border-gray-200 bg-gray-50 text-gray-400 dark:border-dark-300 dark:bg-dark-200'
                 >
                   {entry.avatar ? (
@@ -457,6 +459,8 @@ export const SettingsModelCatalog: React.FC = () => {
                   type='button'
                   onClick={() => setEditing(isEditing ? null : key)}
                   title={t('modelManager.catalog.rename')}
+                  aria-label={t('modelManager.catalog.rename')}
+                  aria-expanded={isEditing}
                   className='flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-gray-400 hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-dark-200'
                 >
                   {isEditing ? (
@@ -505,6 +509,9 @@ export const SettingsModelCatalog: React.FC = () => {
                       updateMetadata(key, { label: event.target.value }, true)
                     }
                     placeholder={model.name}
+                    aria-label={t('modelManager.catalog.displayName', {
+                      name: model.name,
+                    })}
                     className='h-8 max-w-xs text-xs'
                   />
                   {entry.avatar && (

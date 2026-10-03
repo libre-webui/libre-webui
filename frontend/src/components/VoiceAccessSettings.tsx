@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'react-hot-toast';
 import { Button } from '@/components/ui';
@@ -43,6 +43,7 @@ const FEATURES: Array<{ key: VoiceFeatureKey; labelKey: string }> = [
  */
 export const VoiceAccessSettings: React.FC = () => {
   const { t } = useTranslation();
+  const labelPrefix = useId();
   const [modes, setModes] = useState<VoiceAccessModes | null>(null);
   const [saving, setSaving] = useState<VoiceFeatureKey | null>(null);
   const [loadFailed, setLoadFailed] = useState(false);
@@ -122,7 +123,10 @@ export const VoiceAccessSettings: React.FC = () => {
               className='flex items-center justify-between gap-4'
             >
               <div>
-                <p className='text-xs text-gray-700 dark:text-gray-300'>
+                <p
+                  id={`${labelPrefix}-${feature.key}`}
+                  className='text-xs text-gray-700 dark:text-gray-300'
+                >
                   {t(feature.labelKey)}
                 </p>
                 {entry?.lockedByEnv && (
@@ -132,6 +136,7 @@ export const VoiceAccessSettings: React.FC = () => {
                 )}
               </div>
               <SettingsToggle
+                aria-labelledby={`${labelPrefix}-${feature.key}`}
                 checked={entry?.mode === 'all-users'}
                 onChange={checked => handleChange(feature.key, checked)}
                 disabled={

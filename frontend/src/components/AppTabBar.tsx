@@ -248,6 +248,7 @@ export const AppTabBar: React.FC = () => {
     };
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
+        if (menuOpen) newTabButtonRef.current?.focus();
         setMenuOpen(false);
         setContextMenu(null);
       }
@@ -304,6 +305,14 @@ export const AppTabBar: React.FC = () => {
       ?.focus();
   }, [contextMenu]);
 
+  const newTabMenuVisible = menuOpen && menuPosition !== null;
+  useEffect(() => {
+    if (!newTabMenuVisible) return;
+    newTabMenuRef.current
+      ?.querySelector<HTMLButtonElement>('[role="menuitem"]:not(:disabled)')
+      ?.focus();
+  }, [newTabMenuVisible]);
+
   const tabTitle = (tab: AppTab): string => {
     if (tab.kind === 'home') return t('tabs.home', 'Home');
     if (tab.kind === 'chat') {
@@ -329,6 +338,31 @@ export const AppTabBar: React.FC = () => {
     const meta = PAGE_META[tab.path];
     return meta ? t(meta.labelKey, tab.path.slice(1)) : tab.path.slice(1);
   };
+
+  // Name the browser tab after the active view so screen reader users hear
+  // where they landed. Only app-defined names are used: chat and Work titles
+  // are user content, and document.title leaks into browser history, window
+  // lists and screen sharing, so those views get a generic label.
+  const activeTab = accessibleTabs.find(tab => tab.id === activeTabId);
+  const activeDocumentTitle = !activeTab
+    ? ''
+    : activeTab.kind === 'chat'
+      ? currentSession?.isPrivate
+        ? t('chat.session.incognito', 'Incognito Chat')
+        : t('tabs.chat', 'Chat')
+      : activeTab.kind === 'work'
+        ? t('tabs.work', 'Work')
+        : tabTitle(activeTab);
+  useEffect(() => {
+    const brand = 'Libre WebUI';
+    document.title =
+      activeDocumentTitle && activeDocumentTitle !== brand
+        ? `${activeDocumentTitle} · ${brand}`
+        : brand;
+    return () => {
+      document.title = brand;
+    };
+  }, [activeDocumentTitle]);
 
   const closeSingleTab = (tab: AppTab, restoreFocus: boolean) => {
     const index = accessibleTabs.findIndex(item => item.id === tab.id);
@@ -397,11 +431,12 @@ export const AppTabBar: React.FC = () => {
     openContextMenu(tab, rect.left + 12, rect.bottom + 4);
   };
 
+  // Shared by both menus: the handler lives on the menu element itself.
   const handleContextMenuKeyDown = (
     event: React.KeyboardEvent<HTMLDivElement>
   ) => {
     const items = Array.from(
-      contextMenuRef.current?.querySelectorAll<HTMLButtonElement>(
+      event.currentTarget.querySelectorAll<HTMLButtonElement>(
         '[role="menuitem"]:not(:disabled)'
       ) ?? []
     );
@@ -577,7 +612,7 @@ export const AppTabBar: React.FC = () => {
                 }}
                 onKeyDown={event => handleTabContextKeyDown(event, tab)}
                 className={cn(
-                  'flex h-full min-w-0 items-center gap-1.5 rounded-md ps-2.5 outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40',
+                  'flex h-full min-w-0 items-center gap-1.5 rounded-md ps-2.5 outline-none focus-visible:ring-2 focus-visible:ring-primary-500',
                   tab.id === 'home' && 'pe-2.5'
                 )}
               >
@@ -593,7 +628,7 @@ export const AppTabBar: React.FC = () => {
                   onClick={event => handleClose(event, tab)}
                   onKeyDown={event => handleTabContextKeyDown(event, tab)}
                   className={cn(
-                    'flex h-5 w-5 shrink-0 items-center justify-center rounded-md text-gray-400 transition-opacity hover:bg-black/[0.06] hover:text-gray-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 dark:text-dark-500 dark:hover:bg-white/[0.08] dark:hover:text-dark-800',
+                    'flex h-5 w-5 shrink-0 items-center justify-center rounded-md text-gray-400 transition-opacity hover:bg-black/[0.06] hover:text-gray-700 focus-visible:ring-2 focus-visible:ring-primary-500 dark:text-dark-500 dark:hover:bg-white/[0.08] dark:hover:text-dark-800',
                     isActive
                       ? 'opacity-100'
                       : 'sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100'
@@ -681,9 +716,10 @@ export const AppTabBar: React.FC = () => {
           type='button'
           aria-label={t('tabs.new', 'New tab')}
           aria-expanded={menuOpen}
+          aria-haspopup='menu'
           data-testid='app-tab-new'
           onClick={() => setMenuOpen(open => !open)}
-          className='flex h-7 w-7 items-center justify-center rounded-lg text-gray-500 transition-colors hover:bg-white/60 hover:text-gray-900 dark:text-dark-600 dark:hover:bg-dark-200/60 dark:hover:text-dark-900 outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40'
+          className='flex h-7 w-7 items-center justify-center rounded-lg text-gray-500 transition-colors hover:bg-white/60 hover:text-gray-900 dark:text-dark-600 dark:hover:bg-dark-200/60 dark:hover:text-dark-900 outline-none focus-visible:ring-2 focus-visible:ring-primary-500'
         >
           <Plus className='h-4 w-4' />
         </button>
@@ -693,7 +729,16 @@ export const AppTabBar: React.FC = () => {
             <div
               ref={newTabMenuRef}
               role='menu'
+              aria-label={t('tabs.new', 'New tab')}
               data-testid='app-tab-new-menu'
+              onKeyDown={event => {
+                if (event.key === 'Tab') {
+                  newTabButtonRef.current?.focus();
+                  setMenuOpen(false);
+                  return;
+                }
+                handleContextMenuKeyDown(event);
+              }}
               className='fixed z-[100] max-h-[calc(100dvh-4rem)] overflow-y-auto rounded-xl border border-line bg-surface-overlay/95 p-1 shadow-overlay backdrop-blur-xl animate-fade-in motion-reduce:animate-none'
               style={menuPosition}
             >

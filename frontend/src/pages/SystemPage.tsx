@@ -150,13 +150,15 @@ const DetailRow: React.FC<{
   </div>
 );
 
-const Meter: React.FC<{ value: number; tone?: 'primary' | 'warning' }> = ({
-  value,
-  tone = 'primary',
-}) => (
+const Meter: React.FC<{
+  value: number;
+  label: string;
+  tone?: 'primary' | 'warning';
+}> = ({ value, label, tone = 'primary' }) => (
   <div
     className='h-2 overflow-hidden rounded-full bg-gray-100 dark:bg-dark-300'
     role='progressbar'
+    aria-label={label}
     aria-valuemin={0}
     aria-valuemax={100}
     aria-valuenow={Math.round(boundedPercent(value))}
@@ -664,8 +666,15 @@ const SystemPage: React.FC = () => {
   if (isLoading && !diagnostics) {
     return (
       <PageShell width='wide'>
-        <div className='flex min-h-[50vh] items-center justify-center'>
-          <Loader2 className='h-7 w-7 animate-spin text-primary-500' />
+        <div
+          role='status'
+          className='flex min-h-[50vh] items-center justify-center'
+        >
+          <Loader2
+            className='h-7 w-7 animate-spin text-primary-500'
+            aria-hidden='true'
+          />
+          <span className='sr-only'>{t('common.loading')}</span>
         </div>
       </PageShell>
     );
@@ -702,8 +711,11 @@ const SystemPage: React.FC = () => {
       />
 
       {errorMessage && (
-        <div className='mb-6 flex items-center gap-3 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900/40 dark:bg-red-950/30 dark:text-red-300'>
-          <TriangleAlert className='h-4 w-4 shrink-0' />
+        <div
+          role='alert'
+          className='mb-6 flex items-center gap-3 rounded-2xl border border-error-200 bg-error-50 px-4 py-3 text-sm text-error-700 dark:border-error-900/40 dark:bg-error-900/30 dark:text-error-300'
+        >
+          <TriangleAlert className='h-4 w-4 shrink-0' aria-hidden='true' />
           <span>{errorMessage}</span>
         </div>
       )}
@@ -902,6 +914,7 @@ const MemoryPanel: React.FC<{ diagnostics: SystemDiagnostics }> = ({
             </span>
           </div>
           <Meter
+            label={t('systemPage.memory.title')}
             value={memory.usedPercent}
             tone={memory.usedPercent >= 85 ? 'warning' : 'primary'}
           />
@@ -967,6 +980,7 @@ const StoragePanel: React.FC<{ diagnostics: SystemDiagnostics }> = ({
               </div>
               <div className='mt-4'>
                 <Meter
+                  label={filesystem.label}
                   value={filesystem.usedPercent}
                   tone={filesystem.usedPercent >= 85 ? 'warning' : 'primary'}
                 />

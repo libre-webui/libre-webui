@@ -41,7 +41,8 @@
     "remove": "ลบ",
     "home": "หน้าหลัก",
     "more": "มาก",
-    "reasoning": "การใช้เหตุผล"
+    "reasoning": "การใช้เหตุผล",
+    "skipToContent": "ข้ามไปยังเนื้อหา"
   },
   "brand": {
     "name": "Libre WebUI",
@@ -49,7 +50,10 @@
   },
   "appInitialization": {
     "ollamaUnavailable": "บริการ Ollama ไม่พร้อมใช้งาน แต่ยังสามารถใช้โมเดลจากปลั๊กอินได้",
-    "backendConnectionFailed": "ไม่สามารถเชื่อมต่อกับบริการแบ็กเอนด์ได้"
+    "backendConnectionFailed": "ไม่สามารถเชื่อมต่อกับบริการแบ็กเอนด์ได้",
+    "connecting": "กำลังเชื่อมต่อแบ็กเอนด์… ({{attempt}}/{{total}})",
+    "startingUp": "กำลังเริ่มต้น…",
+    "backendUnreachableHint": "ตรวจสอบว่าแบ็กเอนด์ทำงานอยู่ แล้วลองอีกครั้ง"
   },
   "auth": {
     "login": {
@@ -189,7 +193,15 @@
       "removed": "ลบพาสคีย์แล้ว",
       "removeFailed": "ไม่สามารถลบพาสคีย์ได้",
       "signInButton": "เข้าสู่ระบบด้วยพาสคีย์",
-      "signInFailed": "เข้าสู่ระบบด้วยพาสคีย์ไม่สำเร็จ"
+      "signInFailed": "เข้าสู่ระบบด้วยพาสคีย์ไม่สำเร็จ",
+      "removeConfirmTitle": "ลบพาสคีย์นี้หรือไม่",
+      "removeConfirmDescription": "\"{{name}}\" จะใช้ลงชื่อเข้าใช้ไม่ได้อีก คุณลงทะเบียนใหม่ได้ภายหลัง"
+    },
+    "password": {
+      "show": "แสดงรหัสผ่าน",
+      "hide": "ซ่อนรหัสผ่าน",
+      "showConfirmation": "แสดงการยืนยันรหัสผ่าน",
+      "hideConfirmation": "ซ่อนการยืนยันรหัสผ่าน"
     }
   },
   "setup": {
@@ -242,7 +254,8 @@
       "envNote": "คีย์นี้ยังถูกบันทึกในไฟล์ backend/.env เป็น ENCRYPTION_KEY",
       "acknowledgment": "ฉันได้บันทึกคีย์เข้ารหัสในที่ปลอดภัยและเข้าใจว่าการสูญเสียอาจส่งผลให้ข้อมูลสูญหาย",
       "confirmRequired": "กรุณายืนยันว่าคุณได้บันทึกคีย์เข้ารหัสแล้ว",
-      "continue": "ดำเนินการต่อไปยัง Libre WebUI"
+      "continue": "ดำเนินการต่อไปยัง Libre WebUI",
+      "loadFailed": "โหลดคีย์เข้ารหัสไม่ได้ ลองอีกครั้งเพื่อดำเนินการต่อ"
     },
     "connectModels": {
       "title": "เชื่อมต่อโมเดลของคุณ",
@@ -336,7 +349,8 @@
       "toolsOn": "เปิดใช้เครื่องมือแล้ว — โมเดลเรียกใช้เครื่องมือที่อนุมัติไว้ได้",
       "toolsOff": "ให้โมเดลเรียกใช้เครื่องมือในข้อความนี้",
       "thinkingOn": "เปิดการคิด ({{level}})",
-      "thinkingOff": "คิดก่อนตอบ"
+      "thinkingOff": "คิดก่อนตอบ",
+      "thinkingUpdateFailed": "อัปเดตการตั้งค่าการคิดไม่ได้"
     },
     "session": {
       "new": "แชทใหม่",
@@ -372,7 +386,8 @@
         "move": "ย้ายไปยังโฟลเดอร์",
         "remove": "นำออกจากโฟลเดอร์",
         "delete": "ลบโฟลเดอร์",
-        "deleteConfirm": "ลบโฟลเดอร์นี้? แชทข้างในจะยังอยู่"
+        "deleteConfirm": "ลบโฟลเดอร์นี้? แชทข้างในจะยังอยู่",
+        "rename": "เปลี่ยนชื่อโฟลเดอร์"
       },
       "shareChat": "แชร์แชต…"
     },
@@ -405,7 +420,13 @@
       "browse": "เรียกดู",
       "unsupportedFileType": "ไม่รองรับประเภทไฟล์: {{name}}",
       "maxImagesAllowed": "อนุญาตให้ใช้รูปภาพได้สูงสุด {{count}} รูป",
-      "imageTooLarge": "รูปภาพ {{name}} มีขนาดใหญ่เกินไป (สูงสุด 10MB)"
+      "imageTooLarge": "รูปภาพ {{name}} มีขนาดใหญ่เกินไป (สูงสุด 10MB)",
+      "readFailed": "อ่าน {{name}} ไม่ได้",
+      "uploadAlt": "อัปโหลด {{number}}",
+      "removeImage": "ลบรูปภาพที่ {{number}}",
+      "addMore": "เพิ่มรูปภาพ ({{count}}/{{max}})",
+      "uploading": "กำลังอัปโหลด",
+      "removeDocument": "ลบ {{name}}"
     },
     "structuredOutput": {
       "title": "รูปแบบการตอบกลับ",
@@ -456,7 +477,8 @@
       "compactionOff": "ปิดสำหรับแชทนี้"
     },
     "message": {
-      "sources": "แหล่งที่มา"
+      "sources": "แหล่งที่มา",
+      "copyFailed": "คัดลอกไปยังคลิปบอร์ดไม่ได้"
     },
     "toasts": {
       "chatCreated": "สร้างแชทใหม่แล้ว",
@@ -491,7 +513,8 @@
       "branchSwitched": "สลับไปยังตัวเลือก {{number}} แล้ว",
       "branchSelectFailed": "ไม่สามารถเลือกสาขาได้",
       "editFailed": "ไม่สามารถแก้ไขข้อความได้",
-      "toolDecisionFailed": "ไม่สามารถบันทึกการตัดสินใจของเครื่องมือได้"
+      "toolDecisionFailed": "ไม่สามารถบันทึกการตัดสินใจของเครื่องมือได้",
+      "archiveFailed": "เก็บแชทนี้เข้าคลังไม่ได้"
     },
     "documents": {
       "title": "เอกสารในบริบท"
@@ -521,7 +544,25 @@
       "origin": "แยกสาขาจาก {{title}}",
       "originUnknown": "แชทอื่น"
     },
-    "sharedReadOnly": "แชร์โดย {{owner}} — ดูได้อย่างเดียว"
+    "sharedReadOnly": "แชร์โดย {{owner}} — ดูได้อย่างเดียว",
+    "branch": {
+      "variants": "{{count}} ตัวเลือก",
+      "variants_plural": "{{count}} ตัวเลือก",
+      "selectVariant": "เลือกตัวเลือกที่ {{number}}",
+      "generating": "กำลังสร้าง...",
+      "select": "เลือก"
+    },
+    "sources": {
+      "fullContextFailed": "อัปเดตการตั้งค่าเอกสารฉบับเต็มไม่ได้",
+      "usedByRetrieval": "ใช้ในคำตอบ",
+      "triggerLabel": "แหล่งที่มา ({{count}})"
+    },
+    "announce": {
+      "replyFinished": "{{name}} ตอบว่า: {{text}}",
+      "replyFinishedNoText": "{{name}} ตอบเสร็จแล้ว",
+      "codeBlock": "บล็อกโค้ด",
+      "generationStopped": "หยุดการสร้างแล้ว"
+    }
   },
   "sidebar": {
     "navigation": {
@@ -546,7 +587,8 @@
       "strands": "Strands"
     },
     "toggleSize": "สลับขนาดแถบด้านข้าง",
-    "expandSidebar": "ขยายแถบด้านข้าง"
+    "expandSidebar": "ขยายแถบด้านข้าง",
+    "ariaLabel": "แถบด้านข้าง"
   },
   "user": {
     "menu": {
@@ -821,7 +863,8 @@
         "removeFailed": "ไม่สามารถลบ API Key",
         "enterKey": "กรุณาป้อน API Key"
       },
-      "variables": "Variables"
+      "variables": "Variables",
+      "dismissError": "ปิดข้อผิดพลาด"
     },
     "generation": {
       "title": "ตัวเลือกการสร้าง",
@@ -924,7 +967,8 @@
         "deleteFailed": "ลบคอลเลกชันไม่สำเร็จ",
         "assignFailed": "ย้ายเอกสารไม่สำเร็จ",
         "share": "แชร์คอลเลกชัน",
-        "shared": "แชร์แล้ว"
+        "shared": "แชร์แล้ว",
+        "assignTo": "คอลเลกชันสำหรับ {{name}}"
       },
       "library": {
         "title": "เอกสารที่อัปโหลด",
@@ -1066,7 +1110,8 @@
         "title": "แชทที่เก็บถาวร",
         "empty": "ไม่มีแชทที่เก็บถาวร",
         "unarchive": "เลิกเก็บถาวร"
-      }
+      },
+      "clearAllConfirm": "ต้องการลบประวัติแชททั้งหมดหรือไม่ ไม่สามารถย้อนกลับได้"
     },
     "about": {
       "title": "เกี่ยวกับ",
@@ -1186,7 +1231,11 @@
       "unknownDevice": "อุปกรณ์ที่ไม่รู้จัก",
       "createdAt": "เข้าสู่ระบบเมื่อ",
       "lastSeenAt": "ใช้งานล่าสุด",
-      "expiresAt": "หมดอายุ"
+      "expiresAt": "หมดอายุ",
+      "signOutConfirmTitle": "ออกจากระบบเซสชันนี้หรือไม่",
+      "signOutConfirmDescription": "{{device}} จะถูกออกจากระบบทันทีและต้องลงชื่อเข้าใช้อีกครั้ง",
+      "signOutOthersConfirmTitle": "ออกจากระบบเซสชันอื่นหรือไม่",
+      "signOutOthersConfirmDescription": "เซสชันอื่น {{count}} รายการจะถูกออกจากระบบทันที เซสชันนี้ยังคงลงชื่อเข้าใช้อยู่"
     },
     "apiKeys": {
       "title": "คีย์ API",
@@ -1220,7 +1269,9 @@
       "createdAt": "สร้างเมื่อ",
       "lastUsedAt": "ใช้ล่าสุด",
       "expiresAt": "หมดอายุ",
-      "neverExpires": "ไม่มีวันหมดอายุ"
+      "neverExpires": "ไม่มีวันหมดอายุ",
+      "revokeConfirmTitle": "เพิกถอน \"{{name}}\" หรือไม่",
+      "revokeConfirmDescription": "ทุกอย่างที่ใช้คีย์ API นี้จะหยุดทำงานทันที ไม่สามารถย้อนกลับได้"
     },
     "notifications": {
       "title": "การแจ้งเตือน",
@@ -1294,7 +1345,8 @@
     "model": "โมเดล",
     "size": "ขนาด",
     "quality": "คุณภาพ",
-    "created": "สร้างเมื่อ"
+    "created": "สร้างเมื่อ",
+    "lightboxLabel": "ตัวอย่างรูปภาพ"
   },
   "errors": {
     "generic": "เกิดข้อผิดพลาด",
@@ -1389,7 +1441,9 @@
       "hide": "ซ่อนจากผู้ใช้",
       "show": "แสดงต่อผู้ใช้",
       "star": "ติดดาว {{name}}",
-      "unstar": "นำดาวออกจาก {{name}}"
+      "unstar": "นำดาวออกจาก {{name}}",
+      "filterLabel": "กรองโมเดล",
+      "displayName": "ชื่อที่แสดงสำหรับ {{name}}"
     },
     "pull": {
       "placeholder": "ป้อนชื่อโมเดล (เช่น llama3.2:3b, deepseek-r1:14b)",
@@ -1550,7 +1604,10 @@
     "deleteConfirm": "คุณแน่ใจหรือไม่ว่าต้องการลบ \"{{name}}\"?",
     "deleteSuccess": "ลบเพอร์โซน่า \"{{name}}\" สำเร็จ",
     "downloadSuccess": "ดาวน์โหลดเพอร์โซน่า \"{{name}}\" สำเร็จ",
-    "failed": "ไม่สามารถ {{action}} เพอร์โซน่า"
+    "failed": "ไม่สามารถ {{action}} เพอร์โซน่า",
+    "loadFailed": "โหลดเพอร์โซน่าของคุณไม่ได้",
+    "deleteFailed": "ลบเพอร์โซน่าไม่สำเร็จ",
+    "downloadFailed": "ดาวน์โหลดเพอร์โซน่าไม่สำเร็จ"
   },
   "personaForm": {
     "title": {
@@ -1682,7 +1739,8 @@
       "promptHint": "พรอมต์ที่ใช้เริ่มต้นทุกแชทใหม่กับเพอร์โซน่านี้",
       "noPrompt": "ไม่มีพรอมต์",
       "version": "ฉบับแก้ไขการผูก {{version}}"
-    }
+    },
+    "sections": "ส่วนของเพอร์โซน่า"
   },
   "personaCard": {
     "enhanced": "ปรับปรุงแล้ว",
@@ -1699,7 +1757,16 @@
     "backupSuccess": "ดาวน์โหลดสำรองข้อมูลเพอร์โซน่าสำเร็จ",
     "dnaSuccess": "ส่งออก DNA เพอร์โซน่าสำเร็จ",
     "failed": "ไม่สามารถ {{action}}",
-    "shareTooltip": "แชร์เพอร์โซนานี้"
+    "shareTooltip": "แชร์เพอร์โซนานี้",
+    "wipeFailed": "ล้างความจำไม่สำเร็จ",
+    "backupFailed": "สำรองข้อมูลเพอร์โซน่าไม่สำเร็จ",
+    "exportDnaFailed": "ส่งออก DNA ของเพอร์โซน่าไม่สำเร็จ",
+    "favorite": "รายการโปรด",
+    "memoryStatus": {
+      "active": "ใช้งานอยู่",
+      "wiped": "ล้างแล้ว",
+      "backed_up": "สำรองข้อมูลแล้ว"
+    }
   },
   "userManager": {
     "title": "จัดการผู้ใช้",
@@ -1865,7 +1932,28 @@
       "memberOf": "กลุ่ม",
       "featuresLabel": "การเข้าถึงฟีเจอร์",
       "grantsLabel": "การให้สิทธิ์",
-      "grantVia": "ผ่าน"
+      "grantVia": "ผ่าน",
+      "deleteConfirmTitle": "ลบกลุ่ม “{{name}}” หรือไม่",
+      "deleteConfirmDescription": "สมาชิกจะสูญเสียสิทธิ์เข้าถึงที่ได้รับผ่านกลุ่มนี้เท่านั้น บัญชีจะไม่ถูกลบ",
+      "statuses": {
+        "active": "ใช้งานอยู่",
+        "pending": "รออนุมัติ"
+      },
+      "features": {
+        "work": "งาน",
+        "model-download": "ดาวน์โหลดโมเดล",
+        "web-search": "ค้นหาเว็บ",
+        "strands": "เอนจิน Strands",
+        "tools": "เครื่องมือ",
+        "stt": "เสียงเป็นข้อความ",
+        "tts": "ข้อความเป็นเสียง",
+        "voice-mode": "โหมดเสียง",
+        "voice-cloning": "การโคลนเสียง"
+      },
+      "grantViaKinds": {
+        "user": "ให้สิทธิ์โดยตรง",
+        "group": "กลุ่ม"
+      }
     },
     "audit": {
       "title": "บันทึกตรวจสอบความปลอดภัย",
@@ -2298,7 +2386,11 @@
       "harmful": "เป็นอันตราย",
       "formatting": "การจัดรูปแบบ"
     },
-    "feedbackComment": "เพิ่มความคิดเห็น…"
+    "feedbackComment": "เพิ่มความคิดเห็น…",
+    "user": "ผู้ใช้",
+    "feedbackFailed": "บันทึกความคิดเห็นของคุณไม่ได้",
+    "openImage": "เปิดรูปภาพที่ {{number}}",
+    "uploadedImageAlt": "รูปภาพที่อัปโหลด {{number}}"
   },
   "imageGallery": {
     "title": "แกลเลอรีรูปภาพ",
@@ -2387,7 +2479,10 @@
       "image": "รูปภาพ",
       "video": "วิดีโอ",
       "audio": "เสียง"
-    }
+    },
+    "deleteConfirmTitle": "ลบรายการนี้หรือไม่",
+    "deleteConfirmDescription": "สื่อที่สร้างขึ้นจะถูกลบถาวร",
+    "previewFailed": "ไม่มีตัวอย่าง"
   },
   "errorBoundary": {
     "title": "เกิดข้อผิดพลาด",
@@ -2463,7 +2558,8 @@
     "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source.",
     "versionOf": "เวอร์ชัน {{current}} จาก {{total}}",
     "previousVersion": "เวอร์ชันก่อนหน้า",
-    "nextVersion": "เวอร์ชันถัดไป"
+    "nextVersion": "เวอร์ชันถัดไป",
+    "resizePanel": "ปรับขนาดแผง"
   },
   "personaImportExport": {
     "title": "นำเข้าและส่งออกเพอร์โซน่า",
@@ -2501,7 +2597,10 @@
     "generation": "การสร้าง:",
     "modelLoad": "โหลดโมเดล:",
     "totalTime": "เวลาทั้งหมด:",
-    "generatedAt": "สร้างเมื่อ:"
+    "generatedAt": "สร้างเมื่อ:",
+    "notAvailable": "ไม่มีข้อมูล",
+    "tokenCount": "{{tokens}} โทเค็น",
+    "tokensPerSecond": "{{value}} t/s"
   },
   "userMenu": {
     "loggedOut": "ออกจากระบบสำเร็จ",
@@ -2560,7 +2659,9 @@
       "httpWarning": "HTTP ไม่เข้ารหัสข้อมูลประจำตัวหรือการรับส่งข้อมูล ใช้เฉพาะในเครือข่ายที่เชื่อถือได้เท่านั้น",
       "invalidBaseUrl": "URL พื้นฐานต้องไม่มี query string หรือ fragment",
       "invalidApiPath": "ต้องขึ้นต้นด้วย / และไม่มี URL, query, fragment หรือส่วน ..",
-      "tooLong": "ค่ายาวเกินไป"
+      "tooLong": "ค่ายาวเกินไป",
+      "resetConfirmTitle": "รีเซ็ตเป็นค่าเริ่มต้นหรือไม่",
+      "resetConfirmDescription": "การดำเนินการนี้จะล้างค่าที่เก็บไว้ทั้งหมดของ {{name}} รวมถึงคีย์ API และข้อมูลรับรองอื่น ๆ ไม่สามารถย้อนกลับได้"
     }
   },
   "huggingface": {
@@ -2580,7 +2681,10 @@
   },
   "demoMode": {
     "title": "โหมดสาธิต",
-    "github": "GitHub"
+    "github": "GitHub",
+    "defaultMessage": "นี่คือเวอร์ชันสาธิตสำหรับการนำเสนอเท่านั้น แบ็กเอนด์ Ollama ไม่ได้เชื่อมต่อ",
+    "viewOnGithub": "ดูบน GitHub",
+    "dismiss": "ปิด"
   },
   "work": {
     "title": "งาน",
@@ -2671,8 +2775,18 @@
         "checksPending": "การตรวจสอบค้างอยู่",
         "stallNudges": "การแจ้งเตือนหยุดชะงัก",
         "ambiguityNudges": "การแจ้งเตือนปรับตำแหน่งใหม่",
-        "stoppedBy": "หยุดโดย"
-      }
+        "stoppedBy": "หยุดโดย",
+        "reasons": {
+          "round": "ถึงขีดจำกัดรอบ",
+          "toolCall": "ถึงขีดจำกัดการเรียกเครื่องมือ",
+          "approvalTimeout": "การอนุมัติหมดเวลา",
+          "computerStall": "คอมพิวเตอร์ค้าง"
+        }
+      },
+      "skillTraceSavedWorked": "บันทึกแล้ว: ใช้ได้",
+      "skillTraceSavedFailed": "บันทึกแล้ว: ไม่สำเร็จ",
+      "connectionClosed": "การเชื่อมต่อสดของงานถูกปิด",
+      "reconnectingBackground": "การอัปเดตสดกำลังเชื่อมต่อใหม่ในเบื้องหลัง"
     },
     "runtime": {
       "unavailable": "รันไทม์ไม่พร้อมใช้งาน",
@@ -2715,7 +2829,11 @@
       "changes": "การเปลี่ยนแปลง",
       "changesSince": "สิ่งที่เปลี่ยนแปลงตั้งแต่เทิร์นล่าสุด",
       "diffLabel": "การเปลี่ยนแปลงตั้งแต่เทิร์นล่าสุด: {{path}}",
-      "diffFolded": "{{count}} บรรทัดที่ไม่เปลี่ยนแปลง"
+      "diffFolded": "{{count}} บรรทัดที่ไม่เปลี่ยนแปลง",
+      "diffAdded": "เพิ่มแล้ว",
+      "diffRemoved": "ลบแล้ว",
+      "unsavedChanges": "มีการเปลี่ยนแปลงที่ยังไม่บันทึก",
+      "editingLocked": "การแก้ไขจะปลดล็อกเมื่อรอบนี้เสร็จสิ้น"
     },
     "activity": {
       "empty": "คำสั่ง การดำเนินการกับไฟล์ และผลลัพธ์จากเครื่องมือจะปรากฏที่นี่",
@@ -2726,7 +2844,9 @@
         "toolCall": "การเรียกเครื่องมือ",
         "toolResult": "ผลลัพธ์จากเครื่องมือ",
         "error": "ข้อผิดพลาด"
-      }
+      },
+      "arguments": "อาร์กิวเมนต์ของเครื่องมือ",
+      "output": "ผลลัพธ์ของเครื่องมือ"
     },
     "preview": {
       "command": "คำสั่งเริ่มต้น (ไม่บังคับ)",
@@ -2755,7 +2875,8 @@
       "saveFailed": "ไม่สามารถบันทึกไฟล์นี้ได้",
       "saved": "บันทึกไฟล์แล้ว",
       "previewFailed": "ไม่สามารถเริ่มตัวอย่างได้",
-      "previewStopFailed": "ไม่สามารถหยุดตัวอย่างได้"
+      "previewStopFailed": "ไม่สามารถหยุดตัวอย่างได้",
+      "sendFailed": "ส่งข้อความไม่ได้"
     },
     "terminal": {
       "connecting": "กำลังเปิดเชลล์ในแซนด์บ็อกซ์…",
@@ -2807,7 +2928,18 @@
       "noFilterMatches": "ไม่มีไฟล์ที่เปลี่ยนแปลงตรงกับตัวกรองนี้",
       "allChanges": "การเปลี่ยนแปลงทั้งหมด",
       "diffTruncated": "diff นี้ถูกตัดทอน",
-      "binaryFile": "ไฟล์ไบนารี ไม่มี diff แบบข้อความ"
+      "binaryFile": "ไฟล์ไบนารี ไม่มี diff แบบข้อความ",
+      "statusLabels": {
+        "modified": "แก้ไขแล้ว",
+        "added": "เพิ่มแล้ว",
+        "deleted": "ลบแล้ว",
+        "renamed": "เปลี่ยนชื่อแล้ว",
+        "copied": "คัดลอกแล้ว",
+        "typeChanged": "เปลี่ยนประเภทแล้ว",
+        "untracked": "ยังไม่ติดตาม"
+      },
+      "stagedState": "สเตจแล้ว",
+      "aheadBehind": "นำหน้า {{ahead}} ตามหลัง {{behind}}"
     },
     "hostWorkspace": {
       "hint": "เว้นว่างสำหรับพื้นที่ทำงานแยก หรือชี้งานไปยังโฟลเดอร์บนเครื่องนี้",
@@ -2834,7 +2966,8 @@
       "unmute": "เปิดเสียง",
       "mute": "ปิดเสียง",
       "finished": "งานนี้เสร็จแล้ว เปิดอีกครั้งเพื่อนำหน้าจอกลับมา",
-      "reopenOpen": "เปิดงานอีกครั้งและเปิดหน้าจอ"
+      "reopenOpen": "เปิดงานอีกครั้งและเปิดหน้าจอ",
+      "teachSaveFailed": "บันทึกการสาธิตนี้ไม่ได้"
     },
     "computerSetup": {
       "title": "Work Computer",
@@ -2871,7 +3004,11 @@
       "approvalsToggleFailed": "ไม่สามารถอัปเดตการอนุมัติได้",
       "approvalRuleLine": "อนุญาตเสมอ",
       "approvalRuleDelete": "ลบกฎ",
-      "approvalRuleDeleteFailed": "ไม่สามารถลบกฎได้"
+      "approvalRuleDeleteFailed": "ไม่สามารถลบกฎได้",
+      "routinesLoadFailed": "โหลดกิจวัตรไม่ได้",
+      "skillsLoadFailed": "โหลดทักษะที่สอนไว้ไม่ได้",
+      "approvalsLoadFailed": "โหลดการตั้งค่าการอนุมัติไม่ได้",
+      "routinePaused": "หยุดชั่วคราว"
     },
     "approval": {
       "title": "ต้องได้รับการอนุมัติ",
@@ -2879,7 +3016,16 @@
       "allowOnce": "อนุญาตครั้งเดียว",
       "allowAlways": "อนุญาตเสมอ",
       "deny": "ปฏิเสธ",
-      "failed": "ไม่สามารถส่งผลการตัดสินใจได้"
+      "failed": "ไม่สามารถส่งผลการตัดสินใจได้",
+      "details": "รายละเอียดการดำเนินการ",
+      "fields": {
+        "command": "คำสั่ง",
+        "path": "พาธ",
+        "from": "จาก",
+        "to": "ไปยัง",
+        "actions": "การดำเนินการ",
+        "recursive": "แบบเรียกซ้ำ"
+      }
     },
     "idleStopHint": "จะหยุดหลังจากไม่มีความเคลื่อนไหว {{minutes}} นาที",
     "runs": {
@@ -2891,7 +3037,8 @@
         "needsInput": "ต้องการข้อมูลเพิ่มเติม",
         "failed": "ล้มเหลว",
         "cancelled": "ยกเลิกแล้ว"
-      }
+      },
+      "loadFailed": "โหลดประวัติการเรียกใช้ไม่ได้"
     },
     "recovery": {
       "pending": "Work กำลังยืนยันการล้างข้อมูลแซนด์บ็อกซ์ {{pending}} รายการ ก่อนที่จะยอมรับการทำงานใหม่",
@@ -2903,6 +3050,17 @@
       "retrySucceeded": "ล้างข้อมูลสำเร็จ {{cleared}} จาก {{attempted}} รายการที่รอดำเนินการ",
       "retryPending": "กำลังลองใหม่ {{attempted}} รายการที่รอดำเนินการ",
       "retryFailed": "ลองใหม่การล้างข้อมูลที่รอดำเนินการไม่สำเร็จ"
+    },
+    "computer": {
+      "setupFailed": "ตั้งค่าคอมพิวเตอร์ของงานไม่ได้"
+    },
+    "announce": {
+      "completed": "{{title}} เสร็จแล้ว",
+      "needsInput": "{{title}} ต้องการข้อมูลหรือการอนุมัติจากคุณ",
+      "failed": "{{title}} ล้มเหลว",
+      "cancelled": "{{title}} ถูกหยุดแล้ว",
+      "approvalNeeded": "{{title}} ต้องการการอนุมัติจากคุณเพื่อเรียกใช้ {{tool}}",
+      "untitledTask": "งานนี้"
     }
   },
   "personaBackground": {
@@ -2947,7 +3105,8 @@
     "showAll": "แสดงทั้งหมด ({{total}})",
     "sources": "แหล่งที่มาของโมเดล",
     "defaultModel": "โมเดลเริ่มต้น",
-    "contextSize": "บริบท {{size}}"
+    "contextSize": "บริบท {{size}}",
+    "via": "ผ่าน {{provider}}"
   },
   "whatsNew": {
     "title": "มีอะไรใหม่",
@@ -3004,7 +3163,16 @@
     "unpin": "เลิกปักหมุดโน้ต",
     "pinned": "ปักหมุดแล้ว",
     "export": "ดาวน์โหลดเป็น Markdown",
-    "sharedWithYou": "แชร์กับคุณ"
+    "sharedWithYou": "แชร์กับคุณ",
+    "titleLabel": "ชื่อบันทึก",
+    "loadFailed": "โหลดไม่ได้ โปรดลองอีกครั้ง",
+    "restoreConfirmTitle": "กู้คืนเวอร์ชันนี้หรือไม่",
+    "restoreConfirmDescription": "ข้อความของบันทึกจะถูกแทนที่ด้วยเวอร์ชันก่อนหน้านี้",
+    "deleteAttachmentConfirmTitle": "ลบ {{name}} หรือไม่",
+    "deleteAttachmentConfirmDescription": "ไฟล์แนบจะถูกลบถาวรออกจากบันทึกนี้",
+    "attachmentDeleteFailed": "ลบไฟล์แนบไม่ได้",
+    "revokeFailed": "เพิกถอนการเข้าถึงไม่ได้",
+    "sharePermissionLabel": "สิทธิ์"
   },
   "calendar": {
     "title": "ปฏิทิน",
@@ -3049,7 +3217,22 @@
     "importFailed": "นำเข้าไฟล์ไม่สำเร็จ",
     "importResult": "นำเข้า {{total}} กิจกรรมแล้ว",
     "importIcs": "นำเข้า",
-    "exportIcs": "ส่งออก"
+    "exportIcs": "ส่งออก",
+    "chipStatus": {
+      "automation": "ระบบอัตโนมัติที่ตั้งเวลาไว้",
+      "runSucceeded": "การเรียกใช้ระบบอัตโนมัติสำเร็จ",
+      "runFailed": "การเรียกใช้ระบบอัตโนมัติล้มเหลว"
+    },
+    "newEventOn": "กิจกรรมใหม่ในวันที่ {{date}}",
+    "showDay": "แสดงกิจกรรมทั้งหมดในวันที่ {{date}}",
+    "deleteEventConfirmTitle": "ลบ \"{{title}}\" หรือไม่",
+    "deleteEventConfirmDescription": "กิจกรรมนี้จะถูกลบถาวร",
+    "deleteRecurringEventConfirmDescription": "กิจกรรมที่เกิดซ้ำนี้และทุกครั้งที่เกิดขึ้นจะถูกลบถาวร",
+    "shareCalendarNamed": "แชร์ปฏิทิน {{name}}",
+    "deleteCalendarNamed": "ลบปฏิทิน {{name}}",
+    "deleteCalendarConfirmTitle": "ลบปฏิทิน \"{{name}}\" หรือไม่",
+    "deleteCalendarConfirmDescription": "ปฏิทินและกิจกรรมในปฏิทินจะถูกลบถาวร",
+    "calendarDeleteFailed": "ลบปฏิทินไม่ได้"
   },
   "automations": {
     "title": "ระบบอัตโนมัติ",
@@ -3176,13 +3359,17 @@
         "work-approval": "เอเจนต์กำลังรอการอนุมัติจากคุณ",
         "system": "มีประกาศจากระบบเข้ามา"
       }
-    }
+    },
+    "deleteConfirmTitle": "ลบ \"{{name}}\" หรือไม่",
+    "deleteConfirmDescription": "ระบบอัตโนมัติและกำหนดการจะถูกลบถาวร การเรียกใช้ก่อนหน้านี้ยังคงอยู่ในประวัติการเรียกใช้"
   },
   "home": {
     "active": "ใช้งานอยู่",
     "continue": "ดำเนินการต่อ",
     "start": "เริ่ม",
-    "explore": "สำรวจ"
+    "explore": "สำรวจ",
+    "greeting": "{{greeting}}",
+    "greetingWithName": "{{greeting}} {{name}}"
   },
   "palette": {
     "empty": "ไม่พบรายการที่ตรงกัน",
@@ -3195,7 +3382,14 @@
     "work": "งาน",
     "messages": "ข้อความ",
     "notes": "โน้ต",
-    "documents": "เอกสาร"
+    "documents": "เอกสาร",
+    "searching": "กำลังค้นหา…",
+    "searchFailed": "ค้นหาในพื้นที่ทำงานไม่สำเร็จ แสดงเฉพาะแชทและการดำเนินการที่ตรงกัน",
+    "results": "ผลลัพธ์",
+    "escKey": "esc",
+    "hintNavigate": "ไปยัง",
+    "hintOpen": "เปิด",
+    "hintClose": "ปิด"
   },
   "tabs": {
     "actions": "การทำงานของแท็บ",
@@ -3399,7 +3593,8 @@
       "button": "จากโฟลเดอร์",
       "missingSkillMd": "โฟลเดอร์ต้องมีไฟล์ SKILL.md",
       "done": "นำเข้าทักษะพร้อมไฟล์ที่แนบมา {{count}} ไฟล์แล้ว"
-    }
+    },
+    "toggleLabel": "เปิดใช้ทักษะ {{name}}"
   },
   "toolsPage": {
     "title": "เครื่องมือ",
@@ -3557,7 +3752,14 @@
     "added": "แชร์กับ {{name}} แล้ว",
     "failed": "แชร์ไม่สำเร็จ",
     "userNotFound": "ไม่มีผู้ใช้ชื่อนี้",
-    "groupNotFound": "ไม่มีกลุ่มชื่อนี้"
+    "groupNotFound": "ไม่มีกลุ่มชื่อนี้",
+    "principalKind": "แชร์กับผู้ใช้หรือกลุ่ม",
+    "principalName": "ชื่อผู้ใช้หรือชื่อกลุ่ม",
+    "permission": "สิทธิ์",
+    "sharing": "การแชร์",
+    "loading": "กำลังโหลดการแชร์",
+    "loadFailed": "โหลดการแชร์ไม่ได้",
+    "revokeFailed": "เพิกถอนการเข้าถึงไม่ได้"
   },
   "channels": {
     "title": "แชนเนล",
@@ -3616,13 +3818,44 @@
     "toolCalls": {
       "summary": "เครื่องมือที่ใช้ ({{total}})",
       "deniedHint": "เครื่องมือที่เปลี่ยนแปลงข้อมูลจะถูกปฏิเสธในแชนเนล ให้รันจากแชทแทน"
-    }
+    },
+    "confirmEdit": "บันทึกการแก้ไข",
+    "cancelEdit": "ยกเลิกการแก้ไข",
+    "reactWith": "แสดงปฏิกิริยา {{emoji}}",
+    "deleteMessageConfirmTitle": "ลบข้อความนี้หรือไม่",
+    "deleteMessageConfirmDescription": "ข้อความจะถูกลบสำหรับทุกคนในแชนเนลนี้",
+    "unreadCount": "ยังไม่ได้อ่าน {{total}}",
+    "send": "ส่งข้อความ",
+    "invite": "เชิญสมาชิก",
+    "closeThread": "ปิดเธรด",
+    "removeAttachment": "ลบไฟล์แนบ",
+    "loadFailed": "โหลดไม่ได้ โปรดลองอีกครั้ง",
+    "editFailed": "แก้ไขข้อความไม่ได้",
+    "deleteMessageFailed": "ลบข้อความไม่ได้",
+    "pinFailed": "เปลี่ยนการปักหมุดไม่ได้",
+    "reactFailed": "บันทึกปฏิกิริยาไม่ได้",
+    "downloadFailed": "ดาวน์โหลดไฟล์ไม่ได้",
+    "removeMemberConfirm": "ลบ {{name}} ออกจากแชนเนลนี้หรือไม่",
+    "removeMemberConfirmDescription": "สมาชิกจะเข้าถึงแชนเนลและข้อความในแชนเนลไม่ได้อีก",
+    "removeMemberNamed": "ลบ {{name}} ออกจากแชนเนล",
+    "removeMemberFailed": "ลบสมาชิกไม่ได้",
+    "leaveConfirm": "ออกจาก {{name}} หรือไม่",
+    "leaveConfirmDescription": "คุณต้องได้รับเชิญอีกครั้งจึงจะกลับเข้าแชนเนลส่วนตัวได้",
+    "leaveFailed": "ออกจากแชนเนลไม่ได้",
+    "joinFailed": "เข้าร่วมแชนเนลไม่ได้",
+    "deleteConfirm": "ลบ {{name}} หรือไม่",
+    "deleteConfirmDescription": "แชนเนลและข้อความทั้งหมดจะถูกลบถาวรสำหรับสมาชิกทุกคน",
+    "deleteFailed": "ลบแชนเนลไม่ได้",
+    "saveFailed": "บันทึกแชนเนลไม่ได้"
   },
   "notifications": {
     "title": "การแจ้งเตือน",
     "empty": "อ่านครบทุกอย่างแล้ว",
     "markAllRead": "ทำเครื่องหมายว่าอ่านทั้งหมด",
-    "markRead": "ทำเครื่องหมายว่าอ่านแล้ว"
+    "markRead": "ทำเครื่องหมายว่าอ่านแล้ว",
+    "titleWithUnread": "การแจ้งเตือน (ยังไม่ได้อ่าน {{unread}})",
+    "unread": "ยังไม่ได้อ่าน",
+    "loadFailed": "โหลดการแจ้งเตือนไม่ได้"
   },
   "voiceMode": {
     "title": "โหมดเสียง",
@@ -3757,7 +3990,12 @@
       "failed": "ล้มเหลว",
       "cancelled": "ยกเลิกแล้ว"
     },
-    "noFeedback": "ยังไม่มีคำติชม — ให้คะแนนคำตอบเพื่อสร้างชุดข้อมูลของคุณ"
+    "noFeedback": "ยังไม่มีคำติชม — ให้คะแนนคำตอบเพื่อสร้างชุดข้อมูลของคุณ",
+    "deleteSetConfirmTitle": "ลบ \"{{name}}\" หรือไม่",
+    "deleteSetConfirmDescription": "ชุดการประเมินและพรอมต์ในชุดจะถูกลบถาวร",
+    "deleteSetFailed": "ลบชุดการประเมินไม่ได้",
+    "runError": "ข้อผิดพลาด: {{detail}}",
+    "cancelFailed": "ยกเลิกการเรียกใช้ไม่ได้"
   },
   "passwordStrength": {
     "levels": {
@@ -3771,6 +4009,14 @@
       "hasCase": "ตัวพิมพ์ใหญ่และตัวพิมพ์เล็ก",
       "hasNumber": "ตัวเลขอย่างน้อยหนึ่งตัว",
       "tooLong": "ไม่เกิน 72 ไบต์"
+    },
+    "requirements": "ใช้อย่างน้อย 12 อักขระ และไม่เกิน 72 ไบต์ UTF-8 โดยมีตัวพิมพ์ใหญ่ ตัวพิมพ์เล็ก และตัวเลข",
+    "errors": {
+      "minLength": "รหัสผ่านต้องมีอย่างน้อย 12 อักขระ",
+      "tooLong": "รหัสผ่านต้องไม่เกิน 72 ไบต์ UTF-8",
+      "uppercase": "รหัสผ่านต้องมีตัวพิมพ์ใหญ่",
+      "lowercase": "รหัสผ่านต้องมีตัวพิมพ์เล็ก",
+      "number": "รหัสผ่านต้องมีตัวเลข"
     }
   },
   "connectModels": {
@@ -3804,7 +4050,8 @@
       "enable": "เปิดใช้งานผู้ให้บริการ",
       "enabling": "กำลังเปิดใช้งาน…",
       "enabled": "เชื่อมต่อ {{name}} แล้ว — โมเดลของผู้ให้บริการนี้พร้อมใช้งานแล้ว",
-      "enableFailed": "ไม่สามารถเปิดใช้งานผู้ให้บริการได้"
+      "enableFailed": "ไม่สามารถเปิดใช้งานผู้ให้บริการได้",
+      "urlLabel": "URL ของเซิร์ฟเวอร์"
     },
     "cloud": {
       "title": "API บนคลาวด์",
@@ -3813,7 +4060,8 @@
       "connect": "เชื่อมต่อ",
       "connecting": "กำลังเชื่อมต่อ…",
       "connected": "เชื่อมต่อ {{name}} แล้ว — โมเดลของผู้ให้บริการนี้พร้อมใช้งานแล้ว",
-      "saveFailed": "ไม่สามารถบันทึก API Key ได้"
+      "saveFailed": "ไม่สามารถบันทึก API Key ได้",
+      "keyLabel": "คีย์ API ของ {{name}}"
     }
   },
   "strands": {
@@ -3845,5 +4093,15 @@
     "deleteFailed": "ลบเซสชันไม่สำเร็จ",
     "saveFailed": "ไม่สามารถบันทึกเซสชันได้",
     "turnFailed": "เอนจินทำงานรอบนี้ไม่สำเร็จ"
+  },
+  "notFound": {
+    "title": "ไม่พบหน้า",
+    "description": "ไม่มีหน้านี้หรืออาจถูกย้ายแล้ว"
+  },
+  "themeToggle": {
+    "switchToLight": "สลับเป็นโหมดสว่าง",
+    "switchToDark": "สลับเป็นโหมดมืด",
+    "switchToAmoled": "สลับเป็นโหมดดำสนิท",
+    "switchToCelestial": "สลับเป็นโหมดท้องฟ้า"
   }
 }

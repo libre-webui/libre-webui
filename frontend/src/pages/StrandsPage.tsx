@@ -26,7 +26,15 @@ import {
   Wrench,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { Button, Select, Textarea } from '@/components/ui';
+import {
+  Button,
+  EmptyState,
+  ErrorState,
+  LoadingState,
+  Select,
+  Textarea,
+  WorkspaceToolbar,
+} from '@/components/ui';
 import { MessageContent } from '@/components/ui/MessageContent';
 import { composerSurfaceClass } from '@/components/composer/composerStyles';
 import strandsApi, {
@@ -389,38 +397,36 @@ export default function StrandsPage() {
       className='flex h-full min-h-0 flex-col bg-surface'
       data-testid='strands-page'
     >
-      <header className='flex shrink-0 items-center justify-between gap-3 border-b border-line px-4 py-3 sm:px-6'>
-        <div className='min-w-0'>
-          <h1 className='truncate text-lg font-medium text-ink'>
-            {t('strands.title')}
-          </h1>
-          <p className='truncate text-xs text-ink-muted'>
-            {health?.harnessVersion
-              ? t('strands.subtitleVersion', {
-                  version: health.harnessVersion,
-                })
-              : t('strands.subtitle')}
-          </p>
-        </div>
-        <Button
-          size='sm'
-          variant='outline'
-          onClick={() => void createSession()}
-          disabled={!!streaming}
-          data-testid='strands-new-session'
-        >
-          <MessageSquarePlus className='me-2 h-4 w-4' aria-hidden='true' />
-          {t('strands.newSession')}
-        </Button>
-      </header>
+      <WorkspaceToolbar
+        className='shrink-0'
+        title={t('strands.title')}
+        description={
+          health?.harnessVersion
+            ? t('strands.subtitleVersion', {
+                version: health.harnessVersion,
+              })
+            : t('strands.subtitle')
+        }
+        actions={
+          <Button
+            size='sm'
+            variant='outline'
+            onClick={() => void createSession()}
+            disabled={!!streaming}
+            data-testid='strands-new-session'
+          >
+            <MessageSquarePlus className='me-2 h-4 w-4' aria-hidden='true' />
+            {t('strands.newSession')}
+          </Button>
+        }
+      />
 
       {loadError && (
-        <div
-          role='alert'
-          className='m-4 rounded-xl border border-line bg-surface-subtle p-4 text-sm text-ink'
-        >
-          {loadError}
-        </div>
+        <ErrorState
+          size='sm'
+          message={loadError}
+          className='m-4 rounded-xl border border-line bg-surface-subtle'
+        />
       )}
 
       <div className='flex min-h-0 flex-1 flex-col lg:flex-row'>
@@ -487,17 +493,9 @@ export default function StrandsPage() {
           <div className='scroll-region min-h-0 flex-1 overflow-y-auto px-4 py-5 sm:px-6'>
             <div className='mx-auto max-w-3xl space-y-5'>
               {loading ? (
-                <p role='status' className='text-sm text-ink-muted'>
-                  {t('common.loading')}
-                </p>
+                <LoadingState />
               ) : messages.length === 0 && !streaming ? (
-                <div className='py-12 text-center'>
-                  <Bot
-                    className='mx-auto mb-3 h-7 w-7 text-ink-muted'
-                    aria-hidden='true'
-                  />
-                  <p className='text-sm text-ink-muted'>{t('strands.empty')}</p>
-                </div>
+                <EmptyState icon={Bot} title={t('strands.empty')} />
               ) : (
                 messages.map(message => (
                   <MessageView key={message.id} message={message} />

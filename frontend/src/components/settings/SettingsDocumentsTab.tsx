@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   BookOpen,
@@ -39,6 +39,7 @@ import type {
   KnowledgeCollection,
   UserPreferences,
 } from '@/types';
+import { SettingsTabHeader } from './SettingsTabHeader';
 import { SettingsToggle } from './SettingsToggle';
 
 type EmbeddingSettings = UserPreferences['embeddingSettings'];
@@ -75,18 +76,21 @@ export function SettingsDocumentsTab({
   onSave,
 }: SettingsDocumentsTabProps) {
   const { t } = useTranslation();
+  const embeddingsTitleId = useId();
+  const modelSelectId = useId();
 
   return (
     <div className='space-y-6'>
       <div>
-        <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4'>
-          {t('settings.documents.title')}
-        </h3>
+        <SettingsTabHeader title={t('settings.documents.title')} />
 
         <div className='bg-gray-50 dark:bg-dark-50 p-4 rounded-lg border border-gray-200 dark:border-dark-300 space-y-4'>
           <div className='flex items-center justify-between'>
             <div>
-              <h4 className='text-sm font-medium text-gray-900 dark:text-gray-100'>
+              <h4
+                id={embeddingsTitleId}
+                className='text-sm font-medium text-gray-900 dark:text-gray-100'
+              >
                 {t('settings.documents.embeddings.title')}
               </h4>
               <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
@@ -96,16 +100,21 @@ export function SettingsDocumentsTab({
             <SettingsToggle
               checked={settings.enabled}
               onChange={checked => onSettingChange('enabled', checked)}
+              aria-labelledby={embeddingsTitleId}
             />
           </div>
 
           {settings.enabled && (
             <div className='space-y-4 pt-4 border-t border-gray-200 dark:border-dark-300'>
               <div>
-                <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                <label
+                  htmlFor={modelSelectId}
+                  className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'
+                >
                   {t('settings.documents.embeddings.model')}
                 </label>
                 <Select
+                  id={modelSelectId}
                   value={effectiveSettings.model}
                   onChange={event =>
                     onSettingChange('model', event.target.value)
@@ -352,7 +361,8 @@ function KnowledgeCollectionsSection() {
             if (event.key === 'Enter') void handleCreate();
           }}
           placeholder={t('settings.documents.collections.namePlaceholder')}
-          className='flex-1 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-primary-500/40 focus:outline-none dark:border-dark-300 dark:bg-dark-50 dark:text-dark-900'
+          aria-label={t('settings.documents.collections.namePlaceholder')}
+          className='flex-1 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 dark:border-dark-300 dark:bg-dark-50 dark:text-dark-900'
         />
         <Button
           size='sm'
@@ -382,6 +392,7 @@ function KnowledgeCollectionsSection() {
                   onClick={() => setPendingCollectionDelete(null)}
                   className='text-red-400 hover:text-red-600 dark:hover:text-red-300'
                   title={t('common.cancel')}
+                  aria-label={t('common.cancel')}
                 >
                   <X className='h-3 w-3' />
                 </button>
@@ -411,6 +422,7 @@ function KnowledgeCollectionsSection() {
                       }
                       className='text-gray-400 transition-colors hover:text-primary-500 dark:text-dark-500'
                       title={t('settings.documents.collections.share')}
+                      aria-label={t('settings.documents.collections.share')}
                       data-testid='collection-share'
                     >
                       <Share2 className='h-3 w-3' />
@@ -419,6 +431,7 @@ function KnowledgeCollectionsSection() {
                       onClick={() => setPendingCollectionDelete(collection.id)}
                       className='text-gray-400 transition-colors hover:text-red-500 dark:text-dark-500'
                       title={t('common.delete')}
+                      aria-label={t('common.delete')}
                     >
                       <X className='h-3 w-3' />
                     </button>
@@ -457,8 +470,7 @@ function KnowledgeCollectionsSection() {
                   </p>
                   <Button
                     size='sm'
-                    variant='outline'
-                    className='text-red-600 border-red-200 hover:bg-red-50 dark:text-red-400 dark:border-red-800 dark:hover:bg-red-900/20'
+                    variant='danger'
                     onClick={() => void handleDeleteDocument(document.id)}
                   >
                     {t('common.delete')}
@@ -511,7 +523,10 @@ function KnowledgeCollectionsSection() {
                           event.target.value || null
                         )
                       }
-                      className='rounded-lg border border-gray-200 bg-white px-2 py-1 text-xs text-gray-700 focus:outline-none dark:border-dark-300 dark:bg-dark-50 dark:text-dark-800'
+                      aria-label={t('settings.documents.collections.assignTo', {
+                        name: document.filename,
+                      })}
+                      className='rounded-lg border border-gray-200 bg-white px-2 py-1 text-xs text-gray-700 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 dark:border-dark-300 dark:bg-dark-50 dark:text-dark-800'
                     >
                       <option value=''>
                         {t('settings.documents.collections.none')}
@@ -527,6 +542,7 @@ function KnowledgeCollectionsSection() {
                     onClick={() => setPendingDocumentDelete(document.id)}
                     className='text-gray-400 transition-colors hover:text-red-500 dark:text-dark-500'
                     title={t('common.delete')}
+                    aria-label={t('common.delete')}
                   >
                     <Trash2 className='h-4 w-4' />
                   </button>
@@ -569,13 +585,19 @@ function RangeSetting({
   format = nextValue => String(nextValue),
   onChange,
 }: RangeSettingProps) {
+  const inputId = useId();
   return (
     <div>
-      <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+      <label
+        htmlFor={inputId}
+        className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'
+      >
         {label}: {format(value)}
       </label>
       <input
+        id={inputId}
         type='range'
+        aria-valuetext={format(value)}
         min={min}
         max={max}
         step={step}

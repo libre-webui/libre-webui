@@ -40,6 +40,7 @@ import { Button, Input } from '@/components/ui';
 import { GenerationIndicator } from '@/components/ui/GenerationIndicator';
 import { SidebarHoverCard } from './SidebarHoverCard';
 import { SidebarScrollArea } from './SidebarScrollArea';
+import { SidebarSheetDialog } from './SidebarSheetDialog';
 import { compactSidebarButtonClass } from './compactSidebarStyles';
 import { useSidebarMenu } from './useSidebarMenu';
 import type { ChatSession, Persona, SessionFolder } from '@/types';
@@ -403,14 +404,16 @@ export function SidebarSessions({
             <div className='flex items-center gap-0.5'>
               {onCreateFolder && (
                 <button
+                  type='button'
                   onClick={() => {
                     setCreatingFolder(true);
                     setFolderNameDraft('');
                   }}
-                  className='flex h-6 w-6 items-center justify-center rounded-md text-ink-subtle transition-colors hover:bg-interactive-hover hover:text-ink'
+                  className='flex items-center justify-center rounded-md p-1.5 text-ink-muted transition-colors hover:bg-interactive-hover hover:text-ink'
                   title={t('chat.session.folder.new')}
+                  aria-label={t('chat.session.folder.new')}
                 >
-                  <FolderPlus className='h-3.5 w-3.5' />
+                  <FolderPlus className='h-3.5 w-3.5' aria-hidden='true' />
                 </button>
               )}
               <span className='text-[10px] tabular-nums text-ink-subtle font-medium'>
@@ -450,7 +453,7 @@ export function SidebarSessions({
             >
               <MessageSquare className='h-[18px] w-[18px]' />
               {sessions.length > 0 && (
-                <span className='absolute -end-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-md bg-primary-500 px-1 text-[9px] font-semibold tabular-nums text-white shadow-sm'>
+                <span className='absolute -end-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-md bg-primary-600 px-1 text-[9px] font-semibold tabular-nums text-white shadow-sm'>
                   {sessions.length > 99 ? '99+' : sessions.length}
                 </span>
               )}
@@ -503,6 +506,7 @@ export function SidebarSessions({
                     ) : (
                       <>
                         <button
+                          type='button'
                           onClick={() =>
                             toggleFolderCollapsed(group.folder!.id)
                           }
@@ -523,18 +527,21 @@ export function SidebarSessions({
                         <div className='flex items-center gap-0.5 transition-opacity sm:opacity-0 sm:group-hover/folder:opacity-100 sm:group-focus-within/folder:opacity-100 [@media(hover:none)]:opacity-100'>
                           {onRenameFolder && (
                             <button
+                              type='button'
                               onClick={() => {
                                 setRenamingFolderId(group.folder!.id);
                                 setFolderNameDraft(group.folder!.name);
                               }}
-                              className='rounded-md p-0.5 text-gray-400 hover:text-gray-700 dark:text-dark-500 dark:hover:text-dark-800'
-                              title={t('chat.session.renameChat')}
+                              className='rounded-md p-1.5 text-ink-muted hover:text-ink'
+                              title={t('chat.session.folder.rename')}
+                              aria-label={t('chat.session.folder.rename')}
                             >
-                              <Edit3 className='h-3 w-3' />
+                              <Edit3 className='h-3 w-3' aria-hidden='true' />
                             </button>
                           )}
                           {onDeleteFolder && (
                             <button
+                              type='button'
                               onClick={() => {
                                 if (
                                   window.confirm(
@@ -544,10 +551,11 @@ export function SidebarSessions({
                                   onDeleteFolder(group.folder!.id);
                                 }
                               }}
-                              className='rounded-md p-0.5 text-gray-400 hover:text-red-500 dark:text-dark-500 dark:hover:text-red-400'
+                              className='rounded-md p-1.5 text-ink-muted hover:text-error-600 dark:hover:text-error-400'
                               title={t('chat.session.folder.delete')}
+                              aria-label={t('chat.session.folder.delete')}
                             >
-                              <Trash2 className='h-3 w-3' />
+                              <Trash2 className='h-3 w-3' aria-hidden='true' />
                             </button>
                           )}
                         </div>
@@ -944,9 +952,8 @@ export function SidebarSessions({
               onClick={() => setMobileActionSessionId(null)}
               aria-label={t('common.close')}
             />
-            <div
-              role='dialog'
-              aria-modal='true'
+            <SidebarSheetDialog
+              onClose={() => setMobileActionSessionId(null)}
               aria-label={t('palette.actions')}
               className='absolute inset-x-3 bottom-3 rounded-2xl border border-black/[0.08] bg-surface p-2 shadow-[0_20px_70px_rgba(0,0,0,0.3)] dark:border-white/[0.09] dark:bg-dark-100'
               data-testid='sidebar-session-actions-sheet'
@@ -1066,7 +1073,7 @@ export function SidebarSessions({
                 <Trash2 className='h-4 w-4 shrink-0' />
                 {t('chat.session.deleteChat')}
               </button>
-            </div>
+            </SidebarSheetDialog>
           </div>,
           document.body
         )}

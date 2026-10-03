@@ -15,10 +15,11 @@
  * limitations under the License.
  */
 
-import type { ChangeEvent } from 'react';
+import { useId, type ChangeEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button, Select, Textarea } from '@/components/ui';
 import type { ChatProviderType, OllamaModel, UserPreferences } from '@/types';
+import { SettingsTabHeader } from './SettingsTabHeader';
 import { SettingsToggle } from './SettingsToggle';
 import {
   chatModelOptionKey,
@@ -84,6 +85,11 @@ export function SettingsModelsTab({
   const isSettingsAdmin =
     user?.role === 'admin' || systemInfo?.requiresAuth === false;
   const { t } = useTranslation();
+  const defaultModelId = useId();
+  const systemMessageId = useId();
+  const visionModelId = useId();
+  const autoTitleLabelId = useId();
+  const taskModelId = useId();
   const selectedSelection = {
     model: selectedModel,
     providerType: selectedProviderType,
@@ -101,15 +107,17 @@ export function SettingsModelsTab({
   return (
     <div className='space-y-6'>
       <div>
-        <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4'>
-          {t('settings.model.title')}
-        </h3>
+        <SettingsTabHeader title={t('settings.model.title')} />
         <div className='space-y-6'>
           <div className='bg-white dark:bg-dark-100 rounded-lg p-4 border border-gray-200 dark:border-dark-300'>
-            <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3'>
+            <label
+              htmlFor={defaultModelId}
+              className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3'
+            >
               {t('settings.model.defaultModel')}
             </label>
             <Select
+              id={defaultModelId}
               aria-label={t('settings.model.defaultModel')}
               data-testid='default-model-select'
               value={selectedModelKey}
@@ -132,9 +140,9 @@ export function SettingsModelsTab({
               className='bg-white dark:bg-dark-100 rounded-lg p-4 border border-gray-200 dark:border-dark-300'
               data-testid='current-model-info'
             >
-              <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3'>
+              <h4 className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3'>
                 {t('settings.model.currentModelInfo')}
-              </label>
+              </h4>
               <div className='bg-gray-50 dark:bg-dark-50 rounded-lg p-4 border border-gray-200 dark:border-dark-300'>
                 <div className='grid grid-cols-1 sm:grid-cols-2 gap-3'>
                   <ModelInfoItem
@@ -176,10 +184,14 @@ export function SettingsModelsTab({
           )}
 
           <div className='bg-white dark:bg-dark-100 rounded-lg p-4 border border-gray-200 dark:border-dark-300'>
-            <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3'>
+            <label
+              htmlFor={systemMessageId}
+              className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3'
+            >
               {t('settings.systemMessage.title')}
             </label>
             <Textarea
+              id={systemMessageId}
               value={tempSystemMessage}
               onChange={onSystemMessageChange}
               placeholder={t('settings.systemMessage.placeholder')}
@@ -203,19 +215,23 @@ export function SettingsModelsTab({
 
         <div className='mt-6'>
           <div className='bg-white dark:bg-dark-100 rounded-lg p-4 border border-gray-200 dark:border-dark-300'>
-            <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3'>
+            <h4 className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3'>
               {t('settings.model.specializedModels', {
                 defaultValue: 'Specialized Models',
               })}
-            </label>
+            </h4>
             <div className='grid grid-cols-1 gap-5 lg:grid-cols-2'>
               <div>
-                <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                <label
+                  htmlFor={visionModelId}
+                  className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'
+                >
                   {t('settings.model.visionModel', {
                     defaultValue: 'Vision Model',
                   })}
                 </label>
                 <Select
+                  id={visionModelId}
                   aria-label={t('settings.model.visionModel')}
                   data-testid='vision-model-select'
                   value={currentVisionModel}
@@ -233,7 +249,10 @@ export function SettingsModelsTab({
               <div className='lg:border-s lg:border-gray-200 lg:ps-5 dark:lg:border-dark-300'>
                 <div className='flex items-center justify-between'>
                   <div className='flex flex-col pe-4'>
-                    <span className='text-sm font-medium text-gray-700 dark:text-gray-300'>
+                    <span
+                      id={autoTitleLabelId}
+                      className='text-sm font-medium text-gray-700 dark:text-gray-300'
+                    >
                       {t('settings.model.autoTitle.enable')}
                     </span>
                     <span className='text-xs text-gray-500 dark:text-gray-400'>
@@ -243,15 +262,20 @@ export function SettingsModelsTab({
                   <SettingsToggle
                     checked={preferences.titleSettings?.autoTitle || false}
                     onChange={onAutoTitleChange}
+                    aria-labelledby={autoTitleLabelId}
                   />
                 </div>
 
                 {preferences.titleSettings?.autoTitle && (
                   <div className='mt-4'>
-                    <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                    <label
+                      htmlFor={taskModelId}
+                      className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'
+                    >
                       {t('settings.model.autoTitle.taskModel')}
                     </label>
                     <Select
+                      id={taskModelId}
                       aria-label={t('settings.model.autoTitle.taskModel')}
                       data-testid='task-model-select'
                       value={currentTaskModel}

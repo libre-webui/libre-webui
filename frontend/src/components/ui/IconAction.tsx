@@ -14,10 +14,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 import React from 'react';
 import { cn } from '@/utils';
-
 interface IconActionProps {
   icon: React.ComponentType<{ className?: string }>;
   /** Doubles as the tooltip and the accessible name. */
@@ -27,7 +25,6 @@ interface IconActionProps {
   testId?: string;
   onClick: () => void;
 }
-
 /** Compact icon-only row action used by the workspace list pages. */
 export const IconAction: React.FC<IconActionProps> = ({
   icon: Icon,
@@ -45,12 +42,12 @@ export const IconAction: React.FC<IconActionProps> = ({
     aria-label={label}
     data-testid={testId}
     className={cn(
-      'rounded-lg p-1.5 text-gray-400 transition-colors disabled:cursor-not-allowed disabled:opacity-50',
+      'inline-flex h-8 w-8 items-center justify-center rounded-lg text-ink-muted transition-colors duration-150 disabled:cursor-not-allowed disabled:opacity-50',
       destructive
-        ? 'hover:bg-red-500/10 hover:text-red-500'
-        : 'hover:bg-black/[0.04] hover:text-gray-700 dark:hover:bg-white/[0.06] dark:hover:text-dark-800'
+        ? 'hover:bg-error-500/10 hover:text-error-600 dark:hover:text-error-400'
+        : 'hover:bg-interactive-hover hover:text-ink'
     )}
   >
-    <Icon className='h-3.5 w-3.5' />
+    <Icon className='h-4 w-4' />
   </button>
 );

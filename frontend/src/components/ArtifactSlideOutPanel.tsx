@@ -18,6 +18,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { createPortal } from 'react-dom';
+import toast from 'react-hot-toast';
 import {
   Code,
   FileText,
@@ -215,6 +216,21 @@ export const ArtifactSlideOutPanel: React.FC = () => {
     [panelWidth, setIsResizing]
   );
 
+  // Keyboard equivalent of dragging. The panel hugs the inline-end edge, so
+  // the arrow pointing away from that edge widens it in either direction.
+  const handleResizeKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+    e.preventDefault();
+    const widen = rtl ? e.key === 'ArrowRight' : e.key === 'ArrowLeft';
+    const step = e.shiftKey ? 96 : 24;
+    setPanelWidth(
+      Math.min(
+        getMaxPanelWidth(),
+        Math.max(MIN_PANEL_WIDTH, panelWidth + (widen ? step : -step))
+      )
+    );
+  };
+
   const handleResizeMove = useCallback(
     (e: PointerEvent) => {
       if (!isResizing) return;
@@ -338,6 +354,7 @@ export const ArtifactSlideOutPanel: React.FC = () => {
       setTimeout(() => setCopied(false), 2000);
     } catch (_err) {
       logger.error('Failed to copy:', _err);
+      toast.error(t('chat.message.copyFailed'));
     }
   };
 
@@ -618,9 +635,18 @@ export const ArtifactSlideOutPanel: React.FC = () => {
         {!isMobile && (
           <div
             onPointerDown={handleResizeStart}
+            onKeyDown={handleResizeKeyDown}
+            role='separator'
+            aria-orientation='vertical'
+            tabIndex={0}
+            aria-label={t('artifacts.resizePanel')}
+            aria-valuenow={Math.round(panelWidth)}
+            aria-valuemin={MIN_PANEL_WIDTH}
+            aria-valuemax={Math.round(getMaxPanelWidth())}
             data-testid='artifact-resize-handle'
             title={t('artifacts.dragEdgeToResize')}
             className={cn(
+              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500',
               'absolute start-0 top-0 bottom-0 w-4 -ms-2 cursor-col-resize z-[56]',
               'flex items-center justify-center',
               'touch-none select-none group'
@@ -631,7 +657,7 @@ export const ArtifactSlideOutPanel: React.FC = () => {
               className={cn(
                 'w-1 h-16 rounded-full transition-all duration-200',
                 'bg-gray-300 dark:bg-dark-300',
-                'group-hover:bg-primary-500 group-hover:h-24',
+                'group-hover:bg-primary-500 group-hover:h-24 group-focus-visible:bg-primary-500',
                 isResizing && 'bg-primary-500 h-24'
               )}
             />
@@ -659,7 +685,7 @@ export const ArtifactSlideOutPanel: React.FC = () => {
               className='text-sm font-semibold text-gray-900 dark:text-gray-100 truncate'
               title={
                 artifact.description ||
-                `${t('artifacts.created')}: ${new Date(artifact.createdAt).toLocaleString()}`
+                `${t('artifacts.created')}: ${new Date(artifact.createdAt).toLocaleString(i18n.language)}`
               }
             >
               {artifact.title}
@@ -678,8 +704,12 @@ export const ArtifactSlideOutPanel: React.FC = () => {
                 onClick={() => openArtifactPanel(versions[versionIndex - 1])}
                 className='h-7 w-7 p-0'
                 title={t('artifacts.previousVersion')}
+                aria-label={t('artifacts.previousVersion')}
               >
-                <ChevronLeft className='h-3.5 w-3.5 rtl:rotate-180' />
+                <ChevronLeft
+                  className='h-3.5 w-3.5 rtl:rotate-180'
+                  aria-hidden='true'
+                />
               </Button>
               <span className='whitespace-nowrap text-xs tabular-nums text-gray-500 dark:text-dark-600'>
                 {t('artifacts.versionOf', {
@@ -694,8 +724,12 @@ export const ArtifactSlideOutPanel: React.FC = () => {
                 onClick={() => openArtifactPanel(versions[versionIndex + 1])}
                 className='h-7 w-7 p-0'
                 title={t('artifacts.nextVersion')}
+                aria-label={t('artifacts.nextVersion')}
               >
-                <ChevronRight className='h-3.5 w-3.5 rtl:rotate-180' />
+                <ChevronRight
+                  className='h-3.5 w-3.5 rtl:rotate-180'
+                  aria-hidden='true'
+                />
               </Button>
             </div>
           )}
@@ -708,6 +742,7 @@ export const ArtifactSlideOutPanel: React.FC = () => {
                 onClick={() => setViewMode('preview')}
                 className='h-7 px-2 text-xs'
                 title={t('artifacts.previewMode')}
+                aria-pressed={viewMode === 'preview'}
               >
                 <Eye className='h-3.5 w-3.5 me-1' />
                 {t('artifacts.preview')}
@@ -718,6 +753,7 @@ export const ArtifactSlideOutPanel: React.FC = () => {
                 onClick={() => setViewMode('code')}
                 className='h-7 px-2 text-xs'
                 title={t('artifacts.codeMode')}
+                aria-pressed={viewMode === 'code'}
               >
                 <Code2 className='h-3.5 w-3.5 me-1' />
                 {t('artifacts.code')}
@@ -732,11 +768,15 @@ export const ArtifactSlideOutPanel: React.FC = () => {
               onClick={() => copyToClipboard(artifact.content)}
               className='h-7 w-7 p-0 hover:bg-gray-100 dark:hover:bg-dark-200'
               title={t('artifacts.copyContent')}
+              aria-label={t('artifacts.copyContent')}
             >
               {copied ? (
-                <Check className='h-3.5 w-3.5 text-green-500' />
+                <Check
+                  className='h-3.5 w-3.5 text-green-500'
+                  aria-hidden='true'
+                />
               ) : (
-                <Copy className='h-3.5 w-3.5' />
+                <Copy className='h-3.5 w-3.5' aria-hidden='true' />
               )}
             </Button>
 
@@ -746,8 +786,9 @@ export const ArtifactSlideOutPanel: React.FC = () => {
               onClick={downloadArtifact}
               className='h-7 w-7 p-0 hover:bg-gray-100 dark:hover:bg-dark-200'
               title={t('artifacts.download')}
+              aria-label={t('artifacts.download')}
             >
-              <Download className='h-3.5 w-3.5' />
+              <Download className='h-3.5 w-3.5' aria-hidden='true' />
             </Button>
 
             <Button
@@ -758,8 +799,11 @@ export const ArtifactSlideOutPanel: React.FC = () => {
               title={
                 isDesktop ? t('common.close') : t('artifacts.closePanelEsc')
               }
+              aria-label={
+                isDesktop ? t('common.close') : t('artifacts.closePanelEsc')
+              }
             >
-              <X className='h-4 w-4' />
+              <X className='h-4 w-4' aria-hidden='true' />
             </Button>
           </div>
         </div>

@@ -817,7 +817,7 @@ test('wallpaper accepts exactly 10 MiB and rejects one extra byte with a French 
     buffer: Buffer.concat([source, Buffer.from(' ')]),
   });
   await expect(
-    page.getByRole('status').filter({
+    page.getByRole('alert').filter({
       hasText:
         "La taille de l'image d'arrière-plan ne doit pas dépasser 10 Mo.",
     })

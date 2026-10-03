@@ -20,9 +20,11 @@ import { useTranslation } from 'react-i18next';
 import { toast } from 'react-hot-toast';
 import { MonitorSmartphone } from 'lucide-react';
 import { Button } from '@/components/ui';
+import { confirmAction } from '@/components/ui/confirmStore';
 import { authApi } from '@/utils/api';
 import type { AuthSession } from '@/utils/api';
 import { SettingsMfaSection } from './SettingsMfaSection';
+import { SettingsTabHeader } from './SettingsTabHeader';
 
 const formatDate = (value: string | null): string =>
   value ? new Date(value).toLocaleString() : '—';
@@ -30,7 +32,7 @@ const formatDate = (value: string | null): string =>
 /**
  * Where the account is signed in. Lists every active session and lets the
  * user revoke individual ones or everything except the current session.
- * Revoking is reversible by signing in again, so no confirmation step.
+ * Signing out another device can interrupt its work, so both actions ask first.
  */
 export const SettingsSessionsTab: React.FC = () => {
   const { t } = useTranslation();
@@ -64,6 +66,15 @@ export const SettingsSessionsTab: React.FC = () => {
   }, [load]);
 
   const handleRevoke = async (session: AuthSession) => {
+    const confirmed = await confirmAction({
+      title: t('settings.sessions.signOutConfirmTitle'),
+      description: t('settings.sessions.signOutConfirmDescription', {
+        device: session.userAgent || t('settings.sessions.unknownDevice'),
+      }),
+      confirmLabel: t('settings.sessions.signOut'),
+      destructive: true,
+    });
+    if (!confirmed) return;
     setRevokingId(session.id);
     try {
       const response = await authApi.revokeSession(session.id);
@@ -87,6 +98,15 @@ export const SettingsSessionsTab: React.FC = () => {
   };
 
   const handleRevokeOthers = async () => {
+    const confirmed = await confirmAction({
+      title: t('settings.sessions.signOutOthersConfirmTitle'),
+      description: t('settings.sessions.signOutOthersConfirmDescription', {
+        count: otherActiveSessions.length,
+      }),
+      confirmLabel: t('settings.sessions.signOutOthers'),
+      destructive: true,
+    });
+    if (!confirmed) return;
     setRevokingOthers(true);
     try {
       const response = await authApi.revokeOtherSessions();
@@ -121,18 +141,22 @@ export const SettingsSessionsTab: React.FC = () => {
   return (
     <div className='space-y-8'>
       <SettingsMfaSection />
-      <div>
-        <h3 className='flex items-center gap-2 text-lg font-semibold text-gray-900 dark:text-gray-100'>
-          <MonitorSmartphone className='h-5 w-5 text-primary-500' />
-          {t('settings.sessions.title', 'Sessions')}
-        </h3>
-        <p className='mt-1 text-sm text-gray-500 dark:text-gray-400'>
-          {t(
-            'settings.sessions.description',
-            'Everywhere this account is signed in. Signing a session out takes effect immediately; signing in again restores access.'
-          )}
-        </p>
-      </div>
+      <SettingsTabHeader
+        className='mb-0'
+        title={
+          <span className='flex items-center gap-2'>
+            <MonitorSmartphone
+              className='h-5 w-5 text-primary-500'
+              aria-hidden='true'
+            />
+            {t('settings.sessions.title', 'Sessions')}
+          </span>
+        }
+        description={t(
+          'settings.sessions.description',
+          'Everywhere this account is signed in. Signing a session out takes effect immediately; signing in again restores access.'
+        )}
+      />
 
       <div className='flex justify-end'>
         <Button

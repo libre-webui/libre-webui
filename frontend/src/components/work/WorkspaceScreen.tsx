@@ -27,8 +27,11 @@
 
 import { isFinishedWorkStatus } from '@/utils/workStatus';
 import type { WorkTaskStatus } from '@/types/work';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useId, useRef, useState } from 'react';
+import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
+import { Button } from '@/components/ui';
+import { useDialogFocus } from '@/hooks/useDialogFocus';
 import {
   Circle,
   GraduationCap,
@@ -103,6 +106,84 @@ const CONTROL_STATE_POLL_MS = 3_000;
 const CONTROL_RENEW_MS = 60_000;
 /** A demonstration recording caps itself rather than growing unbounded. */
 const TEACH_MAX_EVENTS = 5_000;
+
+/** Names a finished demonstration; a real modal so focus cannot leak behind. */
+function TeachNameDialog({
+  name,
+  saving,
+  onNameChange,
+  onSave,
+  onDiscard,
+}: {
+  name: string;
+  saving: boolean;
+  onNameChange: (value: string) => void;
+  onSave: () => void;
+  onDiscard: () => void;
+}) {
+  const { t } = useTranslation();
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const titleId = useId();
+  // Discarding mid-save would orphan the request, so Escape waits it out.
+  useDialogFocus(dialogRef, {
+    onClose: () => {
+      if (!saving) onDiscard();
+    },
+  });
+  return (
+    <div className='absolute inset-0 z-20 flex items-center justify-center bg-black/60'>
+      <div
+        ref={dialogRef}
+        role='dialog'
+        aria-modal='true'
+        aria-labelledby={titleId}
+        tabIndex={-1}
+        className='flex w-72 flex-col gap-3 rounded-xl border border-line bg-surface-raised p-4 shadow-xl outline-none'
+      >
+        <h3 id={titleId} className='text-sm font-medium text-ink'>
+          {t('work.screen.teachNamePlaceholder')}
+        </h3>
+        <input
+          autoFocus
+          value={name}
+          aria-labelledby={titleId}
+          onChange={event => onNameChange(event.target.value)}
+          onKeyDown={event => {
+            if (event.key === 'Enter') onSave();
+          }}
+          placeholder={t('work.screen.teachNamePlaceholder')}
+          data-testid='work-screen-teach-name'
+          className='rounded-lg border border-line bg-surface px-3 py-2 text-sm text-ink outline-none placeholder:text-ink-subtle focus:border-primary-500 focus:ring-2 focus:ring-primary-500/30'
+        />
+        <div className='flex justify-end gap-2'>
+          <button
+            type='button'
+            onClick={onDiscard}
+            disabled={saving}
+            className='rounded-lg px-3 py-1.5 text-xs text-ink-muted transition-colors hover:bg-surface-subtle disabled:opacity-50'
+          >
+            {t('work.screen.teachDiscard')}
+          </button>
+          <Button
+            size='sm'
+            data-testid='work-screen-teach-confirm'
+            onClick={onSave}
+            disabled={saving || !name.trim()}
+          >
+            {saving && (
+              <Loader2
+                aria-hidden='true'
+                size={12}
+                className='animate-spin motion-reduce:animate-none'
+              />
+            )}
+            {t('work.screen.teachSave')}
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export function WorkspaceScreen({
   taskId,
@@ -490,9 +571,13 @@ export function WorkspaceScreen({
       updateConnection({
         error: apiError.response?.data?.message ?? null,
       });
+      // The connection error is hidden while the screen is up, so say it here.
+      toast.error(
+        apiError.response?.data?.message ?? t('work.screen.teachSaveFailed')
+      );
       setTeachPhase('naming');
     }
-  }, [taskId, teachName, updateConnection]);
+  }, [taskId, teachName, updateConnection, t]);
 
   const driving = mode === 'control' && state === 'connected';
   const someoneElseDriving =
@@ -594,7 +679,7 @@ export function WorkspaceScreen({
           screen's pixels. */}
       <div className='flex shrink-0 flex-wrap items-center gap-2 border-b border-line bg-surface px-3 py-2'>
         <div
-          className={`rounded-md px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide ${
+          className={`rounded-md px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide rtl:tracking-normal ${
             recording
               ? 'bg-red-500/15 text-red-500'
               : driving
@@ -742,43 +827,13 @@ export function WorkspaceScreen({
           </div>
         )}
         {(teachPhase === 'naming' || teachPhase === 'saving') && (
-          <div className='absolute inset-0 z-20 flex items-center justify-center bg-black/60'>
-            <div className='flex w-72 flex-col gap-3 rounded-xl border border-line bg-surface-raised p-4 shadow-xl'>
-              <input
-                autoFocus
-                value={teachName}
-                onChange={event => setTeachName(event.target.value)}
-                onKeyDown={event => {
-                  if (event.key === 'Enter') void handleTeachSave();
-                }}
-                placeholder={t('work.screen.teachNamePlaceholder')}
-                data-testid='work-screen-teach-name'
-                className='rounded-lg border border-line bg-surface px-3 py-2 text-sm text-ink outline-none placeholder:text-ink-subtle focus:border-line-strong'
-              />
-              <div className='flex justify-end gap-2'>
-                <button
-                  type='button'
-                  onClick={handleTeachDiscard}
-                  disabled={teachPhase === 'saving'}
-                  className='rounded-lg px-3 py-1.5 text-xs text-ink-muted transition-colors hover:bg-surface-subtle'
-                >
-                  {t('work.screen.teachDiscard')}
-                </button>
-                <button
-                  type='button'
-                  data-testid='work-screen-teach-confirm'
-                  onClick={() => void handleTeachSave()}
-                  disabled={teachPhase === 'saving' || !teachName.trim()}
-                  className='flex items-center gap-2 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs text-white transition-colors hover:bg-emerald-500 disabled:opacity-50'
-                >
-                  {teachPhase === 'saving' && (
-                    <Loader2 size={12} className='animate-spin' />
-                  )}
-                  {t('work.screen.teachSave')}
-                </button>
-              </div>
-            </div>
-          </div>
+          <TeachNameDialog
+            name={teachName}
+            saving={teachPhase === 'saving'}
+            onNameChange={setTeachName}
+            onSave={() => void handleTeachSave()}
+            onDiscard={handleTeachDiscard}
+          />
         )}
         {control.agentWaiting && !driving && state === 'connected' && (
           <div

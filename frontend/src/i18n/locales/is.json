@@ -41,7 +41,8 @@
     "remove": "Fjarlægja",
     "home": "Heim",
     "more": "Meira",
-    "reasoning": "Rökstuðningur"
+    "reasoning": "Rökstuðningur",
+    "skipToContent": "Fara í efni"
   },
   "brand": {
     "name": "Libre WebUI",
@@ -49,7 +50,10 @@
   },
   "appInitialization": {
     "ollamaUnavailable": "Ollama-þjónustan er ekki tiltæk. Enn er hægt að nota líkön úr viðbótum.",
-    "backendConnectionFailed": "Ekki tókst að tengjast bakendaþjónustunni"
+    "backendConnectionFailed": "Ekki tókst að tengjast bakendaþjónustunni",
+    "connecting": "Tengist bakenda… ({{attempt}}/{{total}})",
+    "startingUp": "Ræsi…",
+    "backendUnreachableHint": "Gakktu úr skugga um að bakendinn sé í gangi og reyndu aftur."
   },
   "auth": {
     "login": {
@@ -189,7 +193,15 @@
       "removed": "Aðgangslykill fjarlægður.",
       "removeFailed": "Ekki tókst að fjarlægja aðgangslykilinn.",
       "signInButton": "Skrá inn með aðgangslykli",
-      "signInFailed": "Innskráning með aðgangslykli mistókst."
+      "signInFailed": "Innskráning með aðgangslykli mistókst.",
+      "removeConfirmTitle": "Fjarlægja þennan aðgangslykil?",
+      "removeConfirmDescription": "„{{name}}“ virkar ekki lengur til innskráningar. Þú getur skráð hann aftur síðar."
+    },
+    "password": {
+      "show": "Sýna lykilorð",
+      "hide": "Fela lykilorð",
+      "showConfirmation": "Sýna staðfestingu lykilorðs",
+      "hideConfirmation": "Fela staðfestingu lykilorðs"
     }
   },
   "setup": {
@@ -242,7 +254,8 @@
       "envNote": "Þessi lykill er einnig vistaður í backend/.env skránni sem ENCRYPTION_KEY",
       "acknowledgment": "Ég hef vistað dulritunarlyklinn minn á öruggum stað og skil að ef ég týni honum gætu gögn glatast.",
       "confirmRequired": "Staðfestu að þú hafir vistað dulritunarlyklinn",
-      "continue": "Halda áfram í Libre WebUI"
+      "continue": "Halda áfram í Libre WebUI",
+      "loadFailed": "Ekki tókst að hlaða dulkóðunarlyklinum. Reyndu aftur til að halda áfram."
     },
     "connectModels": {
       "title": "Tengdu líkönin þín",
@@ -336,7 +349,8 @@
       "toolsOn": "Tól virk — líkanið má kalla á samþykkt tól",
       "toolsOff": "Leyfa líkaninu að kalla á tól fyrir þessi skilaboð",
       "thinkingOn": "Hugsun virk ({{level}})",
-      "thinkingOff": "Hugsa fyrir svarið"
+      "thinkingOff": "Hugsa fyrir svarið",
+      "thinkingUpdateFailed": "Ekki tókst að uppfæra hugsunarstillinguna"
     },
     "session": {
       "new": "Nýtt spjall",
@@ -372,7 +386,8 @@
         "move": "Færa í möppu",
         "remove": "Fjarlægja úr möppu",
         "delete": "Eyða möppu",
-        "deleteConfirm": "Eyða þessari möppu? Spjöll innan hennar haldast."
+        "deleteConfirm": "Eyða þessari möppu? Spjöll innan hennar haldast.",
+        "rename": "Endurnefna möppu"
       },
       "shareChat": "Deila spjalli…"
     },
@@ -405,7 +420,13 @@
       "browse": "flettu",
       "unsupportedFileType": "Skráargerð er ekki studd: {{name}}",
       "maxImagesAllowed": "Að hámarki {{count}} myndir eru leyfðar",
-      "imageTooLarge": "Myndin {{name}} er of stór (hámark 10 MB)"
+      "imageTooLarge": "Myndin {{name}} er of stór (hámark 10 MB)",
+      "readFailed": "Ekki tókst að lesa {{name}}",
+      "uploadAlt": "Upphleðsla {{number}}",
+      "removeImage": "Fjarlægja mynd {{number}}",
+      "addMore": "Bæta við fleiri myndum ({{count}}/{{max}})",
+      "uploading": "Hleð upp",
+      "removeDocument": "Fjarlægja {{name}}"
     },
     "structuredOutput": {
       "title": "Svarssnið",
@@ -456,7 +477,8 @@
       "compactionOff": "Slökkt fyrir þetta spjall"
     },
     "message": {
-      "sources": "Heimildir"
+      "sources": "Heimildir",
+      "copyFailed": "Ekki tókst að afrita á klippispjaldið"
     },
     "toasts": {
       "chatCreated": "Nýtt spjall búið til",
@@ -491,7 +513,8 @@
       "branchSwitched": "Skipt yfir í afbrigði {{number}}",
       "branchSelectFailed": "Ekki tókst að velja grein",
       "editFailed": "Ekki tókst að breyta skilaboðum",
-      "toolDecisionFailed": "Ekki tókst að skrá ákvörðun um verkfærið"
+      "toolDecisionFailed": "Ekki tókst að skrá ákvörðun um verkfærið",
+      "archiveFailed": "Ekki tókst að setja þetta spjall í geymslu"
     },
     "documents": {
       "title": "Skjöl í samhengi"
@@ -521,7 +544,25 @@
       "origin": "Greint frá {{title}}",
       "originUnknown": "öðru spjalli"
     },
-    "sharedReadOnly": "Deilt af {{owner}} — aðeins til skoðunar"
+    "sharedReadOnly": "Deilt af {{owner}} — aðeins til skoðunar",
+    "branch": {
+      "variants": "{{count}} afbrigði",
+      "variants_plural": "{{count}} afbrigði",
+      "selectVariant": "Velja afbrigði {{number}}",
+      "generating": "býr til...",
+      "select": "velja"
+    },
+    "sources": {
+      "fullContextFailed": "Ekki tókst að uppfæra stillingu fyrir heil skjöl",
+      "usedByRetrieval": "Notað í svörum",
+      "triggerLabel": "Heimildir ({{count}})"
+    },
+    "announce": {
+      "replyFinished": "{{name}} svaraði: {{text}}",
+      "replyFinishedNoText": "{{name}} lauk við að svara.",
+      "codeBlock": "kóðablokk",
+      "generationStopped": "Myndun stöðvuð"
+    }
   },
   "sidebar": {
     "navigation": {
@@ -546,7 +587,8 @@
       "strands": "Strands"
     },
     "toggleSize": "Skipta um stærð hliðarspjalds",
-    "expandSidebar": "Stækka hliðarspjald"
+    "expandSidebar": "Stækka hliðarspjald",
+    "ariaLabel": "Hliðarstika"
   },
   "user": {
     "menu": {
@@ -821,7 +863,8 @@
         "removeFailed": "Ekki tókst að fjarlægja API lykil",
         "enterKey": "Sláðu inn API lykil"
       },
-      "variables": "Variables"
+      "variables": "Variables",
+      "dismissError": "Loka villu"
     },
     "generation": {
       "title": "Myndunarstillingar",
@@ -924,7 +967,8 @@
         "deleteFailed": "Ekki tókst að eyða safninu",
         "assignFailed": "Ekki tókst að færa skjalið",
         "share": "Deila safni",
-        "shared": "deilt"
+        "shared": "deilt",
+        "assignTo": "Safn fyrir {{name}}"
       },
       "library": {
         "title": "Hlaðin skjöl",
@@ -1066,7 +1110,8 @@
         "title": "Spjall í geymslu",
         "empty": "Ekkert spjall í geymslu",
         "unarchive": "Taka úr geymslu"
-      }
+      },
+      "clearAllConfirm": "Ertu viss um að þú viljir eyða allri spjallsögu? Ekki er hægt að afturkalla þetta."
     },
     "about": {
       "title": "Um",
@@ -1186,7 +1231,11 @@
       "unknownDevice": "Óþekkt tæki",
       "createdAt": "Innskráning",
       "lastSeenAt": "Síðast virk",
-      "expiresAt": "Rennur út"
+      "expiresAt": "Rennur út",
+      "signOutConfirmTitle": "Skrá þessa setu út?",
+      "signOutConfirmDescription": "{{device}} verður skráð út strax og þarf að skrá sig inn aftur.",
+      "signOutOthersConfirmTitle": "Skrá aðrar setur út?",
+      "signOutOthersConfirmDescription": "{{count}} aðrar setur verða skráðar út strax. Þessi seta helst innskráð."
     },
     "apiKeys": {
       "title": "API lyklar",
@@ -1220,7 +1269,9 @@
       "createdAt": "Búinn til",
       "lastUsedAt": "Síðast notaður",
       "expiresAt": "Rennur út",
-      "neverExpires": "Aldrei"
+      "neverExpires": "Aldrei",
+      "revokeConfirmTitle": "Afturkalla „{{name}}“?",
+      "revokeConfirmDescription": "Allt sem notar þennan API lykil hættir strax að virka. Ekki er hægt að afturkalla þetta."
     },
     "notifications": {
       "title": "Tilkynningar",
@@ -1294,7 +1345,8 @@
     "model": "Líkan",
     "size": "Stærð",
     "quality": "Gæði",
-    "created": "Búin til"
+    "created": "Búin til",
+    "lightboxLabel": "Forskoðun myndar"
   },
   "errors": {
     "generic": "Villa kom upp",
@@ -1389,7 +1441,9 @@
       "hide": "Fela fyrir notendum",
       "show": "Sýna notendum",
       "star": "Stjörnumerkja {{name}}",
-      "unstar": "Fjarlægja stjörnu af {{name}}"
+      "unstar": "Fjarlægja stjörnu af {{name}}",
+      "filterLabel": "Sía líkön",
+      "displayName": "Birtingarheiti fyrir {{name}}"
     },
     "pull": {
       "placeholder": "Sláðu inn nafn líkans (t.d. llama3.2:3b, deepseek-r1:14b)",
@@ -1550,7 +1604,10 @@
     "deleteConfirm": "Ertu viss um að þú viljir eyða \"{{name}}\"?",
     "deleteSuccess": "Persónu \"{{name}}\" eytt",
     "downloadSuccess": "Persóna \"{{name}}\" sótt",
-    "failed": "Ekki tókst að {{action}} persónu"
+    "failed": "Ekki tókst að {{action}} persónu",
+    "loadFailed": "Ekki tókst að hlaða persónunum þínum.",
+    "deleteFailed": "Mistókst að eyða persónu",
+    "downloadFailed": "Mistókst að sækja persónu"
   },
   "personaForm": {
     "title": {
@@ -1682,7 +1739,8 @@
       "promptHint": "Leiðbeining sem hvert nýtt spjall með þessari persónu byrjar á.",
       "noPrompt": "Engin leiðbeining",
       "version": "Útgáfa tenginga {{version}}"
-    }
+    },
+    "sections": "Hlutar persónu"
   },
   "personaCard": {
     "enhanced": "Aukin",
@@ -1699,7 +1757,16 @@
     "backupSuccess": "Öryggisafrit persónu sótt",
     "dnaSuccess": "DNA persónu flutt út",
     "failed": "Ekki tókst að {{action}}",
-    "shareTooltip": "Deila þessari persónu"
+    "shareTooltip": "Deila þessari persónu",
+    "wipeFailed": "Mistókst að hreinsa minningar",
+    "backupFailed": "Mistókst að afrita persónu til öryggis",
+    "exportDnaFailed": "Mistókst að flytja út DNA persónu",
+    "favorite": "Uppáhald",
+    "memoryStatus": {
+      "active": "Virk",
+      "wiped": "Hreinsuð",
+      "backed_up": "Afrituð"
+    }
   },
   "userManager": {
     "title": "Notendastjórnun",
@@ -1865,7 +1932,28 @@
       "memberOf": "Hópar",
       "featuresLabel": "Aðgangur að eiginleikum",
       "grantsLabel": "Heimildir",
-      "grantVia": "í gegnum"
+      "grantVia": "í gegnum",
+      "deleteConfirmTitle": "Eyða hópnum „{{name}}“?",
+      "deleteConfirmDescription": "Meðlimir missa aðgang sem þeir höfðu aðeins í gegnum þennan hóp. Aðgangarnir sjálfir eru ekki fjarlægðir.",
+      "statuses": {
+        "active": "Virkur",
+        "pending": "Bíður samþykkis"
+      },
+      "features": {
+        "work": "Vinna",
+        "model-download": "Niðurhal líkana",
+        "web-search": "Vefleit",
+        "strands": "Strands-vél",
+        "tools": "Tól",
+        "stt": "Tal í texta",
+        "tts": "Texti í tal",
+        "voice-mode": "Raddstilling",
+        "voice-cloning": "Raddafritun"
+      },
+      "grantViaKinds": {
+        "user": "bein úthlutun",
+        "group": "hópur"
+      }
     },
     "audit": {
       "title": "Öryggisatvikaskrá",
@@ -2298,7 +2386,11 @@
       "harmful": "Skaðlegt",
       "formatting": "Snið"
     },
-    "feedbackComment": "Bæta við athugasemd…"
+    "feedbackComment": "Bæta við athugasemd…",
+    "user": "Notandi",
+    "feedbackFailed": "Ekki tókst að vista endurgjöfina þína",
+    "openImage": "Opna mynd {{number}}",
+    "uploadedImageAlt": "Upphlaðin mynd {{number}}"
   },
   "imageGallery": {
     "title": "Myndasafn",
@@ -2387,7 +2479,10 @@
       "image": "Myndir",
       "video": "Myndbönd",
       "audio": "Hljóð"
-    }
+    },
+    "deleteConfirmTitle": "Eyða þessu atriði?",
+    "deleteConfirmDescription": "Miðlinum sem var búinn til verður eytt varanlega.",
+    "previewFailed": "Forskoðun ekki tiltæk"
   },
   "errorBoundary": {
     "title": "Eitthvað fór úrskeiðis",
@@ -2463,7 +2558,8 @@
     "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source.",
     "versionOf": "Útgáfa {{current}} af {{total}}",
     "previousVersion": "Fyrri útgáfa",
-    "nextVersion": "Næsta útgáfa"
+    "nextVersion": "Næsta útgáfa",
+    "resizePanel": "Breyta stærð spjalds"
   },
   "personaImportExport": {
     "title": "Flytja inn og út persónur",
@@ -2501,7 +2597,10 @@
     "generation": "Myndun:",
     "modelLoad": "Hleðsla líkans:",
     "totalTime": "Heildartími:",
-    "generatedAt": "Myndað kl.:"
+    "generatedAt": "Myndað kl.:",
+    "notAvailable": "Á ekki við",
+    "tokenCount": "{{tokens}} tóka",
+    "tokensPerSecond": "{{value}} t/s"
   },
   "userMenu": {
     "loggedOut": "Útskráning tókst",
@@ -2560,7 +2659,9 @@
       "httpWarning": "HTTP dulkóðar ekki skilríki eða umferð. Notaðu það aðeins á traustu neti.",
       "invalidBaseUrl": "Grunn-URL geta ekki innihaldið fyrirspurnarstreng eða brot.",
       "invalidApiPath": "Verður að byrja á / og mega ekki innihalda URL, fyrirspurn, brot eða .. hluta",
-      "tooLong": "Gildið er of langt"
+      "tooLong": "Gildið er of langt",
+      "resetConfirmTitle": "Endurstilla á sjálfgefið?",
+      "resetConfirmDescription": "Þetta hreinsar öll vistuð gildi fyrir {{name}}, þar á meðal API lykla og önnur auðkenni. Ekki er hægt að afturkalla þetta."
     }
   },
   "huggingface": {
@@ -2580,7 +2681,10 @@
   },
   "demoMode": {
     "title": "Kynningarhamur",
-    "github": "GitHub"
+    "github": "GitHub",
+    "defaultMessage": "Þetta er kynningarútgáfa, aðeins til sýnis. Ollama-bakendinn er ekki tengdur.",
+    "viewOnGithub": "Skoða á GitHub",
+    "dismiss": "Loka"
   },
   "work": {
     "title": "Vinna",
@@ -2671,8 +2775,18 @@
         "checksPending": "Prófanir í bið",
         "stallNudges": "Ábendingar um stöðnun",
         "ambiguityNudges": "Ábendingar um endurfestingu",
-        "stoppedBy": "Stöðvað af"
-      }
+        "stoppedBy": "Stöðvað af",
+        "reasons": {
+          "round": "lotutakmark",
+          "toolCall": "takmark á tólakalli",
+          "approvalTimeout": "tímamörk samþykkis",
+          "computerStall": "tölvan festist"
+        }
+      },
+      "skillTraceSavedWorked": "Skráð: virkaði",
+      "skillTraceSavedFailed": "Skráð: mistókst",
+      "connectionClosed": "Lifandi tengingu Vinnu var lokað.",
+      "reconnectingBackground": "Lifandi uppfærslur tengjast aftur í bakgrunni."
     },
     "runtime": {
       "unavailable": "Keyrsluumhverfi ekki tiltækt",
@@ -2715,7 +2829,11 @@
       "changes": "Breytingar",
       "changesSince": "Það sem breyttist frá síðustu umferð",
       "diffLabel": "Breytingar frá síðustu umferð: {{path}}",
-      "diffFolded": "{{count}} óbreyttar línur"
+      "diffFolded": "{{count}} óbreyttar línur",
+      "diffAdded": "Bætt við",
+      "diffRemoved": "Fjarlægt",
+      "unsavedChanges": "óvistaðar breytingar",
+      "editingLocked": "Hægt er að breyta þegar umferðinni lýkur."
     },
     "activity": {
       "empty": "Skipanir, skráaraðgerðir og niðurstöður verkfæra birtast hér.",
@@ -2726,7 +2844,9 @@
         "toolCall": "Verkfærakall",
         "toolResult": "Niðurstaða verkfæris",
         "error": "Villa"
-      }
+      },
+      "arguments": "Færibreytur tóls",
+      "output": "Úttak tóls"
     },
     "preview": {
       "command": "Valfrjáls ræsingarskipun",
@@ -2755,7 +2875,8 @@
       "saveFailed": "Ekki tókst að vista þessa skrá.",
       "saved": "Skrá vistuð.",
       "previewFailed": "Ekki tókst að hefja forskoðun.",
-      "previewStopFailed": "Ekki tókst að stöðva forskoðun."
+      "previewStopFailed": "Ekki tókst að stöðva forskoðun.",
+      "sendFailed": "Ekki tókst að senda skilaboðin."
     },
     "terminal": {
       "connecting": "Opna skel í sandkassanum…",
@@ -2807,7 +2928,18 @@
       "noFilterMatches": "Engar breyttar skrár passa við þessa síu.",
       "allChanges": "Allar breytingar",
       "diffTruncated": "Þessi diff er styttur.",
-      "binaryFile": "Tvíundarskrá, enginn textadiff."
+      "binaryFile": "Tvíundarskrá, enginn textadiff.",
+      "statusLabels": {
+        "modified": "Breytt",
+        "added": "Bætt við",
+        "deleted": "Eytt",
+        "renamed": "Endurnefnt",
+        "copied": "Afritað",
+        "typeChanged": "Tegund breytt",
+        "untracked": "Ekki rakið"
+      },
+      "stagedState": "í undirbúningi",
+      "aheadBehind": "{{ahead}} á undan, {{behind}} á eftir"
     },
     "hostWorkspace": {
       "hint": "Skildu eftir autt fyrir einangrað vinnusvæði, eða beindu verkinu á möppu á þessari vél.",
@@ -2834,7 +2966,8 @@
       "unmute": "Kveikja á hljóði",
       "mute": "Þagga",
       "finished": "Þetta verkefni er lokið. Opnaðu það aftur til að fá skjáinn til baka.",
-      "reopenOpen": "Opna verkefni aftur og opna skjáinn"
+      "reopenOpen": "Opna verkefni aftur og opna skjáinn",
+      "teachSaveFailed": "Ekki tókst að vista þessa sýnikennslu."
     },
     "computerSetup": {
       "title": "Work Computer",
@@ -2871,7 +3004,11 @@
       "approvalsToggleFailed": "Ekki tókst að uppfæra samþykki.",
       "approvalRuleLine": "Alltaf leyft",
       "approvalRuleDelete": "Fjarlægja reglu",
-      "approvalRuleDeleteFailed": "Ekki tókst að fjarlægja regluna."
+      "approvalRuleDeleteFailed": "Ekki tókst að fjarlægja regluna.",
+      "routinesLoadFailed": "Ekki tókst að hlaða venjum.",
+      "skillsLoadFailed": "Ekki tókst að hlaða kenndri færni.",
+      "approvalsLoadFailed": "Ekki tókst að hlaða samþykktarstillingum.",
+      "routinePaused": "Í bið"
     },
     "approval": {
       "title": "Samþykkis er þörf",
@@ -2879,7 +3016,16 @@
       "allowOnce": "Leyfa einu sinni",
       "allowAlways": "Leyfa alltaf",
       "deny": "Hafna",
-      "failed": "Ekki tókst að senda ákvörðunina."
+      "failed": "Ekki tókst að senda ákvörðunina.",
+      "details": "Upplýsingar um aðgerð",
+      "fields": {
+        "command": "Skipun",
+        "path": "Slóð",
+        "from": "Frá",
+        "to": "Til",
+        "actions": "Aðgerðir",
+        "recursive": "Endurkvæmt"
+      }
     },
     "idleStopHint": "Stöðvast eftir {{minutes}} mínútur án virkni.",
     "runs": {
@@ -2891,7 +3037,8 @@
         "needsInput": "Þarf inntak",
         "failed": "Mistókst",
         "cancelled": "Hætt við"
-      }
+      },
+      "loadFailed": "Ekki tókst að hlaða keyrslusögu."
     },
     "recovery": {
       "pending": "Work er að staðfesta {{pending}} sandkassahreinsanir áður en það tekur við nýjum aðgerðum.",
@@ -2903,6 +3050,17 @@
       "retrySucceeded": "Hreinsaði {{cleared}} af {{attempted}} hreinsunum í bið.",
       "retryPending": "Er enn að reyna {{attempted}} hreinsanir í bið.",
       "retryFailed": "Ekki tókst að reyna aftur hreinsanir í bið."
+    },
+    "computer": {
+      "setupFailed": "Ekki tókst að setja upp Work Computer."
+    },
+    "announce": {
+      "completed": "{{title}}: lokið.",
+      "needsInput": "{{title}} þarfnast inntaks þíns eða samþykkis.",
+      "failed": "{{title}}: mistókst.",
+      "cancelled": "{{title}}: stöðvað.",
+      "approvalNeeded": "{{title}} þarfnast samþykkis þíns til að keyra {{tool}}.",
+      "untitledTask": "Þetta verkefni"
     }
   },
   "personaBackground": {
@@ -2947,7 +3105,8 @@
     "showAll": "Sýna allt ({{total}})",
     "sources": "Uppruni líkana",
     "defaultModel": "Sjálfgefið líkan",
-    "contextSize": "{{size}} samhengi"
+    "contextSize": "{{size}} samhengi",
+    "via": "í gegnum {{provider}}"
   },
   "whatsNew": {
     "title": "Nýjungar",
@@ -3004,7 +3163,16 @@
     "unpin": "Losa minnispunkt",
     "pinned": "Fest",
     "export": "Sækja sem Markdown",
-    "sharedWithYou": "Deilt með þér"
+    "sharedWithYou": "Deilt með þér",
+    "titleLabel": "Titill glósu",
+    "loadFailed": "Ekki tókst að hlaða þessu. Reyndu aftur.",
+    "restoreConfirmTitle": "Endurheimta þessa útgáfu?",
+    "restoreConfirmDescription": "Texta glósunnar verður skipt út fyrir þessa eldri útgáfu.",
+    "deleteAttachmentConfirmTitle": "Eyða {{name}}?",
+    "deleteAttachmentConfirmDescription": "Viðhenginu verður eytt varanlega úr þessari glósu.",
+    "attachmentDeleteFailed": "Ekki tókst að eyða viðhenginu",
+    "revokeFailed": "Ekki tókst að afturkalla aðgang",
+    "sharePermissionLabel": "Heimild"
   },
   "calendar": {
     "title": "Dagatal",
@@ -3049,7 +3217,22 @@
     "importFailed": "Ekki tókst að flytja skrána inn",
     "importResult": "{{total}} viðburðir fluttir inn",
     "importIcs": "Flytja inn",
-    "exportIcs": "Flytja út"
+    "exportIcs": "Flytja út",
+    "chipStatus": {
+      "automation": "Tímasett sjálfvirkni",
+      "runSucceeded": "Keyrsla sjálfvirkninnar tókst",
+      "runFailed": "Keyrsla sjálfvirkninnar mistókst"
+    },
+    "newEventOn": "Nýr viðburður {{date}}",
+    "showDay": "Sýna alla viðburði {{date}}",
+    "deleteEventConfirmTitle": "Eyða „{{title}}“?",
+    "deleteEventConfirmDescription": "Þessum viðburði verður eytt varanlega.",
+    "deleteRecurringEventConfirmDescription": "Þessum endurtekna viðburði og öllum tilvikum hans verður eytt varanlega.",
+    "shareCalendarNamed": "Deila dagatalinu {{name}}",
+    "deleteCalendarNamed": "Eyða dagatalinu {{name}}",
+    "deleteCalendarConfirmTitle": "Eyða dagatalinu „{{name}}“?",
+    "deleteCalendarConfirmDescription": "Dagatalinu og viðburðunum í því verður eytt varanlega.",
+    "calendarDeleteFailed": "Ekki tókst að eyða dagatalinu"
   },
   "automations": {
     "title": "Sjálfvirkni",
@@ -3176,13 +3359,17 @@
         "work-approval": "fulltrúi bíður eftir samþykki þínu",
         "system": "kerfistilkynning berst"
       }
-    }
+    },
+    "deleteConfirmTitle": "Eyða „{{name}}“?",
+    "deleteConfirmDescription": "Sjálfvirkninni og tímaáætlun hennar verður eytt varanlega. Fyrri keyrslur haldast í keyrslusögunni."
   },
   "home": {
     "active": "virkt",
     "continue": "Halda áfram",
     "start": "Byrja",
-    "explore": "Kanna"
+    "explore": "Kanna",
+    "greeting": "{{greeting}}.",
+    "greetingWithName": "{{greeting}}, {{name}}."
   },
   "palette": {
     "empty": "Engar samsvaranir.",
@@ -3195,7 +3382,14 @@
     "work": "Vinna",
     "messages": "Skilaboð",
     "notes": "Minnispunktar",
-    "documents": "Skjöl"
+    "documents": "Skjöl",
+    "searching": "Leita…",
+    "searchFailed": "Leit á vinnusvæðinu mistókst. Aðeins samsvarandi spjall og aðgerðir eru sýnd.",
+    "results": "Niðurstöður",
+    "escKey": "esc",
+    "hintNavigate": "Fletta",
+    "hintOpen": "Opna",
+    "hintClose": "Loka"
   },
   "tabs": {
     "actions": "Flipaaðgerðir",
@@ -3399,7 +3593,8 @@
       "button": "Úr möppu",
       "missingSkillMd": "Mappan þarf SKILL.md-skrá",
       "done": "Færni flutt inn með {{count}} meðfylgjandi skrám"
-    }
+    },
+    "toggleLabel": "Virkja færnina {{name}}"
   },
   "toolsPage": {
     "title": "Tól",
@@ -3557,7 +3752,14 @@
     "added": "Deilt með {{name}}",
     "failed": "Deiling mistókst",
     "userNotFound": "Enginn notandi með þetta nafn",
-    "groupNotFound": "Enginn hópur með þetta heiti"
+    "groupNotFound": "Enginn hópur með þetta heiti",
+    "principalKind": "Deila með notanda eða hópi",
+    "principalName": "Notandanafn eða heiti hóps",
+    "permission": "Heimild",
+    "sharing": "Deiling",
+    "loading": "Hleð deilingum",
+    "loadFailed": "Ekki tókst að hlaða deilingum",
+    "revokeFailed": "Ekki tókst að afturkalla aðgang"
   },
   "channels": {
     "title": "Rásir",
@@ -3616,13 +3818,44 @@
     "toolCalls": {
       "summary": "Tól notuð ({{total}})",
       "deniedHint": "Tólum sem breyta einhverju er hafnað í rásum. Keyrðu þau úr spjalli."
-    }
+    },
+    "confirmEdit": "Vista breytingu",
+    "cancelEdit": "Hætta við breytingu",
+    "reactWith": "Bregðast við með {{emoji}}",
+    "deleteMessageConfirmTitle": "Eyða þessum skilaboðum?",
+    "deleteMessageConfirmDescription": "Skilaboðin verða fjarlægð fyrir alla á þessari rás.",
+    "unreadCount": "{{total}} ólesin",
+    "send": "Senda skilaboð",
+    "invite": "Bjóða meðlimi",
+    "closeThread": "Loka þræði",
+    "removeAttachment": "Fjarlægja viðhengi",
+    "loadFailed": "Ekki tókst að hlaða þessu. Reyndu aftur.",
+    "editFailed": "Ekki tókst að breyta skilaboðunum",
+    "deleteMessageFailed": "Ekki tókst að eyða skilaboðunum",
+    "pinFailed": "Ekki tókst að breyta festingunni",
+    "reactFailed": "Ekki tókst að vista viðbrögðin",
+    "downloadFailed": "Ekki tókst að sækja skrána",
+    "removeMemberConfirm": "Fjarlægja {{name}} af þessari rás?",
+    "removeMemberConfirmDescription": "Viðkomandi missir aðgang að rásinni og skilaboðum hennar.",
+    "removeMemberNamed": "Fjarlægja {{name}} af rásinni",
+    "removeMemberFailed": "Ekki tókst að fjarlægja meðliminn",
+    "leaveConfirm": "Yfirgefa {{name}}?",
+    "leaveConfirmDescription": "Þér verður að bjóða aftur til að ganga aftur í lokaða rás.",
+    "leaveFailed": "Ekki tókst að yfirgefa rásina",
+    "joinFailed": "Ekki tókst að ganga í rásina",
+    "deleteConfirm": "Eyða {{name}}?",
+    "deleteConfirmDescription": "Rásinni og öllum skilaboðum hennar verður eytt varanlega fyrir alla meðlimi.",
+    "deleteFailed": "Ekki tókst að eyða rásinni",
+    "saveFailed": "Ekki tókst að vista rásina"
   },
   "notifications": {
     "title": "Tilkynningar",
     "empty": "Þú ert með allt á hreinu.",
     "markAllRead": "Merkja allt sem lesið",
-    "markRead": "Merkja sem lesið"
+    "markRead": "Merkja sem lesið",
+    "titleWithUnread": "Tilkynningar ({{unread}} ólesnar)",
+    "unread": "Ólesið",
+    "loadFailed": "Ekki tókst að hlaða tilkynningum."
   },
   "voiceMode": {
     "title": "Raddhamur",
@@ -3757,7 +3990,12 @@
       "failed": "Mistókst",
       "cancelled": "Hætt við"
     },
-    "noFeedback": "Engar athugasemdir enn — gefðu svörum einkunn til að byggja gagnasafnið."
+    "noFeedback": "Engar athugasemdir enn — gefðu svörum einkunn til að byggja gagnasafnið.",
+    "deleteSetConfirmTitle": "Eyða „{{name}}“?",
+    "deleteSetConfirmDescription": "Matssafninu og kvaðningum þess verður eytt varanlega.",
+    "deleteSetFailed": "Ekki tókst að eyða matssafninu",
+    "runError": "Villa: {{detail}}",
+    "cancelFailed": "Ekki tókst að hætta við keyrsluna"
   },
   "passwordStrength": {
     "levels": {
@@ -3771,6 +4009,14 @@
       "hasCase": "Há- og lágstafir",
       "hasNumber": "Að minnsta kosti ein tala",
       "tooLong": "Mest 72 bæti"
+    },
+    "requirements": "Notaðu að minnsta kosti 12 stafi, ekki fleiri en 72 UTF-8 bæti, með há- og lágstöfum og tölustaf.",
+    "errors": {
+      "minLength": "Lykilorð verður að vera að minnsta kosti 12 stafir.",
+      "tooLong": "Lykilorð má ekki vera meira en 72 UTF-8 bæti.",
+      "uppercase": "Lykilorð verður að innihalda hástaf.",
+      "lowercase": "Lykilorð verður að innihalda lágstaf.",
+      "number": "Lykilorð verður að innihalda tölustaf."
     }
   },
   "connectModels": {
@@ -3804,7 +4050,8 @@
       "enable": "Virkja veitanda",
       "enabling": "Virkjar…",
       "enabled": "{{name}} tengt — líkön þess eru nú tiltæk",
-      "enableFailed": "Ekki tókst að virkja veitandann"
+      "enableFailed": "Ekki tókst að virkja veitandann",
+      "urlLabel": "Vefslóð þjóns"
     },
     "cloud": {
       "title": "Ský-API",
@@ -3813,7 +4060,8 @@
       "connect": "Tengja",
       "connecting": "Tengist…",
       "connected": "{{name}} tengt — líkön þess eru nú tiltæk",
-      "saveFailed": "Ekki tókst að vista API lykilinn"
+      "saveFailed": "Ekki tókst að vista API lykilinn",
+      "keyLabel": "API lykill {{name}}"
     }
   },
   "strands": {
@@ -3845,5 +4093,15 @@
     "deleteFailed": "Ekki tókst að eyða lotunni.",
     "saveFailed": "Ekki tókst að vista lotuna.",
     "turnFailed": "Vélin gat ekki klárað umferðina"
+  },
+  "notFound": {
+    "title": "Síða fannst ekki",
+    "description": "Þessi síða er ekki til eða hefur verið flutt."
+  },
+  "themeToggle": {
+    "switchToLight": "Skipta yfir í ljósan ham",
+    "switchToDark": "Skipta yfir í dökkan ham",
+    "switchToAmoled": "Skipta yfir í alsvartan ham",
+    "switchToCelestial": "Skipta yfir í himneskan ham"
   }
 }

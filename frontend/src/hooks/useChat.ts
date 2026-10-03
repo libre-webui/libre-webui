@@ -38,6 +38,8 @@ import { chatApi } from '@/utils/api';
 import { applyPromptQueueToChatStore } from '@/utils/promptQueue';
 import { isDemoMode } from '@/utils/demoMode';
 import { createLogger } from '@/utils/logger';
+import { announce } from '@/components/ui/liveAnnouncerStore';
+import { markdownToPlainText } from '@/utils/markdownPlainText';
 import toast from 'react-hot-toast';
 import { isChatModelSelectionAvailable } from '@/utils/chatModelSelection';
 import {
@@ -67,8 +69,43 @@ const getSessionTitle = (sessionId: string) => {
     : state.sessions.find(session => session.id === sessionId)?.title;
 };
 
+/**
+ * Who a screen reader should hear the reply from: the persona, else the
+ * model's administrator-given label, else the raw model id, else a generic
+ * assistant. Mirrors the name shown on the message itself.
+ */
+const getAnnouncedAssistantName = (fallback: string): string => {
+  const state = useChatStore.getState();
+  const persona = state.getCurrentPersona();
+  if (persona?.name) return persona.name;
+  const model = state.currentSession?.model ?? '';
+  if (!model || model.startsWith('persona:')) return fallback;
+  const presentation =
+    state.modelMetadata[model] ??
+    Object.entries(state.modelMetadata).find(
+      ([key]) => key.slice(key.indexOf('/') + 1) === model
+    )?.[1];
+  return presentation?.label || model;
+};
+
 export const useChat = (sessionId: string) => {
   const { t } = useTranslation();
+  // One polite announcement per finished reply, never per streamed token. The
+  // full text stays in the message log; this is a capped plain-text preview.
+  const announceReplyFinished = useCallback(
+    (markdown: string) => {
+      const name = getAnnouncedAssistantName(t('chatMessage.assistant'));
+      const text = markdownToPlainText(parseThinkingContent(markdown).content, {
+        codeBlockLabel: t('chat.announce.codeBlock'),
+      });
+      announce(
+        text
+          ? t('chat.announce.replyFinished', { name, text })
+          : t('chat.announce.replyFinishedNoText', { name })
+      );
+    },
+    [t]
+  );
   const [streamingMessage, setStreamingMessage] = useState<string>('');
   const [streamingThinking, setStreamingThinking] = useState<string>('');
   const [streamingMessageId, setStreamingMessageId] = useState<string | null>(
@@ -584,6 +621,10 @@ export const useChat = (sessionId: string) => {
         return;
       }
 
+      // Only a reply this client was streaming is news. Settled history and
+      // other sessions never pass through here, so this fires once per reply.
+      const announceCompletion = streamingMessageIdRef.current !== null;
+
       // Clear streaming state immediately for better UX
       setIsStreaming(false);
       resetVisibleStreamingMessage();
@@ -620,6 +661,7 @@ export const useChat = (sessionId: string) => {
           completeData.providerMetadata,
           finalThinking
         );
+        if (announceCompletion) announceReplyFinished(finalContent);
 
         // Bring a freshly generated artifact forward. Only the turn that just
         // finished passes through here, so historical messages never trigger
@@ -702,6 +744,8 @@ export const useChat = (sessionId: string) => {
         return;
       }
 
+      // Error toasts are assertive alerts already; announcing here too would
+      // read the failure twice.
       toast.error(errorData.error);
     });
 
@@ -732,6 +776,7 @@ export const useChat = (sessionId: string) => {
     cancelQueuedStreamingFrame,
     removeMessage,
     reloadCompletedDurableGeneration,
+    announceReplyFinished,
     t,
   ]);
 
@@ -832,6 +877,7 @@ export const useChat = (sessionId: string) => {
               return;
             }
             updateMessage(sessionId, assistantMessageId, demoResponse);
+            announceReplyFinished(demoResponse);
             setIsStreaming(false);
             resetVisibleStreamingMessage();
             setStreamingMessageId(null);
@@ -1079,6 +1125,7 @@ export const useChat = (sessionId: string) => {
       maybeGenerateTitle,
       settleDurableCancellation,
       reloadCompletedDurableGeneration,
+      announceReplyFinished,
       t,
     ]
   );
@@ -1086,6 +1133,7 @@ export const useChat = (sessionId: string) => {
   const stopGeneration = useCallback(() => {
     const assistantMessageId = streamingMessageIdRef.current;
     if (assistantMessageId) {
+      announce(t('chat.announce.generationStopped'));
       cancelRequestedMessageIdsRef.current.add(assistantMessageId);
       if (demoGenerationTimerRef.current !== null) {
         window.clearTimeout(demoGenerationTimerRef.current);
@@ -1150,6 +1198,7 @@ export const useChat = (sessionId: string) => {
     removeMessage,
     sessionId,
     settleDurableCancellation,
+    t,
   ]);
 
   // Regenerate the last assistant message (creates a new branch)

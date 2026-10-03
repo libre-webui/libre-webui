@@ -15,8 +15,8 @@
  * limitations under the License.
  */
 
-import React, { useEffect, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router';
+import React, { useState } from 'react';
+import { Navigate, useLocation } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import { Boxes, HardDrive, ShieldCheck } from 'lucide-react';
 import { useAuthStore } from '@/store/authStore';
@@ -28,10 +28,10 @@ import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { CelestialSky } from '@/components/CelestialSky';
 import { resolveAppVersion } from '@/utils/appVersion';
+import { resolvePostLoginPath } from '@/utils/postLoginPath';
 
 export const LoginPage: React.FC = () => {
   const { t } = useTranslation();
-  const navigate = useNavigate();
   const location = useLocation();
   const { isAuthenticated, requiresAuth, systemInfo } = useAuthStore();
   const [isSignupMode, setIsSignupMode] = useState(false);
@@ -40,15 +40,10 @@ export const LoginPage: React.FC = () => {
   const oauthApprovalPending =
     new URLSearchParams(location.search).get('approval') === 'pending';
 
-  useEffect(() => {
-    // If already authenticated or auth is disabled, redirect to home.
-    if (isAuthenticated || !authRequired) {
-      navigate('/');
-    }
-  }, [authRequired, isAuthenticated, navigate]);
-
+  // Already authenticated, or auth is disabled: go where the user was headed
+  // before being sent here, else home.
   if (isAuthenticated || !authRequired) {
-    return null;
+    return <Navigate to={resolvePostLoginPath(location.state)} replace />;
   }
 
   const highlights = [
@@ -82,7 +77,7 @@ export const LoginPage: React.FC = () => {
 
   return (
     <div
-      className='relative min-h-screen overflow-y-auto bg-canvas text-ink'
+      className='relative min-h-dvh overflow-y-auto bg-canvas text-ink'
       data-celestial-canvas=''
     >
       <CelestialSky />
@@ -99,7 +94,7 @@ export const LoginPage: React.FC = () => {
         </div>
       </header>
 
-      <main className='relative z-10 grid min-h-screen lg:grid-cols-2'>
+      <main className='relative z-10 grid min-h-dvh lg:grid-cols-2'>
         <section
           className='relative hidden flex-col justify-between border-e border-line bg-surface px-10 py-12 lg:flex xl:px-16'
           data-celestial-surface=''
@@ -134,7 +129,7 @@ export const LoginPage: React.FC = () => {
             </ul>
           </div>
 
-          <div className='relative z-10 space-y-1 font-mono text-[11px] text-ink-subtle'>
+          <div className='relative z-10 space-y-1 font-mono text-[11px] text-ink-muted'>
             <p>
               <a
                 href='https://librewebui.org'

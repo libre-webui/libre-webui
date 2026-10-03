@@ -41,7 +41,8 @@
     "remove": "Remover",
     "home": "Início",
     "more": "Mais",
-    "reasoning": "Raciocínio"
+    "reasoning": "Raciocínio",
+    "skipToContent": "Ir para o conteúdo"
   },
   "brand": {
     "name": "Libre WebUI",
@@ -49,7 +50,10 @@
   },
   "appInitialization": {
     "ollamaUnavailable": "O serviço Ollama não está disponível. Os modelos de plugins ainda podem ser usados.",
-    "backendConnectionFailed": "Falha ao conectar ao serviço de backend"
+    "backendConnectionFailed": "Falha ao conectar ao serviço de backend",
+    "connecting": "Conectando ao backend… ({{attempt}}/{{total}})",
+    "startingUp": "Iniciando…",
+    "backendUnreachableHint": "Verifique se o backend está em execução e tente novamente."
   },
   "auth": {
     "login": {
@@ -189,7 +193,15 @@
       "removed": "Chave de acesso removida.",
       "removeFailed": "Não foi possível remover a chave de acesso.",
       "signInButton": "Entrar com uma chave de acesso",
-      "signInFailed": "Falha no login com chave de acesso."
+      "signInFailed": "Falha no login com chave de acesso.",
+      "removeConfirmTitle": "Remover esta chave de acesso?",
+      "removeConfirmDescription": "“{{name}}” deixará de funcionar para entrar. Você pode registrá-la novamente depois."
+    },
+    "password": {
+      "show": "Mostrar senha",
+      "hide": "Ocultar senha",
+      "showConfirmation": "Mostrar confirmação de senha",
+      "hideConfirmation": "Ocultar confirmação de senha"
     }
   },
   "setup": {
@@ -242,7 +254,8 @@
       "envNote": "Esta chave também está salva no arquivo backend/.env como ENCRYPTION_KEY",
       "acknowledgment": "Salvei minha chave de criptografia em um local seguro e entendo que perdê-la pode resultar em perda de dados.",
       "confirmRequired": "Por favor, confirme que você salvou a chave de criptografia",
-      "continue": "Continuar para o Libre WebUI"
+      "continue": "Continuar para o Libre WebUI",
+      "loadFailed": "Não foi possível carregar a chave de criptografia. Tente novamente para continuar."
     },
     "connectModels": {
       "title": "Conecte seus modelos",
@@ -336,7 +349,8 @@
       "toolsOn": "Ferramentas ativadas — o modelo pode chamar as ferramentas aprovadas",
       "toolsOff": "Deixar o modelo chamar ferramentas nesta mensagem",
       "thinkingOn": "Raciocínio ativado ({{level}})",
-      "thinkingOff": "Raciocinar antes de responder"
+      "thinkingOff": "Raciocinar antes de responder",
+      "thinkingUpdateFailed": "Não foi possível atualizar a configuração de raciocínio"
     },
     "session": {
       "new": "Nova conversa",
@@ -372,7 +386,8 @@
         "move": "Mover para a pasta",
         "remove": "Remover da pasta",
         "delete": "Eliminar pasta",
-        "deleteConfirm": "Eliminar esta pasta? As conversas mantêm-se."
+        "deleteConfirm": "Eliminar esta pasta? As conversas mantêm-se.",
+        "rename": "Renomear pasta"
       },
       "shareChat": "Compartilhar conversa…"
     },
@@ -405,7 +420,13 @@
       "browse": "procure",
       "unsupportedFileType": "Tipo de arquivo não suportado: {{name}}",
       "maxImagesAllowed": "É permitido um máximo de {{count}} imagens",
-      "imageTooLarge": "A imagem {{name}} é muito grande (máx. 10 MB)"
+      "imageTooLarge": "A imagem {{name}} é muito grande (máx. 10 MB)",
+      "readFailed": "Não foi possível ler {{name}}",
+      "uploadAlt": "Upload {{number}}",
+      "removeImage": "Remover imagem {{number}}",
+      "addMore": "Adicionar mais imagens ({{count}}/{{max}})",
+      "uploading": "Enviando",
+      "removeDocument": "Remover {{name}}"
     },
     "structuredOutput": {
       "title": "Formato de Resposta",
@@ -456,7 +477,8 @@
       "compactionOff": "Desativada neste chat"
     },
     "message": {
-      "sources": "Fontes"
+      "sources": "Fontes",
+      "copyFailed": "Não foi possível copiar para a área de transferência"
     },
     "toasts": {
       "chatCreated": "Novo chat criado",
@@ -491,7 +513,8 @@
       "branchSwitched": "Alternado para a variante {{number}}",
       "branchSelectFailed": "Falha ao selecionar a ramificação",
       "editFailed": "Falha ao editar a mensagem",
-      "toolDecisionFailed": "Não foi possível registrar a decisão da ferramenta"
+      "toolDecisionFailed": "Não foi possível registrar a decisão da ferramenta",
+      "archiveFailed": "Não foi possível arquivar esta conversa"
     },
     "documents": {
       "title": "Documentos no contexto"
@@ -521,7 +544,25 @@
       "origin": "Bifurcado de {{title}}",
       "originUnknown": "outro chat"
     },
-    "sharedReadOnly": "Compartilhado por {{owner}} — somente leitura"
+    "sharedReadOnly": "Compartilhado por {{owner}} — somente leitura",
+    "branch": {
+      "variants": "{{count}} variante",
+      "variants_plural": "{{count}} variantes",
+      "selectVariant": "Selecionar variante {{number}}",
+      "generating": "gerando...",
+      "select": "selecionar"
+    },
+    "sources": {
+      "fullContextFailed": "Não foi possível atualizar a configuração de documento completo",
+      "usedByRetrieval": "Usada nas respostas",
+      "triggerLabel": "Fontes ({{count}})"
+    },
+    "announce": {
+      "replyFinished": "{{name}} respondeu: {{text}}",
+      "replyFinishedNoText": "{{name}} terminou de responder.",
+      "codeBlock": "bloco de código",
+      "generationStopped": "Geração interrompida"
+    }
   },
   "sidebar": {
     "navigation": {
@@ -546,7 +587,8 @@
       "strands": "Strands"
     },
     "toggleSize": "Alternar tamanho da barra lateral",
-    "expandSidebar": "Expandir barra lateral"
+    "expandSidebar": "Expandir barra lateral",
+    "ariaLabel": "Barra lateral"
   },
   "user": {
     "menu": {
@@ -821,7 +863,8 @@
         "removeFailed": "Falha ao remover chave de API",
         "enterKey": "Por favor, digite uma chave de API"
       },
-      "variables": "Variables"
+      "variables": "Variables",
+      "dismissError": "Dispensar erro"
     },
     "generation": {
       "title": "Opções de Geração",
@@ -924,7 +967,8 @@
         "deleteFailed": "Não foi possível eliminar a coleção",
         "assignFailed": "Não foi possível mover o documento",
         "share": "Compartilhar coleção",
-        "shared": "compartilhada"
+        "shared": "compartilhada",
+        "assignTo": "Coleção para {{name}}"
       },
       "library": {
         "title": "Documentos carregados",
@@ -1066,7 +1110,8 @@
         "title": "Conversas arquivadas",
         "empty": "Nenhuma conversa arquivada",
         "unarchive": "Desarquivar"
-      }
+      },
+      "clearAllConfirm": "Tem certeza de que deseja excluir todo o histórico de conversas? Esta ação não pode ser desfeita."
     },
     "about": {
       "title": "Sobre",
@@ -1186,7 +1231,11 @@
       "unknownDevice": "Dispositivo desconhecido",
       "createdAt": "Conectado em",
       "lastSeenAt": "Última atividade",
-      "expiresAt": "Expira"
+      "expiresAt": "Expira",
+      "signOutConfirmTitle": "Encerrar esta sessão?",
+      "signOutConfirmDescription": "{{device}} será desconectado imediatamente e precisará entrar novamente.",
+      "signOutOthersConfirmTitle": "Encerrar as outras sessões?",
+      "signOutOthersConfirmDescription": "{{count}} outras sessões serão encerradas imediatamente. Esta sessão continua ativa."
     },
     "apiKeys": {
       "title": "Chaves de API",
@@ -1220,7 +1269,9 @@
       "createdAt": "Criada",
       "lastUsedAt": "Último uso",
       "expiresAt": "Expira",
-      "neverExpires": "Nunca"
+      "neverExpires": "Nunca",
+      "revokeConfirmTitle": "Revogar “{{name}}”?",
+      "revokeConfirmDescription": "Tudo que usa esta chave de API deixa de funcionar imediatamente. Esta ação não pode ser desfeita."
     },
     "notifications": {
       "title": "Notificações",
@@ -1294,7 +1345,8 @@
     "model": "Modelo",
     "size": "Tamanho",
     "quality": "Qualidade",
-    "created": "Criado"
+    "created": "Criado",
+    "lightboxLabel": "Pré-visualização da imagem"
   },
   "errors": {
     "generic": "Ocorreu um erro",
@@ -1389,7 +1441,9 @@
       "hide": "Ocultar dos utilizadores",
       "show": "Mostrar aos utilizadores",
       "star": "Marcar {{name}} com estrela",
-      "unstar": "Remover estrela de {{name}}"
+      "unstar": "Remover estrela de {{name}}",
+      "filterLabel": "Filtrar modelos",
+      "displayName": "Nome de exibição de {{name}}"
     },
     "pull": {
       "placeholder": "Digite o nome do modelo (ex.: llama3.2:3b, deepseek-r1:14b)",
@@ -1550,7 +1604,10 @@
     "deleteConfirm": "Tem certeza de que deseja excluir \"{{name}}\"?",
     "deleteSuccess": "Persona \"{{name}}\" excluída com sucesso",
     "downloadSuccess": "Persona \"{{name}}\" baixada com sucesso",
-    "failed": "Falha ao {{action}} persona"
+    "failed": "Falha ao {{action}} persona",
+    "loadFailed": "Não foi possível carregar suas personas.",
+    "deleteFailed": "Falha ao excluir a persona",
+    "downloadFailed": "Falha ao baixar a persona"
   },
   "personaForm": {
     "title": {
@@ -1682,7 +1739,8 @@
       "promptHint": "Um prompt para iniciar cada novo chat com esta persona.",
       "noPrompt": "Sem prompt",
       "version": "Revisão de vínculos {{version}}"
-    }
+    },
+    "sections": "Seções da persona"
   },
   "personaCard": {
     "enhanced": "Aprimorada",
@@ -1699,7 +1757,16 @@
     "backupSuccess": "Backup da persona baixado com sucesso",
     "dnaSuccess": "DNA da persona exportado com sucesso",
     "failed": "Falha ao {{action}}",
-    "shareTooltip": "Compartilhar esta persona"
+    "shareTooltip": "Compartilhar esta persona",
+    "wipeFailed": "Falha ao apagar as memórias",
+    "backupFailed": "Falha ao fazer backup da persona",
+    "exportDnaFailed": "Falha ao exportar o DNA da persona",
+    "favorite": "Favorita",
+    "memoryStatus": {
+      "active": "Ativa",
+      "wiped": "Apagada",
+      "backed_up": "Com backup"
+    }
   },
   "userManager": {
     "title": "Gerenciamento de Usuários",
@@ -1865,7 +1932,28 @@
       "memberOf": "Grupos",
       "featuresLabel": "Acesso a recursos",
       "grantsLabel": "Concessões",
-      "grantVia": "via"
+      "grantVia": "via",
+      "deleteConfirmTitle": "Excluir o grupo “{{name}}”?",
+      "deleteConfirmDescription": "Os membros perdem o acesso que tinham apenas por este grupo. As contas em si não são excluídas.",
+      "statuses": {
+        "active": "Ativo",
+        "pending": "Aprovação pendente"
+      },
+      "features": {
+        "work": "Trabalho",
+        "model-download": "Download de modelos",
+        "web-search": "Pesquisa na web",
+        "strands": "Mecanismo Strands",
+        "tools": "Ferramentas",
+        "stt": "Fala para texto",
+        "tts": "Texto para fala",
+        "voice-mode": "Modo de voz",
+        "voice-cloning": "Clonagem de voz"
+      },
+      "grantViaKinds": {
+        "user": "concessão direta",
+        "group": "grupo"
+      }
     },
     "audit": {
       "title": "Registro de auditoria de segurança",
@@ -2298,7 +2386,11 @@
       "harmful": "Prejudicial",
       "formatting": "Formatação"
     },
-    "feedbackComment": "Adicionar um comentário…"
+    "feedbackComment": "Adicionar um comentário…",
+    "user": "Usuário",
+    "feedbackFailed": "Não foi possível salvar seu feedback",
+    "openImage": "Abrir imagem {{number}}",
+    "uploadedImageAlt": "Imagem enviada {{number}}"
   },
   "imageGallery": {
     "title": "Galeria de Imagens",
@@ -2387,7 +2479,10 @@
       "image": "Imagens",
       "video": "Vídeos",
       "audio": "Áudio"
-    }
+    },
+    "deleteConfirmTitle": "Excluir este item?",
+    "deleteConfirmDescription": "A mídia gerada será excluída permanentemente.",
+    "previewFailed": "Pré-visualização indisponível"
   },
   "errorBoundary": {
     "title": "Algo deu errado",
@@ -2463,7 +2558,8 @@
     "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source.",
     "versionOf": "Versão {{current}} de {{total}}",
     "previousVersion": "Versão anterior",
-    "nextVersion": "Versão seguinte"
+    "nextVersion": "Versão seguinte",
+    "resizePanel": "Redimensionar painel"
   },
   "personaImportExport": {
     "title": "Importar e Exportar Personas",
@@ -2501,7 +2597,10 @@
     "generation": "Geração:",
     "modelLoad": "Carregamento do modelo:",
     "totalTime": "Tempo total:",
-    "generatedAt": "Gerado às:"
+    "generatedAt": "Gerado às:",
+    "notAvailable": "N/D",
+    "tokenCount": "{{tokens}} tokens",
+    "tokensPerSecond": "{{value}} t/s"
   },
   "userMenu": {
     "loggedOut": "Desconectado com sucesso",
@@ -2560,7 +2659,9 @@
       "httpWarning": "O HTTP não criptografa credenciais ou tráfego. Use-o apenas em uma rede confiável.",
       "invalidBaseUrl": "As URLs base não podem conter uma string de consulta ou fragmento.",
       "invalidApiPath": "Deve começar com / e não conter URL, consulta, fragmento ou segmento ..",
-      "tooLong": "O valor é muito longo"
+      "tooLong": "O valor é muito longo",
+      "resetConfirmTitle": "Restaurar os padrões?",
+      "resetConfirmDescription": "Isso apaga todos os valores armazenados de {{name}}, incluindo chaves de API e outras credenciais. Esta ação não pode ser desfeita."
     }
   },
   "huggingface": {
@@ -2580,7 +2681,10 @@
   },
   "demoMode": {
     "title": "Modo demo",
-    "github": "GitHub"
+    "github": "GitHub",
+    "defaultMessage": "Esta é uma versão de demonstração apenas para apresentação. O backend do Ollama não está conectado.",
+    "viewOnGithub": "Ver no GitHub",
+    "dismiss": "Dispensar"
   },
   "work": {
     "title": "Trabalho",
@@ -2671,8 +2775,18 @@
         "checksPending": "Verificações pendentes",
         "stallNudges": "Avisos de travamento",
         "ambiguityNudges": "Avisos de reancoragem",
-        "stoppedBy": "Interrompido por"
-      }
+        "stoppedBy": "Interrompido por",
+        "reasons": {
+          "round": "limite de rodadas",
+          "toolCall": "limite de chamadas de ferramenta",
+          "approvalTimeout": "tempo de aprovação esgotado",
+          "computerStall": "computador travou"
+        }
+      },
+      "skillTraceSavedWorked": "Anotado: funcionou",
+      "skillTraceSavedFailed": "Anotado: falhou",
+      "connectionClosed": "A conexão ao vivo do Trabalho foi encerrada.",
+      "reconnectingBackground": "As atualizações ao vivo estão se reconectando em segundo plano."
     },
     "runtime": {
       "unavailable": "Ambiente de execução indisponível",
@@ -2715,7 +2829,11 @@
       "changes": "Alterações",
       "changesSince": "O que mudou desde o último turno",
       "diffLabel": "Alterações desde o último turno: {{path}}",
-      "diffFolded": "{{count}} linhas inalteradas"
+      "diffFolded": "{{count}} linhas inalteradas",
+      "diffAdded": "Adicionado",
+      "diffRemoved": "Removido",
+      "unsavedChanges": "alterações não salvas",
+      "editingLocked": "A edição é liberada quando o turno terminar."
     },
     "activity": {
       "empty": "Comandos, operações de arquivo e resultados de ferramentas aparecerão aqui.",
@@ -2726,7 +2844,9 @@
         "toolCall": "Chamada de ferramenta",
         "toolResult": "Resultado da ferramenta",
         "error": "Erro"
-      }
+      },
+      "arguments": "Argumentos da ferramenta",
+      "output": "Saída da ferramenta"
     },
     "preview": {
       "command": "Comando de início opcional",
@@ -2755,7 +2875,8 @@
       "saveFailed": "Não foi possível salvar este arquivo.",
       "saved": "Arquivo salvo.",
       "previewFailed": "Não foi possível iniciar a pré-visualização.",
-      "previewStopFailed": "Não foi possível parar a pré-visualização."
+      "previewStopFailed": "Não foi possível parar a pré-visualização.",
+      "sendFailed": "Não foi possível enviar a mensagem."
     },
     "terminal": {
       "connecting": "Abrindo um shell na sandbox…",
@@ -2807,7 +2928,18 @@
       "noFilterMatches": "Nenhum arquivo alterado corresponde a este filtro.",
       "allChanges": "Todas as alterações",
       "diffTruncated": "Este diff está truncado.",
-      "binaryFile": "Arquivo binário, sem diff de texto."
+      "binaryFile": "Arquivo binário, sem diff de texto.",
+      "statusLabels": {
+        "modified": "Modificado",
+        "added": "Adicionado",
+        "deleted": "Excluído",
+        "renamed": "Renomeado",
+        "copied": "Copiado",
+        "typeChanged": "Tipo alterado",
+        "untracked": "Não rastreado"
+      },
+      "stagedState": "preparado",
+      "aheadBehind": "{{ahead}} à frente, {{behind}} atrás"
     },
     "hostWorkspace": {
       "hint": "Deixe em branco para um espaço isolado, ou aponte a tarefa para uma pasta desta máquina.",
@@ -2834,7 +2966,8 @@
       "unmute": "Ativar som",
       "mute": "Silenciar",
       "finished": "Esta tarefa está concluída. Reabra-a para trazer a tela de volta.",
-      "reopenOpen": "Reabrir tarefa e abrir a tela"
+      "reopenOpen": "Reabrir tarefa e abrir a tela",
+      "teachSaveFailed": "Não foi possível salvar esta demonstração."
     },
     "computerSetup": {
       "title": "Work Computer",
@@ -2871,7 +3004,11 @@
       "approvalsToggleFailed": "Não foi possível atualizar as aprovações.",
       "approvalRuleLine": "Sempre permitido",
       "approvalRuleDelete": "Remover regra",
-      "approvalRuleDeleteFailed": "Não foi possível remover a regra."
+      "approvalRuleDeleteFailed": "Não foi possível remover a regra.",
+      "routinesLoadFailed": "Não foi possível carregar as rotinas.",
+      "skillsLoadFailed": "Não foi possível carregar as habilidades ensinadas.",
+      "approvalsLoadFailed": "Não foi possível carregar as configurações de aprovação.",
+      "routinePaused": "Pausada"
     },
     "approval": {
       "title": "Aprovação necessária",
@@ -2879,7 +3016,16 @@
       "allowOnce": "Permitir uma vez",
       "allowAlways": "Permitir sempre",
       "deny": "Recusar",
-      "failed": "Não foi possível enviar a decisão."
+      "failed": "Não foi possível enviar a decisão.",
+      "details": "Detalhes da ação",
+      "fields": {
+        "command": "Comando",
+        "path": "Caminho",
+        "from": "De",
+        "to": "Para",
+        "actions": "Ações",
+        "recursive": "Recursivo"
+      }
     },
     "idleStopHint": "Para depois de {{minutes}} minutos sem atividade.",
     "runs": {
@@ -2891,7 +3037,8 @@
         "needsInput": "Precisa de entrada",
         "failed": "Falhou",
         "cancelled": "Cancelado"
-      }
+      },
+      "loadFailed": "Não foi possível carregar o histórico de execuções."
     },
     "recovery": {
       "pending": "O Work está confirmando {{pending}} limpeza(s) de sandbox antes de aceitar novas operações.",
@@ -2903,6 +3050,17 @@
       "retrySucceeded": "Concluídas {{cleared}} de {{attempted}} limpezas pendentes.",
       "retryPending": "Ainda tentando {{attempted}} limpezas pendentes.",
       "retryFailed": "Não foi possível repetir as limpezas pendentes."
+    },
+    "computer": {
+      "setupFailed": "Não foi possível configurar o Computador do Trabalho."
+    },
+    "announce": {
+      "completed": "{{title}}: concluído.",
+      "needsInput": "{{title}} precisa da sua entrada ou aprovação.",
+      "failed": "{{title}}: falhou.",
+      "cancelled": "{{title}}: interrompido.",
+      "approvalNeeded": "{{title}} precisa da sua aprovação para executar {{tool}}.",
+      "untitledTask": "Esta tarefa"
     }
   },
   "personaBackground": {
@@ -2947,7 +3105,8 @@
     "showAll": "Mostrar todos ({{total}})",
     "sources": "Origens dos modelos",
     "defaultModel": "Modelo padrão",
-    "contextSize": "contexto de {{size}}"
+    "contextSize": "contexto de {{size}}",
+    "via": "via {{provider}}"
   },
   "whatsNew": {
     "title": "Novidades",
@@ -3004,7 +3163,16 @@
     "unpin": "Desafixar nota",
     "pinned": "Fixada",
     "export": "Baixar como Markdown",
-    "sharedWithYou": "Compartilhada com você"
+    "sharedWithYou": "Compartilhada com você",
+    "titleLabel": "Título da nota",
+    "loadFailed": "Não foi possível carregar. Tente novamente.",
+    "restoreConfirmTitle": "Restaurar esta versão?",
+    "restoreConfirmDescription": "O texto da nota será substituído por esta versão anterior.",
+    "deleteAttachmentConfirmTitle": "Excluir {{name}}?",
+    "deleteAttachmentConfirmDescription": "O anexo será excluído permanentemente desta nota.",
+    "attachmentDeleteFailed": "Não foi possível excluir o anexo",
+    "revokeFailed": "Não foi possível revogar o acesso",
+    "sharePermissionLabel": "Permissão"
   },
   "calendar": {
     "title": "Calendário",
@@ -3049,7 +3217,22 @@
     "importFailed": "Não foi possível importar o arquivo",
     "importResult": "{{total}} eventos importados",
     "importIcs": "Importar",
-    "exportIcs": "Exportar"
+    "exportIcs": "Exportar",
+    "chipStatus": {
+      "automation": "Automação agendada",
+      "runSucceeded": "Execução da automação concluída",
+      "runFailed": "Falha na execução da automação"
+    },
+    "newEventOn": "Novo evento em {{date}}",
+    "showDay": "Mostrar todos os eventos em {{date}}",
+    "deleteEventConfirmTitle": "Excluir \"{{title}}\"?",
+    "deleteEventConfirmDescription": "Este evento será excluído permanentemente.",
+    "deleteRecurringEventConfirmDescription": "Este evento recorrente e todas as suas ocorrências serão excluídos permanentemente.",
+    "shareCalendarNamed": "Compartilhar calendário {{name}}",
+    "deleteCalendarNamed": "Excluir calendário {{name}}",
+    "deleteCalendarConfirmTitle": "Excluir o calendário \"{{name}}\"?",
+    "deleteCalendarConfirmDescription": "O calendário e os eventos nele serão excluídos permanentemente.",
+    "calendarDeleteFailed": "Não foi possível excluir o calendário"
   },
   "automations": {
     "title": "Automações",
@@ -3176,13 +3359,17 @@
         "work-approval": "um agente está esperando sua aprovação",
         "system": "um aviso do sistema chega"
       }
-    }
+    },
+    "deleteConfirmTitle": "Excluir \"{{name}}\"?",
+    "deleteConfirmDescription": "A automação e sua programação serão excluídas permanentemente. As execuções anteriores permanecem no histórico."
   },
   "home": {
     "active": "ativo",
     "continue": "Continuar",
     "start": "Começar",
-    "explore": "Explorar"
+    "explore": "Explorar",
+    "greeting": "{{greeting}}.",
+    "greetingWithName": "{{greeting}}, {{name}}."
   },
   "palette": {
     "empty": "Sem correspondências.",
@@ -3195,7 +3382,14 @@
     "work": "Trabalho",
     "messages": "Mensagens",
     "notes": "Notas",
-    "documents": "Documentos"
+    "documents": "Documentos",
+    "searching": "Pesquisando…",
+    "searchFailed": "A pesquisa no espaço de trabalho falhou. Mostrando apenas conversas e ações correspondentes.",
+    "results": "Resultados",
+    "escKey": "esc",
+    "hintNavigate": "Navegar",
+    "hintOpen": "Abrir",
+    "hintClose": "Fechar"
   },
   "tabs": {
     "actions": "Ações da aba",
@@ -3399,7 +3593,8 @@
       "button": "De uma pasta",
       "missingSkillMd": "A pasta precisa de um arquivo SKILL.md",
       "done": "Habilidade importada com {{count}} arquivos incluídos"
-    }
+    },
+    "toggleLabel": "Ativar habilidade {{name}}"
   },
   "toolsPage": {
     "title": "Ferramentas",
@@ -3557,7 +3752,14 @@
     "added": "Compartilhado com {{name}}",
     "failed": "Falha ao compartilhar",
     "userNotFound": "Nenhum usuário com esse nome",
-    "groupNotFound": "Nenhum grupo com esse nome"
+    "groupNotFound": "Nenhum grupo com esse nome",
+    "principalKind": "Compartilhar com um usuário ou grupo",
+    "principalName": "Nome de usuário ou do grupo",
+    "permission": "Permissão",
+    "sharing": "Compartilhamento",
+    "loading": "Carregando compartilhamentos",
+    "loadFailed": "Não foi possível carregar os compartilhamentos",
+    "revokeFailed": "Não foi possível revogar o acesso"
   },
   "channels": {
     "title": "Canais",
@@ -3616,13 +3818,44 @@
     "toolCalls": {
       "summary": "Ferramentas usadas ({{total}})",
       "deniedHint": "Ferramentas que alteram dados são recusadas em canais. Execute-as a partir de um chat."
-    }
+    },
+    "confirmEdit": "Salvar edição",
+    "cancelEdit": "Cancelar edição",
+    "reactWith": "Reagir com {{emoji}}",
+    "deleteMessageConfirmTitle": "Excluir esta mensagem?",
+    "deleteMessageConfirmDescription": "A mensagem será removida para todos neste canal.",
+    "unreadCount": "{{total}} não lidas",
+    "send": "Enviar mensagem",
+    "invite": "Convidar membro",
+    "closeThread": "Fechar tópico",
+    "removeAttachment": "Remover anexo",
+    "loadFailed": "Não foi possível carregar. Tente novamente.",
+    "editFailed": "Não foi possível editar a mensagem",
+    "deleteMessageFailed": "Não foi possível excluir a mensagem",
+    "pinFailed": "Não foi possível alterar a fixação",
+    "reactFailed": "Não foi possível salvar a reação",
+    "downloadFailed": "Não foi possível baixar o arquivo",
+    "removeMemberConfirm": "Remover {{name}} deste canal?",
+    "removeMemberConfirmDescription": "A pessoa perderá o acesso ao canal e às mensagens dele.",
+    "removeMemberNamed": "Remover {{name}} do canal",
+    "removeMemberFailed": "Não foi possível remover o membro",
+    "leaveConfirm": "Sair de {{name}}?",
+    "leaveConfirmDescription": "Você precisará ser convidado novamente para voltar a um canal privado.",
+    "leaveFailed": "Não foi possível sair do canal",
+    "joinFailed": "Não foi possível entrar no canal",
+    "deleteConfirm": "Excluir {{name}}?",
+    "deleteConfirmDescription": "O canal e todas as suas mensagens serão excluídos permanentemente para todos os membros.",
+    "deleteFailed": "Não foi possível excluir o canal",
+    "saveFailed": "Não foi possível salvar o canal"
   },
   "notifications": {
     "title": "Notificações",
     "empty": "Você está em dia.",
     "markAllRead": "Marcar tudo como lido",
-    "markRead": "Marcar como lido"
+    "markRead": "Marcar como lido",
+    "titleWithUnread": "Notificações ({{unread}} não lidas)",
+    "unread": "Não lidas",
+    "loadFailed": "Não foi possível carregar as notificações."
   },
   "voiceMode": {
     "title": "Modo de voz",
@@ -3757,7 +3990,12 @@
       "failed": "Falhou",
       "cancelled": "Cancelada"
     },
-    "noFeedback": "Ainda não há feedback — avalie respostas para construir seu conjunto de dados."
+    "noFeedback": "Ainda não há feedback — avalie respostas para construir seu conjunto de dados.",
+    "deleteSetConfirmTitle": "Excluir \"{{name}}\"?",
+    "deleteSetConfirmDescription": "O conjunto de avaliação e seus prompts serão excluídos permanentemente.",
+    "deleteSetFailed": "Não foi possível excluir o conjunto de avaliação",
+    "runError": "Erro: {{detail}}",
+    "cancelFailed": "Não foi possível cancelar a execução"
   },
   "passwordStrength": {
     "levels": {
@@ -3771,6 +4009,14 @@
       "hasCase": "Letras maiúsculas e minúsculas",
       "hasNumber": "Pelo menos um número",
       "tooLong": "No máximo 72 bytes"
+    },
+    "requirements": "Use pelo menos 12 caracteres, no máximo 72 bytes UTF-8, com maiúscula, minúscula e um número.",
+    "errors": {
+      "minLength": "A senha deve ter pelo menos 12 caracteres.",
+      "tooLong": "A senha deve ter no máximo 72 bytes UTF-8.",
+      "uppercase": "A senha deve conter uma letra maiúscula.",
+      "lowercase": "A senha deve conter uma letra minúscula.",
+      "number": "A senha deve conter um número."
     }
   },
   "connectModels": {
@@ -3804,7 +4050,8 @@
       "enable": "Ativar provedor",
       "enabling": "Ativando…",
       "enabled": "{{name}} conectado — seus modelos já estão disponíveis",
-      "enableFailed": "Não foi possível ativar o provedor"
+      "enableFailed": "Não foi possível ativar o provedor",
+      "urlLabel": "URL do servidor"
     },
     "cloud": {
       "title": "API na nuvem",
@@ -3813,7 +4060,8 @@
       "connect": "Conectar",
       "connecting": "Conectando…",
       "connected": "{{name}} conectado — seus modelos já estão disponíveis",
-      "saveFailed": "Não foi possível salvar a chave de API"
+      "saveFailed": "Não foi possível salvar a chave de API",
+      "keyLabel": "Chave de API de {{name}}"
     }
   },
   "strands": {
@@ -3845,5 +4093,15 @@
     "deleteFailed": "Não foi possível excluir a sessão.",
     "saveFailed": "Não foi possível salvar a sessão.",
     "turnFailed": "O motor não conseguiu concluir o turno"
+  },
+  "notFound": {
+    "title": "Página não encontrada",
+    "description": "Esta página não existe ou pode ter sido movida."
+  },
+  "themeToggle": {
+    "switchToLight": "Mudar para o modo claro",
+    "switchToDark": "Mudar para o modo escuro",
+    "switchToAmoled": "Mudar para o modo preto puro",
+    "switchToCelestial": "Mudar para o modo celestial"
   }
 }

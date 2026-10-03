@@ -41,7 +41,8 @@
     "remove": "Verwijderen",
     "home": "Home",
     "more": "Meer",
-    "reasoning": "Redenering"
+    "reasoning": "Redenering",
+    "skipToContent": "Naar inhoud springen"
   },
   "brand": {
     "name": "Libre WebUI",
@@ -49,7 +50,10 @@
   },
   "appInitialization": {
     "ollamaUnavailable": "De Ollama-service is niet beschikbaar. Pluginmodellen kunnen nog wel worden gebruikt.",
-    "backendConnectionFailed": "Kan geen verbinding maken met de backendservice"
+    "backendConnectionFailed": "Kan geen verbinding maken met de backendservice",
+    "connecting": "Verbinden met de backend… ({{attempt}}/{{total}})",
+    "startingUp": "Starten…",
+    "backendUnreachableHint": "Controleer of de backend draait en probeer het opnieuw."
   },
   "auth": {
     "login": {
@@ -189,7 +193,15 @@
       "removed": "Passkey verwijderd.",
       "removeFailed": "De passkey kon niet worden verwijderd.",
       "signInButton": "Inloggen met een passkey",
-      "signInFailed": "Inloggen met passkey mislukt."
+      "signInFailed": "Inloggen met passkey mislukt.",
+      "removeConfirmTitle": "Deze passkey verwijderen?",
+      "removeConfirmDescription": "Met \"{{name}}\" kun je niet meer inloggen. Je kunt hem later opnieuw registreren."
+    },
+    "password": {
+      "show": "Wachtwoord tonen",
+      "hide": "Wachtwoord verbergen",
+      "showConfirmation": "Wachtwoordbevestiging tonen",
+      "hideConfirmation": "Wachtwoordbevestiging verbergen"
     }
   },
   "setup": {
@@ -242,7 +254,8 @@
       "envNote": "Deze sleutel is ook opgeslagen in uw backend/.env bestand als ENCRYPTION_KEY",
       "acknowledgment": "Ik heb mijn encryptiesleutel op een veilige locatie opgeslagen en begrijp dat verlies ervan kan leiden tot gegevensverlies.",
       "confirmRequired": "Bevestig dat u de encryptiesleutel heeft opgeslagen",
-      "continue": "Doorgaan naar Libre WebUI"
+      "continue": "Doorgaan naar Libre WebUI",
+      "loadFailed": "Kon de versleutelingssleutel niet laden. Probeer opnieuw om door te gaan."
     },
     "connectModels": {
       "title": "Verbind uw modellen",
@@ -336,7 +349,8 @@
       "toolsOn": "Gereedschappen aan — het model mag goedgekeurde gereedschappen aanroepen",
       "toolsOff": "Het model gereedschappen laten aanroepen voor dit bericht",
       "thinkingOn": "Nadenken aan ({{level}})",
-      "thinkingOff": "Nadenken voor het antwoord"
+      "thinkingOff": "Nadenken voor het antwoord",
+      "thinkingUpdateFailed": "Kon de denkinstelling niet bijwerken"
     },
     "session": {
       "new": "Nieuwe chat",
@@ -372,7 +386,8 @@
         "move": "Verplaatsen naar map",
         "remove": "Uit map verwijderen",
         "delete": "Map verwijderen",
-        "deleteConfirm": "Deze map verwijderen? De chats erin blijven bewaard."
+        "deleteConfirm": "Deze map verwijderen? De chats erin blijven bewaard.",
+        "rename": "Map hernoemen"
       },
       "shareChat": "Chat delen…"
     },
@@ -405,7 +420,13 @@
       "browse": "bladeren",
       "unsupportedFileType": "Bestandstype wordt niet ondersteund: {{name}}",
       "maxImagesAllowed": "Maximaal {{count}} afbeeldingen toegestaan",
-      "imageTooLarge": "Afbeelding {{name}} is te groot (max. 10 MB)"
+      "imageTooLarge": "Afbeelding {{name}} is te groot (max. 10 MB)",
+      "readFailed": "Kon {{name}} niet lezen",
+      "uploadAlt": "Upload {{number}}",
+      "removeImage": "Afbeelding {{number}} verwijderen",
+      "addMore": "Meer afbeeldingen toevoegen ({{count}}/{{max}})",
+      "uploading": "Uploaden",
+      "removeDocument": "{{name}} verwijderen"
     },
     "structuredOutput": {
       "title": "Antwoordformaat",
@@ -456,7 +477,8 @@
       "compactionOff": "Uit voor deze chat"
     },
     "message": {
-      "sources": "Bronnen"
+      "sources": "Bronnen",
+      "copyFailed": "Kon niet naar het klembord kopiëren"
     },
     "toasts": {
       "chatCreated": "Nieuwe chat aangemaakt",
@@ -491,7 +513,8 @@
       "branchSwitched": "Overgeschakeld naar variant {{number}}",
       "branchSelectFailed": "Vertakking selecteren mislukt",
       "editFailed": "Bericht bewerken mislukt",
-      "toolDecisionFailed": "De beslissing over de tool kon niet worden vastgelegd"
+      "toolDecisionFailed": "De beslissing over de tool kon niet worden vastgelegd",
+      "archiveFailed": "Kon deze chat niet archiveren"
     },
     "documents": {
       "title": "Documenten in context"
@@ -521,7 +544,25 @@
       "origin": "Afgesplitst van {{title}}",
       "originUnknown": "een andere chat"
     },
-    "sharedReadOnly": "Gedeeld door {{owner}} — alleen lezen"
+    "sharedReadOnly": "Gedeeld door {{owner}} — alleen lezen",
+    "branch": {
+      "variants": "{{count}} variant",
+      "variants_plural": "{{count}} varianten",
+      "selectVariant": "Variant {{number}} selecteren",
+      "generating": "genereren...",
+      "select": "selecteren"
+    },
+    "sources": {
+      "fullContextFailed": "Kon de instelling voor volledig document niet bijwerken",
+      "usedByRetrieval": "Gebruikt in antwoorden",
+      "triggerLabel": "Bronnen ({{count}})"
+    },
+    "announce": {
+      "replyFinished": "{{name}} antwoordde: {{text}}",
+      "replyFinishedNoText": "{{name}} is klaar met antwoorden.",
+      "codeBlock": "codeblok",
+      "generationStopped": "Generatie gestopt"
+    }
   },
   "sidebar": {
     "navigation": {
@@ -546,7 +587,8 @@
       "strands": "Strands"
     },
     "toggleSize": "Zijbalk grootte wijzigen",
-    "expandSidebar": "Zijbalk uitvouwen"
+    "expandSidebar": "Zijbalk uitvouwen",
+    "ariaLabel": "Zijbalk"
   },
   "user": {
     "menu": {
@@ -821,7 +863,8 @@
         "removeFailed": "Kon API-sleutel niet verwijderen",
         "enterKey": "Voer een API-sleutel in"
       },
-      "variables": "Variables"
+      "variables": "Variables",
+      "dismissError": "Fout sluiten"
     },
     "generation": {
       "title": "Generatieopties",
@@ -924,7 +967,8 @@
         "deleteFailed": "Collectie kon niet worden verwijderd",
         "assignFailed": "Document kon niet worden verplaatst",
         "share": "Collectie delen",
-        "shared": "gedeeld"
+        "shared": "gedeeld",
+        "assignTo": "Collectie voor {{name}}"
       },
       "library": {
         "title": "Geüploade documenten",
@@ -1066,7 +1110,8 @@
         "title": "Gearchiveerde chats",
         "empty": "Geen gearchiveerde chats",
         "unarchive": "Herstellen"
-      }
+      },
+      "clearAllConfirm": "Weet je zeker dat je de hele chatgeschiedenis wilt verwijderen? Dit kan niet ongedaan worden gemaakt."
     },
     "about": {
       "title": "Over",
@@ -1186,7 +1231,11 @@
       "unknownDevice": "Onbekend apparaat",
       "createdAt": "Ingelogd",
       "lastSeenAt": "Laatst actief",
-      "expiresAt": "Verloopt"
+      "expiresAt": "Verloopt",
+      "signOutConfirmTitle": "Deze sessie uitloggen?",
+      "signOutConfirmDescription": "{{device}} wordt direct uitgelogd en moet opnieuw inloggen.",
+      "signOutOthersConfirmTitle": "Andere sessies uitloggen?",
+      "signOutOthersConfirmDescription": "{{count}} andere sessies worden direct uitgelogd. Deze sessie blijft ingelogd."
     },
     "apiKeys": {
       "title": "API-sleutels",
@@ -1220,7 +1269,9 @@
       "createdAt": "Aangemaakt",
       "lastUsedAt": "Laatst gebruikt",
       "expiresAt": "Verloopt",
-      "neverExpires": "Nooit"
+      "neverExpires": "Nooit",
+      "revokeConfirmTitle": "\"{{name}}\" intrekken?",
+      "revokeConfirmDescription": "Alles wat deze API-sleutel gebruikt, werkt direct niet meer. Dit kan niet ongedaan worden gemaakt."
     },
     "notifications": {
       "title": "Meldingen",
@@ -1294,7 +1345,8 @@
     "model": "Model",
     "size": "Grootte",
     "quality": "Kwaliteit",
-    "created": "Aangemaakt"
+    "created": "Aangemaakt",
+    "lightboxLabel": "Afbeeldingsvoorbeeld"
   },
   "errors": {
     "generic": "Er is een fout opgetreden",
@@ -1389,7 +1441,9 @@
       "hide": "Verbergen voor gebruikers",
       "show": "Tonen aan gebruikers",
       "star": "{{name}} markeren met ster",
-      "unstar": "Ster van {{name}} verwijderen"
+      "unstar": "Ster van {{name}} verwijderen",
+      "filterLabel": "Modellen filteren",
+      "displayName": "Weergavenaam voor {{name}}"
     },
     "pull": {
       "placeholder": "Voer modelnaam in (bijv. llama3.2:3b, deepseek-r1:14b)",
@@ -1550,7 +1604,10 @@
     "deleteConfirm": "Weet u zeker dat u \"{{name}}\" wilt verwijderen?",
     "deleteSuccess": "Persona \"{{name}}\" succesvol verwijderd",
     "downloadSuccess": "Persona \"{{name}}\" succesvol gedownload",
-    "failed": "Kon persona niet {{action}}"
+    "failed": "Kon persona niet {{action}}",
+    "loadFailed": "Je persona's konden niet worden geladen.",
+    "deleteFailed": "Persona verwijderen mislukt",
+    "downloadFailed": "Persona downloaden mislukt"
   },
   "personaForm": {
     "title": {
@@ -1682,7 +1739,8 @@
       "promptHint": "Een prompt waarmee elke nieuwe chat met deze persona begint.",
       "noPrompt": "Geen prompt",
       "version": "Koppelingsrevisie {{version}}"
-    }
+    },
+    "sections": "Persona-secties"
   },
   "personaCard": {
     "enhanced": "Verbeterd",
@@ -1699,7 +1757,16 @@
     "backupSuccess": "Persona-back-up succesvol gedownload",
     "dnaSuccess": "Persona-DNA succesvol geëxporteerd",
     "failed": "{{action}} mislukt",
-    "shareTooltip": "Deze persona delen"
+    "shareTooltip": "Deze persona delen",
+    "wipeFailed": "Herinneringen wissen mislukt",
+    "backupFailed": "Back-up van persona maken mislukt",
+    "exportDnaFailed": "Persona-DNA exporteren mislukt",
+    "favorite": "Favoriet",
+    "memoryStatus": {
+      "active": "Actief",
+      "wiped": "Gewist",
+      "backed_up": "Back-up gemaakt"
+    }
   },
   "userManager": {
     "title": "Gebruikersbeheer",
@@ -1865,7 +1932,28 @@
       "memberOf": "Groepen",
       "featuresLabel": "Functietoegang",
       "grantsLabel": "Toekenningen",
-      "grantVia": "via"
+      "grantVia": "via",
+      "deleteConfirmTitle": "Groep \"{{name}}\" verwijderen?",
+      "deleteConfirmDescription": "Leden verliezen toegang die ze alleen via deze groep hadden. De accounts zelf worden niet verwijderd.",
+      "statuses": {
+        "active": "Actief",
+        "pending": "In afwachting van goedkeuring"
+      },
+      "features": {
+        "work": "Werk",
+        "model-download": "Modellen downloaden",
+        "web-search": "Zoeken op het web",
+        "strands": "Strands-engine",
+        "tools": "Tools",
+        "stt": "Spraak naar tekst",
+        "tts": "Tekst naar spraak",
+        "voice-mode": "Spraakmodus",
+        "voice-cloning": "Stemklonen"
+      },
+      "grantViaKinds": {
+        "user": "directe toekenning",
+        "group": "groep"
+      }
     },
     "audit": {
       "title": "Beveiligingsauditlog",
@@ -2298,7 +2386,11 @@
       "harmful": "Schadelijk",
       "formatting": "Opmaak"
     },
-    "feedbackComment": "Voeg een opmerking toe…"
+    "feedbackComment": "Voeg een opmerking toe…",
+    "user": "Gebruiker",
+    "feedbackFailed": "Kon je feedback niet opslaan",
+    "openImage": "Afbeelding {{number}} openen",
+    "uploadedImageAlt": "Geüploade afbeelding {{number}}"
   },
   "imageGallery": {
     "title": "Afbeeldingengalerij",
@@ -2387,7 +2479,10 @@
       "image": "Afbeeldingen",
       "video": "Video's",
       "audio": "Audio"
-    }
+    },
+    "deleteConfirmTitle": "Dit item verwijderen?",
+    "deleteConfirmDescription": "De gegenereerde media worden definitief verwijderd.",
+    "previewFailed": "Voorbeeld niet beschikbaar"
   },
   "errorBoundary": {
     "title": "Er is iets misgegaan",
@@ -2463,7 +2558,8 @@
     "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source.",
     "versionOf": "Versie {{current}} van {{total}}",
     "previousVersion": "Vorige versie",
-    "nextVersion": "Volgende versie"
+    "nextVersion": "Volgende versie",
+    "resizePanel": "Paneel vergroten of verkleinen"
   },
   "personaImportExport": {
     "title": "Personas importeren & exporteren",
@@ -2501,7 +2597,10 @@
     "generation": "Generatie:",
     "modelLoad": "Model laden:",
     "totalTime": "Totale tijd:",
-    "generatedAt": "Gegenereerd om:"
+    "generatedAt": "Gegenereerd om:",
+    "notAvailable": "n.v.t.",
+    "tokenCount": "{{tokens}} tokens",
+    "tokensPerSecond": "{{value}} t/s"
   },
   "userMenu": {
     "loggedOut": "Succesvol uitgelogd",
@@ -2560,7 +2659,9 @@
       "httpWarning": "HTTP versleutelt geen inloggegevens of verkeer. Gebruik dit alleen op een vertrouwd netwerk.",
       "invalidBaseUrl": "Basis-URL's mogen geen queryreeks of fragment bevatten.",
       "invalidApiPath": "Moet beginnen met / en geen URL, query, fragment of .. segment bevatten",
-      "tooLong": "Waarde is te lang"
+      "tooLong": "Waarde is te lang",
+      "resetConfirmTitle": "Terugzetten naar standaardwaarden?",
+      "resetConfirmDescription": "Hiermee worden alle opgeslagen waarden voor {{name}} gewist, inclusief API-sleutels en andere inloggegevens. Dit kan niet ongedaan worden gemaakt."
     }
   },
   "huggingface": {
@@ -2580,7 +2681,10 @@
   },
   "demoMode": {
     "title": "Demomodus",
-    "github": "GitHub"
+    "github": "GitHub",
+    "defaultMessage": "Dit is een demoversie, alleen bedoeld voor presentatie. De Ollama-backend is niet verbonden.",
+    "viewOnGithub": "Bekijken op GitHub",
+    "dismiss": "Sluiten"
   },
   "work": {
     "title": "Werk",
@@ -2671,8 +2775,18 @@
         "checksPending": "Controles in behandeling",
         "stallNudges": "Vastloopmeldingen",
         "ambiguityNudges": "Herijkingsmeldingen",
-        "stoppedBy": "Gestopt door"
-      }
+        "stoppedBy": "Gestopt door",
+        "reasons": {
+          "round": "rondelimiet",
+          "toolCall": "limiet voor toolaanroepen",
+          "approvalTimeout": "time-out voor goedkeuring",
+          "computerStall": "computer liep vast"
+        }
+      },
+      "skillTraceSavedWorked": "Genoteerd: werkte",
+      "skillTraceSavedFailed": "Genoteerd: mislukt",
+      "connectionClosed": "De live Werk-verbinding is gesloten.",
+      "reconnectingBackground": "Live-updates worden op de achtergrond opnieuw verbonden."
     },
     "runtime": {
       "unavailable": "Runtime niet beschikbaar",
@@ -2715,7 +2829,11 @@
       "changes": "Wijzigingen",
       "changesSince": "Wat er is veranderd sinds de laatste beurt",
       "diffLabel": "Wijzigingen sinds de laatste beurt: {{path}}",
-      "diffFolded": "{{count}} ongewijzigde regels"
+      "diffFolded": "{{count}} ongewijzigde regels",
+      "diffAdded": "Toegevoegd",
+      "diffRemoved": "Verwijderd",
+      "unsavedChanges": "niet-opgeslagen wijzigingen",
+      "editingLocked": "Bewerken wordt ontgrendeld zodra de beurt klaar is."
     },
     "activity": {
       "empty": "Opdrachten, bestandsbewerkingen en toolresultaten verschijnen hier.",
@@ -2726,7 +2844,9 @@
         "toolCall": "Toolaanroep",
         "toolResult": "Toolresultaat",
         "error": "Fout"
-      }
+      },
+      "arguments": "Toolargumenten",
+      "output": "Tooluitvoer"
     },
     "preview": {
       "command": "Optionele startopdracht",
@@ -2755,7 +2875,8 @@
       "saveFailed": "Dit bestand kon niet worden opgeslagen.",
       "saved": "Bestand opgeslagen.",
       "previewFailed": "Het voorbeeld kon niet worden gestart.",
-      "previewStopFailed": "Het voorbeeld kon niet worden gestopt."
+      "previewStopFailed": "Het voorbeeld kon niet worden gestopt.",
+      "sendFailed": "Het bericht kon niet worden verzonden."
     },
     "terminal": {
       "connecting": "Een shell in de sandbox openen…",
@@ -2807,7 +2928,18 @@
       "noFilterMatches": "Geen gewijzigde bestanden komen overeen met dit filter.",
       "allChanges": "Alle wijzigingen",
       "diffTruncated": "Deze diff is ingekort.",
-      "binaryFile": "Binair bestand, geen tekstdiff."
+      "binaryFile": "Binair bestand, geen tekstdiff.",
+      "statusLabels": {
+        "modified": "Gewijzigd",
+        "added": "Toegevoegd",
+        "deleted": "Verwijderd",
+        "renamed": "Hernoemd",
+        "copied": "Gekopieerd",
+        "typeChanged": "Type gewijzigd",
+        "untracked": "Niet gevolgd"
+      },
+      "stagedState": "staged",
+      "aheadBehind": "{{ahead}} voor, {{behind}} achter"
     },
     "hostWorkspace": {
       "hint": "Laat leeg voor een geïsoleerde werkruimte, of wijs de taak naar een map op deze machine.",
@@ -2834,7 +2966,8 @@
       "unmute": "Geluid aan",
       "mute": "Dempen",
       "finished": "Deze taak is voltooid. Open hem opnieuw om het scherm terug te halen.",
-      "reopenOpen": "Taak heropenen en scherm openen"
+      "reopenOpen": "Taak heropenen en scherm openen",
+      "teachSaveFailed": "Kon deze demonstratie niet opslaan."
     },
     "computerSetup": {
       "title": "Work Computer",
@@ -2871,7 +3004,11 @@
       "approvalsToggleFailed": "De goedkeuringsinstelling kon niet worden bijgewerkt.",
       "approvalRuleLine": "Altijd toegestaan",
       "approvalRuleDelete": "Regel verwijderen",
-      "approvalRuleDeleteFailed": "De regel kon niet worden verwijderd."
+      "approvalRuleDeleteFailed": "De regel kon niet worden verwijderd.",
+      "routinesLoadFailed": "Kon routines niet laden.",
+      "skillsLoadFailed": "Kon aangeleerde vaardigheden niet laden.",
+      "approvalsLoadFailed": "Kon goedkeuringsinstellingen niet laden.",
+      "routinePaused": "Gepauzeerd"
     },
     "approval": {
       "title": "Goedkeuring nodig",
@@ -2879,7 +3016,16 @@
       "allowOnce": "Eén keer toestaan",
       "allowAlways": "Altijd toestaan",
       "deny": "Weigeren",
-      "failed": "De beslissing kon niet worden verzonden."
+      "failed": "De beslissing kon niet worden verzonden.",
+      "details": "Actiedetails",
+      "fields": {
+        "command": "Opdracht",
+        "path": "Pad",
+        "from": "Van",
+        "to": "Naar",
+        "actions": "Acties",
+        "recursive": "Recursief"
+      }
     },
     "idleStopHint": "Stopt na {{minutes}} minuten zonder activiteit.",
     "runs": {
@@ -2891,7 +3037,8 @@
         "needsInput": "Invoer nodig",
         "failed": "Mislukt",
         "cancelled": "Geannuleerd"
-      }
+      },
+      "loadFailed": "Kon runhistorie niet laden."
     },
     "recovery": {
       "pending": "Work bevestigt {{pending}} sandbox-opschoning(en) voordat het nieuwe bewerkingen accepteert.",
@@ -2903,6 +3050,17 @@
       "retrySucceeded": "{{cleared}} van {{attempted}} openstaande opschoningen voltooid.",
       "retryPending": "Nog steeds bezig met het opnieuw proberen van {{attempted}} openstaande opschoningen.",
       "retryFailed": "De openstaande opschoningen konden niet opnieuw worden geprobeerd."
+    },
+    "computer": {
+      "setupFailed": "De Work Computer kon niet worden ingesteld."
+    },
+    "announce": {
+      "completed": "{{title}} is klaar.",
+      "needsInput": "{{title}} heeft je invoer of goedkeuring nodig.",
+      "failed": "{{title}} is mislukt.",
+      "cancelled": "{{title}} is gestopt.",
+      "approvalNeeded": "{{title}} heeft je goedkeuring nodig om {{tool}} uit te voeren.",
+      "untitledTask": "Deze taak"
     }
   },
   "personaBackground": {
@@ -2947,7 +3105,8 @@
     "showAll": "Alles tonen ({{total}})",
     "sources": "Modelbronnen",
     "defaultModel": "Standaardmodel",
-    "contextSize": "{{size}} context"
+    "contextSize": "{{size}} context",
+    "via": "via {{provider}}"
   },
   "whatsNew": {
     "title": "Wat is nieuw",
@@ -3004,7 +3163,16 @@
     "unpin": "Notitie losmaken",
     "pinned": "Vastgezet",
     "export": "Downloaden als Markdown",
-    "sharedWithYou": "Met jou gedeeld"
+    "sharedWithYou": "Met jou gedeeld",
+    "titleLabel": "Notitietitel",
+    "loadFailed": "Kon dit niet laden. Probeer het opnieuw.",
+    "restoreConfirmTitle": "Deze versie herstellen?",
+    "restoreConfirmDescription": "De tekst van de notitie wordt vervangen door deze eerdere versie.",
+    "deleteAttachmentConfirmTitle": "{{name}} verwijderen?",
+    "deleteAttachmentConfirmDescription": "De bijlage wordt definitief uit deze notitie verwijderd.",
+    "attachmentDeleteFailed": "Kon de bijlage niet verwijderen",
+    "revokeFailed": "Kon toegang niet intrekken",
+    "sharePermissionLabel": "Toestemming"
   },
   "calendar": {
     "title": "Kalender",
@@ -3049,7 +3217,22 @@
     "importFailed": "Het bestand kon niet worden geïmporteerd",
     "importResult": "{{total}} evenementen geïmporteerd",
     "importIcs": "Importeren",
-    "exportIcs": "Exporteren"
+    "exportIcs": "Exporteren",
+    "chipStatus": {
+      "automation": "Geplande automatisering",
+      "runSucceeded": "Automatiseringsrun geslaagd",
+      "runFailed": "Automatiseringsrun mislukt"
+    },
+    "newEventOn": "Nieuwe afspraak op {{date}}",
+    "showDay": "Alle afspraken op {{date}} tonen",
+    "deleteEventConfirmTitle": "\"{{title}}\" verwijderen?",
+    "deleteEventConfirmDescription": "Deze afspraak wordt definitief verwijderd.",
+    "deleteRecurringEventConfirmDescription": "Deze terugkerende afspraak en alle herhalingen worden definitief verwijderd.",
+    "shareCalendarNamed": "Kalender {{name}} delen",
+    "deleteCalendarNamed": "Kalender {{name}} verwijderen",
+    "deleteCalendarConfirmTitle": "Kalender \"{{name}}\" verwijderen?",
+    "deleteCalendarConfirmDescription": "De kalender en alle afspraken erin worden definitief verwijderd.",
+    "calendarDeleteFailed": "De kalender kon niet worden verwijderd"
   },
   "automations": {
     "title": "Automatiseringen",
@@ -3176,13 +3359,17 @@
         "work-approval": "een agent op je goedkeuring wacht",
         "system": "er een systeemmelding binnenkomt"
       }
-    }
+    },
+    "deleteConfirmTitle": "\"{{name}}\" verwijderen?",
+    "deleteConfirmDescription": "De automatisering en het schema worden definitief verwijderd. Eerdere runs blijven in de runhistorie."
   },
   "home": {
     "active": "actief",
     "continue": "Doorgaan",
     "start": "Starten",
-    "explore": "Verkennen"
+    "explore": "Verkennen",
+    "greeting": "{{greeting}}.",
+    "greetingWithName": "{{greeting}}, {{name}}."
   },
   "palette": {
     "empty": "Geen resultaten.",
@@ -3195,7 +3382,14 @@
     "work": "Werk",
     "messages": "Berichten",
     "notes": "Notities",
-    "documents": "Documenten"
+    "documents": "Documenten",
+    "searching": "Zoeken…",
+    "searchFailed": "Zoeken in de werkruimte mislukt. Alleen overeenkomende chats en acties worden getoond.",
+    "results": "Resultaten",
+    "escKey": "esc",
+    "hintNavigate": "Navigeren",
+    "hintOpen": "Openen",
+    "hintClose": "Sluiten"
   },
   "tabs": {
     "actions": "Tabbladacties",
@@ -3399,7 +3593,8 @@
       "button": "Uit map",
       "missingSkillMd": "De map heeft een SKILL.md-bestand nodig",
       "done": "Skill geïmporteerd met {{count}} meegeleverde bestanden"
-    }
+    },
+    "toggleLabel": "Vaardigheid {{name}} inschakelen"
   },
   "toolsPage": {
     "title": "Gereedschappen",
@@ -3557,7 +3752,14 @@
     "added": "Gedeeld met {{name}}",
     "failed": "Delen mislukt",
     "userNotFound": "Geen gebruiker met die naam",
-    "groupNotFound": "Geen groep met die naam"
+    "groupNotFound": "Geen groep met die naam",
+    "principalKind": "Delen met een gebruiker of groep",
+    "principalName": "Gebruikersnaam of groepsnaam",
+    "permission": "Toestemming",
+    "sharing": "Delen",
+    "loading": "Shares laden",
+    "loadFailed": "Kon shares niet laden",
+    "revokeFailed": "Kon toegang niet intrekken"
   },
   "channels": {
     "title": "Kanalen",
@@ -3616,13 +3818,44 @@
     "toolCalls": {
       "summary": "Gebruikte gereedschappen ({{total}})",
       "deniedHint": "Gereedschappen die iets wijzigen worden in kanalen geweigerd. Voer ze uit vanuit een chat."
-    }
+    },
+    "confirmEdit": "Bewerking opslaan",
+    "cancelEdit": "Bewerking annuleren",
+    "reactWith": "Reageren met {{emoji}}",
+    "deleteMessageConfirmTitle": "Dit bericht verwijderen?",
+    "deleteMessageConfirmDescription": "Het bericht wordt voor iedereen in dit kanaal verwijderd.",
+    "unreadCount": "{{total}} ongelezen",
+    "send": "Bericht verzenden",
+    "invite": "Lid uitnodigen",
+    "closeThread": "Draad sluiten",
+    "removeAttachment": "Bijlage verwijderen",
+    "loadFailed": "Kon dit niet laden. Probeer het opnieuw.",
+    "editFailed": "Het bericht kon niet worden bewerkt",
+    "deleteMessageFailed": "Het bericht kon niet worden verwijderd",
+    "pinFailed": "De pin kon niet worden gewijzigd",
+    "reactFailed": "De reactie kon niet worden opgeslagen",
+    "downloadFailed": "Het bestand kon niet worden gedownload",
+    "removeMemberConfirm": "{{name}} uit dit kanaal verwijderen?",
+    "removeMemberConfirmDescription": "Diegene verliest toegang tot het kanaal en de berichten.",
+    "removeMemberNamed": "{{name}} uit kanaal verwijderen",
+    "removeMemberFailed": "Het lid kon niet worden verwijderd",
+    "leaveConfirm": "{{name}} verlaten?",
+    "leaveConfirmDescription": "Je moet opnieuw worden uitgenodigd om weer lid te worden van een privékanaal.",
+    "leaveFailed": "Je kon het kanaal niet verlaten",
+    "joinFailed": "Je kon niet aan het kanaal deelnemen",
+    "deleteConfirm": "{{name}} verwijderen?",
+    "deleteConfirmDescription": "Het kanaal en alle berichten worden definitief verwijderd voor alle leden.",
+    "deleteFailed": "Het kanaal kon niet worden verwijderd",
+    "saveFailed": "Het kanaal kon niet worden opgeslagen"
   },
   "notifications": {
     "title": "Meldingen",
     "empty": "Je bent helemaal bij.",
     "markAllRead": "Alles als gelezen markeren",
-    "markRead": "Als gelezen markeren"
+    "markRead": "Als gelezen markeren",
+    "titleWithUnread": "Meldingen ({{unread}} ongelezen)",
+    "unread": "Ongelezen",
+    "loadFailed": "Kon meldingen niet laden."
   },
   "voiceMode": {
     "title": "Spraakmodus",
@@ -3757,7 +3990,12 @@
       "failed": "Mislukt",
       "cancelled": "Geannuleerd"
     },
-    "noFeedback": "Nog geen feedback — beoordeel antwoorden om je dataset op te bouwen."
+    "noFeedback": "Nog geen feedback — beoordeel antwoorden om je dataset op te bouwen.",
+    "deleteSetConfirmTitle": "\"{{name}}\" verwijderen?",
+    "deleteSetConfirmDescription": "De evaluatieset en de bijbehorende prompts worden definitief verwijderd.",
+    "deleteSetFailed": "De evaluatieset kon niet worden verwijderd",
+    "runError": "Fout: {{detail}}",
+    "cancelFailed": "De run kon niet worden geannuleerd"
   },
   "passwordStrength": {
     "levels": {
@@ -3771,6 +4009,14 @@
       "hasCase": "Hoofd- en kleine letters",
       "hasNumber": "Minstens één cijfer",
       "tooLong": "Maximaal 72 bytes"
+    },
+    "requirements": "Gebruik minstens 12 tekens, maximaal 72 UTF-8-bytes, met hoofdletters, kleine letters en een cijfer.",
+    "errors": {
+      "minLength": "Het wachtwoord moet minstens 12 tekens bevatten.",
+      "tooLong": "Het wachtwoord mag maximaal 72 UTF-8-bytes bevatten.",
+      "uppercase": "Het wachtwoord moet een hoofdletter bevatten.",
+      "lowercase": "Het wachtwoord moet een kleine letter bevatten.",
+      "number": "Het wachtwoord moet een cijfer bevatten."
     }
   },
   "connectModels": {
@@ -3804,7 +4050,8 @@
       "enable": "Provider inschakelen",
       "enabling": "Inschakelen…",
       "enabled": "{{name}} verbonden — de modellen zijn nu beschikbaar",
-      "enableFailed": "Kon de provider niet inschakelen"
+      "enableFailed": "Kon de provider niet inschakelen",
+      "urlLabel": "Server-URL"
     },
     "cloud": {
       "title": "Cloud-API",
@@ -3813,7 +4060,8 @@
       "connect": "Verbinden",
       "connecting": "Verbinden…",
       "connected": "{{name}} verbonden — de modellen zijn nu beschikbaar",
-      "saveFailed": "Kon de API-sleutel niet opslaan"
+      "saveFailed": "Kon de API-sleutel niet opslaan",
+      "keyLabel": "{{name}} API-sleutel"
     }
   },
   "strands": {
@@ -3845,5 +4093,15 @@
     "deleteFailed": "Sessie kon niet worden verwijderd.",
     "saveFailed": "De sessie kon niet worden opgeslagen.",
     "turnFailed": "De engine kon de beurt niet afronden"
+  },
+  "notFound": {
+    "title": "Pagina niet gevonden",
+    "description": "Deze pagina bestaat niet of is verplaatst."
+  },
+  "themeToggle": {
+    "switchToLight": "Overschakelen naar lichte modus",
+    "switchToDark": "Overschakelen naar donkere modus",
+    "switchToAmoled": "Overschakelen naar zuiver zwarte modus",
+    "switchToCelestial": "Overschakelen naar hemelse modus"
   }
 }

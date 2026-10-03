@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { ShareDialog } from '@/components/ShareDialog';
@@ -74,8 +74,46 @@ const PersonaCard: React.FC<PersonaCardProps> = ({
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [showMenu, setShowMenu] = useState(false);
+  const menuTriggerRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
   const [shareOpen, setShareOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Move focus into the menu when it opens so it is keyboard operable.
+  useEffect(() => {
+    if (showMenu) {
+      menuRef.current
+        ?.querySelector<HTMLElement>('[role="menuitem"]:not(:disabled)')
+        ?.focus();
+    }
+  }, [showMenu]);
+
+  const closeMenu = (restoreFocus = false) => {
+    setShowMenu(false);
+    if (restoreFocus) menuTriggerRef.current?.focus();
+  };
+
+  const handleMenuKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    if (event.key === 'Escape') {
+      event.stopPropagation();
+      closeMenu(true);
+      return;
+    }
+    if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') return;
+    const items = Array.from(
+      menuRef.current?.querySelectorAll<HTMLElement>(
+        '[role="menuitem"]:not(:disabled)'
+      ) ?? []
+    );
+    if (items.length === 0) return;
+    event.preventDefault();
+    const current = items.indexOf(document.activeElement as HTMLElement);
+    const next =
+      event.key === 'ArrowDown'
+        ? (current + 1) % items.length
+        : (current - 1 + items.length) % items.length;
+    items[next]?.focus();
+  };
 
   const hasAdvancedFeatures = Boolean(
     persona.memory_settings?.enabled || persona.mutation_settings?.enabled
@@ -112,10 +150,10 @@ const PersonaCard: React.FC<PersonaCardProps> = ({
         );
         await reloadMemoryStatus();
       } else {
-        toast.error(t('personaCard.failed', { action: 'wipe memories' }));
+        toast.error(t('personaCard.wipeFailed'));
       }
     } catch (error) {
-      toast.error(t('personaCard.failed', { action: 'wipe memories' }));
+      toast.error(t('personaCard.wipeFailed'));
       logger.error(error);
     } finally {
       setIsLoading(false);
@@ -137,7 +175,7 @@ const PersonaCard: React.FC<PersonaCardProps> = ({
       document.body.removeChild(a);
       toast.success(t('personaCard.backupSuccess'));
     } catch (error) {
-      toast.error(t('personaCard.failed', { action: 'backup persona' }));
+      toast.error(t('personaCard.backupFailed'));
       logger.error(error);
     } finally {
       setIsLoading(false);
@@ -159,7 +197,7 @@ const PersonaCard: React.FC<PersonaCardProps> = ({
       document.body.removeChild(a);
       toast.success(t('personaCard.dnaSuccess'));
     } catch (error) {
-      toast.error(t('personaCard.failed', { action: 'export persona DNA' }));
+      toast.error(t('personaCard.exportDnaFailed'));
       logger.error(error);
     } finally {
       setIsLoading(false);
@@ -270,26 +308,49 @@ const PersonaCard: React.FC<PersonaCardProps> = ({
         {/* Top badges */}
         <div className='absolute inset-x-3 top-3 flex items-start justify-between'>
           {/* Favorite */}
-          <button
-            onClick={e => {
-              e.stopPropagation();
-              onToggleFavorite?.(persona);
-            }}
-            className={cn(
-              'p-1.5 rounded-full transition-all duration-200',
-              'border border-white/30 bg-black/20 text-white backdrop-blur-sm hover:bg-black/30',
-              persona.is_favorite && 'bg-amber-500/80 hover:bg-amber-500'
-            )}
-          >
-            <Star
+          {/* The toggle is only meaningful when a handler is wired up. */}
+          {onToggleFavorite ? (
+            <button
+              type='button'
+              onClick={e => {
+                e.stopPropagation();
+                onToggleFavorite(persona);
+              }}
+              aria-pressed={Boolean(persona.is_favorite)}
+              aria-label={t('personaCard.favorite')}
+              title={t('personaCard.favorite')}
               className={cn(
-                'h-4 w-4',
-                persona.is_favorite
-                  ? 'fill-ink text-ink dark:fill-ink-inverse dark:text-ink-inverse'
-                  : 'text-white/80 hover:text-white'
+                'p-1.5 rounded-full transition-all duration-200',
+                'border border-white/30 bg-black/20 text-white backdrop-blur-sm hover:bg-black/30',
+                persona.is_favorite && 'bg-amber-500/80 hover:bg-amber-500'
               )}
-            />
-          </button>
+            >
+              <Star
+                aria-hidden='true'
+                className={cn(
+                  'h-4 w-4',
+                  persona.is_favorite
+                    ? 'fill-ink text-ink dark:fill-ink-inverse dark:text-ink-inverse'
+                    : 'text-white/80 hover:text-white'
+                )}
+              />
+            </button>
+          ) : persona.is_favorite ? (
+            // Read-only marker: favorites stay recognizable without a toggle.
+            <span
+              role='img'
+              aria-label={t('personaCard.favorite')}
+              title={t('personaCard.favorite')}
+              className='rounded-full border border-white/30 bg-amber-500/80 p-1.5 backdrop-blur-sm'
+            >
+              <Star
+                aria-hidden='true'
+                className='h-4 w-4 fill-ink text-ink dark:fill-ink-inverse dark:text-ink-inverse'
+              />
+            </span>
+          ) : (
+            <span />
+          )}
 
           {/* Advanced badge */}
           {hasAdvancedFeatures && (
@@ -387,11 +448,11 @@ const PersonaCard: React.FC<PersonaCardProps> = ({
                   className={cn(
                     'text-[10px] px-1.5 py-0.5 rounded-full font-medium',
                     memoryStatus.status === 'active'
-                      ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
-                      : 'bg-gray-100 dark:bg-dark-200 text-gray-600 dark:text-gray-400'
+                      ? 'bg-success-500/20 text-ink'
+                      : 'bg-surface-subtle text-ink-muted'
                   )}
                 >
-                  {memoryStatus.status}
+                  {t(`personaCard.memoryStatus.${memoryStatus.status}`)}
                 </span>
               )}
             </div>
@@ -415,26 +476,32 @@ const PersonaCard: React.FC<PersonaCardProps> = ({
           {/* Action buttons */}
           <div className='ms-auto flex items-center gap-1'>
             <button
+              type='button'
               onClick={() => onEdit(persona)}
               className='p-2 rounded-lg text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-dark-200 transition-colors'
               title={t('personaCard.editTooltip')}
+              aria-label={t('personaCard.editTooltip')}
             >
               <Edit className='h-4 w-4' />
             </button>
             {!persona.shared && (
               <button
+                type='button'
                 onClick={() => setShareOpen(true)}
                 className='p-2 rounded-lg text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-dark-200 transition-colors'
                 title={t('personaCard.shareTooltip')}
+                aria-label={t('personaCard.shareTooltip')}
                 data-testid='persona-share'
               >
                 <Share2 className='h-4 w-4' />
               </button>
             )}
             <button
+              type='button'
               onClick={() => onDownload(persona)}
               className='p-2 rounded-lg text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-dark-200 transition-colors'
               title={t('personaCard.downloadTooltip')}
+              aria-label={t('personaCard.downloadTooltip')}
             >
               <Download className='h-4 w-4' />
             </button>
@@ -442,9 +509,14 @@ const PersonaCard: React.FC<PersonaCardProps> = ({
             {/* More menu */}
             <div className='relative'>
               <button
+                ref={menuTriggerRef}
+                type='button'
                 onClick={() => setShowMenu(!showMenu)}
+                aria-haspopup='menu'
+                aria-expanded={showMenu}
                 className='p-2 rounded-lg text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-dark-200 transition-colors'
-                title={t('common.more', { defaultValue: 'More' })}
+                title={t('common.more')}
+                aria-label={t('common.more')}
               >
                 <MoreHorizontal className='h-4 w-4' />
               </button>
@@ -455,10 +527,17 @@ const PersonaCard: React.FC<PersonaCardProps> = ({
                     className='fixed inset-0 z-10'
                     onClick={() => setShowMenu(false)}
                   />
-                  <div className='absolute end-0 bottom-full z-20 mb-1 w-44 rounded-xl border border-gray-200 bg-white py-1 shadow-lg dark:border-white/10 dark:bg-dark-100'>
+                  <div
+                    ref={menuRef}
+                    role='menu'
+                    onKeyDown={handleMenuKeyDown}
+                    className='absolute end-0 bottom-full z-20 mb-1 w-44 rounded-xl border border-gray-200 bg-white py-1 shadow-lg dark:border-white/10 dark:bg-dark-100'
+                  >
                     {hasAdvancedFeatures && (
                       <>
                         <button
+                          type='button'
+                          role='menuitem'
                           onClick={handleBackupPersona}
                           disabled={isLoading}
                           className='w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-dark-50 disabled:opacity-50'
@@ -467,6 +546,8 @@ const PersonaCard: React.FC<PersonaCardProps> = ({
                           {t('personaCard.backup')}
                         </button>
                         <button
+                          type='button'
+                          role='menuitem'
                           onClick={handleExportDNA}
                           disabled={isLoading}
                           className='w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-dark-50 disabled:opacity-50'
@@ -476,6 +557,8 @@ const PersonaCard: React.FC<PersonaCardProps> = ({
                         </button>
                         {memoryStatus && memoryStatus.memory_count > 0 && (
                           <button
+                            type='button'
+                            role='menuitem'
                             onClick={handleWipeMemories}
                             disabled={isLoading}
                             className='w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 disabled:opacity-50'
@@ -488,6 +571,8 @@ const PersonaCard: React.FC<PersonaCardProps> = ({
                       </>
                     )}
                     <button
+                      type='button'
+                      role='menuitem'
                       onClick={() => {
                         onDelete(persona);
                         setShowMenu(false);

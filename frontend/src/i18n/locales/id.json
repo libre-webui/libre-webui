@@ -41,7 +41,8 @@
     "remove": "Hapus",
     "home": "Beranda",
     "more": "Banyak",
-    "reasoning": "Penalaran"
+    "reasoning": "Penalaran",
+    "skipToContent": "Lewati ke konten"
   },
   "brand": {
     "name": "Libre WebUI",
@@ -49,7 +50,10 @@
   },
   "appInitialization": {
     "ollamaUnavailable": "Layanan Ollama tidak tersedia. Model plugin tetap dapat digunakan.",
-    "backendConnectionFailed": "Gagal terhubung ke layanan backend"
+    "backendConnectionFailed": "Gagal terhubung ke layanan backend",
+    "connecting": "Menghubungkan ke backend… ({{attempt}}/{{total}})",
+    "startingUp": "Memulai…",
+    "backendUnreachableHint": "Pastikan backend berjalan, lalu coba lagi."
   },
   "auth": {
     "login": {
@@ -189,7 +193,15 @@
       "removed": "Kunci sandi dihapus.",
       "removeFailed": "Kunci sandi tidak dapat dihapus.",
       "signInButton": "Masuk dengan kunci sandi",
-      "signInFailed": "Masuk dengan kunci sandi gagal."
+      "signInFailed": "Masuk dengan kunci sandi gagal.",
+      "removeConfirmTitle": "Hapus kunci sandi ini?",
+      "removeConfirmDescription": "\"{{name}}\" tidak akan dapat digunakan lagi untuk masuk. Anda dapat mendaftarkannya lagi nanti."
+    },
+    "password": {
+      "show": "Tampilkan kata sandi",
+      "hide": "Sembunyikan kata sandi",
+      "showConfirmation": "Tampilkan konfirmasi kata sandi",
+      "hideConfirmation": "Sembunyikan konfirmasi kata sandi"
     }
   },
   "setup": {
@@ -242,7 +254,8 @@
       "envNote": "Kunci ini juga disimpan di file backend/.env sebagai ENCRYPTION_KEY",
       "acknowledgment": "Saya telah menyimpan kunci enkripsi di lokasi yang aman dan memahami bahwa kehilangannya dapat mengakibatkan kehilangan data.",
       "confirmRequired": "Silakan konfirmasi bahwa Anda telah menyimpan kunci enkripsi",
-      "continue": "Lanjutkan ke Libre WebUI"
+      "continue": "Lanjutkan ke Libre WebUI",
+      "loadFailed": "Tidak dapat memuat kunci enkripsi. Coba lagi untuk melanjutkan."
     },
     "connectModels": {
       "title": "Hubungkan model Anda",
@@ -336,7 +349,8 @@
       "toolsOn": "Alat aktif — model dapat memanggil alat yang disetujui",
       "toolsOff": "Izinkan model memanggil alat untuk pesan ini",
       "thinkingOn": "Berpikir aktif ({{level}})",
-      "thinkingOff": "Berpikir sebelum menjawab"
+      "thinkingOff": "Berpikir sebelum menjawab",
+      "thinkingUpdateFailed": "Tidak dapat memperbarui pengaturan berpikir"
     },
     "session": {
       "new": "Chat Baru",
@@ -372,7 +386,8 @@
         "move": "Pindahkan ke folder",
         "remove": "Keluarkan dari folder",
         "delete": "Hapus folder",
-        "deleteConfirm": "Hapus folder ini? Obrolan di dalamnya tetap ada."
+        "deleteConfirm": "Hapus folder ini? Obrolan di dalamnya tetap ada.",
+        "rename": "Ganti nama folder"
       },
       "shareChat": "Bagikan obrolan…"
     },
@@ -405,7 +420,13 @@
       "browse": "telusuri",
       "unsupportedFileType": "Jenis file tidak didukung: {{name}}",
       "maxImagesAllowed": "Maksimum {{count}} gambar diizinkan",
-      "imageTooLarge": "Gambar {{name}} terlalu besar (maks. 10MB)"
+      "imageTooLarge": "Gambar {{name}} terlalu besar (maks. 10MB)",
+      "readFailed": "Tidak dapat membaca {{name}}",
+      "uploadAlt": "Unggahan {{number}}",
+      "removeImage": "Hapus gambar {{number}}",
+      "addMore": "Tambah gambar ({{count}}/{{max}})",
+      "uploading": "Mengunggah",
+      "removeDocument": "Hapus {{name}}"
     },
     "structuredOutput": {
       "title": "Format Respons",
@@ -456,7 +477,8 @@
       "compactionOff": "Nonaktif untuk obrolan ini"
     },
     "message": {
-      "sources": "Sumber"
+      "sources": "Sumber",
+      "copyFailed": "Tidak dapat menyalin ke papan klip"
     },
     "toasts": {
       "chatCreated": "Chat baru dibuat",
@@ -491,7 +513,8 @@
       "branchSwitched": "Beralih ke varian {{number}}",
       "branchSelectFailed": "Gagal memilih cabang",
       "editFailed": "Gagal mengedit pesan",
-      "toolDecisionFailed": "Keputusan alat tidak dapat dicatat"
+      "toolDecisionFailed": "Keputusan alat tidak dapat dicatat",
+      "archiveFailed": "Tidak dapat mengarsipkan chat ini"
     },
     "documents": {
       "title": "Dokumen dalam konteks"
@@ -521,7 +544,25 @@
       "origin": "Dicabangkan dari {{title}}",
       "originUnknown": "obrolan lain"
     },
-    "sharedReadOnly": "Dibagikan oleh {{owner}} — hanya lihat"
+    "sharedReadOnly": "Dibagikan oleh {{owner}} — hanya lihat",
+    "branch": {
+      "variants": "{{count}} varian",
+      "variants_plural": "{{count}} varian",
+      "selectVariant": "Pilih varian {{number}}",
+      "generating": "membuat...",
+      "select": "pilih"
+    },
+    "sources": {
+      "fullContextFailed": "Tidak dapat memperbarui pengaturan dokumen lengkap",
+      "usedByRetrieval": "Digunakan dalam balasan",
+      "triggerLabel": "Sumber ({{count}})"
+    },
+    "announce": {
+      "replyFinished": "{{name}} membalas: {{text}}",
+      "replyFinishedNoText": "{{name}} selesai membalas.",
+      "codeBlock": "blok kode",
+      "generationStopped": "Pembuatan dihentikan"
+    }
   },
   "sidebar": {
     "navigation": {
@@ -546,7 +587,8 @@
       "strands": "Strands"
     },
     "toggleSize": "Ubah ukuran sidebar",
-    "expandSidebar": "Perluas sidebar"
+    "expandSidebar": "Perluas sidebar",
+    "ariaLabel": "Bilah samping"
   },
   "user": {
     "menu": {
@@ -821,7 +863,8 @@
         "removeFailed": "Gagal menghapus API key",
         "enterKey": "Silakan masukkan API key"
       },
-      "variables": "Variables"
+      "variables": "Variables",
+      "dismissError": "Tutup kesalahan"
     },
     "generation": {
       "title": "Opsi Pembuatan",
@@ -924,7 +967,8 @@
         "deleteFailed": "Gagal menghapus koleksi",
         "assignFailed": "Gagal memindahkan dokumen",
         "share": "Bagikan koleksi",
-        "shared": "dibagikan"
+        "shared": "dibagikan",
+        "assignTo": "Koleksi untuk {{name}}"
       },
       "library": {
         "title": "Dokumen terunggah",
@@ -1066,7 +1110,8 @@
         "title": "Obrolan diarsipkan",
         "empty": "Tidak ada obrolan yang diarsipkan",
         "unarchive": "Batalkan arsip"
-      }
+      },
+      "clearAllConfirm": "Yakin ingin menghapus semua riwayat chat? Tindakan ini tidak dapat dibatalkan."
     },
     "about": {
       "title": "Tentang",
@@ -1186,7 +1231,11 @@
       "unknownDevice": "Perangkat tidak dikenal",
       "createdAt": "Masuk",
       "lastSeenAt": "Terakhir aktif",
-      "expiresAt": "Kedaluwarsa"
+      "expiresAt": "Kedaluwarsa",
+      "signOutConfirmTitle": "Keluarkan sesi ini?",
+      "signOutConfirmDescription": "{{device}} akan langsung dikeluarkan dan harus masuk lagi.",
+      "signOutOthersConfirmTitle": "Keluarkan sesi lain?",
+      "signOutOthersConfirmDescription": "{{count}} sesi lain akan langsung dikeluarkan. Sesi ini tetap masuk."
     },
     "apiKeys": {
       "title": "API key",
@@ -1220,7 +1269,9 @@
       "createdAt": "Dibuat",
       "lastUsedAt": "Terakhir digunakan",
       "expiresAt": "Kedaluwarsa",
-      "neverExpires": "Tidak pernah"
+      "neverExpires": "Tidak pernah",
+      "revokeConfirmTitle": "Cabut \"{{name}}\"?",
+      "revokeConfirmDescription": "Semua yang menggunakan API key ini langsung berhenti berfungsi. Tindakan ini tidak dapat dibatalkan."
     },
     "notifications": {
       "title": "Notifikasi",
@@ -1294,7 +1345,8 @@
     "model": "Model",
     "size": "Ukuran",
     "quality": "Kualitas",
-    "created": "Dibuat"
+    "created": "Dibuat",
+    "lightboxLabel": "Pratinjau gambar"
   },
   "errors": {
     "generic": "Terjadi kesalahan",
@@ -1389,7 +1441,9 @@
       "hide": "Sembunyikan dari pengguna",
       "show": "Tampilkan ke pengguna",
       "star": "Beri bintang pada {{name}}",
-      "unstar": "Hapus bintang dari {{name}}"
+      "unstar": "Hapus bintang dari {{name}}",
+      "filterLabel": "Filter model",
+      "displayName": "Nama tampilan untuk {{name}}"
     },
     "pull": {
       "placeholder": "Masukkan nama model (mis., llama3.2:3b, deepseek-r1:14b)",
@@ -1550,7 +1604,10 @@
     "deleteConfirm": "Apakah Anda yakin ingin menghapus \"{{name}}\"?",
     "deleteSuccess": "Persona \"{{name}}\" berhasil dihapus",
     "downloadSuccess": "Persona \"{{name}}\" berhasil diunduh",
-    "failed": "Gagal {{action}} persona"
+    "failed": "Gagal {{action}} persona",
+    "loadFailed": "Persona Anda tidak dapat dimuat.",
+    "deleteFailed": "Gagal menghapus persona",
+    "downloadFailed": "Gagal mengunduh persona"
   },
   "personaForm": {
     "title": {
@@ -1682,7 +1739,8 @@
       "promptHint": "Prompt yang mengawali setiap obrolan baru dengan persona ini.",
       "noPrompt": "Tanpa prompt",
       "version": "Revisi ikatan {{version}}"
-    }
+    },
+    "sections": "Bagian persona"
   },
   "personaCard": {
     "enhanced": "Ditingkatkan",
@@ -1699,7 +1757,16 @@
     "backupSuccess": "Backup persona berhasil diunduh",
     "dnaSuccess": "DNA persona berhasil diekspor",
     "failed": "Gagal {{action}}",
-    "shareTooltip": "Bagikan persona ini"
+    "shareTooltip": "Bagikan persona ini",
+    "wipeFailed": "Gagal menghapus memori",
+    "backupFailed": "Gagal mencadangkan persona",
+    "exportDnaFailed": "Gagal mengekspor DNA persona",
+    "favorite": "Favorit",
+    "memoryStatus": {
+      "active": "Aktif",
+      "wiped": "Dihapus",
+      "backed_up": "Dicadangkan"
+    }
   },
   "userManager": {
     "title": "Manajemen Pengguna",
@@ -1865,7 +1932,28 @@
       "memberOf": "Grup",
       "featuresLabel": "Akses fitur",
       "grantsLabel": "Izin",
-      "grantVia": "melalui"
+      "grantVia": "melalui",
+      "deleteConfirmTitle": "Hapus grup \"{{name}}\"?",
+      "deleteConfirmDescription": "Anggota kehilangan akses yang hanya mereka dapat melalui grup ini. Akun itu sendiri tidak dihapus.",
+      "statuses": {
+        "active": "Aktif",
+        "pending": "Menunggu persetujuan"
+      },
+      "features": {
+        "work": "Kerja",
+        "model-download": "Unduh model",
+        "web-search": "Pencarian web",
+        "strands": "Mesin Strands",
+        "tools": "Alat",
+        "stt": "Ucapan ke teks",
+        "tts": "Teks ke ucapan",
+        "voice-mode": "Mode suara",
+        "voice-cloning": "Kloning suara"
+      },
+      "grantViaKinds": {
+        "user": "pemberian langsung",
+        "group": "grup"
+      }
     },
     "audit": {
       "title": "Log audit keamanan",
@@ -2298,7 +2386,11 @@
       "harmful": "Berbahaya",
       "formatting": "Format"
     },
-    "feedbackComment": "Tambahkan komentar…"
+    "feedbackComment": "Tambahkan komentar…",
+    "user": "Pengguna",
+    "feedbackFailed": "Tidak dapat menyimpan masukan Anda",
+    "openImage": "Buka gambar {{number}}",
+    "uploadedImageAlt": "Gambar yang diunggah {{number}}"
   },
   "imageGallery": {
     "title": "Galeri Gambar",
@@ -2387,7 +2479,10 @@
       "image": "Gambar",
       "video": "Video",
       "audio": "Audio"
-    }
+    },
+    "deleteConfirmTitle": "Hapus item ini?",
+    "deleteConfirmDescription": "Media yang dihasilkan akan dihapus permanen.",
+    "previewFailed": "Pratinjau tidak tersedia"
   },
   "errorBoundary": {
     "title": "Terjadi kesalahan",
@@ -2463,7 +2558,8 @@
     "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source.",
     "versionOf": "Versi {{current}} dari {{total}}",
     "previousVersion": "Versi sebelumnya",
-    "nextVersion": "Versi berikutnya"
+    "nextVersion": "Versi berikutnya",
+    "resizePanel": "Ubah ukuran panel"
   },
   "personaImportExport": {
     "title": "Impor & Ekspor Persona",
@@ -2501,7 +2597,10 @@
     "generation": "Generasi:",
     "modelLoad": "Muat model:",
     "totalTime": "Waktu total:",
-    "generatedAt": "Dibuat pada:"
+    "generatedAt": "Dibuat pada:",
+    "notAvailable": "T/A",
+    "tokenCount": "{{tokens}} token",
+    "tokensPerSecond": "{{value}} t/s"
   },
   "userMenu": {
     "loggedOut": "Berhasil keluar",
@@ -2560,7 +2659,9 @@
       "httpWarning": "HTTP tidak mengenkripsi kredensial atau lalu lintas. Gunakan hanya di jaringan tepercaya.",
       "invalidBaseUrl": "URL dasar tidak boleh berisi string kueri atau fragmen.",
       "invalidApiPath": "Harus diawali dengan / dan tidak boleh berisi URL, kueri, fragmen, atau segmen ..",
-      "tooLong": "Nilai terlalu panjang"
+      "tooLong": "Nilai terlalu panjang",
+      "resetConfirmTitle": "Setel ulang ke default?",
+      "resetConfirmDescription": "Tindakan ini menghapus semua nilai tersimpan untuk {{name}}, termasuk API key dan kredensial lainnya. Tindakan ini tidak dapat dibatalkan."
     }
   },
   "huggingface": {
@@ -2580,7 +2681,10 @@
   },
   "demoMode": {
     "title": "Mode demo",
-    "github": "GitHub"
+    "github": "GitHub",
+    "defaultMessage": "Ini adalah versi demo hanya untuk presentasi. Backend Ollama tidak terhubung.",
+    "viewOnGithub": "Lihat di GitHub",
+    "dismiss": "Tutup"
   },
   "work": {
     "title": "Kerja",
@@ -2671,8 +2775,18 @@
         "checksPending": "Pemeriksaan tertunda",
         "stallNudges": "Peringatan macet",
         "ambiguityNudges": "Peringatan penataan ulang",
-        "stoppedBy": "Dihentikan oleh"
-      }
+        "stoppedBy": "Dihentikan oleh",
+        "reasons": {
+          "round": "batas putaran",
+          "toolCall": "batas panggilan alat",
+          "approvalTimeout": "batas waktu persetujuan",
+          "computerStall": "komputer macet"
+        }
+      },
+      "skillTraceSavedWorked": "Dicatat: berhasil",
+      "skillTraceSavedFailed": "Dicatat: gagal",
+      "connectionClosed": "Koneksi langsung Kerja telah ditutup.",
+      "reconnectingBackground": "Pembaruan langsung sedang menyambung ulang di latar belakang."
     },
     "runtime": {
       "unavailable": "Runtime tidak tersedia",
@@ -2715,7 +2829,11 @@
       "changes": "Perubahan",
       "changesSince": "Apa yang berubah sejak giliran terakhir",
       "diffLabel": "Perubahan sejak giliran terakhir: {{path}}",
-      "diffFolded": "{{count}} baris tidak berubah"
+      "diffFolded": "{{count}} baris tidak berubah",
+      "diffAdded": "Ditambahkan",
+      "diffRemoved": "Dihapus",
+      "unsavedChanges": "perubahan belum disimpan",
+      "editingLocked": "Pengeditan terbuka setelah giliran selesai."
     },
     "activity": {
       "empty": "Perintah, operasi file, dan hasil alat akan muncul di sini.",
@@ -2726,7 +2844,9 @@
         "toolCall": "Panggilan alat",
         "toolResult": "Hasil alat",
         "error": "Error"
-      }
+      },
+      "arguments": "Argumen alat",
+      "output": "Keluaran alat"
     },
     "preview": {
       "command": "Perintah mulai opsional",
@@ -2755,7 +2875,8 @@
       "saveFailed": "Tidak dapat menyimpan file ini.",
       "saved": "File disimpan.",
       "previewFailed": "Tidak dapat memulai pratinjau.",
-      "previewStopFailed": "Tidak dapat menghentikan pratinjau."
+      "previewStopFailed": "Tidak dapat menghentikan pratinjau.",
+      "sendFailed": "Pesan tidak dapat dikirim."
     },
     "terminal": {
       "connecting": "Membuka shell di sandbox…",
@@ -2807,7 +2928,18 @@
       "noFilterMatches": "Tidak ada berkas berubah yang cocok dengan filter ini.",
       "allChanges": "Semua perubahan",
       "diffTruncated": "Diff ini terpotong.",
-      "binaryFile": "Berkas biner, tidak ada diff teks."
+      "binaryFile": "Berkas biner, tidak ada diff teks.",
+      "statusLabels": {
+        "modified": "Diubah",
+        "added": "Ditambahkan",
+        "deleted": "Dihapus",
+        "renamed": "Diganti nama",
+        "copied": "Disalin",
+        "typeChanged": "Tipe diubah",
+        "untracked": "Belum dilacak"
+      },
+      "stagedState": "di-stage",
+      "aheadBehind": "{{ahead}} di depan, {{behind}} tertinggal"
     },
     "hostWorkspace": {
       "hint": "Biarkan kosong untuk ruang kerja terisolasi, atau arahkan tugas ke folder di mesin ini.",
@@ -2834,7 +2966,8 @@
       "unmute": "Bunyikan",
       "mute": "Bisukan",
       "finished": "Tugas ini sudah selesai. Buka lagi untuk menampilkan layarnya kembali.",
-      "reopenOpen": "Buka lagi tugas dan buka layarnya"
+      "reopenOpen": "Buka lagi tugas dan buka layarnya",
+      "teachSaveFailed": "Tidak dapat menyimpan demonstrasi ini."
     },
     "computerSetup": {
       "title": "Work Computer",
@@ -2871,7 +3004,11 @@
       "approvalsToggleFailed": "Tidak dapat memperbarui persetujuan.",
       "approvalRuleLine": "Selalu diizinkan",
       "approvalRuleDelete": "Hapus aturan",
-      "approvalRuleDeleteFailed": "Tidak dapat menghapus aturan."
+      "approvalRuleDeleteFailed": "Tidak dapat menghapus aturan.",
+      "routinesLoadFailed": "Tidak dapat memuat rutinitas.",
+      "skillsLoadFailed": "Tidak dapat memuat keterampilan yang diajarkan.",
+      "approvalsLoadFailed": "Tidak dapat memuat pengaturan persetujuan.",
+      "routinePaused": "Dijeda"
     },
     "approval": {
       "title": "Perlu persetujuan",
@@ -2879,7 +3016,16 @@
       "allowOnce": "Izinkan sekali",
       "allowAlways": "Izinkan selalu",
       "deny": "Tolak",
-      "failed": "Tidak dapat mengirim keputusan."
+      "failed": "Tidak dapat mengirim keputusan.",
+      "details": "Detail tindakan",
+      "fields": {
+        "command": "Perintah",
+        "path": "Jalur",
+        "from": "Dari",
+        "to": "Ke",
+        "actions": "Tindakan",
+        "recursive": "Rekursif"
+      }
     },
     "idleStopHint": "Berhenti setelah {{minutes}} menit tanpa aktivitas.",
     "runs": {
@@ -2891,7 +3037,8 @@
         "needsInput": "Memerlukan input",
         "failed": "Gagal",
         "cancelled": "Dibatalkan"
-      }
+      },
+      "loadFailed": "Tidak dapat memuat riwayat eksekusi."
     },
     "recovery": {
       "pending": "Work sedang mengonfirmasi {{pending}} pembersihan sandbox sebelum menerima operasi baru.",
@@ -2903,6 +3050,17 @@
       "retrySucceeded": "Berhasil membersihkan {{cleared}} dari {{attempted}} pembersihan tertunda.",
       "retryPending": "Masih mencoba {{attempted}} pembersihan tertunda.",
       "retryFailed": "Tidak dapat mencoba lagi pembersihan yang tertunda."
+    },
+    "computer": {
+      "setupFailed": "Work Computer tidak dapat disiapkan."
+    },
+    "announce": {
+      "completed": "{{title}} selesai.",
+      "needsInput": "{{title}} membutuhkan masukan atau persetujuan Anda.",
+      "failed": "{{title}} gagal.",
+      "cancelled": "{{title}} dihentikan.",
+      "approvalNeeded": "{{title}} membutuhkan persetujuan Anda untuk menjalankan {{tool}}.",
+      "untitledTask": "Tugas ini"
     }
   },
   "personaBackground": {
@@ -2947,7 +3105,8 @@
     "showAll": "Tampilkan semua ({{total}})",
     "sources": "Sumber model",
     "defaultModel": "Model default",
-    "contextSize": "konteks {{size}}"
+    "contextSize": "konteks {{size}}",
+    "via": "melalui {{provider}}"
   },
   "whatsNew": {
     "title": "Yang baru",
@@ -3004,7 +3163,16 @@
     "unpin": "Lepas sematan",
     "pinned": "Disematkan",
     "export": "Unduh sebagai Markdown",
-    "sharedWithYou": "Dibagikan kepada Anda"
+    "sharedWithYou": "Dibagikan kepada Anda",
+    "titleLabel": "Judul catatan",
+    "loadFailed": "Tidak dapat memuat ini. Coba lagi.",
+    "restoreConfirmTitle": "Pulihkan versi ini?",
+    "restoreConfirmDescription": "Teks catatan akan diganti dengan versi sebelumnya ini.",
+    "deleteAttachmentConfirmTitle": "Hapus {{name}}?",
+    "deleteAttachmentConfirmDescription": "Lampiran akan dihapus permanen dari catatan ini.",
+    "attachmentDeleteFailed": "Tidak dapat menghapus lampiran",
+    "revokeFailed": "Tidak dapat mencabut akses",
+    "sharePermissionLabel": "Izin"
   },
   "calendar": {
     "title": "Kalender",
@@ -3049,7 +3217,22 @@
     "importFailed": "Berkas tidak dapat diimpor",
     "importResult": "{{total}} acara diimpor",
     "importIcs": "Impor",
-    "exportIcs": "Ekspor"
+    "exportIcs": "Ekspor",
+    "chipStatus": {
+      "automation": "Otomatisasi terjadwal",
+      "runSucceeded": "Eksekusi otomatisasi berhasil",
+      "runFailed": "Eksekusi otomatisasi gagal"
+    },
+    "newEventOn": "Acara baru pada {{date}}",
+    "showDay": "Tampilkan semua acara pada {{date}}",
+    "deleteEventConfirmTitle": "Hapus \"{{title}}\"?",
+    "deleteEventConfirmDescription": "Acara ini akan dihapus permanen.",
+    "deleteRecurringEventConfirmDescription": "Acara berulang ini dan semua kemunculannya akan dihapus permanen.",
+    "shareCalendarNamed": "Bagikan kalender {{name}}",
+    "deleteCalendarNamed": "Hapus kalender {{name}}",
+    "deleteCalendarConfirmTitle": "Hapus kalender \"{{name}}\"?",
+    "deleteCalendarConfirmDescription": "Kalender dan acara di dalamnya akan dihapus permanen.",
+    "calendarDeleteFailed": "Kalender tidak dapat dihapus"
   },
   "automations": {
     "title": "Otomatisasi",
@@ -3176,13 +3359,17 @@
         "work-approval": "agen menunggu persetujuan Anda",
         "system": "pemberitahuan sistem muncul"
       }
-    }
+    },
+    "deleteConfirmTitle": "Hapus \"{{name}}\"?",
+    "deleteConfirmDescription": "Otomatisasi dan jadwalnya akan dihapus permanen. Eksekusi sebelumnya tetap ada di riwayat eksekusi."
   },
   "home": {
     "active": "aktif",
     "continue": "Lanjutkan",
     "start": "Mulai",
-    "explore": "Jelajahi"
+    "explore": "Jelajahi",
+    "greeting": "{{greeting}}.",
+    "greetingWithName": "{{greeting}}, {{name}}."
   },
   "palette": {
     "empty": "Tidak ada yang cocok.",
@@ -3195,7 +3382,14 @@
     "work": "Kerja",
     "messages": "Pesan",
     "notes": "Catatan",
-    "documents": "Dokumen"
+    "documents": "Dokumen",
+    "searching": "Mencari…",
+    "searchFailed": "Pencarian ruang kerja gagal. Hanya menampilkan chat dan tindakan yang cocok.",
+    "results": "Hasil",
+    "escKey": "esc",
+    "hintNavigate": "Navigasi",
+    "hintOpen": "Buka",
+    "hintClose": "Tutup"
   },
   "tabs": {
     "actions": "Aksi tab",
@@ -3399,7 +3593,8 @@
       "button": "Dari folder",
       "missingSkillMd": "Folder harus berisi berkas SKILL.md",
       "done": "Keahlian diimpor dengan {{count}} berkas yang disertakan"
-    }
+    },
+    "toggleLabel": "Aktifkan keterampilan {{name}}"
   },
   "toolsPage": {
     "title": "Alat",
@@ -3557,7 +3752,14 @@
     "added": "Dibagikan dengan {{name}}",
     "failed": "Gagal membagikan",
     "userNotFound": "Tidak ada pengguna dengan nama itu",
-    "groupNotFound": "Tidak ada grup dengan nama itu"
+    "groupNotFound": "Tidak ada grup dengan nama itu",
+    "principalKind": "Bagikan ke pengguna atau grup",
+    "principalName": "Nama pengguna atau nama grup",
+    "permission": "Izin",
+    "sharing": "Berbagi",
+    "loading": "Memuat pembagian",
+    "loadFailed": "Tidak dapat memuat pembagian",
+    "revokeFailed": "Tidak dapat mencabut akses"
   },
   "channels": {
     "title": "Kanal",
@@ -3616,13 +3818,44 @@
     "toolCalls": {
       "summary": "Alat dipakai ({{total}})",
       "deniedHint": "Alat yang mengubah sesuatu ditolak di kanal. Jalankan dari obrolan."
-    }
+    },
+    "confirmEdit": "Simpan perubahan",
+    "cancelEdit": "Batalkan perubahan",
+    "reactWith": "Bereaksi dengan {{emoji}}",
+    "deleteMessageConfirmTitle": "Hapus pesan ini?",
+    "deleteMessageConfirmDescription": "Pesan akan dihapus untuk semua orang di kanal ini.",
+    "unreadCount": "{{total}} belum dibaca",
+    "send": "Kirim pesan",
+    "invite": "Undang anggota",
+    "closeThread": "Tutup utas",
+    "removeAttachment": "Hapus lampiran",
+    "loadFailed": "Tidak dapat memuat ini. Coba lagi.",
+    "editFailed": "Pesan tidak dapat diedit",
+    "deleteMessageFailed": "Pesan tidak dapat dihapus",
+    "pinFailed": "Sematan tidak dapat diubah",
+    "reactFailed": "Reaksi tidak dapat disimpan",
+    "downloadFailed": "File tidak dapat diunduh",
+    "removeMemberConfirm": "Keluarkan {{name}} dari kanal ini?",
+    "removeMemberConfirmDescription": "Mereka akan kehilangan akses ke kanal dan pesannya.",
+    "removeMemberNamed": "Keluarkan {{name}} dari kanal",
+    "removeMemberFailed": "Anggota tidak dapat dikeluarkan",
+    "leaveConfirm": "Keluar dari {{name}}?",
+    "leaveConfirmDescription": "Anda harus diundang lagi untuk bergabung kembali ke kanal privat.",
+    "leaveFailed": "Anda tidak dapat keluar dari kanal",
+    "joinFailed": "Kanal tidak dapat diikuti",
+    "deleteConfirm": "Hapus {{name}}?",
+    "deleteConfirmDescription": "Kanal dan semua pesannya akan dihapus permanen untuk setiap anggota.",
+    "deleteFailed": "Kanal tidak dapat dihapus",
+    "saveFailed": "Kanal tidak dapat disimpan"
   },
   "notifications": {
     "title": "Notifikasi",
     "empty": "Semua sudah dibaca.",
     "markAllRead": "Tandai semua sudah dibaca",
-    "markRead": "Tandai sudah dibaca"
+    "markRead": "Tandai sudah dibaca",
+    "titleWithUnread": "Notifikasi ({{unread}} belum dibaca)",
+    "unread": "Belum dibaca",
+    "loadFailed": "Tidak dapat memuat notifikasi."
   },
   "voiceMode": {
     "title": "Mode suara",
@@ -3757,7 +3990,12 @@
       "failed": "Gagal",
       "cancelled": "Dibatalkan"
     },
-    "noFeedback": "Belum ada umpan balik — nilai jawaban untuk membangun dataset Anda."
+    "noFeedback": "Belum ada umpan balik — nilai jawaban untuk membangun dataset Anda.",
+    "deleteSetConfirmTitle": "Hapus \"{{name}}\"?",
+    "deleteSetConfirmDescription": "Set evaluasi dan prompt-nya akan dihapus permanen.",
+    "deleteSetFailed": "Set evaluasi tidak dapat dihapus",
+    "runError": "Kesalahan: {{detail}}",
+    "cancelFailed": "Eksekusi tidak dapat dibatalkan"
   },
   "passwordStrength": {
     "levels": {
@@ -3771,6 +4009,14 @@
       "hasCase": "Huruf besar dan kecil",
       "hasNumber": "Minimal satu angka",
       "tooLong": "Maksimal 72 byte"
+    },
+    "requirements": "Gunakan minimal 12 karakter, tidak lebih dari 72 byte UTF-8, dengan huruf besar, huruf kecil, dan angka.",
+    "errors": {
+      "minLength": "Kata sandi minimal 12 karakter.",
+      "tooLong": "Kata sandi tidak boleh lebih dari 72 byte UTF-8.",
+      "uppercase": "Kata sandi harus mengandung huruf besar.",
+      "lowercase": "Kata sandi harus mengandung huruf kecil.",
+      "number": "Kata sandi harus mengandung angka."
     }
   },
   "connectModels": {
@@ -3804,7 +4050,8 @@
       "enable": "Aktifkan penyedia",
       "enabling": "Mengaktifkan…",
       "enabled": "{{name}} terhubung — modelnya kini tersedia",
-      "enableFailed": "Tidak dapat mengaktifkan penyedia"
+      "enableFailed": "Tidak dapat mengaktifkan penyedia",
+      "urlLabel": "URL server"
     },
     "cloud": {
       "title": "API Cloud",
@@ -3813,7 +4060,8 @@
       "connect": "Hubungkan",
       "connecting": "Menghubungkan…",
       "connected": "{{name}} terhubung — modelnya kini tersedia",
-      "saveFailed": "Tidak dapat menyimpan API key"
+      "saveFailed": "Tidak dapat menyimpan API key",
+      "keyLabel": "API key {{name}}"
     }
   },
   "strands": {
@@ -3845,5 +4093,15 @@
     "deleteFailed": "Tidak dapat menghapus sesi.",
     "saveFailed": "Tidak dapat menyimpan sesi.",
     "turnFailed": "Mesin tidak dapat menyelesaikan giliran"
+  },
+  "notFound": {
+    "title": "Halaman tidak ditemukan",
+    "description": "Halaman ini tidak ada atau mungkin telah dipindahkan."
+  },
+  "themeToggle": {
+    "switchToLight": "Beralih ke mode terang",
+    "switchToDark": "Beralih ke mode gelap",
+    "switchToAmoled": "Beralih ke mode hitam murni",
+    "switchToCelestial": "Beralih ke mode celestial"
   }
 }

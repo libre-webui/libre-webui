@@ -359,6 +359,12 @@ grids also wrap within the panel; long names and identifiers remain contained.
 
 All text meets WCAG AA contrast requirements at minimum. Primary text on neutral backgrounds exceeds 7:1 contrast ratio. White text on primary action buttons passes AA at body sizes for all preset accents and generated custom accents. Interactive elements have visible focus indicators using the active accent color with a 2px offset ring. No information is conveyed through color alone — status indicators pair color with iconography or text labels.
 
+Controls are at least 44px on narrow screens and wherever the primary pointer is coarse, so touch tablets and touch laptops get finger-sized targets inside desktop layouts.
+
+Finished chat replies and Work run outcomes are announced once through a shared live region: a short plain-text summary, never per streamed token. Failures stay with their assertive error toast so they are not read twice. The browser tab title names the current view; chat and Work titles are user content and stay out of it.
+
+Library pages share one toolbar and one set of empty, loading, and error states, so a list reads and recovers the same way everywhere.
+
 ## Motion
 
 Transitions are 140–180ms with an ease-out curve for interactive states. Sidebar collapse/expand is 200ms. Motion changes opacity, color, or a few pixels of position; it does not bounce, glow, or continuously decorate. Every transition and animation must collapse under `prefers-reduced-motion`.

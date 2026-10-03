@@ -39,40 +39,50 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [dragActive, setDragActive] = useState(false);
 
-  const handleFileSelect = (files: FileList | null) => {
-    if (!files) return;
-
-    const newImages: string[] = [];
-    const remainingSlots = maxImages - images.length;
-
-    for (let i = 0; i < Math.min(files.length, remainingSlots); i++) {
-      const file = files[i];
-
-      if (!file.type.startsWith('image/')) {
-        toast.error(`File ${file.name} is not an image`);
-        continue;
-      }
-
-      if (file.size > 10 * 1024 * 1024) {
-        // 10MB limit
-        toast.error(`Image ${file.name} is too large (max 10MB)`);
-        continue;
-      }
-
+  const readAsDataUrl = (file: File): Promise<string | null> =>
+    new Promise(resolve => {
       const reader = new FileReader();
-      reader.onload = e => {
-        if (e.target?.result) {
-          newImages.push(e.target.result as string);
-          if (newImages.length === Math.min(files.length, remainingSlots)) {
-            onImagesChange([...images, ...newImages]);
-          }
-        }
+      reader.onload = () =>
+        resolve(typeof reader.result === 'string' ? reader.result : null);
+      reader.onerror = () => {
+        toast.error(t('chat.mediaUpload.readFailed', { name: file.name }));
+        resolve(null);
       };
       reader.readAsDataURL(file);
-    }
+    });
+
+  const handleFileSelect = async (files: FileList | null) => {
+    if (!files) return;
+
+    const remainingSlots = maxImages - images.length;
+    const candidates = Array.from(files).slice(0, Math.max(remainingSlots, 0));
+
+    // Reject invalid files individually so one bad file cannot drop the rest.
+    const accepted = candidates.filter(file => {
+      if (!file.type.startsWith('image/')) {
+        toast.error(
+          t('chat.mediaUpload.unsupportedFileType', { name: file.name })
+        );
+        return false;
+      }
+      if (file.size > 10 * 1024 * 1024) {
+        // 10MB limit
+        toast.error(t('chat.mediaUpload.imageTooLarge', { name: file.name }));
+        return false;
+      }
+      return true;
+    });
 
     if (files.length > remainingSlots) {
-      toast.error(`Only ${remainingSlots} more images can be added`);
+      toast.error(t('chat.mediaUpload.maxImagesAllowed', { count: maxImages }));
+    }
+
+    const results = await Promise.all(accepted.map(readAsDataUrl));
+    const newImages = results.filter(
+      (result): result is string => result !== null
+    );
+    if (newImages.length > 0) {
+      onImagesChange([...images, ...newImages]);
     }
   };
 
@@ -89,7 +99,7 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     setDragActive(false);
-    handleFileSelect(e.dataTransfer.files);
+    void handleFileSelect(e.dataTransfer.files);
   };
 
   const removeImage = (index: number) => {
@@ -119,22 +129,30 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
             type='file'
             multiple
             accept='image/*'
-            onChange={e => handleFileSelect(e.target.files)}
+            onChange={e => {
+              void handleFileSelect(e.target.files);
+              // Allow re-selecting the same file after it was removed.
+              e.target.value = '';
+            }}
             className='hidden'
           />
 
           <div className='flex flex-col items-center text-center'>
-            <Upload className='h-8 w-8 text-gray-400 dark:text-gray-500 mb-2' />
+            <Upload
+              className='h-8 w-8 text-gray-400 dark:text-gray-500 mb-2'
+              aria-hidden='true'
+            />
             <p className='text-sm text-gray-700 dark:text-gray-300 mb-2'>
               {t('chat.mediaUpload.dropImagesHere')}{' '}
               <button
+                type='button'
                 onClick={() => fileInputRef.current?.click()}
                 className='text-primary-600 dark:text-primary-400 hover:underline font-medium'
               >
                 {t('chat.mediaUpload.browse')}
               </button>
             </p>
-            <p className='text-xs text-gray-500 dark:text-gray-400'>
+            <p className='text-xs text-ink-muted'>
               {t('chat.mediaUpload.supportedFormats')}
             </p>
           </div>
@@ -151,7 +169,7 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
             >
               <img
                 src={image}
-                alt={`Upload ${index + 1}`}
+                alt={t('chat.mediaUpload.uploadAlt', { number: index + 1 })}
                 className='w-full h-full object-cover'
               />
               <div className='absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all duration-200 flex items-center justify-center'>
@@ -159,9 +177,12 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
                   variant='ghost'
                   size='sm'
                   onClick={() => removeImage(index)}
-                  className='opacity-0 group-hover:opacity-100 transition-opacity bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 hover:bg-red-100 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400 p-1 rounded-full'
+                  aria-label={t('chat.mediaUpload.removeImage', {
+                    number: index + 1,
+                  })}
+                  className='opacity-0 group-hover:opacity-100 focus-visible:opacity-100 [@media(hover:none)]:opacity-100 transition-opacity bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 hover:bg-red-100 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400 p-1 rounded-full'
                 >
-                  <X className='h-4 w-4' />
+                  <X className='h-4 w-4' aria-hidden='true' />
                 </Button>
               </div>
             </div>
@@ -177,8 +198,11 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
           onClick={() => fileInputRef.current?.click()}
           className='w-full sm:w-auto'
         >
-          <ImageIcon className='h-4 w-4 mr-2' />
-          Add More Images ({images.length}/{maxImages})
+          <ImageIcon className='h-4 w-4' aria-hidden='true' />
+          {t('chat.mediaUpload.addMore', {
+            count: images.length,
+            max: maxImages,
+          })}
         </Button>
       )}
     </div>

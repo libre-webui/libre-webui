@@ -1282,7 +1282,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   };
 
   const handleDeletePlugin = async (id: string) => {
-    if (window.confirm('Are you sure you want to delete this plugin?')) {
+    if (window.confirm(t('pluginManager.confirmDelete'))) {
       await deletePlugin(id);
       // Reload models after deleting a plugin
       await loadModels();
@@ -1427,11 +1427,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   };
 
   const handleClearAllHistory = async () => {
-    if (
-      window.confirm(
-        'Are you sure you want to delete all chat history? This action cannot be undone.'
-      )
-    ) {
+    if (window.confirm(t('settings.data.clearAllConfirm'))) {
       await clearAllSessions();
     }
   };
@@ -2138,6 +2134,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               onClick={onClose}
               className='h-9 w-9 touch-manipulation rounded-full p-0 hover:bg-interactive-hover'
               title={t('common.close', { defaultValue: 'Close' })}
+              aria-label={t('common.close')}
             >
               <X className='h-5 w-5' />
             </Button>
@@ -2265,6 +2262,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   onClick={onClose}
                   className='h-7 w-7 touch-manipulation rounded-full p-0 text-ink hover:bg-interactive-hover'
                   title={t('common.close', { defaultValue: 'Close' })}
+                  aria-label={t('common.close')}
                 >
                   <X className='h-4 w-4' />
                 </Button>

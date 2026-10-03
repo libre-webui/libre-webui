@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import React, { useState } from 'react';
+import React, { useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   AlertTriangle,
@@ -43,16 +43,29 @@ const StatusIcon: React.FC<{ status: ChatToolCall['status'] }> = ({
   status,
 }) => {
   if (status === 'running' || status === 'awaiting_approval') {
-    return <Loader2 className='h-3.5 w-3.5 animate-spin' />;
+    return <Loader2 className='h-3.5 w-3.5 animate-spin' aria-hidden='true' />;
   }
   if (status === 'succeeded') {
-    return <Check className='h-3.5 w-3.5 text-green-600 dark:text-green-400' />;
+    return (
+      <Check
+        className='h-3.5 w-3.5 text-green-600 dark:text-green-400'
+        aria-hidden='true'
+      />
+    );
   }
   if (status === 'denied') {
-    return <X className='h-3.5 w-3.5 text-amber-600 dark:text-amber-400' />;
+    return (
+      <X
+        className='h-3.5 w-3.5 text-amber-600 dark:text-amber-400'
+        aria-hidden='true'
+      />
+    );
   }
   return (
-    <AlertTriangle className='h-3.5 w-3.5 text-red-500 dark:text-red-400' />
+    <AlertTriangle
+      className='h-3.5 w-3.5 text-red-500 dark:text-red-400'
+      aria-hidden='true'
+    />
   );
 };
 
@@ -66,13 +79,13 @@ const ToolCallCard: React.FC<{ call: ChatToolCall }> = ({ call }) => {
       <button
         type='button'
         onClick={() => setExpanded(value => !value)}
-        className='flex w-full items-center gap-2 px-3 py-2 text-left'
+        className='flex w-full items-center gap-2 px-3 py-2 text-start'
         aria-expanded={expanded}
       >
         {expanded ? (
           <ChevronDown className='h-3.5 w-3.5 shrink-0 text-gray-400' />
         ) : (
-          <ChevronRight className='h-3.5 w-3.5 shrink-0 text-gray-400' />
+          <ChevronRight className='h-3.5 w-3.5 shrink-0 text-gray-400 rtl:rotate-180' />
         )}
         <Wrench className='h-3.5 w-3.5 shrink-0 text-gray-500 dark:text-gray-400' />
         <span
@@ -88,7 +101,7 @@ const ToolCallCard: React.FC<{ call: ChatToolCall }> = ({ call }) => {
         )}
         <span
           className={cn(
-            'ml-auto flex shrink-0 items-center gap-1 text-xs',
+            'ms-auto flex shrink-0 items-center gap-1 text-xs',
             call.status === 'succeeded'
               ? 'text-green-600 dark:text-green-400'
               : call.status === 'failed'
@@ -152,36 +165,52 @@ export const ChatToolApprovalCard: React.FC<{
     approvalId: string,
     approve: boolean,
     scope: 'once' | 'session' | 'always'
-  ) => void;
+  ) => void | Promise<void>;
   className?: string;
 }> = ({ approval, onDecide, className }) => {
   const { t } = useTranslation();
   const [deciding, setDeciding] = useState(false);
 
-  const decide = (approve: boolean, scope: 'once' | 'session' | 'always') => {
+  const titleId = useId();
+  const decide = async (
+    approve: boolean,
+    scope: 'once' | 'session' | 'always'
+  ) => {
     setDeciding(true);
-    onDecide(approval.approvalId, approve, scope);
+    try {
+      await onDecide(approval.approvalId, approve, scope);
+    } catch {
+      // Re-enable the buttons so the decision can be retried.
+      setDeciding(false);
+    }
   };
+  const description = t('tools.approval.description', {
+    tool: approval.toolCall.name,
+    server: approval.toolCall.serverName ?? t('tools.approval.builtinSource'),
+  });
 
   return (
     <div
-      role='alertdialog'
-      aria-label={t('tools.approval.title')}
+      role='group'
+      aria-labelledby={titleId}
       className={cn(
         'rounded-lg border border-primary-300/70 bg-primary-50 p-3 text-sm dark:border-primary-700/60 dark:bg-primary-900/20',
         className
       )}
     >
-      <div className='flex items-center gap-2 font-medium text-primary-800 dark:text-primary-200'>
-        <ShieldQuestion className='h-4 w-4 shrink-0' />
+      {/* Announce the request when it appears; the card itself takes no focus. */}
+      <span className='sr-only' role='alert' aria-live='assertive'>
+        {t('tools.approval.title')}. {description}
+      </span>
+      <div
+        id={titleId}
+        className='flex items-center gap-2 font-medium text-primary-800 dark:text-primary-200'
+      >
+        <ShieldQuestion className='h-4 w-4 shrink-0' aria-hidden='true' />
         {t('tools.approval.title')}
       </div>
       <p className='mt-1 text-primary-800/90 dark:text-primary-100/80'>
-        {t('tools.approval.description', {
-          tool: approval.toolCall.name,
-          server:
-            approval.toolCall.serverName ?? t('tools.approval.builtinSource'),
-        })}
+        {description}
       </p>
       <pre
         dir='ltr'
@@ -193,7 +222,7 @@ export const ChatToolApprovalCard: React.FC<{
         <Button
           size='sm'
           disabled={deciding}
-          onClick={() => decide(true, 'once')}
+          onClick={() => void decide(true, 'once')}
         >
           {t('tools.approval.allowOnce')}
         </Button>
@@ -201,7 +230,7 @@ export const ChatToolApprovalCard: React.FC<{
           size='sm'
           variant='secondary'
           disabled={deciding}
-          onClick={() => decide(true, 'session')}
+          onClick={() => void decide(true, 'session')}
         >
           {t('tools.approval.allowSession')}
         </Button>
@@ -209,7 +238,7 @@ export const ChatToolApprovalCard: React.FC<{
           size='sm'
           variant='secondary'
           disabled={deciding}
-          onClick={() => decide(true, 'always')}
+          onClick={() => void decide(true, 'always')}
         >
           {t('tools.approval.allowAlways')}
         </Button>
@@ -217,7 +246,7 @@ export const ChatToolApprovalCard: React.FC<{
           size='sm'
           variant='ghost'
           disabled={deciding}
-          onClick={() => decide(false, 'once')}
+          onClick={() => void decide(false, 'once')}
         >
           {t('tools.approval.deny')}
         </Button>

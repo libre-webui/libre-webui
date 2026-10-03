@@ -96,6 +96,7 @@ export const GalleryPage: React.FC = () => {
             key={value}
             type='button'
             onClick={() => setFilter(value)}
+            aria-pressed={filter === value}
             className={cn(
               'rounded-full border px-3 py-1.5 text-sm transition-colors',
               filter === value

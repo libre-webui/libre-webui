@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'react-hot-toast';
 import { Button } from '@/components/ui';
@@ -30,6 +30,7 @@ import { agentCliApi } from '@/utils/api/agentCliApi';
  */
 export const AgentAccessSettings: React.FC = () => {
   const { t } = useTranslation();
+  const titleId = useId();
   const systemInfo = useAuthStore(state => state.systemInfo);
   const setSystemInfo = useAuthStore(state => state.setSystemInfo);
   const loadModels = useChatStore(state => state.loadModels);
@@ -95,7 +96,10 @@ export const AgentAccessSettings: React.FC = () => {
     >
       <div className='flex items-center justify-between gap-4'>
         <div>
-          <h4 className='text-sm font-medium text-gray-900 dark:text-gray-100'>
+          <h4
+            id={titleId}
+            className='text-sm font-medium text-gray-900 dark:text-gray-100'
+          >
             {t(`${labelKey}.title`)}
           </h4>
           <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
@@ -120,6 +124,7 @@ export const AgentAccessSettings: React.FC = () => {
           </Button>
         ) : (
           <SettingsToggle
+            aria-labelledby={titleId}
             checked={enabled === true}
             onChange={handleChange}
             disabled={saving || enabled === null || lockedByEnv}

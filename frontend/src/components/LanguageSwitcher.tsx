@@ -45,7 +45,7 @@ export const LanguageSwitcher: React.FC<{ compact?: boolean }> = ({
         <h4 className='text-sm leading-[22px] text-ink'>
           {t('settings.appearance.language.title')}
         </h4>
-        <p className='mt-0.5 text-xs text-ink-subtle'>
+        <p className='mt-0.5 text-xs text-ink-muted'>
           {t('settings.appearance.language.description')}
         </p>
       </div>
@@ -57,7 +57,7 @@ export const LanguageSwitcher: React.FC<{ compact?: boolean }> = ({
           onChange={handleLanguageChange}
           className={cn(
             compact ? 'max-w-[140px]' : 'max-w-[220px]',
-            'h-9 cursor-pointer appearance-none rounded-full bg-surface-subtle pe-9 ps-3.5 text-sm text-ink transition-colors hover:bg-hover-solid focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40'
+            'h-9 cursor-pointer appearance-none rounded-full bg-surface-subtle pe-9 ps-3.5 text-sm text-ink transition-colors hover:bg-hover-solid focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500'
           )}
         >
           {supportedLanguages.map(lang => (

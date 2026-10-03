@@ -41,7 +41,8 @@
     "remove": "Удалить",
     "home": "Главная",
     "more": "Больше",
-    "reasoning": "Рассуждение"
+    "reasoning": "Рассуждение",
+    "skipToContent": "Перейти к содержимому"
   },
   "brand": {
     "name": "Libre WebUI",
@@ -49,7 +50,10 @@
   },
   "appInitialization": {
     "ollamaUnavailable": "Сервис Ollama недоступен. Модели плагинов по-прежнему можно использовать.",
-    "backendConnectionFailed": "Не удалось подключиться к серверной службе"
+    "backendConnectionFailed": "Не удалось подключиться к серверной службе",
+    "connecting": "Подключение к бэкенду… ({{attempt}}/{{total}})",
+    "startingUp": "Запуск…",
+    "backendUnreachableHint": "Убедитесь, что бэкенд запущен, и повторите попытку."
   },
   "auth": {
     "login": {
@@ -189,7 +193,15 @@
       "removed": "Ключ доступа удалён.",
       "removeFailed": "Не удалось удалить ключ доступа.",
       "signInButton": "Войти с ключом доступа",
-      "signInFailed": "Вход с ключом доступа не удался."
+      "signInFailed": "Вход с ключом доступа не удался.",
+      "removeConfirmTitle": "Удалить этот ключ доступа?",
+      "removeConfirmDescription": "«{{name}}» больше не будет работать для входа. Позже его можно зарегистрировать снова."
+    },
+    "password": {
+      "show": "Показать пароль",
+      "hide": "Скрыть пароль",
+      "showConfirmation": "Показать подтверждение пароля",
+      "hideConfirmation": "Скрыть подтверждение пароля"
     }
   },
   "setup": {
@@ -242,7 +254,8 @@
       "envNote": "Этот ключ также сохранён в файле backend/.env как ENCRYPTION_KEY",
       "acknowledgment": "Я сохранил ключ шифрования в надёжном месте и понимаю, что его потеря может привести к утрате данных.",
       "confirmRequired": "Пожалуйста, подтвердите, что вы сохранили ключ шифрования",
-      "continue": "Продолжить к Libre WebUI"
+      "continue": "Продолжить к Libre WebUI",
+      "loadFailed": "Не удалось загрузить ключ шифрования. Повторите попытку, чтобы продолжить."
     },
     "connectModels": {
       "title": "Подключите свои модели",
@@ -336,7 +349,8 @@
       "toolsOn": "Инструменты включены — модель может вызывать одобренные инструменты",
       "toolsOff": "Разрешить модели вызывать инструменты в этом сообщении",
       "thinkingOn": "Рассуждение включено ({{level}})",
-      "thinkingOff": "Рассуждать перед ответом"
+      "thinkingOff": "Рассуждать перед ответом",
+      "thinkingUpdateFailed": "Не удалось обновить настройку рассуждений"
     },
     "session": {
       "new": "Новый чат",
@@ -372,7 +386,8 @@
         "move": "Переместить в папку",
         "remove": "Убрать из папки",
         "delete": "Удалить папку",
-        "deleteConfirm": "Удалить эту папку? Чаты внутри сохранятся."
+        "deleteConfirm": "Удалить эту папку? Чаты внутри сохранятся.",
+        "rename": "Переименовать папку"
       },
       "shareChat": "Поделиться чатом…"
     },
@@ -405,7 +420,13 @@
       "browse": "выберите",
       "unsupportedFileType": "Тип файла не поддерживается: {{name}}",
       "maxImagesAllowed": "Допускается не более {{count}} изображений",
-      "imageTooLarge": "Изображение {{name}} слишком большое (не более 10 МБ)"
+      "imageTooLarge": "Изображение {{name}} слишком большое (не более 10 МБ)",
+      "readFailed": "Не удалось прочитать {{name}}",
+      "uploadAlt": "Загрузка {{number}}",
+      "removeImage": "Удалить изображение {{number}}",
+      "addMore": "Добавить ещё изображения ({{count}}/{{max}})",
+      "uploading": "Загрузка",
+      "removeDocument": "Удалить {{name}}"
     },
     "structuredOutput": {
       "title": "Формат ответа",
@@ -456,7 +477,8 @@
       "compactionOff": "Отключено для этого чата"
     },
     "message": {
-      "sources": "Источники"
+      "sources": "Источники",
+      "copyFailed": "Не удалось скопировать в буфер обмена"
     },
     "toasts": {
       "chatCreated": "Новый чат создан",
@@ -491,7 +513,8 @@
       "branchSwitched": "Выбран вариант {{number}}",
       "branchSelectFailed": "Не удалось выбрать ветвь",
       "editFailed": "Не удалось изменить сообщение",
-      "toolDecisionFailed": "Не удалось записать решение по инструменту"
+      "toolDecisionFailed": "Не удалось записать решение по инструменту",
+      "archiveFailed": "Не удалось архивировать этот чат"
     },
     "documents": {
       "title": "Документы в контексте"
@@ -521,7 +544,25 @@
       "origin": "Ответвление от {{title}}",
       "originUnknown": "другого чата"
     },
-    "sharedReadOnly": "Поделился {{owner}} — только просмотр"
+    "sharedReadOnly": "Поделился {{owner}} — только просмотр",
+    "branch": {
+      "variants": "{{count}} вариант",
+      "variants_plural": "Вариантов: {{count}}",
+      "selectVariant": "Выбрать вариант {{number}}",
+      "generating": "генерация...",
+      "select": "выбрать"
+    },
+    "sources": {
+      "fullContextFailed": "Не удалось обновить настройку полного документа",
+      "usedByRetrieval": "Используется в ответах",
+      "triggerLabel": "Источники ({{count}})"
+    },
+    "announce": {
+      "replyFinished": "Ответ от {{name}}: {{text}}",
+      "replyFinishedNoText": "Ответ от {{name}} готов.",
+      "codeBlock": "блок кода",
+      "generationStopped": "Генерация остановлена"
+    }
   },
   "sidebar": {
     "navigation": {
@@ -546,7 +587,8 @@
       "strands": "Strands"
     },
     "toggleSize": "Переключить размер боковой панели",
-    "expandSidebar": "Развернуть боковую панель"
+    "expandSidebar": "Развернуть боковую панель",
+    "ariaLabel": "Боковая панель"
   },
   "user": {
     "menu": {
@@ -821,7 +863,8 @@
         "removeFailed": "Не удалось удалить API-ключ",
         "enterKey": "Пожалуйста, введите API-ключ"
       },
-      "variables": "Variables"
+      "variables": "Variables",
+      "dismissError": "Скрыть ошибку"
     },
     "generation": {
       "title": "Параметры генерации",
@@ -924,7 +967,8 @@
         "deleteFailed": "Не удалось удалить коллекцию",
         "assignFailed": "Не удалось переместить документ",
         "share": "Поделиться коллекцией",
-        "shared": "общая"
+        "shared": "общая",
+        "assignTo": "Коллекция для {{name}}"
       },
       "library": {
         "title": "Загруженные документы",
@@ -1066,7 +1110,8 @@
         "title": "Архивированные чаты",
         "empty": "Нет архивированных чатов",
         "unarchive": "Восстановить"
-      }
+      },
+      "clearAllConfirm": "Вы уверены, что хотите удалить всю историю чатов? Это действие нельзя отменить."
     },
     "about": {
       "title": "О программе",
@@ -1186,7 +1231,11 @@
       "unknownDevice": "Неизвестное устройство",
       "createdAt": "Вход выполнен",
       "lastSeenAt": "Последняя активность",
-      "expiresAt": "Истекает"
+      "expiresAt": "Истекает",
+      "signOutConfirmTitle": "Завершить этот сеанс?",
+      "signOutConfirmDescription": "{{device}} будет немедленно отключено, потребуется войти снова.",
+      "signOutOthersConfirmTitle": "Завершить остальные сеансы?",
+      "signOutOthersConfirmDescription": "Остальные сеансы ({{count}}) будут немедленно завершены. Этот сеанс останется активным."
     },
     "apiKeys": {
       "title": "API-ключи",
@@ -1220,7 +1269,9 @@
       "createdAt": "Создан",
       "lastUsedAt": "Последнее использование",
       "expiresAt": "Истекает",
-      "neverExpires": "Бессрочно"
+      "neverExpires": "Бессрочно",
+      "revokeConfirmTitle": "Отозвать «{{name}}»?",
+      "revokeConfirmDescription": "Всё, что использует этот API-ключ, немедленно перестанет работать. Это действие нельзя отменить."
     },
     "notifications": {
       "title": "Уведомления",
@@ -1294,7 +1345,8 @@
     "model": "Модель",
     "size": "Размер",
     "quality": "Качество",
-    "created": "Создано"
+    "created": "Создано",
+    "lightboxLabel": "Просмотр изображения"
   },
   "errors": {
     "generic": "Произошла ошибка",
@@ -1389,7 +1441,9 @@
       "hide": "Скрыть от пользователей",
       "show": "Показать пользователям",
       "star": "Отметить {{name}} звездой",
-      "unstar": "Снять звезду с {{name}}"
+      "unstar": "Снять звезду с {{name}}",
+      "filterLabel": "Фильтр моделей",
+      "displayName": "Отображаемое имя для {{name}}"
     },
     "pull": {
       "placeholder": "Введите название модели (напр., llama3.2:3b, deepseek-r1:14b)",
@@ -1550,7 +1604,10 @@
     "deleteConfirm": "Вы уверены, что хотите удалить \"{{name}}\"?",
     "deleteSuccess": "Персона \"{{name}}\" успешно удалена",
     "downloadSuccess": "Персона \"{{name}}\" успешно скачана",
-    "failed": "Не удалось {{action}} персону"
+    "failed": "Не удалось {{action}} персону",
+    "loadFailed": "Не удалось загрузить ваши персоны.",
+    "deleteFailed": "Не удалось удалить персону",
+    "downloadFailed": "Не удалось скачать персону"
   },
   "personaForm": {
     "title": {
@@ -1682,7 +1739,8 @@
       "promptHint": "Промпт, с которого начинается каждый новый чат с этой персоной.",
       "noPrompt": "Без промпта",
       "version": "Ревизия привязок {{version}}"
-    }
+    },
+    "sections": "Разделы персоны"
   },
   "personaCard": {
     "enhanced": "Улучшенная",
@@ -1699,7 +1757,16 @@
     "backupSuccess": "Бэкап персоны успешно скачан",
     "dnaSuccess": "ДНК персоны успешно экспортирована",
     "failed": "Не удалось {{action}}",
-    "shareTooltip": "Поделиться этой персоной"
+    "shareTooltip": "Поделиться этой персоной",
+    "wipeFailed": "Не удалось стереть воспоминания",
+    "backupFailed": "Не удалось создать резервную копию персоны",
+    "exportDnaFailed": "Не удалось экспортировать ДНК персоны",
+    "favorite": "Избранное",
+    "memoryStatus": {
+      "active": "Активна",
+      "wiped": "Стёрты",
+      "backed_up": "Сохранены в резервной копии"
+    }
   },
   "userManager": {
     "title": "Управление пользователями",
@@ -1865,7 +1932,28 @@
       "memberOf": "Группы",
       "featuresLabel": "Доступ к функциям",
       "grantsLabel": "Разрешения",
-      "grantVia": "через"
+      "grantVia": "через",
+      "deleteConfirmTitle": "Удалить группу «{{name}}»?",
+      "deleteConfirmDescription": "Участники потеряют доступ, который получили только через эту группу. Сами учётные записи не удаляются.",
+      "statuses": {
+        "active": "Активна",
+        "pending": "Ожидает одобрения"
+      },
+      "features": {
+        "work": "Работа",
+        "model-download": "Загрузка моделей",
+        "web-search": "Веб-поиск",
+        "strands": "Движок Strands",
+        "tools": "Инструменты",
+        "stt": "Речь в текст",
+        "tts": "Текст в речь",
+        "voice-mode": "Голосовой режим",
+        "voice-cloning": "Клонирование голоса"
+      },
+      "grantViaKinds": {
+        "user": "прямой доступ",
+        "group": "группа"
+      }
     },
     "audit": {
       "title": "Журнал аудита безопасности",
@@ -2298,7 +2386,11 @@
       "harmful": "Вредный",
       "formatting": "Форматирование"
     },
-    "feedbackComment": "Добавить комментарий…"
+    "feedbackComment": "Добавить комментарий…",
+    "user": "Пользователь",
+    "feedbackFailed": "Не удалось сохранить ваш отзыв",
+    "openImage": "Открыть изображение {{number}}",
+    "uploadedImageAlt": "Загруженное изображение {{number}}"
   },
   "imageGallery": {
     "title": "Галерея изображений",
@@ -2387,7 +2479,10 @@
       "image": "Изображения",
       "video": "Видео",
       "audio": "Аудио"
-    }
+    },
+    "deleteConfirmTitle": "Удалить этот элемент?",
+    "deleteConfirmDescription": "Сгенерированный медиафайл будет безвозвратно удалён.",
+    "previewFailed": "Предпросмотр недоступен"
   },
   "errorBoundary": {
     "title": "Что-то пошло не так",
@@ -2463,7 +2558,8 @@
     "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source.",
     "versionOf": "Версия {{current}} из {{total}}",
     "previousVersion": "Предыдущая версия",
-    "nextVersion": "Следующая версия"
+    "nextVersion": "Следующая версия",
+    "resizePanel": "Изменить размер панели"
   },
   "personaImportExport": {
     "title": "Импорт и экспорт персон",
@@ -2501,7 +2597,10 @@
     "generation": "Генерация:",
     "modelLoad": "Загрузка модели:",
     "totalTime": "Общее время:",
-    "generatedAt": "Сгенерировано в:"
+    "generatedAt": "Сгенерировано в:",
+    "notAvailable": "Н/Д",
+    "tokenCount": "Токенов: {{tokens}}",
+    "tokensPerSecond": "{{value}} т/с"
   },
   "userMenu": {
     "loggedOut": "Вы вышли из системы",
@@ -2560,7 +2659,9 @@
       "httpWarning": "HTTP не шифрует учетные данные или трафик. Используйте его только в доверенной сети.",
       "invalidBaseUrl": "Базовые URL не могут содержать строку запроса или фрагмент.",
       "invalidApiPath": "Должен начинаться с / и не содержать URL, запрос, фрагмент или сегмент ..",
-      "tooLong": "Значение слишком длинное"
+      "tooLong": "Значение слишком длинное",
+      "resetConfirmTitle": "Сбросить к значениям по умолчанию?",
+      "resetConfirmDescription": "Будут удалены все сохранённые значения для {{name}}, включая API-ключи и другие учётные данные. Это действие нельзя отменить."
     }
   },
   "huggingface": {
@@ -2580,7 +2681,10 @@
   },
   "demoMode": {
     "title": "Демо-режим",
-    "github": "GitHub"
+    "github": "GitHub",
+    "defaultMessage": "Это демонстрационная версия, предназначенная только для презентации. Бэкенд Ollama не подключён.",
+    "viewOnGithub": "Открыть на GitHub",
+    "dismiss": "Закрыть"
   },
   "work": {
     "title": "Работа",
@@ -2671,8 +2775,18 @@
         "checksPending": "Проверок в ожидании",
         "stallNudges": "Сигналы о застое",
         "ambiguityNudges": "Сигналы перенастройки",
-        "stoppedBy": "Остановлено из-за"
-      }
+        "stoppedBy": "Остановлено из-за",
+        "reasons": {
+          "round": "лимит раундов",
+          "toolCall": "лимит вызовов инструментов",
+          "approvalTimeout": "тайм-аут одобрения",
+          "computerStall": "компьютер завис"
+        }
+      },
+      "skillTraceSavedWorked": "Отмечено: сработало",
+      "skillTraceSavedFailed": "Отмечено: не сработало",
+      "connectionClosed": "Live-соединение Работы закрыто.",
+      "reconnectingBackground": "Live-обновления переподключаются в фоновом режиме."
     },
     "runtime": {
       "unavailable": "Среда выполнения недоступна",
@@ -2715,7 +2829,11 @@
       "changes": "Изменения",
       "changesSince": "Что изменилось с последнего хода",
       "diffLabel": "Изменения с последнего хода: {{path}}",
-      "diffFolded": "{{count}} строк без изменений"
+      "diffFolded": "{{count}} строк без изменений",
+      "diffAdded": "Добавлено",
+      "diffRemoved": "Удалено",
+      "unsavedChanges": "несохранённые изменения",
+      "editingLocked": "Редактирование разблокируется после завершения хода."
     },
     "activity": {
       "empty": "Здесь появятся команды, операции с файлами и результаты инструментов.",
@@ -2726,7 +2844,9 @@
         "toolCall": "Вызов инструмента",
         "toolResult": "Результат инструмента",
         "error": "Ошибка"
-      }
+      },
+      "arguments": "Аргументы инструмента",
+      "output": "Вывод инструмента"
     },
     "preview": {
       "command": "Необязательная команда запуска",
@@ -2755,7 +2875,8 @@
       "saveFailed": "Не удалось сохранить этот файл.",
       "saved": "Файл сохранён.",
       "previewFailed": "Не удалось запустить предпросмотр.",
-      "previewStopFailed": "Не удалось остановить предпросмотр."
+      "previewStopFailed": "Не удалось остановить предпросмотр.",
+      "sendFailed": "Не удалось отправить сообщение."
     },
     "terminal": {
       "connecting": "Открывается оболочка в песочнице…",
@@ -2807,7 +2928,18 @@
       "noFilterMatches": "Нет изменённых файлов, соответствующих этому фильтру.",
       "allChanges": "Все изменения",
       "diffTruncated": "Этот diff усечён.",
-      "binaryFile": "Двоичный файл, текстовый diff недоступен."
+      "binaryFile": "Двоичный файл, текстовый diff недоступен.",
+      "statusLabels": {
+        "modified": "Изменён",
+        "added": "Добавлен",
+        "deleted": "Удалён",
+        "renamed": "Переименован",
+        "copied": "Скопирован",
+        "typeChanged": "Изменён тип",
+        "untracked": "Не отслеживается"
+      },
+      "stagedState": "в индексе",
+      "aheadBehind": "Впереди: {{ahead}}, позади: {{behind}}"
     },
     "hostWorkspace": {
       "hint": "Оставьте пустым для изолированного пространства или укажите задаче папку на этой машине.",
@@ -2834,7 +2966,8 @@
       "unmute": "Включить звук",
       "mute": "Выключить звук",
       "finished": "Эта задача завершена. Откройте её снова, чтобы вернуть экран.",
-      "reopenOpen": "Открыть задачу заново и открыть экран"
+      "reopenOpen": "Открыть задачу заново и открыть экран",
+      "teachSaveFailed": "Не удалось сохранить эту демонстрацию."
     },
     "computerSetup": {
       "title": "Work Computer",
@@ -2871,7 +3004,11 @@
       "approvalsToggleFailed": "Не удалось обновить настройки одобрения.",
       "approvalRuleLine": "Всегда разрешено",
       "approvalRuleDelete": "Удалить правило",
-      "approvalRuleDeleteFailed": "Не удалось удалить правило."
+      "approvalRuleDeleteFailed": "Не удалось удалить правило.",
+      "routinesLoadFailed": "Не удалось загрузить рутины.",
+      "skillsLoadFailed": "Не удалось загрузить обученные навыки.",
+      "approvalsLoadFailed": "Не удалось загрузить настройки одобрения.",
+      "routinePaused": "На паузе"
     },
     "approval": {
       "title": "Нужно одобрение",
@@ -2879,7 +3016,16 @@
       "allowOnce": "Разрешить один раз",
       "allowAlways": "Разрешать всегда",
       "deny": "Отклонить",
-      "failed": "Не удалось отправить решение."
+      "failed": "Не удалось отправить решение.",
+      "details": "Сведения о действии",
+      "fields": {
+        "command": "Команда",
+        "path": "Путь",
+        "from": "Откуда",
+        "to": "Куда",
+        "actions": "Действия",
+        "recursive": "Рекурсивно"
+      }
     },
     "idleStopHint": "Останавливается через {{minutes}} минут без активности.",
     "runs": {
@@ -2891,7 +3037,8 @@
         "needsInput": "Требуется ввод",
         "failed": "Не удалось",
         "cancelled": "Отменено"
-      }
+      },
+      "loadFailed": "Не удалось загрузить историю запусков."
     },
     "recovery": {
       "pending": "Work подтверждает {{pending}} очистку(и) песочницы, прежде чем принимать новые операции.",
@@ -2903,6 +3050,17 @@
       "retrySucceeded": "Очищено {{cleared}} из {{attempted}} ожидающих очисток.",
       "retryPending": "Всё ещё повторяем {{attempted}} ожидающих очисток.",
       "retryFailed": "Не удалось повторить ожидающие очистки."
+    },
+    "computer": {
+      "setupFailed": "Не удалось настроить компьютер Работы."
+    },
+    "announce": {
+      "completed": "{{title}}: завершено.",
+      "needsInput": "{{title}} требует вашего ввода или подтверждения.",
+      "failed": "{{title}}: ошибка.",
+      "cancelled": "{{title}}: остановлено.",
+      "approvalNeeded": "{{title}} требует вашего подтверждения для запуска {{tool}}.",
+      "untitledTask": "Эта задача"
     }
   },
   "personaBackground": {
@@ -2947,7 +3105,8 @@
     "showAll": "Показать все ({{total}})",
     "sources": "Источники моделей",
     "defaultModel": "Модель по умолчанию",
-    "contextSize": "контекст {{size}}"
+    "contextSize": "контекст {{size}}",
+    "via": "через {{provider}}"
   },
   "whatsNew": {
     "title": "Что нового",
@@ -3004,7 +3163,16 @@
     "unpin": "Открепить заметку",
     "pinned": "Закреплена",
     "export": "Скачать как Markdown",
-    "sharedWithYou": "Доступна вам"
+    "sharedWithYou": "Доступна вам",
+    "titleLabel": "Название заметки",
+    "loadFailed": "Не удалось загрузить. Повторите попытку.",
+    "restoreConfirmTitle": "Восстановить эту версию?",
+    "restoreConfirmDescription": "Текст заметки будет заменён этой более ранней версией.",
+    "deleteAttachmentConfirmTitle": "Удалить {{name}}?",
+    "deleteAttachmentConfirmDescription": "Вложение будет безвозвратно удалено из этой заметки.",
+    "attachmentDeleteFailed": "Не удалось удалить вложение",
+    "revokeFailed": "Не удалось отозвать доступ",
+    "sharePermissionLabel": "Разрешение"
   },
   "calendar": {
     "title": "Календарь",
@@ -3049,7 +3217,22 @@
     "importFailed": "Не удалось импортировать файл",
     "importResult": "Импортировано событий: {{total}}",
     "importIcs": "Импорт",
-    "exportIcs": "Экспорт"
+    "exportIcs": "Экспорт",
+    "chipStatus": {
+      "automation": "Запланированная автоматизация",
+      "runSucceeded": "Автоматизация выполнена успешно",
+      "runFailed": "Ошибка выполнения автоматизации"
+    },
+    "newEventOn": "Новое событие на {{date}}",
+    "showDay": "Показать все события на {{date}}",
+    "deleteEventConfirmTitle": "Удалить «{{title}}»?",
+    "deleteEventConfirmDescription": "Это событие будет безвозвратно удалено.",
+    "deleteRecurringEventConfirmDescription": "Это повторяющееся событие и все его вхождения будут безвозвратно удалены.",
+    "shareCalendarNamed": "Поделиться календарём {{name}}",
+    "deleteCalendarNamed": "Удалить календарь {{name}}",
+    "deleteCalendarConfirmTitle": "Удалить календарь «{{name}}»?",
+    "deleteCalendarConfirmDescription": "Календарь и все его события будут безвозвратно удалены.",
+    "calendarDeleteFailed": "Не удалось удалить календарь"
   },
   "automations": {
     "title": "Автоматизации",
@@ -3176,13 +3359,17 @@
         "work-approval": "агент ждёт вашего одобрения",
         "system": "приходит системное уведомление"
       }
-    }
+    },
+    "deleteConfirmTitle": "Удалить «{{name}}»?",
+    "deleteConfirmDescription": "Автоматизация и её расписание будут безвозвратно удалены. Прошлые запуски останутся в истории запусков."
   },
   "home": {
     "active": "активно",
     "continue": "Продолжить",
     "start": "Начать",
-    "explore": "Обзор"
+    "explore": "Обзор",
+    "greeting": "{{greeting}}.",
+    "greetingWithName": "{{greeting}}, {{name}}."
   },
   "palette": {
     "empty": "Совпадений нет.",
@@ -3195,7 +3382,14 @@
     "work": "Работа",
     "messages": "Сообщения",
     "notes": "Заметки",
-    "documents": "Документы"
+    "documents": "Документы",
+    "searching": "Поиск…",
+    "searchFailed": "Поиск по рабочему пространству не удался. Показаны только подходящие чаты и действия.",
+    "results": "Результаты",
+    "escKey": "esc",
+    "hintNavigate": "Навигация",
+    "hintOpen": "Открыть",
+    "hintClose": "Закрыть"
   },
   "tabs": {
     "actions": "Действия вкладки",
@@ -3399,7 +3593,8 @@
       "button": "Из папки",
       "missingSkillMd": "В папке должен быть файл SKILL.md",
       "done": "Навык импортирован с {{count}} прилагаемыми файлами"
-    }
+    },
+    "toggleLabel": "Включить навык {{name}}"
   },
   "toolsPage": {
     "title": "Инструменты",
@@ -3557,7 +3752,14 @@
     "added": "Доступ открыт для {{name}}",
     "failed": "Не удалось поделиться",
     "userNotFound": "Пользователь с таким именем не найден",
-    "groupNotFound": "Группа с таким именем не найдена"
+    "groupNotFound": "Группа с таким именем не найдена",
+    "principalKind": "Поделиться с пользователем или группой",
+    "principalName": "Имя пользователя или название группы",
+    "permission": "Разрешение",
+    "sharing": "Общий доступ",
+    "loading": "Загрузка списка доступа",
+    "loadFailed": "Не удалось загрузить список доступа",
+    "revokeFailed": "Не удалось отозвать доступ"
   },
   "channels": {
     "title": "Каналы",
@@ -3616,13 +3818,44 @@
     "toolCalls": {
       "summary": "Использованные инструменты ({{total}})",
       "deniedHint": "Инструменты, которые что-то меняют, отклоняются в каналах. Запускайте их из чата."
-    }
+    },
+    "confirmEdit": "Сохранить изменения",
+    "cancelEdit": "Отменить редактирование",
+    "reactWith": "Отреагировать: {{emoji}}",
+    "deleteMessageConfirmTitle": "Удалить это сообщение?",
+    "deleteMessageConfirmDescription": "Сообщение будет удалено для всех в этом канале.",
+    "unreadCount": "Непрочитано: {{total}}",
+    "send": "Отправить сообщение",
+    "invite": "Пригласить участника",
+    "closeThread": "Закрыть тред",
+    "removeAttachment": "Удалить вложение",
+    "loadFailed": "Не удалось загрузить. Повторите попытку.",
+    "editFailed": "Не удалось изменить сообщение",
+    "deleteMessageFailed": "Не удалось удалить сообщение",
+    "pinFailed": "Не удалось изменить закрепление",
+    "reactFailed": "Не удалось сохранить реакцию",
+    "downloadFailed": "Не удалось скачать файл",
+    "removeMemberConfirm": "Удалить {{name}} из этого канала?",
+    "removeMemberConfirmDescription": "Участник потеряет доступ к каналу и его сообщениям.",
+    "removeMemberNamed": "Удалить {{name}} из канала",
+    "removeMemberFailed": "Не удалось удалить участника",
+    "leaveConfirm": "Покинуть «{{name}}»?",
+    "leaveConfirmDescription": "Чтобы вернуться в закрытый канал, вас нужно будет пригласить снова.",
+    "leaveFailed": "Не удалось покинуть канал",
+    "joinFailed": "Не удалось присоединиться к каналу",
+    "deleteConfirm": "Удалить «{{name}}»?",
+    "deleteConfirmDescription": "Канал и все его сообщения будут безвозвратно удалены для всех участников.",
+    "deleteFailed": "Не удалось удалить канал",
+    "saveFailed": "Не удалось сохранить канал"
   },
   "notifications": {
     "title": "Уведомления",
     "empty": "Новых уведомлений нет.",
     "markAllRead": "Отметить всё прочитанным",
-    "markRead": "Отметить прочитанным"
+    "markRead": "Отметить прочитанным",
+    "titleWithUnread": "Уведомления (непрочитано: {{unread}})",
+    "unread": "Непрочитанные",
+    "loadFailed": "Не удалось загрузить уведомления."
   },
   "voiceMode": {
     "title": "Голосовой режим",
@@ -3757,7 +3990,12 @@
       "failed": "Сбой",
       "cancelled": "Отменён"
     },
-    "noFeedback": "Отзывов пока нет — оценивайте ответы, чтобы собрать набор данных."
+    "noFeedback": "Отзывов пока нет — оценивайте ответы, чтобы собрать набор данных.",
+    "deleteSetConfirmTitle": "Удалить «{{name}}»?",
+    "deleteSetConfirmDescription": "Набор оценки и его промпты будут безвозвратно удалены.",
+    "deleteSetFailed": "Не удалось удалить набор оценки",
+    "runError": "Ошибка: {{detail}}",
+    "cancelFailed": "Не удалось отменить запуск"
   },
   "passwordStrength": {
     "levels": {
@@ -3771,6 +4009,14 @@
       "hasCase": "Заглавные и строчные буквы",
       "hasNumber": "Хотя бы одна цифра",
       "tooLong": "Не более 72 байт"
+    },
+    "requirements": "Не менее 12 символов и не более 72 байт UTF-8, с заглавной и строчной буквами и цифрой.",
+    "errors": {
+      "minLength": "Пароль должен содержать не менее 12 символов.",
+      "tooLong": "Пароль не должен превышать 72 байта UTF-8.",
+      "uppercase": "Пароль должен содержать заглавную букву.",
+      "lowercase": "Пароль должен содержать строчную букву.",
+      "number": "Пароль должен содержать цифру."
     }
   },
   "connectModels": {
@@ -3804,7 +4050,8 @@
       "enable": "Включить провайдера",
       "enabling": "Включение…",
       "enabled": "{{name}} подключён — его модели теперь доступны",
-      "enableFailed": "Не удалось включить провайдера"
+      "enableFailed": "Не удалось включить провайдера",
+      "urlLabel": "URL сервера"
     },
     "cloud": {
       "title": "Облачный API",
@@ -3813,7 +4060,8 @@
       "connect": "Подключить",
       "connecting": "Подключение…",
       "connected": "{{name}} подключён — его модели теперь доступны",
-      "saveFailed": "Не удалось сохранить API-ключ"
+      "saveFailed": "Не удалось сохранить API-ключ",
+      "keyLabel": "API-ключ {{name}}"
     }
   },
   "strands": {
@@ -3845,5 +4093,15 @@
     "deleteFailed": "Не удалось удалить сеанс.",
     "saveFailed": "Не удалось сохранить сеанс.",
     "turnFailed": "Движок не смог завершить ход"
+  },
+  "notFound": {
+    "title": "Страница не найдена",
+    "description": "Эта страница не существует или была перемещена."
+  },
+  "themeToggle": {
+    "switchToLight": "Переключить на светлую тему",
+    "switchToDark": "Переключить на тёмную тему",
+    "switchToAmoled": "Переключить на чисто чёрную тему",
+    "switchToCelestial": "Переключить на небесную тему"
   }
 }

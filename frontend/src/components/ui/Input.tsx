@@ -54,8 +54,8 @@ export const Input: React.FC<InputProps> = ({
         id={inputId}
         className={cn(
           'block w-full rounded-xl border border-line bg-surface-raised px-3.5 py-2.5 text-base text-ink shadow-none',
-          'placeholder:text-ink-subtle transition-[background-color,border-color,box-shadow,color] duration-150 ease-out',
-          'focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus-visible:outline-none dark:focus:border-primary-400 dark:focus:ring-primary-400/20',
+          'placeholder:text-ink-muted transition-[background-color,border-color,box-shadow,color] duration-150 ease-out',
+          'focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus-visible:outline-none dark:focus:border-primary-400 dark:focus:ring-primary-400/30',
           'disabled:cursor-not-allowed disabled:bg-surface-subtle disabled:text-ink-subtle disabled:opacity-70',
           error &&
             'border-error-500 focus:border-error-500 focus:ring-error-500/20',

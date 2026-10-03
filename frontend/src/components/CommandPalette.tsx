@@ -19,6 +19,7 @@ import React, {
   useCallback,
   useEffect,
   useMemo,
+  useId,
   useRef,
   useState,
 } from 'react';
@@ -58,6 +59,7 @@ import {
 } from '@/utils/appNavigation';
 import { cn, formatTimestamp, isMac } from '@/utils';
 import { searchApi } from '@/utils/api/searchApi';
+import { findWorkStatusPresentation } from '@/utils/workStatus';
 import type { WorkspaceSearchResult } from '@/utils/api/searchApi';
 
 type IconComponent = React.ComponentType<{ className?: string }>;
@@ -164,6 +166,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
   const [selectedIndex, setSelectedIndex] = useState(0);
   const dialogRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
+  const listboxId = useId();
   const sessions = useChatStore(state => state.sessions);
   const workTasks = useWorkStore(state => state.tasks);
   const toggleTheme = useAppStore(state => state.toggleTheme);
@@ -208,9 +211,20 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
   // Stale results clear during render the moment the query drops below the
   // threshold or the palette closes; the effect only owns the debounced
   // fetch.
-  if (deepResults !== null && (!open || query.trim().length < 3)) {
+  const deepEligible = open && query.trim().length >= 3;
+  // Which query the last deep search answered, and whether it failed. A
+  // query that has not settled yet is still "searching".
+  const [deepSettled, setDeepSettled] = useState<{
+    query: string;
+    failed: boolean;
+  } | null>(null);
+  if (!deepEligible && (deepResults !== null || deepSettled !== null)) {
     setDeepResults(null);
+    setDeepSettled(null);
   }
+  const deepPending = deepEligible && deepSettled?.query !== query.trim();
+  const deepFailed =
+    deepEligible && deepSettled?.query === query.trim() && deepSettled.failed;
   useEffect(() => {
     const trimmed = query.trim();
     if (!open || trimmed.length < 3) return;
@@ -219,11 +233,17 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
       searchApi
         .searchApp(trimmed)
         .then(response => {
-          if (!cancelled && response.success && response.data) {
+          if (cancelled) return;
+          if (response.success && response.data) {
             setDeepResults(response.data);
+            setDeepSettled({ query: trimmed, failed: false });
+          } else {
+            setDeepSettled({ query: trimmed, failed: true });
           }
         })
-        .catch(() => {});
+        .catch(() => {
+          if (!cancelled) setDeepSettled({ query: trimmed, failed: true });
+        });
     }, 300);
     return () => {
       cancelled = true;
@@ -391,14 +411,19 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
             (a, b) =>
               new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
           )
-          .map(task => ({
-            id: `work:${task.id}`,
-            section: t('palette.work', 'Work'),
-            label: task.title || t('work.tasks.untitled', 'Untitled task'),
-            icon: Briefcase,
-            hint: task.status,
-            run: () => navigate(`/work/${task.id}`),
-          }))
+          .map(task => {
+            const status = findWorkStatusPresentation(task.status);
+            return {
+              id: `work:${task.id}`,
+              section: t('palette.work', 'Work'),
+              label: task.title || t('work.tasks.untitled', 'Untitled task'),
+              icon: Briefcase,
+              hint: status
+                ? t(status.labelKey, { defaultValue: status.label })
+                : task.status,
+              run: () => navigate(`/work/${task.id}`),
+            };
+          })
       : [];
 
     return [...actions, ...sessionItems, ...workItems];
@@ -510,12 +535,47 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
     ];
   }, [items, query, deepResults, t, navigate, onOpenSettingsTab]);
 
+  // Deep results can shrink the list under the highlight; clamp it.
+  const activeIndex = Math.min(selectedIndex, filtered.length - 1);
+  const optionId = (index: number) => `${listboxId}-option-${index}`;
+
   useEffect(() => {
     const selected = listRef.current?.querySelector<HTMLElement>(
       '[data-selected="true"]'
     );
     selected?.scrollIntoView({ block: 'nearest' });
   }, [selectedIndex, filtered.length]);
+
+  const sections = useMemo(() => {
+    const groups: Array<{
+      name: string;
+      entries: Array<{
+        item: PaletteItem;
+        ranges: Array<[number, number]>;
+        index: number;
+      }>;
+    }> = [];
+    filtered.forEach(({ item, ranges }, index) => {
+      const last = groups[groups.length - 1];
+      if (last && last.name === item.section) {
+        last.entries.push({ item, ranges, index });
+      } else {
+        groups.push({ name: item.section, entries: [{ item, ranges, index }] });
+      }
+    });
+    return groups;
+  }, [filtered]);
+
+  const statusMessage =
+    filtered.length === 0
+      ? deepPending
+        ? t('palette.searching')
+        : deepFailed
+          ? t('palette.searchFailed')
+          : t('palette.empty', 'No matches.')
+      : deepFailed
+        ? t('palette.searchFailed')
+        : '';
 
   const runItem = (item: PaletteItem | undefined) => {
     if (!item) return;
@@ -542,9 +602,19 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
         className='flex h-[min(34rem,76vh)] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-line bg-surface-overlay/95 shadow-overlay backdrop-blur-xl animate-scale-in motion-reduce:animate-none'
       >
         <div className='flex shrink-0 items-center gap-2.5 border-b border-line px-4'>
-          <Search className='h-4 w-4 shrink-0 text-ink-subtle' />
+          <Search
+            className='h-4 w-4 shrink-0 text-ink-muted'
+            aria-hidden='true'
+          />
           <input
             data-testid='command-palette-input'
+            role='combobox'
+            aria-expanded={filtered.length > 0}
+            aria-controls={listboxId}
+            aria-autocomplete='list'
+            aria-activedescendant={
+              filtered.length > 0 ? optionId(activeIndex) : undefined
+            }
             aria-label={t(
               'palette.placeholder',
               'Search chats, Work, actions…'
@@ -559,87 +629,120 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
               if (event.nativeEvent.isComposing) return;
               if (event.key === 'ArrowDown') {
                 event.preventDefault();
-                setSelectedIndex(index =>
-                  Math.min(filtered.length - 1, index + 1)
+                setSelectedIndex(
+                  Math.min(filtered.length - 1, activeIndex + 1)
                 );
               } else if (event.key === 'ArrowUp') {
                 event.preventDefault();
-                setSelectedIndex(index => Math.max(0, index - 1));
+                setSelectedIndex(Math.max(0, activeIndex - 1));
               } else if (event.key === 'Enter') {
                 event.preventDefault();
-                runItem(filtered[selectedIndex]?.item);
+                runItem(filtered[activeIndex]?.item);
               }
             }}
             placeholder={t(
               'palette.placeholder',
               'Search chats, Work, actions…'
             )}
-            className='h-[3.25rem] w-full bg-transparent text-[15px] text-ink outline-none placeholder:text-ink-subtle'
+            className='h-[3.25rem] w-full bg-transparent text-[15px] text-ink outline-none placeholder:text-ink-muted'
           />
-          <kbd className='shrink-0 rounded-md border border-line px-1.5 py-0.5 font-mono text-[10px] text-ink-subtle'>
-            esc
+          <kbd
+            aria-hidden='true'
+            className='shrink-0 rounded-md border border-line px-1.5 py-0.5 font-mono text-[10px] text-ink-muted'
+          >
+            {t('palette.escKey')}
           </kbd>
         </div>
         <div
           ref={listRef}
           className='min-h-0 flex-1 overflow-y-auto p-2 scrollbar-thin'
         >
-          {filtered.length === 0 && (
-            <p className='px-3 py-6 text-center text-sm text-ink-subtle'>
-              {t('palette.empty', 'No matches.')}
-            </p>
-          )}
-          {filtered.map(({ item, ranges }, index) => {
-            const showSection =
-              index === 0 || item.section !== filtered[index - 1].item.section;
-            return (
-              <React.Fragment key={item.id}>
-                {showSection && (
-                  <p className='px-2.5 pb-1 pt-2.5 text-[10px] font-medium uppercase tracking-[0.08em] text-ink-subtle first:pt-1'>
-                    {item.section}
-                  </p>
-                )}
-                <button
-                  type='button'
-                  data-selected={index === selectedIndex || undefined}
-                  onMouseEnter={() => setSelectedIndex(index)}
-                  onClick={() => runItem(item)}
-                  className={cn(
-                    'flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-start text-sm transition-colors',
-                    index === selectedIndex
-                      ? 'bg-black/[0.05] text-ink dark:bg-white/[0.07]'
-                      : 'text-ink-muted'
-                  )}
+          <div id={listboxId} role='listbox' aria-label={t('palette.results')}>
+            {sections.map(section => (
+              <div
+                key={section.name}
+                role='group'
+                aria-labelledby={`${listboxId}-section-${section.entries[0].index}`}
+              >
+                <p
+                  id={`${listboxId}-section-${section.entries[0].index}`}
+                  role='presentation'
+                  className='px-2.5 pb-1 pt-2.5 text-[10px] font-medium uppercase tracking-[0.08em] text-ink-muted'
                 >
-                  <item.icon className='h-4 w-4 shrink-0 text-ink-subtle' />
-                  <span className='min-w-0 flex-1 truncate'>
-                    <HighlightedLabel text={item.label} ranges={ranges} />
-                  </span>
-                  {item.hint && (
-                    <span className='shrink-0 font-mono text-[10px] text-ink-subtle'>
-                      {item.hint}
+                  {section.name}
+                </p>
+                {section.entries.map(({ item, ranges, index }) => (
+                  <div
+                    key={item.id}
+                    id={optionId(index)}
+                    role='option'
+                    aria-selected={index === activeIndex}
+                    data-selected={index === activeIndex || undefined}
+                    onMouseEnter={() => setSelectedIndex(index)}
+                    onClick={() => runItem(item)}
+                    className={cn(
+                      'flex w-full cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-2 text-start text-sm transition-colors',
+                      index === activeIndex
+                        ? 'bg-interactive-active text-ink ring-1 ring-inset ring-line-strong'
+                        : 'text-ink-muted'
+                    )}
+                  >
+                    <item.icon
+                      className='h-4 w-4 shrink-0 text-ink-muted'
+                      aria-hidden='true'
+                    />
+                    <span className='min-w-0 flex-1 truncate'>
+                      <HighlightedLabel text={item.label} ranges={ranges} />
                     </span>
-                  )}
-                </button>
-              </React.Fragment>
-            );
-          })}
+                    {item.hint && (
+                      <span className='shrink-0 font-mono text-[10px] text-ink-muted'>
+                        {item.hint}
+                      </span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
+          <div
+            role='status'
+            className={cn(
+              statusMessage &&
+                (filtered.length === 0
+                  ? 'px-3 py-6 text-center text-sm text-ink-muted'
+                  : 'px-3 py-2 text-center text-xs text-ink-muted')
+            )}
+          >
+            {statusMessage}
+          </div>
         </div>
-        <div className='flex shrink-0 items-center gap-3 border-t border-line px-4 py-2 text-[10px] text-ink-subtle'>
+        <div className='flex shrink-0 items-center gap-3 border-t border-line px-4 py-2 text-[10px] text-ink-muted'>
           <span className='inline-flex items-center gap-1'>
-            <kbd className='rounded-md border border-line px-1.5 py-0.5 font-mono'>
+            <kbd
+              aria-hidden='true'
+              className='rounded-md border border-line px-1.5 py-0.5 font-mono'
+            >
               ↑↓
             </kbd>
+            {t('palette.hintNavigate')}
           </span>
           <span className='inline-flex items-center gap-1'>
-            <kbd className='rounded-md border border-line px-1.5 py-0.5 font-mono'>
+            <kbd
+              aria-hidden='true'
+              className='rounded-md border border-line px-1.5 py-0.5 font-mono'
+            >
               ↵
             </kbd>
+            {t('palette.hintOpen')}
           </span>
           <span className='ms-auto inline-flex items-center gap-1'>
-            <kbd className='rounded-md border border-line px-1.5 py-0.5 font-mono'>
-              esc
+            <kbd
+              aria-hidden='true'
+              className='rounded-md border border-line px-1.5 py-0.5 font-mono'
+            >
+              {t('palette.escKey')}
             </kbd>
+            {t('palette.hintClose')}
           </span>
         </div>
       </div>

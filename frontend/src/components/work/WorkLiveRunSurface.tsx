@@ -174,6 +174,9 @@ export function ToolActivityRow({
           {argumentsText && (
             <pre
               dir='ltr'
+              role='region'
+              tabIndex={0}
+              aria-label={t('work.activity.arguments')}
               className='max-h-48 overflow-auto whitespace-pre-wrap break-words px-3 py-2.5 text-left font-mono text-[11px] leading-relaxed text-ink-muted'
             >
               {argumentsText}
@@ -182,6 +185,9 @@ export function ToolActivityRow({
           {outputText && (
             <pre
               dir='ltr'
+              role='region'
+              tabIndex={0}
+              aria-label={t('work.activity.output')}
               className={cn(
                 'max-h-64 overflow-auto whitespace-pre-wrap break-words border-t border-line px-3 py-2.5 text-left font-mono text-[11px] leading-relaxed',
                 error ? 'text-error-600' : 'text-ink-muted'
@@ -332,6 +338,17 @@ const connectionLabel = (
   return undefined;
 };
 
+const skillTraceButtonClass =
+  'inline-flex h-7 min-w-7 items-center justify-center rounded-full text-xs hover:bg-interactive-hover hover:text-ink';
+
+/** Moves focus to the pill's status text before its buttons unmount. */
+const focusTraceStatus = (button: HTMLElement) => {
+  const pill = button.closest<HTMLElement>('[data-skill-trace-pill]');
+  requestAnimationFrame(() =>
+    pill?.querySelector<HTMLElement>('[data-skill-trace-status]')?.focus()
+  );
+};
+
 export function WorkLiveRunSurface({
   run,
   variant = 'conversation',
@@ -419,6 +436,15 @@ export function WorkLiveRunSurface({
         <ElapsedTime run={run} />
       </div>
 
+      {run.connection === 'error' && run.connectionError && (
+        <p
+          dir='auto'
+          className='-mt-1.5 mb-3 break-words text-xs leading-relaxed text-error-600'
+        >
+          {run.connectionError}
+        </p>
+      )}
+
       {variant === 'conversation' && (
         <span
           className='sr-only'
@@ -453,16 +479,26 @@ export function WorkLiveRunSurface({
                 return (
                   <span
                     key={skill.id}
+                    data-skill-trace-pill
                     className='inline-flex items-center gap-1 rounded-full border border-line bg-surface-raised px-2 py-1 text-[10px] text-ink-muted'
                   >
                     <span dir='auto'>{skill.name}</span>
-                    {traced ? (
-                      <span className='text-primary-500'>
-                        {t('work.live.skillTraceSaved', {
-                          defaultValue: 'noted',
-                        })}
-                      </span>
-                    ) : (
+                    {/* The live region stays mounted so the outcome is
+                        announced, and it takes focus when the buttons that
+                        held it are replaced. */}
+                    <span
+                      role='status'
+                      tabIndex={-1}
+                      data-skill-trace-status
+                      className='text-primary-700 outline-none dark:text-primary-300'
+                    >
+                      {traced
+                        ? traced === 'success'
+                          ? t('work.live.skillTraceSavedWorked')
+                          : t('work.live.skillTraceSavedFailed')
+                        : null}
+                    </span>
+                    {!traced && (
                       <>
                         <button
                           type='button'
@@ -473,8 +509,11 @@ export function WorkLiveRunSurface({
                           title={t('work.live.skillWorked', {
                             defaultValue: 'This procedure worked',
                           })}
-                          onClick={() => recordSkillTraceClick(slug, 'success')}
-                          className='rounded px-1 hover:text-primary-600'
+                          onClick={event => {
+                            focusTraceStatus(event.currentTarget);
+                            recordSkillTraceClick(slug, 'success');
+                          }}
+                          className={skillTraceButtonClass}
                         >
                           ✓
                         </button>
@@ -487,8 +526,11 @@ export function WorkLiveRunSurface({
                           title={t('work.live.skillFailed', {
                             defaultValue: 'This procedure failed',
                           })}
-                          onClick={() => recordSkillTraceClick(slug, 'failure')}
-                          className='rounded px-1 hover:text-red-600'
+                          onClick={event => {
+                            focusTraceStatus(event.currentTarget);
+                            recordSkillTraceClick(slug, 'failure');
+                          }}
+                          className={skillTraceButtonClass}
                         >
                           ✕
                         </button>

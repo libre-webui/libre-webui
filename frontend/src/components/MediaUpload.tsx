@@ -55,13 +55,20 @@ export const MediaUpload: React.FC<MediaUploadProps> = ({
 
   const handleFileSelect = async (files: FileList | null) => {
     if (!files || disabled) return;
-
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i];
-
+    // Collect every image from this selection and report them in one call;
+    // `images` is a stale closure once the first file has been read.
+    // Snapshot first: resetting the input after the first await empties the
+    // live FileList in place.
+    const selection = Array.from(files);
+    const collected: string[] = [];
+    for (const file of selection) {
       // Check if it's an image
       if (file.type.startsWith('image/')) {
-        await handleImageFile(file);
+        const dataUrl = await handleImageFile(
+          file,
+          maxImages - images.length - collected.length
+        );
+        if (dataUrl) collected.push(dataUrl);
       }
       // Check if it's a document (PDF or TXT)
       else if (file.type.includes('pdf') || file.type.includes('text')) {
@@ -72,28 +79,35 @@ export const MediaUpload: React.FC<MediaUploadProps> = ({
         );
       }
     }
+    if (collected.length > 0) {
+      onImagesChange([...images, ...collected]);
+    }
   };
 
-  const handleImageFile = async (file: File) => {
-    const remainingSlots = maxImages - images.length;
-
+  const handleImageFile = (
+    file: File,
+    remainingSlots: number
+  ): Promise<string | null> => {
     if (remainingSlots <= 0) {
       toast.error(t('chat.mediaUpload.maxImagesAllowed', { count: maxImages }));
-      return;
+      return Promise.resolve(null);
     }
 
     if (file.size > 10 * 1024 * 1024) {
       toast.error(t('chat.mediaUpload.imageTooLarge', { name: file.name }));
-      return;
+      return Promise.resolve(null);
     }
 
-    const reader = new FileReader();
-    reader.onload = e => {
-      if (e.target?.result) {
-        onImagesChange([...images, e.target.result as string]);
-      }
-    };
-    reader.readAsDataURL(file);
+    return new Promise(resolve => {
+      const reader = new FileReader();
+      reader.onload = () =>
+        resolve(typeof reader.result === 'string' ? reader.result : null);
+      reader.onerror = () => {
+        toast.error(t('chat.mediaUpload.readFailed', { name: file.name }));
+        resolve(null);
+      };
+      reader.readAsDataURL(file);
+    });
   };
 
   const handleDocumentFile = async (file: File) => {
@@ -141,7 +155,7 @@ export const MediaUpload: React.FC<MediaUploadProps> = ({
     e.preventDefault();
     setDragActive(false);
     if (!disabled) {
-      handleFileSelect(e.dataTransfer.files);
+      void handleFileSelect(e.dataTransfer.files);
     }
   };
 
@@ -190,7 +204,20 @@ export const MediaUpload: React.FC<MediaUploadProps> = ({
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
+        role='button'
+        tabIndex={disabled ? -1 : 0}
+        aria-disabled={disabled || undefined}
+        aria-label={`${t('chat.mediaUpload.dropImagesHere')} ${t('chat.mediaUpload.browse')}`}
         onClick={() => !disabled && fileInputRef.current?.click()}
+        onKeyDown={e => {
+          if (
+            e.target === e.currentTarget &&
+            (e.key === 'Enter' || e.key === ' ')
+          ) {
+            e.preventDefault();
+            if (!disabled) fileInputRef.current?.click();
+          }
+        }}
       >
         <input
           ref={fileInputRef}
@@ -198,7 +225,7 @@ export const MediaUpload: React.FC<MediaUploadProps> = ({
           multiple
           accept='image/*,.pdf,.txt'
           onChange={e => {
-            handleFileSelect(e.target.files);
+            void handleFileSelect(e.target.files);
             // Clear input to allow re-selecting same file
             e.target.value = '';
           }}
@@ -208,9 +235,16 @@ export const MediaUpload: React.FC<MediaUploadProps> = ({
 
         <div className='flex flex-col items-center text-center'>
           {isUploadingDoc ? (
-            <Loader2 className='h-8 w-8 text-gray-400 dark:text-gray-500 mb-2 animate-spin' />
+            <Loader2
+              className='h-8 w-8 text-gray-400 dark:text-gray-500 mb-2 animate-spin'
+              role='status'
+              aria-label={t('chat.mediaUpload.uploading')}
+            />
           ) : (
-            <Upload className='h-8 w-8 text-gray-400 dark:text-gray-500 mb-2' />
+            <Upload
+              className='h-8 w-8 text-gray-400 dark:text-gray-500 mb-2'
+              aria-hidden='true'
+            />
           )}
           <p className='text-sm text-gray-700 dark:text-gray-300'>
             {t('chat.mediaUpload.dropImagesHere')}{' '}
@@ -218,7 +252,7 @@ export const MediaUpload: React.FC<MediaUploadProps> = ({
               {t('chat.mediaUpload.browse')}
             </span>
           </p>
-          <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
+          <p className='text-xs text-ink-muted mt-1'>
             {t('chat.mediaUpload.supportedFormats')}
           </p>
         </div>
@@ -235,17 +269,21 @@ export const MediaUpload: React.FC<MediaUploadProps> = ({
             >
               <img
                 src={image}
-                alt={`Upload ${index + 1}`}
+                alt={t('chat.mediaUpload.uploadAlt', { number: index + 1 })}
                 className='w-full h-full object-cover'
               />
               <button
+                type='button'
                 onClick={e => {
                   e.stopPropagation();
                   removeImage(index);
                 }}
-                className='absolute top-0.5 right-0.5 p-0.5 rounded-full bg-black/60 hover:bg-black/80 text-white opacity-0 group-hover:opacity-100 transition-opacity'
+                aria-label={t('chat.mediaUpload.removeImage', {
+                  number: index + 1,
+                })}
+                className='absolute top-0.5 end-0.5 p-0.5 rounded-full bg-black/60 hover:bg-black/80 text-white opacity-0 group-hover:opacity-100 focus-visible:opacity-100 [@media(hover:none)]:opacity-100 transition-opacity'
               >
-                <X className='h-3 w-3' />
+                <X className='h-3 w-3' aria-hidden='true' />
               </button>
             </div>
           ))}
@@ -265,18 +303,22 @@ export const MediaUpload: React.FC<MediaUploadProps> = ({
                 <p className='text-xs font-medium text-gray-900 dark:text-gray-100 truncate max-w-[100px]'>
                   {doc.filename}
                 </p>
-                <p className='text-[10px] text-gray-500 dark:text-gray-400'>
+                <p className='text-[10px] text-ink-muted'>
                   {formatFileSize(doc.size)}
                 </p>
               </div>
               <button
+                type='button'
                 onClick={e => {
                   e.stopPropagation();
                   handleRemoveDocument(doc.id);
                 }}
+                aria-label={t('chat.mediaUpload.removeDocument', {
+                  name: doc.filename,
+                })}
                 className='p-0.5 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 hover:text-red-500 transition-colors'
               >
-                <X className='h-3 w-3' />
+                <X className='h-3 w-3' aria-hidden='true' />
               </button>
             </div>
           ))}

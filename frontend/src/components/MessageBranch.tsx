@@ -20,6 +20,7 @@ import { ChatMessage as ChatMessageType } from '@/types';
 import { ChatMessage } from '@/components/ChatMessage';
 import { cn } from '@/utils';
 import { GitBranch, Check } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 interface MessageBranchProps {
   messages: ChatMessageType[]; // All variants of a message (branches)
@@ -44,6 +45,7 @@ const MessageBranchBase: React.FC<MessageBranchProps> = ({
   onSelectBranch,
   className,
 }) => {
+  const { t } = useTranslation();
   // If there's only one message, render it normally
   if (messages.length === 1) {
     const message = messages[0];
@@ -72,9 +74,9 @@ const MessageBranchBase: React.FC<MessageBranchProps> = ({
   return (
     <div className={cn('relative py-2', className)}>
       {/* Branch indicator - minimal */}
-      <div className='flex items-center gap-1.5 pb-3 text-[10px] font-medium uppercase tracking-[0.12em] text-gray-400 dark:text-dark-500'>
-        <GitBranch className='h-3 w-3' />
-        <span>{messages.length} variants</span>
+      <div className='flex items-center gap-1.5 pb-3 text-[10px] font-medium uppercase tracking-[0.12em] text-ink-muted'>
+        <GitBranch className='h-3 w-3' aria-hidden='true' />
+        <span>{t('chat.branch.variants', { count: messages.length })}</span>
       </div>
 
       {/* Branch container */}
@@ -103,13 +105,23 @@ const MessageBranchBase: React.FC<MessageBranchProps> = ({
               )}
               role={!isActive && !isThisMessageStreaming ? 'button' : undefined}
               tabIndex={!isActive && !isThisMessageStreaming ? 0 : undefined}
+              aria-label={
+                !isActive && !isThisMessageStreaming
+                  ? t('chat.branch.selectVariant', { number: index + 1 })
+                  : undefined
+              }
+              aria-current={
+                isActive || isThisMessageStreaming ? 'true' : undefined
+              }
               onClick={() =>
                 !isActive &&
                 !isThisMessageStreaming &&
                 onSelectBranch?.(message.id)
               }
               onKeyDown={event => {
+                // Nested buttons (copy, regenerate) bubble Enter/Space here.
                 if (
+                  event.target === event.currentTarget &&
                   !isActive &&
                   !isThisMessageStreaming &&
                   (event.key === 'Enter' || event.key === ' ')
@@ -125,22 +137,22 @@ const MessageBranchBase: React.FC<MessageBranchProps> = ({
                   'flex items-center justify-between border-b px-3 py-2 text-[10px] font-medium uppercase tracking-[0.12em]',
                   isActive || isThisMessageStreaming
                     ? 'border-primary-500/10 bg-primary-50/50 text-primary-600 dark:border-primary-400/10 dark:bg-primary-900/10 dark:text-primary-400'
-                    : 'border-black/[0.05] text-gray-400 dark:border-white/[0.05] dark:text-dark-500'
+                    : 'border-black/[0.05] text-ink-muted dark:border-white/[0.05]'
                 )}
               >
                 <div className='flex items-center gap-1.5'>
                   <span className='font-medium'>{index + 1}</span>
                   {isThisMessageStreaming && (
                     <span className='text-[10px] opacity-70 animate-pulse'>
-                      generating...
+                      {t('chat.branch.generating')}
                     </span>
                   )}
                 </div>
                 {isActive && !isThisMessageStreaming && (
-                  <Check className='h-3 w-3' />
+                  <Check className='h-3 w-3' aria-hidden='true' />
                 )}
                 {!isActive && !isThisMessageStreaming && (
-                  <span className='text-[10px] opacity-50'>select</span>
+                  <span className='text-[10px]'>{t('chat.branch.select')}</span>
                 )}
               </div>
 

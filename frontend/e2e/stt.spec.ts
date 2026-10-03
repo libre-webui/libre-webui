@@ -236,7 +236,7 @@ test('invalid provider audio is rejected safely without inserting a transcript',
   await expect(microphone).toBeVisible();
   await expect(
     page
-      .getByRole('status')
+      .getByRole('alert')
       .filter({ hasText: 'Request failed with status code 400' })
   ).toBeVisible();
 });

@@ -41,7 +41,8 @@
     "remove": "Ta bort",
     "home": "Hem",
     "more": "Mer",
-    "reasoning": "Resonemang"
+    "reasoning": "Resonemang",
+    "skipToContent": "Hoppa till innehåll"
   },
   "brand": {
     "name": "Libre WebUI",
@@ -49,7 +50,10 @@
   },
   "appInitialization": {
     "ollamaUnavailable": "Ollama-tjänsten är inte tillgänglig. Pluginmodeller kan fortfarande användas.",
-    "backendConnectionFailed": "Det gick inte att ansluta till backendtjänsten"
+    "backendConnectionFailed": "Det gick inte att ansluta till backendtjänsten",
+    "connecting": "Ansluter till backend… ({{attempt}}/{{total}})",
+    "startingUp": "Startar…",
+    "backendUnreachableHint": "Kontrollera att backend körs och försök sedan igen."
   },
   "auth": {
     "login": {
@@ -189,7 +193,15 @@
       "removed": "Passnyckel borttagen.",
       "removeFailed": "Passnyckeln kunde inte tas bort.",
       "signInButton": "Logga in med passnyckel",
-      "signInFailed": "Inloggning med passnyckel misslyckades."
+      "signInFailed": "Inloggning med passnyckel misslyckades.",
+      "removeConfirmTitle": "Ta bort den här passnyckeln?",
+      "removeConfirmDescription": "”{{name}}” fungerar inte längre för inloggning. Du kan registrera den igen senare."
+    },
+    "password": {
+      "show": "Visa lösenord",
+      "hide": "Dölj lösenord",
+      "showConfirmation": "Visa lösenordsbekräftelse",
+      "hideConfirmation": "Dölj lösenordsbekräftelse"
     }
   },
   "setup": {
@@ -242,7 +254,8 @@
       "envNote": "Denna nyckel sparas också i din backend/.env-fil som ENCRYPTION_KEY",
       "acknowledgment": "Jag har sparat min krypteringsnyckel på ett säkert ställe och förstår att förlust av den kan resultera i dataförlust.",
       "confirmRequired": "Bekräfta att du har sparat krypteringsnyckeln",
-      "continue": "Fortsätt till Libre WebUI"
+      "continue": "Fortsätt till Libre WebUI",
+      "loadFailed": "Det gick inte att ladda krypteringsnyckeln. Försök igen för att fortsätta."
     },
     "connectModels": {
       "title": "Anslut dina modeller",
@@ -336,7 +349,8 @@
       "toolsOn": "Verktyg på — modellen kan anropa godkända verktyg",
       "toolsOff": "Låt modellen anropa verktyg för det här meddelandet",
       "thinkingOn": "Tänkande på ({{level}})",
-      "thinkingOff": "Tänk innan svaret"
+      "thinkingOff": "Tänk innan svaret",
+      "thinkingUpdateFailed": "Det gick inte att uppdatera tänkandeinställningen"
     },
     "session": {
       "new": "Ny chatt",
@@ -372,7 +386,8 @@
         "move": "Flytta till mapp",
         "remove": "Ta bort från mapp",
         "delete": "Ta bort mapp",
-        "deleteConfirm": "Ta bort den här mappen? Chattarna i den behålls."
+        "deleteConfirm": "Ta bort den här mappen? Chattarna i den behålls.",
+        "rename": "Byt namn på mapp"
       },
       "shareChat": "Dela chatt…"
     },
@@ -405,7 +420,13 @@
       "browse": "bläddra",
       "unsupportedFileType": "Filtypen stöds inte: {{name}}",
       "maxImagesAllowed": "Högst {{count}} bilder är tillåtna",
-      "imageTooLarge": "Bilden {{name}} är för stor (max 10 MB)"
+      "imageTooLarge": "Bilden {{name}} är för stor (max 10 MB)",
+      "readFailed": "Det gick inte att läsa {{name}}",
+      "uploadAlt": "Uppladdning {{number}}",
+      "removeImage": "Ta bort bild {{number}}",
+      "addMore": "Lägg till fler bilder ({{count}}/{{max}})",
+      "uploading": "Laddar upp",
+      "removeDocument": "Ta bort {{name}}"
     },
     "structuredOutput": {
       "title": "Svarsformat",
@@ -456,7 +477,8 @@
       "compactionOff": "Av för den här chatten"
     },
     "message": {
-      "sources": "Källor"
+      "sources": "Källor",
+      "copyFailed": "Det gick inte att kopiera till urklipp"
     },
     "toasts": {
       "chatCreated": "Ny chatt skapad",
@@ -491,7 +513,8 @@
       "branchSwitched": "Bytte till variant {{number}}",
       "branchSelectFailed": "Det gick inte att välja gren",
       "editFailed": "Det gick inte att redigera meddelandet",
-      "toolDecisionFailed": "Beslutet om verktyget kunde inte registreras"
+      "toolDecisionFailed": "Beslutet om verktyget kunde inte registreras",
+      "archiveFailed": "Det gick inte att arkivera den här chatten"
     },
     "documents": {
       "title": "Dokument i kontexten"
@@ -521,7 +544,25 @@
       "origin": "Avgrenad från {{title}}",
       "originUnknown": "en annan chatt"
     },
-    "sharedReadOnly": "Delad av {{owner}} — endast visning"
+    "sharedReadOnly": "Delad av {{owner}} — endast visning",
+    "branch": {
+      "variants": "{{count}} variant",
+      "variants_plural": "{{count}} varianter",
+      "selectVariant": "Välj variant {{number}}",
+      "generating": "genererar...",
+      "select": "välj"
+    },
+    "sources": {
+      "fullContextFailed": "Det gick inte att uppdatera inställningen för helt dokument",
+      "usedByRetrieval": "Används i svar",
+      "triggerLabel": "Källor ({{count}})"
+    },
+    "announce": {
+      "replyFinished": "{{name}} svarade: {{text}}",
+      "replyFinishedNoText": "{{name}} har svarat klart.",
+      "codeBlock": "kodblock",
+      "generationStopped": "Genereringen stoppades"
+    }
   },
   "sidebar": {
     "navigation": {
@@ -546,7 +587,8 @@
       "strands": "Strands"
     },
     "toggleSize": "Växla sidofältets storlek",
-    "expandSidebar": "Expandera sidofältet"
+    "expandSidebar": "Expandera sidofältet",
+    "ariaLabel": "Sidofält"
   },
   "user": {
     "menu": {
@@ -821,7 +863,8 @@
         "removeFailed": "Kunde inte ta bort API-nyckel",
         "enterKey": "Ange en API-nyckel"
       },
-      "variables": "Variables"
+      "variables": "Variables",
+      "dismissError": "Stäng felet"
     },
     "generation": {
       "title": "Genereringsalternativ",
@@ -924,7 +967,8 @@
         "deleteFailed": "Samlingen kunde inte tas bort",
         "assignFailed": "Dokumentet kunde inte flyttas",
         "share": "Dela samling",
-        "shared": "delad"
+        "shared": "delad",
+        "assignTo": "Samling för {{name}}"
       },
       "library": {
         "title": "Uppladdade dokument",
@@ -1066,7 +1110,8 @@
         "title": "Arkiverade chattar",
         "empty": "Inga arkiverade chattar",
         "unarchive": "Återställ"
-      }
+      },
+      "clearAllConfirm": "Är du säker på att du vill radera hela chatthistoriken? Det går inte att ångra."
     },
     "about": {
       "title": "Om",
@@ -1186,7 +1231,11 @@
       "unknownDevice": "Okänd enhet",
       "createdAt": "Inloggad",
       "lastSeenAt": "Senast aktiv",
-      "expiresAt": "Upphör"
+      "expiresAt": "Upphör",
+      "signOutConfirmTitle": "Logga ut den här sessionen?",
+      "signOutConfirmDescription": "{{device}} loggas ut direkt och måste logga in igen.",
+      "signOutOthersConfirmTitle": "Logga ut andra sessioner?",
+      "signOutOthersConfirmDescription": "{{count}} andra sessioner loggas ut direkt. Den här sessionen förblir inloggad."
     },
     "apiKeys": {
       "title": "API-nycklar",
@@ -1220,7 +1269,9 @@
       "createdAt": "Skapad",
       "lastUsedAt": "Senast använd",
       "expiresAt": "Upphör",
-      "neverExpires": "Aldrig"
+      "neverExpires": "Aldrig",
+      "revokeConfirmTitle": "Återkalla ”{{name}}”?",
+      "revokeConfirmDescription": "Allt som använder den här API-nyckeln slutar fungera direkt. Det går inte att ångra."
     },
     "notifications": {
       "title": "Aviseringar",
@@ -1294,7 +1345,8 @@
     "model": "Modell",
     "size": "Storlek",
     "quality": "Kvalitet",
-    "created": "Skapad"
+    "created": "Skapad",
+    "lightboxLabel": "Bildförhandsvisning"
   },
   "errors": {
     "generic": "Ett fel uppstod",
@@ -1389,7 +1441,9 @@
       "hide": "Dölj för användare",
       "show": "Visa för användare",
       "star": "Stjärnmärk {{name}}",
-      "unstar": "Ta bort stjärnan från {{name}}"
+      "unstar": "Ta bort stjärnan från {{name}}",
+      "filterLabel": "Filtrera modeller",
+      "displayName": "Visningsnamn för {{name}}"
     },
     "pull": {
       "placeholder": "Ange modellnamn (t.ex. llama3.2:3b, deepseek-r1:14b)",
@@ -1550,7 +1604,10 @@
     "deleteConfirm": "Är du säker på att du vill radera \"{{name}}\"?",
     "deleteSuccess": "Persona \"{{name}}\" raderades",
     "downloadSuccess": "Persona \"{{name}}\" laddades ner",
-    "failed": "Kunde inte {{action}} persona"
+    "failed": "Kunde inte {{action}} persona",
+    "loadFailed": "Det gick inte att ladda dina personas.",
+    "deleteFailed": "Det gick inte att radera personan",
+    "downloadFailed": "Det gick inte att ladda ner personan"
   },
   "personaForm": {
     "title": {
@@ -1682,7 +1739,8 @@
       "promptHint": "En prompt som varje ny chatt med den här personan startar med.",
       "noPrompt": "Ingen prompt",
       "version": "Bindningsrevision {{version}}"
-    }
+    },
+    "sections": "Personans avsnitt"
   },
   "personaCard": {
     "enhanced": "Förbättrad",
@@ -1699,7 +1757,16 @@
     "backupSuccess": "Personans säkerhetskopia laddades ner",
     "dnaSuccess": "Personans DNA exporterades",
     "failed": "Kunde inte {{action}}",
-    "shareTooltip": "Dela denna persona"
+    "shareTooltip": "Dela denna persona",
+    "wipeFailed": "Det gick inte att radera minnena",
+    "backupFailed": "Det gick inte att säkerhetskopiera personan",
+    "exportDnaFailed": "Det gick inte att exportera personans DNA",
+    "favorite": "Favorit",
+    "memoryStatus": {
+      "active": "Aktiv",
+      "wiped": "Raderade",
+      "backed_up": "Säkerhetskopierade"
+    }
   },
   "userManager": {
     "title": "Användarhantering",
@@ -1865,7 +1932,28 @@
       "memberOf": "Grupper",
       "featuresLabel": "Funktionsåtkomst",
       "grantsLabel": "Tilldelningar",
-      "grantVia": "via"
+      "grantVia": "via",
+      "deleteConfirmTitle": "Radera gruppen ”{{name}}”?",
+      "deleteConfirmDescription": "Medlemmar förlorar den åtkomst de bara hade via den här gruppen. Själva kontona raderas inte.",
+      "statuses": {
+        "active": "Aktiv",
+        "pending": "Väntar på godkännande"
+      },
+      "features": {
+        "work": "Arbete",
+        "model-download": "Modellnedladdning",
+        "web-search": "Webbsökning",
+        "strands": "Strands-motor",
+        "tools": "Verktyg",
+        "stt": "Tal till text",
+        "tts": "Text till tal",
+        "voice-mode": "Röstläge",
+        "voice-cloning": "Röstkloning"
+      },
+      "grantViaKinds": {
+        "user": "direkt tilldelning",
+        "group": "grupp"
+      }
     },
     "audit": {
       "title": "Säkerhetslogg",
@@ -2298,7 +2386,11 @@
       "harmful": "Skadlig",
       "formatting": "Formatering"
     },
-    "feedbackComment": "Lägg till en kommentar…"
+    "feedbackComment": "Lägg till en kommentar…",
+    "user": "Användare",
+    "feedbackFailed": "Det gick inte att spara din feedback",
+    "openImage": "Öppna bild {{number}}",
+    "uploadedImageAlt": "Uppladdad bild {{number}}"
   },
   "imageGallery": {
     "title": "Bildgalleri",
@@ -2387,7 +2479,10 @@
       "image": "Bilder",
       "video": "Videor",
       "audio": "Ljud"
-    }
+    },
+    "deleteConfirmTitle": "Radera det här objektet?",
+    "deleteConfirmDescription": "Den genererade median raderas permanent.",
+    "previewFailed": "Förhandsvisning saknas"
   },
   "errorBoundary": {
     "title": "Något gick fel",
@@ -2463,7 +2558,8 @@
     "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source.",
     "versionOf": "Version {{current}} av {{total}}",
     "previousVersion": "Föregående version",
-    "nextVersion": "Nästa version"
+    "nextVersion": "Nästa version",
+    "resizePanel": "Ändra panelens storlek"
   },
   "personaImportExport": {
     "title": "Importera och exportera personas",
@@ -2501,7 +2597,10 @@
     "generation": "Generering:",
     "modelLoad": "Modellladdning:",
     "totalTime": "Total tid:",
-    "generatedAt": "Genererat kl.:"
+    "generatedAt": "Genererat kl.:",
+    "notAvailable": "Saknas",
+    "tokenCount": "{{tokens}} tokens",
+    "tokensPerSecond": "{{value}} t/s"
   },
   "userMenu": {
     "loggedOut": "Utloggad",
@@ -2560,7 +2659,9 @@
       "httpWarning": "HTTP krypterar inte inloggningsuppgifter eller trafik. Använd det endast i ett betrott nätverk.",
       "invalidBaseUrl": "Bas-URL:er får inte innehålla en frågesträng eller fragment.",
       "invalidApiPath": "Måste börja med / och får inte innehålla URL, fråga, fragment eller ..-segment",
-      "tooLong": "Värdet är för långt"
+      "tooLong": "Värdet är för långt",
+      "resetConfirmTitle": "Återställa till standard?",
+      "resetConfirmDescription": "Det här rensar alla sparade värden för {{name}}, inklusive API-nycklar och andra inloggningsuppgifter. Det går inte att ångra."
     }
   },
   "huggingface": {
@@ -2580,7 +2681,10 @@
   },
   "demoMode": {
     "title": "Demoläge",
-    "github": "GitHub"
+    "github": "GitHub",
+    "defaultMessage": "Det här är en demoversion endast för presentation. Ollama-backend är inte ansluten.",
+    "viewOnGithub": "Visa på GitHub",
+    "dismiss": "Stäng"
   },
   "work": {
     "title": "Arbete",
@@ -2671,8 +2775,18 @@
         "checksPending": "Väntande kontroller",
         "stallNudges": "Stoppåminnelser",
         "ambiguityNudges": "Omorienteringspåminnelser",
-        "stoppedBy": "Stoppad av"
-      }
+        "stoppedBy": "Stoppad av",
+        "reasons": {
+          "round": "rundgräns",
+          "toolCall": "gräns för verktygsanrop",
+          "approvalTimeout": "tidsgräns för godkännande",
+          "computerStall": "datorn har hängt sig"
+        }
+      },
+      "skillTraceSavedWorked": "Noterat: fungerade",
+      "skillTraceSavedFailed": "Noterat: misslyckades",
+      "connectionClosed": "Live-anslutningen för Arbete stängdes.",
+      "reconnectingBackground": "Live-uppdateringar återansluter i bakgrunden."
     },
     "runtime": {
       "unavailable": "Körmiljön är inte tillgänglig",
@@ -2715,7 +2829,11 @@
       "changes": "Ändringar",
       "changesSince": "Vad som ändrats sedan senaste turen",
       "diffLabel": "Ändringar sedan senaste turen: {{path}}",
-      "diffFolded": "{{count}} oförändrade rader"
+      "diffFolded": "{{count}} oförändrade rader",
+      "diffAdded": "Tillagd",
+      "diffRemoved": "Borttagen",
+      "unsavedChanges": "osparade ändringar",
+      "editingLocked": "Redigering låses upp när turen är klar."
     },
     "activity": {
       "empty": "Kommandon, filåtgärder och verktygsresultat visas här.",
@@ -2726,7 +2844,9 @@
         "toolCall": "Verktygsanrop",
         "toolResult": "Verktygsresultat",
         "error": "Fel"
-      }
+      },
+      "arguments": "Verktygsargument",
+      "output": "Verktygsutdata"
     },
     "preview": {
       "command": "Valfritt startkommando",
@@ -2755,7 +2875,8 @@
       "saveFailed": "Det gick inte att spara den här filen.",
       "saved": "Filen har sparats.",
       "previewFailed": "Det gick inte att starta förhandsgranskningen.",
-      "previewStopFailed": "Det gick inte att stoppa förhandsgranskningen."
+      "previewStopFailed": "Det gick inte att stoppa förhandsgranskningen.",
+      "sendFailed": "Det gick inte att skicka meddelandet."
     },
     "terminal": {
       "connecting": "Öppnar ett skal i sandlådan…",
@@ -2807,7 +2928,18 @@
       "noFilterMatches": "Inga ändrade filer matchar det här filtret.",
       "allChanges": "Alla ändringar",
       "diffTruncated": "Denna diff är avkortad.",
-      "binaryFile": "Binär fil, ingen textdiff."
+      "binaryFile": "Binär fil, ingen textdiff.",
+      "statusLabels": {
+        "modified": "Ändrad",
+        "added": "Tillagd",
+        "deleted": "Raderad",
+        "renamed": "Omdöpt",
+        "copied": "Kopierad",
+        "typeChanged": "Typ ändrad",
+        "untracked": "Ospårad"
+      },
+      "stagedState": "stageade",
+      "aheadBehind": "{{ahead}} före, {{behind}} efter"
     },
     "hostWorkspace": {
       "hint": "Lämna tomt för en isolerad arbetsyta, eller peka uppgiften mot en mapp på den här datorn.",
@@ -2834,7 +2966,8 @@
       "unmute": "Slå på ljud",
       "mute": "Stäng av ljud",
       "finished": "Den här uppgiften är avslutad. Öppna den igen för att få tillbaka skärmen.",
-      "reopenOpen": "Öppna uppgiften igen och öppna skärmen"
+      "reopenOpen": "Öppna uppgiften igen och öppna skärmen",
+      "teachSaveFailed": "Det gick inte att spara den här demonstrationen."
     },
     "computerSetup": {
       "title": "Work Computer",
@@ -2871,7 +3004,11 @@
       "approvalsToggleFailed": "Godkännandena kunde inte uppdateras.",
       "approvalRuleLine": "Alltid tillåten",
       "approvalRuleDelete": "Ta bort regel",
-      "approvalRuleDeleteFailed": "Regeln kunde inte tas bort."
+      "approvalRuleDeleteFailed": "Regeln kunde inte tas bort.",
+      "routinesLoadFailed": "Det gick inte att ladda rutinerna.",
+      "skillsLoadFailed": "Det gick inte att ladda inlärda färdigheter.",
+      "approvalsLoadFailed": "Det gick inte att ladda godkännandeinställningarna.",
+      "routinePaused": "Pausad"
     },
     "approval": {
       "title": "Godkännande krävs",
@@ -2879,7 +3016,16 @@
       "allowOnce": "Tillåt en gång",
       "allowAlways": "Tillåt alltid",
       "deny": "Neka",
-      "failed": "Beslutet kunde inte skickas."
+      "failed": "Beslutet kunde inte skickas.",
+      "details": "Åtgärdsdetaljer",
+      "fields": {
+        "command": "Kommando",
+        "path": "Sökväg",
+        "from": "Från",
+        "to": "Till",
+        "actions": "Åtgärder",
+        "recursive": "Rekursivt"
+      }
     },
     "idleStopHint": "Stoppar efter {{minutes}} minuter utan aktivitet.",
     "runs": {
@@ -2891,7 +3037,8 @@
         "needsInput": "Behöver indata",
         "failed": "Misslyckades",
         "cancelled": "Avbruten"
-      }
+      },
+      "loadFailed": "Det gick inte att ladda körhistoriken."
     },
     "recovery": {
       "pending": "Work bekräftar {{pending}} rensning(ar) av sandlådor innan nya åtgärder tillåts.",
@@ -2903,6 +3050,17 @@
       "retrySucceeded": "Rensade {{cleared}} av {{attempted}} väntande rensningar.",
       "retryPending": "Försöker fortfarande med {{attempted}} väntande rensningar.",
       "retryFailed": "De väntande rensningarna kunde inte försökas igen."
+    },
+    "computer": {
+      "setupFailed": "Arbetsdatorn kunde inte konfigureras."
+    },
+    "announce": {
+      "completed": "{{title}} är klar.",
+      "needsInput": "{{title}} behöver din inmatning eller ditt godkännande.",
+      "failed": "{{title}} misslyckades.",
+      "cancelled": "{{title}} stoppades.",
+      "approvalNeeded": "{{title}} behöver ditt godkännande för att köra {{tool}}.",
+      "untitledTask": "Den här uppgiften"
     }
   },
   "personaBackground": {
@@ -2947,7 +3105,8 @@
     "showAll": "Visa alla ({{total}})",
     "sources": "Modellkällor",
     "defaultModel": "Standardmodell",
-    "contextSize": "{{size}} kontext"
+    "contextSize": "{{size}} kontext",
+    "via": "via {{provider}}"
   },
   "whatsNew": {
     "title": "Nyheter",
@@ -3004,7 +3163,16 @@
     "unpin": "Lossa anteckning",
     "pinned": "Fäst",
     "export": "Ladda ner som Markdown",
-    "sharedWithYou": "Delad med dig"
+    "sharedWithYou": "Delad med dig",
+    "titleLabel": "Anteckningens titel",
+    "loadFailed": "Det gick inte att ladda. Försök igen.",
+    "restoreConfirmTitle": "Återställa den här versionen?",
+    "restoreConfirmDescription": "Anteckningens text ersätts med den här tidigare versionen.",
+    "deleteAttachmentConfirmTitle": "Radera {{name}}?",
+    "deleteAttachmentConfirmDescription": "Bilagan raderas permanent från den här anteckningen.",
+    "attachmentDeleteFailed": "Det gick inte att radera bilagan",
+    "revokeFailed": "Det gick inte att återkalla åtkomsten",
+    "sharePermissionLabel": "Behörighet"
   },
   "calendar": {
     "title": "Kalender",
@@ -3049,7 +3217,22 @@
     "importFailed": "Filen kunde inte importeras",
     "importResult": "{{total}} händelser importerade",
     "importIcs": "Importera",
-    "exportIcs": "Exportera"
+    "exportIcs": "Exportera",
+    "chipStatus": {
+      "automation": "Schemalagd automatisering",
+      "runSucceeded": "Automatiseringskörningen lyckades",
+      "runFailed": "Automatiseringskörningen misslyckades"
+    },
+    "newEventOn": "Ny händelse den {{date}}",
+    "showDay": "Visa alla händelser den {{date}}",
+    "deleteEventConfirmTitle": "Radera \"{{title}}\"?",
+    "deleteEventConfirmDescription": "Den här händelsen raderas permanent.",
+    "deleteRecurringEventConfirmDescription": "Den här återkommande händelsen och alla dess förekomster raderas permanent.",
+    "shareCalendarNamed": "Dela kalendern {{name}}",
+    "deleteCalendarNamed": "Radera kalendern {{name}}",
+    "deleteCalendarConfirmTitle": "Radera kalendern \"{{name}}\"?",
+    "deleteCalendarConfirmDescription": "Kalendern och händelserna i den raderas permanent.",
+    "calendarDeleteFailed": "Det gick inte att radera kalendern"
   },
   "automations": {
     "title": "Automatiseringar",
@@ -3176,13 +3359,17 @@
         "work-approval": "en agent väntar på ditt godkännande",
         "system": "ett systemmeddelande kommer in"
       }
-    }
+    },
+    "deleteConfirmTitle": "Radera \"{{name}}\"?",
+    "deleteConfirmDescription": "Automatiseringen och dess schema raderas permanent. Tidigare körningar finns kvar i körhistoriken."
   },
   "home": {
     "active": "aktiv",
     "continue": "Fortsätt",
     "start": "Börja",
-    "explore": "Utforska"
+    "explore": "Utforska",
+    "greeting": "{{greeting}}.",
+    "greetingWithName": "{{greeting}}, {{name}}."
   },
   "palette": {
     "empty": "Inga träffar.",
@@ -3195,7 +3382,14 @@
     "work": "Arbete",
     "messages": "Meddelanden",
     "notes": "Anteckningar",
-    "documents": "Dokument"
+    "documents": "Dokument",
+    "searching": "Söker…",
+    "searchFailed": "Sökningen i arbetsytan misslyckades. Visar bara matchande chattar och åtgärder.",
+    "results": "Resultat",
+    "escKey": "esc",
+    "hintNavigate": "Navigera",
+    "hintOpen": "Öppna",
+    "hintClose": "Stäng"
   },
   "tabs": {
     "actions": "Flikåtgärder",
@@ -3399,7 +3593,8 @@
       "button": "Från mapp",
       "missingSkillMd": "Mappen behöver en SKILL.md-fil",
       "done": "Färdighet importerad med {{count}} medföljande filer"
-    }
+    },
+    "toggleLabel": "Aktivera färdigheten {{name}}"
   },
   "toolsPage": {
     "title": "Verktyg",
@@ -3557,7 +3752,14 @@
     "added": "Delad med {{name}}",
     "failed": "Delningen misslyckades",
     "userNotFound": "Ingen användare med det namnet",
-    "groupNotFound": "Ingen grupp med det namnet"
+    "groupNotFound": "Ingen grupp med det namnet",
+    "principalKind": "Dela med en användare eller grupp",
+    "principalName": "Användarnamn eller gruppnamn",
+    "permission": "Behörighet",
+    "sharing": "Delning",
+    "loading": "Laddar delningar",
+    "loadFailed": "Det gick inte att ladda delningarna",
+    "revokeFailed": "Det gick inte att återkalla åtkomsten"
   },
   "channels": {
     "title": "Kanaler",
@@ -3616,13 +3818,44 @@
     "toolCalls": {
       "summary": "Verktyg använda ({{total}})",
       "deniedHint": "Verktyg som ändrar saker avvisas i kanaler. Kör dem från en chatt."
-    }
+    },
+    "confirmEdit": "Spara ändring",
+    "cancelEdit": "Avbryt redigering",
+    "reactWith": "Reagera med {{emoji}}",
+    "deleteMessageConfirmTitle": "Radera det här meddelandet?",
+    "deleteMessageConfirmDescription": "Meddelandet tas bort för alla i den här kanalen.",
+    "unreadCount": "{{total}} olästa",
+    "send": "Skicka meddelande",
+    "invite": "Bjud in medlem",
+    "closeThread": "Stäng tråd",
+    "removeAttachment": "Ta bort bilaga",
+    "loadFailed": "Det gick inte att ladda. Försök igen.",
+    "editFailed": "Det gick inte att redigera meddelandet",
+    "deleteMessageFailed": "Det gick inte att radera meddelandet",
+    "pinFailed": "Det gick inte att ändra fästningen",
+    "reactFailed": "Det gick inte att spara reaktionen",
+    "downloadFailed": "Det gick inte att ladda ner filen",
+    "removeMemberConfirm": "Ta bort {{name}} från den här kanalen?",
+    "removeMemberConfirmDescription": "Personen förlorar åtkomsten till kanalen och dess meddelanden.",
+    "removeMemberNamed": "Ta bort {{name}} från kanalen",
+    "removeMemberFailed": "Det gick inte att ta bort medlemmen",
+    "leaveConfirm": "Lämna {{name}}?",
+    "leaveConfirmDescription": "Du måste bjudas in igen för att gå med i en privat kanal.",
+    "leaveFailed": "Det gick inte att lämna kanalen",
+    "joinFailed": "Det gick inte att gå med i kanalen",
+    "deleteConfirm": "Radera {{name}}?",
+    "deleteConfirmDescription": "Kanalen och alla dess meddelanden raderas permanent för alla medlemmar.",
+    "deleteFailed": "Det gick inte att radera kanalen",
+    "saveFailed": "Det gick inte att spara kanalen"
   },
   "notifications": {
     "title": "Aviseringar",
     "empty": "Du är ikapp.",
     "markAllRead": "Markera alla som lästa",
-    "markRead": "Markera som läst"
+    "markRead": "Markera som läst",
+    "titleWithUnread": "Aviseringar ({{unread}} olästa)",
+    "unread": "Olästa",
+    "loadFailed": "Det gick inte att ladda aviseringarna."
   },
   "voiceMode": {
     "title": "Röstläge",
@@ -3757,7 +3990,12 @@
       "failed": "Misslyckad",
       "cancelled": "Avbruten"
     },
-    "noFeedback": "Ingen feedback ännu — betygsätt svar för att bygga din data."
+    "noFeedback": "Ingen feedback ännu — betygsätt svar för att bygga din data.",
+    "deleteSetConfirmTitle": "Radera \"{{name}}\"?",
+    "deleteSetConfirmDescription": "Utvärderingsuppsättningen och dess prompter raderas permanent.",
+    "deleteSetFailed": "Det gick inte att radera utvärderingsuppsättningen",
+    "runError": "Fel: {{detail}}",
+    "cancelFailed": "Det gick inte att avbryta körningen"
   },
   "passwordStrength": {
     "levels": {
@@ -3771,6 +4009,14 @@
       "hasCase": "Stora och små bokstäver",
       "hasNumber": "Minst en siffra",
       "tooLong": "Högst 72 byte"
+    },
+    "requirements": "Använd minst 12 tecken och högst 72 UTF-8-byte, med versal, gemen och en siffra.",
+    "errors": {
+      "minLength": "Lösenordet måste vara minst 12 tecken.",
+      "tooLong": "Lösenordet får vara högst 72 UTF-8-byte.",
+      "uppercase": "Lösenordet måste innehålla en versal.",
+      "lowercase": "Lösenordet måste innehålla en gemen.",
+      "number": "Lösenordet måste innehålla en siffra."
     }
   },
   "connectModels": {
@@ -3804,7 +4050,8 @@
       "enable": "Aktivera leverantör",
       "enabling": "Aktiverar…",
       "enabled": "{{name}} ansluten — dess modeller är nu tillgängliga",
-      "enableFailed": "Det gick inte att aktivera leverantören"
+      "enableFailed": "Det gick inte att aktivera leverantören",
+      "urlLabel": "Server-URL"
     },
     "cloud": {
       "title": "Moln-API",
@@ -3813,7 +4060,8 @@
       "connect": "Anslut",
       "connecting": "Ansluter…",
       "connected": "{{name}} ansluten — dess modeller är nu tillgängliga",
-      "saveFailed": "Det gick inte att spara API-nyckeln"
+      "saveFailed": "Det gick inte att spara API-nyckeln",
+      "keyLabel": "API-nyckel för {{name}}"
     }
   },
   "strands": {
@@ -3845,5 +4093,15 @@
     "deleteFailed": "Sessionen kunde inte tas bort.",
     "saveFailed": "Det gick inte att spara sessionen.",
     "turnFailed": "Motorn kunde inte slutföra turen"
+  },
+  "notFound": {
+    "title": "Sidan hittades inte",
+    "description": "Den här sidan finns inte eller har flyttats."
+  },
+  "themeToggle": {
+    "switchToLight": "Byt till ljust läge",
+    "switchToDark": "Byt till mörkt läge",
+    "switchToAmoled": "Byt till rent svart läge",
+    "switchToCelestial": "Byt till himmelskt läge"
   }
 }

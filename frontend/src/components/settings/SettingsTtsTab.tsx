@@ -25,6 +25,7 @@ import {
   Trash2,
   Volume2,
 } from 'lucide-react';
+import { useId } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button, Select } from '@/components/ui';
 import {
@@ -35,6 +36,7 @@ import {
 } from '@/utils/api';
 import type { TTSSettings } from '@/types';
 import { unlockTTSAudioPlayback } from '@/utils/ttsBatching';
+import { SettingsTabHeader } from './SettingsTabHeader';
 import { SettingsToggle } from './SettingsToggle';
 
 interface SettingsTtsTabProps {
@@ -82,6 +84,11 @@ export function SettingsTtsTab({
   onSave,
 }: SettingsTtsTabProps) {
   const { t } = useTranslation();
+  const enableTitleId = useId();
+  const autoPlayTitleId = useId();
+  const streamTitleId = useId();
+  const modelId = useId();
+  const voiceId = useId();
   const selectedModel = models.find(
     model =>
       model.model === effectiveSettings.model &&
@@ -92,12 +99,10 @@ export function SettingsTtsTab({
   return (
     <div className='space-y-6'>
       <div>
-        <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4'>
-          {t('settings.tts.title')}
-        </h3>
-        <p className='text-sm text-gray-600 dark:text-gray-400 mb-6'>
-          {t('settings.tts.description')}
-        </p>
+        <SettingsTabHeader
+          title={t('settings.tts.title')}
+          description={t('settings.tts.description')}
+        />
 
         {loading ? (
           <div className='flex items-center justify-center py-8'>
@@ -125,7 +130,10 @@ export function SettingsTtsTab({
             <div className='bg-white dark:bg-dark-100 rounded-lg p-4 border border-gray-200 dark:border-dark-300'>
               <div className='flex items-center justify-between'>
                 <div>
-                  <h4 className='text-sm font-medium text-gray-900 dark:text-gray-100'>
+                  <h4
+                    id={enableTitleId}
+                    className='text-sm font-medium text-gray-900 dark:text-gray-100'
+                  >
                     {t('settings.tts.enable')}
                   </h4>
                   <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
@@ -135,6 +143,7 @@ export function SettingsTtsTab({
                 <SettingsToggle
                   checked={settings.enabled}
                   onChange={checked => onSettingChange('enabled', checked)}
+                  aria-labelledby={enableTitleId}
                 />
               </div>
             </div>
@@ -142,7 +151,10 @@ export function SettingsTtsTab({
             <div className='bg-white dark:bg-dark-100 rounded-lg p-4 border border-gray-200 dark:border-dark-300'>
               <div className='flex items-center justify-between'>
                 <div>
-                  <h4 className='text-sm font-medium text-gray-900 dark:text-gray-100'>
+                  <h4
+                    id={autoPlayTitleId}
+                    className='text-sm font-medium text-gray-900 dark:text-gray-100'
+                  >
                     {t('settings.tts.autoPlay')}
                   </h4>
                   <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
@@ -158,6 +170,7 @@ export function SettingsTtsTab({
                     if (checked) void unlockTTSAudioPlayback();
                     onSettingChange('autoPlay', checked);
                   }}
+                  aria-labelledby={autoPlayTitleId}
                 />
               </div>
             </div>
@@ -165,7 +178,10 @@ export function SettingsTtsTab({
             <div className='bg-white dark:bg-dark-100 rounded-lg p-4 border border-gray-200 dark:border-dark-300'>
               <div className='flex items-center justify-between'>
                 <div>
-                  <h4 className='text-sm font-medium text-gray-900 dark:text-gray-100'>
+                  <h4
+                    id={streamTitleId}
+                    className='text-sm font-medium text-gray-900 dark:text-gray-100'
+                  >
                     {t('settings.tts.streamSentences')}
                   </h4>
                   <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
@@ -178,6 +194,7 @@ export function SettingsTtsTab({
                   onChange={checked =>
                     onSettingChange('streamSentences', checked)
                   }
+                  aria-labelledby={streamTitleId}
                 />
               </div>
             </div>
@@ -188,10 +205,14 @@ export function SettingsTtsTab({
               </h4>
               <div className='space-y-4'>
                 <div>
-                  <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                  <label
+                    htmlFor={modelId}
+                    className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'
+                  >
                     {t('settings.tts.model')}
                   </label>
                   <Select
+                    id={modelId}
                     aria-label={t('settings.tts.model')}
                     value={
                       selectedModel ? getTTSModelOptionValue(selectedModel) : ''
@@ -224,10 +245,14 @@ export function SettingsTtsTab({
 
                 {voices.length > 0 || selectableVoiceProfiles.length > 0 ? (
                   <div>
-                    <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                    <label
+                      htmlFor={voiceId}
+                      className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'
+                    >
                       {t('settings.tts.voice')}
                     </label>
                     <Select
+                      id={voiceId}
                       aria-label={t('settings.tts.voice')}
                       value={
                         effectiveSettings.voiceProfileId
@@ -380,14 +405,14 @@ export function SettingsTtsTab({
                     <p className='truncate text-sm text-gray-800 dark:text-gray-200'>
                       {profile.name}
                       {profile.consentStatus === 'revoked' && (
-                        <span className='ml-2 rounded bg-red-100 px-1.5 py-0.5 text-[10px] font-medium text-red-700 dark:bg-red-950/40 dark:text-red-400'>
+                        <span className='ms-2 rounded bg-red-100 px-1.5 py-0.5 text-[10px] font-medium text-red-700 dark:bg-red-950/40 dark:text-red-400'>
                           {t('settings.tts.consentRevoked', {
                             defaultValue: 'Consent withdrawn',
                           })}
                         </span>
                       )}
                       {profile.consentStatus === 'expired' && (
-                        <span className='ml-2 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-700 dark:bg-amber-950/40 dark:text-amber-400'>
+                        <span className='ms-2 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-700 dark:bg-amber-950/40 dark:text-amber-400'>
                           {t('settings.tts.consentExpired', {
                             defaultValue: 'Consent expired',
                           })}

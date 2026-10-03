@@ -20,9 +20,11 @@ import { useTranslation } from 'react-i18next';
 import { toast } from 'react-hot-toast';
 import { Copy, KeyRound } from 'lucide-react';
 import { Button, Input } from '@/components/ui';
+import { confirmAction } from '@/components/ui/confirmStore';
 import { useAuthStore } from '@/store/authStore';
 import { authApi, API_TOKEN_SCOPES } from '@/utils/api';
 import type { ApiTokenRecord } from '@/utils/api';
+import { SettingsTabHeader } from './SettingsTabHeader';
 
 const formatDate = (value: string | null): string =>
   value ? new Date(value).toLocaleString() : '—';
@@ -147,6 +149,14 @@ export const SettingsApiKeysTab: React.FC = () => {
   };
 
   const handleRevoke = async (token: ApiTokenRecord) => {
+    // Revoking is permanent: a revoked key can never be used again.
+    const confirmed = await confirmAction({
+      title: t('settings.apiKeys.revokeConfirmTitle', { name: token.name }),
+      description: t('settings.apiKeys.revokeConfirmDescription'),
+      confirmLabel: t('settings.apiKeys.revoke'),
+      destructive: true,
+    });
+    if (!confirmed) return;
     setRevokingId(token.id);
     try {
       const response = await authApi.revokeApiToken(token.id);
@@ -171,18 +181,19 @@ export const SettingsApiKeysTab: React.FC = () => {
 
   return (
     <div className='space-y-6'>
-      <div>
-        <h3 className='flex items-center gap-2 text-lg font-semibold text-gray-900 dark:text-gray-100'>
-          <KeyRound className='h-5 w-5 text-primary-500' />
-          {t('settings.apiKeys.title', 'API keys')}
-        </h3>
-        <p className='mt-1 text-sm text-gray-500 dark:text-gray-400'>
-          {t(
-            'settings.apiKeys.description',
-            'Scoped tokens for scripts and integrations. Each key only has access to the scopes you pick.'
-          )}
-        </p>
-      </div>
+      <SettingsTabHeader
+        className='mb-0'
+        title={
+          <span className='flex items-center gap-2'>
+            <KeyRound className='h-5 w-5 text-primary-500' aria-hidden='true' />
+            {t('settings.apiKeys.title', 'API keys')}
+          </span>
+        }
+        description={t(
+          'settings.apiKeys.description',
+          'Scoped tokens for scripts and integrations. Each key only has access to the scopes you pick.'
+        )}
+      />
 
       {createdToken && (
         <div className='rounded-lg border border-primary-500/40 bg-primary-50 dark:bg-primary-900/20 p-4 space-y-2'>

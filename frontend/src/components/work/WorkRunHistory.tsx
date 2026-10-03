@@ -17,10 +17,14 @@
 
 import { FileText } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { EmptyState, ErrorState, LoadingState } from '@/components/ui';
 import { useWorkRuns } from '@/hooks/useWorkRuns';
 import type { WorkRun } from '@/types/work';
 import { cn, formatTimestamp } from '@/utils';
-import { workStatusPresentation } from '@/utils/workStatus';
+import {
+  findWorkStatusPresentation,
+  workStatusPresentation,
+} from '@/utils/workStatus';
 
 interface WorkRunHistoryProps {
   taskId: string;
@@ -76,7 +80,7 @@ export function WorkRunHistory({
   className,
 }: WorkRunHistoryProps) {
   const { t, i18n } = useTranslation();
-  const { runs, loaded } = useWorkRuns(taskId, {
+  const { runs, loaded, error, reload } = useWorkRuns(taskId, {
     enabled: active,
     refreshToken,
   });
@@ -85,30 +89,47 @@ export function WorkRunHistory({
 
   return (
     <section data-testid='work-run-history' className={className}>
-      <h4 className='mb-2 text-[11px] font-medium uppercase tracking-wide text-ink-subtle'>
+      <h4 className='mb-2 text-[11px] font-medium uppercase tracking-wide text-ink-subtle rtl:tracking-normal'>
         {t('work.runs.title', { defaultValue: 'Runs' })}
       </h4>
       {finished.length === 0 ? (
-        <p className='text-xs leading-relaxed text-ink-subtle'>
-          {loaded
-            ? t('work.runs.empty', {
-                defaultValue:
-                  'No finished runs yet. Each run keeps what it produced and the files it changed.',
-              })
-            : '…'}
-        </p>
+        !loaded ? (
+          <LoadingState size='sm' />
+        ) : error ? (
+          <ErrorState
+            size='sm'
+            message={t('work.runs.loadFailed')}
+            onRetry={reload}
+          />
+        ) : (
+          <EmptyState
+            icon={FileText}
+            size='sm'
+            title={t('work.runs.empty', {
+              defaultValue:
+                'No finished runs yet. Each run keeps what it produced and the files it changed.',
+            })}
+          />
+        )
       ) : (
         <ul className='space-y-1'>
           {finished.map(run => {
             const state = exitStateOf(run);
+            const fallbackPresentation = state
+              ? undefined
+              : findWorkStatusPresentation(run.status);
             const label = state
               ? t(EXIT_STATE_LABELS[state].key, {
                   defaultValue: EXIT_STATE_LABELS[state].value,
                 })
-              : run.status;
+              : fallbackPresentation
+                ? t(fallbackPresentation.labelKey, {
+                    defaultValue: fallbackPresentation.label,
+                  })
+                : run.status;
             const color = state
               ? workStatusPresentation[state].color
-              : 'rgb(255, 255, 255)';
+              : (fallbackPresentation?.color ?? 'rgb(255, 255, 255)');
             const summary = firstLine(run.summary);
             const files = run.changedFiles ?? [];
             return (
@@ -121,7 +142,7 @@ export function WorkRunHistory({
                 <div className='flex items-center gap-2'>
                   <span
                     aria-hidden='true'
-                    className='h-2 w-2 shrink-0 rounded-full'
+                    className='h-2 w-2 shrink-0 rounded-full ring-1 ring-black/20 dark:ring-white/20'
                     style={{ backgroundColor: color }}
                   />
                   <span

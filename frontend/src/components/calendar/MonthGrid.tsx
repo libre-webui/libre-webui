@@ -35,6 +35,8 @@ interface MonthGridProps {
   events: CalendarDisplayEvent[];
   onDayClick: (day: Date) => void;
   onEventClick: (event: CalendarDisplayEvent) => void;
+  /** Opens a single-day view so hidden events can be read in full. */
+  onShowDay?: (day: Date) => void;
 }
 
 export function MonthGrid({
@@ -43,6 +45,7 @@ export function MonthGrid({
   events,
   onDayClick,
   onEventClick,
+  onShowDay,
 }: MonthGridProps) {
   const { t, i18n } = useTranslation();
   const days = useMemo(
@@ -64,6 +67,16 @@ export function MonthGrid({
   }, [events]);
 
   const labels = useMemo(() => weekdayLabels(i18n.language), [i18n.language]);
+  const dateFormatter = useMemo(
+    () =>
+      new Intl.DateTimeFormat(i18n.language, {
+        weekday: 'long',
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric',
+      }),
+    [i18n.language]
+  );
 
   return (
     <div
@@ -98,16 +111,23 @@ export function MonthGrid({
                 !inMonth && 'opacity-40'
               )}
             >
-              <span
+              {/* A real button makes the cell keyboard reachable; its click
+                  bubbles to the cell handler, so there is one code path. */}
+              <button
+                type='button'
+                aria-label={t('calendar.newEventOn', {
+                  date: dateFormatter.format(day),
+                })}
+                aria-current={isToday ? 'date' : undefined}
                 className={cn(
-                  'flex h-6 w-6 items-center justify-center rounded-full text-[12px]',
+                  'flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[12px]',
                   isToday
-                    ? 'bg-primary-500 font-semibold text-white'
-                    : 'text-gray-600 dark:text-dark-600'
+                    ? 'bg-ink font-semibold text-ink-inverse'
+                    : 'text-ink-muted'
                 )}
               >
                 {day.getDate()}
-              </span>
+              </button>
               <div className='flex min-h-0 flex-col gap-0.5 overflow-hidden'>
                 {dayEvents.slice(0, MAX_CHIPS_PER_DAY).map(event => (
                   <EventChip
@@ -122,9 +142,19 @@ export function MonthGrid({
                   />
                 ))}
                 {overflow > 0 && (
-                  <span className='px-1 text-[10px] text-gray-400 dark:text-dark-500'>
+                  <button
+                    type='button'
+                    onClick={event => {
+                      event.stopPropagation();
+                      onShowDay?.(day);
+                    }}
+                    title={t('calendar.showDay', {
+                      date: dateFormatter.format(day),
+                    })}
+                    className='rounded px-1 text-start text-[10px] text-ink-muted hover:text-ink'
+                  >
                     {t('calendar.more', { n: overflow })}
-                  </span>
+                  </button>
                 )}
               </div>
             </div>

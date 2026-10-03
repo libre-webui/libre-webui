@@ -51,16 +51,22 @@ export const ShareDialog: React.FC<ShareDialogProps> = ({
   const [principalName, setPrincipalName] = useState('');
   const [permission, setPermission] = useState<'read' | 'write'>('read');
   const [sharing, setSharing] = useState(false);
-
+  const [loadFailed, setLoadFailed] = useState(false);
   const loadGrants = useCallback(() => {
     accessApi
       .listGrants(resourceType, resourceId)
       .then(response => {
         if (response.success && Array.isArray(response.data)) {
           setGrants(response.data);
+          setLoadFailed(false);
+        } else {
+          setLoadFailed(true);
         }
       })
-      .catch(error => logger.error('Failed to load shares:', error));
+      .catch(error => {
+        logger.error('Failed to load shares:', error);
+        setLoadFailed(true);
+      });
   }, [resourceType, resourceId]);
 
   useEffect(() => {
@@ -110,8 +116,10 @@ export const ShareDialog: React.FC<ShareDialogProps> = ({
     try {
       const response = await accessApi.deleteGrant(grantId);
       if (response.success) loadGrants();
+      else toast.error(response.error || t('share.revokeFailed'));
     } catch (error) {
       logger.error('Failed to revoke share:', error);
+      toast.error(t('share.revokeFailed'));
     }
   };
 
@@ -129,6 +137,7 @@ export const ShareDialog: React.FC<ShareDialogProps> = ({
           onChange={event =>
             setPrincipalKind(event.target.value as 'user' | 'group')
           }
+          aria-label={t('share.principalKind')}
           className={`${modalFieldClass} w-auto`}
           data-testid='share-principal-kind'
         >
@@ -147,6 +156,7 @@ export const ShareDialog: React.FC<ShareDialogProps> = ({
               ? t('share.usernamePlaceholder')
               : t('share.groupPlaceholder')
           }
+          aria-label={t('share.principalName')}
           className={`${modalFieldClass} min-w-0 flex-1`}
           data-testid='share-principal-name'
         />
@@ -155,6 +165,7 @@ export const ShareDialog: React.FC<ShareDialogProps> = ({
           onChange={event =>
             setPermission(event.target.value as 'read' | 'write')
           }
+          aria-label={t('share.permission')}
           className={`${modalFieldClass} w-auto`}
           data-testid='share-permission'
         >
@@ -168,18 +179,41 @@ export const ShareDialog: React.FC<ShareDialogProps> = ({
           data-testid='share-submit'
         >
           {sharing ? (
-            <Loader2 className='h-3.5 w-3.5 animate-spin' />
+            <Loader2
+              className='h-3.5 w-3.5 animate-spin'
+              role='status'
+              aria-label={t('share.sharing')}
+            />
           ) : (
             t('share.action')
           )}
         </Button>
       </div>
-      {grants === null ? (
-        <Loader2 className='mx-auto h-4 w-4 animate-spin text-gray-400' />
+      {loadFailed ? (
+        <div
+          role='alert'
+          className='flex items-center justify-between gap-2 rounded-lg border border-error-200 px-2.5 py-2 text-xs text-error-700 dark:border-error-800 dark:text-error-300'
+        >
+          <span>{t('share.loadFailed')}</span>
+          <Button
+            variant='outline'
+            size='sm'
+            onClick={() => {
+              setLoadFailed(false);
+              loadGrants();
+            }}
+          >
+            {t('common.retry')}
+          </Button>
+        </div>
+      ) : grants === null ? (
+        <Loader2
+          className='mx-auto h-4 w-4 animate-spin text-ink-muted'
+          role='status'
+          aria-label={t('share.loading')}
+        />
       ) : grants.length === 0 ? (
-        <p className='text-center text-xs text-gray-400 dark:text-dark-500'>
-          {t('share.empty')}
-        </p>
+        <p className='text-center text-xs text-ink-muted'>{t('share.empty')}</p>
       ) : (
         <div className='space-y-2'>
           {grants.map(grant => (
@@ -189,29 +223,40 @@ export const ShareDialog: React.FC<ShareDialogProps> = ({
               data-testid='share-item'
             >
               {grant.principalType === 'group' ? (
-                <Users className='h-3.5 w-3.5 shrink-0 text-gray-400 dark:text-dark-500' />
+                <Users
+                  className='h-3.5 w-3.5 shrink-0 text-ink-muted'
+                  aria-hidden='true'
+                />
               ) : (
-                <Share2 className='h-3.5 w-3.5 shrink-0 text-gray-400 dark:text-dark-500' />
+                <Share2
+                  className='h-3.5 w-3.5 shrink-0 text-ink-muted'
+                  aria-hidden='true'
+                />
               )}
               <span className='min-w-0 flex-1 truncate text-[13px] text-gray-800 dark:text-dark-800'>
                 {grant.principalName ?? grant.principalId}
               </span>
-              <span className='shrink-0 text-[11px] uppercase text-gray-400 dark:text-dark-500'>
-                {grant.permission}
+              <span className='shrink-0 text-[11px] uppercase text-ink-muted'>
+                {grant.permission === 'read'
+                  ? t('share.permissionRead')
+                  : grant.permission === 'write'
+                    ? t('share.permissionWrite')
+                    : grant.permission}
               </span>
               <button
                 type='button'
                 onClick={() => void handleRevoke(grant.id)}
                 className='rounded-md p-1 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20'
                 title={t('share.revoke')}
+                aria-label={t('share.revoke')}
               >
-                <X className='h-3.5 w-3.5' />
+                <X className='h-3.5 w-3.5' aria-hidden='true' />
               </button>
             </div>
           ))}
         </div>
       )}
-      <p className='text-[11px] leading-relaxed text-gray-400 dark:text-dark-500'>
+      <p className='text-[11px] leading-relaxed text-ink-muted'>
         {t('share.hint')}
       </p>
     </ModalShell>

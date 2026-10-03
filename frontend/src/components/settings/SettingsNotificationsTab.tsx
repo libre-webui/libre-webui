@@ -15,10 +15,11 @@
  * limitations under the License.
  */
 
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'react-hot-toast';
 import { BellRing, Mail } from 'lucide-react';
+import { SettingsTabHeader } from './SettingsTabHeader';
 import { SettingsToggle } from './SettingsToggle';
 import { pushApi } from '@/utils/api/pushApi';
 import { emailApi, preferencesApi } from '@/utils/api';
@@ -53,6 +54,8 @@ const applicationServerKey = (base64Url: string): Uint8Array<ArrayBuffer> => {
  */
 export const SettingsNotificationsTab: React.FC = () => {
   const { t } = useTranslation();
+  const pushTitleId = useId();
+  const emailLabelPrefix = useId();
   const [supported] = useState(pushSupported);
   const [permission, setPermission] = useState<NotificationPermission>(
     typeof Notification !== 'undefined' ? Notification.permission : 'denied'
@@ -222,20 +225,24 @@ export const SettingsNotificationsTab: React.FC = () => {
 
   return (
     <div className='space-y-6' data-testid='settings-notifications-tab'>
-      <div>
-        <h3 className='flex items-center gap-2 text-lg font-semibold text-gray-900 dark:text-gray-100'>
-          <BellRing className='h-5 w-5 text-primary-500' />
-          {t('settings.notifications.title')}
-        </h3>
-        <p className='mt-1 text-sm text-gray-500 dark:text-gray-400'>
-          {t('settings.notifications.description')}
-        </p>
-      </div>
+      <SettingsTabHeader
+        className='mb-0'
+        title={
+          <span className='flex items-center gap-2'>
+            <BellRing className='h-5 w-5 text-primary-500' aria-hidden='true' />
+            {t('settings.notifications.title')}
+          </span>
+        }
+        description={t('settings.notifications.description')}
+      />
 
       <div className='rounded-lg border border-gray-200 dark:border-dark-300 bg-white dark:bg-dark-100 p-4'>
         <div className='flex items-center justify-between gap-4'>
           <div>
-            <p className='text-sm font-medium text-gray-900 dark:text-gray-100'>
+            <p
+              id={pushTitleId}
+              className='text-sm font-medium text-gray-900 dark:text-gray-100'
+            >
               {t('settings.notifications.pushTitle')}
             </p>
             <p className='mt-0.5 text-xs text-gray-500 dark:text-gray-400'>
@@ -246,6 +253,7 @@ export const SettingsNotificationsTab: React.FC = () => {
             checked={enabled}
             disabled={busy || Boolean(unavailableReason && !enabled)}
             onChange={handleToggle}
+            aria-labelledby={pushTitleId}
           />
         </div>
       </div>
@@ -279,7 +287,10 @@ export const SettingsNotificationsTab: React.FC = () => {
             data-testid={`settings-email-${kind}`}
           >
             <div>
-              <p className='text-sm text-gray-900 dark:text-gray-100'>
+              <p
+                id={`${emailLabelPrefix}-${kind}`}
+                className='text-sm text-gray-900 dark:text-gray-100'
+              >
                 {t(`settings.notifications.${labelKey}`)}
               </p>
               <p className='mt-0.5 text-xs text-gray-500 dark:text-gray-400'>
@@ -294,6 +305,7 @@ export const SettingsNotificationsTab: React.FC = () => {
                   emailPreferences?.[kind] !== true)
               }
               onChange={checked => void updateEmailPreference(kind, checked)}
+              aria-labelledby={`${emailLabelPrefix}-${kind}`}
             />
           </div>
         ))}

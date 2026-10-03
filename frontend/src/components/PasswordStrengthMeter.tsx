@@ -20,7 +20,7 @@ import { useTranslation } from 'react-i18next';
 import { Check, X } from 'lucide-react';
 import { cn } from '@/utils';
 import {
-  PASSWORD_REQUIREMENTS,
+  PASSWORD_REQUIREMENTS_KEY,
   evaluatePasswordStrength,
 } from '@/utils/passwordPolicy';
 
@@ -31,11 +31,13 @@ const LEVEL_BAR_CLASSES: Record<string, string> = {
   strong: 'bg-green-500',
 };
 
+// The level label is text, so it needs AA contrast: the mid levels use the
+// neutral ink color and rely on the bar fill and the word itself.
 const LEVEL_TEXT_CLASSES: Record<string, string> = {
-  weak: 'text-red-600 dark:text-red-400',
-  fair: 'text-amber-600 dark:text-amber-400',
-  good: 'text-lime-600 dark:text-lime-400',
-  strong: 'text-green-600 dark:text-green-400',
+  weak: 'text-error-700 dark:text-error-400',
+  fair: 'text-ink',
+  good: 'text-ink',
+  strong: 'text-success-800 dark:text-success-400',
 };
 
 const CheckRow: React.FC<{ met: boolean; label: string }> = ({
@@ -45,9 +47,7 @@ const CheckRow: React.FC<{ met: boolean; label: string }> = ({
   <li
     className={cn(
       'flex items-center gap-1.5',
-      met
-        ? 'text-green-600 dark:text-green-400'
-        : 'text-gray-500 dark:text-dark-500'
+      met ? 'text-success-800 dark:text-success-400' : 'text-ink-muted'
     )}
   >
     {met ? (
@@ -72,19 +72,15 @@ export const PasswordStrengthMeter: React.FC<{ password: string }> = ({
 
   if (!password) {
     return (
-      <p className='mt-1.5 text-xs text-gray-500 dark:text-dark-500'>
-        {PASSWORD_REQUIREMENTS}
+      <p className='mt-1.5 text-xs text-ink-muted'>
+        {t(PASSWORD_REQUIREMENTS_KEY)}
       </p>
     );
   }
 
   const strength = evaluatePasswordStrength(password);
   return (
-    <div
-      className='mt-2 space-y-1.5'
-      data-testid='password-strength-meter'
-      aria-live='polite'
-    >
+    <div className='mt-2 space-y-1.5' data-testid='password-strength-meter'>
       <div className='flex items-center gap-2'>
         <div className='flex flex-1 gap-1'>
           {[1, 2, 3, 4].map(segment => (
@@ -101,6 +97,7 @@ export const PasswordStrengthMeter: React.FC<{ password: string }> = ({
         </div>
         <span
           data-testid='password-strength-label'
+          aria-live='polite'
           className={cn(
             'text-xs font-medium',
             LEVEL_TEXT_CLASSES[strength.level]

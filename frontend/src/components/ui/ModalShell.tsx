@@ -36,10 +36,10 @@ interface ModalShellProps {
 
 /** Field styling shared by the workspace forms, matching the automations modal. */
 export const modalFieldClass =
-  'w-full rounded-lg border border-black/[0.08] bg-white px-2.5 py-1.5 text-[13px] text-gray-900 focus:border-primary-500/40 focus:outline-none dark:border-white/[0.08] dark:bg-dark-100 dark:text-dark-900';
+  'w-full rounded-lg border border-line bg-surface-raised px-2.5 py-1.5 text-[13px] text-ink placeholder:text-ink-muted transition-[border-color,box-shadow] duration-150 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 dark:focus:border-primary-400 dark:focus:ring-primary-400/30';
 
 export const modalLabelClass =
-  'mb-1 block text-[11px] font-medium uppercase tracking-wide text-gray-400 dark:text-dark-500';
+  'mb-1 block text-[11px] font-medium uppercase tracking-wide text-ink-muted rtl:normal-case rtl:tracking-normal';
 
 /**
  * Centered dialog chrome shared by the prompt, skill and tool forms so the
@@ -57,12 +57,23 @@ export const ModalShell: React.FC<ModalShellProps> = ({
   testId,
 }) => {
   const dialogRef = useRef<HTMLDivElement>(null);
+  const backdropPressRef = useRef(false);
   useDialogFocus(dialogRef, { onClose });
 
   return createPortal(
     <div
       className='fixed inset-0 z-[2147483647] flex items-center justify-center bg-gray-950/55 p-4 backdrop-blur-md'
-      onClick={onClose}
+      // Close only when the press both starts and ends on the backdrop, so a
+      // text selection dragged out of the dialog does not discard the form.
+      onMouseDown={event => {
+        backdropPressRef.current = event.target === event.currentTarget;
+      }}
+      onClick={event => {
+        if (backdropPressRef.current && event.target === event.currentTarget) {
+          onClose();
+        }
+        backdropPressRef.current = false;
+      }}
     >
       <div
         ref={dialogRef}
@@ -75,6 +86,8 @@ export const ModalShell: React.FC<ModalShellProps> = ({
           'flex max-h-[90vh] w-full flex-col overflow-hidden rounded-3xl border border-black/[0.07] bg-white shadow-[0_24px_80px_rgba(0,0,0,0.24)] animate-scale-in dark:border-white/[0.08] dark:bg-dark-25',
           widthClassName
         )}
+        // React events bubble through portals; keep dialog clicks from
+        // reaching the opener's ancestors.
         onClick={event => event.stopPropagation()}
       >
         <div
@@ -89,7 +102,7 @@ export const ModalShell: React.FC<ModalShellProps> = ({
           />
           {children && <div className='space-y-4'>{children}</div>}
           {footer && (
-            <div className='mt-5 flex justify-end gap-3 border-t border-gray-200 pt-4 dark:border-dark-300'>
+            <div className='mt-5 flex justify-end gap-3 border-t border-line pt-4'>
               {footer}
             </div>
           )}
@@ -109,12 +122,12 @@ const ModalHeader: React.FC<
       <div className='min-w-0'>
         <h3
           id={titleId}
-          className='text-lg font-medium tracking-[-0.02em] text-gray-950 dark:text-dark-950'
+          className='text-lg font-medium tracking-[-0.02em] text-ink'
         >
           {title}
         </h3>
         {subtitle && (
-          <p className='mt-1 text-[12px] leading-5 text-gray-500 dark:text-dark-500'>
+          <p className='mt-1 text-[12px] leading-5 text-ink-muted'>
             {subtitle}
           </p>
         )}
@@ -123,9 +136,9 @@ const ModalHeader: React.FC<
         type='button'
         onClick={onClose}
         aria-label={t('common.close')}
-        className='shrink-0 rounded-xl p-2 transition-colors hover:bg-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 dark:hover:bg-dark-200'
+        className='shrink-0 rounded-xl p-2 transition-colors text-ink-muted hover:bg-interactive-hover hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500'
       >
-        <X size={20} className='text-gray-500' />
+        <X size={20} aria-hidden='true' />
       </button>
     </div>
   );

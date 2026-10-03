@@ -21,21 +21,39 @@ interface SettingsToggleProps {
   checked: boolean;
   onChange: (checked: boolean) => void;
   disabled?: boolean;
+  id?: string;
+  /** The toggle renders no text; name it from the setting row it controls. */
+  'aria-label'?: string;
+  'aria-labelledby'?: string;
+  'aria-describedby'?: string;
 }
 
 export function SettingsToggle({
   checked,
   onChange,
   disabled = false,
+  id,
+  'aria-label': ariaLabel,
+  'aria-labelledby': ariaLabelledBy,
+  'aria-describedby': ariaDescribedBy,
 }: SettingsToggleProps) {
   return (
     // Keep the native focus target inside the visible switch as settings scroll.
-    <label className='relative flex items-center cursor-pointer'>
+    <label
+      className={cn(
+        'relative flex items-center',
+        disabled ? 'cursor-not-allowed' : 'cursor-pointer'
+      )}
+    >
       <input
         type='checkbox'
+        id={id}
         checked={checked}
         onChange={event => onChange(event.target.checked)}
         disabled={disabled}
+        aria-label={ariaLabel}
+        aria-labelledby={ariaLabelledBy}
+        aria-describedby={ariaDescribedBy}
         className='peer sr-only'
       />
       <div
