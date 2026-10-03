@@ -15,6 +15,83 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 📚 Documentation
 
+## [0.40.0] - 2026-10-03
+
+Libre WebUI now works better with a keyboard, a screen reader, and a touch
+screen, and saved provider keys survive model list updates. Administrators
+can pick a light or dark email template, and Codex adds GPT-6.1 Sol.
+
+### ✨ New Features
+
+- **Accessibility across the app**: Every control has a name for screen
+  readers, dialogs keep focus inside until they close, and menus work with
+  the arrow keys. Finished chat replies and Work runs are announced to screen
+  readers with a short plain-text preview, never token by token.
+- **Email template presets**: Administrators choose a **Light** or **Dark**
+  email template and preview it before saving. The preset applies to every
+  notification and test email on the instance, and the preview renders
+  sample content without contacting SMTP.
+- **GPT-6.1 Sol**: The Codex provider and the Codex agent CLI offer
+  **GPT-6.1 Sol** (`gpt-6.1-sol`), subject to the signed-in account's access.
+
+### 🔧 Improvements
+
+- **Clearer failures and safer deletes**: Lists and panels that fail to load
+  show an error with **Retry** instead of looking empty, and deleting or
+  revoking something asks for confirmation first.
+- **Touch screens**: Buttons, tabs, and menu items are at least 44px wherever
+  the main pointer is coarse, so tablets and touch laptops get finger-sized
+  targets in desktop layouts. Controls that appear on hover open with a tap.
+- **Consistent pages**: Notes, Calendar, Automations, Channels, and Strands
+  share one toolbar, library pages share their empty, loading, and error
+  states, and unknown addresses show a 404 page.
+- **Lighter design**: User messages use the subtle light bubble from
+  DESIGN.md, primary buttons use the neutral treatment, and the Chat, Work,
+  and Strands composers share one quiet focus style.
+- **Links in replies**: Links in chat replies use the accent color with an
+  underline, and off-page links open in a new tab so the chat stays open.
+- **Private page titles**: Browser tabs show "Libre WebUI" instead of chat
+  titles, so conversation names stay out of browser history and window
+  lists.
+- **Work previews in team mode**: The external worker expires previews owned
+  by application replicas, and a preview's hold alone no longer counts as
+  activity. The runtime slot is released on the next heartbeat, normally
+  within ten seconds.
+
+### 🐛 Bug Fixes
+
+- **Saved API keys**: Adding or removing models in a provider's manifest no
+  longer makes its saved API keys disappear. Keys saved earlier keep working
+  and are rebound the first time they are used; changing an endpoint or
+  routing still asks for the key again.
+- **Work sandboxes during runs**: The sandbox stays running between commands
+  and workspace helpers during an agent run, so Files and Git no longer see a
+  stopped container mid-run.
+- **Work terminal**: Switching between light and dark no longer restarts the
+  terminal session.
+- **Image attachments**: Selecting several images at once attaches all of
+  them instead of only the first.
+- **First message**: When a new chat cannot be created, the message you typed
+  stays in the composer.
+- **Folder rename**: The rename button on a chat folder is labeled for
+  folders instead of chats.
+
+### 🔒 Security
+
+- **Tailwind CSS 4**: Tailwind 3 depended on braces <=3.0.3
+  (GHSA-vfj7-8cjw-p6xm), which has no patched release. The frontend now
+  builds with Tailwind CSS 4 and keeps the same look.
+- **npm audit fixes**: DOMPurify moves to 3.4.16 and brace-expansion to
+  5.0.12.
+
+### 📚 Documentation
+
+- **Providers, Work, and email**: Provider Connections and Agent CLI Models
+  list GPT-6.1 Sol. Notifications covers the email template presets, and
+  Workspaces covers sandbox lifetime during runs and preview expiry in team
+  mode. Troubleshooting, Plugin Architecture, and Environment Variables
+  explain that model catalog changes keep saved keys.
+
 ## [0.39.0] - 2026-09-29
 
 Amazon Bedrock joins the bundled providers with one API key and its full model
