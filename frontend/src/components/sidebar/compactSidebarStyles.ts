@@ -17,4 +17,4 @@
 
 /** One hit area and hover treatment for every compact navigation control. */
 export const compactSidebarButtonClass =
-  'relative flex h-[44px] w-[44px] shrink-0 items-center justify-center rounded-full text-ink transition-colors duration-150 hover:bg-interactive-hover outline-none focus-visible:ring-2 focus-visible:ring-primary-500/30 touch-manipulation motion-reduce:transition-none';
+  'relative flex h-[44px] w-[44px] shrink-0 items-center justify-center rounded-full text-ink transition-colors duration-150 hover:bg-interactive-hover outline-hidden focus-visible:ring-2 focus-visible:ring-primary-500/30 touch-manipulation motion-reduce:transition-none';

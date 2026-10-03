@@ -248,7 +248,7 @@ export const ImageEditPanel: React.FC<ImageEditPanelProps> = ({
       role='dialog'
       aria-modal='true'
       aria-label={t('imageEdit.title')}
-      className='fixed inset-0 z-[70] flex items-center justify-center bg-black/50 p-4'
+      className='fixed inset-0 z-70 flex items-center justify-center bg-black/50 p-4'
       data-testid='image-edit-panel'
     >
       <div className='flex max-h-[90vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl bg-white shadow-xl dark:bg-dark-100'>

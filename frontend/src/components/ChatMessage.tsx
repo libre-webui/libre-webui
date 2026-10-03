@@ -148,7 +148,7 @@ function ChatAvatar({ role, user, persona, modelAvatar }: ChatAvatarProps) {
         role='img'
         aria-label='Libre WebUI'
         data-testid='chat-assistant-avatar'
-        className='mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full border border-black/[0.07] bg-white text-gray-900 shadow-sm dark:border-white/[0.09] dark:bg-dark-200 dark:text-dark-950'
+        className='mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full border border-black/[0.07] bg-white text-gray-900 shadow-xs dark:border-white/9 dark:bg-dark-200 dark:text-dark-950'
       >
         {markImage ? (
           <img
@@ -180,7 +180,7 @@ function ChatAvatar({ role, user, persona, modelAvatar }: ChatAvatarProps) {
       className={cn(
         'mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full',
         hasAvatar
-          ? 'border border-black/[0.07] bg-white dark:border-white/[0.09] dark:bg-dark-200'
+          ? 'border border-black/[0.07] bg-white dark:border-white/9 dark:bg-dark-200'
           : 'bg-gray-950 text-white dark:bg-white dark:text-gray-950'
       )}
       title={label}
@@ -730,7 +730,7 @@ const ChatMessageBase: React.FC<ChatMessageProps> = ({
                 {message.images.map((image, index) => (
                   <div
                     key={index}
-                    className='aspect-square overflow-hidden rounded-xl border border-black/[0.06] bg-gray-100 dark:border-white/[0.08] dark:bg-gray-800'
+                    className='aspect-square overflow-hidden rounded-xl border border-black/6 bg-gray-100 dark:border-white/8 dark:bg-gray-800'
                   >
                     <button
                       type='button'
@@ -755,7 +755,7 @@ const ChatMessageBase: React.FC<ChatMessageProps> = ({
 
             {isUser ? (
               isEditing ? (
-                <div className='w-full min-w-[min(28rem,80vw)] rounded-2xl border border-black/[0.08] bg-white p-2 shadow-sm focus-within:border-primary-500 focus-within:ring-2 focus-within:ring-primary-500/30 dark:border-white/[0.08] dark:bg-dark-100'>
+                <div className='w-full min-w-[min(28rem,80vw)] rounded-2xl border border-black/8 bg-white p-2 shadow-xs focus-within:border-primary-500 focus-within:ring-2 focus-within:ring-primary-500/30 dark:border-white/8 dark:bg-dark-100'>
                   <textarea
                     aria-label={t('chatMessage.edit')}
                     dir='auto'
@@ -775,7 +775,7 @@ const ChatMessageBase: React.FC<ChatMessageProps> = ({
                       }
                     }}
                     autoFocus
-                    className='min-h-[72px] w-full resize-y rounded-xl border-none bg-transparent p-2 text-[0.9375rem] leading-relaxed text-gray-900 focus:outline-none dark:text-dark-900'
+                    className='min-h-[72px] w-full resize-y rounded-xl border-none bg-transparent p-2 text-[0.9375rem] leading-relaxed text-gray-900 focus:outline-hidden dark:text-dark-900'
                   />
                   <div className='flex items-center justify-end gap-1.5 px-1 pb-1'>
                     <Button
@@ -809,7 +809,7 @@ const ChatMessageBase: React.FC<ChatMessageProps> = ({
                 </div>
               )
             ) : isSystem ? (
-              <div className='relative z-0 rounded-2xl border border-black/[0.06] bg-white/55 p-3 dark:border-white/[0.06] dark:bg-dark-200/45'>
+              <div className='relative z-0 rounded-2xl border border-black/6 bg-white/55 p-3 dark:border-white/6 dark:bg-dark-200/45'>
                 <div className='mb-2 flex items-center justify-between text-[10px] font-semibold uppercase tracking-[0.12em] text-gray-500 dark:text-dark-500'>
                   <div className='flex items-center gap-1'>
                     {isCompactionSummary ? (
@@ -883,7 +883,7 @@ const ChatMessageBase: React.FC<ChatMessageProps> = ({
                     dir='auto'
                     value={editedContent}
                     onChange={e => setEditedContent(e.target.value)}
-                    className='min-h-[100px] w-full resize-none rounded-xl border border-black/[0.08] bg-white p-3 text-sm text-gray-900 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-primary-500 dark:border-white/[0.08] dark:bg-dark-100 dark:text-dark-900 dark:focus:ring-primary-400'
+                    className='min-h-[100px] w-full resize-none rounded-xl border border-black/8 bg-white p-3 text-sm text-gray-900 focus:border-transparent focus:outline-hidden focus:ring-2 focus:ring-primary-500 dark:border-white/8 dark:bg-dark-100 dark:text-dark-900 dark:focus:ring-primary-400'
                     placeholder={t('chatMessage.systemMessagePlaceholder')}
                     disabled={isSaving}
                   />
@@ -933,7 +933,7 @@ const ChatMessageBase: React.FC<ChatMessageProps> = ({
                       aria-expanded={isThinkingExpanded}
                       aria-controls={thinkingPanelId}
                       onClick={() => setIsThinkingExpanded(!isThinkingExpanded)}
-                      className='flex min-h-11 max-w-full items-center gap-1.5 rounded-md py-2 text-start text-xs text-ink-muted transition-colors hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/30'
+                      className='flex min-h-11 max-w-full items-center gap-1.5 rounded-md py-2 text-start text-xs text-ink-muted transition-colors hover:text-ink focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary-500/30'
                     >
                       {thinkingStreaming ? (
                         <GenerationIndicator data-testid='thinking-generation-indicator' />
@@ -947,7 +947,7 @@ const ChatMessageBase: React.FC<ChatMessageProps> = ({
                         role='status'
                         aria-live={thinkingStreaming ? 'polite' : 'off'}
                         aria-atomic='true'
-                        className='min-w-0 [overflow-wrap:anywhere]'
+                        className='min-w-0 wrap-anywhere'
                       >
                         <span
                           key={thinkingSummary || 'thinking'}
@@ -1239,7 +1239,7 @@ const ChatMessageBase: React.FC<ChatMessageProps> = ({
                           }
                           placeholder={t('chatMessage.feedbackComment')}
                           aria-label={t('chatMessage.feedbackComment')}
-                          className='w-32 rounded border border-gray-300 px-1.5 py-0.5 text-[10px] focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 dark:border-dark-300 dark:bg-dark-50'
+                          className='w-32 rounded-sm border border-gray-300 px-1.5 py-0.5 text-[10px] focus:border-primary-500 focus:outline-hidden focus:ring-2 focus:ring-primary-500/30 dark:border-dark-300 dark:bg-dark-50'
                           maxLength={2000}
                         />
                         <Button
@@ -1254,7 +1254,7 @@ const ChatMessageBase: React.FC<ChatMessageProps> = ({
                           type='button'
                           onClick={() => setFeedbackDetailsFor(null)}
                           aria-label={t('common.close')}
-                          className='rounded p-0.5 text-ink-muted hover:text-ink'
+                          className='rounded-sm p-0.5 text-ink-muted hover:text-ink'
                         >
                           <X className='h-3 w-3' aria-hidden='true' />
                         </button>
@@ -1299,13 +1299,13 @@ const ChatMessageBase: React.FC<ChatMessageProps> = ({
             aria-modal='true'
             aria-label={t('chatMessage.fullSizeImage')}
             tabIndex={-1}
-            className='fixed inset-0 z-[9999] flex items-center justify-center bg-black/85 p-6 backdrop-blur-md'
+            className='fixed inset-0 z-9999 flex items-center justify-center bg-black/85 p-6 backdrop-blur-md'
             onClick={() => setLightboxImage(null)}
           >
             <button
               type='button'
               aria-label={t('common.close')}
-              className='absolute end-6 top-6 rounded-full border border-white/15 bg-white/10 p-3 text-white transition-colors hover:bg-white/20'
+              className='absolute inset-e-6 top-6 rounded-full border border-white/15 bg-white/10 p-3 text-white transition-colors hover:bg-white/20'
               onClick={e => {
                 e.stopPropagation();
                 setLightboxImage(null);

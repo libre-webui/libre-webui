@@ -219,7 +219,7 @@ export const DocumentUpload: React.FC<DocumentUploadProps> = ({
                 </div>
                 <button
                   onClick={() => handleRemoveDocument(doc.id)}
-                  className='p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors'
+                  className='p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-sm transition-colors'
                   title={t('documents.removeDocument')}
                 >
                   <X className='w-4 h-4 text-gray-500' />

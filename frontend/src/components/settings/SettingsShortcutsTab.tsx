@@ -113,7 +113,7 @@ export function SettingsShortcutsTab() {
                   {row.keys.map((key, index) => (
                     <kbd
                       key={`${row.labelKey}-${key}-${index}`}
-                      className='rounded border border-gray-300 bg-gray-100 px-2 py-1 font-mono text-xs text-gray-700 dark:border-dark-400 dark:bg-dark-200 dark:text-gray-300'
+                      className='rounded-sm border border-gray-300 bg-gray-100 px-2 py-1 font-mono text-xs text-gray-700 dark:border-dark-400 dark:bg-dark-200 dark:text-gray-300'
                     >
                       {label(key)}
                     </kbd>

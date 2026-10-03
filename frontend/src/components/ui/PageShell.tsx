@@ -95,7 +95,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
           {eyebrow}
         </div>
       )}
-      <h1 className='text-balance text-3xl font-normal leading-[1.02] tracking-[-0.04em] text-ink sm:text-5xl rtl:leading-[1.15] rtl:tracking-normal'>
+      <h1 className='text-balance text-3xl font-normal leading-[1.02] tracking-[-0.04em] text-ink sm:text-5xl sm:leading-none rtl:leading-[1.15] rtl:tracking-normal'>
         {title}
       </h1>
       {description && (

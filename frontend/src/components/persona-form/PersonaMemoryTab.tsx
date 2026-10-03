@@ -60,7 +60,7 @@ export function PersonaMemoryTab({
   return (
     <div className='space-y-6'>
       <div className='rounded-xl overflow-hidden border border-emerald-200/50 dark:border-emerald-700/30'>
-        <div className='px-5 py-4 bg-gradient-to-r from-emerald-500 to-teal-500 dark:from-emerald-600 dark:to-teal-600'>
+        <div className='px-5 py-4 bg-linear-to-r from-emerald-500 to-teal-500 dark:from-emerald-600 dark:to-teal-600'>
           <div className='flex items-center justify-between'>
             <div className='flex items-center gap-3'>
               <div className='w-10 h-10 rounded-lg bg-white/20 flex items-center justify-center'>

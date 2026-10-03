@@ -148,7 +148,7 @@ export function MediaGallery({
         {media.map(item => (
           <article
             key={item.id}
-            className='overflow-hidden rounded-2xl border border-gray-200/80 bg-white/70 dark:border-white/10 dark:bg-white/[0.025]'
+            className='overflow-hidden rounded-2xl border border-gray-200/80 bg-white/70 dark:border-white/10 dark:bg-white/2.5'
           >
             <MediaPreview
               item={item}
@@ -298,7 +298,7 @@ function MediaPreview({
     return (
       <div
         role='status'
-        className='flex aspect-video items-center justify-center bg-gray-100 dark:bg-white/[0.03]'
+        className='flex aspect-video items-center justify-center bg-gray-100 dark:bg-white/3'
       >
         <Loader2
           className='h-6 w-6 animate-spin text-gray-400'

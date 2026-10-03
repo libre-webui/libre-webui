@@ -88,7 +88,7 @@ export const VersionHistoryModal: React.FC<VersionHistoryModalProps> = ({
             <div
               key={entry.version}
               data-testid='version-history-entry'
-              className='rounded-2xl border border-black/[0.06] bg-white/60 px-4 py-3 dark:border-white/[0.07] dark:bg-dark-100/60'
+              className='rounded-2xl border border-black/6 bg-white/60 px-4 py-3 dark:border-white/[0.07] dark:bg-dark-100/60'
             >
               <div className='flex items-center justify-between gap-3'>
                 <div className='min-w-0'>
@@ -118,7 +118,7 @@ export const VersionHistoryModal: React.FC<VersionHistoryModalProps> = ({
                     : t('promptsPage.history.rollback')}
                 </Button>
               </div>
-              <pre className='mt-2 max-h-32 overflow-auto whitespace-pre-wrap break-words rounded-xl bg-black/[0.03] p-2.5 text-[11px] leading-5 text-gray-600 scrollbar-thin dark:bg-white/[0.04] dark:text-dark-600'>
+              <pre className='mt-2 max-h-32 overflow-auto whitespace-pre-wrap wrap-break-word rounded-xl bg-black/3 p-2.5 text-[11px] leading-5 text-gray-600 scrollbar-thin dark:bg-white/4 dark:text-dark-600'>
                 {entry.body}
               </pre>
             </div>

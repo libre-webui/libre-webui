@@ -124,7 +124,7 @@ export const VoiceModeOverlay: React.FC<VoiceModeOverlayProps> = ({
       role='dialog'
       aria-modal='true'
       aria-label={t('voiceMode.title')}
-      className='fixed inset-0 z-[70] flex flex-col items-center justify-center gap-6 bg-white/95 p-6 backdrop-blur dark:bg-dark-25/95'
+      className='fixed inset-0 z-70 flex flex-col items-center justify-center gap-6 bg-white/95 p-6 backdrop-blur-sm dark:bg-dark-25/95'
       data-testid='voice-mode-overlay'
     >
       <button

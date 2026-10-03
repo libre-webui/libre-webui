@@ -129,7 +129,7 @@ export const PersonaSelector: React.FC<PersonaSelectorProps> = ({
             {selectedPersona.description}
           </div>
           {hasAdvancedFeatures(selectedPersona) && (
-            <div className='text-xs bg-gradient-to-r from-primary-100 to-primary-200 dark:from-primary-900/30 dark:to-primary-800/30 text-primary-700 dark:text-primary-400 px-2 py-1 rounded-full border border-primary-200 dark:border-primary-800'>
+            <div className='text-xs bg-linear-to-r from-primary-100 to-primary-200 dark:from-primary-900/30 dark:to-primary-800/30 text-primary-700 dark:text-primary-400 px-2 py-1 rounded-full border border-primary-200 dark:border-primary-800'>
               Advanced ✨
             </div>
           )}

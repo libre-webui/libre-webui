@@ -205,7 +205,7 @@ export function SidebarUserSection({
             type='button'
             onClick={() => onToggleShortcutPin(shortcut.id)}
             className={cn(
-              'absolute end-2 top-1/2 -translate-y-1/2 rounded-md p-1 text-ink-subtle transition-[color,opacity] hover:text-ink focus-visible:opacity-100',
+              'absolute inset-e-2 top-1/2 -translate-y-1/2 rounded-md p-1 text-ink-subtle transition-[color,opacity] hover:text-ink focus-visible:opacity-100',
               pinned
                 ? 'opacity-100 text-primary-600 dark:text-primary-400 hover:text-primary-500'
                 : 'opacity-0 group-hover/shortcut:opacity-100'
@@ -228,7 +228,7 @@ export function SidebarUserSection({
   return (
     <div
       className={cn(
-        'border-t border-black/[0.04] dark:border-white/[0.06]',
+        'border-t border-black/4 dark:border-white/6',
         sidebarCompact ? 'p-2' : 'p-2'
       )}
     >
@@ -243,7 +243,7 @@ export function SidebarUserSection({
               key={shortcut.id}
               to={shortcut.to}
               onClick={onMobileNavigate}
-              className='relative flex h-9 w-9 items-center justify-center rounded-full text-ink outline-none transition-colors hover:bg-interactive-hover focus-visible:ring-2 focus-visible:ring-primary-500/30'
+              className='relative flex h-9 w-9 items-center justify-center rounded-full text-ink outline-hidden transition-colors hover:bg-interactive-hover focus-visible:ring-2 focus-visible:ring-primary-500/30'
               title={t(shortcut.labelKey)}
               aria-label={t(shortcut.labelKey)}
               data-testid={`sidebar-rail-pinned-${shortcut.id}`}
@@ -254,7 +254,7 @@ export function SidebarUserSection({
           <button
             type='button'
             onClick={onOpenSettings}
-            className='flex h-9 w-9 items-center justify-center rounded-full text-ink outline-none transition-colors hover:bg-interactive-hover focus-visible:ring-2 focus-visible:ring-primary-500/30'
+            className='flex h-9 w-9 items-center justify-center rounded-full text-ink outline-hidden transition-colors hover:bg-interactive-hover focus-visible:ring-2 focus-visible:ring-primary-500/30'
             title={t('user.menu.settings')}
             aria-label={t('user.menu.settings')}
             data-testid='sidebar-rail-settings-button'
@@ -265,7 +265,7 @@ export function SidebarUserSection({
             ref={triggerRef}
             type='button'
             onClick={onToggleUserMenu}
-            className='relative flex h-9 w-9 items-center justify-center rounded-full outline-none transition-colors hover:bg-interactive-hover focus-visible:ring-2 focus-visible:ring-primary-500'
+            className='relative flex h-9 w-9 items-center justify-center rounded-full outline-hidden transition-colors hover:bg-interactive-hover focus-visible:ring-2 focus-visible:ring-primary-500'
             aria-label={triggerLabel}
             aria-expanded={userMenuOpen}
             aria-haspopup='true'
@@ -276,7 +276,7 @@ export function SidebarUserSection({
             {pendingApprovalCount > 0 && (
               <span
                 data-testid='pending-user-notification-badge'
-                className='absolute -end-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-md bg-error-500 px-1 text-[9px] font-semibold text-white shadow-sm'
+                className='absolute -inset-e-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-md bg-error-500 px-1 text-[9px] font-semibold text-white shadow-xs'
                 aria-hidden='true'
               >
                 {pendingApprovalCount > 99 ? '99+' : pendingApprovalCount}
@@ -288,7 +288,7 @@ export function SidebarUserSection({
             <div
               ref={menuPanelRef}
               data-testid='sidebar-user-menu'
-              className='scroll-region absolute bottom-0 start-full z-[70] ms-3 w-64 max-h-[calc(100dvh-1rem)] overflow-y-auto rounded-xl border border-black/[0.04] bg-surface-overlay py-1 shadow-lv3 animate-scale-in scrollbar-thin dark:border-white/[0.06]'
+              className='scroll-region absolute bottom-0 inset-s-full z-70 ms-3 w-64 max-h-[calc(100dvh-1rem)] overflow-y-auto rounded-xl border border-black/4 bg-surface-overlay py-1 shadow-lv3 animate-scale-in scrollbar-thin dark:border-white/6'
             >
               <button
                 type='button'
@@ -350,7 +350,7 @@ export function SidebarUserSection({
               key={shortcut.id}
               to={shortcut.to}
               onClick={onMobileNavigate}
-              className='flex h-[34px] w-full items-center gap-2 rounded-xl px-2.5 text-start text-sm text-ink transition-colors duration-150 hover:bg-interactive-hover touch-manipulation outline-none focus-visible:ring-2 focus-visible:ring-primary-500/30'
+              className='flex h-[34px] w-full items-center gap-2 rounded-xl px-2.5 text-start text-sm text-ink transition-colors duration-150 hover:bg-interactive-hover touch-manipulation outline-hidden focus-visible:ring-2 focus-visible:ring-primary-500/30'
               data-testid={`sidebar-pinned-${shortcut.id}`}
             >
               <shortcut.icon className='h-4 w-4 shrink-0 text-ink-muted' />
@@ -362,7 +362,7 @@ export function SidebarUserSection({
           <button
             type='button'
             onClick={onOpenSettings}
-            className='flex h-[34px] w-full items-center gap-2 rounded-xl px-2.5 text-start text-sm text-ink transition-colors duration-150 hover:bg-interactive-hover touch-manipulation outline-none focus-visible:ring-2 focus-visible:ring-primary-500/30'
+            className='flex h-[34px] w-full items-center gap-2 rounded-xl px-2.5 text-start text-sm text-ink transition-colors duration-150 hover:bg-interactive-hover touch-manipulation outline-hidden focus-visible:ring-2 focus-visible:ring-primary-500/30'
             data-testid='sidebar-settings-button'
           >
             <Settings className='h-4 w-4 shrink-0 text-ink-muted' />
@@ -375,7 +375,7 @@ export function SidebarUserSection({
             aria-label={isAdmin ? triggerLabel : user.username}
             aria-expanded={userMenuOpen}
             aria-haspopup='true'
-            className='relative h-[38px] w-full rounded-xl px-2.5 hover:bg-interactive-hover transition-colors duration-150 text-start touch-manipulation outline-none focus-visible:ring-2 focus-visible:ring-primary-500'
+            className='relative h-[38px] w-full rounded-xl px-2.5 hover:bg-interactive-hover transition-colors duration-150 text-start touch-manipulation outline-hidden focus-visible:ring-2 focus-visible:ring-primary-500'
           >
             <div className='flex items-center gap-2'>
               <UserAvatar user={user} size='sm' />
@@ -395,7 +395,7 @@ export function SidebarUserSection({
             {isAdmin && pendingApprovalCount > 0 && (
               <span
                 data-testid='pending-user-notification-badge'
-                className='absolute -end-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-error-500 px-1 text-[10px] font-semibold text-white shadow-subtle'
+                className='absolute -inset-e-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-error-500 px-1 text-[10px] font-semibold text-white shadow-subtle'
                 aria-hidden='true'
               >
                 {pendingApprovalCount > 99 ? '99+' : pendingApprovalCount}
@@ -407,7 +407,7 @@ export function SidebarUserSection({
             <div
               ref={menuPanelRef}
               data-testid='sidebar-user-menu'
-              className='scroll-region absolute bottom-full left-0 right-0 z-50 mb-2 max-h-[calc(100dvh-1rem)] rounded-xl border border-black/[0.04] bg-surface-overlay py-1 shadow-lv3 animate-scale-in scrollbar-thin dark:border-white/[0.06]'
+              className='scroll-region absolute bottom-full left-0 right-0 z-50 mb-2 max-h-[calc(100dvh-1rem)] rounded-xl border border-black/4 bg-surface-overlay py-1 shadow-lv3 animate-scale-in scrollbar-thin dark:border-white/6'
             >
               <div className='px-3 py-2 border-b border-gray-100 dark:border-dark-200/50'>
                 <div className='flex items-center gap-2.5'>

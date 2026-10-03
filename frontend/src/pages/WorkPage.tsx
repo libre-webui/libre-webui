@@ -1382,7 +1382,7 @@ export default function WorkPage() {
                   event.currentTarget.blur();
                 }
               }}
-              className='min-w-0 max-w-sm flex-1 truncate rounded-lg border border-transparent bg-transparent px-2 py-1 text-sm font-semibold text-ink outline-none hover:border-line focus:border-primary-500 focus:bg-surface'
+              className='min-w-0 max-w-sm flex-1 truncate rounded-lg border border-transparent bg-transparent px-2 py-1 text-sm font-semibold text-ink outline-hidden hover:border-line focus:border-primary-500 focus:bg-surface'
               aria-label={t('work.tasks.rename', {
                 defaultValue: 'Task title',
               })}
@@ -1599,7 +1599,7 @@ export default function WorkPage() {
                   role='menu'
                   aria-labelledby='work-task-actions-trigger'
                   onKeyDown={handleTaskActionsKeyDown}
-                  className='absolute end-0 top-10 z-40 min-w-44 rounded-xl border border-line bg-surface-overlay p-1.5 shadow-overlay'
+                  className='absolute inset-e-0 top-10 z-40 min-w-44 rounded-xl border border-line bg-surface-overlay p-1.5 shadow-overlay'
                 >
                   <button
                     type='button'
@@ -1720,7 +1720,7 @@ export default function WorkPage() {
               className='mx-auto flex min-h-full w-full max-w-3xl flex-col items-center justify-center px-4 py-8 sm:px-8 sm:py-10'
             >
               <div className='flex max-w-xl flex-col items-center text-center'>
-                <h2 className='text-balance text-[clamp(1.5rem,2.8vw,2rem)] font-medium leading-tight tracking-[-0.025em] text-ink rtl:tracking-normal'>
+                <h2 className='text-balance text-[clamp(1.5rem,2.8vw,2rem)] font-medium leading-tight tracking-tight text-ink rtl:tracking-normal'>
                   {t('work.landing.title', {
                     defaultValue: 'What would you like to work on?',
                   })}
@@ -1759,7 +1759,7 @@ export default function WorkPage() {
                         data-testid='work-policy'
                         value={policyId}
                         onChange={event => setPolicyId(event.target.value)}
-                        className='h-11 min-h-[44px] w-full min-w-0 rounded-xl border border-line/80 bg-surface/90 px-3 py-2 text-[13px] text-ink outline-none transition-colors focus:border-line-strong focus-visible:ring-2 focus-visible:ring-primary-500/30 motion-reduce:transition-none'
+                        className='h-11 min-h-[44px] w-full min-w-0 rounded-xl border border-line/80 bg-surface/90 px-3 py-2 text-[13px] text-ink outline-hidden transition-colors focus:border-line-strong focus-visible:ring-2 focus-visible:ring-primary-500/30 motion-reduce:transition-none'
                       >
                         <option value=''>
                           {t('work.policy.default', {
@@ -1791,7 +1791,7 @@ export default function WorkPage() {
                         aria-describedby='work-persona-description'
                         value={personaId}
                         onChange={event => setPersonaId(event.target.value)}
-                        className='h-11 min-h-[44px] w-full min-w-0 rounded-xl border border-line/80 bg-surface/90 px-3 py-2 text-[13px] text-ink outline-none transition-colors focus:border-line-strong focus-visible:ring-2 focus-visible:ring-primary-500/30 motion-reduce:transition-none'
+                        className='h-11 min-h-[44px] w-full min-w-0 rounded-xl border border-line/80 bg-surface/90 px-3 py-2 text-[13px] text-ink outline-hidden transition-colors focus:border-line-strong focus-visible:ring-2 focus-visible:ring-primary-500/30 motion-reduce:transition-none'
                       >
                         <option value=''>
                           {t('work.persona.none', {
@@ -1877,7 +1877,7 @@ export default function WorkPage() {
                             ? `${hostWorkspaceRoots[0]}/my-project`
                             : '/path/to/folder'
                         }
-                        className='min-h-[44px] w-full min-w-0 rounded-xl border border-line bg-surface px-3 py-2 font-mono text-[13px] text-ink outline-none transition-colors placeholder:text-ink-subtle focus:border-line-strong focus-visible:ring-2 focus-visible:ring-primary-500/30 motion-reduce:transition-none'
+                        className='min-h-[44px] w-full min-w-0 rounded-xl border border-line bg-surface px-3 py-2 font-mono text-[13px] text-ink outline-hidden transition-colors placeholder:text-ink-subtle focus:border-line-strong focus-visible:ring-2 focus-visible:ring-primary-500/30 motion-reduce:transition-none'
                       />
                       <p className='mt-1.5 text-xs leading-relaxed text-ink-muted'>
                         {hostPath.trim()

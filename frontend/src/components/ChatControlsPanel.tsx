@@ -307,7 +307,7 @@ export const ChatControlsPanel: React.FC<ChatControlsPanelProps> = ({
   return (
     <div
       data-testid='chat-controls-panel'
-      className='flex h-full w-[21rem] shrink-0 flex-col border-s border-black/[0.06] bg-surface/70 backdrop-blur-xl dark:border-white/[0.07] dark:bg-dark-100/70'
+      className='flex h-full w-84 shrink-0 flex-col border-s border-black/6 bg-surface/70 backdrop-blur-xl dark:border-white/[0.07] dark:bg-dark-100/70'
     >
       <div className='flex items-center justify-between px-4 pb-2 pt-4'>
         <h2 className='text-sm font-semibold text-gray-900 dark:text-dark-900'>
@@ -338,7 +338,7 @@ export const ChatControlsPanel: React.FC<ChatControlsPanelProps> = ({
             value={systemPrompt}
             onChange={event => setSystemPrompt(event.target.value)}
             placeholder={t('chat.controls.systemPromptPlaceholder')}
-            className='min-h-[110px] w-full resize-y rounded-xl border border-black/[0.08] bg-white p-2.5 text-[13px] leading-relaxed text-gray-900 placeholder:text-gray-400 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 dark:border-white/[0.08] dark:bg-dark-50 dark:text-dark-900 dark:placeholder:text-dark-500'
+            className='min-h-[110px] w-full resize-y rounded-xl border border-black/8 bg-white p-2.5 text-[13px] leading-relaxed text-gray-900 placeholder:text-gray-400 focus:border-primary-500 focus:outline-hidden focus:ring-2 focus:ring-primary-500/30 dark:border-white/8 dark:bg-dark-50 dark:text-dark-900 dark:placeholder:text-dark-500'
           />
         </div>
 
@@ -356,7 +356,7 @@ export const ChatControlsPanel: React.FC<ChatControlsPanelProps> = ({
             // so the inherited value is named inside the Default option.
             value={thinkingChoiceOf(overrides.think)}
             onChange={event => setThinkingOverride(event.target.value)}
-            className='w-full rounded-xl border border-black/[0.08] bg-white px-2.5 py-2 text-[13px] text-gray-900 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 dark:border-white/[0.08] dark:bg-dark-50 dark:text-dark-900'
+            className='w-full rounded-xl border border-black/8 bg-white px-2.5 py-2 text-[13px] text-gray-900 focus:border-primary-500 focus:outline-hidden focus:ring-2 focus:ring-primary-500/30 dark:border-white/8 dark:bg-dark-50 dark:text-dark-900'
           >
             {THINKING_CHOICES.map(choice => (
               <option key={choice} value={choice}>
@@ -391,7 +391,7 @@ export const ChatControlsPanel: React.FC<ChatControlsPanelProps> = ({
               onChange={event =>
                 setCompactionAllowed(event.target.value !== 'off')
               }
-              className='w-full rounded-xl border border-black/[0.08] bg-white px-2.5 py-2 text-[13px] text-gray-900 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 dark:border-white/[0.08] dark:bg-dark-50 dark:text-dark-900'
+              className='w-full rounded-xl border border-black/8 bg-white px-2.5 py-2 text-[13px] text-gray-900 focus:border-primary-500 focus:outline-hidden focus:ring-2 focus:ring-primary-500/30 dark:border-white/8 dark:bg-dark-50 dark:text-dark-900'
             >
               <option value='default'>
                 {t('chat.controls.compactionDefault')}
@@ -466,7 +466,7 @@ export const ChatControlsPanel: React.FC<ChatControlsPanelProps> = ({
                     onChange={event =>
                       setNumericOverride(option.key, event.target.value)
                     }
-                    className='w-24 rounded-lg border border-black/[0.08] bg-white px-2 py-1 text-end text-[12px] tabular-nums text-gray-900 placeholder:text-gray-400 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 dark:border-white/[0.08] dark:bg-dark-50 dark:text-dark-900 dark:placeholder:text-dark-500'
+                    className='w-24 rounded-lg border border-black/8 bg-white px-2 py-1 text-end text-[12px] tabular-nums text-gray-900 placeholder:text-gray-400 focus:border-primary-500 focus:outline-hidden focus:ring-2 focus:ring-primary-500/30 dark:border-white/8 dark:bg-dark-50 dark:text-dark-900 dark:placeholder:text-dark-500'
                   />
                 </div>
               );
@@ -477,7 +477,7 @@ export const ChatControlsPanel: React.FC<ChatControlsPanelProps> = ({
 
       {/* The floating keyboard-shortcuts control sits in this same corner on
           large screens; the extra space keeps it off these buttons. */}
-      <div className='flex items-center justify-between gap-2 border-t border-black/[0.06] px-4 py-3 dark:border-white/[0.07] lg:pb-16'>
+      <div className='flex items-center justify-between gap-2 border-t border-black/6 px-4 py-3 dark:border-white/[0.07] lg:pb-16'>
         <button
           onClick={() => {
             setOverrides({});

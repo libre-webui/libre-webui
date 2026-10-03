@@ -138,7 +138,7 @@ function TeachNameDialog({
         aria-modal='true'
         aria-labelledby={titleId}
         tabIndex={-1}
-        className='flex w-72 flex-col gap-3 rounded-xl border border-line bg-surface-raised p-4 shadow-xl outline-none'
+        className='flex w-72 flex-col gap-3 rounded-xl border border-line bg-surface-raised p-4 shadow-xl outline-hidden'
       >
         <h3 id={titleId} className='text-sm font-medium text-ink'>
           {t('work.screen.teachNamePlaceholder')}
@@ -153,7 +153,7 @@ function TeachNameDialog({
           }}
           placeholder={t('work.screen.teachNamePlaceholder')}
           data-testid='work-screen-teach-name'
-          className='rounded-lg border border-line bg-surface px-3 py-2 text-sm text-ink outline-none placeholder:text-ink-subtle focus:border-primary-500 focus:ring-2 focus:ring-primary-500/30'
+          className='rounded-lg border border-line bg-surface px-3 py-2 text-sm text-ink outline-hidden placeholder:text-ink-subtle focus:border-primary-500 focus:ring-2 focus:ring-primary-500/30'
         />
         <div className='flex justify-end gap-2'>
           <button
@@ -597,7 +597,7 @@ export function WorkspaceScreen({
   if (variant === 'mini') {
     return (
       <div
-        className='relative aspect-[8/5] w-full overflow-hidden rounded-xl border border-line bg-canvas'
+        className='relative aspect-8/5 w-full overflow-hidden rounded-xl border border-line bg-canvas'
         data-testid='work-screen-mini'
       >
         <div ref={mountRef} className='h-full w-full' />
@@ -641,7 +641,7 @@ export function WorkspaceScreen({
   if (needsReopen) {
     return (
       <div
-        className='flex h-full min-h-[16rem] w-full flex-col items-center justify-center gap-3 px-6 text-center'
+        className='flex h-full min-h-64 w-full flex-col items-center justify-center gap-3 px-6 text-center'
         data-testid='work-screen'
       >
         <MonitorPlay size={24} className='text-ink-muted' />
@@ -672,7 +672,7 @@ export function WorkspaceScreen({
 
   return (
     <div
-      className='flex h-full min-h-[16rem] w-full flex-col'
+      className='flex h-full min-h-64 w-full flex-col'
       data-testid='work-screen'
     >
       {/* Controls live in their own toolbar, never on top of the remote
@@ -837,7 +837,7 @@ export function WorkspaceScreen({
         )}
         {control.agentWaiting && !driving && state === 'connected' && (
           <div
-            className='absolute bottom-3 left-1/2 flex max-w-[90%] -translate-x-1/2 items-center gap-3 rounded-lg bg-amber-500/90 px-3 py-2 text-xs text-black shadow-lg backdrop-blur'
+            className='absolute bottom-3 left-1/2 flex max-w-[90%] -translate-x-1/2 items-center gap-3 rounded-lg bg-amber-500/90 px-3 py-2 text-xs text-black shadow-lg backdrop-blur-sm'
             data-testid='work-screen-agent-waiting'
           >
             <span className='font-medium'>{t('work.screen.agentWaiting')}</span>

@@ -80,7 +80,7 @@ export function SidebarScrollArea({
       className={
         compact
           ? cn('shrink-0', compactClassName)
-          : 'flex min-h-0 flex-1 flex-col border-t border-black/[0.05] dark:border-white/[0.05]'
+          : 'flex min-h-0 flex-1 flex-col border-t border-black/5 dark:border-white/5'
       }
     >
       <div

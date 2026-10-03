@@ -236,7 +236,7 @@ const PersonaCard: React.FC<PersonaCardProps> = ({
         onClick={() => onSelect?.(persona)}
       >
         {/* Avatar */}
-        <div className='relative flex-shrink-0'>
+        <div className='relative shrink-0'>
           <img
             src={getAvatarSrc(64)}
             alt={persona.name}
@@ -244,7 +244,7 @@ const PersonaCard: React.FC<PersonaCardProps> = ({
             onError={handleAvatarError(64)}
           />
           {hasAdvancedFeatures && (
-            <div className='absolute -bottom-0.5 -end-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-primary-600'>
+            <div className='absolute -bottom-0.5 -inset-e-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-primary-600'>
               <Sparkles className='h-2.5 w-2.5 text-white' />
             </div>
           )}
@@ -257,7 +257,7 @@ const PersonaCard: React.FC<PersonaCardProps> = ({
               {persona.name}
             </h4>
             {persona.is_favorite && (
-              <Star className='h-3 w-3 text-amber-500 fill-amber-500 flex-shrink-0' />
+              <Star className='h-3 w-3 text-amber-500 fill-amber-500 shrink-0' />
             )}
           </div>
           <p className='text-xs text-gray-500 dark:text-gray-400 truncate'>
@@ -267,7 +267,7 @@ const PersonaCard: React.FC<PersonaCardProps> = ({
 
         {/* Quick action */}
         {isSelected && (
-          <div className='flex-shrink-0'>
+          <div className='shrink-0'>
             <div className='w-6 h-6 rounded-full bg-primary-500 dark:bg-primary-600 flex items-center justify-center'>
               <Play className='h-3 w-3 text-white rtl:rotate-180' />
             </div>
@@ -372,7 +372,7 @@ const PersonaCard: React.FC<PersonaCardProps> = ({
             onError={handleAvatarError(128)}
           />
           {hasAdvancedFeatures && (
-            <div className='absolute -bottom-1 -end-1 flex h-6 w-6 items-center justify-center rounded-lg bg-primary-600 ring-2 ring-white dark:ring-dark-100'>
+            <div className='absolute -bottom-1 -inset-e-1 flex h-6 w-6 items-center justify-center rounded-lg bg-primary-600 ring-2 ring-white dark:ring-dark-100'>
               <Brain className='h-3.5 w-3.5 text-white' />
             </div>
           )}
@@ -401,7 +401,7 @@ const PersonaCard: React.FC<PersonaCardProps> = ({
 
         {/* System prompt preview */}
         {persona.parameters.system_prompt && (
-          <div className='mb-3 rounded-xl border border-gray-200/70 bg-gray-50/70 p-2.5 dark:border-white/[0.08] dark:bg-white/[0.025]'>
+          <div className='mb-3 rounded-xl border border-gray-200/70 bg-gray-50/70 p-2.5 dark:border-white/8 dark:bg-white/2.5'>
             <div className='flex items-center gap-1.5 mb-1'>
               <MessageSquare className='h-3 w-3 text-gray-400 dark:text-gray-500' />
               <span className='text-[10px] uppercase tracking-wider font-medium text-gray-400 dark:text-gray-500'>
@@ -416,14 +416,14 @@ const PersonaCard: React.FC<PersonaCardProps> = ({
 
         {/* Parameters */}
         <div className='flex flex-wrap gap-1.5 mb-3'>
-          <span className='inline-flex items-center gap-1 rounded-lg border border-gray-200/70 px-2 py-1 text-[11px] font-medium text-gray-600 dark:border-white/[0.08] dark:text-gray-400'>
+          <span className='inline-flex items-center gap-1 rounded-lg border border-gray-200/70 px-2 py-1 text-[11px] font-medium text-gray-600 dark:border-white/8 dark:text-gray-400'>
             <Zap className='h-3 w-3' />
             {persona.parameters.temperature?.toFixed(1) || '0.7'}
           </span>
-          <span className='inline-flex items-center rounded-lg border border-gray-200/70 px-2 py-1 text-[11px] font-medium text-gray-600 dark:border-white/[0.08] dark:text-gray-400'>
+          <span className='inline-flex items-center rounded-lg border border-gray-200/70 px-2 py-1 text-[11px] font-medium text-gray-600 dark:border-white/8 dark:text-gray-400'>
             Top-P {persona.parameters.top_p?.toFixed(1) || '0.9'}
           </span>
-          <span className='inline-flex items-center rounded-lg border border-gray-200/70 px-2 py-1 text-[11px] font-medium text-gray-600 dark:border-white/[0.08] dark:text-gray-400'>
+          <span className='inline-flex items-center rounded-lg border border-gray-200/70 px-2 py-1 text-[11px] font-medium text-gray-600 dark:border-white/8 dark:text-gray-400'>
             {(persona.parameters.context_window || 4096).toLocaleString()} ctx
           </span>
         </div>
@@ -460,7 +460,7 @@ const PersonaCard: React.FC<PersonaCardProps> = ({
         )}
 
         {/* Actions */}
-        <div className='flex items-center justify-between border-t border-gray-200/70 pt-3 dark:border-white/[0.08]'>
+        <div className='flex items-center justify-between border-t border-gray-200/70 pt-3 dark:border-white/8'>
           {/* Use button */}
           {onSelect && (
             <Button
@@ -531,7 +531,7 @@ const PersonaCard: React.FC<PersonaCardProps> = ({
                     ref={menuRef}
                     role='menu'
                     onKeyDown={handleMenuKeyDown}
-                    className='absolute end-0 bottom-full z-20 mb-1 w-44 rounded-xl border border-gray-200 bg-white py-1 shadow-lg dark:border-white/10 dark:bg-dark-100'
+                    className='absolute inset-e-0 bottom-full z-20 mb-1 w-44 rounded-xl border border-gray-200 bg-white py-1 shadow-lg dark:border-white/10 dark:bg-dark-100'
                   >
                     {hasAdvancedFeatures && (
                       <>

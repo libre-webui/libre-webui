@@ -35,8 +35,8 @@ function DiffLineRow({ line }: { line: WorkDiffLine }) {
   return (
     <tr
       className={cn(
-        line.type === 'added' && 'bg-[rgb(76,212,117)]/[0.12] text-ink',
-        line.type === 'removed' && 'bg-[rgb(255,61,129)]/[0.10] text-ink-muted',
+        line.type === 'added' && 'bg-[rgb(76,212,117)]/12 text-ink',
+        line.type === 'removed' && 'bg-[rgb(255,61,129)]/10 text-ink-muted',
         line.type === 'context' && 'text-ink-muted'
       )}
     >

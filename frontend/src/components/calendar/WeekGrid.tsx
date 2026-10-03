@@ -115,11 +115,11 @@ export function WeekGrid({
     >
       <div ref={gridRef} className='grid grid-cols-[3.5rem_repeat(7,1fr)]'>
         {/* Day headers + all-day row */}
-        <div className='sticky top-0 z-10 border-b border-black/[0.06] bg-surface dark:border-white/[0.07]' />
+        <div className='sticky top-0 z-10 border-b border-black/6 bg-surface dark:border-white/[0.07]' />
         {days.map(day => (
           <div
             key={day.toISOString()}
-            className='sticky top-0 z-10 border-b border-e border-black/[0.06] bg-surface px-1 py-1.5 dark:border-white/[0.07]'
+            className='sticky top-0 z-10 border-b border-e border-black/6 bg-surface px-1 py-1.5 dark:border-white/[0.07]'
           >
             <span
               className={cn(
@@ -147,7 +147,7 @@ export function WeekGrid({
         {/* Hour rows */}
         {Array.from({ length: 24 }, (_, hour) => (
           <React.Fragment key={hour}>
-            <div className='relative border-b border-black/[0.04] pe-1.5 text-end text-[10px] text-gray-400 dark:border-white/[0.04] dark:text-dark-500'>
+            <div className='relative border-b border-black/4 pe-1.5 text-end text-[10px] text-gray-400 dark:border-white/4 dark:text-dark-500'>
               <span className='relative -top-1.5'>
                 {hour > 0
                   ? hourFormatter.format(new Date(2024, 0, 1, hour))
@@ -164,7 +164,7 @@ export function WeekGrid({
                   key={`${day.toISOString()}-${hour}`}
                   onClick={() => onDayClick(day, hour)}
                   style={{ height: HOUR_HEIGHT_PX }}
-                  className='relative cursor-pointer space-y-0.5 overflow-hidden border-b border-e border-black/[0.04] p-0.5 transition-colors hover:bg-black/[0.02] dark:border-white/[0.04] dark:hover:bg-white/[0.03]'
+                  className='relative cursor-pointer space-y-0.5 overflow-hidden border-b border-e border-black/4 p-0.5 transition-colors hover:bg-black/2 dark:border-white/4 dark:hover:bg-white/3'
                 >
                   {/* The click bubbles to the slot handler above. */}
                   <button
@@ -183,7 +183,7 @@ export function WeekGrid({
                     })}
                     onFocus={() => setActiveSlot(slotKey)}
                     onKeyDown={event => moveSlot(event, dayIndex, hour)}
-                    className='absolute inset-0 focus-visible:outline-offset-[-2px]'
+                    className='absolute inset-0 focus-visible:-outline-offset-2'
                   />
                   {slotEvents.map(event => (
                     <div key={event.id} className='relative'>

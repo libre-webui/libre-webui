@@ -374,7 +374,7 @@ export function MediaGenerationPanel({
   if (!isOpen) return null;
 
   return createPortal(
-    <div className='fixed inset-0 z-[99999] flex items-center justify-center p-3 sm:p-6'>
+    <div className='fixed inset-0 z-99999 flex items-center justify-center p-3 sm:p-6'>
       <button
         className='absolute inset-0 bg-black/55 backdrop-blur-sm'
         onClick={handleClose}
@@ -386,7 +386,7 @@ export function MediaGenerationPanel({
         aria-labelledby={titleId}
         className='relative flex max-h-[92vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-gray-200/80 bg-white/95 shadow-2xl backdrop-blur-xl dark:border-white/10 dark:bg-dark-25/95'
       >
-        <div className='flex items-center justify-between border-b border-gray-200/70 px-4 py-3 dark:border-white/[0.08] sm:px-5'>
+        <div className='flex items-center justify-between border-b border-gray-200/70 px-4 py-3 dark:border-white/8 sm:px-5'>
           <div>
             <h2
               id={titleId}
@@ -404,7 +404,7 @@ export function MediaGenerationPanel({
         </div>
 
         <div className='scroll-region min-h-0 flex-1 space-y-4 p-4 sm:p-5'>
-          <div className='grid grid-cols-2 gap-2 rounded-xl bg-gray-100 p-1 dark:bg-white/[0.05]'>
+          <div className='grid grid-cols-2 gap-2 rounded-xl bg-gray-100 p-1 dark:bg-white/5'>
             {(['video', 'audio'] as const).map(option => (
               <button
                 key={option}
@@ -419,7 +419,7 @@ export function MediaGenerationPanel({
                 className={cn(
                   'flex items-center justify-center gap-2 rounded-xl px-3 py-2 text-sm transition-colors',
                   option === kind
-                    ? 'bg-white text-gray-950 shadow-sm dark:bg-white/10 dark:text-white'
+                    ? 'bg-white text-gray-950 shadow-xs dark:bg-white/10 dark:text-white'
                     : 'text-gray-500 dark:text-dark-500',
                   generating && 'cursor-not-allowed opacity-50'
                 )}
@@ -435,7 +435,7 @@ export function MediaGenerationPanel({
           </div>
 
           {kind === 'video' && recoverableVideoJobs.length > 0 && (
-            <section className='space-y-2 rounded-xl border border-gray-200/80 bg-gray-50/80 p-3 dark:border-white/10 dark:bg-white/[0.025]'>
+            <section className='space-y-2 rounded-xl border border-gray-200/80 bg-gray-50/80 p-3 dark:border-white/10 dark:bg-white/2.5'>
               <div>
                 <h3 className='text-sm font-medium text-gray-900 dark:text-gray-100'>
                   {t('mediaGeneration.savedJobs', {
@@ -607,7 +607,7 @@ export function MediaGenerationPanel({
               ) : null}
 
               {supportsVoiceCloning && (
-                <div className='space-y-3 rounded-xl border border-primary-500/20 bg-primary-500/[0.06] p-4'>
+                <div className='space-y-3 rounded-xl border border-primary-500/20 bg-primary-500/6 p-4'>
                   <label className='flex items-start gap-3 text-sm'>
                     <input
                       type='checkbox'
@@ -836,7 +836,7 @@ export function MediaGenerationPanel({
         </div>
 
         {models.length > 0 && (
-          <div className='border-t border-gray-200/70 p-4 dark:border-white/[0.08] sm:px-5'>
+          <div className='border-t border-gray-200/70 p-4 dark:border-white/8 sm:px-5'>
             <Button
               onClick={generating ? handleCancelGeneration : handleGenerate}
               disabled={
@@ -929,6 +929,6 @@ function formatBytes(bytes: number): string {
 }
 
 const inputClass =
-  'w-full rounded-xl border border-gray-200/80 bg-white/70 px-3 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500/20 dark:border-white/10 dark:bg-white/[0.035] dark:text-gray-100';
+  'w-full rounded-xl border border-gray-200/80 bg-white/70 px-3 py-2.5 text-sm text-gray-900 focus:outline-hidden focus:ring-2 focus:ring-primary-500/20 dark:border-white/10 dark:bg-white/[0.035] dark:text-gray-100';
 
 export default MediaGenerationPanel;

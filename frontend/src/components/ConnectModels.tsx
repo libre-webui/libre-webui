@@ -251,9 +251,9 @@ export const ConnectModels: React.FC<ConnectModelsProps> = ({
   };
 
   const cardClass =
-    'rounded-2xl border border-gray-200/80 bg-white/80 p-4 dark:border-white/10 dark:bg-white/[0.04]';
+    'rounded-2xl border border-gray-200/80 bg-white/80 p-4 dark:border-white/10 dark:bg-white/4';
   const inputClass =
-    'w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 dark:border-white/10 dark:bg-white/[0.035] dark:text-dark-800 dark:placeholder-dark-500';
+    'w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:border-primary-500 focus:outline-hidden focus:ring-2 focus:ring-primary-500/30 dark:border-white/10 dark:bg-white/[0.035] dark:text-dark-800 dark:placeholder-dark-500';
 
   const statusDot = {
     checking: 'bg-gray-400 animate-pulse',
@@ -272,7 +272,7 @@ export const ConnectModels: React.FC<ConnectModelsProps> = ({
       {/* ------------------------------------------------ Ollama */}
       <div className={cardClass}>
         <div className='flex items-center gap-3'>
-          <div className='rounded-xl border border-gray-200 bg-gray-50 p-2 dark:border-white/10 dark:bg-white/[0.05]'>
+          <div className='rounded-xl border border-gray-200 bg-gray-50 p-2 dark:border-white/10 dark:bg-white/5'>
             <Cpu className='h-5 w-5 text-gray-700 dark:text-dark-700' />
           </div>
           <div className='min-w-0 flex-1'>
@@ -351,7 +351,7 @@ export const ConnectModels: React.FC<ConnectModelsProps> = ({
             setOpenSection(openSection === 'local' ? null : 'local')
           }
         >
-          <div className='rounded-xl border border-gray-200 bg-gray-50 p-2 dark:border-white/10 dark:bg-white/[0.05]'>
+          <div className='rounded-xl border border-gray-200 bg-gray-50 p-2 dark:border-white/10 dark:bg-white/5'>
             <Server className='h-5 w-5 text-gray-700 dark:text-dark-700' />
           </div>
           <div className='min-w-0 flex-1'>
@@ -455,7 +455,7 @@ export const ConnectModels: React.FC<ConnectModelsProps> = ({
                     {probedModels.slice(0, 8).map(model => (
                       <span
                         key={model}
-                        className='rounded-md bg-gray-100 px-2 py-0.5 font-mono text-[10px] text-gray-700 dark:bg-white/[0.06] dark:text-dark-700'
+                        className='rounded-md bg-gray-100 px-2 py-0.5 font-mono text-[10px] text-gray-700 dark:bg-white/6 dark:text-dark-700'
                       >
                         {model}
                       </span>
@@ -491,7 +491,7 @@ export const ConnectModels: React.FC<ConnectModelsProps> = ({
             setOpenSection(openSection === 'cloud' ? null : 'cloud')
           }
         >
-          <div className='rounded-xl border border-gray-200 bg-gray-50 p-2 dark:border-white/10 dark:bg-white/[0.05]'>
+          <div className='rounded-xl border border-gray-200 bg-gray-50 p-2 dark:border-white/10 dark:bg-white/5'>
             <Cloud className='h-5 w-5 text-gray-700 dark:text-dark-700' />
           </div>
           <div className='min-w-0 flex-1'>
@@ -540,7 +540,7 @@ export const ConnectModels: React.FC<ConnectModelsProps> = ({
                 {cloudProvider && (
                   <>
                     <div className='relative'>
-                      <KeyRound className='absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400' />
+                      <KeyRound className='absolute inset-s-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400' />
                       <input
                         className={cn(inputClass, 'ps-9')}
                         value={cloudKey}

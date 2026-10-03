@@ -290,7 +290,7 @@ const AutomationsPage: React.FC = () => {
         <div
           role='tablist'
           aria-label={t('automations.title')}
-          className='flex items-center rounded-xl bg-black/[0.04] p-0.5 dark:bg-white/[0.06]'
+          className='flex items-center rounded-xl bg-black/4 p-0.5 dark:bg-white/6'
           onKeyDown={event => {
             if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') {
               return;
@@ -315,7 +315,7 @@ const AutomationsPage: React.FC = () => {
               className={cn(
                 'rounded-[10px] px-2.5 py-1 text-[12px] font-medium transition-colors',
                 tab === choice
-                  ? 'bg-white text-gray-900 shadow-sm dark:bg-dark-200 dark:text-dark-900'
+                  ? 'bg-white text-gray-900 shadow-xs dark:bg-dark-200 dark:text-dark-900'
                   : 'text-gray-500 hover:text-gray-800 dark:text-dark-500 dark:hover:text-dark-800'
               )}
             >
@@ -340,7 +340,7 @@ const AutomationsPage: React.FC = () => {
                 <div
                   key={automation.id}
                   data-testid='automation-row'
-                  className='rounded-2xl border border-black/[0.06] bg-white/60 px-4 py-3 dark:border-white/[0.07] dark:bg-dark-100/60'
+                  className='rounded-2xl border border-black/6 bg-white/60 px-4 py-3 dark:border-white/[0.07] dark:bg-dark-100/60'
                 >
                   <div className='flex items-center justify-between gap-3'>
                     <div className='min-w-0'>
@@ -400,7 +400,7 @@ const AutomationsPage: React.FC = () => {
                         }
                         aria-label={t('automations.actions')}
                         data-testid='automation-menu'
-                        className='rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-black/[0.04] hover:text-gray-700 dark:hover:bg-white/[0.06] dark:hover:text-dark-800'
+                        className='rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-black/4 hover:text-gray-700 dark:hover:bg-white/6 dark:hover:text-dark-800'
                       >
                         <MoreHorizontal className='h-4 w-4' />
                       </button>
@@ -408,7 +408,7 @@ const AutomationsPage: React.FC = () => {
                         <div
                           role='menu'
                           onKeyDown={handleMenuKeyDown}
-                          className='absolute end-0 top-8 z-20 w-44 rounded-xl border border-black/[0.07] bg-white p-1 shadow-lg dark:border-white/[0.08] dark:bg-dark-100'
+                          className='absolute inset-e-0 top-8 z-20 w-44 rounded-xl border border-black/[0.07] bg-white p-1 shadow-lg dark:border-white/8 dark:bg-dark-100'
                         >
                           <MenuItem
                             icon={Pencil}
@@ -460,7 +460,7 @@ const AutomationsPage: React.FC = () => {
                   type='button'
                   onClick={() => openTemplate(template)}
                   data-testid='automation-template'
-                  className='rounded-2xl border border-black/[0.06] bg-white/40 px-4 py-3 text-start transition-colors hover:bg-white/80 dark:border-white/[0.07] dark:bg-dark-100/40 dark:hover:bg-dark-100/80'
+                  className='rounded-2xl border border-black/6 bg-white/40 px-4 py-3 text-start transition-colors hover:bg-white/80 dark:border-white/[0.07] dark:bg-dark-100/40 dark:hover:bg-dark-100/80'
                 >
                   <p className='text-[13px] font-medium text-gray-900 dark:text-dark-900'>
                     {t(`automations.templates.${template.id}.name`)}
@@ -492,7 +492,7 @@ const AutomationsPage: React.FC = () => {
                 {runs.map(run => (
                   <div
                     key={run.id}
-                    className='flex items-center gap-3 rounded-xl border border-black/[0.05] bg-white/50 px-3 py-2 dark:border-white/[0.06] dark:bg-dark-100/50'
+                    className='flex items-center gap-3 rounded-xl border border-black/5 bg-white/50 px-3 py-2 dark:border-white/6 dark:bg-dark-100/50'
                   >
                     {runStatusIcon(run)}
                     <div className='min-w-0 flex-1'>
@@ -565,7 +565,7 @@ function MenuItem({ icon: Icon, label, destructive, onClick }: MenuItemProps) {
         'flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-start text-[13px] transition-colors',
         destructive
           ? 'text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20'
-          : 'text-gray-700 hover:bg-black/[0.04] dark:text-dark-700 dark:hover:bg-white/[0.06]'
+          : 'text-gray-700 hover:bg-black/4 dark:text-dark-700 dark:hover:bg-white/6'
       )}
     >
       <Icon className='h-3.5 w-3.5' />

@@ -97,7 +97,7 @@ const triggerFor = (
 };
 
 const fieldClass =
-  'w-full rounded-lg border border-black/[0.08] bg-white px-2.5 py-1.5 text-[13px] text-gray-900 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 dark:border-white/[0.08] dark:bg-dark-100 dark:text-dark-900';
+  'w-full rounded-lg border border-black/8 bg-white px-2.5 py-1.5 text-[13px] text-gray-900 focus:border-primary-500 focus:outline-hidden focus:ring-2 focus:ring-primary-500/30 dark:border-white/8 dark:bg-dark-100 dark:text-dark-900';
 const labelClass =
   'mb-1 block text-[11px] font-medium uppercase tracking-wide text-gray-400 dark:text-dark-500';
 
@@ -195,7 +195,7 @@ function EventModalForm({
 
   return createPortal(
     <div
-      className='fixed inset-0 z-[2147483647] flex items-center justify-center bg-gray-950/55 p-4 backdrop-blur-md'
+      className='fixed inset-0 z-2147483647 flex items-center justify-center bg-gray-950/55 p-4 backdrop-blur-md'
       onClick={onClose}
     >
       <div
@@ -204,7 +204,7 @@ function EventModalForm({
         aria-modal='true'
         aria-labelledby='calendar-event-modal-title'
         data-testid='calendar-event-modal'
-        className='w-full max-w-md rounded-3xl border border-black/[0.07] bg-white p-6 shadow-[0_24px_80px_rgba(0,0,0,0.24)] animate-scale-in dark:border-white/[0.08] dark:bg-dark-25'
+        className='w-full max-w-md rounded-3xl border border-black/[0.07] bg-white p-6 shadow-[0_24px_80px_rgba(0,0,0,0.24)] animate-scale-in dark:border-white/8 dark:bg-dark-25'
         onClick={e => e.stopPropagation()}
       >
         <div className='mb-4 flex items-center justify-between'>
@@ -261,7 +261,7 @@ function EventModalForm({
                   type='checkbox'
                   checked={allDay}
                   onChange={e => setAllDay(e.target.checked)}
-                  className='h-4 w-4 rounded accent-primary-500'
+                  className='h-4 w-4 rounded-sm accent-primary-500'
                 />
                 {t('calendar.allDay')}
               </label>

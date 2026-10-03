@@ -289,7 +289,7 @@ export const SettingsModelCatalog: React.FC = () => {
 
       <div className='flex flex-wrap items-center gap-2'>
         <div className='relative min-w-[180px] flex-1'>
-          <Search className='pointer-events-none absolute start-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400' />
+          <Search className='pointer-events-none absolute inset-s-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400' />
           <Input
             value={search}
             onChange={event => setSearch(event.target.value)}
@@ -444,7 +444,7 @@ export const SettingsModelCatalog: React.FC = () => {
                   title={starLabel}
                   aria-label={starLabel}
                   className={cn(
-                    'flex h-7 w-7 shrink-0 items-center justify-center rounded-md transition-colors hover:bg-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-1 dark:hover:bg-dark-200 dark:focus-visible:ring-offset-dark-100',
+                    'flex h-7 w-7 shrink-0 items-center justify-center rounded-md transition-colors hover:bg-gray-100 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-1 dark:hover:bg-dark-200 dark:focus-visible:ring-offset-dark-100',
                     isStarred
                       ? 'text-primary-600 dark:text-primary-400'
                       : 'text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'

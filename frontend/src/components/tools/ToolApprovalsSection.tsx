@@ -54,7 +54,7 @@ export const ToolApprovalsSection: React.FC<ToolApprovalsSectionProps> = ({
         {t('toolsPage.approvals.description')}
       </p>
       {approvals.length === 0 ? (
-        <p className='rounded-2xl border border-dashed border-black/[0.08] px-4 py-6 text-center text-[12px] text-gray-400 dark:border-white/[0.08] dark:text-dark-500'>
+        <p className='rounded-2xl border border-dashed border-black/8 px-4 py-6 text-center text-[12px] text-gray-400 dark:border-white/8 dark:text-dark-500'>
           {t('toolsPage.approvals.empty')}
         </p>
       ) : (
@@ -63,10 +63,10 @@ export const ToolApprovalsSection: React.FC<ToolApprovalsSectionProps> = ({
             <div
               key={approval.id}
               data-testid='tool-approval-row'
-              className='flex flex-wrap items-center justify-between gap-3 rounded-xl border border-black/[0.05] bg-white/50 px-3 py-2 dark:border-white/[0.06] dark:bg-dark-100/50'
+              className='flex flex-wrap items-center justify-between gap-3 rounded-xl border border-black/5 bg-white/50 px-3 py-2 dark:border-white/6 dark:bg-dark-100/50'
             >
               <div className='min-w-0 flex-[1_1_16rem]'>
-                <p className='break-words text-[13px] text-gray-900 [overflow-wrap:anywhere] dark:text-dark-900'>
+                <p className='wrap-break-word text-[13px] text-gray-900 wrap-anywhere dark:text-dark-900'>
                   <code>{approval.toolName}</code>
                   {' · '}
                   {serverName(approval.serverId)}

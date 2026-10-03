@@ -828,7 +828,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
       >
         {/* Advanced Features Panel */}
         {showAdvanced && (
-          <div className='mb-2 animate-slide-up rounded-2xl border border-black/[0.07] bg-surface/90 p-4 shadow-[0_12px_40px_rgba(15,23,42,0.08)] backdrop-blur-xl dark:border-white/[0.08] dark:bg-dark-200/90'>
+          <div className='mb-2 animate-slide-up rounded-2xl border border-black/[0.07] bg-surface/90 p-4 shadow-[0_12px_40px_rgba(15,23,42,0.08)] backdrop-blur-xl dark:border-white/8 dark:bg-dark-200/90'>
             <MediaUpload
               images={images}
               onImagesChange={setImages}
@@ -863,7 +863,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                   .map(entry => (
                     <span
                       key={entry.assistantMessageId}
-                      className='flex items-center gap-1.5 rounded-full border border-black/[0.07] bg-surface/70 px-2.5 py-1 text-[12px] text-gray-600 dark:border-white/[0.08] dark:bg-dark-200/70 dark:text-dark-700'
+                      className='flex items-center gap-1.5 rounded-full border border-black/[0.07] bg-surface/70 px-2.5 py-1 text-[12px] text-gray-600 dark:border-white/8 dark:bg-dark-200/70 dark:text-dark-700'
                       data-testid='pending-comparison'
                     >
                       <Loader2 className='h-3 w-3 animate-spin' />
@@ -917,13 +917,13 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                 placeholder={t('chat.input.placeholder')}
                 aria-label={t('chat.input.placeholder')}
                 disabled={disabled}
-                className='!m-0 block w-full min-h-9 max-h-[160px] resize-none !rounded-none !border-0 !bg-transparent !px-2 !pt-1.5 !pb-2 !shadow-none scrollbar-thin scrollbar-thumb-gray-300 placeholder:text-ink-subtle focus:!border-0 focus:!bg-transparent focus:!shadow-none focus:!ring-0 dark:scrollbar-thumb-dark-400 text-[0.9375rem] leading-relaxed touch-manipulation'
+                className='m-0! block w-full min-h-9 max-h-[160px] resize-none rounded-none! border-0! bg-transparent! px-2! pt-1.5! pb-2! shadow-none! scrollbar-thin scrollbar-thumb-gray-300 placeholder:text-ink-subtle focus:border-0! focus:bg-transparent! focus:shadow-none! focus:ring-0! dark:scrollbar-thumb-dark-400 text-[0.9375rem] leading-relaxed touch-manipulation'
                 rows={1}
               />
 
               <div className='flex items-center gap-1.5'>
                 {/* Attach menu - Integrated Left */}
-                <div ref={attachMenuRef} className='relative flex-shrink-0'>
+                <div ref={attachMenuRef} className='relative shrink-0'>
                   <Button
                     type='button'
                     variant='ghost'
@@ -937,7 +937,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                       setWebpageUrl(null);
                     }}
                     className={cn(
-                      'h-9 w-9 !p-0 rounded-full flex-shrink-0',
+                      'h-9 w-9 p-0! rounded-full shrink-0',
                       'bg-surface-subtle text-ink-muted hover:bg-hover-solid hover:text-ink dark:bg-surface-raised dark:hover:bg-surface-overlay',
                       'transition-colors duration-150 touch-manipulation',
                       hasAdvancedFeatures &&
@@ -957,7 +957,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                     ) : hasAdvancedFeatures ? (
                       <div className='relative flex items-center justify-center'>
                         <Paperclip className='h-4 w-4' aria-hidden='true' />
-                        <div className='absolute -top-0.5 -end-0.5 h-2 w-2 bg-primary-500 dark:bg-primary-400 rounded-full ring-2 ring-white dark:ring-dark-50' />
+                        <div className='absolute -top-0.5 -inset-e-0.5 h-2 w-2 bg-primary-500 dark:bg-primary-400 rounded-full ring-2 ring-white dark:ring-dark-50' />
                       </div>
                     ) : showAdvanced ? (
                       <Minus className='h-4 w-4' aria-hidden='true' />
@@ -967,7 +967,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                   </Button>
 
                   {attachMenuOpen && (
-                    <div className='absolute bottom-full start-0 z-30 mb-2 w-64 rounded-2xl border border-black/[0.08] bg-surface/95 p-1.5 shadow-[0_16px_48px_rgba(15,23,42,0.16)] backdrop-blur-xl animate-scale-in dark:border-white/[0.09] dark:bg-dark-100/95'>
+                    <div className='absolute bottom-full inset-s-0 z-30 mb-2 w-64 rounded-2xl border border-black/8 bg-surface/95 p-1.5 shadow-[0_16px_48px_rgba(15,23,42,0.16)] backdrop-blur-xl animate-scale-in dark:border-white/9 dark:bg-dark-100/95'>
                       {knowledgeMenuOpen ? (
                         <div className='p-1'>
                           <p className='mb-1 px-1.5 text-[11px] font-medium text-ink-muted'>
@@ -1043,7 +1043,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                             placeholder='https://…'
                             autoFocus
                             dir='ltr'
-                            className='w-full rounded-lg border border-black/[0.08] bg-white px-2.5 py-1.5 text-[13px] text-gray-900 placeholder:text-gray-400 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 dark:border-white/[0.08] dark:bg-dark-50 dark:text-dark-900'
+                            className='w-full rounded-lg border border-black/8 bg-white px-2.5 py-1.5 text-[13px] text-gray-900 placeholder:text-gray-400 focus:border-primary-500 focus:outline-hidden focus:ring-2 focus:ring-primary-500/30 dark:border-white/8 dark:bg-dark-50 dark:text-dark-900'
                           />
                           <div className='mt-2 flex justify-end gap-1.5'>
                             <Button
@@ -1195,7 +1195,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                       size='sm'
                       onClick={() => setWebSearchActive(active => !active)}
                       className={cn(
-                        'h-9 w-9 p-0 rounded-full flex-shrink-0 flex items-center justify-center',
+                        'h-9 w-9 p-0 rounded-full shrink-0 flex items-center justify-center',
                         'text-ink-muted hover:bg-interactive-hover hover:text-ink',
                         'transition-colors duration-150 touch-manipulation',
                         webSearchActive &&
@@ -1251,7 +1251,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                             })
                           : t('chat.input.transcriptionSource')
                       }
-                      className='h-8 max-w-32 rounded-lg border border-black/[0.08] bg-transparent px-1.5 text-[11px] text-gray-500 outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/30 dark:border-white/[0.09] dark:text-dark-600'
+                      className='h-8 max-w-32 rounded-lg border border-black/8 bg-transparent px-1.5 text-[11px] text-gray-500 outline-hidden focus:border-primary-500 focus:ring-2 focus:ring-primary-500/30 dark:border-white/9 dark:text-dark-600'
                     >
                       {dictation.sources.map(source =>
                         source.kind === 'browser' ? (
@@ -1273,7 +1273,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                       size='sm'
                       onClick={() => void dictation.toggle()}
                       className={cn(
-                        'h-9 w-9 p-0 rounded-full flex-shrink-0 flex items-center justify-center',
+                        'h-9 w-9 p-0 rounded-full shrink-0 flex items-center justify-center',
                         'text-ink-muted hover:bg-interactive-hover hover:text-ink',
                         'transition-colors duration-150 touch-manipulation',
                         (speechStarting || listening || transcribing) &&
@@ -1309,7 +1309,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                         onOpenVoiceMode();
                       }}
                       className={cn(
-                        'h-9 w-9 p-0 rounded-full flex-shrink-0 flex items-center justify-center',
+                        'h-9 w-9 p-0 rounded-full shrink-0 flex items-center justify-center',
                         'text-ink-muted hover:bg-interactive-hover hover:text-ink',
                         'transition-colors duration-150 touch-manipulation'
                       )}
@@ -1358,7 +1358,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                       size='sm'
                       onClick={handleStopGeneration}
                       className={cn(
-                        'h-9 w-9 p-0 rounded-full flex-shrink-0 flex items-center justify-center',
+                        'h-9 w-9 p-0 rounded-full shrink-0 flex items-center justify-center',
                         'bg-red-50 dark:bg-red-900/20',
                         'text-red-500 dark:text-red-400',
                         'hover:bg-red-100 dark:hover:bg-red-900/30',

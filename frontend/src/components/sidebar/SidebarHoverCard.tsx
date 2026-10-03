@@ -44,7 +44,7 @@ export function SidebarHoverCard({
   return createPortal(
     <div
       role='tooltip'
-      className='pointer-events-none fixed z-[70] hidden w-72 rounded-2xl border border-black/[0.07] bg-surface/95 p-3.5 shadow-[0_16px_48px_rgba(15,23,42,0.18)] backdrop-blur-xl animate-scale-in dark:border-white/[0.09] dark:bg-dark-100/95 md:block'
+      className='pointer-events-none fixed z-70 hidden w-72 rounded-2xl border border-black/[0.07] bg-surface/95 p-3.5 shadow-[0_16px_48px_rgba(15,23,42,0.18)] backdrop-blur-xl animate-scale-in dark:border-white/9 dark:bg-dark-100/95 md:block'
       style={{
         top: Math.max(8, Math.min(top, window.innerHeight - 220)),
         left,

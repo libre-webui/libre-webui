@@ -522,7 +522,7 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
         )}
       >
         <div className='max-w-sm text-center text-ink-muted'>
-          <div className='mx-auto mb-5 flex h-11 w-11 items-center justify-center rounded-2xl border border-black/[0.06] bg-surface/70 text-gray-500 shadow-sm dark:border-white/[0.07] dark:bg-dark-200/70 dark:text-dark-600'>
+          <div className='mx-auto mb-5 flex h-11 w-11 items-center justify-center rounded-2xl border border-black/6 bg-surface/70 text-gray-500 shadow-xs dark:border-white/[0.07] dark:bg-dark-200/70 dark:text-dark-600'>
             <Sparkles className='h-4 w-4' />
           </div>
           <h3 className='mb-2 text-lg font-medium tracking-[-0.02em] text-gray-900 dark:text-dark-900 sm:text-xl'>
@@ -731,7 +731,7 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
             'flex items-center justify-center gap-1.5',
             'px-3.5 py-2 rounded-full',
             'bg-surface/90 dark:bg-dark-200/90',
-            'border border-black/[0.07] dark:border-white/[0.08]',
+            'border border-black/[0.07] dark:border-white/8',
             'shadow-[0_8px_28px_rgba(15,23,42,0.12)] backdrop-blur-xl',
             'text-gray-600 dark:text-dark-600',
             'hover:bg-surface-raised dark:hover:bg-dark-200',

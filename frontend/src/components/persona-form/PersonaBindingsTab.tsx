@@ -256,7 +256,7 @@ function CheckboxGroup({
                 type='checkbox'
                 checked={selected.includes(option.id)}
                 onChange={() => onToggle(option.id)}
-                className='h-4 w-4 rounded border-gray-300 dark:border-dark-400'
+                className='h-4 w-4 rounded-sm border-gray-300 dark:border-dark-400'
               />
               <span className='text-sm text-gray-900 dark:text-dark-800'>
                 {option.label}

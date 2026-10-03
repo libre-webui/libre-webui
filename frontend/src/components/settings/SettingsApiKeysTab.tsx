@@ -285,7 +285,7 @@ export const SettingsApiKeysTab: React.FC = () => {
                   type='checkbox'
                   checked={scopes.includes(scope)}
                   onChange={() => toggleScope(scope)}
-                  className='h-4 w-4 rounded border-gray-300 dark:border-dark-300 text-primary-600 focus:ring-primary-500'
+                  className='h-4 w-4 rounded-sm border-gray-300 dark:border-dark-300 text-primary-600 focus:ring-primary-500'
                 />
                 {scope}
               </label>
@@ -335,7 +335,7 @@ export const SettingsApiKeysTab: React.FC = () => {
                   </span>
                   <code
                     dir='ltr'
-                    className='rounded bg-gray-100 dark:bg-dark-200 px-1.5 py-0.5 text-xs text-gray-600 dark:text-gray-300'
+                    className='rounded-sm bg-gray-100 dark:bg-dark-200 px-1.5 py-0.5 text-xs text-gray-600 dark:text-gray-300'
                   >
                     {token.tokenPrefix}…
                   </code>

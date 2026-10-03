@@ -196,7 +196,7 @@ const PersonaImportExport: React.FC<PersonaImportExportProps> = ({
 
       <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
         {/* Export Section */}
-        <div className='bg-white dark:bg-dark-100 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-dark-300'>
+        <div className='bg-white dark:bg-dark-100 rounded-lg p-6 shadow-xs border border-gray-200 dark:border-dark-300'>
           <h3 className='text-lg font-semibold text-gray-900 dark:text-dark-800 mb-4'>
             {t('personaImportExport.exportPersonas')}
           </h3>
@@ -267,7 +267,7 @@ const PersonaImportExport: React.FC<PersonaImportExportProps> = ({
         </div>
 
         {/* Import Section */}
-        <div className='bg-white dark:bg-dark-100 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-dark-300'>
+        <div className='bg-white dark:bg-dark-100 rounded-lg p-6 shadow-xs border border-gray-200 dark:border-dark-300'>
           <h3 className='text-lg font-semibold text-gray-900 dark:text-dark-800 mb-4'>
             {t('personaImportExport.importPersonas')}
           </h3>

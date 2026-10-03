@@ -84,12 +84,12 @@ export const PersonaQuickSwitch: React.FC<PersonaQuickSwitchProps> = ({
   return (
     <>
       {/* Backdrop */}
-      <div className='fixed inset-0 z-[9998]' onClick={onClose} />
+      <div className='fixed inset-0 z-9998' onClick={onClose} />
 
       {/* Panel */}
       <div
         className={cn(
-          'fixed z-[9999] w-80 max-h-[70vh] flex flex-col',
+          'fixed z-9999 w-80 max-h-[70vh] flex flex-col',
           'bg-white dark:bg-dark-100',
           'rounded-2xl shadow-2xl',
           'border border-gray-200 dark:border-dark-300',
@@ -98,7 +98,7 @@ export const PersonaQuickSwitch: React.FC<PersonaQuickSwitchProps> = ({
         )}
       >
         {/* Header */}
-        <div className='flex-shrink-0 px-4 py-3 border-b border-gray-100 dark:border-dark-200'>
+        <div className='shrink-0 px-4 py-3 border-b border-gray-100 dark:border-dark-200'>
           <div className='flex items-center justify-between mb-3'>
             <div className='flex items-center gap-2'>
               <Users className='h-5 w-5 text-primary-600 dark:text-primary-400' />
@@ -128,7 +128,7 @@ export const PersonaQuickSwitch: React.FC<PersonaQuickSwitchProps> = ({
                 'border border-gray-200 dark:border-dark-300',
                 'text-gray-900 dark:text-gray-100',
                 'placeholder:text-gray-400 dark:placeholder:text-gray-500',
-                'focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 dark:focus:border-primary-400'
+                'focus:outline-hidden focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 dark:focus:border-primary-400'
               )}
             />
           </div>
@@ -136,7 +136,7 @@ export const PersonaQuickSwitch: React.FC<PersonaQuickSwitchProps> = ({
 
         {/* Current persona */}
         {currentPersonaId && onClearPersona && (
-          <div className='flex-shrink-0 px-4 py-2 bg-primary-50 dark:bg-primary-900/20 border-b border-primary-100 dark:border-primary-800/30'>
+          <div className='shrink-0 px-4 py-2 bg-primary-50 dark:bg-primary-900/20 border-b border-primary-100 dark:border-primary-800/30'>
             <div className='flex items-center justify-between'>
               <span className='text-xs text-primary-700 dark:text-primary-300'>
                 Active persona
@@ -198,7 +198,7 @@ export const PersonaQuickSwitch: React.FC<PersonaQuickSwitchProps> = ({
                     )}
                   >
                     {/* Avatar */}
-                    <div className='relative flex-shrink-0'>
+                    <div className='relative shrink-0'>
                       <img
                         src={getAvatarSrc(persona)}
                         alt={persona.name}
@@ -212,7 +212,7 @@ export const PersonaQuickSwitch: React.FC<PersonaQuickSwitchProps> = ({
                         }
                       />
                       {hasAdvancedFeatures && (
-                        <div className='absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-gradient-to-br from-purple-500 to-primary-500 rounded-full flex items-center justify-center'>
+                        <div className='absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-linear-to-br from-purple-500 to-primary-500 rounded-full flex items-center justify-center'>
                           <Sparkles className='h-2.5 w-2.5 text-white' />
                         </div>
                       )}
@@ -232,7 +232,7 @@ export const PersonaQuickSwitch: React.FC<PersonaQuickSwitchProps> = ({
                           {persona.name}
                         </span>
                         {persona.is_favorite && (
-                          <Star className='h-3 w-3 text-amber-500 fill-amber-500 flex-shrink-0' />
+                          <Star className='h-3 w-3 text-amber-500 fill-amber-500 shrink-0' />
                         )}
                       </div>
                       <div className='flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400'>
@@ -244,7 +244,7 @@ export const PersonaQuickSwitch: React.FC<PersonaQuickSwitchProps> = ({
                     {/* Arrow */}
                     <ChevronRight
                       className={cn(
-                        'h-4 w-4 flex-shrink-0',
+                        'h-4 w-4 shrink-0',
                         isActive
                           ? 'text-primary-500 dark:text-primary-400'
                           : 'text-gray-300 dark:text-gray-600'
@@ -258,7 +258,7 @@ export const PersonaQuickSwitch: React.FC<PersonaQuickSwitchProps> = ({
         </div>
 
         {/* Footer */}
-        <div className='flex-shrink-0 px-4 py-3 border-t border-gray-100 dark:border-dark-200 bg-gray-50 dark:bg-dark-50'>
+        <div className='shrink-0 px-4 py-3 border-t border-gray-100 dark:border-dark-200 bg-gray-50 dark:bg-dark-50'>
           <p className='text-[11px] text-gray-500 dark:text-gray-400 text-center'>
             {personas.length} persona{personas.length !== 1 ? 's' : ''}{' '}
             available

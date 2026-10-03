@@ -263,13 +263,13 @@ export const CostGovernancePanel: React.FC<{ days: number }> = ({ days }) => {
                         .then(() => setRefresh(value => value + 1))
                         .catch(() => toast.error(t('costs.saveFailed')));
                     }}
-                    className='shrink-0 rounded p-1 text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30'
+                    className='shrink-0 rounded-sm p-1 text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30'
                     aria-label={t('costs.deleteBudget')}
                   >
                     <Trash2 className='h-3.5 w-3.5' />
                   </button>
                 </div>
-                <div className='mt-1 h-1.5 overflow-hidden rounded bg-gray-200 dark:bg-dark-300'>
+                <div className='mt-1 h-1.5 overflow-hidden rounded-sm bg-gray-200 dark:bg-dark-300'>
                   <div
                     className={
                       ratio >= 1
@@ -419,7 +419,7 @@ export const CostGovernancePanel: React.FC<{ days: number }> = ({ days }) => {
                           .then(() => setRefresh(value => value + 1))
                           .catch(() => toast.error(t('costs.saveFailed')));
                       }}
-                      className='rounded p-1 text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30'
+                      className='rounded-sm p-1 text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30'
                       aria-label={t('costs.deleteTariff')}
                     >
                       <Trash2 className='h-3.5 w-3.5' />

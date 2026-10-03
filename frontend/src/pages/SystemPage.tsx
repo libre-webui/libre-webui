@@ -104,7 +104,7 @@ const Panel: React.FC<
 > = ({ title, description, icon: Icon, className, action, children }) => (
   <section
     className={cn(
-      'overflow-hidden rounded-2xl border border-gray-200/80 bg-white/80 shadow-subtle backdrop-blur-md dark:border-white/[0.08] dark:bg-dark-100/75',
+      'overflow-hidden rounded-2xl border border-gray-200/80 bg-white/80 shadow-subtle backdrop-blur-md dark:border-white/8 dark:bg-dark-100/75',
       className
     )}
   >
@@ -135,13 +135,13 @@ const DetailRow: React.FC<{
   value: React.ReactNode;
   mono?: boolean;
 }> = ({ label, value, mono }) => (
-  <div className='flex min-w-0 items-start justify-between gap-5 border-b border-gray-100 py-2 last:border-0 dark:border-white/[0.05]'>
+  <div className='flex min-w-0 items-start justify-between gap-5 border-b border-gray-100 py-2 last:border-0 dark:border-white/5'>
     <dt className='shrink-0 text-xs text-gray-500 dark:text-dark-500'>
       {label}
     </dt>
     <dd
       className={cn(
-        'min-w-0 break-words text-end text-xs font-medium text-gray-800 dark:text-dark-800',
+        'min-w-0 wrap-break-word text-end text-xs font-medium text-gray-800 dark:text-dark-800',
         mono && 'font-mono text-[11px]'
       )}
     >
@@ -286,7 +286,7 @@ const WorkRecoverySection: React.FC = () => {
       ) : (
         <div className='overflow-x-auto'>
           <table className='w-full min-w-[720px] text-sm'>
-            <thead className='text-[11px] uppercase tracking-[0.1em] text-gray-400 dark:text-dark-500'>
+            <thead className='text-[11px] uppercase tracking-widest text-gray-400 dark:text-dark-500'>
               <tr>
                 <th className='px-4 py-2 text-start font-medium'>
                   {t('systemPage.work.recovery.container')}
@@ -459,7 +459,7 @@ const WorkPanel: React.FC = () => {
       action={
         <span
           className={cn(
-            'inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-medium uppercase tracking-[0.1em]',
+            'inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-medium uppercase tracking-widest',
             overview.runtimeAvailable
               ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300'
               : 'bg-gray-500/10 text-gray-600 dark:text-dark-600'
@@ -525,7 +525,7 @@ const WorkPanel: React.FC = () => {
             data-testid='system-work-table'
             className='w-full min-w-[900px] text-sm'
           >
-            <thead className='text-[11px] uppercase tracking-[0.1em] text-gray-400 dark:text-dark-500'>
+            <thead className='text-[11px] uppercase tracking-widest text-gray-400 dark:text-dark-500'>
               <tr>
                 <th className='px-5 py-2 text-start font-medium'>
                   {t('systemPage.work.owner')}
@@ -553,7 +553,7 @@ const WorkPanel: React.FC = () => {
                 </th>
               </tr>
             </thead>
-            <tbody className='divide-y divide-gray-100 dark:divide-white/[0.06]'>
+            <tbody className='divide-y divide-gray-100 dark:divide-white/6'>
               {overview.tasks.map(task => (
                 <tr key={task.id}>
                   <td className='px-5 py-2.5 text-gray-800 dark:text-dark-800'>
@@ -802,7 +802,7 @@ const SummaryCards: React.FC<{ diagnostics: SystemDiagnostics }> = ({
         return (
           <section
             key={card.label}
-            className='rounded-2xl border border-gray-200/80 bg-white/75 p-4 shadow-subtle backdrop-blur-md dark:border-white/[0.08] dark:bg-dark-100/70'
+            className='rounded-2xl border border-gray-200/80 bg-white/75 p-4 shadow-subtle backdrop-blur-md dark:border-white/8 dark:bg-dark-100/70'
           >
             <div className='flex items-center justify-between gap-3'>
               <span className='text-xs font-medium uppercase tracking-[0.12em] text-gray-500 dark:text-dark-500'>
@@ -834,7 +834,7 @@ const HostPanel: React.FC<{ diagnostics: SystemDiagnostics }> = ({
       description={t('systemPage.host.description')}
       icon={Server}
       action={
-        <span className='rounded-full bg-primary-500/10 px-2.5 py-1 text-[10px] font-medium uppercase tracking-[0.1em] text-primary-700 dark:text-primary-300'>
+        <span className='rounded-full bg-primary-500/10 px-2.5 py-1 text-[10px] font-medium uppercase tracking-widest text-primary-700 dark:text-primary-300'>
           {host.containerized
             ? t('systemPage.host.container')
             : t('systemPage.host.native')}
@@ -963,7 +963,7 @@ const StoragePanel: React.FC<{ diagnostics: SystemDiagnostics }> = ({
           {diagnostics.filesystems.map(filesystem => (
             <div
               key={`${filesystem.label}:${filesystem.path}`}
-              className='rounded-xl border border-gray-200/80 bg-gray-50/70 p-4 dark:border-white/[0.06] dark:bg-dark-200/55'
+              className='rounded-xl border border-gray-200/80 bg-gray-50/70 p-4 dark:border-white/6 dark:bg-dark-200/55'
             >
               <div className='flex items-start justify-between gap-4'>
                 <div className='min-w-0'>
@@ -1018,7 +1018,7 @@ const DockerPanel: React.FC<{ diagnostics: SystemDiagnostics }> = ({
       action={
         <span
           className={cn(
-            'inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-medium uppercase tracking-[0.1em]',
+            'inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-medium uppercase tracking-widest',
             docker.available
               ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300'
               : 'bg-gray-500/10 text-gray-600 dark:text-dark-600'
@@ -1116,7 +1116,7 @@ const DockerPanel: React.FC<{ diagnostics: SystemDiagnostics }> = ({
                 data-testid='system-docker-table'
                 className='w-full min-w-[760px] text-sm'
               >
-                <thead className='text-[11px] uppercase tracking-[0.1em] text-gray-400 dark:text-dark-500'>
+                <thead className='text-[11px] uppercase tracking-widest text-gray-400 dark:text-dark-500'>
                   <tr>
                     <th className='px-5 py-2 text-start font-medium'>
                       {t('systemPage.docker.container')}
@@ -1132,7 +1132,7 @@ const DockerPanel: React.FC<{ diagnostics: SystemDiagnostics }> = ({
                     </th>
                   </tr>
                 </thead>
-                <tbody className='divide-y divide-gray-100 dark:divide-white/[0.06]'>
+                <tbody className='divide-y divide-gray-100 dark:divide-white/6'>
                   {docker.containers.map(container => (
                     <tr key={container.id}>
                       <td className='px-5 py-2.5'>
@@ -1209,7 +1209,7 @@ const NetworkPanel: React.FC<{ diagnostics: SystemDiagnostics }> = ({
           {diagnostics.network.interfaces.map(networkInterface => (
             <div
               key={networkInterface.name}
-              className='rounded-xl border border-gray-200/80 bg-gray-50/70 p-4 dark:border-white/[0.06] dark:bg-dark-200/55'
+              className='rounded-xl border border-gray-200/80 bg-gray-50/70 p-4 dark:border-white/6 dark:bg-dark-200/55'
             >
               <div className='flex items-center gap-2'>
                 <Box className='h-4 w-4 text-primary-500' />

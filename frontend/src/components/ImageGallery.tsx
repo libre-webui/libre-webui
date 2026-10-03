@@ -138,7 +138,7 @@ export const ImageGallery: React.FC<ImageGalleryProps> = ({
 
   if (images.length === 0) {
     return (
-      <div className='flex flex-col items-center justify-center rounded-2xl border border-dashed border-gray-300 bg-white/30 px-6 py-20 text-center dark:border-white/15 dark:bg-white/[0.02]'>
+      <div className='flex flex-col items-center justify-center rounded-2xl border border-dashed border-gray-300 bg-white/30 px-6 py-20 text-center dark:border-white/15 dark:bg-white/2'>
         <ImageOff className='mb-4 h-10 w-10 text-gray-300 dark:text-gray-600' />
         <h3 className='text-lg font-medium text-gray-900 dark:text-gray-100 mb-2'>
           {t('imageGallery.noImages')}
@@ -180,7 +180,7 @@ export const ImageGallery: React.FC<ImageGalleryProps> = ({
 
             <button
               type='button'
-              className='absolute inset-0 z-[1] rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary-500'
+              className='absolute inset-0 z-1 rounded-2xl focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary-500'
               onClick={() => setSelectedImage(image)}
               aria-label={image.prompt}
             />
@@ -188,7 +188,7 @@ export const ImageGallery: React.FC<ImageGalleryProps> = ({
             {/* Hover Overlay */}
             <div
               className={cn(
-                'pointer-events-none absolute inset-0 z-[2] bg-gradient-to-t from-black/80 via-black/20 to-transparent',
+                'pointer-events-none absolute inset-0 z-2 bg-linear-to-t from-black/80 via-black/20 to-transparent',
                 'opacity-100 transition-opacity duration-200 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100',
                 'flex flex-col justify-end p-3'
               )}

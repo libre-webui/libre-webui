@@ -53,7 +53,7 @@ interface AutomationModalProps {
 }
 
 const fieldClass =
-  'w-full rounded-lg border border-black/[0.08] bg-white px-2.5 py-1.5 text-[13px] text-gray-900 focus:border-primary-500/40 focus:outline-none dark:border-white/[0.08] dark:bg-dark-100 dark:text-dark-900';
+  'w-full rounded-lg border border-black/8 bg-white px-2.5 py-1.5 text-[13px] text-gray-900 focus:border-primary-500/40 focus:outline-hidden dark:border-white/8 dark:bg-dark-100 dark:text-dark-900';
 const labelClass =
   'mb-1 block text-[11px] font-medium uppercase tracking-wide text-gray-400 dark:text-dark-500';
 
@@ -222,7 +222,7 @@ function AutomationModalForm({
 
   return createPortal(
     <div
-      className='fixed inset-0 z-[2147483647] flex items-center justify-center bg-gray-950/55 p-4 backdrop-blur-md'
+      className='fixed inset-0 z-2147483647 flex items-center justify-center bg-gray-950/55 p-4 backdrop-blur-md'
       onClick={onClose}
     >
       <div
@@ -232,7 +232,7 @@ function AutomationModalForm({
         aria-labelledby='automation-modal-title'
         tabIndex={-1}
         data-testid='automation-modal'
-        className='flex max-h-[90vh] w-full max-w-lg flex-col overflow-hidden rounded-3xl border border-black/[0.07] bg-white shadow-[0_24px_80px_rgba(0,0,0,0.24)] animate-scale-in dark:border-white/[0.08] dark:bg-dark-25'
+        className='flex max-h-[90vh] w-full max-w-lg flex-col overflow-hidden rounded-3xl border border-black/[0.07] bg-white shadow-[0_24px_80px_rgba(0,0,0,0.24)] animate-scale-in dark:border-white/8 dark:bg-dark-25'
         onClick={e => e.stopPropagation()}
       >
         <div

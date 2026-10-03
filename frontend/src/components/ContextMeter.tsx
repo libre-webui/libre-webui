@@ -89,7 +89,7 @@ export const ContextMeter: React.FC<ContextMeterProps> = ({
 
   return (
     <div
-      className='relative flex-shrink-0'
+      className='relative shrink-0'
       onMouseEnter={() => setVisible(true)}
       onMouseLeave={() => setVisible(false)}
       onFocus={() => setVisible(true)}
@@ -111,7 +111,7 @@ export const ContextMeter: React.FC<ContextMeterProps> = ({
             }
           : {})}
         className={cn(
-          'touch-target relative flex h-9 w-9 items-center justify-center rounded-full text-ink-muted outline-none',
+          'touch-target relative flex h-9 w-9 items-center justify-center rounded-full text-ink-muted outline-hidden',
           'transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-primary-500/40',
           // Past four fifths the summarizer is close enough to warn about;
           // at the window the conversation is losing history.
@@ -149,7 +149,7 @@ export const ContextMeter: React.FC<ContextMeterProps> = ({
         {/* Color alone must not carry the warning. */}
         {ratio >= 0.8 && (
           <AlertTriangle
-            className='absolute end-0 top-0 h-3 w-3'
+            className='absolute inset-e-0 top-0 h-3 w-3'
             aria-hidden='true'
           />
         )}
@@ -161,7 +161,7 @@ export const ContextMeter: React.FC<ContextMeterProps> = ({
           className={cn(
             'pointer-events-none absolute bottom-full left-1/2 z-30 mb-2 -translate-x-1/2',
             'whitespace-nowrap rounded-2xl bg-surface/95 px-4 py-3 text-center shadow-lv3 backdrop-blur-xl',
-            'border border-black/[0.06] dark:border-white/[0.08] dark:bg-dark-100/95',
+            'border border-black/6 dark:border-white/8 dark:bg-dark-100/95',
             'animate-scale-in'
           )}
         >

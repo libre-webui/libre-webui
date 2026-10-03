@@ -89,7 +89,7 @@ export function HuggingFaceSection({
     <div
       className={cn(
         'overflow-hidden rounded-2xl border',
-        'bg-white/60 dark:bg-white/[0.03]',
+        'bg-white/60 dark:bg-white/3',
         'border-gray-200/80 dark:border-white/10'
       )}
     >
@@ -130,7 +130,7 @@ export function HuggingFaceSection({
         <div className='p-4 pt-0 space-y-4'>
           <div className='flex flex-col sm:flex-row gap-3'>
             <div className='relative flex-1'>
-              <Search className='absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 dark:text-gray-500' />
+              <Search className='absolute inset-s-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 dark:text-gray-500' />
               <input
                 type='text'
                 value={search}
@@ -145,7 +145,7 @@ export function HuggingFaceSection({
                   'border-gray-200 dark:border-dark-300',
                   'text-gray-900 dark:text-dark-700',
                   'placeholder-gray-500 dark:placeholder-gray-400',
-                  'focus:outline-none focus:ring-2 focus:ring-primary-500/20',
+                  'focus:outline-hidden focus:ring-2 focus:ring-primary-500/20',
                   'focus:border-primary-500'
                 )}
               />
@@ -159,7 +159,7 @@ export function HuggingFaceSection({
                 'bg-gray-50 dark:bg-dark-50',
                 'border-gray-200 dark:border-dark-300',
                 'text-gray-900 dark:text-dark-700',
-                'focus:outline-none focus:ring-2 focus:ring-primary-500/20'
+                'focus:outline-hidden focus:ring-2 focus:ring-primary-500/20'
               )}
             >
               <option value='text-generation'>
@@ -184,7 +184,7 @@ export function HuggingFaceSection({
                 'bg-gray-50 dark:bg-dark-50',
                 'border-gray-200 dark:border-dark-300',
                 'text-gray-900 dark:text-dark-700',
-                'focus:outline-none focus:ring-2 focus:ring-primary-500/20'
+                'focus:outline-hidden focus:ring-2 focus:ring-primary-500/20'
               )}
             >
               <option value='downloads'>
@@ -318,7 +318,7 @@ function HuggingFaceModelCard({
               {model.gated && (
                 <span
                   className={cn(
-                    'px-1.5 py-0.5 rounded text-xs',
+                    'px-1.5 py-0.5 rounded-sm text-xs',
                     'bg-yellow-500/20 dark:bg-yellow-900/30',
                     'text-ink'
                   )}
@@ -331,7 +331,7 @@ function HuggingFaceModelCard({
               {t('modelManager.huggingface.by', 'by')} {model.author}
             </p>
           </div>
-          <div className='flex items-center gap-2 flex-shrink-0'>
+          <div className='flex items-center gap-2 shrink-0'>
             <a
               href={`https://huggingface.co/${model.id}`}
               target='_blank'
@@ -366,7 +366,7 @@ function HuggingFaceModelCard({
           {model.pipeline_tag && (
             <span
               className={cn(
-                'px-1.5 py-0.5 rounded',
+                'px-1.5 py-0.5 rounded-sm',
                 'bg-gray-200 dark:bg-dark-300'
               )}
             >
@@ -495,7 +495,7 @@ function GgufFileRow({
         <div className='flex items-center gap-2 mt-0.5 text-xs text-gray-500 dark:text-gray-400'>
           <span>{file.sizeFormatted}</span>
           {file.quantization && (
-            <span className='px-1.5 py-0.5 rounded bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400'>
+            <span className='px-1.5 py-0.5 rounded-sm bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400'>
               {file.quantization}
             </span>
           )}

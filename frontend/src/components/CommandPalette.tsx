@@ -588,7 +588,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
   return createPortal(
     <div
       data-testid='command-palette'
-      className='fixed inset-0 z-[2147483647] flex items-center justify-center bg-black/25 px-4 backdrop-blur-[2px] dark:bg-black/45'
+      className='fixed inset-0 z-2147483647 flex items-center justify-center bg-black/25 px-4 backdrop-blur-xs dark:bg-black/45'
       onMouseDown={event => {
         if (event.target === event.currentTarget) close();
       }}
@@ -644,7 +644,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
               'palette.placeholder',
               'Search chats, Work, actions…'
             )}
-            className='h-[3.25rem] w-full bg-transparent text-[15px] text-ink outline-none placeholder:text-ink-muted'
+            className='h-13 w-full bg-transparent text-[15px] text-ink outline-hidden placeholder:text-ink-muted'
           />
           <kbd
             aria-hidden='true'

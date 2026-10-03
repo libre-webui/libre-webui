@@ -343,7 +343,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
   );
 
   const inputClass =
-    'h-11 w-full rounded-xl border border-line bg-surface px-3 text-sm text-ink shadow-subtle outline-none transition-[border-color,box-shadow,background-color] placeholder:text-ink-muted focus:border-primary-500 focus:ring-2 focus:ring-primary-500/30 disabled:cursor-not-allowed disabled:bg-surface-subtle disabled:text-ink-muted motion-reduce:transition-none';
+    'h-11 w-full rounded-xl border border-line bg-surface px-3 text-sm text-ink shadow-subtle outline-hidden transition-[border-color,box-shadow,background-color] placeholder:text-ink-muted focus:border-primary-500 focus:ring-2 focus:ring-primary-500/30 disabled:cursor-not-allowed disabled:bg-surface-subtle disabled:text-ink-muted motion-reduce:transition-none';
 
   if (recoveryCodes && pendingLogin) {
     return (
@@ -366,7 +366,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
         <button
           type='button'
           onClick={() => completeLogin(pendingLogin)}
-          className='flex h-11 w-full items-center justify-center rounded-xl border border-transparent bg-ink px-4 text-sm font-medium text-ink-inverse shadow-subtle transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 disabled:cursor-not-allowed disabled:opacity-40 motion-reduce:transition-none'
+          className='flex h-11 w-full items-center justify-center rounded-xl border border-transparent bg-ink px-4 text-sm font-medium text-ink-inverse shadow-subtle transition-opacity hover:opacity-90 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary-500 disabled:cursor-not-allowed disabled:opacity-40 motion-reduce:transition-none'
         >
           {t('auth.mfa.recoveryCodesSaved')}
         </button>
@@ -448,7 +448,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
           <button
             type='submit'
             disabled={isLoading || !mfaCode.trim()}
-            className='flex h-11 w-full items-center justify-center rounded-xl border border-transparent bg-ink px-4 text-sm font-medium text-ink-inverse shadow-subtle transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 disabled:cursor-not-allowed disabled:opacity-40 motion-reduce:transition-none'
+            className='flex h-11 w-full items-center justify-center rounded-xl border border-transparent bg-ink px-4 text-sm font-medium text-ink-inverse shadow-subtle transition-opacity hover:opacity-90 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary-500 disabled:cursor-not-allowed disabled:opacity-40 motion-reduce:transition-none'
           >
             {isLoading ? (
               <div className='flex items-center'>
@@ -533,7 +533,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
               clearFieldError('username', 'credentials');
             }}
             onKeyDown={handleKeyDown}
-            className='h-11 w-full rounded-xl border border-line bg-surface px-3 text-sm text-ink shadow-subtle outline-none transition-[border-color,box-shadow,background-color] placeholder:text-ink-muted focus:border-primary-500 focus:ring-2 focus:ring-primary-500/30 disabled:cursor-not-allowed disabled:bg-surface-subtle disabled:text-ink-muted motion-reduce:transition-none'
+            className='h-11 w-full rounded-xl border border-line bg-surface px-3 text-sm text-ink shadow-subtle outline-hidden transition-[border-color,box-shadow,background-color] placeholder:text-ink-muted focus:border-primary-500 focus:ring-2 focus:ring-primary-500/30 disabled:cursor-not-allowed disabled:bg-surface-subtle disabled:text-ink-muted motion-reduce:transition-none'
             placeholder={t('auth.login.usernamePlaceholder')}
             required
             disabled={isLoading || isDemo}
@@ -559,7 +559,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
                 clearFieldError('password', 'credentials');
               }}
               onKeyDown={handleKeyDown}
-              className='h-11 w-full rounded-xl border border-line bg-surface px-3 pe-11 text-sm text-ink shadow-subtle outline-none transition-[border-color,box-shadow,background-color] placeholder:text-ink-muted focus:border-primary-500 focus:ring-2 focus:ring-primary-500/30 disabled:cursor-not-allowed disabled:bg-surface-subtle disabled:text-ink-muted motion-reduce:transition-none'
+              className='h-11 w-full rounded-xl border border-line bg-surface px-3 pe-11 text-sm text-ink shadow-subtle outline-hidden transition-[border-color,box-shadow,background-color] placeholder:text-ink-muted focus:border-primary-500 focus:ring-2 focus:ring-primary-500/30 disabled:cursor-not-allowed disabled:bg-surface-subtle disabled:text-ink-muted motion-reduce:transition-none'
               placeholder={t('auth.login.passwordPlaceholder')}
               required
               disabled={isLoading || isDemo}
@@ -567,7 +567,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
             <button
               type='button'
               onClick={() => setShowPassword(!showPassword)}
-              className='absolute inset-y-0 end-0 flex items-center pe-3 text-ink-muted transition-colors hover:text-ink disabled:cursor-not-allowed disabled:opacity-50'
+              className='absolute inset-y-0 inset-e-0 flex items-center pe-3 text-ink-muted transition-colors hover:text-ink disabled:cursor-not-allowed disabled:opacity-50'
               disabled={isLoading || isDemo}
               aria-label={
                 showPassword ? t('auth.password.hide') : t('auth.password.show')
@@ -599,7 +599,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
         <button
           type='submit'
           disabled={submitDisabled}
-          className='flex h-11 w-full items-center justify-center rounded-xl border border-transparent bg-ink px-4 text-sm font-medium text-ink-inverse shadow-subtle transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-canvas disabled:cursor-not-allowed disabled:opacity-40 motion-reduce:transition-none'
+          className='flex h-11 w-full items-center justify-center rounded-xl border border-transparent bg-ink px-4 text-sm font-medium text-ink-inverse shadow-subtle transition-opacity hover:opacity-90 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-canvas disabled:cursor-not-allowed disabled:opacity-40 motion-reduce:transition-none'
         >
           {isLoading ? (
             <div className='flex items-center'>
@@ -621,7 +621,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
           data-testid='passkey-signin-button'
           onClick={handlePasskeyLogin}
           disabled={isLoading}
-          className='mt-3 flex h-11 w-full items-center justify-center rounded-xl border border-line bg-surface px-4 text-sm font-medium text-ink shadow-subtle transition-colors hover:bg-surface-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 disabled:cursor-not-allowed disabled:opacity-40 motion-reduce:transition-none'
+          className='mt-3 flex h-11 w-full items-center justify-center rounded-xl border border-line bg-surface px-4 text-sm font-medium text-ink shadow-subtle transition-colors hover:bg-surface-subtle focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary-500 disabled:cursor-not-allowed disabled:opacity-40 motion-reduce:transition-none'
         >
           <KeyRound size={16} className='me-2' />
           {t('auth.passkeys.signInButton')}

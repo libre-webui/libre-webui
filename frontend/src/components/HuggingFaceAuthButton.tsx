@@ -92,7 +92,7 @@ export const HuggingFaceAuthButton: React.FC = () => {
       type='button'
       onClick={handleHuggingFaceLogin}
       disabled={isLoading}
-      className='flex h-11 w-full items-center justify-center rounded-xl border border-line bg-surface-raised px-4 text-sm font-medium text-ink shadow-subtle transition-colors hover:border-line-strong hover:bg-surface-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-canvas disabled:cursor-not-allowed disabled:opacity-40 motion-reduce:transition-none'
+      className='flex h-11 w-full items-center justify-center rounded-xl border border-line bg-surface-raised px-4 text-sm font-medium text-ink shadow-subtle transition-colors hover:border-line-strong hover:bg-surface-subtle focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-canvas disabled:cursor-not-allowed disabled:opacity-40 motion-reduce:transition-none'
     >
       {isLoading ? (
         <div className='flex items-center'>

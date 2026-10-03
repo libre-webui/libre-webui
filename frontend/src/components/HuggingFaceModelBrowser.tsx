@@ -269,7 +269,7 @@ export const HuggingFaceModelBrowser: React.FC<
               placeholder={t('huggingface.searchPlaceholder')}
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
-              className='w-full pl-10 pr-4 py-2.5 bg-gray-100 dark:bg-dark-50 border border-gray-200 dark:border-dark-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-gray-900 dark:text-dark-800 placeholder-gray-500 dark:placeholder-dark-500'
+              className='w-full pl-10 pr-4 py-2.5 bg-gray-100 dark:bg-dark-50 border border-gray-200 dark:border-dark-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-hidden text-gray-900 dark:text-dark-800 placeholder-gray-500 dark:placeholder-dark-500'
             />
           </div>
 
@@ -298,7 +298,7 @@ export const HuggingFaceModelBrowser: React.FC<
                 <select
                   value={task}
                   onChange={e => setTask(e.target.value as TaskOption)}
-                  className='w-full px-3 py-2 bg-gray-100 dark:bg-dark-50 border border-gray-200 dark:border-dark-300 rounded-lg text-sm text-gray-900 dark:text-dark-800 focus:ring-2 focus:ring-blue-500 outline-none'
+                  className='w-full px-3 py-2 bg-gray-100 dark:bg-dark-50 border border-gray-200 dark:border-dark-300 rounded-lg text-sm text-gray-900 dark:text-dark-800 focus:ring-2 focus:ring-blue-500 outline-hidden'
                 >
                   {TASK_OPTIONS.map(option => (
                     <option key={option.value} value={option.value}>
@@ -316,7 +316,7 @@ export const HuggingFaceModelBrowser: React.FC<
                 <select
                   value={sort}
                   onChange={e => setSort(e.target.value as SortOption)}
-                  className='w-full px-3 py-2 bg-gray-100 dark:bg-dark-50 border border-gray-200 dark:border-dark-300 rounded-lg text-sm text-gray-900 dark:text-dark-800 focus:ring-2 focus:ring-blue-500 outline-none'
+                  className='w-full px-3 py-2 bg-gray-100 dark:bg-dark-50 border border-gray-200 dark:border-dark-300 rounded-lg text-sm text-gray-900 dark:text-dark-800 focus:ring-2 focus:ring-blue-500 outline-hidden'
                 >
                   {SORT_OPTIONS.map(option => (
                     <option key={option.value} value={option.value}>
@@ -381,7 +381,7 @@ export const HuggingFaceModelBrowser: React.FC<
                               {model.id}
                             </h3>
                             {model.gated && (
-                              <span className='rounded bg-yellow-500/20 px-1.5 py-0.5 text-xs text-ink dark:bg-yellow-900/30'>
+                              <span className='rounded-sm bg-yellow-500/20 px-1.5 py-0.5 text-xs text-ink dark:bg-yellow-900/30'>
                                 {t('huggingface.gated')}
                               </span>
                             )}
@@ -399,7 +399,7 @@ export const HuggingFaceModelBrowser: React.FC<
                               {formatNumber(model.likes)}
                             </span>
                             {model.pipeline_tag && (
-                              <span className='px-2 py-0.5 bg-gray-100 dark:bg-dark-200 rounded text-xs'>
+                              <span className='px-2 py-0.5 bg-gray-100 dark:bg-dark-200 rounded-sm text-xs'>
                                 {model.pipeline_tag}
                               </span>
                             )}
@@ -493,7 +493,7 @@ export const HuggingFaceModelBrowser: React.FC<
                                     <div className='flex items-center gap-2 mt-1 text-xs text-gray-500 dark:text-gray-400'>
                                       <span>{file.sizeFormatted}</span>
                                       {file.quantization && (
-                                        <span className='px-1.5 py-0.5 rounded bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400'>
+                                        <span className='px-1.5 py-0.5 rounded-sm bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400'>
                                           {file.quantization}
                                         </span>
                                       )}
@@ -538,7 +538,7 @@ export const HuggingFaceModelBrowser: React.FC<
                                       {t('models.pull', 'Pull')}
                                     </button>
                                   ) : (
-                                    <span className='rounded bg-amber-500/20 px-2 py-1 text-[11px] font-medium text-ink dark:bg-amber-900/30'>
+                                    <span className='rounded-sm bg-amber-500/20 px-2 py-1 text-[11px] font-medium text-ink dark:bg-amber-900/30'>
                                       {t('modelSelector.adminOnlyPull')}
                                     </span>
                                   )}

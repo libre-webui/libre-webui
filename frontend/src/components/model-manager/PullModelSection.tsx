@@ -80,7 +80,7 @@ export function PullModelSection({
     <div
       className={cn(
         'overflow-hidden rounded-2xl border',
-        'bg-white/60 dark:bg-white/[0.03]',
+        'bg-white/60 dark:bg-white/3',
         'border-gray-200/80 dark:border-white/10'
       )}
     >
@@ -110,7 +110,7 @@ export function PullModelSection({
         <div className='p-4 pt-0 space-y-4'>
           <div className='flex gap-2'>
             <div className='relative flex-1'>
-              <Search className='absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 dark:text-gray-500' />
+              <Search className='absolute inset-s-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 dark:text-gray-500' />
               <input
                 type='text'
                 value={modelName}
@@ -122,7 +122,7 @@ export function PullModelSection({
                   'border-gray-200 dark:border-dark-300',
                   'text-gray-900 dark:text-dark-700',
                   'placeholder-gray-500 dark:placeholder-gray-400',
-                  'focus:outline-none focus:ring-2 focus:ring-primary-500/20',
+                  'focus:outline-hidden focus:ring-2 focus:ring-primary-500/20',
                   'focus:border-primary-500'
                 )}
                 disabled={pulling || !canInstallModels}

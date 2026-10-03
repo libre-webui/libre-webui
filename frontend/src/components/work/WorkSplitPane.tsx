@@ -396,7 +396,7 @@ export function WorkSplitPane({
         onDoubleClick={resetSplit}
         onKeyDown={handleResizerKeyDown}
         className={cn(
-          'group relative z-40 hidden h-full cursor-col-resize touch-none select-none items-center justify-center outline-none xl:flex',
+          'group relative z-40 hidden h-full cursor-col-resize touch-none select-none items-center justify-center outline-hidden xl:flex',
           'focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary-500'
         )}
       >

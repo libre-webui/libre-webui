@@ -36,7 +36,7 @@ interface ModalShellProps {
 
 /** Field styling shared by the workspace forms, matching the automations modal. */
 export const modalFieldClass =
-  'w-full rounded-lg border border-line bg-surface-raised px-2.5 py-1.5 text-[13px] text-ink placeholder:text-ink-muted transition-[border-color,box-shadow] duration-150 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 dark:focus:border-primary-400 dark:focus:ring-primary-400/30';
+  'w-full rounded-lg border border-line bg-surface-raised px-2.5 py-1.5 text-[13px] text-ink placeholder:text-ink-muted transition-[border-color,box-shadow] duration-150 focus:border-primary-500 focus:outline-hidden focus:ring-2 focus:ring-primary-500/30 dark:focus:border-primary-400 dark:focus:ring-primary-400/30';
 
 export const modalLabelClass =
   'mb-1 block text-[11px] font-medium uppercase tracking-wide text-ink-muted rtl:normal-case rtl:tracking-normal';
@@ -62,7 +62,7 @@ export const ModalShell: React.FC<ModalShellProps> = ({
 
   return createPortal(
     <div
-      className='fixed inset-0 z-[2147483647] flex items-center justify-center bg-gray-950/55 p-4 backdrop-blur-md'
+      className='fixed inset-0 z-2147483647 flex items-center justify-center bg-gray-950/55 p-4 backdrop-blur-md'
       // Close only when the press both starts and ends on the backdrop, so a
       // text selection dragged out of the dialog does not discard the form.
       onMouseDown={event => {
@@ -83,7 +83,7 @@ export const ModalShell: React.FC<ModalShellProps> = ({
         aria-labelledby={titleId}
         data-testid={testId}
         className={cn(
-          'flex max-h-[90vh] w-full flex-col overflow-hidden rounded-3xl border border-black/[0.07] bg-white shadow-[0_24px_80px_rgba(0,0,0,0.24)] animate-scale-in dark:border-white/[0.08] dark:bg-dark-25',
+          'flex max-h-[90vh] w-full flex-col overflow-hidden rounded-3xl border border-black/[0.07] bg-white shadow-[0_24px_80px_rgba(0,0,0,0.24)] animate-scale-in dark:border-white/8 dark:bg-dark-25',
           widthClassName
         )}
         // React events bubble through portals; keep dialog clicks from
@@ -136,7 +136,7 @@ const ModalHeader: React.FC<
         type='button'
         onClick={onClose}
         aria-label={t('common.close')}
-        className='shrink-0 rounded-xl p-2 transition-colors text-ink-muted hover:bg-interactive-hover hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500'
+        className='shrink-0 rounded-xl p-2 transition-colors text-ink-muted hover:bg-interactive-hover hover:text-ink focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary-500'
       >
         <X size={20} aria-hidden='true' />
       </button>

@@ -332,7 +332,7 @@ export const ChatSourcesPanel: React.FC<ChatSourcesPanelProps> = ({
                   href={source.url}
                   target='_blank'
                   rel='noopener noreferrer'
-                  className='group -mx-1 flex items-center gap-2.5 rounded-lg px-1 py-1.5 transition-colors hover:bg-black/[0.04] dark:hover:bg-white/[0.05]'
+                  className='group -mx-1 flex items-center gap-2.5 rounded-lg px-1 py-1.5 transition-colors hover:bg-black/4 dark:hover:bg-white/5'
                   title={source.url}
                 >
                   <Globe className='h-4 w-4 shrink-0 text-gray-400 transition-colors group-hover:text-gray-700 dark:text-dark-500 dark:group-hover:text-dark-800' />
@@ -418,7 +418,7 @@ export const ChatSourcesPanel: React.FC<ChatSourcesPanelProps> = ({
               checked={fullDocumentContext}
               onChange={toggleFullDocumentContext}
               data-testid='full-document-context-toggle'
-              className='h-3.5 w-3.5 rounded border-gray-300 text-primary-600 focus:ring-primary-500 dark:border-dark-400'
+              className='h-3.5 w-3.5 rounded-sm border-gray-300 text-primary-600 focus:ring-primary-500 dark:border-dark-400'
             />
             <span className='min-w-0 flex-1'>
               {t('documents.fullContextToggle', 'Send full documents')}
@@ -448,7 +448,7 @@ export const ChatSourcesPanel: React.FC<ChatSourcesPanelProps> = ({
     <>
       <aside
         data-testid='chat-sources-panel'
-        className='hidden w-72 shrink-0 flex-col gap-7 overflow-y-auto border-s border-black/[0.05] px-5 py-6 scrollbar-thin dark:border-white/[0.06] xl:flex'
+        className='hidden w-72 shrink-0 flex-col gap-7 overflow-y-auto border-s border-black/5 px-5 py-6 scrollbar-thin dark:border-white/6 xl:flex'
       >
         {sections}
       </aside>
@@ -458,7 +458,7 @@ export const ChatSourcesPanel: React.FC<ChatSourcesPanelProps> = ({
         type='button'
         onClick={() => setSheetOpen(true)}
         data-testid='chat-sources-trigger'
-        className='absolute end-3 top-[4.25rem] z-20 flex h-8 w-8 items-center justify-center rounded-full border border-black/[0.07] bg-surface/65 text-gray-500 backdrop-blur-md transition-colors duration-150 hover:bg-surface-raised hover:text-gray-950 dark:border-white/[0.08] dark:bg-dark-200/65 dark:text-dark-600 dark:hover:bg-dark-200 dark:hover:text-dark-950 xl:hidden'
+        className='absolute inset-e-3 top-17 z-20 flex h-8 w-8 items-center justify-center rounded-full border border-black/[0.07] bg-surface/65 text-gray-500 backdrop-blur-md transition-colors duration-150 hover:bg-surface-raised hover:text-gray-950 dark:border-white/8 dark:bg-dark-200/65 dark:text-dark-600 dark:hover:bg-dark-200 dark:hover:text-dark-950 xl:hidden'
         title={t('chat.message.sources', 'Sources')}
         aria-label={t('chat.sources.triggerLabel', {
           count: webSources.length + documents.length,
@@ -469,7 +469,7 @@ export const ChatSourcesPanel: React.FC<ChatSourcesPanelProps> = ({
         <BookOpen className='h-3.5 w-3.5' aria-hidden='true' />
         <span
           aria-hidden='true'
-          className='absolute -end-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-md bg-primary-500 px-1 text-[9px] font-semibold tabular-nums text-white shadow-sm'
+          className='absolute -inset-e-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-md bg-primary-500 px-1 text-[9px] font-semibold tabular-nums text-white shadow-xs'
         >
           {webSources.length + documents.length}
         </span>
@@ -477,10 +477,10 @@ export const ChatSourcesPanel: React.FC<ChatSourcesPanelProps> = ({
 
       {sheetOpen &&
         createPortal(
-          <div className='fixed inset-0 z-[80] xl:hidden'>
+          <div className='fixed inset-0 z-80 xl:hidden'>
             <button
               type='button'
-              className='absolute inset-0 bg-black/35 backdrop-blur-[2px]'
+              className='absolute inset-0 bg-black/35 backdrop-blur-xs'
               onClick={() => setSheetOpen(false)}
               aria-label={t('common.close')}
             />
@@ -490,7 +490,7 @@ export const ChatSourcesPanel: React.FC<ChatSourcesPanelProps> = ({
               aria-modal='true'
               tabIndex={-1}
               aria-label={t('chat.message.sources', 'Sources')}
-              className='absolute inset-x-3 bottom-3 max-h-[75vh] overflow-y-auto rounded-2xl border border-black/[0.08] bg-surface p-5 shadow-[0_20px_70px_rgba(0,0,0,0.3)] scrollbar-thin dark:border-white/[0.09] dark:bg-dark-100'
+              className='absolute inset-x-3 bottom-3 max-h-[75vh] overflow-y-auto rounded-2xl border border-black/8 bg-surface p-5 shadow-[0_20px_70px_rgba(0,0,0,0.3)] scrollbar-thin dark:border-white/9 dark:bg-dark-100'
               data-testid='chat-sources-sheet'
             >
               <div className='mb-3 flex items-center justify-between'>

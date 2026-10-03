@@ -185,7 +185,7 @@ export const ComposerToolsMenu: React.FC<ComposerToolsMenuProps> = ({
   );
 
   return (
-    <div ref={containerRef} className='relative flex-shrink-0'>
+    <div ref={containerRef} className='relative shrink-0'>
       <Button
         type='button'
         variant='ghost'
@@ -193,7 +193,7 @@ export const ComposerToolsMenu: React.FC<ComposerToolsMenuProps> = ({
         disabled={disabled}
         onClick={() => setOpen(current => !current)}
         className={cn(
-          'h-9 w-9 p-0 rounded-full flex-shrink-0 flex items-center justify-center',
+          'h-9 w-9 p-0 rounded-full shrink-0 flex items-center justify-center',
           'text-ink-muted hover:bg-interactive-hover hover:text-ink',
           'transition-colors duration-150 touch-manipulation',
           value.enabled &&
@@ -212,11 +212,11 @@ export const ComposerToolsMenu: React.FC<ComposerToolsMenuProps> = ({
 
       {open && (
         <div
-          className='absolute bottom-full start-0 z-30 mb-2 flex w-72 flex-col rounded-xl border border-gray-200 bg-white p-2 shadow-lg dark:border-dark-200 dark:bg-dark-50'
+          className='absolute bottom-full inset-s-0 z-30 mb-2 flex w-72 flex-col rounded-xl border border-gray-200 bg-white p-2 shadow-lg dark:border-dark-200 dark:bg-dark-50'
           style={{ maxHeight }}
           data-testid='composer-tools-menu'
         >
-          <label className='flex flex-shrink-0 cursor-pointer items-center justify-between gap-2 rounded-lg px-2 py-1.5 text-sm font-medium text-gray-800 dark:text-gray-200'>
+          <label className='flex shrink-0 cursor-pointer items-center justify-between gap-2 rounded-lg px-2 py-1.5 text-sm font-medium text-gray-800 dark:text-gray-200'>
             {t('composer.toolsMenu.enable')}
             <input
               type='checkbox'
@@ -275,7 +275,7 @@ export const ComposerToolsMenu: React.FC<ComposerToolsMenuProps> = ({
             )}
           </div>
 
-          <p className='mt-1 flex-shrink-0 border-t border-gray-100 px-2 pb-0.5 pt-1.5 text-[11px] leading-4 text-gray-400 dark:border-dark-200 dark:text-dark-500'>
+          <p className='mt-1 shrink-0 border-t border-gray-100 px-2 pb-0.5 pt-1.5 text-[11px] leading-4 text-gray-400 dark:border-dark-200 dark:text-dark-500'>
             {t('composer.toolsMenu.hint')}
           </p>
         </div>

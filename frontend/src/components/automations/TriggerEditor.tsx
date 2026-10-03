@@ -38,7 +38,7 @@ const KINDS = [
 ] as const;
 
 const fieldClass =
-  'rounded-lg border border-black/[0.08] bg-white px-2 py-1 text-[13px] text-gray-900 focus:border-primary-500/40 focus:outline-none dark:border-white/[0.08] dark:bg-dark-100 dark:text-dark-900';
+  'rounded-lg border border-black/8 bg-white px-2 py-1 text-[13px] text-gray-900 focus:border-primary-500/40 focus:outline-hidden dark:border-white/8 dark:bg-dark-100 dark:text-dark-900';
 
 const timeValueOf = (hour: number, minute: number): string =>
   `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
@@ -110,7 +110,7 @@ export function TriggerEditor({
 
   return (
     <div
-      className='flex flex-wrap items-center gap-2 rounded-xl border border-black/[0.06] bg-black/[0.02] px-2.5 py-2 dark:border-white/[0.06] dark:bg-white/[0.03]'
+      className='flex flex-wrap items-center gap-2 rounded-xl border border-black/6 bg-black/2 px-2.5 py-2 dark:border-white/6 dark:bg-white/3'
       data-testid='automation-trigger'
     >
       <Clock className='h-3.5 w-3.5 shrink-0 text-gray-400 dark:text-dark-500' />

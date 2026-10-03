@@ -541,7 +541,7 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
     model: OllamaModel,
     size: 'sm' | 'md' = 'sm'
   ): React.ReactNode => {
-    const box = size === 'md' ? 'h-6 w-6 rounded-md' : 'h-4 w-4 rounded';
+    const box = size === 'md' ? 'h-6 w-6 rounded-md' : 'h-4 w-4 rounded-sm';
     // An administrator-set picture stands in for the generic provider icon.
     const picture = modelMetadata[modelVisibilityKey(model)]?.avatar;
     if (picture && !model.isPersona) {
@@ -860,7 +860,7 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
             ? 'flex h-9 w-full min-w-0 items-center justify-between gap-2 px-2.5 text-start'
             : 'w-full flex items-center justify-between gap-2 px-3 py-2.5 text-start',
           'rounded-xl border border-line bg-surface-subtle text-sm text-ink hover:bg-hover-solid',
-          'transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500',
+          'transition-colors duration-150 focus:outline-hidden focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500',
           disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
         )}
         title={
@@ -883,7 +883,7 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
 
       {isOpen &&
         createPortal(
-          <div className='fixed inset-0 z-[999999] flex items-center justify-center p-3 sm:p-6'>
+          <div className='fixed inset-0 z-999999 flex items-center justify-center p-3 sm:p-6'>
             <div
               className='absolute inset-0 bg-gray-950/55 backdrop-blur-md'
               onClick={() => closeSelector()}
@@ -895,15 +895,15 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
               aria-modal='true'
               aria-label={t('modelSelector.selectModel')}
               className={cn(
-                'relative flex w-full max-w-xl flex-col overflow-hidden bg-white/[0.98] dark:bg-dark-25/[0.98]',
-                'h-[min(620px,88vh)] rounded-[1.5rem] border border-black/[0.08] dark:border-white/[0.09]',
+                'relative flex w-full max-w-xl flex-col overflow-hidden bg-white/98 dark:bg-dark-25/98',
+                'h-[min(620px,88vh)] rounded-3xl border border-black/8 dark:border-white/9',
                 'shadow-[0_30px_100px_rgba(0,0,0,0.28)] backdrop-blur-xl animate-scale-in'
               )}
               onClick={e => e.stopPropagation()}
             >
-              <div className='flex-shrink-0'>
+              <div className='shrink-0'>
                 <div className='flex items-center justify-between px-4 pb-2 pt-4 sm:px-5 sm:pt-5'>
-                  <h2 className='text-lg font-medium tracking-[-0.025em] text-gray-950 dark:text-dark-950 rtl:tracking-normal'>
+                  <h2 className='text-lg font-medium tracking-tight text-gray-950 dark:text-dark-950 rtl:tracking-normal'>
                     {t('modelSelector.selectModel')}
                   </h2>
                   <button
@@ -919,7 +919,7 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
 
                 <div className='px-4 pb-3 sm:px-5'>
                   <div className='relative'>
-                    <Search className='absolute start-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400' />
+                    <Search className='absolute inset-s-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400' />
                     <input
                       ref={searchInputRef}
                       type='text'
@@ -954,7 +954,7 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
                       }}
                       className={cn(
                         'w-full rounded-xl border border-black/[0.07] bg-gray-100/70 py-2.5 ps-10 pe-4 text-sm dark:border-white/[0.07] dark:bg-dark-200/70',
-                        'focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/30',
+                        'focus:outline-hidden focus:border-primary-500 focus:ring-2 focus:ring-primary-500/30',
                         'text-gray-900 dark:text-dark-900 placeholder:text-gray-400 dark:placeholder:text-dark-500'
                       )}
                     />
@@ -970,7 +970,7 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
                       className={cn(
                         'flex-1 rounded-lg px-2 py-2 text-xs font-medium transition-colors sm:px-4',
                         tab === 'installed'
-                          ? 'bg-white text-gray-950 shadow-sm dark:bg-dark-300 dark:text-dark-950'
+                          ? 'bg-white text-gray-950 shadow-xs dark:bg-dark-300 dark:text-dark-950'
                           : 'text-gray-500 hover:text-gray-800 dark:text-dark-500 dark:hover:text-dark-800'
                       )}
                       aria-pressed={tab === 'installed'}
@@ -985,7 +985,7 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
                       className={cn(
                         'flex-1 rounded-lg px-2 py-2 text-xs font-medium transition-colors sm:px-4',
                         tab === 'ollama'
-                          ? 'bg-white text-gray-950 shadow-sm dark:bg-dark-300 dark:text-dark-950'
+                          ? 'bg-white text-gray-950 shadow-xs dark:bg-dark-300 dark:text-dark-950'
                           : 'text-gray-500 hover:text-gray-800 dark:text-dark-500 dark:hover:text-dark-800'
                       )}
                       aria-pressed={tab === 'ollama'}
@@ -1000,7 +1000,7 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
                       className={cn(
                         'flex-1 rounded-lg px-2 py-2 text-xs font-medium transition-colors sm:px-4',
                         tab === 'huggingface'
-                          ? 'bg-white text-gray-950 shadow-sm dark:bg-dark-300 dark:text-dark-950'
+                          ? 'bg-white text-gray-950 shadow-xs dark:bg-dark-300 dark:text-dark-950'
                           : 'text-gray-500 hover:text-gray-800 dark:text-dark-500 dark:hover:text-dark-800'
                       )}
                       aria-pressed={tab === 'huggingface'}

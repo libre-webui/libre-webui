@@ -359,7 +359,7 @@ export const ImageGenerationPanel: React.FC<ImageGenerationPanelProps> = ({
 
   return createPortal(
     <div
-      className='fixed inset-0 z-[99999] flex items-center justify-center p-3 sm:p-6'
+      className='fixed inset-0 z-99999 flex items-center justify-center p-3 sm:p-6'
       role='dialog'
       aria-modal='true'
       aria-labelledby={titleId}
@@ -381,18 +381,18 @@ export const ImageGenerationPanel: React.FC<ImageGenerationPanelProps> = ({
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
-        <div className='flex items-center justify-between border-b border-gray-200/70 px-5 py-4 dark:border-white/[0.08] sm:px-6 sm:py-5'>
+        <div className='flex items-center justify-between border-b border-gray-200/70 px-5 py-4 dark:border-white/8 sm:px-6 sm:py-5'>
           <div>
             <h2
               id={titleId}
-              className='text-xl font-normal tracking-[-0.025em] text-gray-950 dark:text-dark-950'
+              className='text-xl font-normal tracking-tight text-gray-950 dark:text-dark-950'
             >
               {t('imageGeneration.title')}
             </h2>
           </div>
           <button
             onClick={handleClose}
-            className='rounded-xl p-2 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-900 dark:text-dark-500 dark:hover:bg-white/[0.06] dark:hover:text-dark-900'
+            className='rounded-xl p-2 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-900 dark:text-dark-500 dark:hover:bg-white/6 dark:hover:text-dark-900'
             title={t('common.close', { defaultValue: 'Close' })}
           >
             <X className='h-5 w-5 text-gray-500 dark:text-gray-400' />
@@ -427,7 +427,7 @@ export const ImageGenerationPanel: React.FC<ImageGenerationPanelProps> = ({
                       'bg-white/70 dark:bg-white/[0.035]',
                       'border border-gray-200/80 dark:border-white/10',
                       'text-gray-900 dark:text-gray-100',
-                      'focus:outline-none focus:ring-2 focus:ring-primary-500/20'
+                      'focus:outline-hidden focus:ring-2 focus:ring-primary-500/20'
                     )}
                   >
                     {plugins.map(plugin => (
@@ -450,7 +450,7 @@ export const ImageGenerationPanel: React.FC<ImageGenerationPanelProps> = ({
                       'bg-white/70 dark:bg-white/[0.035]',
                       'border border-gray-200/80 dark:border-white/10',
                       'text-gray-900 dark:text-gray-100',
-                      'focus:outline-none focus:ring-2 focus:ring-primary-500/20'
+                      'focus:outline-hidden focus:ring-2 focus:ring-primary-500/20'
                     )}
                   >
                     {currentPlugin?.models.map(model => (
@@ -474,7 +474,7 @@ export const ImageGenerationPanel: React.FC<ImageGenerationPanelProps> = ({
                         'bg-white/70 dark:bg-white/[0.035]',
                         'border border-gray-200/80 dark:border-white/10',
                         'text-gray-900 dark:text-gray-100',
-                        'focus:outline-none focus:ring-2 focus:ring-primary-500/20'
+                        'focus:outline-hidden focus:ring-2 focus:ring-primary-500/20'
                       )}
                     >
                       {availableStyles.map(option => (
@@ -501,7 +501,7 @@ export const ImageGenerationPanel: React.FC<ImageGenerationPanelProps> = ({
                       'bg-white/70 dark:bg-white/[0.035]',
                       'border border-gray-200/80 dark:border-white/10',
                       'text-gray-900 dark:text-gray-100',
-                      'focus:outline-none focus:ring-2 focus:ring-primary-500/20'
+                      'focus:outline-hidden focus:ring-2 focus:ring-primary-500/20'
                     )}
                   >
                     {availableSizes.map(s => (
@@ -525,7 +525,7 @@ export const ImageGenerationPanel: React.FC<ImageGenerationPanelProps> = ({
                         'bg-white/70 dark:bg-white/[0.035]',
                         'border border-gray-200/80 dark:border-white/10',
                         'text-gray-900 dark:text-gray-100',
-                        'focus:outline-none focus:ring-2 focus:ring-primary-500/20'
+                        'focus:outline-hidden focus:ring-2 focus:ring-primary-500/20'
                       )}
                     >
                       {availableQualities.map(q => (
@@ -554,7 +554,7 @@ export const ImageGenerationPanel: React.FC<ImageGenerationPanelProps> = ({
                     'border border-gray-200/80 dark:border-white/10',
                     'text-gray-900 dark:text-gray-100',
                     'placeholder-gray-500 dark:placeholder-gray-400',
-                    'focus:outline-none focus:ring-2 focus:ring-primary-500/20',
+                    'focus:outline-hidden focus:ring-2 focus:ring-primary-500/20',
                     maxPromptLength &&
                       prompt.length > maxPromptLength &&
                       'border-red-500 dark:border-red-500'
@@ -586,7 +586,7 @@ export const ImageGenerationPanel: React.FC<ImageGenerationPanelProps> = ({
                   <button
                     onClick={handleDownload}
                     className={cn(
-                      'absolute bottom-3 end-3 rounded-lg p-2',
+                      'absolute bottom-3 inset-e-3 rounded-lg p-2',
                       'bg-white/90 dark:bg-dark-100/90',
                       'hover:bg-white dark:hover:bg-dark-100',
                       'border border-gray-200 dark:border-dark-300',
@@ -604,7 +604,7 @@ export const ImageGenerationPanel: React.FC<ImageGenerationPanelProps> = ({
 
         {/* Footer */}
         {currentPlugin && (
-          <div className='border-t border-gray-200/70 p-4 dark:border-white/[0.08] sm:px-6 sm:py-5'>
+          <div className='border-t border-gray-200/70 p-4 dark:border-white/8 sm:px-6 sm:py-5'>
             <Button
               onClick={isGenerating ? handleCancelGeneration : handleGenerate}
               disabled={

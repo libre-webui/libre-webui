@@ -334,7 +334,7 @@ export function SidebarWorkTasks({
         data-agent={isAgentRow ? 'true' : undefined}
         aria-current={selected ? 'page' : undefined}
         className={cn(
-          'group relative cursor-pointer rounded-lg px-2 transition-colors duration-150 outline-none touch-manipulation',
+          'group relative cursor-pointer rounded-lg px-2 transition-colors duration-150 outline-hidden touch-manipulation',
           selected ? 'bg-interactive-active' : 'hover:bg-interactive-hover'
         )}
         onClick={() => {
@@ -371,7 +371,7 @@ export function SidebarWorkTasks({
                 data-status-label={statusLabel}
                 title={statusLabel}
                 className={cn(
-                  'absolute -bottom-0.5 -end-0.5 h-2.5 w-2.5 rounded-full border-2 border-gray-100 dark:border-dark-50',
+                  'absolute -bottom-0.5 -inset-e-0.5 h-2.5 w-2.5 rounded-full border-2 border-gray-100 dark:border-dark-50',
                   status.animated && 'animate-pulse',
                   task.status === 'idle' &&
                     'ring-1 ring-black/20 dark:ring-white/20'
@@ -385,7 +385,7 @@ export function SidebarWorkTasks({
                   type='button'
                   dir='auto'
                   className={cn(
-                    'min-w-0 flex-1 truncate rounded-md text-start text-sm leading-5 text-ink outline-none focus-visible:ring-2 focus-visible:ring-primary-500/30',
+                    'min-w-0 flex-1 truncate rounded-md text-start text-sm leading-5 text-ink outline-hidden focus-visible:ring-2 focus-visible:ring-primary-500/30',
                     unread && 'font-medium'
                   )}
                   title={taskDisplayTitle(task)}
@@ -441,7 +441,7 @@ export function SidebarWorkTasks({
             <button
               type='button'
               dir='auto'
-              className='min-w-0 flex-1 truncate rounded-md py-1 text-start text-sm leading-5 text-ink outline-none focus-visible:ring-2 focus-visible:ring-primary-500/30'
+              className='min-w-0 flex-1 truncate rounded-md py-1 text-start text-sm leading-5 text-ink outline-hidden focus-visible:ring-2 focus-visible:ring-primary-500/30'
               title={taskDisplayTitle(task)}
               aria-current={selected ? 'page' : undefined}
             >
@@ -494,7 +494,7 @@ export function SidebarWorkTasks({
             >
               <Briefcase className='h-[18px] w-[18px]' />
               {tasks.length > 0 && (
-                <span className='absolute -end-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-md bg-primary-600 px-1 text-[9px] font-semibold tabular-nums text-white shadow-sm'>
+                <span className='absolute -inset-e-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-md bg-primary-600 px-1 text-[9px] font-semibold tabular-nums text-white shadow-xs'>
                   {tasks.length > 99 ? '99+' : tasks.length}
                 </span>
               )}
@@ -549,7 +549,7 @@ export function SidebarWorkTasks({
                     {selected && (
                       <span
                         aria-hidden='true'
-                        className='absolute -start-2 h-5 w-0.5 rounded-full bg-primary-500 shadow-[0_0_12px_rgb(var(--color-primary-500)/0.55)]'
+                        className='absolute -inset-s-2 h-5 w-0.5 rounded-full bg-primary-500 shadow-[0_0_12px_rgb(var(--color-primary-500)/0.55)]'
                       />
                     )}
                     <img
@@ -574,7 +574,7 @@ export function SidebarWorkTasks({
                       <span
                         aria-hidden='true'
                         data-testid='sidebar-compact-work-agent-unread'
-                        className='absolute end-1.5 top-1.5 h-2 w-2 rounded-full bg-primary-500 ring-2 ring-gray-100 dark:ring-dark-50'
+                        className='absolute inset-e-1.5 top-1.5 h-2 w-2 rounded-full bg-primary-500 ring-2 ring-gray-100 dark:ring-dark-50'
                       />
                     )}
                     <span
@@ -582,7 +582,7 @@ export function SidebarWorkTasks({
                       data-testid='sidebar-compact-work-agent-status'
                       data-status={task.status}
                       className={cn(
-                        'absolute bottom-1.5 end-1.5 h-2 w-2 rounded-full border-2 border-gray-100 dark:border-dark-50',
+                        'absolute bottom-1.5 inset-e-1.5 h-2 w-2 rounded-full border-2 border-gray-100 dark:border-dark-50',
                         status.animated && 'animate-pulse',
                         task.status === 'idle' &&
                           'ring-1 ring-black/20 dark:ring-white/20'
@@ -609,7 +609,7 @@ export function SidebarWorkTasks({
           </div>
         ) : tasks.length === 0 ? (
           <div className='py-8 text-center px-2'>
-            <div className='mx-auto mb-3 flex items-center justify-center rounded-xl bg-white/70 ring-1 ring-black/[0.04] dark:bg-dark-200 dark:ring-white/[0.05] h-12 w-12'>
+            <div className='mx-auto mb-3 flex items-center justify-center rounded-xl bg-white/70 ring-1 ring-black/4 dark:bg-dark-200 dark:ring-white/5 h-12 w-12'>
               <Briefcase className='text-gray-400 dark:text-gray-500 h-5 w-5' />
             </div>
             <p className='text-sm font-medium text-gray-600 dark:text-dark-600'>
@@ -651,7 +651,7 @@ export function SidebarWorkTasks({
       {taskMenu &&
         taskMenuTask &&
         createPortal(
-          <div className='fixed inset-0 z-[75] hidden sm:block'>
+          <div className='fixed inset-0 z-75 hidden sm:block'>
             <button
               type='button'
               tabIndex={-1}
@@ -665,7 +665,7 @@ export function SidebarWorkTasks({
               role='menu'
               aria-label={taskDisplayTitle(taskMenuTask)}
               data-testid='sidebar-work-task-menu'
-              className='absolute overflow-y-auto rounded-xl border border-black/[0.04] bg-surface-overlay p-1 shadow-lv3 animate-scale-in dark:border-white/[0.06]'
+              className='absolute overflow-y-auto rounded-xl border border-black/4 bg-surface-overlay p-1 shadow-lv3 animate-scale-in dark:border-white/6'
               style={{
                 top: taskMenu.top,
                 left: taskMenu.left,
@@ -694,7 +694,7 @@ export function SidebarWorkTasks({
                   closeTaskMenu();
                   onDeleteTask(taskMenuTask);
                 }}
-                className='mt-1 flex w-full items-center gap-2.5 rounded-lg border-t border-black/[0.06] px-2.5 py-2 text-start text-[13px] text-red-500 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-white/[0.07] dark:hover:bg-red-900/20'
+                className='mt-1 flex w-full items-center gap-2.5 rounded-lg border-t border-black/6 px-2.5 py-2 text-start text-[13px] text-red-500 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-white/[0.07] dark:hover:bg-red-900/20'
               >
                 <Trash2 className='h-3.5 w-3.5 shrink-0' />
                 {t('work.tasks.delete', { defaultValue: 'Delete task' })}
@@ -705,17 +705,17 @@ export function SidebarWorkTasks({
         )}
       {mobileActionTask &&
         createPortal(
-          <div className='fixed inset-0 z-[80] sm:hidden'>
+          <div className='fixed inset-0 z-80 sm:hidden'>
             <button
               type='button'
-              className='absolute inset-0 bg-black/35 backdrop-blur-[2px]'
+              className='absolute inset-0 bg-black/35 backdrop-blur-xs'
               onClick={() => setMobileActionTaskId(null)}
               aria-label={t('common.close')}
             />
             <SidebarSheetDialog
               onClose={() => setMobileActionTaskId(null)}
               aria-label={t('palette.actions')}
-              className='absolute inset-x-3 bottom-3 rounded-2xl border border-black/[0.08] bg-surface p-2 shadow-[0_20px_70px_rgba(0,0,0,0.3)] dark:border-white/[0.09] dark:bg-dark-100'
+              className='absolute inset-x-3 bottom-3 rounded-2xl border border-black/8 bg-surface p-2 shadow-[0_20px_70px_rgba(0,0,0,0.3)] dark:border-white/9 dark:bg-dark-100'
               data-testid='sidebar-work-task-actions-sheet'
             >
               <div className='flex items-center justify-between gap-3 px-2 pb-2 pt-1'>

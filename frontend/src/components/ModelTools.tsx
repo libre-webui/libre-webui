@@ -225,7 +225,7 @@ export const ModelTools: React.FC = () => {
         </Button>
       </div>
       {info && (
-        <pre className='p-2 bg-gray-100 dark:bg-dark-200 rounded text-xs overflow-auto max-h-40'>
+        <pre className='p-2 bg-gray-100 dark:bg-dark-200 rounded-sm text-xs overflow-auto max-h-40'>
           {JSON.stringify(info, null, 2)}
         </pre>
       )}
@@ -292,7 +292,7 @@ export const ModelTools: React.FC = () => {
         </Button>
       </div>
       {running.length > 0 && (
-        <pre className='p-2 bg-gray-100 dark:bg-dark-200 rounded text-xs overflow-auto max-h-40'>
+        <pre className='p-2 bg-gray-100 dark:bg-dark-200 rounded-sm text-xs overflow-auto max-h-40'>
           {JSON.stringify(running, null, 2)}
         </pre>
       )}

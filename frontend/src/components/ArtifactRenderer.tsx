@@ -218,7 +218,7 @@ export const ArtifactRenderer: React.FC<ArtifactRendererProps> = ({
         <OptimizedSyntaxHighlighter
           language={getLanguage()}
           isDark={theme.mode !== 'light'}
-          className='!m-0 !rounded-lg'
+          className='m-0! rounded-lg!'
           codeTheme='night'
           showLineNumbers
           backgroundColor={
@@ -241,7 +241,7 @@ export const ArtifactRenderer: React.FC<ArtifactRendererProps> = ({
           <OptimizedSyntaxHighlighter
             language='json'
             isDark={theme.mode !== 'light'}
-            className='!m-0 !rounded-lg'
+            className='m-0! rounded-lg!'
             codeTheme='night'
             showLineNumbers
             backgroundColor={
@@ -318,21 +318,21 @@ export const ArtifactRenderer: React.FC<ArtifactRendererProps> = ({
         onClick={() => openArtifactPanel(artifact)}
         title={t('artifacts.openInPanel')}
         className={cn(
-          'flex w-full max-w-full items-center gap-3 rounded-xl border border-gray-200 bg-white px-4 py-3 text-start shadow-sm transition-colors animate-fade-in',
+          'flex w-full max-w-full items-center gap-3 rounded-xl border border-gray-200 bg-white px-4 py-3 text-start shadow-xs transition-colors animate-fade-in',
           'hover:bg-gray-50 dark:border-dark-200 dark:bg-dark-25 dark:hover:bg-dark-100',
           className
         )}
       >
-        <div className='flex-shrink-0 text-gray-600 dark:text-gray-400'>
+        <div className='shrink-0 text-gray-600 dark:text-gray-400'>
           {getIcon()}
         </div>
         <span className='min-w-0 flex-1 truncate font-medium text-gray-900 dark:text-gray-100'>
           {artifact.title}
         </span>
-        <span className='flex-shrink-0 rounded-full bg-primary-50 px-2 py-1 text-xs font-medium text-primary-700 dark:bg-primary-900/20 dark:text-primary-300'>
+        <span className='shrink-0 rounded-full bg-primary-50 px-2 py-1 text-xs font-medium text-primary-700 dark:bg-primary-900/20 dark:text-primary-300'>
           {artifact.type.toUpperCase()}
         </span>
-        <Maximize2 className='h-4 w-4 flex-shrink-0 text-gray-400 dark:text-dark-500' />
+        <Maximize2 className='h-4 w-4 shrink-0 text-gray-400 dark:text-dark-500' />
       </button>
     );
   }
@@ -347,12 +347,12 @@ export const ArtifactRenderer: React.FC<ArtifactRendererProps> = ({
       )}
     >
       {/* Header */}
-      <div className='px-1.5 py-1.5 sm:p-4 border-b border-gray-100 dark:border-dark-200 flex-shrink-0'>
+      <div className='px-1.5 py-1.5 sm:p-4 border-b border-gray-100 dark:border-dark-200 shrink-0'>
         {/* Mobile: Vertical Stack */}
         <div className='flex flex-col gap-2 sm:hidden'>
           {/* Title Row */}
           <div className='flex items-center gap-2'>
-            <div className='h-4 w-4 flex-shrink-0 flex items-center justify-center'>
+            <div className='h-4 w-4 shrink-0 flex items-center justify-center'>
               {getIcon()}
             </div>
             <h3 className='font-medium text-gray-900 dark:text-gray-100 truncate text-sm leading-tight flex-1'>
@@ -427,17 +427,17 @@ export const ArtifactRenderer: React.FC<ArtifactRendererProps> = ({
         <div className='hidden sm:flex items-center justify-between gap-2'>
           <div className='flex items-center gap-3 min-w-0 flex-1'>
             <div className='flex items-center gap-2 min-w-0 flex-1'>
-              <div className='flex-shrink-0'>{getIcon()}</div>
+              <div className='shrink-0'>{getIcon()}</div>
               <h3 className='font-semibold text-gray-900 dark:text-gray-100 truncate'>
                 {artifact.title}
               </h3>
             </div>
-            <span className='text-xs bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300 px-2 py-1 rounded-full font-medium flex-shrink-0'>
+            <span className='text-xs bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300 px-2 py-1 rounded-full font-medium shrink-0'>
               {artifact.type.toUpperCase()}
             </span>
           </div>
 
-          <div className='flex items-center gap-1 flex-shrink-0'>
+          <div className='flex items-center gap-1 shrink-0'>
             {/* View mode toggle for previewable artifacts */}
             {shouldShowViewToggle() && (
               <>
@@ -514,7 +514,7 @@ export const ArtifactRenderer: React.FC<ArtifactRendererProps> = ({
       </div>
 
       {/* Footer */}
-      <div className='flex items-center justify-between p-3 border-t border-gray-100 dark:border-dark-200 bg-gray-50 dark:bg-dark-100/50 flex-shrink-0'>
+      <div className='flex items-center justify-between p-3 border-t border-gray-100 dark:border-dark-200 bg-gray-50 dark:bg-dark-100/50 shrink-0'>
         <div className='text-xs text-gray-500 dark:text-gray-400'>
           {t('artifacts.created')}:{' '}
           {new Date(artifact.createdAt).toLocaleString()}

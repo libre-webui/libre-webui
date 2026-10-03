@@ -101,7 +101,7 @@ export const WorkApprovalCard: React.FC<{
         role='region'
         tabIndex={0}
         aria-label={t('work.approval.details')}
-        className='mt-2 max-h-32 overflow-auto whitespace-pre-wrap rounded bg-white/70 p-2 font-mono text-xs text-gray-700 dark:bg-dark-100 dark:text-gray-300'
+        className='mt-2 max-h-32 overflow-auto whitespace-pre-wrap rounded-sm bg-white/70 p-2 font-mono text-xs text-gray-700 dark:bg-dark-100 dark:text-gray-300'
       >
         {rows.length === 0 ? (
           <bdi dir='ltr'>{approval.name}</bdi>

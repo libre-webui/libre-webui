@@ -34,11 +34,11 @@ export const SettingsTabHeader: React.FC<SettingsTabHeaderProps> = ({
 }) => (
   <header
     className={cn(
-      'mb-5 flex flex-wrap items-end justify-between gap-3 border-b border-gray-200/70 pb-4 dark:border-white/[0.08]',
+      'mb-5 flex flex-wrap items-end justify-between gap-3 border-b border-gray-200/70 pb-4 dark:border-white/8',
       className
     )}
   >
-    <div className='min-w-0 flex-[1_1_18rem] [overflow-wrap:anywhere]'>
+    <div className='min-w-0 flex-[1_1_18rem] wrap-anywhere'>
       <h3 className='text-lg font-medium text-gray-900 dark:text-dark-800'>
         {title}
       </h3>

@@ -58,7 +58,7 @@ export function LocalModelsSection({
     <div
       className={cn(
         'overflow-hidden rounded-2xl border',
-        'bg-white/60 dark:bg-white/[0.03]',
+        'bg-white/60 dark:bg-white/3',
         'border-gray-200/80 dark:border-white/10'
       )}
     >
@@ -193,7 +193,7 @@ function LocalModelCard({
             {model.details?.quantization_level && (
               <span
                 className={cn(
-                  'px-1.5 py-0.5 rounded text-xs',
+                  'px-1.5 py-0.5 rounded-sm text-xs',
                   'bg-gray-200 dark:bg-dark-300',
                   'text-gray-600 dark:text-gray-400'
                 )}
@@ -223,7 +223,7 @@ function LocalModelCard({
           </div>
         </div>
 
-        <div className='flex gap-2 flex-shrink-0'>
+        <div className='flex gap-2 shrink-0'>
           <Button
             onClick={() => onShowModel(model.name)}
             variant='outline'

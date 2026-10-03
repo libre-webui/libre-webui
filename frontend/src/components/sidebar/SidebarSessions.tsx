@@ -453,7 +453,7 @@ export function SidebarSessions({
             >
               <MessageSquare className='h-[18px] w-[18px]' />
               {sessions.length > 0 && (
-                <span className='absolute -end-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-md bg-primary-600 px-1 text-[9px] font-semibold tabular-nums text-white shadow-sm'>
+                <span className='absolute -inset-e-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-md bg-primary-600 px-1 text-[9px] font-semibold tabular-nums text-white shadow-xs'>
                   {sessions.length > 99 ? '99+' : sessions.length}
                 </span>
               )}
@@ -461,7 +461,7 @@ export function SidebarSessions({
           </div>
         ) : sessions.length === 0 ? (
           <div className='text-center py-8 px-2'>
-            <div className='mx-auto mb-3 bg-white/70 dark:bg-dark-200 rounded-xl flex items-center justify-center ring-1 ring-black/[0.04] dark:ring-white/[0.05] w-12 h-12'>
+            <div className='mx-auto mb-3 bg-white/70 dark:bg-dark-200 rounded-xl flex items-center justify-center ring-1 ring-black/4 dark:ring-white/5 w-12 h-12'>
               <MessageSquare className='text-gray-400 dark:text-gray-500 h-5 w-5' />
             </div>
             <p className='text-sm font-medium text-gray-600 dark:text-dark-600'>
@@ -606,7 +606,7 @@ export function SidebarSessions({
                           }}
                           onDragEnd={clearDragState}
                           className={cn(
-                            'group relative cursor-pointer transition-colors duration-150 touch-manipulation outline-none',
+                            'group relative cursor-pointer transition-colors duration-150 touch-manipulation outline-hidden',
                             sidebarCompact
                               ? 'rounded-xl p-1 flex items-center justify-center'
                               : 'rounded-lg px-2',
@@ -638,7 +638,7 @@ export function SidebarSessions({
                                     ? 'bg-white text-primary-600 animate-pulse dark:bg-dark-200 dark:text-primary-400'
                                     : isActive
                                       ? 'bg-gray-950 text-white dark:bg-white dark:text-gray-950'
-                                      : 'bg-white/70 text-gray-500 ring-1 ring-black/[0.04] dark:bg-dark-200/70 dark:text-dark-600 dark:ring-white/[0.05]'
+                                      : 'bg-white/70 text-gray-500 ring-1 ring-black/4 dark:bg-dark-200/70 dark:text-dark-600 dark:ring-white/5'
                                 )}
                               >
                                 {session.title.trim().charAt(0) || '•'}
@@ -688,7 +688,7 @@ export function SidebarSessions({
                             <div className='flex h-8 w-full items-center'>
                               <button
                                 type='button'
-                                className='min-w-0 flex-1 truncate rounded-md py-1 text-start text-sm leading-5 text-ink outline-none focus-visible:ring-2 focus-visible:ring-primary-500/30'
+                                className='min-w-0 flex-1 truncate rounded-md py-1 text-start text-sm leading-5 text-ink outline-hidden focus-visible:ring-2 focus-visible:ring-primary-500/30'
                                 title={session.title}
                                 aria-label={session.title}
                                 aria-current={isActive ? 'page' : undefined}
@@ -781,7 +781,7 @@ export function SidebarSessions({
       {sessionMenu &&
         sessionMenuSession &&
         createPortal(
-          <div className='fixed inset-0 z-[75] hidden sm:block'>
+          <div className='fixed inset-0 z-75 hidden sm:block'>
             <button
               type='button'
               tabIndex={-1}
@@ -795,7 +795,7 @@ export function SidebarSessions({
               role='menu'
               aria-label={sessionMenuSession.title}
               data-testid='sidebar-session-menu'
-              className='absolute overflow-y-auto rounded-xl border border-black/[0.04] bg-surface-overlay p-1 shadow-lv3 animate-scale-in dark:border-white/[0.06]'
+              className='absolute overflow-y-auto rounded-xl border border-black/4 bg-surface-overlay p-1 shadow-lv3 animate-scale-in dark:border-white/6'
               style={{
                 top: sessionMenu.top,
                 left: sessionMenu.left,
@@ -880,7 +880,7 @@ export function SidebarSessions({
                 </button>
               )}
               {onMoveSession && folders.length > 0 && (
-                <div className='mt-1 border-t border-black/[0.06] pt-1 dark:border-white/[0.07]'>
+                <div className='mt-1 border-t border-black/6 pt-1 dark:border-white/[0.07]'>
                   <p className='px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-gray-400 dark:text-dark-500 rtl:tracking-normal'>
                     {t('chat.session.folder.move')}
                   </p>
@@ -926,7 +926,7 @@ export function SidebarSessions({
                   closeSessionMenu();
                   onDeleteSession(sessionMenuSession.id, event);
                 }}
-                className='mt-1 flex w-full items-center gap-2.5 rounded-lg border-t border-black/[0.06] px-2.5 py-2 text-start text-[13px] text-red-500 hover:bg-red-50 dark:border-white/[0.07] dark:hover:bg-red-900/20'
+                className='mt-1 flex w-full items-center gap-2.5 rounded-lg border-t border-black/6 px-2.5 py-2 text-start text-[13px] text-red-500 hover:bg-red-50 dark:border-white/[0.07] dark:hover:bg-red-900/20'
               >
                 <Trash2 className='h-3.5 w-3.5 shrink-0' />
                 {t('chat.session.deleteChat')}
@@ -945,17 +945,17 @@ export function SidebarSessions({
       )}
       {mobileActionSession &&
         createPortal(
-          <div className='fixed inset-0 z-[80] sm:hidden'>
+          <div className='fixed inset-0 z-80 sm:hidden'>
             <button
               type='button'
-              className='absolute inset-0 bg-black/35 backdrop-blur-[2px]'
+              className='absolute inset-0 bg-black/35 backdrop-blur-xs'
               onClick={() => setMobileActionSessionId(null)}
               aria-label={t('common.close')}
             />
             <SidebarSheetDialog
               onClose={() => setMobileActionSessionId(null)}
               aria-label={t('palette.actions')}
-              className='absolute inset-x-3 bottom-3 rounded-2xl border border-black/[0.08] bg-surface p-2 shadow-[0_20px_70px_rgba(0,0,0,0.3)] dark:border-white/[0.09] dark:bg-dark-100'
+              className='absolute inset-x-3 bottom-3 rounded-2xl border border-black/8 bg-surface p-2 shadow-[0_20px_70px_rgba(0,0,0,0.3)] dark:border-white/9 dark:bg-dark-100'
               data-testid='sidebar-session-actions-sheet'
             >
               <div className='flex items-center justify-between gap-3 px-2 pb-2 pt-1'>
@@ -1024,7 +1024,7 @@ export function SidebarSessions({
               )}
 
               {onMoveSession && folders.length > 0 && (
-                <div className='mt-1 border-t border-black/[0.06] pt-1 dark:border-white/[0.07]'>
+                <div className='mt-1 border-t border-black/6 pt-1 dark:border-white/[0.07]'>
                   <p className='px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-gray-400 dark:text-dark-500'>
                     {t('chat.session.folder.move')}
                   </p>
@@ -1068,7 +1068,7 @@ export function SidebarSessions({
                   setMobileActionSessionId(null);
                   void onDeleteSession(mobileActionSession.id, event);
                 }}
-                className='mt-1 flex min-h-11 w-full items-center gap-3 rounded-xl border-t border-black/[0.06] px-3 py-2 text-start text-sm text-red-500 hover:bg-red-50 dark:border-white/[0.07] dark:hover:bg-red-900/20'
+                className='mt-1 flex min-h-11 w-full items-center gap-3 rounded-xl border-t border-black/6 px-3 py-2 text-start text-sm text-red-500 hover:bg-red-50 dark:border-white/[0.07] dark:hover:bg-red-900/20'
               >
                 <Trash2 className='h-4 w-4 shrink-0' />
                 {t('chat.session.deleteChat')}

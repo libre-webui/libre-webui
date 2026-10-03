@@ -62,7 +62,7 @@ export function OllamaLibraryTab({
 
   return (
     <div className='flex min-h-0 flex-1 flex-col overflow-hidden'>
-      <div className='px-3 py-2 border-b border-gray-200 dark:border-dark-300 flex-shrink-0'>
+      <div className='px-3 py-2 border-b border-gray-200 dark:border-dark-300 shrink-0'>
         <div className='flex flex-wrap gap-1.5'>
           {libraryCategories.map(cat => (
             <button
@@ -115,7 +115,7 @@ export function OllamaLibraryTab({
                   )}
                 >
                   <div className='flex items-start gap-3'>
-                    <div className='p-2 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex-shrink-0'>
+                    <div className='p-2 rounded-lg bg-blue-100 dark:bg-blue-900/30 shrink-0'>
                       <Cloud className='h-4 w-4 text-blue-600 dark:text-blue-400' />
                     </div>
                     <div className='flex-1 min-w-0'>
@@ -127,13 +127,13 @@ export function OllamaLibraryTab({
                           {model.name}
                         </h4>
                         {installed && (
-                          <span className='px-1.5 py-0.5 rounded text-xs bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'>
+                          <span className='px-1.5 py-0.5 rounded-sm text-xs bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'>
                             {t('modelSelector.installed')}
                           </span>
                         )}
                         {(model.category === 'cloud' ||
                           model.tags?.includes('cloud')) && (
-                          <span className='px-1.5 py-0.5 rounded text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 flex items-center gap-1'>
+                          <span className='px-1.5 py-0.5 rounded-sm text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 flex items-center gap-1'>
                             <Cloud className='h-3 w-3' />
                             Cloud
                           </span>
@@ -146,7 +146,7 @@ export function OllamaLibraryTab({
                         {model.sizes.slice(0, 3).map(size => (
                           <span
                             key={size}
-                            className='px-1.5 py-0.5 rounded text-xs bg-gray-100 dark:bg-dark-200 text-gray-600 dark:text-gray-400'
+                            className='px-1.5 py-0.5 rounded-sm text-xs bg-gray-100 dark:bg-dark-200 text-gray-600 dark:text-gray-400'
                           >
                             {size}
                           </span>
@@ -159,7 +159,7 @@ export function OllamaLibraryTab({
                         )}
                       </div>
                     </div>
-                    <div className='flex-shrink-0'>
+                    <div className='shrink-0'>
                       {isPulling ? (
                         <div className='flex items-center gap-2'>
                           <div className='text-xs text-gray-500 w-12 text-right'>
@@ -190,7 +190,7 @@ export function OllamaLibraryTab({
                           {t('modelSelector.pull')}
                         </button>
                       ) : (
-                        <span className='rounded bg-amber-500/20 px-2 py-1 text-[11px] font-medium text-ink dark:bg-amber-900/30'>
+                        <span className='rounded-sm bg-amber-500/20 px-2 py-1 text-[11px] font-medium text-ink dark:bg-amber-900/30'>
                           {t('modelSelector.adminOnlyPull')}
                         </span>
                       )}
@@ -212,7 +212,7 @@ export function OllamaLibraryTab({
         )}
       </div>
 
-      <div className='px-3 py-2 border-t border-gray-200 dark:border-dark-300 flex items-center justify-between flex-shrink-0'>
+      <div className='px-3 py-2 border-t border-gray-200 dark:border-dark-300 flex items-center justify-between shrink-0'>
         <a
           href='https://ollama.com/library'
           target='_blank'

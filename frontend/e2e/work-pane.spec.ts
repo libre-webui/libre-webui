@@ -2521,10 +2521,8 @@ test('mirrors the translated Work workspace and resize controls in Arabic', asyn
   const newTaskButton = page.getByRole('button', {
     name: 'بدء مهمة جديدة',
   });
-  await expect(newTaskButton.locator('svg')).toHaveCSS(
-    'transform',
-    'matrix(-1, 0, 0, -1, 0, 0)'
-  );
+  // Tailwind v4 flips the arrow with the standalone rotate property.
+  await expect(newTaskButton.locator('svg')).toHaveCSS('rotate', '180deg');
 });
 
 test('formats and highlights workspace code in dark and light mode', async ({

@@ -241,15 +241,15 @@ export const ToolServerCard: React.FC<ToolServerCardProps> = ({
   return (
     <div
       data-testid='tool-server-row'
-      className='rounded-2xl border border-black/[0.06] bg-white/60 px-4 py-3 dark:border-white/[0.07] dark:bg-dark-100/60'
+      className='rounded-2xl border border-black/6 bg-white/60 px-4 py-3 dark:border-white/[0.07] dark:bg-dark-100/60'
     >
       <div className='flex flex-wrap items-start justify-between gap-3'>
         <div className='min-w-0 flex-[1_1_16rem]'>
           <div className='flex flex-wrap items-center gap-2'>
-            <p className='min-w-0 max-w-full break-words text-[14px] font-medium text-gray-900 [overflow-wrap:anywhere] dark:text-dark-900'>
+            <p className='min-w-0 max-w-full wrap-break-word text-[14px] font-medium text-gray-900 wrap-anywhere dark:text-dark-900'>
               {server.name}
             </p>
-            <span className='rounded-full bg-black/[0.04] px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-gray-500 dark:bg-white/[0.06] dark:text-dark-500'>
+            <span className='rounded-full bg-black/4 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-gray-500 dark:bg-white/6 dark:text-dark-500'>
               {t(`toolsPage.kinds.${server.kind}`)}
             </span>
             <span
@@ -282,7 +282,7 @@ export const ToolServerCard: React.FC<ToolServerCardProps> = ({
             )}
           </div>
           {server.description && (
-            <p className='mt-1 break-words text-[12px] text-gray-500 [overflow-wrap:anywhere] dark:text-dark-500'>
+            <p className='mt-1 wrap-break-word text-[12px] text-gray-500 wrap-anywhere dark:text-dark-500'>
               {server.description}
             </p>
           )}
@@ -348,7 +348,7 @@ export const ToolServerCard: React.FC<ToolServerCardProps> = ({
       {credentialOpen && isOAuth && (
         <div
           data-testid='tool-oauth-panel'
-          className='mt-3 rounded-xl border border-black/[0.06] bg-black/[0.02] p-3 dark:border-white/[0.07] dark:bg-white/[0.03]'
+          className='mt-3 rounded-xl border border-black/6 bg-black/2 p-3 dark:border-white/[0.07] dark:bg-white/3'
         >
           <p className='mb-2 text-[11px] text-gray-500 dark:text-dark-500'>
             {t('toolsPage.oauth.hint')}
@@ -389,7 +389,7 @@ export const ToolServerCard: React.FC<ToolServerCardProps> = ({
       {credentialOpen && server.authMode !== 'none' && !isOAuth && (
         <div
           data-testid='tool-credential-panel'
-          className='mt-3 rounded-xl border border-black/[0.06] bg-black/[0.02] p-3 dark:border-white/[0.07] dark:bg-white/[0.03]'
+          className='mt-3 rounded-xl border border-black/6 bg-black/2 p-3 dark:border-white/[0.07] dark:bg-white/3'
         >
           <p className='mb-2 text-[11px] text-gray-500 dark:text-dark-500'>
             {t('toolsPage.credentialHint')}
@@ -429,7 +429,7 @@ export const ToolServerCard: React.FC<ToolServerCardProps> = ({
       )}
 
       {isAdmin && expanded && (
-        <div className='mt-3 rounded-xl border border-black/[0.06] p-3 dark:border-white/[0.07]'>
+        <div className='mt-3 rounded-xl border border-black/6 p-3 dark:border-white/[0.07]'>
           <p className='mb-2 text-[11px] font-medium uppercase tracking-wide text-gray-400 dark:text-dark-500'>
             {t('toolsPage.pinnedTools')}
           </p>
@@ -447,11 +447,11 @@ export const ToolServerCard: React.FC<ToolServerCardProps> = ({
                 <div
                   key={tool.name}
                   data-testid='tool-server-tool'
-                  className='flex flex-wrap items-center justify-between gap-3 rounded-lg bg-black/[0.02] px-2.5 py-2 dark:bg-white/[0.03]'
+                  className='flex flex-wrap items-center justify-between gap-3 rounded-lg bg-black/2 px-2.5 py-2 dark:bg-white/3'
                 >
                   <div className='min-w-0 flex-[1_1_16rem]'>
                     <div className='flex flex-wrap items-center gap-2'>
-                      <code className='min-w-0 max-w-full break-words text-[12px] text-gray-900 [overflow-wrap:anywhere] dark:text-dark-900'>
+                      <code className='min-w-0 max-w-full wrap-break-word text-[12px] text-gray-900 wrap-anywhere dark:text-dark-900'>
                         {tool.name}
                       </code>
                       {tool.sideEffect && (
@@ -461,7 +461,7 @@ export const ToolServerCard: React.FC<ToolServerCardProps> = ({
                       )}
                     </div>
                     {tool.description && (
-                      <p className='mt-0.5 break-words text-[11px] text-gray-500 [overflow-wrap:anywhere] dark:text-dark-500'>
+                      <p className='mt-0.5 wrap-break-word text-[11px] text-gray-500 wrap-anywhere dark:text-dark-500'>
                         {tool.description}
                       </p>
                     )}

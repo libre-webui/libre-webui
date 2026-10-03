@@ -124,7 +124,7 @@ export const AvatarUpload: React.FC<AvatarUploadProps> = ({
         {/* Avatar Preview and Upload Area */}
         <div className='flex items-start gap-4'>
           {/* Avatar Preview */}
-          <div className='flex-shrink-0'>
+          <div className='shrink-0'>
             <div className='w-20 h-20 rounded-full overflow-hidden bg-gray-100 dark:bg-dark-200 border-2 border-gray-300 dark:border-dark-300 flex items-center justify-center'>
               {getAvatarSrc() ? (
                 <img

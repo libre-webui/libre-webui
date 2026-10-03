@@ -111,7 +111,7 @@ export function SidebarNavigation({
               className={cn(
                 sidebarCompact
                   ? compactSidebarButtonClass
-                  : 'relative flex h-9 flex-1 items-center justify-center rounded-xl transition-colors duration-150 touch-manipulation outline-none focus-visible:ring-2 focus-visible:ring-primary-500/30',
+                  : 'relative flex h-9 flex-1 items-center justify-center rounded-xl transition-colors duration-150 touch-manipulation outline-hidden focus-visible:ring-2 focus-visible:ring-primary-500/30',
                 active
                   ? 'bg-nav-active text-ink'
                   : !sidebarCompact &&
@@ -122,7 +122,7 @@ export function SidebarNavigation({
               {path === '/automations' && unseenRunCount > 0 && (
                 <span
                   data-testid='automations-unseen-badge'
-                  className='absolute -end-0.5 -top-0.5 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-primary-600 px-0.5 text-[9px] font-semibold leading-none text-white'
+                  className='absolute -inset-e-0.5 -top-0.5 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-primary-600 px-0.5 text-[9px] font-semibold leading-none text-white'
                 >
                   {unseenRunCount > 9 ? '9+' : unseenRunCount}
                 </span>

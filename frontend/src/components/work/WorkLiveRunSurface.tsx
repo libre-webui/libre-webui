@@ -134,7 +134,7 @@ export function ToolActivityRow({
         aria-expanded={hasDetails ? expanded : undefined}
         aria-controls={hasDetails ? detailId : undefined}
         aria-label={`${kindLabel}: ${tool.name}`}
-        className='flex min-h-10 w-full items-center gap-2 px-3 py-2 text-start outline-none hover:bg-surface-subtle focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary-500 disabled:cursor-default disabled:hover:bg-transparent'
+        className='flex min-h-10 w-full items-center gap-2 px-3 py-2 text-start outline-hidden hover:bg-surface-subtle focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary-500 disabled:cursor-default disabled:hover:bg-transparent'
       >
         <span className='flex h-5 w-5 shrink-0 items-center justify-center'>
           {error ? (
@@ -177,7 +177,7 @@ export function ToolActivityRow({
               role='region'
               tabIndex={0}
               aria-label={t('work.activity.arguments')}
-              className='max-h-48 overflow-auto whitespace-pre-wrap break-words px-3 py-2.5 text-left font-mono text-[11px] leading-relaxed text-ink-muted'
+              className='max-h-48 overflow-auto whitespace-pre-wrap wrap-break-word px-3 py-2.5 text-left font-mono text-[11px] leading-relaxed text-ink-muted'
             >
               {argumentsText}
             </pre>
@@ -189,7 +189,7 @@ export function ToolActivityRow({
               tabIndex={0}
               aria-label={t('work.activity.output')}
               className={cn(
-                'max-h-64 overflow-auto whitespace-pre-wrap break-words border-t border-line px-3 py-2.5 text-left font-mono text-[11px] leading-relaxed',
+                'max-h-64 overflow-auto whitespace-pre-wrap wrap-break-word border-t border-line px-3 py-2.5 text-left font-mono text-[11px] leading-relaxed',
                 error ? 'text-error-600' : 'text-ink-muted'
               )}
             >
@@ -238,7 +238,7 @@ function ThinkingBlock({
               )}
             />
             {streaming ? (
-              <span className='animate-shimmer truncate bg-gradient-to-r from-ink-subtle via-ink to-ink-subtle bg-[length:200%_100%] bg-clip-text text-transparent motion-reduce:animate-none motion-reduce:bg-none motion-reduce:text-ink-muted'>
+              <span className='animate-shimmer truncate bg-linear-to-r from-ink-subtle via-ink to-ink-subtle bg-size-[200%_100%] bg-clip-text text-transparent motion-reduce:animate-none motion-reduce:bg-none motion-reduce:text-ink-muted'>
                 {t('work.statusLabels.thinking', {
                   defaultValue: 'Thinking',
                 })}
@@ -439,7 +439,7 @@ export function WorkLiveRunSurface({
       {run.connection === 'error' && run.connectionError && (
         <p
           dir='auto'
-          className='-mt-1.5 mb-3 break-words text-xs leading-relaxed text-error-600'
+          className='-mt-1.5 mb-3 wrap-break-word text-xs leading-relaxed text-error-600'
         >
           {run.connectionError}
         </p>
@@ -490,7 +490,7 @@ export function WorkLiveRunSurface({
                       role='status'
                       tabIndex={-1}
                       data-skill-trace-status
-                      className='text-primary-700 outline-none dark:text-primary-300'
+                      className='text-primary-700 outline-hidden dark:text-primary-300'
                     >
                       {traced
                         ? traced === 'success'

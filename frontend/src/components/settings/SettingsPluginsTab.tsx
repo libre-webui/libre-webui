@@ -274,7 +274,7 @@ export function SettingsPluginsTab({
           data-testid='provider-workspace'
           className='overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-dark-300 dark:bg-dark-100'
         >
-          <div className='grid min-h-[30rem] grid-cols-1 lg:grid-cols-[minmax(15rem,0.8fr)_minmax(0,1.6fr)]'>
+          <div className='grid min-h-120 grid-cols-1 lg:grid-cols-[minmax(15rem,0.8fr)_minmax(0,1.6fr)]'>
             <section
               data-testid='provider-list'
               aria-label={t('settings.plugins.providers', {
@@ -301,7 +301,7 @@ export function SettingsPluginsTab({
                 <div className='relative'>
                   <Search
                     aria-hidden='true'
-                    className='absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400'
+                    className='absolute inset-s-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400'
                   />
                   <input
                     id={searchInputId}
@@ -311,14 +311,14 @@ export function SettingsPluginsTab({
                     placeholder={t('settings.plugins.searchProviders', {
                       defaultValue: 'Search providers',
                     })}
-                    className='w-full rounded-lg border border-gray-300 bg-white py-2 pe-3 ps-9 text-sm text-gray-900 placeholder:text-ink-muted focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 dark:border-dark-300 dark:bg-dark-50 dark:text-gray-100'
+                    className='w-full rounded-lg border border-gray-300 bg-white py-2 pe-3 ps-9 text-sm text-gray-900 placeholder:text-ink-muted focus:border-primary-500 focus:outline-hidden focus:ring-2 focus:ring-primary-500/30 dark:border-dark-300 dark:bg-dark-50 dark:text-gray-100'
                   />
                 </div>
               </div>
 
               {/* Stacked: cap the list. Side by side: fill the column so no
                   dead space collects under it when the detail pane is tall. */}
-              <div className='max-h-[32rem] space-y-2 overflow-y-auto p-3 lg:min-h-0 lg:max-h-none lg:flex-1'>
+              <div className='max-h-128 space-y-2 overflow-y-auto p-3 lg:min-h-0 lg:max-h-none lg:flex-1'>
                 {loading && plugins.length === 0 ? (
                   <LoadingState
                     size='sm'
@@ -427,7 +427,7 @@ export function SettingsPluginsTab({
                   onDeleteApiKey={() => onDeleteApiKey(selectedPlugin.id)}
                 />
               ) : (
-                <div className='flex min-h-[24rem] items-center justify-center text-center'>
+                <div className='flex min-h-96 items-center justify-center text-center'>
                   <div>
                     <Puzzle className='mx-auto mb-3 h-10 w-10 text-gray-400' />
                     <p className='text-sm font-medium text-gray-700 dark:text-gray-300'>
@@ -746,7 +746,7 @@ function ProviderModelCatalog({
           })}
         </div>
       ) : (
-        <div className='max-h-[26rem] overflow-auto rounded-lg border border-gray-200 dark:border-dark-300'>
+        <div className='max-h-104 overflow-auto rounded-lg border border-gray-200 dark:border-dark-300'>
           <table className='w-full min-w-[24rem] text-start text-sm'>
             <thead className='sticky top-0 z-10 bg-gray-50 text-xs uppercase tracking-wide text-gray-500 dark:bg-dark-50 dark:text-gray-400'>
               <tr>
@@ -835,7 +835,7 @@ function ApiKeyPanel({
         {plugin.auth?.key_env && (
           <span className='block mt-1'>
             {t('settings.plugins.apiKeyEnvAlternative')}{' '}
-            <code className='bg-gray-200 dark:bg-dark-200 px-1 rounded'>
+            <code className='bg-gray-200 dark:bg-dark-200 px-1 rounded-sm'>
               {plugin.auth.key_env}
             </code>{' '}
             {t('settings.plugins.environmentVariable')}.
@@ -889,7 +889,7 @@ function ApiKeyPanel({
                   : t('settings.plugins.showApiKey')
               }
               disabled={savingApiKey}
-              className='absolute end-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 disabled:cursor-not-allowed disabled:opacity-50'
+              className='absolute inset-e-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 disabled:cursor-not-allowed disabled:opacity-50'
             >
               {showApiKey ? (
                 <EyeOff className='h-4 w-4' />

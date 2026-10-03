@@ -54,7 +54,10 @@ function StreamingTextSegment({ content }: { content: string }) {
   if (!content) return null;
 
   return (
-    <div dir='auto' className='whitespace-pre-wrap break-words leading-relaxed'>
+    <div
+      dir='auto'
+      className='whitespace-pre-wrap wrap-break-word leading-relaxed'
+    >
       {content}
     </div>
   );
@@ -156,7 +159,7 @@ function StreamingCodeBlock({
             }
             borderRadius={0}
             customStyle={messageCodeBodyStyle}
-            className='!m-0 !rounded-none !border-none'
+            className='m-0! rounded-none! border-none!'
             showLineNumbers
             preTag={StreamingPre}
           >

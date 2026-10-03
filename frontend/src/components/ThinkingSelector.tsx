@@ -105,7 +105,7 @@ export const ThinkingSelector: React.FC<ThinkingSelectorProps> = ({
   }, [open]);
 
   return (
-    <div ref={containerRef} className='relative flex-shrink-0'>
+    <div ref={containerRef} className='relative shrink-0'>
       <Button
         type='button'
         variant='ghost'
@@ -158,7 +158,7 @@ export const ThinkingSelector: React.FC<ThinkingSelectorProps> = ({
                     : (index - 1 + items.length) % items.length;
             items[next].focus();
           }}
-          className='absolute bottom-full end-0 z-30 mb-2 w-48 rounded-2xl border border-black/[0.08] bg-surface/95 p-1.5 shadow-[0_16px_48px_rgba(15,23,42,0.16)] backdrop-blur-xl animate-scale-in dark:border-white/[0.09] dark:bg-dark-100/95'
+          className='absolute bottom-full inset-e-0 z-30 mb-2 w-48 rounded-2xl border border-black/8 bg-surface/95 p-1.5 shadow-[0_16px_48px_rgba(15,23,42,0.16)] backdrop-blur-xl animate-scale-in dark:border-white/9 dark:bg-dark-100/95'
         >
           <p className='mb-1 px-2 pt-1 text-[11px] font-medium text-ink-muted'>
             {t('chat.controls.thinking')}

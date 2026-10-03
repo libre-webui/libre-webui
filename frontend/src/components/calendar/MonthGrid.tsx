@@ -83,7 +83,7 @@ export function MonthGrid({
       className='flex min-h-0 flex-1 flex-col'
       data-testid='calendar-month-grid'
     >
-      <div className='grid grid-cols-7 border-b border-black/[0.06] dark:border-white/[0.07]'>
+      <div className='grid grid-cols-7 border-b border-black/6 dark:border-white/[0.07]'>
         {labels.map(label => (
           <div
             key={label}
@@ -107,7 +107,7 @@ export function MonthGrid({
               data-testid='calendar-day-cell'
               onClick={() => onDayClick(day)}
               className={cn(
-                'flex min-h-0 cursor-pointer flex-col gap-0.5 border-b border-e border-black/[0.04] p-1 transition-colors hover:bg-black/[0.02] dark:border-white/[0.04] dark:hover:bg-white/[0.03]',
+                'flex min-h-0 cursor-pointer flex-col gap-0.5 border-b border-e border-black/4 p-1 transition-colors hover:bg-black/2 dark:border-white/4 dark:hover:bg-white/3',
                 !inMonth && 'opacity-40'
               )}
             >
@@ -151,7 +151,7 @@ export function MonthGrid({
                     title={t('calendar.showDay', {
                       date: dateFormatter.format(day),
                     })}
-                    className='rounded px-1 text-start text-[10px] text-ink-muted hover:text-ink'
+                    className='rounded-sm px-1 text-start text-[10px] text-ink-muted hover:text-ink'
                   >
                     {t('calendar.more', { n: overflow })}
                   </button>

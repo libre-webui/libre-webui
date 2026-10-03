@@ -58,7 +58,7 @@ export function ModelMark({ seed, size = 'sm', className }: ModelMarkProps) {
         'inline-flex shrink-0 select-none items-center justify-center font-semibold leading-none',
         size === 'md'
           ? 'h-6 w-6 rounded-md text-[11px]'
-          : 'h-4 w-4 rounded text-[9px]',
+          : 'h-4 w-4 rounded-sm text-[9px]',
         tintFor(seed),
         className
       )}

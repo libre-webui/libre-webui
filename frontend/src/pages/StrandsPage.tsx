@@ -448,7 +448,7 @@ export default function StrandsPage() {
                   >
                     <button
                       type='button'
-                      className='min-w-0 flex-1 rounded-lg px-3 py-2 text-start focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40'
+                      className='min-w-0 flex-1 rounded-lg px-3 py-2 text-start focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary-500/40'
                       onClick={() => {
                         if (session.id === activeId) return;
                         setMessages([]);
@@ -470,7 +470,7 @@ export default function StrandsPage() {
                     </button>
                     <button
                       type='button'
-                      className='me-1 rounded p-1.5 text-ink-muted opacity-70 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 group-hover:opacity-100'
+                      className='me-1 rounded-sm p-1.5 text-ink-muted opacity-70 hover:text-ink focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary-500/40 group-hover:opacity-100'
                       aria-label={`${t('strands.deleteSession')}: ${session.title}`}
                       onClick={() => void deleteSession(session)}
                       disabled={!!streaming}

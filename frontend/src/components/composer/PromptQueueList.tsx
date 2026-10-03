@@ -106,7 +106,7 @@ export const PromptQueueList: React.FC<PromptQueueListProps> = ({
         {queue.map((entry, index) => (
           <li
             key={entry.id}
-            className='flex items-center gap-1.5 rounded-lg border border-black/[0.06] bg-surface/70 px-2 py-1 dark:border-white/[0.08] dark:bg-dark-200/70'
+            className='flex items-center gap-1.5 rounded-lg border border-black/6 bg-surface/70 px-2 py-1 dark:border-white/8 dark:bg-dark-200/70'
             data-testid='prompt-queue-entry'
           >
             {editingId === entry.id ? (
@@ -119,7 +119,7 @@ export const PromptQueueList: React.FC<PromptQueueListProps> = ({
                     if (event.key === 'Enter') void handleSaveEdit(entry.id);
                     if (event.key === 'Escape') setEditingId(null);
                   }}
-                  className='min-w-0 flex-1 bg-transparent text-[13px] text-gray-900 focus:outline-none dark:text-dark-900'
+                  className='min-w-0 flex-1 bg-transparent text-[13px] text-gray-900 focus:outline-hidden dark:text-dark-900'
                   data-testid='prompt-queue-edit-input'
                 />
                 <button

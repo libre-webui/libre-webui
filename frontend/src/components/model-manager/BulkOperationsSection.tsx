@@ -49,7 +49,7 @@ export function BulkOperationsSection({
       aria-busy={updating}
       className={cn(
         'rounded-2xl border p-4',
-        'bg-white/60 dark:bg-white/[0.03]',
+        'bg-white/60 dark:bg-white/3',
         'border-gray-200/80 dark:border-white/10'
       )}
     >

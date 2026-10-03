@@ -145,7 +145,7 @@ export function SidebarHeader({
           <button
             type='button'
             onClick={onToggleCompact}
-            className='flex h-7 w-7 items-center justify-center rounded-full text-ink-muted transition-colors hover:bg-interactive-hover hover:text-ink outline-none focus-visible:ring-2 focus-visible:ring-primary-500/30 touch-manipulation'
+            className='flex h-7 w-7 items-center justify-center rounded-full text-ink-muted transition-colors hover:bg-interactive-hover hover:text-ink outline-hidden focus-visible:ring-2 focus-visible:ring-primary-500/30 touch-manipulation'
             title={t('sidebar.toggleSize')}
             aria-label={t('sidebar.toggleSize')}
             data-testid='sidebar-toggle-size'
@@ -168,10 +168,10 @@ export function SidebarHeader({
           onClick={onCreateSession}
           disabled={createDisabled}
           className={cn(
-            'flex h-[38px] items-center justify-center gap-1.5 rounded-xl border text-sm font-medium transition-colors touch-manipulation outline-none focus-visible:ring-2 focus-visible:ring-primary-500/30',
+            'flex h-[38px] items-center justify-center gap-1.5 rounded-xl border text-sm font-medium transition-colors touch-manipulation outline-hidden focus-visible:ring-2 focus-visible:ring-primary-500/30',
             activeMode === 'chat'
               ? 'border-transparent bg-nav-active text-ink'
-              : 'border-line bg-surface-raised text-ink hover:bg-hover-solid dark:border-white/[0.12] dark:bg-dark-25 dark:hover:bg-dark-300',
+              : 'border-line bg-surface-raised text-ink hover:bg-hover-solid dark:border-white/12 dark:bg-dark-25 dark:hover:bg-dark-300',
             createDisabled && 'opacity-50'
           )}
           title={createDisabled ? disabledTitle : t('chat.session.chat')}
@@ -188,10 +188,10 @@ export function SidebarHeader({
             type='button'
             onClick={onStartWork}
             className={cn(
-              'flex h-[38px] items-center justify-center gap-1.5 rounded-xl border text-sm font-medium transition-colors touch-manipulation outline-none focus-visible:ring-2 focus-visible:ring-primary-500/30',
+              'flex h-[38px] items-center justify-center gap-1.5 rounded-xl border text-sm font-medium transition-colors touch-manipulation outline-hidden focus-visible:ring-2 focus-visible:ring-primary-500/30',
               activeMode === 'work'
                 ? 'border-transparent bg-nav-active text-ink'
-                : 'border-line bg-surface-raised text-ink hover:bg-hover-solid dark:border-white/[0.12] dark:bg-dark-25 dark:hover:bg-dark-300'
+                : 'border-line bg-surface-raised text-ink hover:bg-hover-solid dark:border-white/12 dark:bg-dark-25 dark:hover:bg-dark-300'
             )}
             title={t('chat.session.work')}
             aria-label={t('chat.session.work')}
@@ -210,7 +210,7 @@ export function SidebarHeader({
         onClick={() => window.dispatchEvent(new Event('libre:open-palette'))}
         title={t('palette.search', 'Search')}
         aria-label={t('palette.search', 'Search')}
-        className='mt-1.5 flex h-[34px] w-full items-center gap-2 rounded-xl px-2.5 text-sm text-ink-muted transition-colors hover:bg-interactive-hover hover:text-ink outline-none focus-visible:ring-2 focus-visible:ring-primary-500/30 touch-manipulation'
+        className='mt-1.5 flex h-[34px] w-full items-center gap-2 rounded-xl px-2.5 text-sm text-ink-muted transition-colors hover:bg-interactive-hover hover:text-ink outline-hidden focus-visible:ring-2 focus-visible:ring-primary-500/30 touch-manipulation'
       >
         <Search className='h-4 w-4 shrink-0' />
         <span className='flex-1 text-start'>

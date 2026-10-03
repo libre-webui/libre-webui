@@ -281,7 +281,7 @@ export const MediaUpload: React.FC<MediaUploadProps> = ({
                 aria-label={t('chat.mediaUpload.removeImage', {
                   number: index + 1,
                 })}
-                className='absolute top-0.5 end-0.5 p-0.5 rounded-full bg-black/60 hover:bg-black/80 text-white opacity-0 group-hover:opacity-100 focus-visible:opacity-100 [@media(hover:none)]:opacity-100 transition-opacity'
+                className='absolute top-0.5 inset-e-0.5 p-0.5 rounded-full bg-black/60 hover:bg-black/80 text-white opacity-0 group-hover:opacity-100 focus-visible:opacity-100 [@media(hover:none)]:opacity-100 transition-opacity'
               >
                 <X className='h-3 w-3' aria-hidden='true' />
               </button>
@@ -295,9 +295,9 @@ export const MediaUpload: React.FC<MediaUploadProps> = ({
               className='relative group flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700'
             >
               {doc.fileType === 'pdf' ? (
-                <FileText className='w-4 h-4 text-red-500 flex-shrink-0' />
+                <FileText className='w-4 h-4 text-red-500 shrink-0' />
               ) : (
-                <File className='w-4 h-4 text-blue-500 flex-shrink-0' />
+                <File className='w-4 h-4 text-blue-500 shrink-0' />
               )}
               <div className='min-w-0'>
                 <p className='text-xs font-medium text-gray-900 dark:text-gray-100 truncate max-w-[100px]'>

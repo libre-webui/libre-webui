@@ -92,7 +92,7 @@ function ToggleSwitch({
         checked={checked}
         onChange={event => onChange(event.target.checked)}
       />
-      <div className="peer h-6 w-11 rounded-full bg-line-strong transition-colors peer-focus:outline-none peer-focus-visible:ring-2 peer-focus-visible:ring-primary-500/40 peer-checked:bg-primary-500 after:absolute after:start-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:bg-white after:shadow-sm after:transition-all after:content-[''] peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full"></div>
+      <div className="peer h-6 w-11 rounded-full bg-line-strong transition-colors peer-focus:outline-hidden peer-focus-visible:ring-2 peer-focus-visible:ring-primary-500/40 peer-checked:bg-primary-500 after:absolute after:inset-s-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:bg-white after:shadow-xs after:transition-all after:content-[''] peer-checked:after:translate-x-full peer-checked:rtl:after:-translate-x-full"></div>
     </label>
   );
 }
@@ -158,7 +158,7 @@ export function SettingsAppearanceTab({
         onClick={() => onThemeChange(mode)}
         aria-pressed={selected}
         className={cn(
-          'flex flex-1 basis-[180px] flex-col items-center justify-center gap-1 rounded-2xl border px-8 py-5 text-sm leading-[22px] text-ink transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40',
+          'flex flex-1 basis-[180px] flex-col items-center justify-center gap-1 rounded-2xl border px-8 py-5 text-sm leading-[22px] text-ink transition-colors focus:outline-hidden focus-visible:ring-2 focus-visible:ring-primary-500/40',
           selected
             ? 'border-line-strong bg-surface-subtle'
             : 'border-line hover:bg-interactive-hover'
@@ -216,7 +216,7 @@ export function SettingsAppearanceTab({
               <output
                 dir={celestialLocation ? 'ltr' : 'auto'}
                 aria-live='polite'
-                className='max-w-full break-words rounded-lg bg-surface-subtle px-2 py-1 font-mono text-xs leading-5 text-ink-muted'
+                className='max-w-full wrap-break-word rounded-lg bg-surface-subtle px-2 py-1 font-mono text-xs leading-5 text-ink-muted'
                 data-testid='celestial-location-value'
               >
                 {celestialLocation
@@ -249,7 +249,7 @@ export function SettingsAppearanceTab({
                     dir='ltr'
                     value={manualLatitude}
                     onChange={event => setManualLatitude(event.target.value)}
-                    className='w-full min-w-0 rounded-lg border border-line bg-surface-subtle px-3 py-2 text-[16px] text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 md:text-sm'
+                    className='w-full min-w-0 rounded-lg border border-line bg-surface-subtle px-3 py-2 text-[16px] text-ink focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary-500/40 md:text-sm'
                     data-testid='celestial-latitude'
                   />
                 </div>
@@ -270,7 +270,7 @@ export function SettingsAppearanceTab({
                     dir='ltr'
                     value={manualLongitude}
                     onChange={event => setManualLongitude(event.target.value)}
-                    className='w-full min-w-0 rounded-lg border border-line bg-surface-subtle px-3 py-2 text-[16px] text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 md:text-sm'
+                    className='w-full min-w-0 rounded-lg border border-line bg-surface-subtle px-3 py-2 text-[16px] text-ink focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary-500/40 md:text-sm'
                     data-testid='celestial-longitude'
                   />
                 </div>
@@ -278,7 +278,7 @@ export function SettingsAppearanceTab({
               <div className='flex flex-wrap items-center gap-2'>
                 <button
                   type='submit'
-                  className='rounded-lg border border-line bg-surface-raised px-3 py-2 text-xs font-medium text-ink transition-colors hover:bg-interactive-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40'
+                  className='rounded-lg border border-line bg-surface-raised px-3 py-2 text-xs font-medium text-ink transition-colors hover:bg-interactive-hover focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary-500/40'
                   data-testid='celestial-apply-location'
                 >
                   {t('settings.appearance.celestial.apply')}
@@ -287,7 +287,7 @@ export function SettingsAppearanceTab({
                   type='button'
                   onClick={() => void handleUseBrowserLocation()}
                   disabled={locating}
-                  className='rounded-lg border border-line px-3 py-2 text-xs text-ink transition-colors hover:bg-interactive-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 disabled:opacity-60'
+                  className='rounded-lg border border-line px-3 py-2 text-xs text-ink transition-colors hover:bg-interactive-hover focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary-500/40 disabled:opacity-60'
                   data-testid='celestial-use-location'
                 >
                   {t('settings.appearance.celestial.useMyLocation')}
@@ -296,7 +296,7 @@ export function SettingsAppearanceTab({
                   <button
                     type='button'
                     onClick={() => setLocation(null)}
-                    className='rounded-lg px-3 py-2 text-xs text-ink-muted transition-colors hover:bg-interactive-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40'
+                    className='rounded-lg px-3 py-2 text-xs text-ink-muted transition-colors hover:bg-interactive-hover focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary-500/40'
                     data-testid='celestial-clear-location'
                   >
                     {t('settings.appearance.celestial.clear')}
@@ -356,7 +356,7 @@ export function SettingsAppearanceTab({
             })}
           </h4>
           <div
-            className='h-6 w-6 flex-shrink-0 rounded-full border border-line'
+            className='h-6 w-6 shrink-0 rounded-full border border-line'
             style={{ backgroundColor: accentPreviewColor }}
             aria-hidden='true'
           />
@@ -372,7 +372,7 @@ export function SettingsAppearanceTab({
                 type='button'
                 onClick={() => onAccentChange(option.id)}
                 className={cn(
-                  'relative h-9 w-9 rounded-full transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40',
+                  'relative h-9 w-9 rounded-full transition-all duration-200 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-primary-500/40',
                   isSelected
                     ? 'scale-105 ring-2 ring-ink ring-offset-2 ring-offset-surface'
                     : 'hover:scale-110'
@@ -386,7 +386,7 @@ export function SettingsAppearanceTab({
               >
                 {isSelected && (
                   <Check
-                    className='absolute inset-0 m-auto h-4 w-4 drop-shadow'
+                    className='absolute inset-0 m-auto h-4 w-4 drop-shadow-sm'
                     style={{ color: option.foreground }}
                   />
                 )}
@@ -396,7 +396,7 @@ export function SettingsAppearanceTab({
 
           <label
             className={cn(
-              'relative h-9 w-9 cursor-pointer overflow-hidden rounded-full transition-all duration-200 focus-within:outline-none focus-within:ring-2 focus-within:ring-primary-500/40',
+              'relative h-9 w-9 cursor-pointer overflow-hidden rounded-full transition-all duration-200 focus-within:outline-hidden focus-within:ring-2 focus-within:ring-primary-500/40',
               activeAccent === 'custom'
                 ? 'scale-105 ring-2 ring-ink ring-offset-2 ring-offset-surface'
                 : 'hover:scale-110'
@@ -420,7 +420,7 @@ export function SettingsAppearanceTab({
               style={{ backgroundColor: customAccentValue }}
               aria-hidden='true'
             />
-            <Palette className='absolute inset-0 m-auto h-4 w-4 text-white drop-shadow' />
+            <Palette className='absolute inset-0 m-auto h-4 w-4 text-white drop-shadow-sm' />
           </label>
         </div>
 
@@ -441,7 +441,7 @@ export function SettingsAppearanceTab({
                 aria-pressed={!theme.adaptToAccent}
                 onClick={() => onAdaptToAccentChange(false)}
                 className={cn(
-                  'flex-1 basis-[180px] rounded-2xl border p-4 text-start transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40',
+                  'flex-1 basis-[180px] rounded-2xl border p-4 text-start transition-colors focus:outline-hidden focus-visible:ring-2 focus-visible:ring-primary-500/40',
                   !theme.adaptToAccent
                     ? 'border-line-strong bg-surface-subtle'
                     : 'border-line hover:bg-interactive-hover'
@@ -460,7 +460,7 @@ export function SettingsAppearanceTab({
                 aria-pressed={theme.adaptToAccent === true}
                 onClick={() => onAdaptToAccentChange(true)}
                 className={cn(
-                  'flex-1 basis-[180px] rounded-2xl border p-4 text-start transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40',
+                  'flex-1 basis-[180px] rounded-2xl border p-4 text-start transition-colors focus:outline-hidden focus-visible:ring-2 focus-visible:ring-primary-500/40',
                   theme.adaptToAccent
                     ? 'border-line-strong bg-surface-subtle'
                     : 'border-line hover:bg-interactive-hover'

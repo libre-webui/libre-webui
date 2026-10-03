@@ -87,7 +87,7 @@ export const ImageLightbox: React.FC<ImageLightboxProps> = ({
 
   return createPortal(
     <div
-      className='fixed inset-0 z-[99999] flex items-center justify-center'
+      className='fixed inset-0 z-99999 flex items-center justify-center'
       onClick={onClose}
     >
       {/* Backdrop */}
@@ -108,7 +108,7 @@ export const ImageLightbox: React.FC<ImageLightboxProps> = ({
           onClick={onClose}
           aria-label={t('common.close')}
           className={cn(
-            'absolute -top-12 end-0 lg:top-0 lg:-end-12 z-10',
+            'absolute -top-12 inset-e-0 lg:top-0 lg:-inset-e-12 z-10',
             'p-2 rounded-full',
             'bg-white/10 hover:bg-white/20',
             'transition-colors'
@@ -129,7 +129,7 @@ export const ImageLightbox: React.FC<ImageLightboxProps> = ({
         {/* Info Panel */}
         <div
           className={cn(
-            'w-full lg:w-80 flex-shrink-0',
+            'w-full lg:w-80 shrink-0',
             'bg-white dark:bg-dark-100',
             'rounded-xl p-4 lg:p-5',
             'overflow-y-auto max-h-[25vh] lg:max-h-[90vh]'

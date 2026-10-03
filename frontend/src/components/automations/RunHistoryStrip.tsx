@@ -42,7 +42,7 @@ export function RunHistoryStrip({ days, locale }: RunHistoryStripProps) {
 
   return (
     <div
-      className='rounded-2xl border border-black/[0.06] bg-white/60 px-4 py-3 dark:border-white/[0.07] dark:bg-dark-100/60'
+      className='rounded-2xl border border-black/6 bg-white/60 px-4 py-3 dark:border-white/[0.07] dark:bg-dark-100/60'
       data-testid='automation-run-strip'
     >
       <div className='mb-2 flex items-center justify-between'>
@@ -67,7 +67,7 @@ export function RunHistoryStrip({ days, locale }: RunHistoryStripProps) {
               <div
                 key={index}
                 title={labelFor(index)}
-                className='h-[3px] flex-1 rounded-sm bg-black/[0.06] dark:bg-white/[0.08]'
+                className='h-[3px] flex-1 rounded-xs bg-black/6 dark:bg-white/8'
               />
             );
           }
@@ -77,7 +77,7 @@ export function RunHistoryStrip({ days, locale }: RunHistoryStripProps) {
             <div
               key={index}
               title={`${labelFor(index)}: ${day.succeeded}✓ ${day.failed}✗`}
-              className='flex flex-1 flex-col justify-end overflow-hidden rounded-sm'
+              className='flex flex-1 flex-col justify-end overflow-hidden rounded-xs'
               style={{ height }}
             >
               <div

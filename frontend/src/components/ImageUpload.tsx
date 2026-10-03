@@ -172,7 +172,7 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
                 alt={t('chat.mediaUpload.uploadAlt', { number: index + 1 })}
                 className='w-full h-full object-cover'
               />
-              <div className='absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all duration-200 flex items-center justify-center'>
+              <div className='absolute inset-0 bg-black/0 group-hover:bg-black/50 transition-all duration-200 flex items-center justify-center'>
                 <Button
                   variant='ghost'
                   size='sm'

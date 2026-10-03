@@ -336,7 +336,7 @@ export function WorkComposer({
         'relative shrink-0',
         landing
           ? 'mt-6 w-full'
-          : 'border-t border-line bg-surface/95 px-3 py-3 backdrop-blur md:px-5'
+          : 'border-t border-line bg-surface/95 px-3 py-3 backdrop-blur-sm md:px-5'
       )}
     >
       {remoteProvider && !remoteDisclosureDismissed && (
@@ -350,13 +350,13 @@ export function WorkComposer({
             data-testid='work-provider-disclosure-popover'
             aria-labelledby='work-provider-disclosure-title'
             aria-live='polite'
-            className='relative rounded-2xl border border-warning-500/40 bg-surface-overlay p-3 pe-10 shadow-overlay backdrop-blur dark:border-warning-500/45'
+            className='relative rounded-2xl border border-warning-500/40 bg-surface-overlay p-3 pe-10 shadow-overlay backdrop-blur-sm dark:border-warning-500/45'
           >
             <button
               type='button'
               onClick={() => void dismissRemoteDisclosure()}
               disabled={remoteDisclosureSaving}
-              className='absolute end-2 top-2 inline-flex h-7 w-7 items-center justify-center rounded-lg text-ink-muted transition-colors hover:bg-warning-500/20 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-warning-500 disabled:cursor-wait disabled:opacity-50'
+              className='absolute inset-e-2 top-2 inline-flex h-7 w-7 items-center justify-center rounded-lg text-ink-muted transition-colors hover:bg-warning-500/20 hover:text-ink focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-warning-500 disabled:cursor-wait disabled:opacity-50'
               aria-label={t('work.composer.remoteDismissLabel', {
                 defaultValue: 'Dismiss remote provider notice',
               })}
@@ -422,7 +422,7 @@ export function WorkComposer({
             aria-label={t('work.composer.mentionAgents', {
               defaultValue: 'Mention an agent',
             })}
-            className='absolute bottom-full start-2 z-40 mb-2 w-64 overflow-hidden rounded-xl border border-line bg-surface-overlay shadow-overlay backdrop-blur'
+            className='absolute bottom-full inset-s-2 z-40 mb-2 w-64 overflow-hidden rounded-xl border border-line bg-surface-overlay shadow-overlay backdrop-blur-sm'
           >
             {mentionMatches.slice(0, 6).map((agent, index) => (
               <button
@@ -518,7 +518,7 @@ export function WorkComposer({
             disabled={disabled}
             rows={1}
             className={cn(
-              'm-0 block max-h-[160px] w-full resize-none overflow-y-auto rounded-none border-0 bg-transparent px-2 pt-1.5 pb-2 text-[0.9375rem] leading-relaxed text-ink shadow-none outline-none placeholder:text-ink-subtle focus:border-0 focus:bg-transparent focus:ring-0 disabled:cursor-not-allowed disabled:opacity-60',
+              'm-0 block max-h-[160px] w-full resize-none overflow-y-auto rounded-none border-0 bg-transparent px-2 pt-1.5 pb-2 text-[0.9375rem] leading-relaxed text-ink shadow-none outline-hidden placeholder:text-ink-subtle focus:border-0 focus:bg-transparent focus:ring-0 disabled:cursor-not-allowed disabled:opacity-60',
               landing ? 'min-h-28 px-1 pt-1 text-base' : 'min-h-9'
             )}
             placeholder={t('work.composer.placeholder', {

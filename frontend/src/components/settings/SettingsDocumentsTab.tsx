@@ -362,7 +362,7 @@ function KnowledgeCollectionsSection() {
           }}
           placeholder={t('settings.documents.collections.namePlaceholder')}
           aria-label={t('settings.documents.collections.namePlaceholder')}
-          className='flex-1 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 dark:border-dark-300 dark:bg-dark-50 dark:text-dark-900'
+          className='flex-1 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-primary-500 focus:outline-hidden focus:ring-2 focus:ring-primary-500/30 dark:border-dark-300 dark:bg-dark-50 dark:text-dark-900'
         />
         <Button
           size='sm'
@@ -526,7 +526,7 @@ function KnowledgeCollectionsSection() {
                       aria-label={t('settings.documents.collections.assignTo', {
                         name: document.filename,
                       })}
-                      className='rounded-lg border border-gray-200 bg-white px-2 py-1 text-xs text-gray-700 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 dark:border-dark-300 dark:bg-dark-50 dark:text-dark-800'
+                      className='rounded-lg border border-gray-200 bg-white px-2 py-1 text-xs text-gray-700 focus:border-primary-500 focus:outline-hidden focus:ring-2 focus:ring-primary-500/30 dark:border-dark-300 dark:bg-dark-50 dark:text-dark-800'
                     >
                       <option value=''>
                         {t('settings.documents.collections.none')}

@@ -219,7 +219,7 @@ export const ShareDialog: React.FC<ShareDialogProps> = ({
           {grants.map(grant => (
             <div
               key={grant.id}
-              className='flex items-center gap-2 rounded-lg border border-black/[0.06] px-2.5 py-2 dark:border-white/[0.08]'
+              className='flex items-center gap-2 rounded-lg border border-black/6 px-2.5 py-2 dark:border-white/8'
               data-testid='share-item'
             >
               {grant.principalType === 'group' ? (

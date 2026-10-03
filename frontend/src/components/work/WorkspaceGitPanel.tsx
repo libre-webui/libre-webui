@@ -168,7 +168,7 @@ function FileDiffHeader({
   removed: number;
 }) {
   return (
-    <div className='sticky top-0 z-10 flex items-center gap-2 border-b border-line bg-surface-raised/95 px-3 py-1.5 backdrop-blur'>
+    <div className='sticky top-0 z-10 flex items-center gap-2 border-b border-line bg-surface-raised/95 px-3 py-1.5 backdrop-blur-sm'>
       <GitStatusLetter
         letter={letter}
         className={cn(
@@ -547,7 +547,7 @@ export function WorkspaceGitPanel({
               })
             );
           }}
-          className='h-7 max-w-44 rounded-lg border border-line bg-surface px-2 text-[11px] text-ink outline-none focus-visible:border-primary-500 focus-visible:ring-2 focus-visible:ring-primary-500/30 disabled:opacity-50'
+          className='h-7 max-w-44 rounded-lg border border-line bg-surface px-2 text-[11px] text-ink outline-hidden focus-visible:border-primary-500 focus-visible:ring-2 focus-visible:ring-primary-500/30 disabled:opacity-50'
         >
           {status.detached && (
             <option value='' disabled>
@@ -570,7 +570,7 @@ export function WorkspaceGitPanel({
             placeholder={t('work.git.newBranch', {
               defaultValue: 'New local branch',
             })}
-            className='h-7 min-w-0 flex-1 rounded-lg border border-line bg-surface px-2 font-mono text-[11px] text-ink outline-none placeholder:text-ink-subtle focus:border-primary-500 focus:ring-2 focus:ring-primary-500/30'
+            className='h-7 min-w-0 flex-1 rounded-lg border border-line bg-surface px-2 font-mono text-[11px] text-ink outline-hidden placeholder:text-ink-subtle focus:border-primary-500 focus:ring-2 focus:ring-primary-500/30'
           />
           <Button
             data-testid='work-git-create-branch-button'
@@ -663,7 +663,7 @@ export function WorkspaceGitPanel({
           </div>
           {status.changes.length > 0 && (
             <div className='relative px-2 pb-1.5'>
-              <Search className='pointer-events-none absolute start-4 top-1/2 h-3 w-3 -translate-y-[calc(50%+3px)] text-ink-subtle' />
+              <Search className='pointer-events-none absolute inset-s-4 top-1/2 h-3 w-3 -translate-y-[calc(50%+3px)] text-ink-subtle' />
               <input
                 data-testid='work-git-filter'
                 value={fileFilter}
@@ -675,7 +675,7 @@ export function WorkspaceGitPanel({
                 aria-label={t('work.git.filterFiles', {
                   defaultValue: 'Filter changed files',
                 })}
-                className='h-7 w-full rounded-lg border border-line bg-surface pe-2 ps-7 text-[11px] text-ink outline-none placeholder:text-ink-subtle focus:border-primary-500 focus:ring-2 focus:ring-primary-500/30'
+                className='h-7 w-full rounded-lg border border-line bg-surface pe-2 ps-7 text-[11px] text-ink outline-hidden placeholder:text-ink-subtle focus:border-primary-500 focus:ring-2 focus:ring-primary-500/30'
               />
             </div>
           )}
@@ -770,7 +770,7 @@ export function WorkspaceGitPanel({
               placeholder={t('work.git.commitMessage', {
                 defaultValue: 'Commit message',
               })}
-              className='w-full resize-none rounded-lg border border-line bg-surface px-2.5 py-2 text-xs text-ink outline-none placeholder:text-ink-subtle focus:border-primary-500 focus:ring-2 focus:ring-primary-500/30'
+              className='w-full resize-none rounded-lg border border-line bg-surface px-2.5 py-2 text-xs text-ink outline-hidden placeholder:text-ink-subtle focus:border-primary-500 focus:ring-2 focus:ring-primary-500/30'
             />
             <Button
               data-testid='work-git-commit-button'

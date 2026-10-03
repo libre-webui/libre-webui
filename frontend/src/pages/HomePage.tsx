@@ -52,7 +52,7 @@ const greetingKeyForHour = (hour: number): string => {
 const sectionLabelClass = 'mb-2 text-xs font-medium text-ink-muted';
 
 const rowClass =
-  'group flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-start text-sm text-ink-muted transition-colors hover:bg-white hover:text-ink dark:hover:bg-dark-200 outline-none focus-visible:ring-2 focus-visible:ring-primary-500';
+  'group flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-start text-sm text-ink-muted transition-colors hover:bg-white hover:text-ink dark:hover:bg-dark-200 outline-hidden focus-visible:ring-2 focus-visible:ring-primary-500';
 
 export const HomePage: React.FC = () => {
   const { t, i18n } = useTranslation();
@@ -182,7 +182,7 @@ export const HomePage: React.FC = () => {
                     <span
                       aria-hidden='true'
                       className={cn(
-                        'h-2 w-2 shrink-0 rounded-full ring-1 ring-black/[0.06] dark:ring-white/[0.1]',
+                        'h-2 w-2 shrink-0 rounded-full ring-1 ring-black/6 dark:ring-white/10',
                         status.animated && 'animate-pulse-subtle'
                       )}
                       style={{ backgroundColor: status.color }}
@@ -192,7 +192,7 @@ export const HomePage: React.FC = () => {
                     </span>
                     {task.hostPath && (
                       <span
-                        className='hidden max-w-[14rem] shrink-0 truncate font-mono text-[10px] text-ink-subtle sm:inline'
+                        className='hidden max-w-56 shrink-0 truncate font-mono text-[10px] text-ink-subtle sm:inline'
                         title={task.hostPath}
                       >
                         {task.hostPath}

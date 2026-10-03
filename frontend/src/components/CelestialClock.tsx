@@ -282,7 +282,7 @@ export function CelestialClock() {
               aria-label={t('common.close')}
               title={t('common.close')}
               onClick={() => close(true)}
-              className='absolute end-2 top-2 flex h-8 w-8 items-center justify-center rounded-full text-ink-muted hover:bg-interactive-hover hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40'
+              className='absolute inset-e-2 top-2 flex h-8 w-8 items-center justify-center rounded-full text-ink-muted hover:bg-interactive-hover hover:text-ink focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary-500/40'
             >
               <X className='h-4 w-4' aria-hidden='true' />
             </button>

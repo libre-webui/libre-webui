@@ -65,7 +65,7 @@ export const PromptVariablesEditor: React.FC<PromptVariablesEditorProps> = ({
           <div
             key={index}
             data-testid='prompt-variable-row'
-            className='rounded-xl border border-black/[0.06] bg-black/[0.02] p-2.5 dark:border-white/[0.07] dark:bg-white/[0.03]'
+            className='rounded-xl border border-black/6 bg-black/2 p-2.5 dark:border-white/[0.07] dark:bg-white/3'
           >
             <div className='flex items-center gap-2'>
               <input
@@ -139,7 +139,7 @@ export const PromptVariablesEditor: React.FC<PromptVariablesEditorProps> = ({
                   onChange={event =>
                     patch(index, { required: event.target.checked })
                   }
-                  className='h-3.5 w-3.5 rounded border-gray-300 dark:border-dark-400'
+                  className='h-3.5 w-3.5 rounded-sm border-gray-300 dark:border-dark-400'
                 />
                 {t('promptsPage.form.variableRequired')}
               </label>

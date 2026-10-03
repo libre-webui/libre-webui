@@ -86,7 +86,7 @@ export function InstalledModelsTab({
         groups.map(group => (
           <div key={group.key} data-testid='model-selector-group'>
             {group.showHeader && (
-              <div className='sticky top-0 z-[1] flex items-center gap-2 border-b border-gray-200 bg-gray-100 px-3 py-2 text-xs font-semibold text-gray-500 dark:border-dark-400 dark:bg-dark-300 dark:text-gray-400'>
+              <div className='sticky top-0 z-1 flex items-center gap-2 border-b border-gray-200 bg-gray-100 px-3 py-2 text-xs font-semibold text-gray-500 dark:border-dark-400 dark:bg-dark-300 dark:text-gray-400'>
                 {group.icon}
                 <span className='min-w-0 truncate'>{group.label}</span>
                 <span className='font-normal tabular-nums text-gray-400 dark:text-dark-500'>
@@ -111,7 +111,7 @@ export function InstalledModelsTab({
                     'block w-full cursor-pointer border-b border-gray-100 px-3 py-2 text-start last:border-b-0 dark:border-dark-200',
                     'hover:bg-gray-50 dark:hover:bg-dark-200',
                     'bg-white dark:bg-dark-100 transition-colors',
-                    'focus-visible:relative focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary-500/50',
+                    'focus-visible:relative focus-visible:z-10 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary-500/50',
                     selectedModel === modelValue &&
                       'bg-primary-50 dark:bg-primary-900/30'
                   )}
@@ -129,7 +129,7 @@ export function InstalledModelsTab({
                         {tag && (
                           <span
                             dir='ltr'
-                            className='shrink-0 rounded border border-black/[0.08] px-1 py-px font-mono text-[10px] leading-4 text-gray-500 dark:border-white/[0.1] dark:text-dark-600'
+                            className='shrink-0 rounded-sm border border-black/8 px-1 py-px font-mono text-[10px] leading-4 text-gray-500 dark:border-white/10 dark:text-dark-600'
                           >
                             {tag}
                           </span>
@@ -145,7 +145,7 @@ export function InstalledModelsTab({
                       )}
                     </div>
                     {selectedModel === modelValue && (
-                      <Check className='h-4 w-4 text-primary-600 dark:text-primary-400 flex-shrink-0' />
+                      <Check className='h-4 w-4 text-primary-600 dark:text-primary-400 shrink-0' />
                     )}
                   </div>
                 </button>
@@ -159,7 +159,7 @@ export function InstalledModelsTab({
                 className={cn(
                   'flex w-full items-center justify-between gap-2 border-b border-gray-100 bg-white px-3 py-2 text-start text-xs font-medium text-primary-600 dark:border-dark-200 dark:bg-dark-100 dark:text-primary-400',
                   'hover:bg-gray-50 dark:hover:bg-dark-200',
-                  'focus-visible:relative focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary-500/50'
+                  'focus-visible:relative focus-visible:z-10 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary-500/50'
                 )}
               >
                 <span className='truncate'>

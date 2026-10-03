@@ -137,7 +137,7 @@ const MessageBranchBase: React.FC<MessageBranchProps> = ({
                   'flex items-center justify-between border-b px-3 py-2 text-[10px] font-medium uppercase tracking-[0.12em]',
                   isActive || isThisMessageStreaming
                     ? 'border-primary-500/10 bg-primary-50/50 text-primary-600 dark:border-primary-400/10 dark:bg-primary-900/10 dark:text-primary-400'
-                    : 'border-black/[0.05] text-ink-muted dark:border-white/[0.05]'
+                    : 'border-black/5 text-ink-muted dark:border-white/5'
                 )}
               >
                 <div className='flex items-center gap-1.5'>
@@ -172,7 +172,7 @@ const MessageBranchBase: React.FC<MessageBranchProps> = ({
                   onRegenerate={
                     isActive && !isStreaming ? onRegenerate : undefined
                   }
-                  className='px-3 pb-3 !text-sm'
+                  className='px-3 pb-3 text-sm!'
                 />
               </div>
             </div>

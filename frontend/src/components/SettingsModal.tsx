@@ -2103,7 +2103,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     <>
       {/* Backdrop */}
       <div
-        className='fixed inset-0 z-50 bg-[var(--overlay-mask)] backdrop-blur-[2px] transition-opacity duration-200'
+        className='fixed inset-0 z-50 bg-(--overlay-mask) backdrop-blur-xs transition-opacity duration-200'
         onClick={onClose}
       />
 
@@ -2121,7 +2121,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       >
         <div
           data-testid='settings-modal-panel'
-          className='flex h-full w-full flex-col overscroll-behavior-contain bg-surface shadow-lv3 animate-scale-in sm:h-[min(1000px,calc(100vh-2.5rem))] sm:max-w-[1280px] sm:rounded-[24px] sm:border sm:border-black/[0.04] sm:dark:border-white/[0.06]'
+          className='flex h-full w-full flex-col overscroll-behavior-contain bg-surface shadow-lv3 animate-scale-in sm:h-[min(1000px,calc(100vh-2.5rem))] sm:max-w-[1280px] sm:rounded-[24px] sm:border sm:border-black/4 sm:dark:border-white/6'
         >
           {/* Mobile-only header; on sm+ the title lives in the nav rail. */}
           <div className='flex items-center justify-between border-b border-line px-4 py-4 sm:hidden'>
@@ -2150,7 +2150,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 {t('settings.title')}
               </h2>
               <div className='relative mb-2 hidden shrink-0 sm:block'>
-                <Search className='pointer-events-none absolute start-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-ink-subtle' />
+                <Search className='pointer-events-none absolute inset-s-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-ink-subtle' />
                 <input
                   ref={settingsSearchRef}
                   type='search'
@@ -2177,7 +2177,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     }
                   }}
                   placeholder={t('common.search')}
-                  className='h-9 w-full rounded-xl border border-transparent bg-surface-subtle pe-2.5 ps-8 text-[13px] text-ink placeholder:text-ink-subtle focus:border-primary-500/40 focus:outline-none'
+                  className='h-9 w-full rounded-xl border border-transparent bg-surface-subtle pe-2.5 ps-8 text-[13px] text-ink placeholder:text-ink-subtle focus:border-primary-500/40 focus:outline-hidden'
                 />
               </div>
               <div
@@ -2220,7 +2220,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                             disabled={isDisabled}
                             title={isDisabled ? tab.disabledHint : undefined}
                             className={cn(
-                              'flex h-9 shrink-0 items-center gap-2 rounded-xl px-3 text-start transition-colors duration-150 touch-manipulation outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 sm:w-full',
+                              'flex h-9 shrink-0 items-center gap-2 rounded-xl px-3 text-start transition-colors duration-150 touch-manipulation outline-hidden focus-visible:ring-2 focus-visible:ring-primary-500/40 sm:w-full',
                               isDisabled
                                 ? 'cursor-not-allowed text-ink-subtle opacity-60'
                                 : isActive
@@ -2233,7 +2233,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                             aria-controls={settingsPanelId}
                           >
                             <Icon
-                              className='h-4 w-4 flex-shrink-0 text-ink-muted'
+                              className='h-4 w-4 shrink-0 text-ink-muted'
                               aria-hidden='true'
                             />
                             <span className='truncate whitespace-nowrap text-sm'>

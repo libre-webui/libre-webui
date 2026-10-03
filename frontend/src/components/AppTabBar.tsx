@@ -559,7 +559,7 @@ export const AppTabBar: React.FC = () => {
         ref={stripRef}
         role='tablist'
         aria-label={t('tabs.label', 'Open tabs')}
-        className='tab-scroll-fade flex min-w-0 items-center gap-1 overflow-x-auto p-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden'
+        className='tab-scroll-fade flex min-w-0 items-center gap-1 overflow-x-auto p-0.5 scrollbar-none [&::-webkit-scrollbar]:hidden'
       >
         {accessibleTabs.map(tab => {
           const Icon =
@@ -587,7 +587,7 @@ export const AppTabBar: React.FC = () => {
                 'group flex h-7 min-w-0 flex-none items-center gap-1.5 rounded-lg border text-[13px] transition-colors duration-150',
                 tab.id !== 'home' && 'pe-1',
                 isActive
-                  ? 'border-black/[0.06] bg-gray-50 text-gray-950 shadow-subtle dark:border-white/[0.07] dark:bg-dark-100 dark:text-dark-950'
+                  ? 'border-black/6 bg-gray-50 text-gray-950 shadow-subtle dark:border-white/[0.07] dark:bg-dark-100 dark:text-dark-950'
                   : 'border-transparent text-gray-500 hover:bg-white/60 hover:text-gray-900 dark:text-dark-600 dark:hover:bg-dark-200/60 dark:hover:text-dark-900'
               )}
             >
@@ -612,12 +612,12 @@ export const AppTabBar: React.FC = () => {
                 }}
                 onKeyDown={event => handleTabContextKeyDown(event, tab)}
                 className={cn(
-                  'flex h-full min-w-0 items-center gap-1.5 rounded-md ps-2.5 outline-none focus-visible:ring-2 focus-visible:ring-primary-500',
+                  'flex h-full min-w-0 items-center gap-1.5 rounded-md ps-2.5 outline-hidden focus-visible:ring-2 focus-visible:ring-primary-500',
                   tab.id === 'home' && 'pe-2.5'
                 )}
               >
                 <Icon className='h-3.5 w-3.5 shrink-0' />
-                <span className='max-w-[9rem] truncate'>{tabTitle(tab)}</span>
+                <span className='max-w-36 truncate'>{tabTitle(tab)}</span>
               </button>
               {tab.id !== 'home' && (
                 <button
@@ -628,7 +628,7 @@ export const AppTabBar: React.FC = () => {
                   onClick={event => handleClose(event, tab)}
                   onKeyDown={event => handleTabContextKeyDown(event, tab)}
                   className={cn(
-                    'flex h-5 w-5 shrink-0 items-center justify-center rounded-md text-gray-400 transition-opacity hover:bg-black/[0.06] hover:text-gray-700 focus-visible:ring-2 focus-visible:ring-primary-500 dark:text-dark-500 dark:hover:bg-white/[0.08] dark:hover:text-dark-800',
+                    'flex h-5 w-5 shrink-0 items-center justify-center rounded-md text-gray-400 transition-opacity hover:bg-black/6 hover:text-gray-700 focus-visible:ring-2 focus-visible:ring-primary-500 dark:text-dark-500 dark:hover:bg-white/8 dark:hover:text-dark-800',
                     isActive
                       ? 'opacity-100'
                       : 'sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100'
@@ -655,7 +655,7 @@ export const AppTabBar: React.FC = () => {
             data-testid='app-tab-context-menu'
             onContextMenu={event => event.preventDefault()}
             onKeyDown={handleContextMenuKeyDown}
-            className='fixed z-[100] w-56 rounded-xl border border-line bg-surface-overlay/95 p-1 shadow-overlay backdrop-blur-xl animate-fade-in motion-reduce:animate-none'
+            className='fixed z-100 w-56 rounded-xl border border-line bg-surface-overlay/95 p-1 shadow-overlay backdrop-blur-xl animate-fade-in motion-reduce:animate-none'
             style={{ left: contextMenu.x, top: contextMenu.y }}
           >
             <button
@@ -667,7 +667,7 @@ export const AppTabBar: React.FC = () => {
                 closeSingleTab(contextTab, true);
                 setContextMenu(null);
               }}
-              className='flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-[13px] text-ink-muted transition-colors hover:bg-black/[0.05] hover:text-ink disabled:cursor-not-allowed disabled:opacity-40 dark:hover:bg-white/[0.06]'
+              className='flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-[13px] text-ink-muted transition-colors hover:bg-black/5 hover:text-ink disabled:cursor-not-allowed disabled:opacity-40 dark:hover:bg-white/6'
             >
               <X className='h-4 w-4 shrink-0' />
               <span>{t('tabs.close', 'Close tab')}</span>
@@ -678,7 +678,7 @@ export const AppTabBar: React.FC = () => {
               data-testid='app-tab-context-close-others'
               disabled={otherTabIds.length === 0}
               onClick={() => closeTabSet(otherTabIds, contextTab.id)}
-              className='flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-[13px] text-ink-muted transition-colors hover:bg-black/[0.05] hover:text-ink disabled:cursor-not-allowed disabled:opacity-40 dark:hover:bg-white/[0.06]'
+              className='flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-[13px] text-ink-muted transition-colors hover:bg-black/5 hover:text-ink disabled:cursor-not-allowed disabled:opacity-40 dark:hover:bg-white/6'
             >
               <SquareX className='h-4 w-4 shrink-0' />
               <span>{t('tabs.closeOthers', 'Close other tabs')}</span>
@@ -689,7 +689,7 @@ export const AppTabBar: React.FC = () => {
               data-testid='app-tab-context-close-right'
               disabled={rightTabIds.length === 0}
               onClick={() => closeTabSet(rightTabIds, contextTab.id)}
-              className='flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-[13px] text-ink-muted transition-colors hover:bg-black/[0.05] hover:text-ink disabled:cursor-not-allowed disabled:opacity-40 dark:hover:bg-white/[0.06]'
+              className='flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-[13px] text-ink-muted transition-colors hover:bg-black/5 hover:text-ink disabled:cursor-not-allowed disabled:opacity-40 dark:hover:bg-white/6'
             >
               <PanelRightClose className='h-4 w-4 shrink-0' />
               <span>{t('tabs.closeRight', 'Close tabs to the right')}</span>
@@ -701,7 +701,7 @@ export const AppTabBar: React.FC = () => {
               data-testid='app-tab-context-close-all'
               disabled={allClosableTabIds.length === 0}
               onClick={() => closeTabSet(allClosableTabIds, 'home')}
-              className='flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-[13px] text-ink-muted transition-colors hover:bg-black/[0.05] hover:text-ink disabled:cursor-not-allowed disabled:opacity-40 dark:hover:bg-white/[0.06]'
+              className='flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-[13px] text-ink-muted transition-colors hover:bg-black/5 hover:text-ink disabled:cursor-not-allowed disabled:opacity-40 dark:hover:bg-white/6'
             >
               <ListX className='h-4 w-4 shrink-0' />
               <span>{t('tabs.closeAll', 'Close all tabs')}</span>
@@ -719,7 +719,7 @@ export const AppTabBar: React.FC = () => {
           aria-haspopup='menu'
           data-testid='app-tab-new'
           onClick={() => setMenuOpen(open => !open)}
-          className='flex h-7 w-7 items-center justify-center rounded-lg text-gray-500 transition-colors hover:bg-white/60 hover:text-gray-900 dark:text-dark-600 dark:hover:bg-dark-200/60 dark:hover:text-dark-900 outline-none focus-visible:ring-2 focus-visible:ring-primary-500'
+          className='flex h-7 w-7 items-center justify-center rounded-lg text-gray-500 transition-colors hover:bg-white/60 hover:text-gray-900 dark:text-dark-600 dark:hover:bg-dark-200/60 dark:hover:text-dark-900 outline-hidden focus-visible:ring-2 focus-visible:ring-primary-500'
         >
           <Plus className='h-4 w-4' />
         </button>
@@ -739,7 +739,7 @@ export const AppTabBar: React.FC = () => {
                 }
                 handleContextMenuKeyDown(event);
               }}
-              className='fixed z-[100] max-h-[calc(100dvh-4rem)] overflow-y-auto rounded-xl border border-line bg-surface-overlay/95 p-1 shadow-overlay backdrop-blur-xl animate-fade-in motion-reduce:animate-none'
+              className='fixed z-100 max-h-[calc(100dvh-4rem)] overflow-y-auto rounded-xl border border-line bg-surface-overlay/95 p-1 shadow-overlay backdrop-blur-xl animate-fade-in motion-reduce:animate-none'
               style={menuPosition}
             >
               {menuItems.map(item => (
@@ -754,7 +754,7 @@ export const AppTabBar: React.FC = () => {
                       setMenuOpen(false);
                       item.action();
                     }}
-                    className='flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-[13px] text-ink-muted transition-colors hover:bg-black/[0.05] hover:text-ink dark:hover:bg-white/[0.06]'
+                    className='flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-[13px] text-ink-muted transition-colors hover:bg-black/5 hover:text-ink dark:hover:bg-white/6'
                   >
                     <item.icon className='h-4 w-4 shrink-0' />
                     <span className='min-w-0 flex-1 truncate text-start'>

@@ -35,7 +35,7 @@ export const Button: React.FC<ButtonProps> = ({
   ...props
 }) => {
   const baseStyles =
-    'group relative inline-flex select-none items-center justify-center rounded-xl border font-medium tracking-[-0.01em] transition-[background-color,border-color,color,box-shadow,opacity] duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-canvas dark:focus-visible:ring-primary-400 disabled:cursor-not-allowed disabled:opacity-40 motion-reduce:transition-none';
+    'group relative inline-flex select-none items-center justify-center rounded-xl border font-medium tracking-[-0.01em] transition-[background-color,border-color,color,box-shadow,opacity] duration-150 ease-out focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-canvas dark:focus-visible:ring-primary-400 disabled:cursor-not-allowed disabled:opacity-40 motion-reduce:transition-none';
 
   const variants = {
     primary:

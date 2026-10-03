@@ -183,7 +183,7 @@ export function WorkspaceCodeEditor({
         spellCheck={false}
         wrap='off'
         className={cn(
-          'absolute inset-0 z-10 h-full w-full resize-none overflow-auto whitespace-pre border-0 bg-transparent p-4 text-left font-mono text-[12px] leading-5 outline-none selection:bg-primary-500/25 disabled:cursor-not-allowed',
+          'absolute inset-0 z-10 h-full w-full resize-none overflow-auto whitespace-pre border-0 bg-transparent p-4 text-left font-mono text-[12px] leading-5 outline-hidden selection:bg-primary-500/25 disabled:cursor-not-allowed',
           highlighted ? 'text-transparent caret-ink' : 'text-ink'
         )}
         style={
@@ -200,7 +200,7 @@ export function WorkspaceCodeEditor({
       {isLarge && (
         <span
           dir='auto'
-          className='pointer-events-none absolute bottom-2 end-3 z-20 rounded-md border border-line bg-surface-overlay/90 px-2 py-1 text-[10px] text-ink-muted shadow-subtle'
+          className='pointer-events-none absolute bottom-2 inset-e-3 z-20 rounded-md border border-line bg-surface-overlay/90 px-2 py-1 text-[10px] text-ink-muted shadow-subtle'
           title={t('work.files.highlightPaused', {
             defaultValue:
               'Live highlighting is paused for large files to keep editing responsive.',

@@ -151,7 +151,7 @@ const SidebarLayoutSpacer: React.FC<{ isOpen: boolean; compact: boolean }> = ({
     aria-hidden='true'
     data-sidebar-layout-spacer=''
     className={cn(
-      'hidden md:block flex-shrink-0 transition-[width] duration-200 ease-out motion-reduce:transition-none',
+      'hidden md:block shrink-0 transition-[width] duration-200 ease-out motion-reduce:transition-none',
       isOpen ? (compact ? 'w-16' : 'w-72') : 'w-0'
     )}
   />
@@ -167,7 +167,7 @@ const ArtifactLayoutSpacer: React.FC = () => {
     <div
       aria-hidden='true'
       className={cn(
-        'hidden md:block flex-shrink-0',
+        'hidden md:block shrink-0',
         !artifactPanelResizing && 'transition-[width] duration-300 ease-out'
       )}
       style={{ width: artifactPanelOpen ? artifactPanelWidth : 0 }}
@@ -217,7 +217,7 @@ const ShellLayout: React.FC<ShellLayoutProps> = ({
     >
       <a
         href='#app-main'
-        className='sr-only focus:not-sr-only focus:fixed focus:start-3 focus:top-3 focus:z-[2147483647] focus:rounded-xl focus:bg-ink focus:px-4 focus:py-2.5 focus:text-sm focus:font-medium focus:text-ink-inverse focus:shadow-overlay'
+        className='sr-only focus:not-sr-only focus:fixed focus:inset-s-3 focus:top-3 focus:z-2147483647 focus:rounded-xl focus:bg-ink focus:px-4 focus:py-2.5 focus:text-sm focus:font-medium focus:text-ink-inverse focus:shadow-overlay'
       >
         {t('common.skipToContent')}
       </a>
@@ -240,7 +240,7 @@ const ShellLayout: React.FC<ShellLayoutProps> = ({
           tabIndex={-1}
           data-app-main=''
           data-wallpaper={hasWallpaper ? 'true' : undefined}
-          className='relative isolate min-h-0 flex-1 overflow-hidden bg-canvas focus:outline-none lg:rounded-[1.5rem] lg:border lg:border-black/[0.06] dark:lg:border-white/[0.07] lg:shadow-[0_1px_2px_rgba(0,0,0,0.03),0_18px_60px_rgba(15,23,42,0.04)]'
+          className='relative isolate min-h-0 flex-1 overflow-hidden bg-canvas focus:outline-hidden lg:rounded-3xl lg:border lg:border-black/6 dark:lg:border-white/[0.07] lg:shadow-[0_1px_2px_rgba(0,0,0,0.03),0_18px_60px_rgba(15,23,42,0.04)]'
         >
           <BackgroundRenderer active={hasWallpaper} />
           <div

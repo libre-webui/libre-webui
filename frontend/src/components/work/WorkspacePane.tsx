@@ -590,7 +590,7 @@ export function WorkspacePane({
           aria-label={t('work.workspace.label', {
             defaultValue: 'Workspace views',
           })}
-          className='flex min-w-0 items-center overflow-x-auto rounded-xl border border-line bg-surface-subtle p-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden'
+          className='flex min-w-0 items-center overflow-x-auto rounded-xl border border-line bg-surface-subtle p-0.5 [-ms-overflow-style:none] scrollbar-none [&::-webkit-scrollbar]:hidden'
         >
           {tabs.map((item, index) => {
             const Icon = item.icon;
@@ -614,7 +614,7 @@ export function WorkspacePane({
                 className={cn(
                   // The strip scrolls (overflow-x-auto) and would clip an outer
                   // focus ring, so the ring is drawn inside the tab.
-                  'flex h-7 items-center gap-1.5 rounded-lg px-2 text-[11px] font-medium transition-[background-color,color,box-shadow] focus-visible:outline-offset-[-2px]',
+                  'flex h-7 items-center gap-1.5 rounded-lg px-2 text-[11px] font-medium transition-[background-color,color,box-shadow] focus-visible:-outline-offset-2',
                   tab === item.id
                     ? 'bg-surface-raised text-ink shadow-subtle'
                     : 'text-ink-muted hover:text-ink'
@@ -838,7 +838,7 @@ export function WorkspacePane({
               aria-label={t('work.preview.command', {
                 defaultValue: 'Optional start command',
               })}
-              className='h-8 min-w-0 flex-1 rounded-lg border border-line bg-surface px-2.5 font-mono text-[11px] text-ink outline-none placeholder:text-ink-subtle focus:border-primary-500 focus:ring-2 focus:ring-primary-500/30'
+              className='h-8 min-w-0 flex-1 rounded-lg border border-line bg-surface px-2.5 font-mono text-[11px] text-ink outline-hidden placeholder:text-ink-subtle focus:border-primary-500 focus:ring-2 focus:ring-primary-500/30'
             />
             <div className='flex shrink-0 items-center gap-1'>
               {task.previewStatus === 'running' ||
@@ -1118,7 +1118,7 @@ export function WorkspacePane({
                       role='region'
                       tabIndex={0}
                       aria-label={t('work.activity.output')}
-                      className='mt-2 max-h-56 overflow-auto whitespace-pre-wrap break-words text-left font-mono text-[11px] leading-relaxed text-ink-muted'
+                      className='mt-2 max-h-56 overflow-auto whitespace-pre-wrap wrap-break-word text-left font-mono text-[11px] leading-relaxed text-ink-muted'
                     >
                       {message.content}
                     </pre>

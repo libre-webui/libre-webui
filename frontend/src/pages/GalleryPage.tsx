@@ -53,7 +53,7 @@ export const GalleryPage: React.FC = () => {
         description={t('gallery.subtitle')}
         meta={
           mediaCount !== null && mediaCount > 0 ? (
-            <span className='inline-flex rounded-full border border-gray-200/80 bg-white/60 px-2.5 py-1 text-xs text-gray-500 dark:border-white/10 dark:bg-white/[0.04] dark:text-dark-500'>
+            <span className='inline-flex rounded-full border border-gray-200/80 bg-white/60 px-2.5 py-1 text-xs text-gray-500 dark:border-white/10 dark:bg-white/4 dark:text-dark-500'>
               {t('mediaGallery.itemCount', { count: mediaCount })}
             </span>
           ) : null

@@ -72,7 +72,7 @@ const ChannelToolCalls: React.FC<{ calls: ChatToolCall[] }> = ({ calls }) => {
           {calls.map(call => (
             <div
               key={call.id}
-              className='rounded-lg border border-black/[0.06] px-2 py-1 dark:border-white/[0.08]'
+              className='rounded-lg border border-black/6 px-2 py-1 dark:border-white/8'
               data-testid='channel-tool-call'
             >
               <div className='flex items-baseline gap-1.5'>
@@ -100,7 +100,7 @@ const ChannelToolCalls: React.FC<{ calls: ChatToolCall[] }> = ({ calls }) => {
               {call.resultPreview && (
                 <p
                   dir='ltr'
-                  className='mt-0.5 whitespace-pre-wrap break-words font-mono text-[10px] leading-snug text-gray-500 dark:text-dark-600'
+                  className='mt-0.5 whitespace-pre-wrap wrap-break-word font-mono text-[10px] leading-snug text-gray-500 dark:text-dark-600'
                 >
                   {call.resultPreview.slice(0, TOOL_RESULT_PREVIEW_CHARS)}
                 </p>
@@ -161,7 +161,7 @@ export const ChannelMessageItem: React.FC<ChannelMessageItemProps> = ({
   return (
     <div
       className={cn(
-        'group relative rounded-xl px-2.5 py-1.5 hover:bg-black/[0.025] dark:hover:bg-white/[0.03]',
+        'group relative rounded-xl px-2.5 py-1.5 hover:bg-black/2.5 dark:hover:bg-white/3',
         compact && 'px-2 py-1'
       )}
       data-testid='channel-message'
@@ -208,7 +208,7 @@ export const ChannelMessageItem: React.FC<ChannelMessageItemProps> = ({
             onChange={event => setEditDraft(event.target.value)}
             rows={2}
             aria-label={t('channels.edit')}
-            className='min-w-0 flex-1 resize-none rounded-lg border border-black/[0.08] bg-transparent px-2 py-1 text-[13px] focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 dark:border-white/[0.1] dark:text-dark-900'
+            className='min-w-0 flex-1 resize-none rounded-lg border border-black/8 bg-transparent px-2 py-1 text-[13px] focus:border-primary-500 focus:outline-hidden focus:ring-2 focus:ring-primary-500/30 dark:border-white/10 dark:text-dark-900'
             data-testid='channel-message-edit'
           />
           <button
@@ -228,7 +228,7 @@ export const ChannelMessageItem: React.FC<ChannelMessageItemProps> = ({
             onClick={() => setEditing(false)}
             aria-label={t('channels.cancelEdit')}
             title={t('channels.cancelEdit')}
-            className='rounded-md p-1.5 text-gray-400 hover:bg-black/[0.04] dark:hover:bg-white/[0.06]'
+            className='rounded-md p-1.5 text-gray-400 hover:bg-black/4 dark:hover:bg-white/6'
           >
             <X className='h-3.5 w-3.5' />
           </button>
@@ -243,7 +243,7 @@ export const ChannelMessageItem: React.FC<ChannelMessageItemProps> = ({
           ) : message.error ? (
             <p className='text-[13px] text-red-500'>{message.error}</p>
           ) : (
-            <p className='whitespace-pre-wrap break-words text-[13px] leading-relaxed text-gray-800 dark:text-dark-800'>
+            <p className='whitespace-pre-wrap wrap-break-word text-[13px] leading-relaxed text-gray-800 dark:text-dark-800'>
               {message.content}
             </p>
           )}
@@ -259,7 +259,7 @@ export const ChannelMessageItem: React.FC<ChannelMessageItemProps> = ({
                   onClick={() =>
                     void actions.onDownload(attachment.id, attachment.filename)
                   }
-                  className='flex items-center gap-1.5 rounded-lg border border-black/[0.06] px-2 py-1 text-[12px] text-gray-600 hover:bg-black/[0.03] dark:border-white/[0.08] dark:text-dark-700 dark:hover:bg-white/[0.04]'
+                  className='flex items-center gap-1.5 rounded-lg border border-black/6 px-2 py-1 text-[12px] text-gray-600 hover:bg-black/3 dark:border-white/8 dark:text-dark-700 dark:hover:bg-white/4'
                   data-testid='channel-attachment'
                 >
                   <Paperclip className='h-3 w-3' />
@@ -287,7 +287,7 @@ export const ChannelMessageItem: React.FC<ChannelMessageItemProps> = ({
                 'rounded-full border px-1.5 py-0.5 text-[11px]',
                 reaction.mine
                   ? 'border-primary-400/50 bg-primary-500/10 text-primary-600 dark:text-primary-400'
-                  : 'border-black/[0.08] text-gray-600 hover:bg-black/[0.03] dark:border-white/[0.1] dark:text-dark-700'
+                  : 'border-black/8 text-gray-600 hover:bg-black/3 dark:border-white/10 dark:text-dark-700'
               )}
               data-testid='channel-reaction'
             >
@@ -311,12 +311,12 @@ export const ChannelMessageItem: React.FC<ChannelMessageItemProps> = ({
 
       {/* Hover actions */}
       {!message.deleted && !editing && (
-        <div className='absolute -top-2.5 end-2 hidden items-center gap-0.5 rounded-lg border border-black/[0.08] bg-white px-1 py-0.5 shadow-sm group-focus-within:flex group-hover:flex [@media(hover:none)]:flex dark:border-white/[0.1] dark:bg-dark-50'>
+        <div className='absolute -top-2.5 inset-e-2 hidden items-center gap-0.5 rounded-lg border border-black/8 bg-white px-1 py-0.5 shadow-xs group-focus-within:flex group-hover:flex [@media(hover:none)]:flex dark:border-white/10 dark:bg-dark-50'>
           <div className='relative'>
             <button
               type='button'
               onClick={() => setEmojiOpen(open => !open)}
-              className='rounded p-1 text-gray-400 hover:text-gray-700 dark:hover:text-dark-800'
+              className='rounded-sm p-1 text-gray-400 hover:text-gray-700 dark:hover:text-dark-800'
               title={t('channels.react')}
               aria-label={t('channels.react')}
               aria-haspopup='true'
@@ -326,7 +326,7 @@ export const ChannelMessageItem: React.FC<ChannelMessageItemProps> = ({
               <SmilePlus className='h-3.5 w-3.5' />
             </button>
             {emojiOpen && (
-              <div className='absolute end-0 top-6 z-10 flex gap-0.5 rounded-lg border border-black/[0.08] bg-white p-1 shadow-md dark:border-white/[0.1] dark:bg-dark-50'>
+              <div className='absolute inset-e-0 top-6 z-10 flex gap-0.5 rounded-lg border border-black/8 bg-white p-1 shadow-md dark:border-white/10 dark:bg-dark-50'>
                 {QUICK_EMOJI.map(emoji => (
                   <button
                     key={emoji}
@@ -341,7 +341,7 @@ export const ChannelMessageItem: React.FC<ChannelMessageItemProps> = ({
                       setEmojiOpen(false);
                     }}
                     aria-label={t('channels.reactWith', { emoji })}
-                    className='rounded p-0.5 text-sm hover:bg-black/[0.05] dark:hover:bg-white/[0.08]'
+                    className='rounded-sm p-0.5 text-sm hover:bg-black/5 dark:hover:bg-white/8'
                   >
                     {emoji}
                   </button>
@@ -353,7 +353,7 @@ export const ChannelMessageItem: React.FC<ChannelMessageItemProps> = ({
             <button
               type='button'
               onClick={() => actions.onReply!(message)}
-              className='rounded p-1 text-gray-400 hover:text-gray-700 dark:hover:text-dark-800'
+              className='rounded-sm p-1 text-gray-400 hover:text-gray-700 dark:hover:text-dark-800'
               title={t('channels.reply')}
               aria-label={t('channels.reply')}
               data-testid='channel-reply'
@@ -364,7 +364,7 @@ export const ChannelMessageItem: React.FC<ChannelMessageItemProps> = ({
           <button
             type='button'
             onClick={() => void actions.onPin(message)}
-            className='rounded p-1 text-gray-400 hover:text-amber-500'
+            className='rounded-sm p-1 text-gray-400 hover:text-amber-500'
             title={message.pinnedAt ? t('channels.unpin') : t('channels.pin')}
             aria-label={
               message.pinnedAt ? t('channels.unpin') : t('channels.pin')
@@ -380,7 +380,7 @@ export const ChannelMessageItem: React.FC<ChannelMessageItemProps> = ({
                 setEditDraft(message.content);
                 setEditing(true);
               }}
-              className='rounded p-1 text-gray-400 hover:text-gray-700 dark:hover:text-dark-800'
+              className='rounded-sm p-1 text-gray-400 hover:text-gray-700 dark:hover:text-dark-800'
               title={t('channels.edit')}
               aria-label={t('channels.edit')}
               data-testid='channel-edit'
@@ -399,7 +399,7 @@ export const ChannelMessageItem: React.FC<ChannelMessageItemProps> = ({
                 });
                 if (confirmed) await actions.onDelete(message);
               }}
-              className='rounded p-1 text-gray-400 hover:text-red-500'
+              className='rounded-sm p-1 text-gray-400 hover:text-red-500'
               title={t('channels.deleteMessage')}
               aria-label={t('channels.deleteMessage')}
               data-testid='channel-delete-message'

@@ -35,11 +35,11 @@ export const WhatsNewModal: React.FC<WhatsNewModalProps> = ({
   return (
     <>
       <div
-        className='fixed inset-0 z-[60] bg-black/55 backdrop-blur-sm transition-opacity duration-200'
+        className='fixed inset-0 z-60 bg-black/55 backdrop-blur-sm transition-opacity duration-200'
         onClick={onDismiss}
       />
       <div
-        className='fixed inset-0 z-[60] flex items-center justify-center p-4'
+        className='fixed inset-0 z-60 flex items-center justify-center p-4'
         role='dialog'
         aria-modal='true'
         aria-label={t('whatsNew.title')}
@@ -59,7 +59,7 @@ export const WhatsNewModal: React.FC<WhatsNewModalProps> = ({
             </div>
             <button
               onClick={onDismiss}
-              className='rounded-full p-2 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-900 dark:text-dark-600 dark:hover:bg-white/[0.06] dark:hover:text-dark-900'
+              className='rounded-full p-2 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-900 dark:text-dark-600 dark:hover:bg-white/6 dark:hover:text-dark-900'
               title={t('common.close')}
             >
               <X className='h-4 w-4' />
@@ -70,7 +70,7 @@ export const WhatsNewModal: React.FC<WhatsNewModalProps> = ({
             <ReactMarkdown
               components={{
                 h3: ({ children }) => (
-                  <h3 className='mb-2 mt-5 text-[11px] font-semibold uppercase tracking-[0.1em] text-primary-600 first:mt-0 dark:text-primary-400'>
+                  <h3 className='mb-2 mt-5 text-[11px] font-semibold uppercase tracking-widest text-primary-600 first:mt-0 dark:text-primary-400'>
                     {children}
                   </h3>
                 ),
@@ -114,7 +114,7 @@ export const WhatsNewModal: React.FC<WhatsNewModalProps> = ({
             </ReactMarkdown>
           </div>
 
-          <div className='flex items-center justify-between gap-3 border-t border-gray-200/70 px-6 py-4 dark:border-white/[0.08]'>
+          <div className='flex items-center justify-between gap-3 border-t border-gray-200/70 px-6 py-4 dark:border-white/8'>
             <a
               href='https://github.com/libre-webui/libre-webui'
               target='_blank'

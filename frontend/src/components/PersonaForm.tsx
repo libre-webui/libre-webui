@@ -391,7 +391,7 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
       </div>
 
       <form onSubmit={e => e.preventDefault()} className='space-y-6'>
-        <div className='bg-white dark:bg-dark-100 rounded-lg shadow-sm border border-gray-200 dark:border-dark-300'>
+        <div className='bg-white dark:bg-dark-100 rounded-lg shadow-xs border border-gray-200 dark:border-dark-300'>
           <div
             role='tablist'
             aria-label={t('personaForm.sections')}

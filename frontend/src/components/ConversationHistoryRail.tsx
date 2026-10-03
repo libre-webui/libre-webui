@@ -148,7 +148,7 @@ export const ConversationHistoryRail = React.memo(
       >
         <ol
           ref={listRef}
-          className='pointer-events-auto flex h-full min-h-0 flex-col overflow-y-auto py-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [&>li:first-child]:mt-auto [&>li:last-child]:mb-auto'
+          className='pointer-events-auto flex h-full min-h-0 flex-col overflow-y-auto py-2 scrollbar-none [&::-webkit-scrollbar]:hidden [&>li:first-child]:mt-auto [&>li:last-child]:mb-auto'
         >
           {items.map((item, index) => {
             const isActive = item.id === resolvedActiveId;
@@ -173,9 +173,9 @@ export const ConversationHistoryRail = React.memo(
                   })}
                   tabIndex={index === activeIndex ? 0 : -1}
                   className={cn(
-                    'group flex h-4 w-7 items-center outline-none xl:w-9',
+                    'group flex h-4 w-7 items-center outline-hidden xl:w-9',
                     'focus-visible:ring-2 focus-visible:ring-primary-500/45 focus-visible:ring-offset-2 focus-visible:ring-offset-canvas',
-                    'rounded-sm'
+                    'rounded-xs'
                   )}
                   onClick={() => onSelect(item.id)}
                   onPointerEnter={event =>
@@ -234,7 +234,7 @@ export const ConversationHistoryRail = React.memo(
             id={previewIdValue}
             role='tooltip'
             className={cn(
-              'pointer-events-none absolute start-full ms-2 w-72 -translate-y-1/2',
+              'pointer-events-none absolute inset-s-full ms-2 w-72 -translate-y-1/2',
               'overflow-hidden rounded-xl border border-line bg-surface-overlay/95 shadow-overlay backdrop-blur-xl',
               'animate-fade-in motion-reduce:animate-none'
             )}

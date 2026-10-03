@@ -122,7 +122,7 @@ const ToolCallCard: React.FC<{ call: ChatToolCall }> = ({ call }) => {
           </div>
           <pre
             dir='ltr'
-            className='mt-1 max-h-48 overflow-auto whitespace-pre-wrap rounded bg-white p-2 font-mono text-xs text-gray-700 dark:bg-dark-100 dark:text-gray-300'
+            className='mt-1 max-h-48 overflow-auto whitespace-pre-wrap rounded-sm bg-white p-2 font-mono text-xs text-gray-700 dark:bg-dark-100 dark:text-gray-300'
           >
             {formatArguments(call.arguments)}
           </pre>
@@ -133,7 +133,7 @@ const ToolCallCard: React.FC<{ call: ChatToolCall }> = ({ call }) => {
               </div>
               <pre
                 dir='ltr'
-                className='mt-1 max-h-48 overflow-auto whitespace-pre-wrap rounded bg-white p-2 font-mono text-xs text-gray-700 dark:bg-dark-100 dark:text-gray-300'
+                className='mt-1 max-h-48 overflow-auto whitespace-pre-wrap rounded-sm bg-white p-2 font-mono text-xs text-gray-700 dark:bg-dark-100 dark:text-gray-300'
               >
                 {call.resultPreview}
               </pre>
@@ -214,7 +214,7 @@ export const ChatToolApprovalCard: React.FC<{
       </p>
       <pre
         dir='ltr'
-        className='mt-2 max-h-32 overflow-auto whitespace-pre-wrap rounded bg-white/70 p-2 font-mono text-xs text-gray-700 dark:bg-dark-100 dark:text-gray-300'
+        className='mt-2 max-h-32 overflow-auto whitespace-pre-wrap rounded-sm bg-white/70 p-2 font-mono text-xs text-gray-700 dark:bg-dark-100 dark:text-gray-300'
       >
         {formatArguments(approval.toolCall.arguments)}
       </pre>

@@ -637,7 +637,7 @@ export function WorkConversation({
                           )}
                           <p
                             dir='auto'
-                            className='whitespace-pre-wrap break-words text-sm leading-relaxed'
+                            className='whitespace-pre-wrap wrap-break-word text-sm leading-relaxed'
                           >
                             {message.content}
                           </p>
@@ -722,7 +722,7 @@ export function WorkConversation({
             followTailRef.current = true;
             setShowNewActivity(false);
           }}
-          className='absolute bottom-4 left-1/2 z-10 inline-flex -translate-x-1/2 items-center gap-1.5 rounded-full border border-line bg-surface-overlay/95 px-3 py-2 text-xs font-medium text-ink shadow-overlay backdrop-blur transition-colors hover:bg-surface-raised'
+          className='absolute bottom-4 left-1/2 z-10 inline-flex -translate-x-1/2 items-center gap-1.5 rounded-full border border-line bg-surface-overlay/95 px-3 py-2 text-xs font-medium text-ink shadow-overlay backdrop-blur-sm transition-colors hover:bg-surface-raised'
         >
           <ArrowDown className='h-3.5 w-3.5' />
           {t('work.live.newActivity', { defaultValue: 'New activity' })}

@@ -65,7 +65,7 @@ interface NoteToolsDrawerProps {
 
 const DiffView: React.FC<{ rows: NoteDiffRow[] }> = ({ rows }) => (
   <div
-    className='max-h-64 overflow-auto rounded-lg border border-black/[0.06] font-mono text-[12px] leading-relaxed dark:border-white/[0.08]'
+    className='max-h-64 overflow-auto rounded-lg border border-black/6 font-mono text-[12px] leading-relaxed dark:border-white/8'
     data-testid='note-diff-view'
   >
     {rows.map((row, index) => (
@@ -74,9 +74,9 @@ const DiffView: React.FC<{ rows: NoteDiffRow[] }> = ({ rows }) => (
         className={cn(
           'whitespace-pre-wrap px-2',
           row.type === 'added' &&
-            'bg-[rgb(76,212,117)]/[0.12] text-green-800 dark:text-green-300',
+            'bg-[rgb(76,212,117)]/12 text-green-800 dark:text-green-300',
           row.type === 'removed' &&
-            'bg-[rgb(255,61,129)]/[0.10] text-red-800 line-through dark:text-red-300',
+            'bg-[rgb(255,61,129)]/10 text-red-800 line-through dark:text-red-300',
           row.type === 'context' && 'text-gray-600 dark:text-dark-700'
         )}
       >
@@ -405,12 +405,12 @@ export const NoteToolsDrawer: React.FC<NoteToolsDrawerProps> = ({
 
   return (
     <div
-      className='absolute inset-y-0 end-0 z-30 flex w-full max-w-md flex-col border-s border-black/[0.06] bg-surface shadow-xl dark:border-white/[0.07] dark:bg-dark-100'
+      className='absolute inset-y-0 inset-e-0 z-30 flex w-full max-w-md flex-col border-s border-black/6 bg-surface shadow-xl dark:border-white/[0.07] dark:bg-dark-100'
       data-testid='note-tools-drawer'
       role='dialog'
       aria-label={t('notes.tools')}
     >
-      <div className='flex items-center gap-1 border-b border-black/[0.06] px-3 py-2 dark:border-white/[0.07]'>
+      <div className='flex items-center gap-1 border-b border-black/6 px-3 py-2 dark:border-white/[0.07]'>
         <div role='tablist' className='flex items-center gap-1'>
           {tabs
             .filter(entry => !entry.hidden)
@@ -425,7 +425,7 @@ export const NoteToolsDrawer: React.FC<NoteToolsDrawerProps> = ({
                 className={cn(
                   'flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[12px] transition-colors',
                   tab === entry.id
-                    ? 'bg-black/[0.06] text-gray-900 dark:bg-white/[0.08] dark:text-dark-900'
+                    ? 'bg-black/6 text-gray-900 dark:bg-white/8 dark:text-dark-900'
                     : 'text-gray-500 hover:text-gray-800 dark:text-dark-500 dark:hover:text-dark-800'
                 )}
               >
@@ -460,7 +460,7 @@ export const NoteToolsDrawer: React.FC<NoteToolsDrawerProps> = ({
               revisions.map(revision => (
                 <div
                   key={revision.id}
-                  className='rounded-lg border border-black/[0.06] p-2.5 dark:border-white/[0.08]'
+                  className='rounded-lg border border-black/6 p-2.5 dark:border-white/8'
                   data-testid='note-revision-item'
                 >
                   <div className='flex items-center justify-between gap-2'>
@@ -546,7 +546,7 @@ export const NoteToolsDrawer: React.FC<NoteToolsDrawerProps> = ({
               attachments.map(attachment => (
                 <div
                   key={attachment.id}
-                  className='flex items-center gap-2 rounded-lg border border-black/[0.06] px-2.5 py-2 dark:border-white/[0.08]'
+                  className='flex items-center gap-2 rounded-lg border border-black/6 px-2.5 py-2 dark:border-white/8'
                   data-testid='note-attachment-item'
                 >
                   <Paperclip className='h-3.5 w-3.5 shrink-0 text-gray-400 dark:text-dark-500' />
@@ -597,7 +597,7 @@ export const NoteToolsDrawer: React.FC<NoteToolsDrawerProps> = ({
                 }}
                 placeholder={t('notes.shareUsernamePlaceholder')}
                 aria-label={t('notes.shareUsernamePlaceholder')}
-                className='min-w-0 flex-1 rounded-lg border border-black/[0.08] bg-transparent px-2.5 py-1.5 text-[13px] text-gray-900 placeholder:text-gray-400 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 dark:border-white/[0.1] dark:text-dark-900'
+                className='min-w-0 flex-1 rounded-lg border border-black/8 bg-transparent px-2.5 py-1.5 text-[13px] text-gray-900 placeholder:text-gray-400 focus:border-primary-500 focus:outline-hidden focus:ring-2 focus:ring-primary-500/30 dark:border-white/10 dark:text-dark-900'
                 data-testid='note-share-username'
               />
               <select
@@ -605,7 +605,7 @@ export const NoteToolsDrawer: React.FC<NoteToolsDrawerProps> = ({
                 onChange={event =>
                   setSharePermission(event.target.value as 'read' | 'write')
                 }
-                className='rounded-lg border border-black/[0.08] bg-transparent px-2 py-1.5 text-[12px] text-gray-700 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 dark:border-white/[0.1] dark:bg-dark-100 dark:text-dark-800'
+                className='rounded-lg border border-black/8 bg-transparent px-2 py-1.5 text-[12px] text-gray-700 focus:border-primary-500 focus:outline-hidden focus:ring-2 focus:ring-primary-500/30 dark:border-white/10 dark:bg-dark-100 dark:text-dark-800'
                 aria-label={t('notes.sharePermissionLabel')}
                 data-testid='note-share-permission'
               >
@@ -637,7 +637,7 @@ export const NoteToolsDrawer: React.FC<NoteToolsDrawerProps> = ({
               grants.map(grant => (
                 <div
                   key={grant.id}
-                  className='flex items-center gap-2 rounded-lg border border-black/[0.06] px-2.5 py-2 dark:border-white/[0.08]'
+                  className='flex items-center gap-2 rounded-lg border border-black/6 px-2.5 py-2 dark:border-white/8'
                   data-testid='note-share-item'
                 >
                   <Share2 className='h-3.5 w-3.5 shrink-0 text-gray-400 dark:text-dark-500' />
@@ -672,7 +672,7 @@ export const NoteToolsDrawer: React.FC<NoteToolsDrawerProps> = ({
               onChange={event => setInstruction(event.target.value)}
               placeholder={t('notes.assistPlaceholder')}
               rows={3}
-              className='w-full resize-none rounded-lg border border-black/[0.08] bg-transparent px-2.5 py-2 text-[13px] text-gray-900 placeholder:text-gray-400 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 dark:border-white/[0.1] dark:text-dark-900'
+              className='w-full resize-none rounded-lg border border-black/8 bg-transparent px-2.5 py-2 text-[13px] text-gray-900 placeholder:text-gray-400 focus:border-primary-500 focus:outline-hidden focus:ring-2 focus:ring-primary-500/30 dark:border-white/10 dark:text-dark-900'
               aria-label={t('notes.assistPlaceholder')}
               data-testid='note-assist-instruction'
             />

@@ -39,7 +39,7 @@ import {
 import { PasswordStrengthMeter } from '@/components/PasswordStrengthMeter';
 
 const selectClass =
-  'h-11 w-full rounded-xl border border-line bg-surface-raised px-3 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-primary-500 disabled:cursor-not-allowed disabled:opacity-60';
+  'h-11 w-full rounded-xl border border-line bg-surface-raised px-3 text-sm text-ink focus:outline-hidden focus:ring-2 focus:ring-primary-500 disabled:cursor-not-allowed disabled:opacity-60';
 
 function errorMessage(error: unknown, fallback: string): string {
   const apiError = error as {
@@ -433,7 +433,7 @@ export const UserManager: React.FC = () => {
             <Search
               size={16}
               aria-hidden='true'
-              className='pointer-events-none absolute start-3.5 top-3.5 text-ink-subtle'
+              className='pointer-events-none absolute inset-s-3.5 top-3.5 text-ink-subtle'
             />
             <Input
               type='search'
@@ -536,7 +536,7 @@ export const UserManager: React.FC = () => {
               aria-labelledby='pending-users-title'
               className='overflow-hidden rounded-2xl border border-warning-500/30 bg-surface'
             >
-              <div className='border-b border-line bg-warning-500/[0.06] p-4'>
+              <div className='border-b border-line bg-warning-500/6 p-4'>
                 <h3
                   id='pending-users-title'
                   className='flex items-center gap-2 text-sm font-semibold text-ink'
@@ -694,7 +694,7 @@ export const UserManager: React.FC = () => {
           }}
           testId='user-action-dialog'
         >
-          <p className='break-words text-sm leading-relaxed text-ink-muted'>
+          <p className='wrap-break-word text-sm leading-relaxed text-ink-muted'>
             {t(
               action.kind === 'delete'
                 ? 'userManager.deleteConfirm'

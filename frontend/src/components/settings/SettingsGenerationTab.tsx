@@ -160,7 +160,7 @@ export function SettingsGenerationTab({
             </span>
             <ChevronDown
               className={cn(
-                'h-4 w-4 flex-shrink-0 text-gray-500 transition-transform',
+                'h-4 w-4 shrink-0 text-gray-500 transition-transform',
                 advancedOpen && 'rotate-180'
               )}
             />

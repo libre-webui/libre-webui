@@ -42,7 +42,7 @@ export function PersonaAdvancedTab({
 
   return (
     <div className='space-y-6'>
-      <div className='rounded-xl p-5 bg-gradient-to-br from-primary-50 to-primary-100/50 dark:from-primary-900/30 dark:to-primary-800/20 border border-primary-200/50 dark:border-primary-700/30'>
+      <div className='rounded-xl p-5 bg-linear-to-br from-primary-50 to-primary-100/50 dark:from-primary-900/30 dark:to-primary-800/20 border border-primary-200/50 dark:border-primary-700/30'>
         <div className='flex items-center gap-2 mb-4'>
           <Database className='h-5 w-5 text-primary-600 dark:text-primary-400' />
           <h3 className='font-semibold text-primary-900 dark:text-primary-100'>
@@ -88,7 +88,7 @@ export function PersonaAdvancedTab({
           <div className='mt-3 rounded-lg border border-amber-200 bg-amber-500/10 p-3 dark:border-amber-700/50 dark:bg-amber-900/20'>
             <p className='text-sm text-ink'>
               {t('personaForm.advanced.installHint')}{' '}
-              <code className='rounded bg-amber-500/20 px-1.5 py-0.5 text-xs dark:bg-amber-900/40'>
+              <code className='rounded-sm bg-amber-500/20 px-1.5 py-0.5 text-xs dark:bg-amber-900/40'>
                 ollama pull nomic-embed-text
               </code>
             </p>
@@ -101,7 +101,7 @@ export function PersonaAdvancedTab({
 
       <div className='p-4 bg-gray-50 dark:bg-dark-50 rounded-xl border border-gray-200 dark:border-dark-300'>
         <div className='flex items-start gap-3'>
-          <Info className='h-5 w-5 text-gray-400 mt-0.5 flex-shrink-0' />
+          <Info className='h-5 w-5 text-gray-400 mt-0.5 shrink-0' />
           <div>
             <p className='text-sm font-medium text-gray-700 dark:text-gray-300'>
               {t('personaForm.advanced.aboutTitle')}

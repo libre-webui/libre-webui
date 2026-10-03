@@ -677,7 +677,7 @@ export const ModelManager: React.FC<ModelManagerProps> = ({
       <div
         className={cn(
           'rounded-2xl border px-4 py-3',
-          'bg-white/60 dark:bg-white/[0.03]',
+          'bg-white/60 dark:bg-white/3',
           'border-gray-200/80 dark:border-white/10'
         )}
       >
@@ -814,7 +814,7 @@ export const ModelManager: React.FC<ModelManagerProps> = ({
         <div
           className={cn(
             'rounded-2xl border p-4',
-            'bg-white/60 dark:bg-white/[0.03]',
+            'bg-white/60 dark:bg-white/3',
             'border-gray-200/80 dark:border-white/10'
           )}
         >
@@ -826,7 +826,7 @@ export const ModelManager: React.FC<ModelManagerProps> = ({
             <span
               className={cn(
                 'ms-auto rounded-full px-2 py-0.5 text-xs font-medium',
-                'border border-gray-200 bg-gray-50 dark:border-white/10 dark:bg-white/[0.04]',
+                'border border-gray-200 bg-gray-50 dark:border-white/10 dark:bg-white/4',
                 'text-gray-600 dark:text-dark-600'
               )}
             >
@@ -839,8 +839,8 @@ export const ModelManager: React.FC<ModelManagerProps> = ({
                 key={model.name}
                 className={cn(
                   'flex items-center justify-between p-4 rounded-lg border',
-                  'bg-white/50 dark:bg-white/[0.025]',
-                  'border-gray-200/80 dark:border-white/[0.08]'
+                  'bg-white/50 dark:bg-white/2.5',
+                  'border-gray-200/80 dark:border-white/8'
                 )}
               >
                 <div className='flex items-center gap-3'>
@@ -872,7 +872,7 @@ export const ModelManager: React.FC<ModelManagerProps> = ({
                 <div
                   className={cn(
                     'flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium',
-                    'border border-gray-200 bg-gray-50 dark:border-white/10 dark:bg-white/[0.04]',
+                    'border border-gray-200 bg-gray-50 dark:border-white/10 dark:bg-white/4',
                     'text-gray-600 dark:text-dark-600'
                   )}
                 >
@@ -912,7 +912,7 @@ export const ModelManager: React.FC<ModelManagerProps> = ({
       <div
         className={cn(
           'overflow-hidden rounded-2xl border',
-          'bg-white/60 dark:bg-white/[0.03]',
+          'bg-white/60 dark:bg-white/3',
           'border-gray-200/80 dark:border-white/10'
         )}
       >

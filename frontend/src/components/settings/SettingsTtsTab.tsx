@@ -307,7 +307,7 @@ export function SettingsTtsTab({
             </div>
 
             {selectedModel?.config?.supports_voice_cloning && (
-              <div className='rounded-lg border border-primary-500/20 bg-primary-500/[0.06] p-4'>
+              <div className='rounded-lg border border-primary-500/20 bg-primary-500/6 p-4'>
                 <h4 className='text-sm font-medium text-gray-900 dark:text-gray-100'>
                   {t('settings.tts.voiceCloningAvailable')}
                 </h4>
@@ -326,7 +326,7 @@ export function SettingsTtsTab({
                   {plugins.map(plugin => (
                     <div
                       key={plugin.id}
-                      className='flex items-center gap-2 p-2 bg-white dark:bg-dark-100 rounded border border-gray-200 dark:border-dark-300'
+                      className='flex items-center gap-2 p-2 bg-white dark:bg-dark-100 rounded-sm border border-gray-200 dark:border-dark-300'
                     >
                       <div className='w-2 h-2 rounded-full bg-green-500' />
                       <span className='text-sm text-gray-700 dark:text-gray-300'>
@@ -405,14 +405,14 @@ export function SettingsTtsTab({
                     <p className='truncate text-sm text-gray-800 dark:text-gray-200'>
                       {profile.name}
                       {profile.consentStatus === 'revoked' && (
-                        <span className='ms-2 rounded bg-red-100 px-1.5 py-0.5 text-[10px] font-medium text-red-700 dark:bg-red-950/40 dark:text-red-400'>
+                        <span className='ms-2 rounded-sm bg-red-100 px-1.5 py-0.5 text-[10px] font-medium text-red-700 dark:bg-red-950/40 dark:text-red-400'>
                           {t('settings.tts.consentRevoked', {
                             defaultValue: 'Consent withdrawn',
                           })}
                         </span>
                       )}
                       {profile.consentStatus === 'expired' && (
-                        <span className='ms-2 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-700 dark:bg-amber-950/40 dark:text-amber-400'>
+                        <span className='ms-2 rounded-sm bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-700 dark:bg-amber-950/40 dark:text-amber-400'>
                           {t('settings.tts.consentExpired', {
                             defaultValue: 'Consent expired',
                           })}

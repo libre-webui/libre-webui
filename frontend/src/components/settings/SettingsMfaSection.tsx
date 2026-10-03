@@ -212,7 +212,7 @@ export const SettingsMfaSection: React.FC = () => {
   if (loading || !status) return null;
 
   const codeInputClass =
-    'h-9 w-40 rounded-lg border border-gray-200 dark:border-dark-300 bg-white dark:bg-dark-100 px-3 text-sm text-gray-900 dark:text-gray-100 outline-none focus:ring-2 focus:ring-primary-500/35';
+    'h-9 w-40 rounded-lg border border-gray-200 dark:border-dark-300 bg-white dark:bg-dark-100 px-3 text-sm text-gray-900 dark:text-gray-100 outline-hidden focus:ring-2 focus:ring-primary-500/35';
 
   return (
     <div className='space-y-6' data-testid='settings-mfa-section'>

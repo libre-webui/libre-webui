@@ -219,7 +219,7 @@ export const WorkPoliciesSettings: React.FC = () => {
         {...field(key)}
         placeholder={placeholder}
         spellCheck={false}
-        className='w-full rounded-lg border border-gray-200 bg-white px-2.5 py-1.5 text-sm text-gray-900 outline-none focus:border-primary-500 dark:border-dark-300 dark:bg-dark-50 dark:text-gray-100'
+        className='w-full rounded-lg border border-gray-200 bg-white px-2.5 py-1.5 text-sm text-gray-900 outline-hidden focus:border-primary-500 dark:border-dark-300 dark:bg-dark-50 dark:text-gray-100'
       />
     </label>
   );
@@ -356,7 +356,7 @@ export const WorkPoliciesSettings: React.FC = () => {
               </span>
               <select
                 {...field('networkDefault')}
-                className='w-full rounded-lg border border-gray-200 bg-white px-2.5 py-1.5 text-sm text-gray-900 outline-none focus:border-primary-500 dark:border-dark-300 dark:bg-dark-50 dark:text-gray-100'
+                className='w-full rounded-lg border border-gray-200 bg-white px-2.5 py-1.5 text-sm text-gray-900 outline-hidden focus:border-primary-500 dark:border-dark-300 dark:bg-dark-50 dark:text-gray-100'
               >
                 <option value='inherit'>
                   {t('userManager.workPolicies.networkInherit')}
@@ -380,7 +380,7 @@ export const WorkPoliciesSettings: React.FC = () => {
                     guiEnabled: event.target.checked,
                   }))
                 }
-                className='h-3.5 w-3.5 rounded border-gray-300 text-primary-600 focus:ring-primary-500'
+                className='h-3.5 w-3.5 rounded-sm border-gray-300 text-primary-600 focus:ring-primary-500'
               />
               <span className='font-medium text-gray-700 dark:text-gray-300'>
                 {t('userManager.workPolicies.guiEnabled')}
@@ -398,7 +398,7 @@ export const WorkPoliciesSettings: React.FC = () => {
                       takeoverEnabled: event.target.checked,
                     }))
                   }
-                  className='h-3.5 w-3.5 rounded border-gray-300 text-primary-600 focus:ring-primary-500'
+                  className='h-3.5 w-3.5 rounded-sm border-gray-300 text-primary-600 focus:ring-primary-500'
                 />
                 <span className='font-medium text-gray-700 dark:text-gray-300'>
                   {t('userManager.workPolicies.takeoverEnabled')}
@@ -416,7 +416,7 @@ export const WorkPoliciesSettings: React.FC = () => {
                     approvalsRequired: event.target.checked,
                   }))
                 }
-                className='h-3.5 w-3.5 rounded border-gray-300 text-primary-600 focus:ring-primary-500'
+                className='h-3.5 w-3.5 rounded-sm border-gray-300 text-primary-600 focus:ring-primary-500'
               />
               <span className='font-medium text-gray-700 dark:text-gray-300'>
                 {t('userManager.workPolicies.approvalsRequired')}

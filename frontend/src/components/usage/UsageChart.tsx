@@ -118,7 +118,7 @@ export function UsageChart({
     <section
       data-testid='plugin-usage-chart'
       aria-busy={loadingModel !== undefined}
-      className='min-w-0 overflow-hidden rounded-2xl border border-gray-200/80 bg-white/80 shadow-subtle dark:border-white/[0.08] dark:bg-dark-100/75'
+      className='min-w-0 overflow-hidden rounded-2xl border border-gray-200/80 bg-white/80 shadow-subtle dark:border-white/8 dark:bg-dark-100/75'
     >
       <div className='flex flex-wrap items-start justify-between gap-3 border-b border-gray-200/70 px-4 py-4 dark:border-white/[0.07] sm:px-5'>
         <div>
@@ -138,9 +138,9 @@ export function UsageChart({
               type='button'
               aria-pressed={metric === option}
               className={cn(
-                'min-h-9 rounded-lg px-3 text-xs font-medium focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-500',
+                'min-h-9 rounded-lg px-3 text-xs font-medium focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-500',
                 metric === option
-                  ? 'bg-white text-gray-950 shadow-sm dark:bg-dark-300 dark:text-dark-950'
+                  ? 'bg-white text-gray-950 shadow-xs dark:bg-dark-300 dark:text-dark-950'
                   : 'text-gray-500 hover:text-gray-800 dark:text-dark-500 dark:hover:text-dark-800'
               )}
               onClick={() => onMetricChange(option)}
@@ -160,7 +160,7 @@ export function UsageChart({
             type='button'
             disabled={!selected && !highlighted}
             className={cn(
-              'inline-flex min-h-9 items-center gap-1.5 rounded-lg px-2 text-xs font-medium text-gray-700 hover:bg-gray-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary-500 dark:text-dark-800 dark:hover:bg-dark-200',
+              'inline-flex min-h-9 items-center gap-1.5 rounded-lg px-2 text-xs font-medium text-gray-700 hover:bg-gray-100 focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-primary-500 dark:text-dark-800 dark:hover:bg-dark-200',
               !selected && !highlighted && 'invisible'
             )}
             onClick={() => {
@@ -200,7 +200,7 @@ export function UsageChart({
                 onBlur={() => onHighlight(undefined)}
                 onClick={() => onSelect(pinned ? undefined : entry.key)}
                 className={cn(
-                  'flex min-h-11 min-w-0 items-center gap-2.5 rounded-xl border px-3 py-2 text-start focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-500',
+                  'flex min-h-11 min-w-0 items-center gap-2.5 rounded-xl border px-3 py-2 text-start focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-500',
                   active
                     ? 'border-gray-400 bg-gray-50 dark:border-dark-500 dark:bg-dark-200'
                     : 'border-gray-200/70 hover:bg-gray-50 dark:border-white/[0.07] dark:hover:bg-dark-200/70'
@@ -393,7 +393,7 @@ export function UsageChart({
                   analytics.series[Number(event.target.value)]?.timestamp
                 )
               }
-              className='h-6 w-full cursor-pointer accent-gray-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary-500 dark:accent-gray-300'
+              className='h-6 w-full cursor-pointer accent-gray-700 focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-primary-500 dark:accent-gray-300'
               dir='ltr'
             />
           </label>

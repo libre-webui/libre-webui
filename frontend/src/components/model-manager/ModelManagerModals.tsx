@@ -124,7 +124,7 @@ export const ModelManagerModals: React.FC<ModelManagerModalsProps> = ({
     <>
       {showDetailsModal &&
         createPortal(
-          <div className='fixed inset-0 z-[999999] flex items-center justify-center p-4'>
+          <div className='fixed inset-0 z-999999 flex items-center justify-center p-4'>
             <div
               className='absolute inset-0 bg-black/50 backdrop-blur-sm'
               onClick={() => setShowDetailsModal(false)}
@@ -332,7 +332,7 @@ export const ModelManagerModals: React.FC<ModelManagerModalsProps> = ({
 
       {showCopyModal &&
         createPortal(
-          <div className='fixed inset-0 z-[999999] flex items-center justify-center p-4'>
+          <div className='fixed inset-0 z-999999 flex items-center justify-center p-4'>
             <div
               className='absolute inset-0 bg-black/50 backdrop-blur-sm'
               onClick={() => setShowCopyModal(false)}
@@ -448,7 +448,7 @@ export const ModelManagerModals: React.FC<ModelManagerModalsProps> = ({
 
       {showCreateModal &&
         createPortal(
-          <div className='fixed inset-0 z-[999999] flex items-center justify-center p-4'>
+          <div className='fixed inset-0 z-999999 flex items-center justify-center p-4'>
             <div
               className='absolute inset-0 bg-black/50 backdrop-blur-sm'
               onClick={() => setShowCreateModal(false)}
@@ -577,7 +577,7 @@ export const ModelManagerModals: React.FC<ModelManagerModalsProps> = ({
 
       {showEmbeddingsModal &&
         createPortal(
-          <div className='fixed inset-0 z-[999999] flex items-center justify-center p-4'>
+          <div className='fixed inset-0 z-999999 flex items-center justify-center p-4'>
             <div
               className='absolute inset-0 bg-black/50 backdrop-blur-sm'
               onClick={() => setShowEmbeddingsModal(false)}

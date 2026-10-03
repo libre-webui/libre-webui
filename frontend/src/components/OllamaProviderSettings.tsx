@@ -116,7 +116,7 @@ export const OllamaProviderSettings: React.FC = () => {
       {settings !== null && (
         <div className='mt-3 flex items-center gap-2'>
           <input
-            className='min-w-0 flex-1 rounded-lg border border-gray-200 bg-white px-3 py-1.5 font-mono text-xs text-gray-900 focus:border-primary-400 focus:outline-none dark:border-dark-300 dark:bg-dark-50 dark:text-gray-100'
+            className='min-w-0 flex-1 rounded-lg border border-gray-200 bg-white px-3 py-1.5 font-mono text-xs text-gray-900 focus:border-primary-400 focus:outline-hidden dark:border-dark-300 dark:bg-dark-50 dark:text-gray-100'
             value={draftUrl}
             onChange={event => setDraftUrl(event.target.value)}
             placeholder='http://localhost:11434'

@@ -264,7 +264,7 @@ export function WorkAgentPanel({
           <span
             aria-hidden='true'
             className={cn(
-              'absolute -bottom-0.5 -end-0.5 h-3 w-3 rounded-full border-2 border-surface ring-1 ring-black/20 dark:ring-white/20',
+              'absolute -bottom-0.5 -inset-e-0.5 h-3 w-3 rounded-full border-2 border-surface ring-1 ring-black/20 dark:ring-white/20',
               status.animated && 'animate-pulse'
             )}
             style={{ backgroundColor: status.color }}

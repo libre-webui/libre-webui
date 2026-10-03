@@ -234,7 +234,7 @@ function SkillModalForm({
         </p>
       </div>
 
-      <div className='flex items-center justify-between gap-4 rounded-xl border border-black/[0.06] px-3 py-2.5 dark:border-white/[0.07]'>
+      <div className='flex items-center justify-between gap-4 rounded-xl border border-black/6 px-3 py-2.5 dark:border-white/[0.07]'>
         <div>
           <p className='text-[13px] font-medium text-gray-900 dark:text-dark-900'>
             {t('skillsPage.form.enabled')}
@@ -247,7 +247,7 @@ function SkillModalForm({
       </div>
 
       <div
-        className='rounded-xl border border-black/[0.06] px-3 py-2.5 dark:border-white/[0.07]'
+        className='rounded-xl border border-black/6 px-3 py-2.5 dark:border-white/[0.07]'
         data-testid='skill-approval'
       >
         <div className='flex items-center justify-between gap-4'>
@@ -268,7 +268,7 @@ function SkillModalForm({
         </div>
 
         {approvalPolicy === 'always' && (
-          <div className='mt-2.5 border-t border-black/[0.06] pt-2.5 dark:border-white/[0.07]'>
+          <div className='mt-2.5 border-t border-black/6 pt-2.5 dark:border-white/[0.07]'>
             <p className='text-[13px] font-medium text-gray-900 dark:text-dark-900'>
               {t('skillsPage.form.approvalTools')}
             </p>
@@ -286,7 +286,7 @@ function SkillModalForm({
                     onChange={event =>
                       toggleApprovalTool(tool, event.target.checked)
                     }
-                    className='h-3.5 w-3.5 rounded border-line-strong accent-primary-600'
+                    className='h-3.5 w-3.5 rounded-sm border-line-strong accent-primary-600'
                   />
                   {tool}
                 </label>
@@ -384,7 +384,7 @@ function SkillFilesEditor({ skillId }: { skillId: string }) {
 
   return (
     <div
-      className='rounded-xl border border-black/[0.06] px-3 py-2.5 dark:border-white/[0.07]'
+      className='rounded-xl border border-black/6 px-3 py-2.5 dark:border-white/[0.07]'
       data-testid='skill-files'
     >
       <div className='flex items-center justify-between gap-4'>
@@ -413,7 +413,7 @@ function SkillFilesEditor({ skillId }: { skillId: string }) {
             <li
               key={file.path}
               data-testid='skill-file-row'
-              className='flex items-center gap-2 rounded-lg bg-black/[0.03] px-2 py-1.5 dark:bg-white/[0.04]'
+              className='flex items-center gap-2 rounded-lg bg-black/3 px-2 py-1.5 dark:bg-white/4'
             >
               <code
                 className='min-w-0 flex-1 truncate text-[12px] text-gray-700 dark:text-dark-800'

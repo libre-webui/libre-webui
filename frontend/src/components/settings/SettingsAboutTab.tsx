@@ -224,7 +224,7 @@ export function SettingsAboutTab({ appVersion }: SettingsAboutTabProps) {
           <div className='space-y-4 text-sm text-gray-700 dark:text-gray-300'>
             {featureKeys.map(key => (
               <div key={key} className='flex items-start gap-3'>
-                <div className='w-2 h-2 bg-primary-500 rounded-full mt-2 flex-shrink-0'></div>
+                <div className='w-2 h-2 bg-primary-500 rounded-full mt-2 shrink-0'></div>
                 <div>
                   <p className='font-semibold text-gray-900 dark:text-gray-100 mb-1'>
                     {t(`${key}.title`)}

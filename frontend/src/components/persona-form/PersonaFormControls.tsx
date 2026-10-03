@@ -63,7 +63,7 @@ export const ParameterSlider: React.FC<ParameterSliderProps> = ({
           step={step}
           value={format(value)}
           onChange={handleInputChange}
-          className='w-20 px-2 py-1 text-sm text-right bg-gray-100 dark:bg-dark-200 border border-gray-300 dark:border-dark-300 rounded focus:outline-none focus:ring-1 focus:ring-primary-500 dark:text-dark-600'
+          className='w-20 px-2 py-1 text-sm text-right bg-gray-100 dark:bg-dark-200 border border-gray-300 dark:border-dark-300 rounded-sm focus:outline-hidden focus:ring-1 focus:ring-primary-500 dark:text-dark-600'
         />
       </div>
       <input
@@ -115,7 +115,7 @@ export const ToggleSwitch: React.FC<ToggleSwitchProps> = ({
     >
       <div
         className={cn(
-          'absolute top-0.5 start-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform',
+          'absolute top-0.5 inset-s-0.5 w-4 h-4 rounded-full bg-white shadow-sm transition-transform',
           checked && 'translate-x-5 rtl:-translate-x-5'
         )}
       />

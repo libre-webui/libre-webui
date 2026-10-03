@@ -54,7 +54,7 @@ export const DemoModeBanner: React.FC<DemoModeBannerProps> = ({
     >
       <div className='flex items-center justify-between max-w-6xl mx-auto gap-3'>
         <div className='flex items-center gap-2.5 min-w-0'>
-          <div className='flex-shrink-0'>
+          <div className='shrink-0'>
             <Info
               className='h-4 w-4 text-white/65 dark:text-gray-950/60'
               aria-hidden='true'
@@ -78,7 +78,7 @@ export const DemoModeBanner: React.FC<DemoModeBannerProps> = ({
           <Button
             variant='ghost'
             size='sm'
-            className='h-8 px-2 text-white/70 hover:bg-white/10 hover:text-white dark:text-gray-950/70 dark:hover:bg-black/[0.06] dark:hover:text-gray-950'
+            className='h-8 px-2 text-white/70 hover:bg-white/10 hover:text-white dark:text-gray-950/70 dark:hover:bg-black/6 dark:hover:text-gray-950'
             onClick={() =>
               window.open(
                 'https://github.com/libre-webui/libre-webui',
@@ -99,7 +99,7 @@ export const DemoModeBanner: React.FC<DemoModeBannerProps> = ({
             variant='ghost'
             size='sm'
             onClick={handleDismiss}
-            className='h-8 w-8 p-0 text-white/70 hover:bg-white/10 hover:text-white dark:text-gray-950/70 dark:hover:bg-black/[0.06] dark:hover:text-gray-950'
+            className='h-8 w-8 p-0 text-white/70 hover:bg-white/10 hover:text-white dark:text-gray-950/70 dark:hover:bg-black/6 dark:hover:text-gray-950'
             title={t('demoMode.dismiss')}
             aria-label={t('demoMode.dismiss')}
           >

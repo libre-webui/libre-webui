@@ -46,7 +46,7 @@ import { cn } from '@/utils';
 type EvaluationsTab = 'arena' | 'leaderboard' | 'sets' | 'feedback';
 
 const inputClass =
-  'w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 dark:border-dark-300 dark:bg-dark-50';
+  'w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-primary-500 focus:outline-hidden focus:ring-2 focus:ring-primary-500/30 dark:border-dark-300 dark:bg-dark-50';
 
 /**
  * Evaluation platform (ADMIN-02): blind arena matches with an Elo
@@ -246,7 +246,7 @@ export const EvaluationsPage: React.FC = () => {
       <div
         role='tablist'
         aria-label={t('evaluations.title')}
-        className='mb-4 inline-flex rounded-xl border border-gray-200 bg-white/70 p-1 dark:border-white/[0.08] dark:bg-dark-100/70'
+        className='mb-4 inline-flex rounded-xl border border-gray-200 bg-white/70 p-1 dark:border-white/8 dark:bg-dark-100/70'
         onKeyDown={event => {
           const index = tabs.findIndex(entry => entry.id === tab);
           const rtl = i18n.dir() === 'rtl';
@@ -520,7 +520,7 @@ export const EvaluationsPage: React.FC = () => {
                 {t('evaluations.yourSets')}
               </h3>
               <select
-                className='rounded-lg border border-gray-300 bg-white px-2 py-1 text-xs focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 dark:border-dark-300 dark:bg-dark-50'
+                className='rounded-lg border border-gray-300 bg-white px-2 py-1 text-xs focus:border-primary-500 focus:outline-hidden focus:ring-2 focus:ring-primary-500/30 dark:border-dark-300 dark:bg-dark-50'
                 aria-label={t('evaluations.pickModel')}
                 value={runModel}
                 onChange={event => setRunModel(event.target.value)}
@@ -584,7 +584,7 @@ export const EvaluationsPage: React.FC = () => {
                             toast.error(t('evaluations.deleteSetFailed'));
                           }
                         }}
-                        className='rounded p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30'
+                        className='rounded-sm p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30'
                         aria-label={t('evaluations.deleteSet')}
                       >
                         <Trash2 className='h-3.5 w-3.5' />
@@ -597,7 +597,7 @@ export const EvaluationsPage: React.FC = () => {
                     .map(run => (
                       <div
                         key={run.id}
-                        className='mt-1 flex items-center justify-between gap-2 rounded bg-gray-50 px-2 py-1 text-xs dark:bg-dark-50'
+                        className='mt-1 flex items-center justify-between gap-2 rounded-sm bg-gray-50 px-2 py-1 text-xs dark:bg-dark-50'
                       >
                         <span className='min-w-0 truncate'>
                           {run.model} · {t(`evaluations.status.${run.status}`)}
@@ -618,7 +618,7 @@ export const EvaluationsPage: React.FC = () => {
                                     toast.error(t('evaluations.cancelFailed'))
                                   );
                               }}
-                              className='rounded p-1 text-gray-500 hover:bg-gray-200 dark:hover:bg-dark-200'
+                              className='rounded-sm p-1 text-gray-500 hover:bg-gray-200 dark:hover:bg-dark-200'
                               aria-label={t('evaluations.cancelRun')}
                             >
                               <X className='h-3 w-3' />
@@ -628,7 +628,7 @@ export const EvaluationsPage: React.FC = () => {
                             <button
                               type='button'
                               onClick={() => void handleExportRun(run.id)}
-                              className='rounded p-1 text-gray-500 hover:bg-gray-200 dark:hover:bg-dark-200'
+                              className='rounded-sm p-1 text-gray-500 hover:bg-gray-200 dark:hover:bg-dark-200'
                               aria-label={t('evaluations.exportRun')}
                             >
                               <Download className='h-3 w-3' />

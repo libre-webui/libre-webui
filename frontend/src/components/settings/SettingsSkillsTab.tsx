@@ -413,15 +413,15 @@ export const SettingsSkillsTab: React.FC = () => {
             <div
               key={skill.id}
               data-testid='skill-row'
-              className='rounded-2xl border border-black/[0.06] bg-white/60 px-4 py-3 dark:border-white/[0.07] dark:bg-dark-100/60'
+              className='rounded-2xl border border-black/6 bg-white/60 px-4 py-3 dark:border-white/[0.07] dark:bg-dark-100/60'
             >
               <div className='flex flex-wrap items-start gap-3'>
-                <div className='min-w-0 flex-[1_1_16rem] [overflow-wrap:anywhere]'>
+                <div className='min-w-0 flex-[1_1_16rem] wrap-anywhere'>
                   <div className='flex flex-wrap items-center gap-2'>
                     <p className='max-w-full text-[14px] font-medium text-gray-900 dark:text-dark-900'>
                       {skill.name}
                     </p>
-                    <code className='max-w-full rounded-md bg-black/[0.04] px-1.5 py-0.5 text-[11px] text-gray-500 dark:bg-white/[0.06] dark:text-dark-500'>
+                    <code className='max-w-full rounded-md bg-black/4 px-1.5 py-0.5 text-[11px] text-gray-500 dark:bg-white/6 dark:text-dark-500'>
                       ${skill.slug}
                     </code>
                     <span className='text-[11px] text-gray-400 dark:text-dark-500'>

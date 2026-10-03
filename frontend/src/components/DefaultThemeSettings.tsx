@@ -138,7 +138,7 @@ export const DefaultThemeSettings: React.FC = () => {
                   disabled={saving || theme === null}
                   onClick={() => void handleSelect(mode)}
                   className={cn(
-                    'flex min-h-11 max-w-full items-center gap-2 rounded-lg border px-3 py-2 text-sm text-ink transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 disabled:cursor-not-allowed disabled:opacity-60',
+                    'flex min-h-11 max-w-full items-center gap-2 rounded-lg border px-3 py-2 text-sm text-ink transition-colors focus:outline-hidden focus-visible:ring-2 focus-visible:ring-primary-500/40 disabled:cursor-not-allowed disabled:opacity-60',
                     selected
                       ? 'border-line-strong bg-surface-subtle'
                       : 'border-line hover:bg-interactive-hover'

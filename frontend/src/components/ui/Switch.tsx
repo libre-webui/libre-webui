@@ -53,8 +53,8 @@ export const Switch: React.FC<SwitchProps> = ({
       disabled={disabled}
       onClick={() => onChange(!checked)}
       className={cn(
-        'relative inline-flex h-6 w-11 flex-shrink-0 items-center justify-center rounded-full bg-transparent',
-        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-canvas dark:focus-visible:ring-primary-400',
+        'relative inline-flex h-6 w-11 shrink-0 items-center justify-center rounded-full bg-transparent',
+        'focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-canvas dark:focus-visible:ring-primary-400',
         disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer',
         className
       )}

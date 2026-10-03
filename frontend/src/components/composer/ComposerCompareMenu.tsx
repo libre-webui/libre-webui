@@ -88,7 +88,7 @@ export const ComposerCompareMenu: React.FC<ComposerCompareMenuProps> = ({
         disabled={disabled}
         onClick={() => setOpen(current => !current)}
         className={cn(
-          'h-9 w-9 p-0 rounded-full flex-shrink-0 flex items-center justify-center',
+          'h-9 w-9 p-0 rounded-full shrink-0 flex items-center justify-center',
           'text-ink-muted hover:bg-interactive-hover hover:text-ink',
           'transition-colors duration-150 touch-manipulation',
           selectedKeys.length > 0 &&
@@ -101,14 +101,14 @@ export const ComposerCompareMenu: React.FC<ComposerCompareMenuProps> = ({
       >
         <Columns2 className='h-4 w-4' />
         {selectedKeys.length > 0 && (
-          <span className='absolute -end-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-md bg-primary-500 px-1 text-[9px] font-semibold tabular-nums text-white'>
+          <span className='absolute -inset-e-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-md bg-primary-500 px-1 text-[9px] font-semibold tabular-nums text-white'>
             +{selectedKeys.length}
           </span>
         )}
       </Button>
       {open && (
         <div
-          className='absolute bottom-full start-0 z-30 mb-2 max-h-72 w-72 overflow-y-auto rounded-xl border border-gray-200 bg-white p-2 shadow-lg scrollbar-thin dark:border-dark-200 dark:bg-dark-50'
+          className='absolute bottom-full inset-s-0 z-30 mb-2 max-h-72 w-72 overflow-y-auto rounded-xl border border-gray-200 bg-white p-2 shadow-lg scrollbar-thin dark:border-dark-200 dark:bg-dark-50'
           role='menu'
           data-testid='composer-compare-menu'
         >
@@ -131,7 +131,7 @@ export const ComposerCompareMenu: React.FC<ComposerCompareMenuProps> = ({
                   checked={checked}
                   disabled={full}
                   onChange={() => toggle(key)}
-                  className='h-3.5 w-3.5 rounded border-gray-300 text-primary-600 focus:ring-primary-500 dark:border-dark-400'
+                  className='h-3.5 w-3.5 rounded-sm border-gray-300 text-primary-600 focus:ring-primary-500 dark:border-dark-400'
                 />
                 <span dir='ltr' className='min-w-0 flex-1 truncate'>
                   {model.name}

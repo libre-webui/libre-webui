@@ -400,7 +400,7 @@ function ToolServerForm({
         </div>
       </div>
 
-      <div className='flex items-center justify-between gap-4 rounded-xl border border-black/[0.06] px-3 py-2.5 dark:border-white/[0.07]'>
+      <div className='flex items-center justify-between gap-4 rounded-xl border border-black/6 px-3 py-2.5 dark:border-white/[0.07]'>
         <div>
           <p className='text-[13px] font-medium text-gray-900 dark:text-dark-900'>
             {t('toolsPage.form.enabled')}

@@ -349,7 +349,7 @@ const CalendarPage: React.FC = () => {
         title={t('calendar.title')}
         actions={
           <>
-            <div className='flex items-center rounded-xl bg-black/[0.04] p-0.5 dark:bg-white/[0.06]'>
+            <div className='flex items-center rounded-xl bg-black/4 p-0.5 dark:bg-white/6'>
               {(['month', 'week', 'day'] as const).map(choice => (
                 <button
                   key={choice}
@@ -358,9 +358,9 @@ const CalendarPage: React.FC = () => {
                   aria-pressed={view === choice}
                   data-testid={`calendar-view-${choice}`}
                   className={cn(
-                    'rounded-[10px] px-2.5 py-1 text-[12px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-canvas',
+                    'rounded-[10px] px-2.5 py-1 text-[12px] font-medium transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-canvas',
                     view === choice
-                      ? 'bg-white text-gray-900 shadow-sm dark:bg-dark-200 dark:text-dark-900'
+                      ? 'bg-white text-gray-900 shadow-xs dark:bg-dark-200 dark:text-dark-900'
                       : 'text-gray-500 hover:text-gray-800 dark:text-dark-500 dark:hover:text-dark-800'
                   )}
                 >
@@ -417,11 +417,11 @@ const CalendarPage: React.FC = () => {
           {title}
         </span>
       </WorkspaceToolbar>
-      <div className='flex flex-wrap items-center gap-1.5 border-b border-black/[0.06] px-4 py-2 dark:border-white/[0.07]'>
+      <div className='flex flex-wrap items-center gap-1.5 border-b border-black/6 px-4 py-2 dark:border-white/[0.07]'>
         {calendars.map(calendar => (
           <span
             key={calendar.id}
-            className='inline-flex max-w-full items-center gap-1.5 rounded-full border border-black/[0.08] px-2.5 py-1 text-xs text-gray-700 dark:border-white/[0.1] dark:text-dark-800'
+            className='inline-flex max-w-full items-center gap-1.5 rounded-full border border-black/8 px-2.5 py-1 text-xs text-gray-700 dark:border-white/10 dark:text-dark-800'
             data-testid='calendar-chip'
           >
             <span
@@ -478,7 +478,7 @@ const CalendarPage: React.FC = () => {
             onChange={event => setNewCalendarName(event.target.value)}
             placeholder={t('calendar.newCalendarPlaceholder')}
             aria-label={t('calendar.newCalendarPlaceholder')}
-            className='min-w-0 w-36 rounded-full border border-dashed border-black/[0.12] bg-transparent px-2.5 py-1 text-base text-gray-700 placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-canvas dark:border-white/[0.16] dark:text-dark-800 sm:text-xs'
+            className='min-w-0 w-36 rounded-full border border-dashed border-black/12 bg-transparent px-2.5 py-1 text-base text-gray-700 placeholder:text-gray-400 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-canvas dark:border-white/16 dark:text-dark-800 sm:text-xs'
             data-testid='calendar-new-calendar'
           />
           <Button

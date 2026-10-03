@@ -78,7 +78,7 @@ export function ModelLibrarySection({
     <div
       className={cn(
         'overflow-hidden rounded-2xl border',
-        'bg-white/60 dark:bg-white/[0.03]',
+        'bg-white/60 dark:bg-white/3',
         'border-gray-200/80 dark:border-white/10'
       )}
     >
@@ -117,7 +117,7 @@ export function ModelLibrarySection({
         <div className='p-4 pt-0 space-y-4'>
           <div className='flex flex-col sm:flex-row gap-3'>
             <div className='relative flex-1'>
-              <Search className='absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 dark:text-gray-500' />
+              <Search className='absolute inset-s-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 dark:text-gray-500' />
               <input
                 type='text'
                 value={search}
@@ -129,7 +129,7 @@ export function ModelLibrarySection({
                   'border-gray-200 dark:border-dark-300',
                   'text-gray-900 dark:text-dark-700',
                   'placeholder-gray-500 dark:placeholder-gray-400',
-                  'focus:outline-none focus:ring-2 focus:ring-primary-500/20',
+                  'focus:outline-hidden focus:ring-2 focus:ring-primary-500/20',
                   'focus:border-primary-500'
                 )}
               />
@@ -250,7 +250,7 @@ function LibraryModelCard({
         {installed && (
           <span
             className={cn(
-              'flex items-center gap-1 px-1.5 py-0.5 rounded text-xs',
+              'flex items-center gap-1 px-1.5 py-0.5 rounded-sm text-xs',
               'bg-green-100 dark:bg-green-900/30',
               'text-green-700 dark:text-green-400'
             )}
@@ -270,7 +270,7 @@ function LibraryModelCard({
           <span
             key={size}
             className={cn(
-              'px-1.5 py-0.5 rounded text-xs',
+              'px-1.5 py-0.5 rounded-sm text-xs',
               'bg-gray-200 dark:bg-dark-300',
               'text-gray-600 dark:text-gray-400'
             )}
@@ -297,7 +297,7 @@ function LibraryModelCard({
           )}
           <span
             className={cn(
-              'px-1.5 py-0.5 rounded capitalize',
+              'px-1.5 py-0.5 rounded-sm capitalize',
               model.category === 'cloud'
                 ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400'
                 : 'bg-gray-100 dark:bg-dark-200'

@@ -189,7 +189,7 @@ export const SettingsToolsTab: React.FC = () => {
         }
       />
 
-      <p className='mb-5 rounded-xl border border-black/[0.06] bg-black/[0.02] px-3.5 py-2.5 text-[12px] leading-5 text-gray-500 dark:border-white/[0.07] dark:bg-white/[0.03] dark:text-dark-500'>
+      <p className='mb-5 rounded-xl border border-black/6 bg-black/2 px-3.5 py-2.5 text-[12px] leading-5 text-gray-500 dark:border-white/[0.07] dark:bg-white/3 dark:text-dark-500'>
         {t('toolsPage.approvalNotice')}
       </p>
 

@@ -2,612 +2,337 @@
    no page load sends a user's IP to a third party. It was declared in the font
    stack but never loaded, so the interface fell back to system fonts.
    See scripts/vendor-inter.mjs. */
-@import '/fonts/inter.css';
+@import url('/fonts/inter.css');
 /* JetBrains Mono for code, same self-hosted policy. */
-@import '/fonts/jetbrains-mono.css';
+@import url('/fonts/jetbrains-mono.css');
 
-@import 'tailwindcss/base';
-@import 'tailwindcss/components';
-@import 'tailwindcss/utilities';
+@import 'tailwindcss';
 
-.libre-brand {
-  font-family:
-    'Inter',
-    ui-sans-serif,
-    system-ui,
-    -apple-system,
-    BlinkMacSystemFont,
-    sans-serif !important;
-  font-weight: 650;
-  font-optical-sizing: auto;
-  letter-spacing: -0.045em;
+@custom-variant dark (&:is(.dark *));
+/* Tailwind v4 applies hover only where the pointer can hover. The controls
+   revealed on hover were built on v3, where a tap also triggers it. */
+@custom-variant hover (&:hover);
+
+/* Runtime tokens are bare RGB channels ("15 17 21") that JavaScript swaps for
+   accents and themes, defined below on :root, .dark and .amoled. `reference`
+   keeps Tailwind from emitting a same-named theme variable that would shadow
+   them, and `inline` makes utilities read rgb(var(--token)) directly. */
+@theme inline reference {
+  --color-primary-50: rgb(var(--color-primary-50));
+  --color-primary-100: rgb(var(--color-primary-100));
+  --color-primary-200: rgb(var(--color-primary-200));
+  --color-primary-300: rgb(var(--color-primary-300));
+  --color-primary-400: rgb(var(--color-primary-400));
+  --color-primary-500: rgb(var(--color-primary-500));
+  --color-primary-600: rgb(var(--color-primary-600));
+  --color-primary-700: rgb(var(--color-primary-700));
+  --color-primary-800: rgb(var(--color-primary-800));
+  --color-primary-900: rgb(var(--color-primary-900));
+  --color-primary-950: rgb(var(--color-primary-950));
+
+  --color-accent-50: rgb(var(--color-accent-50));
+  --color-accent-100: rgb(var(--color-accent-100));
+  --color-accent-200: rgb(var(--color-accent-200));
+  --color-accent-300: rgb(var(--color-accent-300));
+  --color-accent-400: rgb(var(--color-accent-400));
+  --color-accent-500: rgb(var(--color-accent-500));
+  --color-accent-600: rgb(var(--color-accent-600));
+  --color-accent-700: rgb(var(--color-accent-700));
+  --color-accent-800: rgb(var(--color-accent-800));
+  --color-accent-900: rgb(var(--color-accent-900));
+  --color-accent-950: rgb(var(--color-accent-950));
+
+  --color-canvas: rgb(var(--color-canvas));
+  --color-sidebar: rgb(var(--color-sidebar));
+
+  --color-surface: rgb(var(--color-surface));
+  --color-surface-subtle: rgb(var(--color-surface-subtle));
+  --color-surface-raised: rgb(var(--color-surface-raised));
+  --color-surface-overlay: rgb(var(--color-surface-overlay));
+  --color-surface-inverse: rgb(var(--color-surface-inverse));
+
+  --color-ink: rgb(var(--color-ink));
+  --color-ink-muted: rgb(var(--color-ink-muted));
+  --color-ink-subtle: rgb(var(--color-ink-subtle));
+  --color-ink-inverse: rgb(var(--color-ink-inverse));
+
+  --color-line: rgb(var(--color-line));
+  --color-line-strong: rgb(var(--color-line-strong));
+
+  --color-gray-25: rgb(var(--color-gray-25));
+  --color-gray-50: rgb(var(--color-gray-50));
+  --color-gray-100: rgb(var(--color-gray-100));
+  --color-gray-200: rgb(var(--color-gray-200));
+  --color-gray-300: rgb(var(--color-gray-300));
+  --color-gray-400: rgb(var(--color-gray-400));
+  --color-gray-500: rgb(var(--color-gray-500));
+  --color-gray-600: rgb(var(--color-gray-600));
+  --color-gray-700: rgb(var(--color-gray-700));
+  --color-gray-800: rgb(var(--color-gray-800));
+  --color-gray-900: rgb(var(--color-gray-900));
+  --color-gray-950: rgb(var(--color-gray-950));
+
+  --color-dark-25: rgb(var(--color-dark-25));
+  --color-dark-50: rgb(var(--color-dark-50));
+  --color-dark-100: rgb(var(--color-dark-100));
+  --color-dark-200: rgb(var(--color-dark-200));
+  --color-dark-300: rgb(var(--color-dark-300));
+  --color-dark-400: rgb(var(--color-dark-400));
+  --color-dark-500: rgb(var(--color-dark-500));
+  --color-dark-600: rgb(var(--color-dark-600));
+  --color-dark-700: rgb(var(--color-dark-700));
+  --color-dark-800: rgb(var(--color-dark-800));
+  --color-dark-900: rgb(var(--color-dark-900));
+  --color-dark-950: rgb(var(--color-dark-950));
+
+  --background-color-interactive-hover: var(--interactive-hover);
+  --background-color-interactive-active: var(--interactive-active);
+  --background-color-hover-solid: rgb(var(--interactive-hover-solid));
+  --background-color-nav-active: rgb(var(--nav-item-active));
+
+  --shadow-lv2: var(--shadow-lv2);
+  --shadow-lv3: var(--shadow-lv3);
+  --shadow-glow:
+    0 0 0 1px rgb(var(--color-primary-500) / 0.12),
+    0 6px 20px -14px rgb(var(--color-primary-500) / 0.18);
+  --shadow-glow-lg:
+    0 0 0 1px rgb(var(--color-primary-500) / 0.14),
+    0 12px 32px -20px rgb(var(--color-primary-500) / 0.2);
 }
-
-:root {
-  font-family:
-    Inter,
-    ui-sans-serif,
-    -apple-system,
-    BlinkMacSystemFont,
-    'SF Pro Text',
-    'Segoe UI Variable',
-    'Segoe UI',
-    Roboto,
-    sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
-  font-synthesis: none;
-  font-optical-sizing: auto;
-  font-feature-settings:
-    'cv02' 1,
-    'cv03' 1,
-    'cv04' 1,
-    'cv11' 1;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  -webkit-text-size-adjust: 100%;
-
-  color-scheme: light;
-
-  /* Quiet, semantic neutrals. Components should consume these roles rather
-     than choosing a numeric gray for each theme. Values follow a cool
-     "bluish neutral" ramp: white canvas, #F9FAFB panels, hairline borders. */
-  --color-canvas: 255 255 255;
-  --color-surface: 255 255 255;
-  --color-surface-subtle: 245 246 247;
-  --color-surface-raised: 255 255 255;
-  --color-surface-overlay: 255 255 255;
-  --color-surface-inverse: 15 17 21;
-  --color-ink: 15 17 21;
-  --color-ink-muted: 97 102 107;
-  --color-ink-subtle: 129 133 140;
-  --color-ink-inverse: 249 250 251;
-  --color-line: 233 236 242;
-  --color-line-strong: 207 211 214;
-
-  /* Sidebar column + interaction fills (hover/active are alpha washes so they
-     compose over any fill). */
-  --color-sidebar: 249 250 251;
-  --interactive-hover: rgba(38, 49, 72, 0.06);
-  --interactive-active: rgba(38, 49, 72, 0.1);
-  --interactive-hover-solid: 241 243 245;
-  --nav-item-active: 235 238 242;
-
-  /* Elevation + overlay mask. */
-  --shadow-lv2:
-    0 4px 12px 0 rgba(0, 0, 0, 0.02), 0 2px 8px 0 rgba(0, 0, 0, 0.04);
-  --shadow-lv3:
-    0 0 1px 0 rgba(0, 0, 0, 0.2), 0 0 4px 0 rgba(0, 0, 0, 0.02),
-    0 12px 32px 0 rgba(0, 0, 0, 0.08);
-  --overlay-mask: rgba(0, 0, 0, 0.24);
-
-  /* Runtime-compatible legacy neutral scales. Accent adaptation can replace
-     these without requiring component-specific theme variants. */
-  --color-gray-25: 252 252 253;
-  --color-gray-50: 248 250 252;
-  --color-gray-100: 241 245 249;
-  --color-gray-200: 226 232 240;
-  --color-gray-300: 209 213 219;
-  --color-gray-400: 156 163 175;
-  --color-gray-500: 107 114 128;
-  --color-gray-600: 75 85 99;
-  --color-gray-700: 55 65 81;
-  --color-gray-800: 31 41 55;
-  --color-gray-900: 17 24 39;
-  --color-gray-950: 11 16 32;
-
-  --color-dark-25: 44 44 46;
-  --color-dark-50: 21 21 23;
-  --color-dark-100: 27 27 28;
-  --color-dark-200: 35 35 36;
-  --color-dark-300: 53 54 56;
-  --color-dark-400: 67 69 74;
-  --color-dark-500: 97 102 107;
-  --color-dark-600: 129 133 140;
-  --color-dark-700: 173 178 184;
-  --color-dark-800: 207 211 214;
-  --color-dark-900: 233 236 242;
-  --color-dark-950: 249 250 251;
-
-  --motion-fast: 140ms;
-  --motion-standard: 180ms;
-  --ease-product: cubic-bezier(0.22, 1, 0.36, 1);
-
-  --color-primary-50: 237 243 254;
-  --color-primary-100: 228 237 253;
-  --color-primary-200: 211 226 255;
-  --color-primary-300: 183 200 254;
-  --color-primary-400: 103 158 254;
-  --color-primary-500: 65 118 230;
-  --color-primary-600: 72 104 178;
-  --color-primary-700: 47 76 143;
-  --color-primary-800: 52 65 91;
-  --color-primary-900: 40 49 66;
-  --color-primary-950: 30 38 53;
-  --color-accent-50: var(--color-primary-50);
-  --color-accent-100: var(--color-primary-100);
-  --color-accent-200: var(--color-primary-200);
-  --color-accent-300: var(--color-primary-300);
-  --color-accent-400: var(--color-primary-400);
-  --color-accent-500: var(--color-primary-500);
-  --color-accent-600: var(--color-primary-600);
-  --color-accent-700: var(--color-primary-700);
-  --color-accent-800: var(--color-primary-800);
-  --color-accent-900: var(--color-primary-900);
-  --color-accent-950: var(--color-primary-950);
-
-  --toast-bg: rgb(var(--color-surface-overlay));
-  --toast-color: rgb(var(--color-ink));
-  --toast-border: rgb(var(--color-line));
-
-  --scrollbar-width: 8px;
-  --scrollbar-track: transparent;
-  --scrollbar-thumb: rgb(var(--color-line-strong));
-  --scrollbar-thumb-hover: rgb(var(--color-ink-subtle));
-}
-
-/* AMOLED: the true-black variant of dark. Surfaces drop to (or near) black;
-   text and accent rungs stay on the grey dark values. The dark-* ladder is
-   overridden too because many components use it directly. */
-.dark.amoled {
-  --color-canvas: 0 0 0;
-  --color-surface: 0 0 0;
-  --color-surface-subtle: 10 10 11;
-  --color-surface-raised: 17 17 19;
-  --color-surface-overlay: 25 25 27;
-  --color-ink-inverse: 0 0 0;
-  --color-line: 27 27 29;
-  --color-line-strong: 46 47 50;
-
-  --color-sidebar: 0 0 0;
-  --interactive-hover-solid: 23 23 25;
-  --nav-item-active: 32 32 34;
-
-  --color-dark-25: 16 16 18;
-  --color-dark-50: 0 0 0;
-  --color-dark-100: 8 8 9;
-  --color-dark-200: 16 16 17;
-  --color-dark-300: 30 30 32;
-}
-
-html[data-runtime='electron'] {
-  --scrollbar-width: 10px;
-}
-
-.dark {
-  color-scheme: dark;
-
-  --color-canvas: 21 21 23;
-  --color-surface: 27 27 28;
-  --color-surface-subtle: 35 35 36;
-  --color-surface-raised: 44 44 46;
-  --color-surface-overlay: 53 54 56;
-  --color-surface-inverse: 249 250 251;
-  --color-ink: 249 250 251;
-  --color-ink-muted: 173 178 184;
-  --color-ink-subtle: 129 133 140;
-  --color-ink-inverse: 21 21 23;
-  --color-line: 45 46 48;
-  --color-line-strong: 67 69 74;
-
-  --color-sidebar: 27 27 28;
-  --interactive-hover: rgba(255, 255, 255, 0.08);
-  --interactive-active: rgba(255, 255, 255, 0.14);
-  --interactive-hover-solid: 53 54 56;
-  --nav-item-active: 67 69 74;
-
-  --shadow-lv2:
-    0 4px 12px 0 rgba(0, 0, 0, 0.12), 0 2px 8px 0 rgba(0, 0, 0, 0.16);
-  --shadow-lv3:
-    0 0 1px 0 rgba(0, 0, 0, 0.4), 0 0 4px 0 rgba(0, 0, 0, 0.08),
-    0 12px 32px 0 rgba(0, 0, 0, 0.32);
-  --overlay-mask: rgba(0, 0, 0, 0.5);
-
-  --toast-bg: rgb(var(--color-surface-overlay));
-  --toast-color: rgb(var(--color-ink));
-  --toast-border: rgb(var(--color-line));
-
-  --scrollbar-track: transparent;
-  --scrollbar-thumb: rgb(var(--color-line-strong));
-  --scrollbar-thumb-hover: rgb(var(--color-ink-subtle));
-}
-
-[data-hot-toast] {
-  z-index: 9999 !important;
-}
-
-[data-hot-toast] [data-toast] {
-  cursor: pointer;
-  border: 1px solid var(--toast-border);
-  transition:
-    background-color var(--motion-fast) ease-out,
-    border-color var(--motion-fast) ease-out,
-    box-shadow var(--motion-fast) ease-out,
-    transform var(--motion-fast) var(--ease-product);
-}
-
-[data-hot-toast] [data-toast]:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 12px 36px -24px rgb(0 0 0 / 0.28) !important;
-}
-
-[data-hot-toast] [data-toast]::after {
-  content: '×';
-  position: absolute;
-  top: 8px;
-  inset-inline-end: 12px;
-  font-size: 16px;
-  color: rgb(var(--color-ink-subtle));
-  opacity: 0;
-  transition: opacity 0.2s ease-in-out;
-  pointer-events: none;
-  font-weight: 500;
-}
-
-[data-hot-toast] [data-toast]:hover::after {
-  opacity: 1;
-}
-
-.scrollbar-thin {
-  scrollbar-width: thin;
-  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
-}
-
-.scrollbar-thin::-webkit-scrollbar {
-  width: var(--scrollbar-width);
-  height: var(--scrollbar-width);
-}
-
-.scrollbar-thin::-webkit-scrollbar-track {
-  background: var(--scrollbar-track);
-  border-radius: 10px;
-}
-
-.scrollbar-thin::-webkit-scrollbar-thumb {
-  background: var(--scrollbar-thumb);
-  border-radius: 10px;
-  border: 1px solid var(--scrollbar-track);
-}
-
-.scrollbar-thin::-webkit-scrollbar-thumb:hover {
-  background: var(--scrollbar-thumb-hover);
-}
-
-.scroll-region {
-  min-height: 0;
-  overflow-y: auto;
-  overscroll-behavior-y: contain;
-  scrollbar-gutter: stable;
-  touch-action: pan-y pinch-zoom;
-  -webkit-overflow-scrolling: touch;
-}
-
-.scrollbar-hidden {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-
-.sidebar-scroll-fade {
-  --sidebar-fade-top: 0px;
-  --sidebar-fade-bottom: 0px;
-  scroll-padding-block: 24px;
-  mask-image: linear-gradient(
-    to bottom,
-    transparent,
-    #000 var(--sidebar-fade-top),
-    #000 calc(100% - var(--sidebar-fade-bottom)),
-    transparent
-  );
-}
-
-.tab-scroll-fade {
-  --tab-fade-left: 0px;
-  --tab-fade-right: 0px;
-  scroll-padding-inline: 24px;
-  mask-image: linear-gradient(
-    to right,
-    transparent,
-    #000 var(--tab-fade-left),
-    #000 calc(100% - var(--tab-fade-right)),
-    transparent
-  );
-}
-
-/* Keep keyboard focus rings fully visible, even at the scroll edges. */
-.sidebar-scroll-fade:has(:focus-visible),
-.tab-scroll-fade:has(:focus-visible) {
-  mask-image: none;
-}
-
-.scrollbar-hidden::-webkit-scrollbar {
-  display: none;
-}
-
-/* Mask content in both scroll directions without painting over theme surfaces. */
-[data-scroll-fade-active] {
-  scroll-padding: 24px;
-  mask-image:
-    linear-gradient(
-      to bottom,
-      transparent,
-      #000 var(--scroll-fade-top, 0px),
-      #000 calc(100% - var(--scroll-fade-bottom, 0px)),
-      transparent
-    ),
-    linear-gradient(
-      to right,
-      transparent,
-      #000 var(--scroll-fade-left, 0px),
-      #000 calc(100% - var(--scroll-fade-right, 0px)),
-      transparent
-    );
-  mask-composite: intersect;
-}
-
-[data-scroll-fade-keyboard] {
-  mask-image: none;
-}
-
-a,
-button {
-  color: inherit;
-  text-decoration: inherit;
-}
-
-.text-primary-500 {
-  color: rgb(var(--color-primary-500)) !important;
-}
-
-.text-primary-400 {
-  color: rgb(var(--color-primary-400)) !important;
-}
-
-.text-primary-600 {
-  color: rgb(var(--color-primary-600)) !important;
-}
-
-.hover\:text-primary-600:hover {
-  color: rgb(var(--color-primary-600)) !important;
-}
-
-.hover\:text-primary-300:hover {
-  color: rgb(var(--color-primary-300)) !important;
-}
-
-.dark .text-primary-500 {
-  color: rgb(var(--color-primary-400)) !important;
-}
-
-.dark .text-primary-400 {
-  color: rgb(var(--color-primary-300)) !important;
-}
-
-.dark .dark\:text-primary-400 {
-  color: rgb(var(--color-primary-300)) !important;
-}
-
-.dark .dark\:hover\:text-primary-300:hover {
-  color: rgb(var(--color-primary-200)) !important;
-}
-
-.text-accent-500 {
-  color: rgb(var(--color-accent-500)) !important;
-}
-
-.text-accent-400 {
-  color: rgb(var(--color-accent-400)) !important;
-}
-
-.text-accent-600 {
-  color: rgb(var(--color-accent-600)) !important;
-}
-
-.hover\:text-accent-600:hover {
-  color: rgb(var(--color-accent-600)) !important;
-}
-
-.hover\:text-accent-300:hover {
-  color: rgb(var(--color-accent-300)) !important;
-}
-
-.dark .text-accent-500 {
-  color: rgb(var(--color-accent-400)) !important;
-}
-
-.dark .text-accent-400 {
-  color: rgb(var(--color-accent-300)) !important;
-}
-
-.dark .dark\:text-accent-400 {
-  color: rgb(var(--color-accent-300)) !important;
-}
-
-.dark .dark\:hover\:text-accent-300:hover {
-  color: rgb(var(--color-accent-200)) !important;
-}
-
-.focus-ring:focus {
-  outline: none;
-  box-shadow:
-    0 0 0 2px rgb(var(--color-primary-500)),
-    0 0 0 4px rgb(var(--color-primary-500) / 0.2);
-}
-
-::selection {
-  background-color: rgb(var(--color-primary-100));
-  color: rgb(var(--color-primary-900));
-}
-
-.dark ::selection {
-  background-color: rgb(var(--color-primary-800));
-  color: rgb(var(--color-primary-100));
-}
-
-.scrollbar-thumb-gray-600::-webkit-scrollbar-thumb {
-  background-color: var(--scrollbar-thumb);
-  border-radius: theme('borderRadius.full');
-}
-
-.line-clamp-2 {
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-:focus-visible {
-  outline: 2px solid rgb(var(--color-primary-500));
-  outline-offset: 2px;
-}
-
-/* Text-entry fields signal focus through their caret and the field's own
-   border/ring styling — the global outline double-frames them (composer,
-   palette, search fields). Checkboxes, radios, ranges, buttons, and links
-   keep the outline: keyboard users have no other focus cue there. */
-input:not([type='checkbox']):not([type='radio']):not(
-    [type='range']
-  ):focus-visible,
-textarea:focus-visible,
-[contenteditable='true']:focus-visible {
-  outline: none;
-}
-
-.touch-manipulation {
-  touch-action: manipulation;
-}
-
-html {
-  min-height: 100%;
-  background: rgb(var(--color-canvas));
-  /* Compact global density: rem-based type and spacing scale from here. */
-  font-size: 15px;
-}
-
-body,
-#root {
-  min-height: 100%;
-}
-
-body {
-  margin: 0;
-  background: rgb(var(--color-canvas));
-  color: rgb(var(--color-ink));
-  -webkit-app-region: no-drag;
-}
-
-button,
-a,
-input,
-textarea,
-select,
-[role='button'],
-.cursor-pointer {
-  -webkit-app-region: no-drag;
-  -webkit-user-drag: none;
-}
-
-@media (max-width: 768px) {
-  input[type='text'],
-  input[type='email'],
-  input[type='password'],
-  input[type='search'],
-  textarea,
-  select {
-    /* Avoid iOS input zoom without inflating desktop field typography. */
-    font-size: 16px;
+@theme {
+  --breakpoint-xs: 475px;
+
+  --color-success-50: #ecfdf5;
+  --color-success-100: #d1fae5;
+  --color-success-200: #a7f3d0;
+  --color-success-300: #6ee7b7;
+  --color-success-400: #34d399;
+  --color-success-500: #34d399;
+  --color-success-600: #10b981;
+  --color-success-700: #059669;
+  --color-success-800: #047857;
+  --color-success-900: #064e3b;
+
+  --color-warning-50: #ff7b52;
+  --color-warning-100: #ff7b52;
+  --color-warning-200: #ff7b52;
+  --color-warning-300: #ff7b52;
+  --color-warning-400: #ff7b52;
+  --color-warning-500: #ff7b52;
+  --color-warning-600: #ff7b52;
+  --color-warning-700: #ff7b52;
+  --color-warning-800: #ff7b52;
+  --color-warning-900: #ff7b52;
+  --color-warning-950: #ff7b52;
+
+  --color-amber-50: #ff7b52;
+  --color-amber-100: #ff7b52;
+  --color-amber-200: #ff7b52;
+  --color-amber-300: #ff7b52;
+  --color-amber-400: #ff7b52;
+  --color-amber-500: #ff7b52;
+  --color-amber-600: #ff7b52;
+  --color-amber-700: #ff7b52;
+  --color-amber-800: #ff7b52;
+  --color-amber-900: #ff7b52;
+  --color-amber-950: #ff7b52;
+
+  --color-yellow-50: #ff7b52;
+  --color-yellow-100: #ff7b52;
+  --color-yellow-200: #ff7b52;
+  --color-yellow-300: #ff7b52;
+  --color-yellow-400: #ff7b52;
+  --color-yellow-500: #ff7b52;
+  --color-yellow-600: #ff7b52;
+  --color-yellow-700: #ff7b52;
+  --color-yellow-800: #ff7b52;
+  --color-yellow-900: #ff7b52;
+  --color-yellow-950: #ff7b52;
+
+  --color-error-50: #fef2f2;
+  --color-error-100: #fee2e2;
+  --color-error-200: #fecaca;
+  --color-error-300: #fca5a5;
+  --color-error-400: #f87171;
+  --color-error-500: #f87171;
+  --color-error-600: #ef4444;
+  --color-error-700: #dc2626;
+  --color-error-800: #b91c1c;
+  --color-error-900: #7f1d1d;
+
+  --color-info-50: #eff6ff;
+  --color-info-100: #dbeafe;
+  --color-info-200: #bfdbfe;
+  --color-info-300: #93c5fd;
+  --color-info-400: #60a5fa;
+  --color-info-500: #60a5fa;
+  --color-info-600: #3b82f6;
+  --color-info-700: #2563eb;
+  --color-info-800: #1d4ed8;
+  --color-info-900: #1e3a8a;
+
+  --font-sans:
+    Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, SF Pro Text,
+    Segoe UI Variable, Segoe UI, Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  --font-mono:
+    JetBrains Mono, ui-monospace, Fira Code, SF Mono, Monaco, Inconsolata,
+    Roboto Mono, source-code-pro, monospace;
+
+  --text-xs: 0.75rem;
+  --text-xs--line-height: 1rem;
+  --text-sm: 0.8125rem;
+  --text-sm--line-height: 1.25rem;
+  --text-base: 0.9375rem;
+  --text-base--line-height: 1.625;
+  --text-lg: 1.125rem;
+  --text-lg--line-height: 1.75rem;
+  --text-xl: 1.25rem;
+  --text-xl--line-height: 1.75rem;
+  --text-2xl: 1.5rem;
+  --text-2xl--line-height: 2rem;
+  --text-3xl: 1.875rem;
+  --text-3xl--line-height: 2.25rem;
+
+  --radius-xl: 0.75rem;
+  --radius-2xl: 1rem;
+  --radius-3xl: 1.5rem;
+  --shadow-subtle: 0 1px 2px 0 rgb(0 0 0 / 0.035);
+  --shadow-card: 0 1px 2px 0 rgb(0 0 0 / 0.035);
+  --shadow-card-hover:
+    0 8px 24px -18px rgb(0 0 0 / 0.22), 0 1px 2px rgb(0 0 0 / 0.04);
+  --shadow-overlay:
+    0 24px 70px -28px rgb(0 0 0 / 0.28), 0 2px 8px rgb(0 0 0 / 0.06);
+
+  --animate-fade-in: fadeIn 0.18s cubic-bezier(0.22, 1, 0.36, 1);
+  --animate-slide-in: slideIn 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+  --animate-slide-up: slideUp 0.18s cubic-bezier(0.22, 1, 0.36, 1);
+  --animate-scale-in: scaleIn 0.16s cubic-bezier(0.22, 1, 0.36, 1);
+  --animate-pulse-subtle: pulseSubtle 2.4s ease-in-out infinite;
+  --animate-shimmer: shimmer 2s linear infinite;
+
+  --backdrop-blur-xs: 2px;
+
+  @keyframes shimmer {
+    0% {
+      background-position: 200% 0;
+    }
+    100% {
+      background-position: -200% 0;
+    }
   }
-
-  button {
-    min-height: 44px;
-    min-width: 44px;
+  @keyframes fadeIn {
+    0% {
+      opacity: 0;
+    }
+    100% {
+      opacity: 1;
+    }
   }
-
-  .touch-target {
-    min-height: 44px;
-    min-width: 44px;
+  @keyframes slideIn {
+    0% {
+      transform: translateX(-6px);
+      opacity: 0;
+    }
+    100% {
+      transform: translateX(0);
+      opacity: 1;
+    }
   }
-}
-/* Touch tablets and touch laptops get desktop layouts, so the width rule
-   above never reaches them. Size primary controls for fingers wherever the
-   main pointer is coarse, at any width. Inline links are unaffected: min
-   sizes do not apply to non-replaced inline boxes. */
-@media (pointer: coarse) {
-  button,
-  select,
-  summary,
-  [role='button'],
-  [role='tab'],
-  [role='menuitem'],
-  [role='menuitemradio'],
-  [role='menuitemcheckbox'],
-  [role='option'],
-  .touch-target {
-    min-height: 44px;
-    min-width: 44px;
+  @keyframes slideUp {
+    0% {
+      transform: translateY(6px);
+      opacity: 0;
+    }
+    100% {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+  @keyframes scaleIn {
+    0% {
+      transform: scale(0.985);
+      opacity: 0;
+    }
+    100% {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+  @keyframes pulseSubtle {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.8;
+    }
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  html:focus-within {
-    scroll-behavior: auto;
-  }
+/*
+  The default border color has changed to `currentcolor` in Tailwind CSS v4,
+  so we've added these compatibility styles to make sure everything still
+  looks the same as it did with Tailwind CSS v3.
 
+  If we ever want to remove these styles, we need to add an explicit border
+  color utility to any element that depends on these defaults.
+*/
+@layer base {
   *,
-  *::before,
-  *::after {
-    scroll-behavior: auto !important;
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: rgb(var(--color-gray-200));
+  }
+  /* Tailwind v3 preflight defaults the interface was designed against. */
+  input::placeholder,
+  textarea::placeholder {
+    opacity: 1;
+    color: rgb(var(--color-gray-400));
+  }
+  button:not(:disabled),
+  [role='button']:not(:disabled) {
+    cursor: pointer;
   }
 }
 
-.prose {
-  --tw-prose-body: rgb(var(--color-ink));
-  --tw-prose-headings: rgb(var(--color-ink));
-  --tw-prose-lead: rgb(var(--color-ink-muted));
-  --tw-prose-links: rgb(var(--color-primary-600));
-  --tw-prose-bold: rgb(var(--color-ink));
-  --tw-prose-counters: rgb(var(--color-ink-subtle));
-  --tw-prose-bullets: rgb(var(--color-line-strong));
-  --tw-prose-hr: rgb(var(--color-line));
-  --tw-prose-quotes: rgb(var(--color-ink));
-  --tw-prose-quote-borders: rgb(var(--color-line-strong));
-  --tw-prose-captions: rgb(var(--color-ink-muted));
-  --tw-prose-code: rgb(var(--color-ink));
-  --tw-prose-pre-code: rgb(var(--color-ink));
-  --tw-prose-pre-bg: rgb(var(--color-surface-subtle));
-  --tw-prose-th-borders: rgb(var(--color-line-strong));
-  --tw-prose-td-borders: rgb(var(--color-line));
-}
-
-@keyframes spin-slow {
-  from {
-    transform: rotate(0deg);
+/* Tailwind v4 spaces children with an end margin on every child but the last,
+   at zero specificity, so a child's own margin now wins. The layout was built
+   on the v3 rule: a start margin on every child after the first that
+   overrides the child's own. These restore it; `:not(template)` outranks the
+   core rule but not a child's own margin utility. */
+@utility space-y-* {
+  :where(&) > :not(template) {
+    margin-block-end: 0;
   }
-  to {
-    transform: rotate(360deg);
+  & > :not([hidden]) ~ :not([hidden]) {
+    margin-block-start: calc(var(--spacing) * --value(number));
+    margin-block-end: 0;
   }
 }
-.animate-spin-slow {
-  animation: spin-slow 2s linear infinite;
+
+@utility space-x-* {
+  :where(&) > :not(template) {
+    margin-inline-end: 0;
+  }
+  & > :not([hidden]) ~ :not([hidden]) {
+    margin-inline-start: calc(var(--spacing) * --value(number));
+    margin-inline-end: 0;
+  }
 }
 
-@layer utilities {
-  .range-slider {
-    -webkit-appearance: none;
-    appearance: none;
-    width: 100%;
-    height: 4px;
-    background: rgb(var(--color-line));
-    border-radius: 9999px;
-    outline: none;
-    accent-color: rgb(var(--color-primary-600));
-  }
+@utility range-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 4px;
+  background: rgb(var(--color-line));
+  border-radius: 9999px;
+  outline: none;
+  accent-color: rgb(var(--color-primary-600));
 
-  .range-slider::-webkit-slider-thumb {
+  &::-webkit-slider-thumb {
     -webkit-appearance: none;
     appearance: none;
     width: 16px;
@@ -620,11 +345,11 @@ select,
     transition: transform 0.15s ease;
   }
 
-  .range-slider::-webkit-slider-thumb:hover {
+  &::-webkit-slider-thumb:hover {
     transform: scale(1.15);
   }
 
-  .range-slider::-moz-range-thumb {
+  &::-moz-range-thumb {
     width: 16px;
     height: 16px;
     border-radius: 50%;
@@ -635,24 +360,24 @@ select,
     transition: transform 0.15s ease;
   }
 
-  .range-slider::-moz-range-thumb:hover {
+  &::-moz-range-thumb:hover {
     transform: scale(1.15);
   }
 
-  .range-slider:focus-visible {
+  &:focus-visible {
     box-shadow: 0 0 0 3px rgb(var(--color-primary-500) / 0.25);
   }
+}
 
-  .slider {
-    -webkit-appearance: none;
-    appearance: none;
-    background: transparent;
-    cursor: pointer;
-    position: relative;
-    background: rgb(var(--color-line));
-  }
+@utility slider {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  cursor: pointer;
+  position: relative;
+  background: rgb(var(--color-line));
 
-  .slider::-webkit-slider-track {
+  &::-webkit-slider-track {
     width: 100%;
     height: 8px;
     cursor: pointer;
@@ -661,7 +386,7 @@ select,
     transition: background-color 0.2s ease;
   }
 
-  .slider::-webkit-slider-thumb {
+  &::-webkit-slider-thumb {
     -webkit-appearance: none;
     appearance: none;
     height: 20px;
@@ -674,12 +399,12 @@ select,
     border: 2px solid rgb(var(--color-surface-raised));
   }
 
-  .slider::-webkit-slider-thumb:hover {
+  &::-webkit-slider-thumb:hover {
     background: rgb(var(--color-primary-600));
     transform: scale(1.1);
   }
 
-  .slider::-moz-range-track {
+  &::-moz-range-track {
     width: 100%;
     height: 8px;
     cursor: pointer;
@@ -688,7 +413,7 @@ select,
     border: none;
   }
 
-  .slider::-moz-range-thumb {
+  &::-moz-range-thumb {
     height: 20px;
     width: 20px;
     border-radius: 50%;
@@ -699,12 +424,12 @@ select,
     transition: all 0.2s ease;
   }
 
-  .slider::-moz-range-thumb:hover {
+  &::-moz-range-thumb:hover {
     background: rgb(var(--color-primary-600));
     transform: scale(1.1);
   }
 
-  .slider::before {
+  &::before {
     content: '';
     position: absolute;
     top: 0;
@@ -715,6 +440,593 @@ select,
     border-radius: 4px;
     transition: width 0.2s ease;
     pointer-events: none;
+  }
+}
+
+@layer utilities {
+  .libre-brand {
+    font-family:
+      'Inter',
+      ui-sans-serif,
+      system-ui,
+      -apple-system,
+      BlinkMacSystemFont,
+      sans-serif !important;
+    font-weight: 650;
+    font-optical-sizing: auto;
+    letter-spacing: -0.045em;
+  }
+
+  :root {
+    font-family:
+      Inter,
+      ui-sans-serif,
+      -apple-system,
+      BlinkMacSystemFont,
+      'SF Pro Text',
+      'Segoe UI Variable',
+      'Segoe UI',
+      Roboto,
+      sans-serif;
+    line-height: 1.5;
+    font-weight: 400;
+    font-synthesis: none;
+    font-optical-sizing: auto;
+    font-feature-settings:
+      'cv02' 1,
+      'cv03' 1,
+      'cv04' 1,
+      'cv11' 1;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    -webkit-text-size-adjust: 100%;
+
+    color-scheme: light;
+
+    /* Quiet, semantic neutrals. Components should consume these roles rather
+     than choosing a numeric gray for each theme. Values follow a cool
+     "bluish neutral" ramp: white canvas, #F9FAFB panels, hairline borders. */
+    --color-canvas: 255 255 255;
+    --color-surface: 255 255 255;
+    --color-surface-subtle: 245 246 247;
+    --color-surface-raised: 255 255 255;
+    --color-surface-overlay: 255 255 255;
+    --color-surface-inverse: 15 17 21;
+    --color-ink: 15 17 21;
+    --color-ink-muted: 97 102 107;
+    --color-ink-subtle: 129 133 140;
+    --color-ink-inverse: 249 250 251;
+    --color-line: 233 236 242;
+    --color-line-strong: 207 211 214;
+
+    /* Sidebar column + interaction fills (hover/active are alpha washes so they
+     compose over any fill). */
+    --color-sidebar: 249 250 251;
+    --interactive-hover: rgba(38, 49, 72, 0.06);
+    --interactive-active: rgba(38, 49, 72, 0.1);
+    --interactive-hover-solid: 241 243 245;
+    --nav-item-active: 235 238 242;
+
+    /* Elevation + overlay mask. */
+    --shadow-lv2:
+      0 4px 12px 0 rgba(0, 0, 0, 0.02), 0 2px 8px 0 rgba(0, 0, 0, 0.04);
+    --shadow-lv3:
+      0 0 1px 0 rgba(0, 0, 0, 0.2), 0 0 4px 0 rgba(0, 0, 0, 0.02),
+      0 12px 32px 0 rgba(0, 0, 0, 0.08);
+    --overlay-mask: rgba(0, 0, 0, 0.24);
+
+    /* Runtime-compatible legacy neutral scales. Accent adaptation can replace
+     these without requiring component-specific theme variants. */
+    --color-gray-25: 252 252 253;
+    --color-gray-50: 248 250 252;
+    --color-gray-100: 241 245 249;
+    --color-gray-200: 226 232 240;
+    --color-gray-300: 209 213 219;
+    --color-gray-400: 156 163 175;
+    --color-gray-500: 107 114 128;
+    --color-gray-600: 75 85 99;
+    --color-gray-700: 55 65 81;
+    --color-gray-800: 31 41 55;
+    --color-gray-900: 17 24 39;
+    --color-gray-950: 11 16 32;
+
+    --color-dark-25: 44 44 46;
+    --color-dark-50: 21 21 23;
+    --color-dark-100: 27 27 28;
+    --color-dark-200: 35 35 36;
+    --color-dark-300: 53 54 56;
+    --color-dark-400: 67 69 74;
+    --color-dark-500: 97 102 107;
+    --color-dark-600: 129 133 140;
+    --color-dark-700: 173 178 184;
+    --color-dark-800: 207 211 214;
+    --color-dark-900: 233 236 242;
+    --color-dark-950: 249 250 251;
+
+    --motion-fast: 140ms;
+    --motion-standard: 180ms;
+    --ease-product: cubic-bezier(0.22, 1, 0.36, 1);
+
+    --color-primary-50: 237 243 254;
+    --color-primary-100: 228 237 253;
+    --color-primary-200: 211 226 255;
+    --color-primary-300: 183 200 254;
+    --color-primary-400: 103 158 254;
+    --color-primary-500: 65 118 230;
+    --color-primary-600: 72 104 178;
+    --color-primary-700: 47 76 143;
+    --color-primary-800: 52 65 91;
+    --color-primary-900: 40 49 66;
+    --color-primary-950: 30 38 53;
+    --color-accent-50: var(--color-primary-50);
+    --color-accent-100: var(--color-primary-100);
+    --color-accent-200: var(--color-primary-200);
+    --color-accent-300: var(--color-primary-300);
+    --color-accent-400: var(--color-primary-400);
+    --color-accent-500: var(--color-primary-500);
+    --color-accent-600: var(--color-primary-600);
+    --color-accent-700: var(--color-primary-700);
+    --color-accent-800: var(--color-primary-800);
+    --color-accent-900: var(--color-primary-900);
+    --color-accent-950: var(--color-primary-950);
+
+    --toast-bg: rgb(var(--color-surface-overlay));
+    --toast-color: rgb(var(--color-ink));
+    --toast-border: rgb(var(--color-line));
+
+    --scrollbar-width: 8px;
+    --scrollbar-track: transparent;
+    --scrollbar-thumb: rgb(var(--color-line-strong));
+    --scrollbar-thumb-hover: rgb(var(--color-ink-subtle));
+  }
+
+  /* AMOLED: the true-black variant of dark. Surfaces drop to (or near) black;
+   text and accent rungs stay on the grey dark values. The dark-* ladder is
+   overridden too because many components use it directly. */
+  .dark.amoled {
+    --color-canvas: 0 0 0;
+    --color-surface: 0 0 0;
+    --color-surface-subtle: 10 10 11;
+    --color-surface-raised: 17 17 19;
+    --color-surface-overlay: 25 25 27;
+    --color-ink-inverse: 0 0 0;
+    --color-line: 27 27 29;
+    --color-line-strong: 46 47 50;
+
+    --color-sidebar: 0 0 0;
+    --interactive-hover-solid: 23 23 25;
+    --nav-item-active: 32 32 34;
+
+    --color-dark-25: 16 16 18;
+    --color-dark-50: 0 0 0;
+    --color-dark-100: 8 8 9;
+    --color-dark-200: 16 16 17;
+    --color-dark-300: 30 30 32;
+  }
+
+  html[data-runtime='electron'] {
+    --scrollbar-width: 10px;
+  }
+
+  .dark {
+    color-scheme: dark;
+
+    --color-canvas: 21 21 23;
+    --color-surface: 27 27 28;
+    --color-surface-subtle: 35 35 36;
+    --color-surface-raised: 44 44 46;
+    --color-surface-overlay: 53 54 56;
+    --color-surface-inverse: 249 250 251;
+    --color-ink: 249 250 251;
+    --color-ink-muted: 173 178 184;
+    --color-ink-subtle: 129 133 140;
+    --color-ink-inverse: 21 21 23;
+    --color-line: 45 46 48;
+    --color-line-strong: 67 69 74;
+
+    --color-sidebar: 27 27 28;
+    --interactive-hover: rgba(255, 255, 255, 0.08);
+    --interactive-active: rgba(255, 255, 255, 0.14);
+    --interactive-hover-solid: 53 54 56;
+    --nav-item-active: 67 69 74;
+
+    --shadow-lv2:
+      0 4px 12px 0 rgba(0, 0, 0, 0.12), 0 2px 8px 0 rgba(0, 0, 0, 0.16);
+    --shadow-lv3:
+      0 0 1px 0 rgba(0, 0, 0, 0.4), 0 0 4px 0 rgba(0, 0, 0, 0.08),
+      0 12px 32px 0 rgba(0, 0, 0, 0.32);
+    --overlay-mask: rgba(0, 0, 0, 0.5);
+
+    --toast-bg: rgb(var(--color-surface-overlay));
+    --toast-color: rgb(var(--color-ink));
+    --toast-border: rgb(var(--color-line));
+
+    --scrollbar-track: transparent;
+    --scrollbar-thumb: rgb(var(--color-line-strong));
+    --scrollbar-thumb-hover: rgb(var(--color-ink-subtle));
+  }
+
+  [data-hot-toast] {
+    z-index: 9999 !important;
+  }
+
+  [data-hot-toast] [data-toast] {
+    cursor: pointer;
+    border: 1px solid var(--toast-border);
+    transition:
+      background-color var(--motion-fast) ease-out,
+      border-color var(--motion-fast) ease-out,
+      box-shadow var(--motion-fast) ease-out,
+      transform var(--motion-fast) var(--ease-product);
+  }
+
+  [data-hot-toast] [data-toast]:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 12px 36px -24px rgb(0 0 0 / 0.28) !important;
+  }
+
+  [data-hot-toast] [data-toast]::after {
+    content: '×';
+    position: absolute;
+    top: 8px;
+    inset-inline-end: 12px;
+    font-size: 16px;
+    color: rgb(var(--color-ink-subtle));
+    opacity: 0;
+    transition: opacity 0.2s ease-in-out;
+    pointer-events: none;
+    font-weight: 500;
+  }
+
+  [data-hot-toast] [data-toast]:hover::after {
+    opacity: 1;
+  }
+
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+  }
+
+  .scrollbar-thin::-webkit-scrollbar {
+    width: var(--scrollbar-width);
+    height: var(--scrollbar-width);
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: var(--scrollbar-track);
+    border-radius: 10px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: var(--scrollbar-thumb);
+    border-radius: 10px;
+    border: 1px solid var(--scrollbar-track);
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background: var(--scrollbar-thumb-hover);
+  }
+
+  .scroll-region {
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior-y: contain;
+    scrollbar-gutter: stable;
+    touch-action: pan-y pinch-zoom;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .scrollbar-hidden {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .sidebar-scroll-fade {
+    --sidebar-fade-top: 0px;
+    --sidebar-fade-bottom: 0px;
+    scroll-padding-block: 24px;
+    mask-image: linear-gradient(
+      to bottom,
+      transparent,
+      #000 var(--sidebar-fade-top),
+      #000 calc(100% - var(--sidebar-fade-bottom)),
+      transparent
+    );
+  }
+
+  .tab-scroll-fade {
+    --tab-fade-left: 0px;
+    --tab-fade-right: 0px;
+    scroll-padding-inline: 24px;
+    mask-image: linear-gradient(
+      to right,
+      transparent,
+      #000 var(--tab-fade-left),
+      #000 calc(100% - var(--tab-fade-right)),
+      transparent
+    );
+  }
+
+  /* Keep keyboard focus rings fully visible, even at the scroll edges. */
+  .sidebar-scroll-fade:has(:focus-visible),
+  .tab-scroll-fade:has(:focus-visible) {
+    mask-image: none;
+  }
+
+  .scrollbar-hidden::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Mask content in both scroll directions without painting over theme surfaces. */
+  [data-scroll-fade-active] {
+    scroll-padding: 24px;
+    mask-image:
+      linear-gradient(
+        to bottom,
+        transparent,
+        #000 var(--scroll-fade-top, 0px),
+        #000 calc(100% - var(--scroll-fade-bottom, 0px)),
+        transparent
+      ),
+      linear-gradient(
+        to right,
+        transparent,
+        #000 var(--scroll-fade-left, 0px),
+        #000 calc(100% - var(--scroll-fade-right, 0px)),
+        transparent
+      );
+    mask-composite: intersect;
+  }
+
+  [data-scroll-fade-keyboard] {
+    mask-image: none;
+  }
+
+  a,
+  button {
+    color: inherit;
+    text-decoration: inherit;
+  }
+
+  .text-primary-500 {
+    color: rgb(var(--color-primary-500)) !important;
+  }
+
+  .text-primary-400 {
+    color: rgb(var(--color-primary-400)) !important;
+  }
+
+  .text-primary-600 {
+    color: rgb(var(--color-primary-600)) !important;
+  }
+
+  .hover\:text-primary-600:hover {
+    color: rgb(var(--color-primary-600)) !important;
+  }
+
+  .hover\:text-primary-300:hover {
+    color: rgb(var(--color-primary-300)) !important;
+  }
+
+  .dark .text-primary-500 {
+    color: rgb(var(--color-primary-400)) !important;
+  }
+
+  .dark .text-primary-400 {
+    color: rgb(var(--color-primary-300)) !important;
+  }
+
+  .dark .dark\:text-primary-400 {
+    color: rgb(var(--color-primary-300)) !important;
+  }
+
+  .dark .dark\:hover\:text-primary-300:hover {
+    color: rgb(var(--color-primary-200)) !important;
+  }
+
+  .text-accent-500 {
+    color: rgb(var(--color-accent-500)) !important;
+  }
+
+  .text-accent-400 {
+    color: rgb(var(--color-accent-400)) !important;
+  }
+
+  .text-accent-600 {
+    color: rgb(var(--color-accent-600)) !important;
+  }
+
+  .hover\:text-accent-600:hover {
+    color: rgb(var(--color-accent-600)) !important;
+  }
+
+  .hover\:text-accent-300:hover {
+    color: rgb(var(--color-accent-300)) !important;
+  }
+
+  .dark .text-accent-500 {
+    color: rgb(var(--color-accent-400)) !important;
+  }
+
+  .dark .text-accent-400 {
+    color: rgb(var(--color-accent-300)) !important;
+  }
+
+  .dark .dark\:text-accent-400 {
+    color: rgb(var(--color-accent-300)) !important;
+  }
+
+  .dark .dark\:hover\:text-accent-300:hover {
+    color: rgb(var(--color-accent-200)) !important;
+  }
+
+  .focus-ring:focus {
+    outline: none;
+    box-shadow:
+      0 0 0 2px rgb(var(--color-primary-500)),
+      0 0 0 4px rgb(var(--color-primary-500) / 0.2);
+  }
+
+  ::selection {
+    background-color: rgb(var(--color-primary-100));
+    color: rgb(var(--color-primary-900));
+  }
+
+  .dark ::selection {
+    background-color: rgb(var(--color-primary-800));
+    color: rgb(var(--color-primary-100));
+  }
+
+  .scrollbar-thumb-gray-600::-webkit-scrollbar-thumb {
+    background-color: var(--scrollbar-thumb);
+    border-radius: 9999px;
+  }
+
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  :focus-visible {
+    outline: 2px solid rgb(var(--color-primary-500));
+    outline-offset: 2px;
+  }
+
+  /* Text-entry fields signal focus through their caret and the field's own
+   border/ring styling — the global outline double-frames them (composer,
+   palette, search fields). Checkboxes, radios, ranges, buttons, and links
+   keep the outline: keyboard users have no other focus cue there. */
+  input:not([type='checkbox']):not([type='radio']):not(
+      [type='range']
+    ):focus-visible,
+  textarea:focus-visible,
+  [contenteditable='true']:focus-visible {
+    outline: none;
+  }
+
+  .touch-manipulation {
+    touch-action: manipulation;
+  }
+
+  html {
+    min-height: 100%;
+    background: rgb(var(--color-canvas));
+    /* Compact global density: rem-based type and spacing scale from here. */
+    font-size: 15px;
+  }
+
+  body,
+  #root {
+    min-height: 100%;
+  }
+
+  body {
+    margin: 0;
+    background: rgb(var(--color-canvas));
+    color: rgb(var(--color-ink));
+    -webkit-app-region: no-drag;
+  }
+
+  button,
+  a,
+  input,
+  textarea,
+  select,
+  [role='button'],
+  .cursor-pointer {
+    -webkit-app-region: no-drag;
+    -webkit-user-drag: none;
+  }
+
+  @media (max-width: 768px) {
+    input[type='text'],
+    input[type='email'],
+    input[type='password'],
+    input[type='search'],
+    textarea,
+    select {
+      /* Avoid iOS input zoom without inflating desktop field typography. */
+      font-size: 16px;
+    }
+
+    button {
+      min-height: 44px;
+      min-width: 44px;
+    }
+
+    .touch-target {
+      min-height: 44px;
+      min-width: 44px;
+    }
+  }
+  /* Touch tablets and touch laptops get desktop layouts, so the width rule
+   above never reaches them. Size primary controls for fingers wherever the
+   main pointer is coarse, at any width. Inline links are unaffected: min
+   sizes do not apply to non-replaced inline boxes. */
+  @media (pointer: coarse) {
+    button,
+    select,
+    summary,
+    [role='button'],
+    [role='tab'],
+    [role='menuitem'],
+    [role='menuitemradio'],
+    [role='menuitemcheckbox'],
+    [role='option'],
+    .touch-target {
+      min-height: 44px;
+      min-width: 44px;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html:focus-within {
+      scroll-behavior: auto;
+    }
+
+    *,
+    *::before,
+    *::after {
+      scroll-behavior: auto !important;
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+
+  .prose {
+    --tw-prose-body: rgb(var(--color-ink));
+    --tw-prose-headings: rgb(var(--color-ink));
+    --tw-prose-lead: rgb(var(--color-ink-muted));
+    --tw-prose-links: rgb(var(--color-primary-600));
+    --tw-prose-bold: rgb(var(--color-ink));
+    --tw-prose-counters: rgb(var(--color-ink-subtle));
+    --tw-prose-bullets: rgb(var(--color-line-strong));
+    --tw-prose-hr: rgb(var(--color-line));
+    --tw-prose-quotes: rgb(var(--color-ink));
+    --tw-prose-quote-borders: rgb(var(--color-line-strong));
+    --tw-prose-captions: rgb(var(--color-ink-muted));
+    --tw-prose-code: rgb(var(--color-ink));
+    --tw-prose-pre-code: rgb(var(--color-ink));
+    --tw-prose-pre-bg: rgb(var(--color-surface-subtle));
+    --tw-prose-th-borders: rgb(var(--color-line-strong));
+    --tw-prose-td-borders: rgb(var(--color-line));
+  }
+
+  @keyframes spin-slow {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  }
+  .animate-spin-slow {
+    animation: spin-slow 2s linear infinite;
   }
 }
 

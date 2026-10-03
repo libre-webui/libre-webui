@@ -231,7 +231,7 @@ export const SignupForm: React.FC<SignupFormProps> = ({
               clearFieldError('username');
             }}
             onKeyDown={handleKeyDown}
-            className='h-11 w-full rounded-xl border border-line bg-surface px-3 text-sm text-ink shadow-subtle outline-none transition-[border-color,box-shadow,background-color] placeholder:text-ink-muted focus:border-primary-500 focus:ring-2 focus:ring-primary-500/30 disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:transition-none'
+            className='h-11 w-full rounded-xl border border-line bg-surface px-3 text-sm text-ink shadow-subtle outline-hidden transition-[border-color,box-shadow,background-color] placeholder:text-ink-muted focus:border-primary-500 focus:ring-2 focus:ring-primary-500/30 disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:transition-none'
             placeholder={t('auth.signup.usernamePlaceholder')}
             required
             disabled={isLoading}
@@ -253,7 +253,7 @@ export const SignupForm: React.FC<SignupFormProps> = ({
             value={email}
             onChange={e => setEmail(e.target.value)}
             onKeyDown={handleKeyDown}
-            className='h-11 w-full rounded-xl border border-line bg-surface px-3 text-sm text-ink shadow-subtle outline-none transition-[border-color,box-shadow,background-color] placeholder:text-ink-muted focus:border-primary-500 focus:ring-2 focus:ring-primary-500/30 disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:transition-none'
+            className='h-11 w-full rounded-xl border border-line bg-surface px-3 text-sm text-ink shadow-subtle outline-hidden transition-[border-color,box-shadow,background-color] placeholder:text-ink-muted focus:border-primary-500 focus:ring-2 focus:ring-primary-500/30 disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:transition-none'
             placeholder={t('auth.signup.emailPlaceholder')}
             disabled={isLoading}
           />
@@ -278,7 +278,7 @@ export const SignupForm: React.FC<SignupFormProps> = ({
                 clearFieldError('password');
               }}
               onKeyDown={handleKeyDown}
-              className='h-11 w-full rounded-xl border border-line bg-surface px-3 pe-11 text-sm text-ink shadow-subtle outline-none transition-[border-color,box-shadow,background-color] placeholder:text-ink-muted focus:border-primary-500 focus:ring-2 focus:ring-primary-500/30 disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:transition-none'
+              className='h-11 w-full rounded-xl border border-line bg-surface px-3 pe-11 text-sm text-ink shadow-subtle outline-hidden transition-[border-color,box-shadow,background-color] placeholder:text-ink-muted focus:border-primary-500 focus:ring-2 focus:ring-primary-500/30 disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:transition-none'
               placeholder={t('auth.signup.passwordPlaceholder')}
               required
               disabled={isLoading}
@@ -286,7 +286,7 @@ export const SignupForm: React.FC<SignupFormProps> = ({
             <button
               type='button'
               onClick={() => setShowPassword(!showPassword)}
-              className='absolute inset-y-0 end-0 flex items-center pe-3 text-ink-muted transition-colors hover:text-ink disabled:cursor-not-allowed disabled:opacity-50'
+              className='absolute inset-y-0 inset-e-0 flex items-center pe-3 text-ink-muted transition-colors hover:text-ink disabled:cursor-not-allowed disabled:opacity-50'
               disabled={isLoading}
               aria-label={
                 showPassword ? t('auth.password.hide') : t('auth.password.show')
@@ -322,7 +322,7 @@ export const SignupForm: React.FC<SignupFormProps> = ({
                 clearFieldError('confirmPassword');
               }}
               onKeyDown={handleKeyDown}
-              className='h-11 w-full rounded-xl border border-line bg-surface px-3 pe-11 text-sm text-ink shadow-subtle outline-none transition-[border-color,box-shadow,background-color] placeholder:text-ink-muted focus:border-primary-500 focus:ring-2 focus:ring-primary-500/30 disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:transition-none'
+              className='h-11 w-full rounded-xl border border-line bg-surface px-3 pe-11 text-sm text-ink shadow-subtle outline-hidden transition-[border-color,box-shadow,background-color] placeholder:text-ink-muted focus:border-primary-500 focus:ring-2 focus:ring-primary-500/30 disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:transition-none'
               placeholder={t('auth.signup.confirmPasswordPlaceholder')}
               required
               disabled={isLoading}
@@ -330,7 +330,7 @@ export const SignupForm: React.FC<SignupFormProps> = ({
             <button
               type='button'
               onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-              className='absolute inset-y-0 end-0 flex items-center pe-3 text-ink-muted transition-colors hover:text-ink disabled:cursor-not-allowed disabled:opacity-50'
+              className='absolute inset-y-0 inset-e-0 flex items-center pe-3 text-ink-muted transition-colors hover:text-ink disabled:cursor-not-allowed disabled:opacity-50'
               disabled={isLoading}
               aria-label={
                 showConfirmPassword
@@ -361,7 +361,7 @@ export const SignupForm: React.FC<SignupFormProps> = ({
         <button
           type='submit'
           disabled={submitDisabled}
-          className='flex h-11 w-full items-center justify-center rounded-xl border border-transparent bg-ink px-4 text-sm font-medium text-ink-inverse shadow-subtle transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-canvas disabled:cursor-not-allowed disabled:opacity-40 motion-reduce:transition-none'
+          className='flex h-11 w-full items-center justify-center rounded-xl border border-transparent bg-ink px-4 text-sm font-medium text-ink-inverse shadow-subtle transition-opacity hover:opacity-90 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-canvas disabled:cursor-not-allowed disabled:opacity-40 motion-reduce:transition-none'
         >
           {isLoading ? (
             <div className='flex items-center'>

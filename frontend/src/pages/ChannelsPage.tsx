@@ -424,7 +424,7 @@ const ChannelsPage: React.FC = () => {
       {/* Channel rail */}
       <aside
         className={cn(
-          'flex w-64 shrink-0 flex-col border-e border-black/[0.06] dark:border-white/[0.06]',
+          'flex w-64 shrink-0 flex-col border-e border-black/6 dark:border-white/6',
           selectedId ? 'hidden md:flex' : 'flex'
         )}
         data-testid='channel-rail'
@@ -439,7 +439,7 @@ const ChannelsPage: React.FC = () => {
                 onClick={openBrowse}
                 title={t('channels.browsePublic')}
                 aria-label={t('channels.browsePublic')}
-                className='rounded-md p-1.5 text-gray-500 hover:bg-black/[0.04] dark:text-dark-600 dark:hover:bg-white/[0.06]'
+                className='rounded-md p-1.5 text-gray-500 hover:bg-black/4 dark:text-dark-600 dark:hover:bg-white/6'
                 data-testid='channels-browse'
               >
                 <Compass className='h-4 w-4' />
@@ -449,7 +449,7 @@ const ChannelsPage: React.FC = () => {
                 onClick={() => setDmOpen(true)}
                 title={t('channels.newDm')}
                 aria-label={t('channels.newDm')}
-                className='rounded-md p-1.5 text-gray-500 hover:bg-black/[0.04] dark:text-dark-600 dark:hover:bg-white/[0.06]'
+                className='rounded-md p-1.5 text-gray-500 hover:bg-black/4 dark:text-dark-600 dark:hover:bg-white/6'
                 data-testid='channels-new-dm'
               >
                 <MessageCircle className='h-4 w-4' />
@@ -459,7 +459,7 @@ const ChannelsPage: React.FC = () => {
                 onClick={() => setCreateOpen(true)}
                 title={t('channels.newChannel')}
                 aria-label={t('channels.newChannel')}
-                className='rounded-md p-1.5 text-gray-500 hover:bg-black/[0.04] dark:text-dark-600 dark:hover:bg-white/[0.06]'
+                className='rounded-md p-1.5 text-gray-500 hover:bg-black/4 dark:text-dark-600 dark:hover:bg-white/6'
                 data-testid='channels-new'
               >
                 <Plus className='h-4 w-4' />
@@ -481,8 +481,8 @@ const ChannelsPage: React.FC = () => {
                 className={cn(
                   'flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-start text-[13px]',
                   selectedId === channel.id
-                    ? 'bg-black/[0.05] text-gray-900 dark:bg-white/[0.08] dark:text-dark-900'
-                    : 'text-gray-600 hover:bg-black/[0.03] dark:text-dark-700 dark:hover:bg-white/[0.04]'
+                    ? 'bg-black/5 text-gray-900 dark:bg-white/8 dark:text-dark-900'
+                    : 'text-gray-600 hover:bg-black/3 dark:text-dark-700 dark:hover:bg-white/4'
                 )}
                 data-testid='channel-item'
               >
@@ -522,13 +522,13 @@ const ChannelsPage: React.FC = () => {
           />
         ) : (
           <>
-            <header className='flex items-center gap-2 border-b border-black/[0.06] px-4 py-2.5 dark:border-white/[0.06]'>
+            <header className='flex items-center gap-2 border-b border-black/6 px-4 py-2.5 dark:border-white/6'>
               <button
                 type='button'
                 onClick={() => setSelectedId(null)}
                 aria-label={t('common.back')}
                 title={t('common.back')}
-                className='rounded-md p-1 text-gray-500 hover:bg-black/[0.04] md:hidden dark:text-dark-600'
+                className='rounded-md p-1 text-gray-500 hover:bg-black/4 md:hidden dark:text-dark-600'
               >
                 <ArrowLeft className='h-4 w-4 rtl:rotate-180' />
               </button>
@@ -547,7 +547,7 @@ const ChannelsPage: React.FC = () => {
                 title={t('channels.pins')}
                 aria-label={t('channels.pins')}
                 aria-pressed={sidePanel === 'pins'}
-                className='rounded-md p-1.5 text-gray-500 hover:bg-black/[0.04] dark:text-dark-600 dark:hover:bg-white/[0.06]'
+                className='rounded-md p-1.5 text-gray-500 hover:bg-black/4 dark:text-dark-600 dark:hover:bg-white/6'
                 data-testid='channel-pins-toggle'
               >
                 <Pin className='h-4 w-4' />
@@ -560,7 +560,7 @@ const ChannelsPage: React.FC = () => {
                 title={t('channels.members')}
                 aria-label={t('channels.members')}
                 aria-pressed={sidePanel === 'members'}
-                className='rounded-md p-1.5 text-gray-500 hover:bg-black/[0.04] dark:text-dark-600 dark:hover:bg-white/[0.06]'
+                className='rounded-md p-1.5 text-gray-500 hover:bg-black/4 dark:text-dark-600 dark:hover:bg-white/6'
                 data-testid='channel-members-toggle'
               >
                 <Users className='h-4 w-4' />
@@ -571,7 +571,7 @@ const ChannelsPage: React.FC = () => {
                   onClick={() => setShareOpen(true)}
                   title={t('channels.settings')}
                   aria-label={t('channels.settings')}
-                  className='rounded-md p-1.5 text-gray-500 hover:bg-black/[0.04] dark:text-dark-600 dark:hover:bg-white/[0.06]'
+                  className='rounded-md p-1.5 text-gray-500 hover:bg-black/4 dark:text-dark-600 dark:hover:bg-white/6'
                   data-testid='channel-settings'
                 >
                   <Settings2 className='h-4 w-4' />
@@ -607,9 +607,9 @@ const ChannelsPage: React.FC = () => {
                   )}
                 </div>
 
-                <div className='border-t border-black/[0.06] p-3 dark:border-white/[0.06]'>
+                <div className='border-t border-black/6 p-3 dark:border-white/6'>
                   {pendingAttachment && (
-                    <div className='mb-2 flex items-center gap-2 rounded-lg border border-black/[0.06] px-2.5 py-1.5 text-xs text-gray-600 dark:border-white/[0.08] dark:text-dark-700'>
+                    <div className='mb-2 flex items-center gap-2 rounded-lg border border-black/6 px-2.5 py-1.5 text-xs text-gray-600 dark:border-white/8 dark:text-dark-700'>
                       <Paperclip className='h-3.5 w-3.5' />
                       <span className='min-w-0 flex-1 truncate'>
                         {pendingAttachment.filename}
@@ -619,7 +619,7 @@ const ChannelsPage: React.FC = () => {
                         onClick={() => setPendingAttachment(null)}
                         aria-label={t('channels.removeAttachment')}
                         title={t('channels.removeAttachment')}
-                        className='rounded p-0.5 text-gray-500 hover:text-red-500'
+                        className='rounded-sm p-0.5 text-gray-500 hover:text-red-500'
                       >
                         <X className='h-3.5 w-3.5' />
                       </button>
@@ -641,7 +641,7 @@ const ChannelsPage: React.FC = () => {
                       onClick={() => fileInputRef.current?.click()}
                       title={t('channels.attach')}
                       aria-label={t('channels.attach')}
-                      className='rounded-md p-2 text-gray-500 hover:bg-black/[0.04] dark:text-dark-600 dark:hover:bg-white/[0.06]'
+                      className='rounded-md p-2 text-gray-500 hover:bg-black/4 dark:text-dark-600 dark:hover:bg-white/6'
                       data-testid='channel-attach'
                     >
                       <Paperclip className='h-4 w-4' />
@@ -658,7 +658,7 @@ const ChannelsPage: React.FC = () => {
                       <select
                         value={mentionModel}
                         onChange={event => setMentionModel(event.target.value)}
-                        className='max-w-[130px] rounded-md border border-black/[0.08] bg-transparent px-1 py-1 text-[11px] text-gray-600 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 dark:border-white/[0.1] dark:bg-dark-100 dark:text-dark-700'
+                        className='max-w-[130px] rounded-md border border-black/8 bg-transparent px-1 py-1 text-[11px] text-gray-600 focus:border-primary-500 focus:outline-hidden focus:ring-2 focus:ring-primary-500/30 dark:border-white/10 dark:bg-dark-100 dark:text-dark-700'
                         title={t('channels.askModel')}
                         aria-label={t('channels.askModel')}
                         data-testid='channel-mention-model'
@@ -687,7 +687,7 @@ const ChannelsPage: React.FC = () => {
                       rows={1}
                       placeholder={t('channels.composerPlaceholder')}
                       aria-label={t('channels.composerPlaceholder')}
-                      className='max-h-32 min-w-0 flex-1 resize-none rounded-xl border border-black/[0.08] bg-transparent px-3 py-2 text-[13px] text-gray-900 placeholder:text-gray-400 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 dark:border-white/[0.1] dark:text-dark-900'
+                      className='max-h-32 min-w-0 flex-1 resize-none rounded-xl border border-black/8 bg-transparent px-3 py-2 text-[13px] text-gray-900 placeholder:text-gray-400 focus:border-primary-500 focus:outline-hidden focus:ring-2 focus:ring-primary-500/30 dark:border-white/10 dark:text-dark-900'
                       data-testid='channel-composer'
                     />
                     <Button
@@ -713,10 +713,10 @@ const ChannelsPage: React.FC = () => {
               {/* Thread panel */}
               {threadRootId && (
                 <aside
-                  className='flex w-80 shrink-0 flex-col border-s border-black/[0.06] dark:border-white/[0.06]'
+                  className='flex w-80 shrink-0 flex-col border-s border-black/6 dark:border-white/6'
                   data-testid='channel-thread'
                 >
-                  <div className='flex items-center gap-2 border-b border-black/[0.06] px-3 py-2 dark:border-white/[0.06]'>
+                  <div className='flex items-center gap-2 border-b border-black/6 px-3 py-2 dark:border-white/6'>
                     <span className='flex-1 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-dark-600'>
                       {t('channels.thread')}
                     </span>
@@ -725,7 +725,7 @@ const ChannelsPage: React.FC = () => {
                       onClick={() => setThreadRootId(null)}
                       aria-label={t('channels.closeThread')}
                       title={t('channels.closeThread')}
-                      className='rounded-md p-1 text-gray-400 hover:bg-black/[0.04] dark:hover:bg-white/[0.06]'
+                      className='rounded-md p-1 text-gray-400 hover:bg-black/4 dark:hover:bg-white/6'
                     >
                       <X className='h-3.5 w-3.5' />
                     </button>
@@ -742,7 +742,7 @@ const ChannelsPage: React.FC = () => {
                       />
                     ))}
                   </div>
-                  <div className='flex items-end gap-1.5 border-t border-black/[0.06] p-2 dark:border-white/[0.06]'>
+                  <div className='flex items-end gap-1.5 border-t border-black/6 p-2 dark:border-white/6'>
                     <textarea
                       value={draft}
                       onChange={event => setDraft(event.target.value)}
@@ -759,7 +759,7 @@ const ChannelsPage: React.FC = () => {
                       rows={1}
                       placeholder={t('channels.replyPlaceholder')}
                       aria-label={t('channels.replyPlaceholder')}
-                      className='min-w-0 flex-1 resize-none rounded-lg border border-black/[0.08] bg-transparent px-2.5 py-1.5 text-[13px] text-gray-900 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 dark:border-white/[0.1] dark:text-dark-900'
+                      className='min-w-0 flex-1 resize-none rounded-lg border border-black/8 bg-transparent px-2.5 py-1.5 text-[13px] text-gray-900 focus:border-primary-500 focus:outline-hidden focus:ring-2 focus:ring-primary-500/30 dark:border-white/10 dark:text-dark-900'
                       data-testid='channel-thread-composer'
                     />
                     <Button
@@ -780,10 +780,10 @@ const ChannelsPage: React.FC = () => {
               {/* Members / pins panel */}
               {sidePanel && (
                 <aside
-                  className='flex w-72 shrink-0 flex-col border-s border-black/[0.06] dark:border-white/[0.06]'
+                  className='flex w-72 shrink-0 flex-col border-s border-black/6 dark:border-white/6'
                   data-testid={`channel-${sidePanel}-panel`}
                 >
-                  <div className='flex items-center gap-2 border-b border-black/[0.06] px-3 py-2 dark:border-white/[0.06]'>
+                  <div className='flex items-center gap-2 border-b border-black/6 px-3 py-2 dark:border-white/6'>
                     <span className='flex-1 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-dark-600'>
                       {sidePanel === 'members'
                         ? t('channels.members')
@@ -794,7 +794,7 @@ const ChannelsPage: React.FC = () => {
                       onClick={() => setSidePanel(null)}
                       aria-label={t('common.close')}
                       title={t('common.close')}
-                      className='rounded-md p-1 text-gray-400 hover:bg-black/[0.04] dark:hover:bg-white/[0.06]'
+                      className='rounded-md p-1 text-gray-400 hover:bg-black/4 dark:hover:bg-white/6'
                     >
                       <X className='h-3.5 w-3.5' />
                     </button>
@@ -820,7 +820,7 @@ const ChannelsPage: React.FC = () => {
                               }}
                               placeholder={t('channels.invitePlaceholder')}
                               aria-label={t('channels.invitePlaceholder')}
-                              className='min-w-0 flex-1 rounded-lg border border-black/[0.08] bg-transparent px-2 py-1 text-xs focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 dark:border-white/[0.1] dark:text-dark-800'
+                              className='min-w-0 flex-1 rounded-lg border border-black/8 bg-transparent px-2 py-1 text-xs focus:border-primary-500 focus:outline-hidden focus:ring-2 focus:ring-primary-500/30 dark:border-white/10 dark:text-dark-800'
                               data-testid='channel-invite-name'
                             />
                             <Button
@@ -885,7 +885,7 @@ const ChannelsPage: React.FC = () => {
                                       );
                                     }
                                   }}
-                                  className='rounded p-1 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20'
+                                  className='rounded-sm p-1 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20'
                                   title={t('channels.removeMember')}
                                   aria-label={t('channels.removeMemberNamed', {
                                     name: member.username,
@@ -1183,7 +1183,7 @@ const BrowseChannelsModal: React.FC<{
         channels.map(channel => (
           <div
             key={channel.id}
-            className='flex items-center gap-2 rounded-lg border border-black/[0.06] px-3 py-2 dark:border-white/[0.08]'
+            className='flex items-center gap-2 rounded-lg border border-black/6 px-3 py-2 dark:border-white/8'
             data-testid='browse-channel-item'
           >
             <Hash className='h-3.5 w-3.5 shrink-0 text-gray-400' />

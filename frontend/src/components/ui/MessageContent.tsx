@@ -42,7 +42,7 @@ function PlainMessageContent({
     <div
       dir='auto'
       className={cn(
-        'text-sm leading-relaxed text-ink whitespace-pre-wrap break-words',
+        'text-sm leading-relaxed text-ink whitespace-pre-wrap wrap-break-word',
         className
       )}
     >

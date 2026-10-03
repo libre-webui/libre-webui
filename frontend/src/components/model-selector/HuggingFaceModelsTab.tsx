@@ -77,7 +77,7 @@ export function HuggingFaceModelsTab({
 
   return (
     <div className='flex-1 flex flex-col overflow-hidden'>
-      <div className='px-3 py-2 border-b border-gray-200 dark:border-dark-300 flex-shrink-0 space-y-2'>
+      <div className='px-3 py-2 border-b border-gray-200 dark:border-dark-300 shrink-0 space-y-2'>
         <div className='flex gap-2'>
           <select
             value={hfTask}
@@ -152,7 +152,7 @@ export function HuggingFaceModelsTab({
                     }}
                   >
                     <div className='flex items-start gap-3'>
-                      <div className='flex-shrink-0 rounded-lg bg-yellow-500/20 p-2 dark:bg-yellow-900/30'>
+                      <div className='shrink-0 rounded-lg bg-yellow-500/20 p-2 dark:bg-yellow-900/30'>
                         <Zap className='h-4 w-4 text-yellow-600 dark:text-yellow-400' />
                       </div>
                       <div className='flex-1 min-w-0'>
@@ -164,7 +164,7 @@ export function HuggingFaceModelsTab({
                             {model.id}
                           </h4>
                           {model.gated && (
-                            <span className='rounded bg-yellow-500/20 px-1.5 py-0.5 text-xs text-ink dark:bg-yellow-900/30'>
+                            <span className='rounded-sm bg-yellow-500/20 px-1.5 py-0.5 text-xs text-ink dark:bg-yellow-900/30'>
                               Gated
                             </span>
                           )}
@@ -182,13 +182,13 @@ export function HuggingFaceModelsTab({
                             {formatNumber(model.likes)}
                           </span>
                           {model.pipeline_tag && (
-                            <span className='px-1.5 py-0.5 rounded bg-gray-100 dark:bg-dark-200'>
+                            <span className='px-1.5 py-0.5 rounded-sm bg-gray-100 dark:bg-dark-200'>
                               {model.pipeline_tag}
                             </span>
                           )}
                         </div>
                       </div>
-                      <div className='flex items-center gap-2 flex-shrink-0'>
+                      <div className='flex items-center gap-2 shrink-0'>
                         <a
                           href={`https://huggingface.co/${model.id}`}
                           target='_blank'
@@ -244,7 +244,7 @@ export function HuggingFaceModelsTab({
                                   <div className='flex items-center gap-2 mt-0.5 text-xs text-gray-500 dark:text-gray-400'>
                                     <span>{file.sizeFormatted}</span>
                                     {file.quantization && (
-                                      <span className='px-1.5 py-0.5 rounded bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400'>
+                                      <span className='px-1.5 py-0.5 rounded-sm bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400'>
                                         {file.quantization}
                                       </span>
                                     )}
@@ -291,7 +291,7 @@ export function HuggingFaceModelsTab({
                                     {t('models.pull')}
                                   </button>
                                 ) : (
-                                  <span className='rounded bg-amber-500/20 px-2 py-1 text-[11px] font-medium text-ink dark:bg-amber-900/30'>
+                                  <span className='rounded-sm bg-amber-500/20 px-2 py-1 text-[11px] font-medium text-ink dark:bg-amber-900/30'>
                                     {t('modelSelector.adminOnlyPull')}
                                   </span>
                                 )}
@@ -320,7 +320,7 @@ export function HuggingFaceModelsTab({
         )}
       </div>
 
-      <div className='px-3 py-2 border-t border-gray-200 dark:border-dark-300 flex items-center justify-between flex-shrink-0'>
+      <div className='px-3 py-2 border-t border-gray-200 dark:border-dark-300 flex items-center justify-between shrink-0'>
         <a
           href='https://huggingface.co/models'
           target='_blank'

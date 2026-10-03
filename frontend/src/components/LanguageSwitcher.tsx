@@ -57,7 +57,7 @@ export const LanguageSwitcher: React.FC<{ compact?: boolean }> = ({
           onChange={handleLanguageChange}
           className={cn(
             compact ? 'max-w-[140px]' : 'max-w-[220px]',
-            'h-9 cursor-pointer appearance-none rounded-full bg-surface-subtle pe-9 ps-3.5 text-sm text-ink transition-colors hover:bg-hover-solid focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500'
+            'h-9 cursor-pointer appearance-none rounded-full bg-surface-subtle pe-9 ps-3.5 text-sm text-ink transition-colors hover:bg-hover-solid focus:outline-hidden focus-visible:ring-2 focus-visible:ring-primary-500'
           )}
         >
           {supportedLanguages.map(lang => (
@@ -66,7 +66,7 @@ export const LanguageSwitcher: React.FC<{ compact?: boolean }> = ({
             </option>
           ))}
         </select>
-        <ChevronDown className='pointer-events-none absolute end-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-muted' />
+        <ChevronDown className='pointer-events-none absolute inset-e-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-muted' />
       </div>
     </div>
   );

@@ -105,7 +105,7 @@ export const LoginPage: React.FC = () => {
           </div>
 
           <div className='relative z-10 max-w-lg'>
-            <p className='text-[2.6rem] font-light leading-[1.05] tracking-[-0.04em] text-ink xl:text-5xl'>
+            <p className='text-[2.6rem] font-light leading-[1.05] tracking-[-0.04em] text-ink xl:text-5xl xl:leading-none'>
               {t('auth.tagline', 'Your AI stack should answer to you.')}
             </p>
 

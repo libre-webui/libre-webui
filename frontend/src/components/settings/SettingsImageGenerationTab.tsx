@@ -267,7 +267,7 @@ export function SettingsImageGenerationTab({
                   {plugins.map(plugin => (
                     <div
                       key={plugin.id}
-                      className='flex items-center gap-2 p-2 bg-white dark:bg-dark-100 rounded border border-gray-200 dark:border-dark-300'
+                      className='flex items-center gap-2 p-2 bg-white dark:bg-dark-100 rounded-sm border border-gray-200 dark:border-dark-300'
                     >
                       <div className='w-2 h-2 rounded-full bg-green-500' />
                       <span className='text-sm text-gray-700 dark:text-gray-300'>

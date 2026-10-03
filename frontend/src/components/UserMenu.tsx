@@ -228,7 +228,7 @@ export const UserMenu: React.FC<UserMenuProps> = ({ onSettingsClick }) => {
                 onClick={handleAvatarClick}
                 className='w-full flex items-center px-3 py-2.5 sm:py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-dark-200 active:bg-gray-100 dark:active:bg-dark-100 touch-manipulation transition-colors'
               >
-                <Camera size={16} className='mr-3 flex-shrink-0' />
+                <Camera size={16} className='mr-3 shrink-0' />
                 {t('userMenu.changePicture')}
               </button>
 
@@ -236,7 +236,7 @@ export const UserMenu: React.FC<UserMenuProps> = ({ onSettingsClick }) => {
                 onClick={handleSettings}
                 className='w-full flex items-center px-3 py-2.5 sm:py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-dark-200 active:bg-gray-100 dark:active:bg-dark-100 touch-manipulation transition-colors'
               >
-                <Settings size={16} className='mr-3 flex-shrink-0' />
+                <Settings size={16} className='mr-3 shrink-0' />
                 {t('userMenu.settings')}
               </button>
 
@@ -245,7 +245,7 @@ export const UserMenu: React.FC<UserMenuProps> = ({ onSettingsClick }) => {
                   onClick={handleUserManagement}
                   className='w-full flex items-center px-3 py-2.5 sm:py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-dark-200 active:bg-gray-100 dark:active:bg-dark-100 touch-manipulation transition-colors'
                 >
-                  <User size={16} className='mr-3 flex-shrink-0' />
+                  <User size={16} className='mr-3 shrink-0' />
                   {t('userMenu.userManagement')}
                 </button>
               )}
@@ -255,7 +255,7 @@ export const UserMenu: React.FC<UserMenuProps> = ({ onSettingsClick }) => {
                   onClick={handleLogout}
                   className='w-full flex items-center px-3 py-2.5 sm:py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 active:bg-red-100 dark:active:bg-red-900/30 touch-manipulation transition-colors'
                 >
-                  <LogOut size={16} className='mr-3 flex-shrink-0' />
+                  <LogOut size={16} className='mr-3 shrink-0' />
                   {t('userMenu.signOut')}
                 </button>
               </div>
@@ -268,7 +268,7 @@ export const UserMenu: React.FC<UserMenuProps> = ({ onSettingsClick }) => {
       {showAvatarModal &&
         createPortal(
           <div
-            className='fixed inset-0 z-[2147483647] flex items-center justify-center bg-black/50'
+            className='fixed inset-0 z-2147483647 flex items-center justify-center bg-black/50'
             onClick={() => setShowAvatarModal(false)}
           >
             <div

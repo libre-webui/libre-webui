@@ -507,7 +507,7 @@ export const ArtifactSlideOutPanel: React.FC = () => {
         <OptimizedSyntaxHighlighter
           language={getLanguage()}
           isDark={theme.mode !== 'light'}
-          className='!m-0 !rounded-lg !h-full'
+          className='m-0! rounded-lg! h-full!'
           codeTheme='night'
           showLineNumbers
           backgroundColor={
@@ -530,7 +530,7 @@ export const ArtifactSlideOutPanel: React.FC = () => {
           <OptimizedSyntaxHighlighter
             language='json'
             isDark={theme.mode !== 'light'}
-            className='!m-0 !rounded-lg !h-full'
+            className='m-0! rounded-lg! h-full!'
             codeTheme='night'
             showLineNumbers
             backgroundColor={
@@ -607,7 +607,7 @@ export const ArtifactSlideOutPanel: React.FC = () => {
         <div
           className={cn(
             'fixed inset-0 cursor-col-resize select-none',
-            isDesktop ? 'z-40' : 'z-[55]'
+            isDesktop ? 'z-40' : 'z-55'
           )}
           aria-hidden='true'
         />
@@ -620,7 +620,7 @@ export const ArtifactSlideOutPanel: React.FC = () => {
         data-testid='artifact-slide-out-panel'
         style={{ width: effectiveWidth }}
         className={cn(
-          'fixed top-0 end-0 h-full',
+          'fixed top-0 inset-e-0 h-full',
           isDesktop ? 'z-30' : 'z-50',
           'bg-white dark:bg-dark-25',
           'shadow-2xl border-s border-gray-200 dark:border-dark-200',
@@ -646,8 +646,8 @@ export const ArtifactSlideOutPanel: React.FC = () => {
             data-testid='artifact-resize-handle'
             title={t('artifacts.dragEdgeToResize')}
             className={cn(
-              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500',
-              'absolute start-0 top-0 bottom-0 w-4 -ms-2 cursor-col-resize z-[56]',
+              'focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary-500',
+              'absolute inset-s-0 top-0 bottom-0 w-4 -ms-2 cursor-col-resize z-56',
               'flex items-center justify-center',
               'touch-none select-none group'
             )}
@@ -678,7 +678,7 @@ export const ArtifactSlideOutPanel: React.FC = () => {
             Created date and description live in tooltips instead of bands. */}
         <div className='flex items-center gap-1.5 border-b border-gray-200 dark:border-dark-200 ps-3 pe-2 py-1.5'>
           <div className='flex items-center gap-2 min-w-0 flex-1'>
-            <div className='text-gray-600 dark:text-gray-400 flex-shrink-0'>
+            <div className='text-gray-600 dark:text-gray-400 shrink-0'>
               {getIcon()}
             </div>
             <h2
@@ -690,13 +690,13 @@ export const ArtifactSlideOutPanel: React.FC = () => {
             >
               {artifact.title}
             </h2>
-            <span className='hidden sm:inline text-[10px] bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300 px-1.5 py-0.5 rounded-full font-medium flex-shrink-0'>
+            <span className='hidden sm:inline text-[10px] bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300 px-1.5 py-0.5 rounded-full font-medium shrink-0'>
               {artifact.type.toUpperCase()}
             </span>
           </div>
 
           {versions.length > 1 && versionIndex !== -1 && (
-            <div className='flex items-center gap-0.5 flex-shrink-0'>
+            <div className='flex items-center gap-0.5 shrink-0'>
               <Button
                 variant='ghost'
                 size='sm'
@@ -735,7 +735,7 @@ export const ArtifactSlideOutPanel: React.FC = () => {
           )}
 
           {shouldShowViewToggle() && (
-            <div className='flex items-center gap-0.5 flex-shrink-0'>
+            <div className='flex items-center gap-0.5 shrink-0'>
               <Button
                 variant={viewMode === 'preview' ? 'primary' : 'ghost'}
                 size='sm'
@@ -761,7 +761,7 @@ export const ArtifactSlideOutPanel: React.FC = () => {
             </div>
           )}
 
-          <div className='flex items-center gap-0.5 flex-shrink-0'>
+          <div className='flex items-center gap-0.5 shrink-0'>
             <Button
               variant='ghost'
               size='sm'

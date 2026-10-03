@@ -49,7 +49,7 @@ export const WorkspaceTemplateGrid: React.FC<{
             type='button'
             onClick={() => onPick(card.id)}
             data-testid={testId}
-            className='min-w-0 rounded-2xl border border-black/[0.06] bg-white/40 px-4 py-3 text-start [overflow-wrap:anywhere] transition-colors hover:bg-white/80 dark:border-white/[0.07] dark:bg-dark-100/40 dark:hover:bg-dark-100/80'
+            className='min-w-0 rounded-2xl border border-black/6 bg-white/40 px-4 py-3 text-start wrap-anywhere transition-colors hover:bg-white/80 dark:border-white/[0.07] dark:bg-dark-100/40 dark:hover:bg-dark-100/80'
           >
             <p className='text-[13px] font-medium text-gray-900 dark:text-dark-900'>
               {card.name}

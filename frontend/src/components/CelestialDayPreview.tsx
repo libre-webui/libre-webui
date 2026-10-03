@@ -138,7 +138,7 @@ export const CelestialDayPreview = () => {
           aria-label={t('settings.appearance.celestial.title')}
           aria-valuetext={clock}
           data-testid='celestial-scrubber'
-          className='celestial-day-preview__range w-full rounded-full outline-none focus-visible:ring-2 focus-visible:ring-primary-500/60 focus-visible:ring-offset-2 focus-visible:ring-offset-surface'
+          className='celestial-day-preview__range w-full rounded-full outline-hidden focus-visible:ring-2 focus-visible:ring-primary-500/60 focus-visible:ring-offset-2 focus-visible:ring-offset-surface'
           dir='ltr'
         />
         <div
@@ -159,7 +159,7 @@ export const CelestialDayPreview = () => {
             tabIndex={0}
             onClick={() => previewCelestialMinutes(wrapMinutes(eventMinutes))}
             data-testid={`celestial-preview-${key}`}
-            className='flex min-w-0 items-center gap-2 rounded-xl border border-line px-3 py-2 text-start text-ink hover:bg-interactive-hover outline-none focus-visible:ring-2 focus-visible:ring-primary-500/60'
+            className='flex min-w-0 items-center gap-2 rounded-xl border border-line px-3 py-2 text-start text-ink hover:bg-interactive-hover outline-hidden focus-visible:ring-2 focus-visible:ring-primary-500/60'
           >
             <Icon className='h-4 w-4 shrink-0' aria-hidden='true' />
             <span className='min-w-0'>
@@ -180,7 +180,7 @@ export const CelestialDayPreview = () => {
         disabled={!isPreviewing}
         data-testid='celestial-follow-clock'
         className={cn(
-          'flex items-center justify-center gap-2 rounded-xl border px-3 py-2 text-xs font-medium outline-none transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-primary-500/60 motion-reduce:transition-none',
+          'flex items-center justify-center gap-2 rounded-xl border px-3 py-2 text-xs font-medium outline-hidden transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-primary-500/60 motion-reduce:transition-none',
           isPreviewing
             ? 'border-transparent bg-ink text-ink-inverse hover:opacity-90'
             : 'border-line text-ink-muted disabled:cursor-default'

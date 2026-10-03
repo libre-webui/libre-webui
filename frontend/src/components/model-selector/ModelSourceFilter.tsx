@@ -74,7 +74,7 @@ export function ModelSourceFilter({
       role='radiogroup'
       aria-label={t('modelSelector.sources')}
       data-testid='model-selector-sources'
-      className='flex gap-1.5 overflow-x-auto px-4 pb-3 sm:px-5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden'
+      className='flex gap-1.5 overflow-x-auto px-4 pb-3 sm:px-5 scrollbar-none [&::-webkit-scrollbar]:hidden'
     >
       {chips.map((chip, index) => {
         const checked = chip.key === active;
@@ -93,10 +93,10 @@ export function ModelSourceFilter({
             onKeyDown={event => handleKeyDown(event, index)}
             className={cn(
               'flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition-colors',
-              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/50',
+              'focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary-500/50',
               checked
                 ? 'border-transparent bg-gray-900 text-white dark:bg-dark-900 dark:text-dark-25'
-                : 'border-black/[0.08] text-gray-600 hover:bg-gray-100 dark:border-white/[0.09] dark:text-dark-600 dark:hover:bg-dark-200',
+                : 'border-black/8 text-gray-600 hover:bg-gray-100 dark:border-white/9 dark:text-dark-600 dark:hover:bg-dark-200',
               chip.count === 0 && !checked && 'opacity-50'
             )}
           >

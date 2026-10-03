@@ -124,7 +124,7 @@ const RichMessageContentBase: React.FC<RichMessageContentProps> = ({
             <div className='overflow-x-auto'>
               <React.Suspense
                 fallback={
-                  <CodeFallback className='!m-0 !rounded-none !border-none'>
+                  <CodeFallback className='m-0! rounded-none! border-none!'>
                     {codeString}
                   </CodeFallback>
                 }
@@ -140,7 +140,7 @@ const RichMessageContentBase: React.FC<RichMessageContentProps> = ({
                   }
                   borderRadius={0}
                   customStyle={messageCodeBodyStyle}
-                  className='!m-0 !rounded-none !border-none'
+                  className='m-0! rounded-none! border-none!'
                   showLineNumbers
                 >
                   {codeString}
@@ -253,13 +253,13 @@ const RichMessageContentBase: React.FC<RichMessageContentProps> = ({
         <div
           className={cn(
             'my-4 w-full overflow-x-auto rounded-xl border border-line bg-surface shadow-subtle',
-            'focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40'
+            'focus:outline-hidden focus-visible:ring-2 focus-visible:ring-primary-500/40'
           )}
           tabIndex={0}
         >
           <table
             dir='auto'
-            className='w-full min-w-[42rem] border-separate border-spacing-0 text-start text-sm'
+            className='w-full min-w-2xl border-separate border-spacing-0 text-start text-sm'
             {...props}
           >
             {children}
@@ -280,7 +280,7 @@ const RichMessageContentBase: React.FC<RichMessageContentProps> = ({
     tr({ children, node: _node, ...props }) {
       return (
         <tr
-          className='transition-colors hover:bg-black/[0.025] last:[&>td]:border-b-0 dark:hover:bg-white/[0.025]'
+          className='transition-colors hover:bg-black/2.5 [&>td]:last:border-b-0 dark:hover:bg-white/2.5'
           {...props}
         >
           {children}

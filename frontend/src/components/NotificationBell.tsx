@@ -59,18 +59,18 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({
   useDialogFocus(panelRef, { onClose });
 
   return (
-    <div className='fixed inset-0 z-[2147483646]' onClick={onClose}>
+    <div className='fixed inset-0 z-2147483646' onClick={onClose}>
       <div
         ref={panelRef}
         role='dialog'
         aria-modal='true'
         aria-label={t('notifications.title')}
         tabIndex={-1}
-        className='absolute bottom-16 start-4 flex max-h-[70vh] w-80 flex-col overflow-hidden rounded-2xl border border-black/[0.08] bg-white shadow-[0_18px_60px_rgba(0,0,0,0.22)] dark:border-white/[0.1] dark:bg-dark-25'
+        className='absolute bottom-16 inset-s-4 flex max-h-[70vh] w-80 flex-col overflow-hidden rounded-2xl border border-black/8 bg-white shadow-[0_18px_60px_rgba(0,0,0,0.22)] dark:border-white/10 dark:bg-dark-25'
         onClick={event => event.stopPropagation()}
         data-testid='notification-panel'
       >
-        <div className='flex items-center gap-2 border-b border-black/[0.06] px-3 py-2 dark:border-white/[0.06]'>
+        <div className='flex items-center gap-2 border-b border-black/6 px-3 py-2 dark:border-white/6'>
           <span className='flex-1 text-xs font-semibold uppercase tracking-wide text-ink-muted'>
             {t('notifications.title')}
           </span>
@@ -103,7 +103,7 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({
               <button
                 type='button'
                 onClick={onRetry}
-                className='mt-2 rounded-md px-2 py-1 text-xs font-medium text-ink underline underline-offset-2 hover:bg-black/[0.04] dark:hover:bg-white/[0.06]'
+                className='mt-2 rounded-md px-2 py-1 text-xs font-medium text-ink underline underline-offset-2 hover:bg-black/4 dark:hover:bg-white/6'
                 data-testid='notification-retry'
               >
                 {t('common.retry')}
@@ -126,8 +126,8 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({
               <div
                 key={item.id}
                 className={cn(
-                  'group flex items-start border-b border-black/[0.04] last:border-b-0 hover:bg-black/[0.03] dark:border-white/[0.04] dark:hover:bg-white/[0.04]',
-                  !item.readAt && 'bg-primary-500/[0.04]'
+                  'group flex items-start border-b border-black/4 last:border-b-0 hover:bg-black/3 dark:border-white/4 dark:hover:bg-white/4',
+                  !item.readAt && 'bg-primary-500/4'
                 )}
                 data-testid='notification-item'
               >
@@ -166,7 +166,7 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({
                   <button
                     type='button'
                     onClick={() => onMarkRead(item)}
-                    className='me-2 mt-1.5 hidden rounded p-1.5 text-ink-muted hover:text-success-700 focus-visible:block group-focus-within:block group-hover:block [@media(pointer:coarse)]:block dark:hover:text-success-400'
+                    className='me-2 mt-1.5 hidden rounded-sm p-1.5 text-ink-muted hover:text-success-700 focus-visible:block group-focus-within:block group-hover:block pointer-coarse:block dark:hover:text-success-400'
                     title={t('notifications.markRead')}
                     aria-label={t('notifications.markRead')}
                     data-testid='notification-mark-read'
@@ -286,7 +286,7 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({
         onClick={() => (open ? setOpen(false) : openPanel())}
         aria-expanded={open}
         className={cn(
-          'relative flex items-center gap-2 rounded-lg text-[13px] text-gray-600 hover:bg-black/[0.04] dark:text-dark-700 dark:hover:bg-white/[0.06]',
+          'relative flex items-center gap-2 rounded-lg text-[13px] text-gray-600 hover:bg-black/4 dark:text-dark-700 dark:hover:bg-white/6',
           sidebarCompact ? 'mx-auto h-9 w-9 justify-center' : 'mx-2 px-2 py-1.5'
         )}
         title={bellLabel}
@@ -299,7 +299,7 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({
           <span
             className={cn(
               'rounded-full bg-primary-600 px-1.5 text-[10px] font-semibold leading-4 text-white',
-              sidebarCompact && 'absolute -end-0.5 -top-0.5'
+              sidebarCompact && 'absolute -inset-e-0.5 -top-0.5'
             )}
             data-testid='notification-unread-badge'
             aria-hidden='true'

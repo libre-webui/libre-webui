@@ -154,7 +154,7 @@ const BackgroundUploadControls: React.FC<BackgroundUploadProps> = ({
           <span className='relative h-6 w-11 rounded-full bg-surface-raised ring-1 ring-inset ring-line transition-colors peer-checked:bg-primary-600 peer-focus-visible:ring-2 peer-focus-visible:ring-primary-500 peer-focus-visible:ring-offset-2 peer-focus-visible:ring-offset-surface motion-reduce:transition-none'>
             <span
               className={cn(
-                'absolute start-1 top-1 h-4 w-4 rounded-full bg-white shadow-subtle transition-transform motion-reduce:transition-none',
+                'absolute inset-s-1 top-1 h-4 w-4 rounded-full bg-white shadow-subtle transition-transform motion-reduce:transition-none',
                 settings.enabled && 'translate-x-5 rtl:-translate-x-5'
               )}
             />
