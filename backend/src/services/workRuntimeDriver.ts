@@ -667,7 +667,18 @@ export class DockerWorkRuntimeDriver implements WorkRuntimeDriver {
       acceptFailure: true,
     });
     if (result.exitCode === 0) return true;
-    if (/no such volume/i.test(`${result.stderr}\n${result.stdout}`)) {
+    const output = `${result.stderr}\n${result.stdout}`;
+    const escapedName = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    if (
+      /^(?:error:\s*)?no such volume$/i.test(output.trim()) ||
+      new RegExp(
+        `\\bno such volume(?::\\s*|\\s+)${escapedName}(?=[\\s.:]|$)`,
+        'i'
+      ).test(output) ||
+      new RegExp(`\\bvolume\\s+${escapedName}\\s+not found\\b`, 'i').test(
+        output
+      )
+    ) {
       return false;
     }
     throw new WorkRuntimeError(

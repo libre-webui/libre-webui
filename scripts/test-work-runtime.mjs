@@ -389,6 +389,85 @@ test('computer_act validates focus assertions and expectation declarations', () 
   }
 });
 
+test('Docker volume inspection recognizes only the requested missing volume', async () => {
+  const driverModule = await import(
+    pathToFileURL(
+      path.join(repoRoot, 'backend', 'dist', 'services', 'workRuntimeDriver.js')
+    ).href
+  );
+  const policyModule = await import(
+    pathToFileURL(
+      path.join(repoRoot, 'backend', 'dist', 'services', 'workPolicyService.js')
+    ).href
+  );
+  const originalResolve = policyModule.default.resolve;
+  policyModule.default.resolve = async () => ({ image: 'test-work-image' });
+  try {
+    for (const missingMessage of [
+      `Error: No such volume: ${task.volumeName}`,
+      'Error: No such volume',
+      `Error response from daemon: volume ${task.volumeName} not found`,
+    ]) {
+      const driver = new driverModule.DockerWorkRuntimeDriver();
+      const calls = [];
+      driver.docker = async args => {
+        calls.push(args);
+        if (
+          args[0] === 'volume' &&
+          args[1] === 'inspect' &&
+          args.length === 3
+        ) {
+          return {
+            exitCode: 1,
+            stdout: '',
+            stderr: missingMessage,
+            truncated: false,
+          };
+        }
+        if (args[0] === 'volume' && args[1] === 'inspect') {
+          return {
+            exitCode: 0,
+            stdout: task.id,
+            stderr: '',
+            truncated: false,
+          };
+        }
+        return { exitCode: 0, stdout: '', stderr: '', truncated: false };
+      };
+
+      await driver.ensureWorkspace(task);
+      const createArgs = calls.find(
+        args => args[0] === 'volume' && args[1] === 'create'
+      );
+      assert.ok(createArgs, 'missing volume should be created');
+      assert.ok(createArgs.includes('ai.libre-webui.managed=true'));
+      assert.ok(createArgs.includes(`ai.libre-webui.task=${task.id}`));
+      assert.equal(createArgs.at(-1), task.volumeName);
+      assert.ok(calls.some(args => args[0] === 'run'));
+    }
+
+    for (const message of [
+      'Error: No such volume: another-work-volume',
+      'Error response from daemon: volume another-work-volume not found',
+      'permission denied while inspecting volume',
+    ]) {
+      const driver = new driverModule.DockerWorkRuntimeDriver();
+      let calls = 0;
+      driver.docker = async () => {
+        calls += 1;
+        return { exitCode: 1, stdout: '', stderr: message, truncated: false };
+      };
+      await assert.rejects(
+        driver.ensureWorkspace(task),
+        error => error?.code === 'WORK_DOCKER_INSPECT_FAILED'
+      );
+      assert.equal(calls, 1, 'inspection failure must not create a volume');
+    }
+  } finally {
+    policyModule.default.resolve = originalResolve;
+  }
+});
+
 test('the policy match demands exactly the ports the policy publishes', async () => {
   const sharedModule = await import(
     pathToFileURL(
