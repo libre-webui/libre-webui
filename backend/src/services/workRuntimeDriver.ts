@@ -670,11 +670,14 @@ export class DockerWorkRuntimeDriver implements WorkRuntimeDriver {
     const output = `${result.stderr}\n${result.stdout}`;
     const escapedName = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     if (
-      /^(?:error:\s*)?no such volume$/i.test(output.trim()) ||
+      /^(?:error:\s*)?no such volume$/i.test(result.stderr.trim()) ||
       new RegExp(
         `\\bno such volume(?::\\s*|\\s+)${escapedName}(?=[\\s.:]|$)`,
         'i'
       ).test(output) ||
+      new RegExp(`\\bget\\s+${escapedName}:\\s*no such volume\\b`, 'i').test(
+        output
+      ) ||
       new RegExp(`\\bvolume\\s+${escapedName}\\s+not found\\b`, 'i').test(
         output
       )

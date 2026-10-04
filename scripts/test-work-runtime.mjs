@@ -403,10 +403,17 @@ test('Docker volume inspection recognizes only the requested missing volume', as
   const originalResolve = policyModule.default.resolve;
   policyModule.default.resolve = async () => ({ image: 'test-work-image' });
   try {
-    for (const missingMessage of [
-      `Error: No such volume: ${task.volumeName}`,
-      'Error: No such volume',
-      `Error response from daemon: volume ${task.volumeName} not found`,
+    for (const { stderr, stdout } of [
+      { stderr: `Error: No such volume: ${task.volumeName}`, stdout: '' },
+      { stderr: 'Error: No such volume', stdout: '[]\n' },
+      {
+        stderr: `Error response from daemon: volume ${task.volumeName} not found`,
+        stdout: '',
+      },
+      {
+        stderr: `Error response from daemon: get ${task.volumeName}: no such volume`,
+        stdout: '[]\n',
+      },
     ]) {
       const driver = new driverModule.DockerWorkRuntimeDriver();
       const calls = [];
@@ -419,8 +426,8 @@ test('Docker volume inspection recognizes only the requested missing volume', as
         ) {
           return {
             exitCode: 1,
-            stdout: '',
-            stderr: missingMessage,
+            stdout,
+            stderr,
             truncated: false,
           };
         }
@@ -449,6 +456,7 @@ test('Docker volume inspection recognizes only the requested missing volume', as
     for (const message of [
       'Error: No such volume: another-work-volume',
       'Error response from daemon: volume another-work-volume not found',
+      'Error response from daemon: get another-work-volume: no such volume',
       'permission denied while inspecting volume',
     ]) {
       const driver = new driverModule.DockerWorkRuntimeDriver();

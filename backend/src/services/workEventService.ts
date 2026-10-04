@@ -46,7 +46,9 @@ const occurrenceDigest = (value: unknown): string =>
  * durable payload cap. The full event still reaches live listeners.
  */
 const boundedDurableData = (type: string, data: unknown): unknown => {
-  let value = data;
+  // Match the JSON sent to live listeners: omit optional undefined fields
+  // before handing the copy to the strict durable payload validator.
+  let value: unknown = JSON.parse(JSON.stringify(data));
   if (
     (type === 'reasoning_delta' || type === 'assistant_delta') &&
     value &&

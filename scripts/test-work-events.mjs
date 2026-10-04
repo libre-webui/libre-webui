@@ -612,6 +612,19 @@ test('an oversized delta event neither rejects nor wedges the durable stream', a
   );
 });
 
+test('optional undefined fields do not drop durable Work error events', async () => {
+  const runtime = getDurableJobRuntime().service;
+  const streamId = 'work:task-a:run-a';
+  const before = await runtime.latestEventCursor(streamId);
+  const event = await workEventService.publish('task-a', 'run-a', 'error', {
+    message: 'Docker volume inspection failed',
+    code: undefined,
+  });
+  assert.equal(event.data.message, 'Docker volume inspection failed');
+  const after = await runtime.latestEventCursor(streamId);
+  assert.equal(after, before + 1, 'the error must reach the durable log');
+});
+
 function createSseReader(response) {
   if (!response.body) throw new Error('SSE response has no body.');
   const reader = response.body.getReader();
