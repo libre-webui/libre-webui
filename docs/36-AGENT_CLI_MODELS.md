@@ -53,13 +53,14 @@ name and provider, with size, family, and format only when supplied by its catal
 Each CLI can expose several entries in the Agents group:
 
 - **Claude Code** offers its signed-in default plus Sonnet, Opus, Haiku, and
-  explicit **Sonnet 5.5** (`claude-sonnet-5-5`) and **Opus 5.5**
-  (`claude-opus-5-5`) choices. Sonnet 5.5 requires Claude Code 2.1.284 or
-  later and Opus 5.5 requires
+  explicit **Sonnet 5.5** (`claude-sonnet-5-5`), **Opus 5.5**
+  (`claude-opus-5-5`), and **Haiku 5.5** (`claude-haiku-5-5`) choices. Sonnet
+  5.5 requires Claude Code 2.1.284 or later, Opus 5.5 requires
   [Claude Code 2.1.280 or later](https://code.claude.com/docs/en/model-config),
-  both with access through the signed-in account; run `claude update` to update
-  the CLI. The existing **Sonnet** and **Opus** aliases continue to follow the
-  CLI's current model mapping.
+  and Haiku 5.5 requires Claude Code 2.1.293 or later, all with access through
+  the signed-in account; run `claude update` to update the CLI. The existing
+  **Sonnet**, **Opus**, and **Haiku** aliases continue to follow the CLI's
+  current model mapping.
 - **Codex** offers its configured default plus the documented ChatGPT sign-in
   family: GPT-6 Astra, **GPT-6.1 Sol** (`gpt-6.1-sol`), GPT-6 Sol, GPT-6 Luna,
   GPT-5.6 Sol, Terra, Luna, GPT-5.5, and GPT-5.3 Codex Spark.

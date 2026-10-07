@@ -346,10 +346,11 @@ Leave it unset and nothing is sent, which is what every release before this one
 did. Set it and the server translates the one value for whichever provider
 answers: Ollama takes it in the request body, OpenAI-style providers take a
 reasoning effort, and Anthropic and Gemini take a token budget with room
-reserved for the answer. Claude Sonnet 5.5 and Opus 5.5 take no budget: they
-think adaptively, a named level becomes their effort setting, and **off** on
-Sonnet 5.5 keeps up-front thinking off with Anthropic's `between_tools` mode.
-Opus 5.5 has no off switch, so **off** leaves it at its own default.
+reserved for the answer. Claude Sonnet 5.5, Opus 5.5, and Haiku 5.5 take no
+budget: they think adaptively, and a named level becomes their effort setting.
+**Off** on Sonnet 5.5 keeps up-front thinking off with Anthropic's
+`between_tools` mode, and on Haiku 5.5 it switches thinking off. Opus 5.5 has
+no off switch, so **off** leaves it at its own default.
 
 Two things are worth knowing. A model Ollama reports as unable to reason never
 receives the setting at all, so the control is simply absent for it. And the

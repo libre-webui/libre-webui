@@ -100,22 +100,32 @@ const ANTHROPIC_MAX_OUTPUT_TOKENS: ReadonlyArray<[string, number]> = [
   ['claude-opus-4', 32000],
   ['claude-opus-5-5', 128000],
   ['claude-sonnet-5-5', 128000],
+  ['claude-haiku-5-5', 128000],
 ];
 
 /**
- * Claude models that reject manual thinking budgets and `type: 'disabled'`.
+ * Claude models that reject manual thinking budgets (`type: 'enabled'`).
  * They think adaptively by default; depth is set with `output_config.effort`.
+ * How each one switches thinking off differs, so that is listed separately.
  */
 const ANTHROPIC_ADAPTIVE_THINKING_MODELS = new Set([
   'claude-opus-5-5',
   'claude-sonnet-5-5',
+  'claude-haiku-5-5',
 ]);
 
 /**
  * Adaptive models whose lowest setting is `between_tools`, which keeps
- * up-front thinking off. The others have no way to switch thinking off.
+ * up-front thinking off; they reject `disabled`.
  */
 const ANTHROPIC_BETWEEN_TOOLS_MODELS = new Set(['claude-sonnet-5-5']);
+
+/**
+ * Adaptive models that accept `disabled` at high effort or below. Off sends no
+ * effort, so the request runs at the model's default level. Adaptive models in
+ * neither set have no way to switch thinking off.
+ */
+const ANTHROPIC_DISABLED_THINKING_MODELS = new Set(['claude-haiku-5-5']);
 
 /** Room for adaptive thinking plus the answer when no ceiling was set. */
 const ANTHROPIC_ADAPTIVE_DEFAULT_MAX_TOKENS = 16384;
@@ -127,8 +137,11 @@ function anthropicAdaptiveThinking(
   const preference = normalizeThinkingPreference(think);
   if (preference === undefined) return {};
   if (preference === false) {
-    return ANTHROPIC_BETWEEN_TOOLS_MODELS.has(model)
-      ? { thinking: { type: 'between_tools' } }
+    if (ANTHROPIC_BETWEEN_TOOLS_MODELS.has(model)) {
+      return { thinking: { type: 'between_tools' } };
+    }
+    return ANTHROPIC_DISABLED_THINKING_MODELS.has(model)
+      ? { thinking: { type: 'disabled' } }
       : {};
   }
   return {

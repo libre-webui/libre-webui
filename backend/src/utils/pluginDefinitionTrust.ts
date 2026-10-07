@@ -25,8 +25,8 @@ import { Plugin } from '../types/index.js';
 export const BUNDLED_PLUGIN_DEFINITION_FINGERPRINTS: Readonly<
   Record<string, string>
 > = Object.freeze({
-  anthropic: '282d559305b7a3a8010854cb5889aac992d799d1f3c6bdfd7b3b1009af53dca8',
-  bedrock: '22eaf01882bfbf2d911cb320103de97f534f3aef829001b982d21445a9ed4980',
+  anthropic: '3623dc1cb04bcebf9d41cca59f0e36a2a1c51bb722132e8fe90f0f6e6b52146a',
+  bedrock: 'aa21b0814900f86ea52b86ad49bf59bd792cbcaa2b590e7870b36836f02e0184',
   'codex-oauth':
     '685ec47cc56dcf8cb9bd1667f41ad69a94eb66c1d6dd9aeca5564134c1b1b1f3',
   comfyui: 'eaefe81897b58bffdf92bae8f0d0b675a062af276d5379e43147d6a0adaf0f47',

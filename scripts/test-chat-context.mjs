@@ -1503,6 +1503,57 @@ test('buildPluginChatPayload sends adaptive thinking to Claude Sonnet 5.5', () =
   assert.equal(build('claude-sonnet-4-6', 'low').thinking.type, 'enabled');
 });
 
+test('buildPluginChatPayload sends adaptive thinking to Claude Haiku 5.5 and turns it off with disabled', () => {
+  const build = (model, think, extra = {}) =>
+    pluginChatAdapter.buildPluginChatPayload(
+      { id: 'anthropic' },
+      model,
+      [{ role: 'user', content: 'Classify this ticket.' }],
+      { temperature: 0.2, think, ...extra },
+      { top_p: 0.8 },
+      true
+    ).payload;
+
+  // Haiku 5.5 rejects manual budgets; a level becomes its effort setting.
+  const low = build('claude-haiku-5-5', 'low', { num_predict: 2048 });
+  assert.deepEqual(low.thinking, { type: 'adaptive' });
+  assert.deepEqual(low.output_config, { effort: 'low' });
+  assert.equal(low.max_tokens, 2048);
+  assert.equal('temperature' in low, false);
+  assert.equal('top_p' in low, false);
+
+  const on = build('claude-haiku-5-5', true);
+  assert.deepEqual(on.thinking, { type: 'adaptive' });
+  assert.equal('output_config' in on, false);
+  assert.equal(on.max_tokens, 16384);
+
+  // Unlike Sonnet 5.5, Haiku 5.5 accepts `disabled` at its default effort.
+  const off = build('claude-haiku-5-5', false, { num_predict: 512 });
+  assert.deepEqual(off.thinking, { type: 'disabled' });
+  assert.equal('output_config' in off, false);
+  assert.equal(off.max_tokens, 512);
+
+  const unset = build('claude-haiku-5-5', undefined);
+  assert.equal('thinking' in unset, false);
+  assert.equal('output_config' in unset, false);
+
+  const bedrock = build('anthropic.claude-haiku-5-5', 'high', {
+    num_predict: 200000,
+  });
+  assert.deepEqual(bedrock.thinking, { type: 'adaptive' });
+  assert.deepEqual(bedrock.output_config, { effort: 'high' });
+  assert.equal(bedrock.max_tokens, 128000);
+  assert.deepEqual(build('anthropic.claude-haiku-5-5', false).thinking, {
+    type: 'disabled',
+  });
+
+  // Haiku 4.5 still takes a manual budget.
+  assert.equal(
+    build('claude-haiku-4-5-20251001', 'low').thinking.type,
+    'enabled'
+  );
+});
+
 test('convertProviderResponse normalizes Gemini responses', () => {
   const response = pluginChatAdapter.convertProviderResponse(
     { id: 'gemini' },

@@ -13,6 +13,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   beside Claude Code, Codex, OpenCode, and Pi. Kiro lists the models its
   signed-in account can use, replies stream from non-interactive runs on the
   CLI's V3 agent engine, and each run pins the CLI's built-in default agent.
+- **Claude Haiku 5.5**: The Anthropic and Amazon Bedrock providers offer
+  Claude Haiku 5.5 (`claude-haiku-5-5`, `anthropic.claude-haiku-5-5` on
+  Bedrock), and Claude Code adds an explicit **Haiku 5.5** choice (Claude Code
+  2.1.293 or later). It thinks adaptively; a reasoning level becomes its effort
+  setting, and **off** switches thinking off.
 
 ### 🔧 Improvements
 

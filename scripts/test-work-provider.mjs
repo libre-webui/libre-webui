@@ -1438,6 +1438,20 @@ test('Work payloads carry the run reasoning level per provider', () => {
   assert.deepEqual(adaptive.thinking, { type: 'adaptive' });
   assert.deepEqual(adaptive.output_config, { effort: 'high' });
 
+  // Work shares the Chat translation, including Haiku 5.5's `disabled`.
+  const haikuOff = buildPluginWorkPayload(
+    plugin('anthropic'),
+    request('claude-haiku-5-5', false)
+  ).payload;
+  assert.deepEqual(haikuOff.thinking, { type: 'disabled' });
+  assert.equal('output_config' in haikuOff, false);
+  const haikuLow = buildPluginWorkPayload(
+    plugin('anthropic'),
+    request('claude-haiku-5-5', 'low')
+  ).payload;
+  assert.deepEqual(haikuLow.thinking, { type: 'adaptive' });
+  assert.deepEqual(haikuLow.output_config, { effort: 'low' });
+
   const gemini = buildPluginWorkPayload(
     plugin('gemini'),
     request('gemini-2.5-pro', 'low')

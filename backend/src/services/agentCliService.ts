@@ -107,6 +107,7 @@ export const AGENT_CLI_DEFINITIONS: AgentCliDefinition[] = [
       { id: 'opus', label: 'Opus' },
       { id: 'claude-opus-5-5', label: 'Opus 5.5' },
       { id: 'haiku', label: 'Haiku' },
+      { id: 'claude-haiku-5-5', label: 'Haiku 5.5' },
     ],
   },
   {

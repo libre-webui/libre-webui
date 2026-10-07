@@ -152,7 +152,7 @@ test('Codex lists the GPT-6 family alongside the bundled ChatGPT models', async 
   }
 });
 
-test('Claude Code lists explicit Sonnet 5.5 and Opus 5.5 while preserving its default and aliases', async () => {
+test('Claude Code lists explicit Sonnet 5.5, Opus 5.5, and Haiku 5.5 while preserving its default and aliases', async () => {
   const binDir = fs.mkdtempSync(path.join(os.tmpdir(), 'claude-model-list-'));
   const binary = path.join(binDir, 'claude');
   fs.writeFileSync(binary, '');
@@ -170,6 +170,7 @@ test('Claude Code lists explicit Sonnet 5.5 and Opus 5.5 while preserving its de
         'claude-code:opus',
         'claude-code:claude-opus-5-5',
         'claude-code:haiku',
+        'claude-code:claude-haiku-5-5',
       ]
     );
     const opus = models.find(
@@ -189,6 +190,15 @@ test('Claude Code lists explicit Sonnet 5.5 and Opus 5.5 while preserving its de
     assert.deepEqual(
       definition('claude-code').buildArgs('claude-sonnet-5-5').slice(-2),
       ['--model', 'claude-sonnet-5-5']
+    );
+    const haiku = models.find(
+      model => model.id === 'claude-code:claude-haiku-5-5'
+    );
+    assert.equal(haiku?.name, 'Claude Code · Haiku 5.5');
+    assert.equal(haiku?.agentId, 'claude-code');
+    assert.deepEqual(
+      definition('claude-code').buildArgs('claude-haiku-5-5').slice(-2),
+      ['--model', 'claude-haiku-5-5']
     );
     assert.ok(!definition('claude-code').buildArgs().includes('--model'));
   } finally {
@@ -475,6 +485,7 @@ test('listAgentModels expands CLIs into per-model entries with a shared agentId'
       'claude-code:opus',
       'claude-code:claude-opus-5-5',
       'claude-code:haiku',
+      'claude-code:claude-haiku-5-5',
       'opencode:opencode/big-pickle',
       'opencode:openai/gpt-5.4',
     ]);
@@ -982,6 +993,7 @@ for (const [agent, model] of [
   ['pi', 'fixture/model'],
   ['claude-code', 'claude-sonnet-5-5'],
   ['claude-code', 'claude-opus-5-5'],
+  ['claude-code', 'claude-haiku-5-5'],
   ['codex', 'gpt-6.1-sol'],
   ['codex', 'gpt-6-sol'],
   ['codex', 'gpt-6-luna'],
