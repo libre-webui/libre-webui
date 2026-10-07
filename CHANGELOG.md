@@ -18,6 +18,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 🐛 Bug Fixes
 
+### 🔒 Security
+
+- **npm audit fixes**: `proxy-addr` moves to 2.0.8 (GHSA-jqcg-44mw-7w3h),
+  `source-map-js` to 1.2.2 (GHSA-68fv-2mgg-jv7q), and the enforced
+  `shell-quote` to 1.11.0 (GHSA-pqg4-j6r4-53mv).
+
 ### 📚 Documentation
 
 ## [0.40.0] - 2026-10-03
