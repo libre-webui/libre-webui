@@ -230,6 +230,11 @@ test('kiro runs non-interactive stream-json on the V3 engine without trust flags
     '--agent-engine',
     'v3',
   ]);
+  const agentIndex = args.indexOf('--agent');
+  assert.deepEqual(args.slice(agentIndex, agentIndex + 2), [
+    '--agent',
+    'kiro_default',
+  ]);
   assert.ok(!args.includes('--model'));
   assert.ok(
     !args.some(argument => argument.startsWith('--trust')),

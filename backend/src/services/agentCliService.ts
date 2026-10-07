@@ -149,9 +149,12 @@ export const AGENT_CLI_DEFINITIONS: AgentCliDefinition[] = [
     command: 'kiro-cli',
     parser: 'kiro',
     // --no-interactive reads the prompt from stdin and stream-json emits JSON
-    // Lines. V3 is pinned so an explicit --model reliably takes effect; no
-    // trust flag is passed (a chat turn has no user to approve tool calls),
-    // and Kiro reports credit metering rather than token counters.
+    // Lines. V3 and the built-in default agent are pinned (so an explicit
+    // --model takes effect and a custom chat.defaultAgent cannot apply). No
+    // trust flag is passed: only what the server user's Kiro permissions
+    // already allow runs (reads are trusted by default), and anything that
+    // would need approval is denied under --no-interactive. Kiro reports
+    // credit metering, not token counters, so turns stay unmetered.
     buildArgs: model => [
       'chat',
       '--no-interactive',
@@ -159,9 +162,16 @@ export const AGENT_CLI_DEFINITIONS: AgentCliDefinition[] = [
       'stream-json',
       '--agent-engine',
       'v3',
+      '--agent',
+      'kiro_default',
       ...(model ? ['--model', model] : []),
     ],
-    discoverModels: binaryPath => discoverKiroModels(binaryPath),
+    discoverModels: binaryPath =>
+      discoverCliModels(
+        binaryPath,
+        ['chat', '--list-models', '--format', 'json', '--no-interactive'],
+        parseKiroCatalog
+      ),
   },
   {
     id: 'opencode',
@@ -178,7 +188,8 @@ export const AGENT_CLI_DEFINITIONS: AgentCliDefinition[] = [
       'json',
       ...(model ? ['-m', model] : []),
     ],
-    discoverModels: binaryPath => discoverOpencodeModels(binaryPath),
+    discoverModels: binaryPath =>
+      discoverCliModels(binaryPath, ['models'], parseOpencodeCatalog),
   },
   {
     id: 'pi',
@@ -234,16 +245,19 @@ const discoveryCache = new Map<
   { at: number; options: AgentCliModelOption[] }
 >();
 
-/** `opencode models` prints one provider/model id per line. */
-async function discoverOpencodeModels(
-  binaryPath: string
+/** Spawn one discovery command, parse its stdout, and cache the options. */
+async function discoverCliModels(
+  binaryPath: string,
+  args: string[],
+  parse: (output: string) => AgentCliModelOption[]
 ): Promise<AgentCliModelOption[]> {
-  const cached = discoveryCache.get(binaryPath);
+  const cacheKey = `${binaryPath} ${args.join(' ')}`;
+  const cached = discoveryCache.get(cacheKey);
   if (cached && Date.now() - cached.at < MODEL_DISCOVERY_TTL_MS) {
     return cached.options;
   }
   const options = await new Promise<AgentCliModelOption[]>(resolve => {
-    const child = spawn(binaryPath, ['models'], {
+    const child = spawn(binaryPath, args, {
       env: process.env,
       stdio: ['ignore', 'pipe', 'ignore'],
     });
@@ -262,54 +276,21 @@ async function discoverOpencodeModels(
     });
     child.on('close', () => {
       clearTimeout(timer);
-      resolve(
-        output
-          .split('\n')
-          .map(line => line.trim())
-          .filter(line => /^[\w.-]+\/[\w./:@-]+$/.test(line))
-          .slice(0, MAX_DISCOVERED_MODELS)
-          .map(id => ({ id, label: id }))
-      );
+      resolve(parse(output));
     });
   });
-  discoveryCache.set(binaryPath, { at: Date.now(), options });
+  discoveryCache.set(cacheKey, { at: Date.now(), options });
   return options;
 }
 
-/** `kiro-cli chat --list-models --format json` prints the account catalog. */
-async function discoverKiroModels(
-  binaryPath: string
-): Promise<AgentCliModelOption[]> {
-  const cached = discoveryCache.get(binaryPath);
-  if (cached && Date.now() - cached.at < MODEL_DISCOVERY_TTL_MS) {
-    return cached.options;
-  }
-  const options = await new Promise<AgentCliModelOption[]>(resolve => {
-    const child = spawn(
-      binaryPath,
-      ['chat', '--list-models', '--format', 'json', '--no-interactive'],
-      { env: process.env, stdio: ['ignore', 'pipe', 'ignore'] }
-    );
-    let output = '';
-    const timer = setTimeout(() => {
-      child.kill('SIGKILL');
-      resolve([]);
-    }, MODEL_DISCOVERY_TIMEOUT_MS);
-    child.stdout.on('data', (data: Buffer) => {
-      output += data.toString();
-      if (output.length > 100_000) child.kill('SIGKILL');
-    });
-    child.on('error', () => {
-      clearTimeout(timer);
-      resolve([]);
-    });
-    child.on('close', () => {
-      clearTimeout(timer);
-      resolve(parseKiroCatalog(output));
-    });
-  });
-  discoveryCache.set(binaryPath, { at: Date.now(), options });
-  return options;
+/** `opencode models` prints one provider/model id per line. */
+function parseOpencodeCatalog(output: string): AgentCliModelOption[] {
+  return output
+    .split('\n')
+    .map(line => line.trim())
+    .filter(line => /^[\w.-]+\/[\w./:@-]+$/.test(line))
+    .slice(0, MAX_DISCOVERED_MODELS)
+    .map(id => ({ id, label: id }));
 }
 
 /** Rows arrive as `{ models: [{ model_id, model_name }] }`. */
