@@ -66,9 +66,9 @@ Each CLI can expose several entries in the Agents group:
   Availability depends on the CLI's sign-in and account access.
 - **Kiro** lists the models its signed-in account can use (from
   `kiro-cli chat --list-models`) beside its configured default. Each turn runs
-  non-interactively on the CLI's V3 agent engine with the built-in default
-  agent pinned, so a custom `chat.defaultAgent` does not apply. Requires Kiro
-  CLI 2.27 or later.
+  non-interactively on the CLI's V3 agent engine with its built-in default
+  agent (`vibe`) pinned, so a custom `chat.defaultAgent` does not apply.
+  Requires Kiro CLI 2.27 or later.
 - **Pi** runs with the model configured in the CLI itself.
 - **OpenCode** lists the models of every provider it is authenticated with
   (from `opencode models`), and always requires an explicit choice — its
@@ -102,7 +102,10 @@ model still apply — and every turn is saved as a new session in that user's
 Kiro session store (`kiro-cli chat --list-sessions` shows it, with the recent
 chat transcript inside). There is no flag to turn that off, so chat content
 also lives in the backend user's home directory, outside the Libre WebUI
-database.
+database. Kiro's tools stay enabled: whatever those permission rules trust —
+by default, reads and read-only commands such as `date` — runs without asking,
+and any tool call that needs approval is refused, because a chat turn cannot
+answer the prompt.
 
 ## Using it
 
@@ -184,7 +187,7 @@ launcher often starts with a much smaller `PATH` than a login terminal.
 
 **The reply fails immediately.** Run the same command by hand as the server user
 (`claude -p "hello"`, `codex exec "hello"`, or
-`echo hello | kiro-cli chat --no-interactive --output-format stream-json --agent-engine v3 --agent kiro_default`).
+`echo hello | kiro-cli chat --no-interactive --output-format stream-json --agent-engine v3 --agent vibe`).
 Kiro CLI 2.27 or later is required; an older CLI fails here first, where its
 error is visible — in chat the same failure only shows as
 `Kiro exited unsuccessfully`. Most failures are the agent asking

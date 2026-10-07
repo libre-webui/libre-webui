@@ -230,11 +230,14 @@ test('kiro runs non-interactive stream-json on the V3 engine without trust flags
     '--agent-engine',
     'v3',
   ]);
+  // V3 knows its built-in default agent as `vibe`. The V2 name `kiro_default`
+  // is not found on V3, and a headless run then fails at init.
   const agentIndex = args.indexOf('--agent');
-  assert.deepEqual(args.slice(agentIndex, agentIndex + 2), [
-    '--agent',
-    'kiro_default',
-  ]);
+  assert.deepEqual(
+    args.slice(agentIndex, agentIndex + 2),
+    ['--agent', 'vibe'],
+    'pin the V3 built-in default agent by its V3 name'
+  );
   assert.ok(!args.includes('--model'));
   assert.ok(
     !args.some(argument => argument.startsWith('--trust')),
@@ -287,6 +290,16 @@ test('kiro parser surfaces run failures', () => {
         state
       ),
     /Kiro failed: boom/
+  );
+  // Kiro CLI 2.27 fails a headless run at init when --agent names no agent.
+  assert.throws(
+    () =>
+      parseKiroLine(
+        '{"type":"runError","data":{"sessionId":"sess-4","stage":"init","message":"agent \\"kiro_default\\" not found, using \\"default\\""}}',
+        queue,
+        state
+      ),
+    /Kiro failed: agent "kiro_default" not found/
   );
   assert.throws(
     () =>

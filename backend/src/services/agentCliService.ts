@@ -149,12 +149,14 @@ export const AGENT_CLI_DEFINITIONS: AgentCliDefinition[] = [
     command: 'kiro-cli',
     parser: 'kiro',
     // --no-interactive reads the prompt from stdin and stream-json emits JSON
-    // Lines. V3 and the built-in default agent are pinned (so an explicit
-    // --model takes effect and a custom chat.defaultAgent cannot apply). No
-    // trust flag is passed: only what the server user's Kiro permissions
-    // already allow runs (reads are trusted by default), and anything that
-    // would need approval is denied under --no-interactive. Kiro reports
-    // credit metering, not token counters, so turns stay unmetered.
+    // Lines. V3 and its built-in default agent are pinned (so an explicit
+    // --model takes effect and a custom chat.defaultAgent cannot apply). V3
+    // names that agent `vibe`: the V2 name `kiro_default` is unknown to V3,
+    // and a headless run fails at init rather than falling back. No trust
+    // flag is passed: only what the server user's Kiro permissions already
+    // allow runs (reads are trusted by default), and anything that would
+    // need approval is denied under --no-interactive. Kiro reports credit
+    // metering, not token counters, so turns stay unmetered.
     buildArgs: model => [
       'chat',
       '--no-interactive',
@@ -163,7 +165,7 @@ export const AGENT_CLI_DEFINITIONS: AgentCliDefinition[] = [
       '--agent-engine',
       'v3',
       '--agent',
-      'kiro_default',
+      'vibe',
       ...(model ? ['--model', model] : []),
     ],
     discoverModels: binaryPath =>
