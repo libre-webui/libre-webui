@@ -18,11 +18,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 🐛 Bug Fixes
 
+- **Chat math styling**: Math in replies is rendered by KaTeX 0.19, the same
+  version as the stylesheet it loads. The 0.16 renderer's `base`, `strut`,
+  and `sizing` classes had no rules in that stylesheet.
+
 ### 🔒 Security
 
 - **npm audit fixes**: `proxy-addr` moves to 2.0.8 (GHSA-jqcg-44mw-7w3h),
   `source-map-js` to 1.2.2 (GHSA-68fv-2mgg-jv7q), and the enforced
-  `shell-quote` to 1.11.0 (GHSA-pqg4-j6r4-53mv).
+  `shell-quote` to 1.11.0 (GHSA-pqg4-j6r4-53mv). KaTeX outside Mermaid moves
+  to 0.19 (GHSA-238p-pmpm-9mq7).
 
 ### 📚 Documentation
 
