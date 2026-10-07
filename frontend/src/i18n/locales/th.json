@@ -2080,7 +2080,7 @@
     },
     "agentCliAccess": {
       "title": "โมเดลเอเจนต์ CLI",
-      "description": "ผู้ดูแลระบบสามารถใช้ Pi, OpenCode, Codex และ Claude Code ที่ติดตั้งไว้เป็นโมเดลแชตได้ โดยทำงานบนโฮสต์นอกแซนด์บ็อกซ์ของ Work",
+      "description": "ผู้ดูแลระบบสามารถใช้ Kiro, Pi, OpenCode, Codex และ Claude Code ที่ติดตั้งไว้เป็นโมเดลแชตได้ โดยทำงานบนโฮสต์นอกแซนด์บ็อกซ์ของ Work",
       "lockedByEnv": "ถูกกำหนดโดยตัวแปรสภาพแวดล้อม AGENT_CLI_MODELS_ENABLED"
     }
   },

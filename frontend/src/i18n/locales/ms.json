@@ -2080,7 +2080,7 @@
     },
     "agentCliAccess": {
       "title": "Model ejen CLI",
-      "description": "Pentadbir boleh menggunakan Pi, OpenCode, Codex dan Claude Code yang dipasang sebagai model sembang. Semuanya berjalan pada hos, di luar kotak pasir Work.",
+      "description": "Pentadbir boleh menggunakan Kiro, Pi, OpenCode, Codex dan Claude Code yang dipasang sebagai model sembang. Semuanya berjalan pada hos, di luar kotak pasir Work.",
       "lockedByEnv": "Ditetapkan oleh pemboleh ubah persekitaran AGENT_CLI_MODELS_ENABLED."
     }
   },

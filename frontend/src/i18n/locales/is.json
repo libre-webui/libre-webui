@@ -2080,7 +2080,7 @@
     },
     "agentCliAccess": {
       "title": "Líkön CLI-agenta",
-      "description": "Stjórnendur geta notað uppsett Pi, OpenCode, Codex og Claude Code sem spjalllíkön. Þau keyra á hýsivélinni utan Work-sandkassa.",
+      "description": "Stjórnendur geta notað uppsett Kiro, Pi, OpenCode, Codex og Claude Code sem spjalllíkön. Þau keyra á hýsivélinni utan Work-sandkassa.",
       "lockedByEnv": "Fest með umhverfisbreytunni AGENT_CLI_MODELS_ENABLED."
     }
   },

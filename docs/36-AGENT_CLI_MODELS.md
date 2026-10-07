@@ -1,13 +1,14 @@
 ---
 sidebar_position: 14
 title: 'Use an Installed Coding Agent as a Chat Model'
-description: 'Expose the Claude Code, Codex, OpenCode, or Pi CLI already installed on your server as a selectable Libre WebUI chat model, without adding an API key.'
+description: 'Expose the Claude Code, Codex, Kiro, OpenCode, or Pi CLI already installed on your server as a selectable Libre WebUI chat model, without adding an API key.'
 slug: /AGENT_CLI_MODELS
 keywords:
   [
     agent cli,
     claude code,
     codex,
+    kiro,
     opencode,
     pi,
     coding agent,
@@ -33,6 +34,7 @@ these commands:
 | --------------- | ---------- | ------------- |
 | **Claude Code** | `claude`   | Anthropic     |
 | **Codex**       | `codex`    | OpenAI        |
+| **Kiro**        | `kiro-cli` | AWS           |
 | **OpenCode**    | `opencode` | SST           |
 | **Pi**          | `pi`       | Mario Zechner |
 
@@ -62,6 +64,9 @@ Each CLI can expose several entries in the Agents group:
   family: GPT-6 Astra, **GPT-6.1 Sol** (`gpt-6.1-sol`), GPT-6 Sol, GPT-6 Luna,
   GPT-5.6 Sol, Terra, Luna, GPT-5.5, and GPT-5.3 Codex Spark.
   Availability depends on the CLI's sign-in and account access.
+- **Kiro** lists the models its signed-in account can use (from
+  `kiro-cli chat --list-models`) beside its configured default. Each turn runs
+  non-interactively on the CLI's V3 agent engine.
 - **Pi** runs with the model configured in the CLI itself.
 - **OpenCode** lists the models of every provider it is authenticated with
   (from `opencode models`), and always requires an explicit choice — its
@@ -137,8 +142,8 @@ container with an isolated workspace.
 ## Usage tracking
 
 Open **Provider Usage** (`/usage`) and find **Agents** near the top. Claude Code,
-Codex, OpenCode, Pi, and Strands activity have explicit entries, including a
-clear message when the selected period has no recorded calls.
+Codex, Kiro, OpenCode, Pi, and Strands activity have explicit entries, including
+a clear message when the selected period has no recorded calls.
 
 CLI calls made through LWUI record their outcome, duration, and reported token
 usage. Each invocation creates one usage event; repeated usage snapshots and
@@ -167,10 +172,12 @@ just your interactive shell. A service manager, Docker container, or desktop
 launcher often starts with a much smaller `PATH` than a login terminal.
 
 **The reply fails immediately.** Run the same command by hand as the server user
-(`claude -p "hello"` or `codex exec "hello"`). Most failures are the agent asking
+(`claude -p "hello"`, `codex exec "hello"`, or
+`kiro-cli chat --no-interactive "hello"`). Most failures are the agent asking
 for a login that has expired, or a rate limit on the underlying subscription.
 OpenCode in particular reports an expired provider login only in its own logs;
-re-run `opencode auth login` as the server user.
+re-run `opencode auth login` as the server user. Kiro signs in through
+`kiro-cli login`; an expired session fails the same way.
 
 **Replies stop partway.** A long turn may have hit `AGENT_CLI_TIMEOUT_MS`. Raise
 it, or break the request into smaller steps.

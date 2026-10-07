@@ -2080,7 +2080,7 @@
     },
     "agentCliAccess": {
       "title": "CLI-agentmodeller",
-      "description": "Administratörer kan använda installerade Pi, OpenCode, Codex och Claude Code som chattmodeller. De körs på värddatorn utanför Work-sandlådor.",
+      "description": "Administratörer kan använda installerade Kiro, Pi, OpenCode, Codex och Claude Code som chattmodeller. De körs på värddatorn utanför Work-sandlådor.",
       "lockedByEnv": "Låst av miljövariabeln AGENT_CLI_MODELS_ENABLED."
     }
   },

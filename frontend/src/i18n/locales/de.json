@@ -2080,7 +2080,7 @@
     },
     "agentCliAccess": {
       "title": "Agent-CLI-Modelle",
-      "description": "Administratoren können installierte Pi, OpenCode, Codex und Claude Code als Chatmodelle verwenden. Sie laufen auf dem Host außerhalb der Work-Sandboxen.",
+      "description": "Administratoren können installierte Kiro, Pi, OpenCode, Codex und Claude Code als Chatmodelle verwenden. Sie laufen auf dem Host außerhalb der Work-Sandboxen.",
       "lockedByEnv": "Durch die Umgebungsvariable AGENT_CLI_MODELS_ENABLED festgelegt."
     }
   },

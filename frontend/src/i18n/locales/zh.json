@@ -2080,7 +2080,7 @@
     },
     "agentCliAccess": {
       "title": "CLI代理模型",
-      "description": "管理员可以将已安装的Pi、OpenCode、Codex和Claude Code用作聊天模型。它们在宿主机上运行，位于Work沙盒之外。",
+      "description": "管理员可以将已安装的Kiro、Pi、OpenCode、Codex和Claude Code用作聊天模型。它们在宿主机上运行，位于Work沙盒之外。",
       "lockedByEnv": "已由环境变量 AGENT_CLI_MODELS_ENABLED 固定。"
     }
   },

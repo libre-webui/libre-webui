@@ -2080,7 +2080,7 @@
     },
     "agentCliAccess": {
       "title": "CLI ajan modelleri",
-      "description": "Yöneticiler kurulu Pi, OpenCode, Codex ve Claude Code araçlarını sohbet modelleri olarak kullanabilir. Bunlar Work korumalı alanlarının dışında, ana makinede çalışır.",
+      "description": "Yöneticiler kurulu Kiro, Pi, OpenCode, Codex ve Claude Code araçlarını sohbet modelleri olarak kullanabilir. Bunlar Work korumalı alanlarının dışında, ana makinede çalışır.",
       "lockedByEnv": "AGENT_CLI_MODELS_ENABLED ortam değişkeniyle sabitlendi."
     }
   },

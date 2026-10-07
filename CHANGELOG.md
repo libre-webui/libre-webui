@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### ✨ New Features
 
+- **Kiro as a chat agent.** The Agents group now detects the `kiro-cli` CLI
+  beside Claude Code, Codex, OpenCode, and Pi. Kiro lists the models its
+  signed-in account can use, and replies stream from non-interactive runs on
+  the CLI's V3 agent engine.
+
 ### 🔧 Improvements
 
 ### 🐛 Bug Fixes

@@ -2080,7 +2080,7 @@
     },
     "agentCliAccess": {
       "title": "Mô hình tác tử CLI",
-      "description": "Quản trị viên có thể dùng Pi, OpenCode, Codex và Claude Code đã cài đặt làm mô hình trò chuyện. Chúng chạy trên máy chủ, bên ngoài môi trường cách ly Work.",
+      "description": "Quản trị viên có thể dùng Kiro, Pi, OpenCode, Codex và Claude Code đã cài đặt làm mô hình trò chuyện. Chúng chạy trên máy chủ, bên ngoài môi trường cách ly Work.",
       "lockedByEnv": "Bị khóa bởi biến môi trường AGENT_CLI_MODELS_ENABLED."
     }
   },

@@ -2080,7 +2080,7 @@
     },
     "agentCliAccess": {
       "title": "এজেন্ট CLI মডেল",
-      "description": "প্রশাসকেরা ইনস্টল করা Pi, OpenCode, Codex এবং Claude Code চ্যাট মডেল হিসেবে ব্যবহার করতে পারেন। এগুলি Work স্যান্ডবক্সের বাইরে হোস্টে চলে।",
+      "description": "প্রশাসকেরা ইনস্টল করা Kiro, Pi, OpenCode, Codex এবং Claude Code চ্যাট মডেল হিসেবে ব্যবহার করতে পারেন। এগুলি Work স্যান্ডবক্সের বাইরে হোস্টে চলে।",
       "lockedByEnv": "AGENT_CLI_MODELS_ENABLED এনভায়রনমেন্ট ভেরিয়েবল দ্বারা নির্ধারিত।"
     }
   },

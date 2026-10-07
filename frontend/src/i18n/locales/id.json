@@ -2080,7 +2080,7 @@
     },
     "agentCliAccess": {
       "title": "Model agen CLI",
-      "description": "Administrator dapat menggunakan Pi, OpenCode, Codex, dan Claude Code yang terpasang sebagai model chat. Semuanya berjalan di host, di luar sandbox Work.",
+      "description": "Administrator dapat menggunakan Kiro, Pi, OpenCode, Codex, dan Claude Code yang terpasang sebagai model chat. Semuanya berjalan di host, di luar sandbox Work.",
       "lockedByEnv": "Dikunci oleh variabel lingkungan AGENT_CLI_MODELS_ENABLED."
     }
   },

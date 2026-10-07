@@ -129,7 +129,7 @@ existing usage ledger.
 ### Agent usage
 
 The **Agents** section near the top (**Calls to CLI agents and the Strands
-engine**) shows Claude Code, Codex, OpenCode, Pi, and Strands separately. It
+engine**) shows Claude Code, Codex, Kiro, OpenCode, Pi, and Strands separately. It
 includes each agent's calls, reported tokens,
 failed or cancelled calls, average duration, and up to 20 most-used models.
 Agent totals cover all matching calls in the selected period, independently of
