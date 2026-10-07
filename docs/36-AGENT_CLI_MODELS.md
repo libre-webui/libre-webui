@@ -1,13 +1,14 @@
 ---
 sidebar_position: 14
 title: 'Use an Installed Coding Agent as a Chat Model'
-description: 'Expose the Claude Code, Codex, OpenCode, or Pi CLI already installed on your server as a selectable Libre WebUI chat model, without adding an API key.'
+description: 'Expose the Claude Code, Codex, Kiro, OpenCode, or Pi CLI already installed on your server as a selectable Libre WebUI chat model, without adding an API key.'
 slug: /AGENT_CLI_MODELS
 keywords:
   [
     agent cli,
     claude code,
     codex,
+    kiro,
     opencode,
     pi,
     coding agent,
@@ -33,6 +34,7 @@ these commands:
 | --------------- | ---------- | ------------- |
 | **Claude Code** | `claude`   | Anthropic     |
 | **Codex**       | `codex`    | OpenAI        |
+| **Kiro**        | `kiro-cli` | AWS           |
 | **OpenCode**    | `opencode` | SST           |
 | **Pi**          | `pi`       | Mario Zechner |
 
@@ -62,6 +64,11 @@ Each CLI can expose several entries in the Agents group:
   family: GPT-6 Astra, **GPT-6.1 Sol** (`gpt-6.1-sol`), GPT-6 Sol, GPT-6 Luna,
   GPT-5.6 Sol, Terra, Luna, GPT-5.5, and GPT-5.3 Codex Spark.
   Availability depends on the CLI's sign-in and account access.
+- **Kiro** lists the models its signed-in account can use (from
+  `kiro-cli chat --list-models`) beside its configured default. Each turn runs
+  non-interactively on the CLI's V3 agent engine with its built-in default
+  agent (`vibe`) pinned, so a custom `chat.defaultAgent` does not apply.
+  Requires Kiro CLI 2.27 or later.
 - **Pi** runs with the model configured in the CLI itself.
 - **OpenCode** lists the models of every provider it is authenticated with
   (from `opencode models`), and always requires an explicit choice — its
@@ -87,6 +94,18 @@ plugin, or Strands task model for these auxiliary requests.
 Pi runs each turn stateless (`--no-session`), with local tools disabled and a
 neutral system prompt, so replies are not colored by — and chats never touch —
 the personal Pi configuration of the server's operating-system user.
+
+Kiro is the opposite on both counts: it runs with the server user's Kiro
+configuration — the built-in default agent is pinned, but permission rules
+(`~/.kiro/settings/permissions.yaml`), MCP servers, and the configured default
+model still apply — and every turn is saved as a new session in that user's
+Kiro session store (`kiro-cli chat --list-sessions` shows it, with the recent
+chat transcript inside). There is no flag to turn that off, so chat content
+also lives in the backend user's home directory, outside the Libre WebUI
+database. Kiro's tools stay enabled: whatever those permission rules trust —
+by default, reads and read-only commands such as `date` — runs without asking,
+and any tool call that needs approval is refused, because a chat turn cannot
+answer the prompt.
 
 ## Using it
 
@@ -137,8 +156,8 @@ container with an isolated workspace.
 ## Usage tracking
 
 Open **Provider Usage** (`/usage`) and find **Agents** near the top. Claude Code,
-Codex, OpenCode, Pi, and Strands activity have explicit entries, including a
-clear message when the selected period has no recorded calls.
+Codex, Kiro, OpenCode, Pi, and Strands activity have explicit entries, including
+a clear message when the selected period has no recorded calls.
 
 CLI calls made through LWUI record their outcome, duration, and reported token
 usage. Each invocation creates one usage event; repeated usage snapshots and
@@ -167,10 +186,15 @@ just your interactive shell. A service manager, Docker container, or desktop
 launcher often starts with a much smaller `PATH` than a login terminal.
 
 **The reply fails immediately.** Run the same command by hand as the server user
-(`claude -p "hello"` or `codex exec "hello"`). Most failures are the agent asking
+(`claude -p "hello"`, `codex exec "hello"`, or
+`echo hello | kiro-cli chat --no-interactive --output-format stream-json --agent-engine v3 --agent vibe`).
+Kiro CLI 2.27 or later is required; an older CLI fails here first, where its
+error is visible — in chat the same failure only shows as
+`Kiro exited unsuccessfully`. Most failures are the agent asking
 for a login that has expired, or a rate limit on the underlying subscription.
 OpenCode in particular reports an expired provider login only in its own logs;
-re-run `opencode auth login` as the server user.
+re-run `opencode auth login` as the server user. Kiro signs in through
+`kiro-cli login`; an expired session fails the same way.
 
 **Replies stop partway.** A long turn may have hit `AGENT_CLI_TIMEOUT_MS`. Raise
 it, or break the request into smaller steps.

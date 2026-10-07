@@ -724,7 +724,14 @@ test('usage route rejects malformed model focus and preserves exact scalar names
   }
 });
 
-const supportedAgentIds = ['claude-code', 'strands', 'codex', 'opencode', 'pi'];
+const supportedAgentIds = [
+  'claude-code',
+  'strands',
+  'codex',
+  'kiro',
+  'opencode',
+  'pi',
+];
 
 test('agent summaries include all supported agents with zero recorded usage and no CLI discovery', async t => {
   dbModule.getDatabase().prepare('DELETE FROM plugin_usage_events').run();
@@ -781,6 +788,7 @@ const agentUsageFixtures = now => [
     durationMs: 40,
   },
   { pluginId: 'agent-cli:pi', model: 'pi-real', durationMs: 30 },
+  { pluginId: 'agent-cli:kiro', model: 'kiro-real', durationMs: 15 },
   {
     pluginId: 'agent-cli:strands',
     model: 'shared',
@@ -826,6 +834,7 @@ const assertAgentUsageFixtures = agents => {
       [1, 5, 0, 1, 10],
       [2, 20, 1, 1, 55],
       [1, 0, 1, 0, 20],
+      [1, 0, 0, 0, 15],
       [1, 0, 1, 1, 40],
       [1, 0, 0, 0, 30],
     ]
@@ -872,7 +881,7 @@ test('agent totals bypass provider/model top limits and never attribute ordinary
   assertAgentUsageFixtures(analytics.agents);
   assert.equal(
     analytics.totals.calls,
-    338,
+    339,
     'agent views must not add events to aggregate cards'
   );
   assertDailyModelReconciliation(analytics);
@@ -919,7 +928,7 @@ test('agent model details are bounded while full summary totals remain complete'
   const analytics = await usageModule.default.getAnalytics(7);
   assert.equal(
     analytics.agents.reduce((count, agent) => count + agent.models.length, 0),
-    100
+    120
   );
   for (const agent of analytics.agents) {
     assert.equal(agent.calls, 21);
@@ -929,7 +938,7 @@ test('agent model details are bounded while full summary totals remain complete'
     assert.equal(agent.models[0].model, 'model-00');
     assert.equal(agent.models.at(-1).model, 'model-19');
   }
-  assert.equal(analytics.totals.calls, 105);
+  assert.equal(analytics.totals.calls, 126);
 });
 
 test(
@@ -1015,8 +1024,8 @@ test(
         );
         assert.equal(
           bounded.length,
-          105,
-          'five complete summaries plus at most 100 model rows'
+          126,
+          'six complete summaries plus at most 120 model rows'
         );
         for (const agentId of supportedAgentIds) {
           const agentRows = bounded.filter(row => row.agent_id === agentId);

@@ -2080,7 +2080,7 @@
     },
     "agentCliAccess": {
       "title": "Modely agentů CLI",
-      "description": "Správci mohou používat nainstalované Pi, OpenCode, Codex a Claude Code jako chatové modely. Běží na hostiteli mimo sandboxy Work.",
+      "description": "Správci mohou používat nainstalované Kiro, Pi, OpenCode, Codex a Claude Code jako chatové modely. Běží na hostiteli mimo sandboxy Work.",
       "lockedByEnv": "Určeno proměnnou prostředí AGENT_CLI_MODELS_ENABLED."
     }
   },

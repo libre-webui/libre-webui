@@ -2080,7 +2080,7 @@
     },
     "agentCliAccess": {
       "title": "Modelos de agentes CLI",
-      "description": "Los administradores pueden usar Pi, OpenCode, Codex y Claude Code instalados como modelos de chat. Se ejecutan en el equipo anfitrión, fuera de los entornos aislados de Work.",
+      "description": "Los administradores pueden usar Kiro, Pi, OpenCode, Codex y Claude Code instalados como modelos de chat. Se ejecutan en el equipo anfitrión, fuera de los entornos aislados de Work.",
       "lockedByEnv": "Fijado por la variable de entorno AGENT_CLI_MODELS_ENABLED."
     }
   },

@@ -2080,7 +2080,7 @@
     },
     "agentCliAccess": {
       "title": "Modele agentów CLI",
-      "description": "Administratorzy mogą używać zainstalowanych Pi, OpenCode, Codex i Claude Code jako modeli czatu. Działają one na hoście, poza piaskownicami Work.",
+      "description": "Administratorzy mogą używać zainstalowanych Kiro, Pi, OpenCode, Codex i Claude Code jako modeli czatu. Działają one na hoście, poza piaskownicami Work.",
       "lockedByEnv": "Ustalone przez zmienną środowiskową AGENT_CLI_MODELS_ENABLED."
     }
   },

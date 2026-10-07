@@ -52,7 +52,7 @@ export interface AgentCliDefinition {
   name: string;
   /** Binary looked up on PATH. */
   command: string;
-  parser: 'claude' | 'codex' | 'opencode' | 'pi';
+  parser: 'claude' | 'codex' | 'kiro' | 'opencode' | 'pi';
   buildArgs: (model?: string) => string[];
   /** Fixed model choices offered beside the CLI-default entry. */
   modelOptions?: AgentCliModelOption[];
@@ -144,6 +144,38 @@ export const AGENT_CLI_DEFINITIONS: AgentCliDefinition[] = [
     ],
   },
   {
+    id: 'kiro',
+    name: 'Kiro',
+    command: 'kiro-cli',
+    parser: 'kiro',
+    // --no-interactive reads the prompt from stdin and stream-json emits JSON
+    // Lines. V3 and its built-in default agent are pinned (so an explicit
+    // --model takes effect and a custom chat.defaultAgent cannot apply). V3
+    // names that agent `vibe`: the V2 name `kiro_default` is unknown to V3,
+    // and a headless run fails at init rather than falling back. No trust
+    // flag is passed: only what the server user's Kiro permissions already
+    // allow runs (reads are trusted by default), and anything that would
+    // need approval is denied under --no-interactive. Kiro reports credit
+    // metering, not token counters, so turns stay unmetered.
+    buildArgs: model => [
+      'chat',
+      '--no-interactive',
+      '--output-format',
+      'stream-json',
+      '--agent-engine',
+      'v3',
+      '--agent',
+      'vibe',
+      ...(model ? ['--model', model] : []),
+    ],
+    discoverModels: binaryPath =>
+      discoverCliModels(
+        binaryPath,
+        ['chat', '--list-models', '--format', 'json', '--no-interactive'],
+        parseKiroCatalog
+      ),
+  },
+  {
     id: 'opencode',
     name: 'OpenCode',
     command: 'opencode',
@@ -158,7 +190,8 @@ export const AGENT_CLI_DEFINITIONS: AgentCliDefinition[] = [
       'json',
       ...(model ? ['-m', model] : []),
     ],
-    discoverModels: binaryPath => discoverOpencodeModels(binaryPath),
+    discoverModels: binaryPath =>
+      discoverCliModels(binaryPath, ['models'], parseOpencodeCatalog),
   },
   {
     id: 'pi',
@@ -214,16 +247,19 @@ const discoveryCache = new Map<
   { at: number; options: AgentCliModelOption[] }
 >();
 
-/** `opencode models` prints one provider/model id per line. */
-async function discoverOpencodeModels(
-  binaryPath: string
+/** Spawn one discovery command, parse its stdout, and cache the options. */
+async function discoverCliModels(
+  binaryPath: string,
+  args: string[],
+  parse: (output: string) => AgentCliModelOption[]
 ): Promise<AgentCliModelOption[]> {
-  const cached = discoveryCache.get(binaryPath);
+  const cacheKey = `${binaryPath} ${args.join(' ')}`;
+  const cached = discoveryCache.get(cacheKey);
   if (cached && Date.now() - cached.at < MODEL_DISCOVERY_TTL_MS) {
     return cached.options;
   }
   const options = await new Promise<AgentCliModelOption[]>(resolve => {
-    const child = spawn(binaryPath, ['models'], {
+    const child = spawn(binaryPath, args, {
       env: process.env,
       stdio: ['ignore', 'pipe', 'ignore'],
     });
@@ -242,18 +278,46 @@ async function discoverOpencodeModels(
     });
     child.on('close', () => {
       clearTimeout(timer);
-      resolve(
-        output
-          .split('\n')
-          .map(line => line.trim())
-          .filter(line => /^[\w.-]+\/[\w./:@-]+$/.test(line))
-          .slice(0, MAX_DISCOVERED_MODELS)
-          .map(id => ({ id, label: id }))
-      );
+      resolve(parse(output));
     });
   });
-  discoveryCache.set(binaryPath, { at: Date.now(), options });
+  discoveryCache.set(cacheKey, { at: Date.now(), options });
   return options;
+}
+
+/** `opencode models` prints one provider/model id per line. */
+function parseOpencodeCatalog(output: string): AgentCliModelOption[] {
+  return output
+    .split('\n')
+    .map(line => line.trim())
+    .filter(line => /^[\w.-]+\/[\w./:@-]+$/.test(line))
+    .slice(0, MAX_DISCOVERED_MODELS)
+    .map(id => ({ id, label: id }));
+}
+
+/** Rows arrive as `{ models: [{ model_id, model_name }] }`. */
+function parseKiroCatalog(output: string): AgentCliModelOption[] {
+  try {
+    const parsed = JSON.parse(output) as { models?: unknown } | null;
+    const catalogue = parsed?.models;
+    if (!Array.isArray(catalogue)) return [];
+    const options: AgentCliModelOption[] = [];
+    for (const row of catalogue) {
+      if (!row || typeof row !== 'object') continue;
+      const record = row as { model_id?: unknown; model_name?: unknown };
+      if (typeof record.model_id !== 'string' || !record.model_id) continue;
+      options.push({
+        id: record.model_id,
+        label:
+          typeof record.model_name === 'string' && record.model_name
+            ? record.model_name
+            : record.model_id,
+      });
+    }
+    return options.slice(0, MAX_DISCOVERED_MODELS);
+  } catch {
+    return [];
+  }
 }
 
 function roleLabel(role: ChatMessage['role']): string {
@@ -498,6 +562,70 @@ export function parsePiLine(
     const detail =
       typeof event.message === 'string' ? event.message : 'agent error';
     state.itemErrors.push(detail);
+  }
+}
+
+/** Kiro streams text blocks as `{ type: 'text', text }` inside updates. */
+function kiroContentText(content: unknown): string | undefined {
+  if (typeof content === 'string' && content) return content;
+  if (!content || typeof content !== 'object') return undefined;
+  const text = (content as { text?: unknown }).text;
+  return typeof text === 'string' && text ? text : undefined;
+}
+
+export function parseKiroLine(
+  line: string,
+  queue: AgentParserSink,
+  state: ParserState
+): void {
+  const event = JSON.parse(line) as Record<string, unknown>;
+  const data = event.data as
+    | {
+        sessionId?: unknown;
+        update?: unknown;
+        finalText?: unknown;
+        status?: unknown;
+        message?: unknown;
+      }
+    | undefined;
+  if (
+    typeof data?.sessionId === 'string' &&
+    data.sessionId &&
+    !state.agentSessionId
+  ) {
+    state.agentSessionId = data.sessionId;
+  }
+  if (event.type === 'runError') {
+    const detail =
+      typeof data?.message === 'string' ? data.message : 'agent error';
+    throw new Error(`Kiro failed: ${detail}`);
+  }
+  if (event.type === 'runFinished') {
+    if (typeof data?.status === 'string' && data.status !== 'success') {
+      throw new Error(`Kiro failed: ${data.status}`);
+    }
+    // A run without streamed chunks still returns its finished text here.
+    if (
+      !state.emittedContent &&
+      typeof data?.finalText === 'string' &&
+      data.finalText
+    ) {
+      state.emittedContent = true;
+      queue.push({ type: 'content', content: data.finalText });
+    }
+    return;
+  }
+  if (event.type !== 'sessionUpdate') return;
+  const update = data?.update as
+    { sessionUpdate?: unknown; content?: unknown } | undefined;
+  if (!update || typeof update.sessionUpdate !== 'string') return;
+  const text = kiroContentText(update.content);
+  if (!text) return;
+  if (update.sessionUpdate === 'agent_message_chunk') {
+    state.emittedContent = true;
+    queue.push({ type: 'content', content: text });
+  } else if (update.sessionUpdate === 'agent_thought_chunk') {
+    queue.push({ type: 'reasoning', content: text });
   }
 }
 
@@ -749,6 +877,7 @@ export class AgentCliService {
     const parseLine = {
       claude: parseClaudeLine,
       codex: parseCodexLine,
+      kiro: parseKiroLine,
       opencode: parseOpencodeLine,
       pi: parsePiLine,
     }[definition.parser];

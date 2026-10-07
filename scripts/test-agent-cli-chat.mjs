@@ -44,6 +44,7 @@ const {
   parsePiLine,
   parseClaudeLine,
   parseCodexLine,
+  parseKiroLine,
   default: agentCliService,
 } = await import(serviceUrl);
 const { agentCliTokenUsage } = await import(
@@ -97,6 +98,10 @@ test('every agent CLI passes an explicit model through to its argv', () => {
     '--model',
     'provider/model',
   ]);
+  assert.deepEqual(
+    definition('kiro').buildArgs('claude-sonnet-4.6').slice(-2),
+    ['--model', 'claude-sonnet-4.6']
+  );
 });
 
 test('Codex lists the GPT-6 family alongside the bundled ChatGPT models', async () => {
@@ -210,6 +215,166 @@ test('pi runs stateless, tool-less, with a neutral system prompt', () => {
 
 test('opencode requires an explicit model', () => {
   assert.equal(definition('opencode').requiresModel, true);
+});
+
+test('kiro runs non-interactive stream-json on the V3 engine without trust flags', () => {
+  const args = definition('kiro').buildArgs();
+  assert.deepEqual(args.slice(0, 2), ['chat', '--no-interactive']);
+  const outputIndex = args.indexOf('--output-format');
+  assert.deepEqual(args.slice(outputIndex, outputIndex + 2), [
+    '--output-format',
+    'stream-json',
+  ]);
+  const engineIndex = args.indexOf('--agent-engine');
+  assert.deepEqual(args.slice(engineIndex, engineIndex + 2), [
+    '--agent-engine',
+    'v3',
+  ]);
+  // V3 knows its built-in default agent as `vibe`. The V2 name `kiro_default`
+  // is not found on V3, and a headless run then fails at init.
+  const agentIndex = args.indexOf('--agent');
+  assert.deepEqual(
+    args.slice(agentIndex, agentIndex + 2),
+    ['--agent', 'vibe'],
+    'pin the V3 built-in default agent by its V3 name'
+  );
+  assert.ok(!args.includes('--model'));
+  assert.ok(
+    !args.some(argument => argument.startsWith('--trust')),
+    'a chat turn must not auto-approve tool calls'
+  );
+});
+
+test('kiro parser streams message chunks and falls back to the finished text', () => {
+  const { chunks, queue, state } = collect();
+  const lines = [
+    '{"type":"runStarted","data":{"engine":"v3","payloadSchema":"acp","acpProtocolVersion":1}}',
+    '{"type":"sessionUpdate","data":{"sessionId":"sess-1","update":{"sessionUpdate":"available_commands_update","availableCommands":[]}}}',
+    '{"type":"sessionUpdate","data":{"sessionId":"sess-1","update":{"sessionUpdate":"agent_thought_chunk","content":{"type":"text","text":"hm"}}}}',
+    '{"type":"sessionUpdate","data":{"sessionId":"sess-1","update":{"sessionUpdate":"agent_message_chunk","content":{"type":"text","text":"po"}}}}',
+    '{"type":"sessionUpdate","data":{"sessionId":"sess-1","update":{"sessionUpdate":"agent_message_chunk","content":{"type":"text","text":"ng"}}}}',
+    '{"type":"runFinished","data":{"sessionId":"sess-1","status":"success","stopReason":"end_turn","finalText":"pong","finalTextTruncated":false}}',
+  ];
+  for (const line of lines) parseKiroLine(line, queue, state);
+  assert.equal(state.agentSessionId, 'sess-1');
+  assert.deepEqual(
+    chunks
+      .filter(chunk => chunk.type === 'content')
+      .map(chunk => chunk.content),
+    ['po', 'ng']
+  );
+  assert.deepEqual(
+    chunks
+      .filter(chunk => chunk.type === 'reasoning')
+      .map(chunk => chunk.content),
+    ['hm']
+  );
+
+  // A run without streamed chunks still yields the finished text.
+  const fallback = collect();
+  parseKiroLine(
+    '{"type":"runFinished","data":{"sessionId":"sess-2","status":"success","stopReason":"end_turn","finalText":"pong","finalTextTruncated":false}}',
+    fallback.queue,
+    fallback.state
+  );
+  assert.deepEqual(fallback.chunks, [{ type: 'content', content: 'pong' }]);
+});
+
+test('kiro parser surfaces run failures', () => {
+  const { queue, state } = collect();
+  assert.throws(
+    () =>
+      parseKiroLine(
+        '{"type":"runError","data":{"sessionId":"sess-3","message":"boom"}}',
+        queue,
+        state
+      ),
+    /Kiro failed: boom/
+  );
+  // Kiro CLI 2.27 fails a headless run at init when --agent names no agent.
+  assert.throws(
+    () =>
+      parseKiroLine(
+        '{"type":"runError","data":{"sessionId":"sess-4","stage":"init","message":"agent \\"kiro_default\\" not found, using \\"default\\""}}',
+        queue,
+        state
+      ),
+    /Kiro failed: agent "kiro_default" not found/
+  );
+  assert.throws(
+    () =>
+      parseKiroLine(
+        '{"type":"runFinished","data":{"sessionId":"sess-3","status":"error"}}',
+        queue,
+        state
+      ),
+    /Kiro failed: error/
+  );
+});
+
+test('Kiro lists the models its CLI reports beside its configured default', async () => {
+  const binDir = fs.mkdtempSync(path.join(os.tmpdir(), 'kiro-model-list-'));
+  const binary = path.join(binDir, 'kiro-cli');
+  const catalog = JSON.stringify({
+    models: [
+      { model_id: 'claude-sonnet-4.6', model_name: 'Claude Sonnet 4.6' },
+      { model_id: 'claude-opus-4.8', model_name: 'Claude Opus 4.8' },
+    ],
+  });
+  fs.writeFileSync(
+    binary,
+    [
+      '#!/bin/sh',
+      'if [ "$1" = "chat" ] && [ "$2" = "--list-models" ]; then',
+      `  printf '%s\\n' ${JSON.stringify(catalog)}`,
+      'fi',
+      '',
+    ].join('\n')
+  );
+  fs.chmodSync(binary, 0o755);
+  const previousPath = process.env.PATH;
+  process.env.PATH = binDir;
+  try {
+    const models = await agentCliService.listAgentModels();
+    const ids = models.map(model => model.id);
+    assert.deepEqual(ids, [
+      'kiro',
+      'kiro:claude-sonnet-4.6',
+      'kiro:claude-opus-4.8',
+    ]);
+    assert.equal(
+      models.find(model => model.id === 'kiro:claude-opus-4.8')?.name,
+      'Kiro · Claude Opus 4.8'
+    );
+    assert.ok(
+      models.every(
+        model =>
+          model.id === model.agentId || model.id.startsWith(`${model.agentId}:`)
+      )
+    );
+  } finally {
+    process.env.PATH = previousPath;
+    fs.rmSync(binDir, { recursive: true, force: true });
+  }
+});
+
+test('Kiro keeps its default entry when the catalog cannot be read', async () => {
+  const binDir = fs.mkdtempSync(path.join(os.tmpdir(), 'kiro-no-catalog-'));
+  const binary = path.join(binDir, 'kiro-cli');
+  fs.writeFileSync(binary, '#!/bin/sh\necho "not json"\n');
+  fs.chmodSync(binary, 0o755);
+  const previousPath = process.env.PATH;
+  process.env.PATH = binDir;
+  try {
+    const models = await agentCliService.listAgentModels();
+    assert.deepEqual(
+      models.map(model => model.id),
+      ['kiro']
+    );
+  } finally {
+    process.env.PATH = previousPath;
+    fs.rmSync(binDir, { recursive: true, force: true });
+  }
 });
 
 test('pi parser streams text deltas and falls back to the final message', () => {
@@ -862,6 +1027,57 @@ for (const [agent, model] of [
     assert.equal(chunks.at(-1).type, 'done');
   });
 }
+
+test('kiro records one successful invocation whose stream has no token counters', async t => {
+  const actor = await cliUsageActor();
+  const definition = AGENT_CLI_DEFINITIONS.find(item => item.id === 'kiro');
+  const fixture = await cliProcessFixture(t, definition.command, [
+    {
+      type: 'sessionUpdate',
+      data: {
+        sessionId: 'sess-fixture',
+        update: {
+          sessionUpdate: 'agent_message_chunk',
+          content: { type: 'text', text: 'fixture reply' },
+        },
+      },
+    },
+    {
+      type: 'runFinished',
+      data: {
+        sessionId: 'sess-fixture',
+        status: 'success',
+        stopReason: 'end_turn',
+        finalText: 'fixture reply',
+        finalTextTruncated: false,
+      },
+    },
+  ]);
+  const { default: usageService } = await import(
+    distUrl('services/pluginUsageService.js')
+  );
+  const records = [];
+  t.mock.method(usageService, 'record', async input => {
+    records.push(input);
+  });
+  const chunks = [];
+  for await (const chunk of agentCliService.executeAgentStreamRequest(
+    'kiro',
+    [{ id: 'user', role: 'user', content: 'Fixture only', timestamp: 1 }],
+    actor,
+    { model: 'kiro:claude-sonnet-4.6', cwd: fixture.directory }
+  ))
+    chunks.push(chunk);
+  const args = JSON.parse(fs.readFileSync(fixture.argsFile, 'utf8'));
+  assert.equal(args[args.indexOf('--model') + 1], 'claude-sonnet-4.6');
+  assert.equal(records.length, 1);
+  assert.equal(records[0].pluginId, 'agent-cli:kiro');
+  assert.equal(records[0].status, 'success');
+  assert.equal(records[0].tokens, undefined);
+  assert.equal(chunks.filter(chunk => chunk.type === 'usage').length, 0);
+  assert.equal(chunks.at(-1).type, 'done');
+  assert.equal(chunks.at(-1).providerMetadata?.agentSessionId, 'sess-fixture');
+});
 
 test('a nonzero CLI exit with partial text records failure with its reported tokens', async t => {
   const fixture = await cliProcessFixture(t, 'codex', cliFixtureEvents.codex, {

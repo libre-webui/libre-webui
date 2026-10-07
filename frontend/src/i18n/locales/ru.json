@@ -2080,7 +2080,7 @@
     },
     "agentCliAccess": {
       "title": "Модели агентов CLI",
-      "description": "Администраторы могут использовать установленные Pi, OpenCode, Codex и Claude Code как модели чата. Они работают на хосте вне песочниц Work.",
+      "description": "Администраторы могут использовать установленные Kiro, Pi, OpenCode, Codex и Claude Code как модели чата. Они работают на хосте вне песочниц Work.",
       "lockedByEnv": "Закреплено переменной окружения AGENT_CLI_MODELS_ENABLED."
     }
   },

@@ -22,6 +22,7 @@ const agentNames: Record<string, string> = {
   strands: 'Strands',
   'claude-code': 'Claude Code',
   codex: 'Codex',
+  kiro: 'Kiro',
   opencode: 'OpenCode',
   pi: 'Pi',
 };

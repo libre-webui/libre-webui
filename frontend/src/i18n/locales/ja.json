@@ -2080,7 +2080,7 @@
     },
     "agentCliAccess": {
       "title": "エージェントCLIモデル",
-      "description": "管理者はインストール済みのPi、OpenCode、Codex、Claude Codeをチャットモデルとして使用できます。これらはWorkサンドボックスの外でホスト上で実行されます。",
+      "description": "管理者はインストール済みのKiro、Pi、OpenCode、Codex、Claude Codeをチャットモデルとして使用できます。これらはWorkサンドボックスの外でホスト上で実行されます。",
       "lockedByEnv": "環境変数 AGENT_CLI_MODELS_ENABLED によって固定されています。"
     }
   },

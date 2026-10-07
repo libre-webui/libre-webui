@@ -2080,7 +2080,7 @@
     },
     "agentCliAccess": {
       "title": "نماذج وكلاء CLI",
-      "description": "يمكن للمسؤولين استخدام Pi وOpenCode وCodex وClaude Code المثبتة كنماذج دردشة. تعمل على المضيف خارج بيئات Work المعزولة.",
+      "description": "يمكن للمسؤولين استخدام Kiro وPi وOpenCode وCodex وClaude Code المثبتة كنماذج دردشة. تعمل على المضيف خارج بيئات Work المعزولة.",
       "lockedByEnv": "مثبَّت بواسطة متغير البيئة AGENT_CLI_MODELS_ENABLED."
     }
   },

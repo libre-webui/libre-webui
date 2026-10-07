@@ -2080,7 +2080,7 @@
     },
     "agentCliAccess": {
       "title": "एजेंट CLI मॉडल",
-      "description": "प्रशासक इंस्टॉल किए गए Pi, OpenCode, Codex और Claude Code को चैट मॉडल के रूप में उपयोग कर सकते हैं। ये Work सैंडबॉक्स के बाहर होस्ट पर चलते हैं।",
+      "description": "प्रशासक इंस्टॉल किए गए Kiro, Pi, OpenCode, Codex और Claude Code को चैट मॉडल के रूप में उपयोग कर सकते हैं। ये Work सैंडबॉक्स के बाहर होस्ट पर चलते हैं।",
       "lockedByEnv": "AGENT_CLI_MODELS_ENABLED एनवायरनमेंट वैरिएबल द्वारा निर्धारित।"
     }
   },
