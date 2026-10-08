@@ -16,7 +16,9 @@
  */
 
 import {
+  BEDROCK_RUNTIME_CLAUDE_MODELS,
   fetchPluginChat,
+  isBedrockPlugin,
   pluginChatProtocol,
   requestPluginChat,
 } from '../utils/bedrockMantle.js';
@@ -1921,11 +1923,21 @@ export class PluginService {
 
       const entries = response.data?.data;
       if (entries && Array.isArray(entries)) {
-        const models = entries
+        const listed = entries
           // Bedrock lists models the account cannot call, marked unavailable.
           .filter((m: { status?: unknown }) => m?.status !== 'unavailable')
           .map((m: { id?: string }) => m.id)
           .filter((id: unknown): id is string => typeof id === 'string');
+        // Mantle cannot list the Claude models only bedrock-runtime serves.
+        const models =
+          isBedrockPlugin(plugin) && listed.length > 0
+            ? [
+                ...listed,
+                ...BEDROCK_RUNTIME_CLAUDE_MODELS.filter(
+                  id => !listed.includes(id)
+                ),
+              ]
+            : listed;
         // Providers that publish a context window are worth remembering: it is
         // the only way the application can say how full a conversation is.
         const modelContext = readModelContextMap(entries);

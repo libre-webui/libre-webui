@@ -585,3 +585,32 @@ test('discovery drops models the provider marks unavailable', async () => {
     await provider.close();
   }
 });
+
+test('Bedrock discovery adds the Claude models only bedrock-runtime serves', async () => {
+  const app = express();
+  app.get('/v1/models', (_req, res) => {
+    res.json({
+      data: [
+        { id: 'anthropic.claude-opus-5-5', status: 'available' },
+        { id: 'global.anthropic.claude-sonnet-5-5' },
+        { id: 'deepseek.v3.2' },
+      ],
+    });
+  });
+  const provider = await listen(app);
+  const service = new PluginService();
+  const admin = upsertTestUser('model-refresh-bedrock-admin', 'admin');
+  await installProvider(service, 'bedrock', provider.baseUrl, admin.id);
+  try {
+    // Mantle's list stays first; runtime-only profiles follow, deduplicated.
+    assert.deepEqual(await service.discoverModels('bedrock', admin.id), [
+      'anthropic.claude-opus-5-5',
+      'global.anthropic.claude-sonnet-5-5',
+      'deepseek.v3.2',
+      'global.anthropic.claude-haiku-5-5',
+    ]);
+  } finally {
+    await service.deletePlugin('bedrock');
+    await provider.close();
+  }
+});

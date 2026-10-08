@@ -53,14 +53,30 @@ export const BEDROCK_MANTLE_REGIONS: readonly string[] = [
 
 const MANTLE_HOST = /^bedrock-mantle\.([a-z0-9-]+)\.api\.aws$/;
 const ANTHROPIC_MODEL = /^(?:[a-z]{2,6}\.)?anthropic\./;
+// A cross-Region inference profile ID: `global.`, `us.`, `eu.`, `au.`, `jp.`.
+const ANTHROPIC_INFERENCE_PROFILE = /^[a-z]{2,6}\.anthropic\./;
 const ROUTE_MISMATCH = /(?:isn't|is not|not) supported on this route/i;
 const ROUTE_CACHE_LIMIT = 512;
 
-export type BedrockChatRoute = 'anthropic' | 'mantle' | 'openai';
-type CompletionsRoute = Exclude<BedrockChatRoute, 'anthropic'>;
+/**
+ * Claude models that commercial Regions serve only on `bedrock-runtime`,
+ * through cross-Region inference profiles; `bedrock-mantle` serves them only
+ * in GovCloud (AWS model cards, "Availability using the bedrock-mantle
+ * endpoint"). Mantle's `/v1/models` therefore never lists them and
+ * `bedrock-runtime` has no model-list route, so the catalog adds them here.
+ */
+export const BEDROCK_RUNTIME_CLAUDE_MODELS: readonly string[] = [
+  'global.anthropic.claude-haiku-5-5',
+  'global.anthropic.claude-sonnet-5-5',
+];
+
+export type BedrockChatRoute = 'anthropic' | 'runtime' | 'mantle' | 'openai';
+type CompletionsRoute = Exclude<BedrockChatRoute, 'anthropic' | 'runtime'>;
 
 const ROUTE_PATHS: Record<BedrockChatRoute, string> = {
   anthropic: '/anthropic/v1/messages',
+  // On the Region's bedrock-runtime host, which takes the same API key.
+  runtime: '/anthropic/v1/messages',
   mantle: '/v1/chat/completions',
   openai: '/openai/v1/chat/completions',
 };
@@ -121,7 +137,12 @@ export function bedrockChatRoute(
   endpoint: string,
   model: string
 ): BedrockChatRoute {
-  if (isBedrockAnthropicModel(model)) return 'anthropic';
+  if (isBedrockAnthropicModel(model)) {
+    // Inference profiles are only served by bedrock-runtime.
+    return ANTHROPIC_INFERENCE_PROFILE.test(model.trim().toLowerCase())
+      ? 'runtime'
+      : 'anthropic';
+  }
   const key = routeKey(endpoint, model);
   const learned = key ? learnedRoutes.get(key) : undefined;
   if (learned) return learned;
@@ -136,6 +157,15 @@ export function bedrockRouteEndpoint(
 ): string {
   const url = mantleOrigin(endpoint);
   if (!url) return endpoint;
+  if (route === 'runtime') {
+    // Same Region as the Mantle host, and only a listed one, so the key can
+    // only ever reach that Region's two Bedrock hosts.
+    const region = MANTLE_HOST.exec(url.hostname)?.[1];
+    if (isBedrockMantleRegion(region)) {
+      return `https://bedrock-runtime.${region}.amazonaws.com${ROUTE_PATHS.runtime}`;
+    }
+    return `${url.origin}${ROUTE_PATHS.anthropic}`;
+  }
   return `${url.origin}${ROUTE_PATHS[route]}`;
 }
 
@@ -207,7 +237,12 @@ export async function sendPluginChat<T>(
   const route = isBedrockPlugin(plugin)
     ? bedrockChatRoute(endpoint, model)
     : undefined;
-  if (!route || route === 'anthropic' || !mantleOrigin(endpoint)) {
+  if (
+    !route ||
+    route === 'anthropic' ||
+    route === 'runtime' ||
+    !mantleOrigin(endpoint)
+  ) {
     return send(pluginChatEndpoint(plugin, endpoint, model));
   }
 

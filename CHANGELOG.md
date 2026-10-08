@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   signed-in account can use, replies stream from non-interactive runs on the
   CLI's V3 agent engine, and each run pins the CLI's built-in default agent.
 - **Claude Haiku 5.5**: The Anthropic and Amazon Bedrock providers offer
-  Claude Haiku 5.5 (`claude-haiku-5-5`, `anthropic.claude-haiku-5-5` on
+  Claude Haiku 5.5 (`claude-haiku-5-5`; `global.anthropic.claude-haiku-5-5` on
   Bedrock), and Claude Code adds an explicit **Haiku 5.5** choice (Claude Code
   2.1.293 or later). It thinks adaptively; a reasoning level becomes its effort
   setting, and **off** switches thinking off.
@@ -23,6 +23,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 🐛 Bug Fixes
 
+- **Claude 5.5 on Amazon Bedrock**: AWS serves Claude Haiku 5.5 and Sonnet 5.5
+  in commercial Regions only on `bedrock-runtime`, through cross-Region
+  inference profiles, so they never appeared in the Mantle model list. The
+  Bedrock catalog now includes their `global.` profiles, and Claude inference
+  profile IDs are sent with the same API key to the selected Region's
+  `bedrock-runtime` Messages route.
 - **Chat math styling**: Math in replies is rendered by KaTeX 0.19, the same
   version as the stylesheet it loads. The 0.16 renderer's `base`, `strut`,
   and `sizing` classes had no rules in that stylesheet.

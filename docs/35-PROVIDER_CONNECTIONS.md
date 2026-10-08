@@ -114,6 +114,16 @@ on a second Chat Completions route; Libre WebUI tries that route when Bedrock
 says a model lives there and remembers it. Chat, Work, and the Strands engine
 can all use these models, and usage appears under the provider in analytics.
 
+In commercial Regions, AWS serves Claude Haiku 5.5 and Claude Sonnet 5.5 only
+on `bedrock-runtime`, through cross-Region inference profiles, so Mantle's model
+list never includes them. The catalog adds
+`global.anthropic.claude-haiku-5-5` and `global.anthropic.claude-sonnet-5-5`,
+and any Claude inference profile ID (`global.`, `us.`, `eu.`, `au.`, or `jp.`)
+is sent with the same API key to the selected Region's
+`bedrock-runtime.<region>.amazonaws.com/anthropic/v1/messages`. The key still
+only goes to that Region's two Bedrock hosts. Your account still needs access
+to the model in Amazon Bedrock.
+
 ## Choose a Bundled or Imported Provider
 
 Libre WebUI includes definitions for OpenAI, Anthropic, Gemini, Groq, Mistral,

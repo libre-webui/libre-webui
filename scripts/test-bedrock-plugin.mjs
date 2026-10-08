@@ -174,6 +174,97 @@ test('Claude uses the Messages route and other models use Chat Completions', () 
   );
 });
 
+test('Claude inference profiles go to the same Region bedrock-runtime Messages route', () => {
+  // AWS serves Haiku 5.5 and Sonnet 5.5 in commercial Regions only on
+  // bedrock-runtime, through cross-Region inference profiles.
+  for (const region of ['us-east-1', 'eu-central-1', 'ap-southeast-2']) {
+    for (const model of [
+      'global.anthropic.claude-haiku-5-5',
+      'us.anthropic.claude-haiku-5-5',
+      'eu.anthropic.claude-sonnet-5-5',
+    ]) {
+      assert.equal(
+        bedrock.pluginChatEndpoint(plugin, mantle(region), model),
+        `https://bedrock-runtime.${region}.amazonaws.com/anthropic/v1/messages`
+      );
+      assert.equal(bedrock.pluginChatProtocol(plugin, model), 'anthropic');
+    }
+  }
+  // Plain Claude IDs stay on Mantle.
+  assert.equal(
+    bedrock.pluginChatEndpoint(
+      plugin,
+      mantle('us-east-1'),
+      'anthropic.claude-opus-5-5'
+    ),
+    'https://bedrock-mantle.us-east-1.api.aws/anthropic/v1/messages'
+  );
+  // A host outside the listed Regions never yields a runtime host.
+  assert.equal(
+    bedrock.pluginChatEndpoint(
+      plugin,
+      'https://bedrock-mantle.evil-1.api.aws/v1/chat/completions',
+      'global.anthropic.claude-haiku-5-5'
+    ),
+    'https://bedrock-mantle.evil-1.api.aws/anthropic/v1/messages'
+  );
+  assert.equal(
+    bedrock.pluginChatEndpoint(
+      plugin,
+      'https://proxy.example.com/v1/chat/completions',
+      'global.anthropic.claude-haiku-5-5'
+    ),
+    'https://proxy.example.com/v1/chat/completions',
+    'non-Mantle endpoints are never rewritten'
+  );
+  assert.deepEqual(bedrock.BEDROCK_RUNTIME_CLAUDE_MODELS, [
+    'global.anthropic.claude-haiku-5-5',
+    'global.anthropic.claude-sonnet-5-5',
+  ]);
+  for (const model of bedrock.BEDROCK_RUNTIME_CLAUDE_MODELS) {
+    assert.ok(
+      plugin.model_map.includes(model),
+      `${model} ships in the manifest`
+    );
+  }
+});
+
+test('an inference profile request is sent once to bedrock-runtime', async () => {
+  const urls = [];
+  const response = await bedrock.fetchPluginChat(
+    plugin,
+    mantle('us-east-2'),
+    'global.anthropic.claude-haiku-5-5',
+    { method: 'POST', body: '{}' },
+    async url => {
+      urls.push(url);
+      return new Response('{}', { status: 200 });
+    }
+  );
+  assert.equal(response.status, 200);
+  assert.deepEqual(urls, [
+    'https://bedrock-runtime.us-east-2.amazonaws.com/anthropic/v1/messages',
+  ]);
+});
+
+test('Haiku 5.5 through a Bedrock inference profile keeps its adaptive thinking', () => {
+  const build = think =>
+    chatAdapter.buildPluginChatPayload(
+      plugin,
+      'global.anthropic.claude-haiku-5-5',
+      [userMessage],
+      { think, num_predict: 4096 },
+      {},
+      true
+    );
+  const low = build('low');
+  assert.equal(low.payload.model, 'global.anthropic.claude-haiku-5-5');
+  assert.deepEqual(low.payload.thinking, { type: 'adaptive' });
+  assert.deepEqual(low.payload.output_config, { effort: 'low' });
+  assert.equal(low.headers['anthropic-version'], '2023-06-01');
+  assert.deepEqual(build(false).payload.thinking, { type: 'disabled' });
+});
+
 test('Claude on Bedrock gets an Anthropic Messages payload', () => {
   const { payload, headers } = chatAdapter.buildPluginChatPayload(
     plugin,
