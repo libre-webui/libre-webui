@@ -476,7 +476,7 @@ test('Docker volume inspection recognizes only the requested missing volume', as
   }
 });
 
-test('the policy match demands exactly the ports the policy publishes', async () => {
+test('the policy match demands exactly the ports and mounts the policy needs', async () => {
   const sharedModule = await import(
     pathToFileURL(
       path.join(repoRoot, 'backend', 'dist', 'services', 'workRuntimeShared.js')
@@ -510,7 +510,18 @@ test('the policy match demands exactly the ports the policy publishes', async ()
   const binding = port => ({
     [`${port}/tcp`]: [{ HostIp: '127.0.0.1', HostPort: String(40000 + port) }],
   });
-  const inspectFixture = (policy, portBindings, networkMode) => ({
+  const toolchainMount = {
+    Type: 'volume',
+    Name: sharedModule.workAgentToolchainVolume(),
+    Destination: sharedModule.WORK_AGENT_TOOLCHAIN_MOUNT,
+    RW: false,
+  };
+  const inspectFixture = (
+    policy,
+    portBindings,
+    networkMode,
+    toolchain = toolchainMount
+  ) => ({
     Config: {
       Labels: {
         'ai.libre-webui.managed': 'true',
@@ -542,13 +553,19 @@ test('the policy match demands exactly the ports the policy publishes', async ()
         Destination: '/workspace',
         RW: true,
       },
+      ...(toolchain ? [toolchain] : []),
     ],
   });
   const matches = async (policy, portBindings, override = {}) => {
     driver.docker = async () => ({
       exitCode: 0,
       stdout: JSON.stringify(
-        inspectFixture(policy, portBindings, override.networkMode)
+        inspectFixture(
+          policy,
+          portBindings,
+          override.networkMode,
+          override.toolchain
+        )
       ),
       stderr: '',
       truncated: false,
@@ -604,6 +621,18 @@ test('the policy match demands exactly the ports the policy publishes', async ()
     await matches(headlessPolicy, binding(4173), {
       networkMode: 'none',
       task: { networkEnabled: false },
+    }),
+    false
+  );
+  // Sandboxes from before agent CLIs lack the toolchain: recreate once.
+  assert.equal(
+    await matches(headlessPolicy, binding(4173), { toolchain: null }),
+    false
+  );
+  // The toolchain is shared by every sandbox, so it must stay read-only.
+  assert.equal(
+    await matches(headlessPolicy, binding(4173), {
+      toolchain: { ...toolchainMount, RW: true },
     }),
     false
   );

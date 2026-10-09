@@ -243,6 +243,7 @@ test('explainEffectiveAccess returns groups, feature booleans, and grants', asyn
   );
   assert.deepEqual(view.features, {
     work: false,
+    'work-agents': false,
     'model-download': false,
     'web-search': false,
     strands: false,
