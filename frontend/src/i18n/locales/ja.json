@@ -645,7 +645,8 @@
       "sessions": "セッション",
       "apiKeys": "APIキー",
       "notifications": "通知",
-      "ollamaDisabled": "Ollama は管理者によって無効化されています"
+      "ollamaDisabled": "Ollama は管理者によって無効化されています",
+      "agentClis": "エージェントCLI"
     },
     "appearance": {
       "title": "外観",
@@ -1295,6 +1296,34 @@
       "emailMentionsHint": "チャンネルで自分がメンションされたらメールで知らせます。",
       "emailAutomations": "自動化の実行結果",
       "emailAutomationsHint": "自動化が実行されるたびに、成功・失敗を問わず結果をメールで知らせます。"
+    },
+    "agentClis": {
+      "title": "Work のエージェントCLI",
+      "description": "Claude Code、Codex、Kiro、OpenCode、Pi はサンドボックス内で Work のタスクを実行できます。実行時に見えるのはプレースホルダーだけで、本物のキーは送信プロキシがエージェント自身の API に対してのみ付け加えます。",
+      "accessHint": "使えるユーザーは「ユーザー管理」の「アクセスとポリシー」で選びます。",
+      "unavailable": "Work のエージェントCLIには Docker ランタイムが必要です。または、このサーバーで無効になっています。",
+      "keysTitle": "キー",
+      "keysDescription": "保存したキーは暗号化され、Work でエージェントCLIを使えるすべてのユーザーで共有されます。",
+      "saved": "保存済み",
+      "environment": "サーバー環境で設定済み",
+      "missing": "未設定",
+      "usedBy": "使用元: {{agents}}",
+      "providerFallback": "または各ユーザーの {{provider}} キー",
+      "placeholder": "キーを貼り付け",
+      "save": "保存",
+      "remove": "削除",
+      "keySaved": "キーを保存しました。",
+      "keyRemoved": "キーを削除しました。",
+      "keyFailed": "キーを保存できませんでした。",
+      "toolchainTitle": "インストール済みのエージェント",
+      "toolchainDescription": "各エージェントは初回実行時にインストールされます。事前にインストールしておくと待ち時間を省けます。",
+      "installing": "インストール中…",
+      "installed": "バージョン {{version}}",
+      "notInstalled": "未インストール",
+      "install": "インストール",
+      "installStarted": "{{agent}} をインストールしています。",
+      "installFailed": "インストールを開始できませんでした。",
+      "loadFailed": "エージェントの設定を読み込めませんでした。"
     }
   },
   "models": {
@@ -1948,7 +1977,8 @@
         "stt": "音声認識",
         "tts": "音声合成",
         "voice-mode": "音声モード",
-        "voice-cloning": "音声クローン"
+        "voice-cloning": "音声クローン",
+        "work-agents": "Work のエージェントCLI"
       },
       "grantViaKinds": {
         "user": "直接付与",
@@ -2082,6 +2112,18 @@
       "title": "エージェントCLIモデル",
       "description": "管理者はインストール済みのKiro、Pi、OpenCode、Codex、Claude Codeをチャットモデルとして使用できます。これらはWorkサンドボックスの外でホスト上で実行されます。",
       "lockedByEnv": "環境変数 AGENT_CLI_MODELS_ENABLED によって固定されています。"
+    },
+    "workAgentAccess": {
+      "title": "Work のエージェントCLI",
+      "description": "サンドボックス内で Claude Code、Codex、Kiro、OpenCode、Pi に Work のタスクを任せられるユーザーを選びます。キーは「設定」→「接続」→「エージェントCLI」で追加します。",
+      "lockedByEnv": "環境変数 LIBRE_WORK_AGENTS_ACCESS で固定されています。",
+      "saved": "Work のエージェントCLIへのアクセスを更新しました",
+      "saveFailed": "Work のエージェントCLIへのアクセスを更新できませんでした",
+      "modes": {
+        "disabled": "オフ",
+        "admins": "管理者",
+        "all-users": "Work のすべてのユーザー"
+      }
     }
   },
   "usageAnalytics": {
@@ -3106,7 +3148,8 @@
     "sources": "モデルの提供元",
     "defaultModel": "デフォルトモデル",
     "contextSize": "コンテキスト {{size}}",
-    "via": "{{provider}} 経由"
+    "via": "{{provider}} 経由",
+    "agentNeedsKey": "キーが必要"
   },
   "whatsNew": {
     "title": "新機能",

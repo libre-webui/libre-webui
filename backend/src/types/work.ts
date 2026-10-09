@@ -47,7 +47,11 @@ export type WorkRunStatus =
 
 export type WorkPreviewStatus = 'stopped' | 'starting' | 'running' | 'failed';
 
-export type WorkProviderType = 'ollama' | 'plugin';
+/**
+ * `agent` runs an agent CLI (Claude Code, Codex, Kiro, OpenCode, Pi) inside
+ * the sandbox; providerId names the CLI, as it does for Chat agent models.
+ */
+export type WorkProviderType = 'ollama' | 'plugin' | 'agent';
 
 export interface WorkProviderSelection {
   providerType: WorkProviderType;
@@ -366,6 +370,11 @@ export interface WorkCapabilities {
   ollamaAvailable: boolean;
   pluginAvailable: boolean;
   runtimeImage: string;
+  /** Agent CLIs (Claude Code, Codex, Kiro, OpenCode, Pi) in the sandbox. */
+  agents?: {
+    enabled: boolean;
+    reason?: string;
+  };
   /** Whether this user may run Work tasks on the Strands agent engine. */
   strands?: {
     enabled: boolean;

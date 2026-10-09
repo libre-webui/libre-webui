@@ -645,7 +645,8 @@
       "sessions": "सत्र",
       "apiKeys": "API कुंजियाँ",
       "notifications": "सूचनाएँ",
-      "ollamaDisabled": "Ollama को एक व्यवस्थापक द्वारा अक्षम किया गया है"
+      "ollamaDisabled": "Ollama को एक व्यवस्थापक द्वारा अक्षम किया गया है",
+      "agentClis": "एजेंट CLI"
     },
     "appearance": {
       "title": "दिखावट",
@@ -1295,6 +1296,34 @@
       "emailMentionsHint": "जब कोई मुझे किसी चैनल में उल्लेख करे, तो मुझे ईमेल करें।",
       "emailAutomations": "ऑटोमेशन परिणाम",
       "emailAutomationsHint": "हर ऑटोमेशन रन का परिणाम मुझे ईमेल करें, चाहे वह सफल हो या विफल।"
+    },
+    "agentClis": {
+      "title": "Work में एजेंट CLI",
+      "description": "Claude Code, Codex, Kiro, OpenCode और Pi सैंडबॉक्स के अंदर Work के काम कर सकते हैं। किसी रन को केवल एक प्लेसहोल्डर दिखता है; असली कुंजी egress प्रॉक्सी सिर्फ़ एजेंट के अपने API के लिए जोड़ता है।",
+      "accessHint": "इन्हें कौन उपयोग कर सकता है, यह उपयोगकर्ता प्रबंधन में पहुँच और नीतियाँ के अंतर्गत चुनें।",
+      "unavailable": "Work में एजेंट CLI के लिए Docker रनटाइम चाहिए, या इस सर्वर ने इन्हें बंद कर दिया है।",
+      "keysTitle": "कुंजियाँ",
+      "keysDescription": "सहेजी गई कुंजियाँ एन्क्रिप्ट की जाती हैं और Work में एजेंट CLI इस्तेमाल करने की अनुमति वाले सभी लोग इन्हें साझा करते हैं।",
+      "saved": "सहेजी गई",
+      "environment": "सर्वर के एनवायरनमेंट में सेट",
+      "missing": "सेट नहीं",
+      "usedBy": "{{agents}} द्वारा उपयोग",
+      "providerFallback": "या हर उपयोगकर्ता की {{provider}} कुंजी",
+      "placeholder": "कुंजी चिपकाएँ",
+      "save": "सहेजें",
+      "remove": "हटाएं",
+      "keySaved": "कुंजी सहेजी गई।",
+      "keyRemoved": "कुंजी हटाई गई।",
+      "keyFailed": "कुंजी सहेजी नहीं जा सकी।",
+      "toolchainTitle": "इंस्टॉल किए गए एजेंट",
+      "toolchainDescription": "हर एजेंट अपने पहले रन पर इंस्टॉल होता है। इंतज़ार से बचने के लिए पहले से इंस्टॉल करें।",
+      "installing": "इंस्टॉल हो रहा है…",
+      "installed": "संस्करण {{version}}",
+      "notInstalled": "इंस्टॉल नहीं है",
+      "install": "इंस्टॉल करें",
+      "installStarted": "{{agent}} इंस्टॉल हो रहा है।",
+      "installFailed": "इंस्टॉल शुरू नहीं हो सका।",
+      "loadFailed": "एजेंट सेटिंग्स लोड नहीं हो सकीं।"
     }
   },
   "models": {
@@ -1948,7 +1977,8 @@
         "stt": "स्पीच टू टेक्स्ट",
         "tts": "टेक्स्ट टू स्पीच",
         "voice-mode": "वॉइस मोड",
-        "voice-cloning": "वॉइस क्लोनिंग"
+        "voice-cloning": "वॉइस क्लोनिंग",
+        "work-agents": "Work में एजेंट CLI"
       },
       "grantViaKinds": {
         "user": "सीधी अनुमति",
@@ -2082,6 +2112,18 @@
       "title": "एजेंट CLI मॉडल",
       "description": "प्रशासक इंस्टॉल किए गए Kiro, Pi, OpenCode, Codex और Claude Code को चैट मॉडल के रूप में उपयोग कर सकते हैं। ये Work सैंडबॉक्स के बाहर होस्ट पर चलते हैं।",
       "lockedByEnv": "AGENT_CLI_MODELS_ENABLED एनवायरनमेंट वैरिएबल द्वारा निर्धारित।"
+    },
+    "workAgentAccess": {
+      "title": "Work में एजेंट CLI",
+      "description": "चुनें कि कौन Claude Code, Codex, Kiro, OpenCode या Pi से सैंडबॉक्स के अंदर Work के काम करवा सकता है। कुंजियाँ सेटिंग्स → कनेक्शन → एजेंट CLI में जोड़ी जाती हैं।",
+      "lockedByEnv": "LIBRE_WORK_AGENTS_ACCESS एनवायरनमेंट वेरिएबल द्वारा तय।",
+      "saved": "Work में एजेंट CLI एक्सेस अपडेट हुआ",
+      "saveFailed": "Work में एजेंट CLI एक्सेस अपडेट नहीं हो सका",
+      "modes": {
+        "disabled": "बंद",
+        "admins": "व्यवस्थापक",
+        "all-users": "Work के सभी उपयोगकर्ता"
+      }
     }
   },
   "usageAnalytics": {
@@ -3106,7 +3148,8 @@
     "sources": "मॉडल स्रोत",
     "defaultModel": "डिफ़ॉल्ट मॉडल",
     "contextSize": "{{size}} कॉन्टेक्स्ट",
-    "via": "{{provider}} के ज़रिए"
+    "via": "{{provider}} के ज़रिए",
+    "agentNeedsKey": "कुंजी चाहिए"
   },
   "whatsNew": {
     "title": "नया क्या है",

@@ -37,6 +37,26 @@ import {
   type WorkAdminRecoveryItem,
 } from '../services/workAdminService.js';
 import workAgentService from '../services/workAgentService.js';
+import {
+  getWorkAgentAccess,
+  isWorkAgentAccessMode,
+  setWorkAgentAccessMode,
+  workAgentAccessLockedByEnv,
+  type WorkAgentAccessState,
+} from '../services/workAgentAccessService.js';
+import {
+  isWorkAgentCliId,
+  WORK_AGENT_CLIS,
+} from '../services/workAgentCatalog.js';
+import type { WorkAgentCredentialView } from '../services/workAgentCredentialService.js';
+import type { WorkAgentToolchainState } from '../services/workAgentToolchainService.js';
+import {
+  listWorkAgents,
+  workAgentCredentials,
+  workAgentToolchain,
+  workAgentUnavailableReason,
+  type WorkAgentAvailability,
+} from '../services/workAgents.js';
 import workEventService, {
   WORK_EVENT_MAX_RESUME_CURSOR,
 } from '../services/workEventService.js';
@@ -176,7 +196,158 @@ router.put(
   }
 );
 
+// Agent CLIs in Work: who may use them, the headless keys behind them, and
+// the shared toolchain they run from. Configuration, so admin-only and
+// registered before the Work gate like the access mode above.
+router.get(
+  '/agents/access',
+  requireAdmin,
+  async (
+    _req: AuthenticatedRequest,
+    res: Response<ApiResponse<WorkAgentAccessState>>
+  ): Promise<void> => {
+    try {
+      sendSuccess(res, await getWorkAgentAccess());
+    } catch (error) {
+      sendError(res, error);
+    }
+  }
+);
+
+router.put(
+  '/agents/access',
+  requireAdmin,
+  async (
+    req: AuthenticatedRequest,
+    res: Response<ApiResponse<WorkAgentAccessState>>
+  ): Promise<void> => {
+    try {
+      const mode: unknown = req.body?.mode;
+      if (!isWorkAgentAccessMode(mode)) {
+        throw new WorkRouteError(
+          'Field "mode" must be "disabled", "admins", or "all-users".',
+          400
+        );
+      }
+      if (workAgentAccessLockedByEnv()) {
+        throw new WorkRouteError(
+          'Agent CLI access in Work is pinned by LIBRE_WORK_AGENTS_ACCESS; unset it to manage the mode here.',
+          409
+        );
+      }
+      await setWorkAgentAccessMode(mode);
+      sendSuccess(res, await getWorkAgentAccess());
+    } catch (error) {
+      sendError(res, error);
+    }
+  }
+);
+
+router.get(
+  '/agents/credentials',
+  requireAdmin,
+  async (
+    _req: AuthenticatedRequest,
+    res: Response<ApiResponse<WorkAgentCredentialView[]>>
+  ): Promise<void> => {
+    try {
+      sendSuccess(res, await workAgentCredentials.list());
+    } catch (error) {
+      sendError(res, error);
+    }
+  }
+);
+
+router.put(
+  '/agents/credentials/:name',
+  requireAdmin,
+  async (
+    req: AuthenticatedRequest,
+    res: Response<ApiResponse<WorkAgentCredentialView[]>>
+  ): Promise<void> => {
+    try {
+      const value: unknown = req.body?.value;
+      if (typeof value !== 'string') {
+        throw new WorkRouteError('Field "value" must be a string.', 400);
+      }
+      await workAgentCredentials.set(String(req.params.name), value);
+      sendSuccess(res, await workAgentCredentials.list());
+    } catch (error) {
+      sendError(res, error);
+    }
+  }
+);
+
+router.get(
+  '/agents/toolchain',
+  requireAdmin,
+  async (
+    _req: AuthenticatedRequest,
+    res: Response<
+      ApiResponse<{
+        available: boolean;
+        reason?: string;
+        agents: WorkAgentToolchainState[];
+      }>
+    >
+  ): Promise<void> => {
+    try {
+      const reason = workAgentToolchain.unavailableReason();
+      sendSuccess(res, {
+        available: !reason,
+        ...(reason ? { reason } : {}),
+        agents: await workAgentToolchain.status(),
+      });
+    } catch (error) {
+      sendError(res, error);
+    }
+  }
+);
+
+// Installs (or reinstalls) one CLI's pinned version. Runs in the background:
+// the toolchain status reports `installing` until it lands.
+router.post(
+  '/agents/toolchain/:cli',
+  requireAdmin,
+  async (
+    req: AuthenticatedRequest,
+    res: Response<ApiResponse<WorkAgentToolchainState[]>>
+  ): Promise<void> => {
+    try {
+      const cliId = String(req.params.cli);
+      if (!isWorkAgentCliId(cliId)) {
+        throw new WorkRouteError(`Unknown agent CLI "${cliId}".`, 404);
+      }
+      const reason = workAgentToolchain.unavailableReason();
+      if (reason) throw new WorkRouteError(reason, 409);
+      void workAgentToolchain
+        .ensureInstalled(WORK_AGENT_CLIS[cliId])
+        .catch(() => undefined);
+      res.status(202);
+      sendSuccess(res, await workAgentToolchain.status());
+    } catch (error) {
+      sendError(res, error);
+    }
+  }
+);
+
 router.use(requireWorkAccess);
+
+// The agent entries this user may pick for a Work task. Unconfigured agents
+// are listed too, so the picker can say what an administrator must add.
+router.get(
+  '/agents',
+  async (
+    req: AuthenticatedRequest,
+    res: Response<ApiResponse<WorkAgentAvailability>>
+  ): Promise<void> => {
+    try {
+      sendSuccess(res, await listWorkAgents(requireUserId(req)));
+    } catch (error) {
+      sendError(res, error);
+    }
+  }
+);
 
 router.get(
   '/capabilities',
@@ -185,13 +356,19 @@ router.get(
     res: Response<ApiResponse<WorkCapabilities>>
   ): Promise<void> => {
     const userId = requireUserId(req);
-    const [runtimeAvailable, providers, strandsEnabled] = await Promise.all([
-      workRuntimeService.isRuntimeAvailable(),
-      workModelProviderService.availability(userId),
-      userHasStrandsAccess({ id: userId, role: req.user?.role }),
-    ]);
+    const [runtimeAvailable, providers, strandsEnabled, agentsUnavailable] =
+      await Promise.all([
+        workRuntimeService.isRuntimeAvailable(),
+        workModelProviderService.availability(userId),
+        userHasStrandsAccess({ id: userId, role: req.user?.role }),
+        workAgentUnavailableReason(userId).catch(
+          () => 'Agent CLIs in Work are unavailable.'
+        ),
+      ]);
     const providerAvailable =
-      providers.ollamaAvailable || providers.pluginAvailable;
+      providers.ollamaAvailable ||
+      providers.pluginAvailable ||
+      !agentsUnavailable;
     const recoveryPending = workRuntimeService.recoveryPending;
     const recoveryPendingCount = workRuntimeService.recoveryPendingCount;
     const available = runtimeAvailable && !recoveryPending && providerAvailable;
@@ -210,6 +387,9 @@ router.get(
       runtimeAvailable,
       ollamaAvailable: providers.ollamaAvailable,
       pluginAvailable: providers.pluginAvailable,
+      agents: agentsUnavailable
+        ? { enabled: false, reason: agentsUnavailable }
+        : { enabled: true },
       strands: { enabled: strandsEnabled },
       runtimeImage: workRuntimeService.image,
       reason,
@@ -1857,11 +2037,21 @@ function readProviderSelection(
   const record =
     body && typeof body === 'object' ? (body as Record<string, unknown>) : {};
   const rawType = record.providerType ?? fallback?.providerType ?? 'ollama';
-  if (rawType !== 'ollama' && rawType !== 'plugin') {
+  if (rawType !== 'ollama' && rawType !== 'plugin' && rawType !== 'agent') {
     throw new WorkRouteError(
-      'Field "providerType" must be "ollama" or "plugin".',
+      'Field "providerType" must be "ollama", "plugin", or "agent".',
       400
     );
+  }
+  if (rawType === 'agent') {
+    const cliId = record.providerId ?? fallback?.providerId;
+    if (!isWorkAgentCliId(cliId)) {
+      throw new WorkRouteError(
+        'Field "providerId" must name an agent CLI for agent providers.',
+        400
+      );
+    }
+    return { providerType: 'agent', providerId: cliId };
   }
   if (rawType === 'ollama') {
     if (

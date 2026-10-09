@@ -645,7 +645,8 @@
       "sessions": "เซสชัน",
       "apiKeys": "คีย์ API",
       "notifications": "การแจ้งเตือน",
-      "ollamaDisabled": "ผู้ดูแลระบบปิดใช้งาน Ollama แล้ว"
+      "ollamaDisabled": "ผู้ดูแลระบบปิดใช้งาน Ollama แล้ว",
+      "agentClis": "CLI ของเอเจนต์"
     },
     "appearance": {
       "title": "รูปลักษณ์",
@@ -1295,6 +1296,34 @@
       "emailMentionsHint": "ส่งอีเมลแจ้งฉันเมื่อมีคนกล่าวถึงฉันในแชนเนล",
       "emailAutomations": "ผลลัพธ์ของระบบอัตโนมัติ",
       "emailAutomationsHint": "ส่งอีเมลแจ้งผลลัพธ์ของการทำงานอัตโนมัติแต่ละครั้ง ไม่ว่าจะสำเร็จหรือล้มเหลว"
+    },
+    "agentClis": {
+      "title": "CLI ของเอเจนต์ใน Work",
+      "description": "Claude Code, Codex, Kiro, OpenCode และ Pi ทำงานของ Work ภายในแซนด์บ็อกซ์ได้ การรันแต่ละครั้งจะเห็นเพียงค่าตัวแทน ส่วนพร็อกซีขาออกจะใส่คีย์จริงให้เฉพาะ API ของเอเจนต์เท่านั้น",
+      "accessHint": "เลือกผู้ที่ใช้ได้ใน จัดการผู้ใช้ หัวข้อ การเข้าถึงและนโยบาย",
+      "unavailable": "CLI ของเอเจนต์ใน Work ต้องใช้รันไทม์ Docker หรือเซิร์ฟเวอร์นี้ปิดใช้งานไว้",
+      "keysTitle": "คีย์",
+      "keysDescription": "คีย์ที่บันทึกจะถูกเข้ารหัสและใช้ร่วมกันโดยทุกคนที่ได้รับอนุญาตให้ใช้ CLI ของเอเจนต์ใน Work",
+      "saved": "บันทึกแล้ว",
+      "environment": "ตั้งค่าในสภาพแวดล้อมของเซิร์ฟเวอร์",
+      "missing": "ยังไม่ได้ตั้งค่า",
+      "usedBy": "ใช้โดย {{agents}}",
+      "providerFallback": "หรือคีย์ {{provider}} ของผู้ใช้แต่ละคน",
+      "placeholder": "วางคีย์",
+      "save": "บันทึก",
+      "remove": "ลบ",
+      "keySaved": "บันทึกคีย์แล้ว",
+      "keyRemoved": "ลบคีย์แล้ว",
+      "keyFailed": "บันทึกคีย์ไม่ได้",
+      "toolchainTitle": "เอเจนต์ที่ติดตั้งแล้ว",
+      "toolchainDescription": "เอเจนต์แต่ละตัวจะติดตั้งเมื่อรันครั้งแรก ติดตั้งล่วงหน้าเพื่อไม่ต้องรอ",
+      "installing": "กำลังติดตั้ง…",
+      "installed": "เวอร์ชัน {{version}}",
+      "notInstalled": "ยังไม่ได้ติดตั้ง",
+      "install": "ติดตั้ง",
+      "installStarted": "กำลังติดตั้ง {{agent}}",
+      "installFailed": "เริ่มการติดตั้งไม่ได้",
+      "loadFailed": "โหลดการตั้งค่าเอเจนต์ไม่ได้"
     }
   },
   "models": {
@@ -1948,7 +1977,8 @@
         "stt": "เสียงเป็นข้อความ",
         "tts": "ข้อความเป็นเสียง",
         "voice-mode": "โหมดเสียง",
-        "voice-cloning": "การโคลนเสียง"
+        "voice-cloning": "การโคลนเสียง",
+        "work-agents": "CLI ของเอเจนต์ใน Work"
       },
       "grantViaKinds": {
         "user": "ให้สิทธิ์โดยตรง",
@@ -2082,6 +2112,18 @@
       "title": "โมเดลเอเจนต์ CLI",
       "description": "ผู้ดูแลระบบสามารถใช้ Kiro, Pi, OpenCode, Codex และ Claude Code ที่ติดตั้งไว้เป็นโมเดลแชตได้ โดยทำงานบนโฮสต์นอกแซนด์บ็อกซ์ของ Work",
       "lockedByEnv": "ถูกกำหนดโดยตัวแปรสภาพแวดล้อม AGENT_CLI_MODELS_ENABLED"
+    },
+    "workAgentAccess": {
+      "title": "CLI ของเอเจนต์ใน Work",
+      "description": "เลือกผู้ที่สามารถให้ Claude Code, Codex, Kiro, OpenCode หรือ Pi ทำงานของ Work ภายในแซนด์บ็อกซ์ได้ เพิ่มคีย์ได้ที่ การตั้งค่า → การเชื่อมต่อ → CLI ของเอเจนต์",
+      "lockedByEnv": "กำหนดตายตัวโดยตัวแปรสภาพแวดล้อม LIBRE_WORK_AGENTS_ACCESS",
+      "saved": "อัปเดตการเข้าถึง CLI ของเอเจนต์ใน Work แล้ว",
+      "saveFailed": "อัปเดตการเข้าถึง CLI ของเอเจนต์ใน Work ไม่ได้",
+      "modes": {
+        "disabled": "ปิด",
+        "admins": "ผู้ดูแลระบบ",
+        "all-users": "ผู้ใช้ Work ทั้งหมด"
+      }
     }
   },
   "usageAnalytics": {
@@ -3106,7 +3148,8 @@
     "sources": "แหล่งที่มาของโมเดล",
     "defaultModel": "โมเดลเริ่มต้น",
     "contextSize": "บริบท {{size}}",
-    "via": "ผ่าน {{provider}}"
+    "via": "ผ่าน {{provider}}",
+    "agentNeedsKey": "ต้องมีคีย์"
   },
   "whatsNew": {
     "title": "มีอะไรใหม่",

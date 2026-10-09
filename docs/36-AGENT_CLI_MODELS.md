@@ -154,6 +154,15 @@ For a model that can act on files but stays inside a sandbox, use
 [Work](./WORKSPACES) instead: it runs tool-capable models in a locked-down
 container with an isolated workspace.
 
+## The same agents in Work
+
+Work offers these agents too, but runs them differently: inside the task's
+sandbox instead of on the host, with headless keys an administrator stores in
+Libre WebUI instead of the server user's logins, and behind an egress proxy
+that keeps the real keys out of the sandbox. They have their own access mode,
+**Agent CLIs in Work**, and do not need the switch above. See
+[Agent CLIs in Work](./WORKSPACES#agent-clis-in-work).
+
 ## Usage tracking
 
 Open **Provider Usage** (`/usage`) and find **Agents** near the top. Claude Code,

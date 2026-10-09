@@ -70,6 +70,67 @@ The server re-checks Strands access on every model call of a Strands run, so
 turning the engine off for your account stops a live run at its next step.
 Existing tasks remain readable and can select the Libre WebUI engine again.
 
+## Agent CLIs in Work
+
+The model picker in Work has the same **Agents** groups as Chat: **Claude
+Code**, **Codex**, **Kiro**, **OpenCode**, and **Pi**. Pick one and that coding
+agent does the task. It runs inside the task's sandbox, in `/workspace`, as
+the same unprivileged user as every other Work command, with its own tools
+approved: the container, not the agent, is the security boundary. Its replies,
+reasoning, and tool calls stream into the run like any Work run, and the files
+it changed appear on the run.
+
+These are not the [Agent CLI chat models](./AGENT_CLI_MODELS). Those run on the
+server host with the server user's own logins. Agents in Work never see the
+host, and they never see a real credential either.
+
+**Credentials stay outside the sandbox.** A run gets a placeholder such as
+`lwui_ph_…` in place of each key. The agent's traffic leaves the sandbox
+through Libre WebUI's egress proxy, which recognizes the credential's own API
+hosts, swaps the placeholder for the real key on the way out, and passes every
+other connection through untouched. A placeholder sent anywhere else stays
+useless. The proxy refuses private addresses, and a task without network can
+reach only its agent's API.
+
+| Agent        | Credential, any one of                                                                               | Sent only to                                                    |
+| ------------ | ---------------------------------------------------------------------------------------------------- | --------------------------------------------------------------- |
+| Claude Code  | `CLAUDE_CODE_OAUTH_TOKEN` (from `claude setup-token`), `ANTHROPIC_API_KEY`, or an Amazon Bedrock key | `api.anthropic.com`, or `bedrock-runtime` in the Bedrock Region |
+| Codex        | `CODEX_API_KEY` or an OpenAI key                                                                     | `api.openai.com`                                                |
+| Kiro         | `KIRO_API_KEY`, a `ksk_` key from app.kiro.dev (Kiro Pro and above)                                  | Kiro's management and runtime hosts                             |
+| OpenCode, Pi | an OpenRouter, Anthropic, or OpenAI key, matching the model's provider                               | that provider's API                                             |
+
+Administrators add headless keys under **Settings → Connections → Agent CLIs**,
+where they are stored encrypted, or set `WORK_AGENT_<NAME>` in the server
+environment (for example `WORK_AGENT_KIRO_API_KEY`). The server's own
+`KIRO_API_KEY` or `ANTHROPIC_API_KEY` is never picked up implicitly. Provider
+keys come from the key each user saved for that provider, exactly as Chat uses
+them, so OpenCode and Pi work with an OpenRouter connection, and Claude Code
+works with an Amazon Bedrock connection.
+
+**Access.** Agent CLIs in Work start **off**. An administrator opens them to
+administrators or to every Work user under **Settings → User Management →
+Access & policies → Agent CLIs in Work**, or pins the choice with
+`LIBRE_WORK_AGENTS_ACCESS`. An agent with no credential stays visible in the
+picker, marked unavailable, until a key is added.
+
+**Installation.** The first run of each agent installs a pinned version into a
+shared, read-only toolchain volume (`libre-webui-work-agents`) with a
+short-lived installer container, so sandboxes never install anything
+themselves; the run shows **Installing** meanwhile. An administrator can also
+install an agent ahead of time from the same settings page. Agent CLIs in Work
+need the Docker runtime.
+
+**Turns and limits.** Each message starts a fresh agent turn that receives the
+task's earlier conversation, and the workspace keeps everything it made. Stop
+ends the agent and every command it started. A turn may run for up to
+`WORK_AGENT_RUN_TIMEOUT_MS` (60 minutes). Action approvals do not apply,
+because the agent executes its own tools; the sandbox policy and the task's
+network setting bound what it can reach.
+
+**Personas.** The picker also lists your personas. Picking one hires the
+persona for the new task, as **Hire as an agent** does, and switches to the
+persona's own model when Work can run it.
+
 ## Reasoning level
 
 The Work composer carries the same reasoning control as Chat, beside the model

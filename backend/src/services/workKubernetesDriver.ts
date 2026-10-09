@@ -25,8 +25,11 @@ import type {
   WorkRuntimeDriver,
   WorkRuntimeState,
   WorkTerminalTransport,
+  WorkProcessOptions,
+  WorkSandboxProcess,
 } from './workRuntimeDriver.js';
 import workPolicyService from './workPolicyService.js';
+import { sandboxEnvironmentPairs } from './workRuntimeDriver.js';
 import {
   ProcessResult,
   ResolvedWorkRuntimePolicy,
@@ -291,6 +294,70 @@ export class KubernetesWorkRuntimeDriver implements WorkRuntimeDriver {
       wrapCommandWithWorkdir(command, options.workdir),
       options
     );
+  }
+
+  async openProcess(
+    task: WorkTaskRecord,
+    command: string[],
+    options: WorkProcessOptions = {}
+  ): Promise<WorkSandboxProcess> {
+    const { lib, kubeConfig } = await this.client();
+    // The exec subresource has no environment field; `env` sets it.
+    const pairs = sandboxEnvironmentPairs(options.env);
+    const argv = wrapCommandWithWorkdir(
+      pairs.length > 0 ? ['env', ...pairs, ...command] : command,
+      options.workdir
+    );
+    const stdin = new PassThrough();
+    const stdout = new PassThrough();
+    const stderr = new PassThrough();
+    let status: import('@kubernetes/client-node').V1Status | undefined;
+    let socket: import('isomorphic-ws').WebSocket | undefined;
+    let resolveExit!: (code: number | null) => void;
+    const exited = new Promise<number | null>(resolve => {
+      resolveExit = resolve;
+    });
+    const finish = (code: number | null): void => {
+      stdout.end();
+      stderr.end();
+      resolveExit(code);
+    };
+    try {
+      socket = await new lib.Exec(kubeConfig).exec(
+        this.namespace,
+        task.containerName,
+        WORK_CONTAINER_NAME,
+        argv,
+        stdout,
+        stderr,
+        stdin,
+        false,
+        result => {
+          status = result;
+        }
+      );
+    } catch (error) {
+      throw new WorkRuntimeError(
+        `Could not exec in Work sandbox Pod "${task.containerName}": ${error instanceof Error ? error.message : String(error)}`,
+        503,
+        'WORK_KUBERNETES_UNAVAILABLE'
+      );
+    }
+    socket.on('close', () => finish(statusToExitCode(status)));
+    socket.on('error', () => finish(null));
+    return {
+      stdin,
+      stdout,
+      stderr,
+      exited,
+      kill: () => {
+        try {
+          socket?.close();
+        } catch {
+          // Already closed.
+        }
+      },
+    };
   }
 
   async previewEndpoint(

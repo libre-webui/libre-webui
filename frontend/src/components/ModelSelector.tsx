@@ -637,6 +637,10 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
     if (model.isPersona) {
       return t('modelSelector.via', { provider: model.model });
     }
+    // Only Work lists agents it cannot run yet: they wait for a key.
+    if (model.isAgent && model.isUnavailable) {
+      return t('modelSelector.agentNeedsKey', 'needs a key');
+    }
     if (model.isPlugin) {
       return model.isUnavailable
         ? `${t('modelSelector.via', {

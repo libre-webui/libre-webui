@@ -645,7 +645,8 @@
       "sessions": "Setur",
       "apiKeys": "API lyklar",
       "notifications": "Tilkynningar",
-      "ollamaDisabled": "Stjórnandi hefur slökkt á Ollama"
+      "ollamaDisabled": "Stjórnandi hefur slökkt á Ollama",
+      "agentClis": "CLI-agentar"
     },
     "appearance": {
       "title": "Útlit",
@@ -1295,6 +1296,34 @@
       "emailMentionsHint": "Sendu mér tölvupóst þegar einhver nefnir mig í rás.",
       "emailAutomations": "Niðurstöður sjálfvirkni",
       "emailAutomationsHint": "Sendu mér tölvupóst um niðurstöðu hverrar sjálfvirknikeyrslu, hvort sem hún heppnaðist eða ekki."
+    },
+    "agentClis": {
+      "title": "CLI-agentar í Work",
+      "description": "Claude Code, Codex, Kiro, OpenCode og Pi geta unnið Work-verkefni inni í sandkassanum. Keyrsla sér aðeins staðgengil; útleiðarproxy bætir raunverulega lyklinum við eingöngu fyrir API agentsins.",
+      "accessHint": "Veldu hverjir mega nota þá í Notendastjórnun, undir Aðgangur og reglur.",
+      "unavailable": "CLI-agentar í Work þurfa Docker-keyrsluumhverfi, eða þessi þjónn hefur slökkt á þeim.",
+      "keysTitle": "Lyklar",
+      "keysDescription": "Vistaðir lyklar eru dulkóðaðir og deilt með öllum sem mega nota CLI-agenta í Work.",
+      "saved": "Vistaður",
+      "environment": "Stilltur í umhverfi þjónsins",
+      "missing": "Ekki stilltur",
+      "usedBy": "Notaður af {{agents}}",
+      "providerFallback": "eða {{provider}}-lykill hvers notanda",
+      "placeholder": "Límdu inn lykil",
+      "save": "Vista",
+      "remove": "Fjarlægja",
+      "keySaved": "Lykill vistaður.",
+      "keyRemoved": "Lykill fjarlægður.",
+      "keyFailed": "Ekki tókst að vista lykilinn.",
+      "toolchainTitle": "Uppsettir agentar",
+      "toolchainDescription": "Hver agent er settur upp við fyrstu keyrslu. Settu hann upp fyrir fram til að sleppa við biðina.",
+      "installing": "Set upp…",
+      "installed": "Útgáfa {{version}}",
+      "notInstalled": "Ekki uppsettur",
+      "install": "Setja upp",
+      "installStarted": "Set upp {{agent}}.",
+      "installFailed": "Ekki tókst að hefja uppsetningu.",
+      "loadFailed": "Ekki tókst að hlaða stillingum agenta."
     }
   },
   "models": {
@@ -1948,7 +1977,8 @@
         "stt": "Tal í texta",
         "tts": "Texti í tal",
         "voice-mode": "Raddstilling",
-        "voice-cloning": "Raddafritun"
+        "voice-cloning": "Raddafritun",
+        "work-agents": "CLI-agentar í Work"
       },
       "grantViaKinds": {
         "user": "bein úthlutun",
@@ -2082,6 +2112,18 @@
       "title": "Líkön CLI-agenta",
       "description": "Stjórnendur geta notað uppsett Kiro, Pi, OpenCode, Codex og Claude Code sem spjalllíkön. Þau keyra á hýsivélinni utan Work-sandkassa.",
       "lockedByEnv": "Fest með umhverfisbreytunni AGENT_CLI_MODELS_ENABLED."
+    },
+    "workAgentAccess": {
+      "title": "CLI-agentar í Work",
+      "description": "Veldu hverjir mega láta Claude Code, Codex, Kiro, OpenCode eða Pi vinna Work-verkefni inni í sandkassanum. Lyklum er bætt við í Stillingar → Tengingar → CLI-agentar.",
+      "lockedByEnv": "Fest með umhverfisbreytunni LIBRE_WORK_AGENTS_ACCESS.",
+      "saved": "Aðgangur að CLI-agentum í Work uppfærður",
+      "saveFailed": "Ekki tókst að uppfæra aðgang að CLI-agentum í Work",
+      "modes": {
+        "disabled": "Slökkt",
+        "admins": "Stjórnendur",
+        "all-users": "Allir Work-notendur"
+      }
     }
   },
   "usageAnalytics": {
@@ -3106,7 +3148,8 @@
     "sources": "Uppruni líkana",
     "defaultModel": "Sjálfgefið líkan",
     "contextSize": "{{size}} samhengi",
-    "via": "í gegnum {{provider}}"
+    "via": "í gegnum {{provider}}",
+    "agentNeedsKey": "vantar lykil"
   },
   "whatsNew": {
     "title": "Nýjungar",

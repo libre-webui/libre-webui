@@ -45,11 +45,14 @@ export const baseWorkModel = (
   return prefix ? model.slice(prefix.length) : model;
 };
 
-/** Every provider model can run on either engine. */
+/**
+ * Every provider model can run on either engine. An agent CLI runs its own
+ * loop, so it only takes the default slot and never gains a Strands prefix.
+ */
 export const workModelSupportsEngine = (
-  _option: WorkModelOption,
-  _engine: WorkEngine
-): boolean => true;
+  option: WorkModelOption,
+  engine: WorkEngine
+): boolean => option.providerType !== 'agent' || engine === 'libre';
 
 /** The engine choice never changes the selected provider or remote disclosure. */
 export const selectWorkEngine = (

@@ -645,7 +645,8 @@
       "sessions": "সেশন",
       "apiKeys": "API কী",
       "notifications": "বিজ্ঞপ্তি",
-      "ollamaDisabled": "একজন প্রশাসক Ollama নিষ্ক্রিয় করেছেন"
+      "ollamaDisabled": "একজন প্রশাসক Ollama নিষ্ক্রিয় করেছেন",
+      "agentClis": "এজেন্ট CLI"
     },
     "appearance": {
       "title": "চেহারা",
@@ -1295,6 +1296,34 @@
       "emailMentionsHint": "কোনো চ্যানেলে কেউ আমাকে উল্লেখ করলে আমাকে ইমেইল করুন।",
       "emailAutomations": "অটোমেশন ফলাফল",
       "emailAutomationsHint": "প্রতিটি অটোমেশন রানের ফলাফল আমাকে ইমেইল করুন, তা সফল হোক বা ব্যর্থ।"
+    },
+    "agentClis": {
+      "title": "Work-এ এজেন্ট CLI",
+      "description": "Claude Code, Codex, Kiro, OpenCode এবং Pi স্যান্ডবক্সের ভেতরে Work-এর কাজ করতে পারে। কোনো রান কেবল একটি প্লেসহোল্ডার দেখে; আসল কী egress প্রক্সি শুধু এজেন্টের নিজস্ব API-র জন্য যোগ করে।",
+      "accessHint": "কে এগুলো ব্যবহার করতে পারবে তা ব্যবহারকারী ব্যবস্থাপনা-এ অ্যাক্সেস ও নীতিমালা অংশে বেছে নিন।",
+      "unavailable": "Work-এ এজেন্ট CLI-র জন্য Docker রানটাইম প্রয়োজন, অথবা এই সার্ভার এগুলো বন্ধ রেখেছে।",
+      "keysTitle": "কী",
+      "keysDescription": "সংরক্ষিত কী এনক্রিপ্ট করা থাকে এবং Work-এ এজেন্ট CLI ব্যবহারের অনুমতিপ্রাপ্ত সবাই সেগুলো ভাগ করে নেয়।",
+      "saved": "সংরক্ষিত",
+      "environment": "সার্ভারের পরিবেশে সেট করা",
+      "missing": "সেট করা নেই",
+      "usedBy": "ব্যবহার করে {{agents}}",
+      "providerFallback": "অথবা প্রত্যেক ব্যবহারকারীর {{provider}} কী",
+      "placeholder": "একটি কী পেস্ট করুন",
+      "save": "সংরক্ষণ",
+      "remove": "সরান",
+      "keySaved": "কী সংরক্ষিত হয়েছে।",
+      "keyRemoved": "কী সরানো হয়েছে।",
+      "keyFailed": "কী সংরক্ষণ করা যায়নি।",
+      "toolchainTitle": "ইনস্টল করা এজেন্ট",
+      "toolchainDescription": "প্রতিটি এজেন্ট প্রথমবার চালানোর সময় ইনস্টল হয়। অপেক্ষা এড়াতে আগেই ইনস্টল করুন।",
+      "installing": "ইনস্টল হচ্ছে…",
+      "installed": "সংস্করণ {{version}}",
+      "notInstalled": "ইনস্টল করা নেই",
+      "install": "ইনস্টল করুন",
+      "installStarted": "{{agent}} ইনস্টল হচ্ছে।",
+      "installFailed": "ইনস্টল শুরু করা যায়নি।",
+      "loadFailed": "এজেন্ট সেটিংস লোড করা যায়নি।"
     }
   },
   "models": {
@@ -1948,7 +1977,8 @@
         "stt": "স্পিচ টু টেক্সট",
         "tts": "টেক্সট টু স্পিচ",
         "voice-mode": "ভয়েস মোড",
-        "voice-cloning": "ভয়েস ক্লোনিং"
+        "voice-cloning": "ভয়েস ক্লোনিং",
+        "work-agents": "Work-এ এজেন্ট CLI"
       },
       "grantViaKinds": {
         "user": "সরাসরি অনুমতি",
@@ -2082,6 +2112,18 @@
       "title": "এজেন্ট CLI মডেল",
       "description": "প্রশাসকেরা ইনস্টল করা Kiro, Pi, OpenCode, Codex এবং Claude Code চ্যাট মডেল হিসেবে ব্যবহার করতে পারেন। এগুলি Work স্যান্ডবক্সের বাইরে হোস্টে চলে।",
       "lockedByEnv": "AGENT_CLI_MODELS_ENABLED এনভায়রনমেন্ট ভেরিয়েবল দ্বারা নির্ধারিত।"
+    },
+    "workAgentAccess": {
+      "title": "Work-এ এজেন্ট CLI",
+      "description": "কে Claude Code, Codex, Kiro, OpenCode বা Pi দিয়ে স্যান্ডবক্সের ভেতরে Work-এর কাজ করাতে পারবে তা বেছে নিন। কী যোগ করা হয় সেটিংস → সংযোগ → এজেন্ট CLI-এ।",
+      "lockedByEnv": "LIBRE_WORK_AGENTS_ACCESS এনভায়রনমেন্ট ভেরিয়েবল দ্বারা নির্ধারিত।",
+      "saved": "Work-এ এজেন্ট CLI অ্যাক্সেস হালনাগাদ হয়েছে",
+      "saveFailed": "Work-এ এজেন্ট CLI অ্যাক্সেস হালনাগাদ করা যায়নি",
+      "modes": {
+        "disabled": "বন্ধ",
+        "admins": "প্রশাসকগণ",
+        "all-users": "Work-এর সব ব্যবহারকারী"
+      }
     }
   },
   "usageAnalytics": {
@@ -3106,7 +3148,8 @@
     "sources": "মডেলের উৎস",
     "defaultModel": "ডিফল্ট মডেল",
     "contextSize": "{{size}} কনটেক্সট",
-    "via": "{{provider}} এর মাধ্যমে"
+    "via": "{{provider}} এর মাধ্যমে",
+    "agentNeedsKey": "কী প্রয়োজন"
   },
   "whatsNew": {
     "title": "নতুন কী আছে",

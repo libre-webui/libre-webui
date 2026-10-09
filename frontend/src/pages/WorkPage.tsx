@@ -51,13 +51,14 @@ import { useWorkStore } from '@/store/workStore';
 import {
   isWorkTaskActive,
   workModelSelectionKey,
+  type WorkAgentOffer,
   type WorkFile,
   type WorkModelOption,
   type WorkPolicy,
   type WorkRunEvent,
   type WorkTask,
 } from '@/types/work';
-import type { ThinkingPreference } from '@/types';
+import type { OllamaModel, ThinkingPreference } from '@/types';
 import { cn, formatRelativeTime } from '@/utils';
 import { preferencesApi, workApi } from '@/utils/api';
 import { clearWorkDraft, clearWorkTaskDrafts } from '@/utils/workDrafts';
@@ -101,6 +102,9 @@ const waitForReconnect = (
     timer = window.setTimeout(finish, milliseconds);
     signal.addEventListener('abort', finish, { once: true });
   });
+
+/** Stable stand-in while agent CLIs are off, so memos stay quiet. */
+const NO_AGENT_OFFERS: WorkAgentOffer[] = [];
 
 export default function WorkPage() {
   const { t, i18n } = useTranslation();
@@ -178,7 +182,7 @@ export default function WorkPage() {
       ),
     [chatModels]
   );
-  const modelOptions = useMemo<WorkModelOption[]>(
+  const providerModelOptions = useMemo<WorkModelOption[]>(
     () =>
       models.flatMap(model => {
         if (model.isPlugin && !model.pluginId) return [];
@@ -207,6 +211,101 @@ export default function WorkPage() {
       }),
     [models]
   );
+  // Agent CLIs Work runs inside the sandbox (not the host CLIs Chat lists).
+  // Unconfigured agents stay visible so the picker can say what is missing.
+  const agentsEnabled = capabilities?.agents?.enabled === true;
+  const [loadedAgentOffers, setAgentOffers] = useState<WorkAgentOffer[]>([]);
+  const [agentListVersion, setAgentListVersion] = useState(0);
+  const agentOffers = agentsEnabled ? loadedAgentOffers : NO_AGENT_OFFERS;
+  useEffect(() => {
+    if (!agentsEnabled) return;
+    let cancelled = false;
+    void workApi
+      .agents()
+      .then(response => {
+        if (cancelled || !response.success || !response.data) return;
+        setAgentOffers(response.data.enabled ? response.data.agents : []);
+      })
+      .catch(() => {
+        if (!cancelled) setAgentOffers([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [agentsEnabled, agentListVersion]);
+  const agentModelOptions = useMemo<WorkModelOption[]>(
+    () =>
+      agentOffers.flatMap(offer =>
+        offer.models.map(entry => {
+          const selection = {
+            model: entry.id,
+            providerType: 'agent' as const,
+            providerId: offer.id,
+          };
+          return {
+            ...selection,
+            key: workModelSelectionKey(selection),
+            label:
+              entry.id === offer.id
+                ? offer.name
+                : `${offer.name} · ${entry.label}`,
+            remote: true,
+            ...(offer.configured ? {} : { unavailable: true }),
+          };
+        })
+      ),
+    [agentOffers]
+  );
+  const agentSelectorModels = useMemo<OllamaModel[]>(
+    () =>
+      agentModelOptions.map(option => ({
+        name: option.model,
+        model: option.model,
+        size: 0,
+        digest: '',
+        modified_at: '',
+        details: {},
+        isAgent: true,
+        agentId: option.providerId,
+        agentName: option.label,
+        ...(option.unavailable ? { isUnavailable: true } : {}),
+      })),
+    [agentModelOptions]
+  );
+  const modelOptions = useMemo<WorkModelOption[]>(
+    () => [...providerModelOptions, ...agentModelOptions],
+    [providerModelOptions, agentModelOptions]
+  );
+  const selectorModels = useMemo(
+    () => [...models, ...agentSelectorModels],
+    [models, agentSelectorModels]
+  );
+  // Personas Chat offers. Picking one hires it for the new task and, when
+  // Work can run the persona's own model, switches to that model as well.
+  const personaPicks = useMemo(() => {
+    const options: WorkModelOption[] = [];
+    const entries: OllamaModel[] = [];
+    for (const persona of chatModels) {
+      if (!persona.isPersona) continue;
+      const base =
+        modelOptions.find(
+          option =>
+            option.model === persona.model && option.providerType === 'plugin'
+        ) ?? modelOptions.find(option => option.model === persona.model);
+      options.push({
+        ...(base ?? {
+          model: persona.model ?? persona.name,
+          providerType: 'ollama' as const,
+          remote: false,
+        }),
+        key: persona.name,
+        label: persona.personaName || persona.name,
+        personaId: persona.name.replace(/^persona:/, ''),
+      });
+      entries.push(persona);
+    }
+    return { options, entries };
+  }, [chatModels, modelOptions]);
   const allModelOptions = modelOptions;
   const [draftModel, setDraftModel] = useState<WorkModelOption | null>(null);
   const [engineChoice, setEngineChoice] = useState<{
@@ -505,8 +604,14 @@ export default function WorkPage() {
             (chatSelectedProviderType === 'plugin'
               ? model.providerType === 'plugin' &&
                 model.providerId === chatSelectedProviderId
-              : model.providerType === 'ollama')
-        ) ?? modelOptions[0]);
+              : chatSelectedProviderType === 'agent'
+                ? model.providerType === 'agent' &&
+                  model.providerId === chatSelectedProviderId &&
+                  !model.unavailable
+                : model.providerType === 'ollama')
+        ) ??
+        modelOptions.find(model => !model.unavailable) ??
+        modelOptions[0]);
   const freshEngine =
     chosenEngine ??
     (draftModel
@@ -979,9 +1084,20 @@ export default function WorkPage() {
   };
 
   const changeModel = async (
-    model: WorkModelOption,
+    picked: WorkModelOption,
     requestedEngine?: WorkEngine
   ) => {
+    // A persona entry hires that persona, and runs on its own model when
+    // Work offers it; otherwise the current model stays.
+    let model = picked;
+    if (picked.personaId) {
+      if (selectedTask) return;
+      setPersonaId(picked.personaId);
+      const baseKey = workModelSelectionKey(picked);
+      const base = allModelOptions.find(option => option.key === baseKey);
+      if (!base) return;
+      model = base;
+    }
     if (!selectedTask) {
       // ModelSelector can finish its unload request after a newer engine
       // choice. Merge with current state instead of its captured render.
@@ -1052,6 +1168,7 @@ export default function WorkPage() {
 
   const refreshModels = async () => {
     await Promise.all([loadChatModels(), loadCapabilities()]);
+    setAgentListVersion(version => version + 1);
   };
 
   const stopRun = async () => {
@@ -1909,8 +2026,8 @@ export default function WorkPage() {
               <WorkComposer
                 variant='landing'
                 dictationOwnerKey='landing'
-                models={freshModelOptions}
-                selectorModels={models}
+                models={[...personaPicks.options, ...freshModelOptions]}
+                selectorModels={[...personaPicks.entries, ...selectorModels]}
                 selectedModel={freshModel}
                 engine={freshEngine}
                 strandsEnabled={strandsEnabled}
@@ -1983,7 +2100,7 @@ export default function WorkPage() {
                     )
                     .map(item => ({ id: item.id, name: item.title }))}
                   models={effectiveModelOptions}
-                  selectorModels={models}
+                  selectorModels={selectorModels}
                   selectedModel={selectedWorkModel}
                   engine={taskEngine}
                   strandsEnabled={strandsEnabled}

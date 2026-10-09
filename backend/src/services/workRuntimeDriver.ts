@@ -17,7 +17,7 @@
 
 import { spawn } from 'node:child_process';
 import http from 'node:http';
-import type { Duplex } from 'node:stream';
+import type { Duplex, Readable, Writable } from 'node:stream';
 
 import type { WorkTaskRecord } from '../types/work.js';
 import {
@@ -27,6 +27,8 @@ import {
 import { createLogger } from '../utils/logger.js';
 import workPolicyService from './workPolicyService.js';
 import {
+  WORK_AGENT_TOOLCHAIN_MOUNT,
+  workAgentToolchainVolume,
   ProcessOptions,
   ProcessResult,
   ResolvedWorkRuntimePolicy,
@@ -43,6 +45,50 @@ const activeDockerProcesses = new Set<ReturnType<typeof spawn>>();
 export interface WorkExecOptions extends ProcessOptions {
   /** Working directory inside the sandbox. Defaults to /workspace. */
   workdir?: string;
+}
+
+export interface WorkProcessOptions {
+  /** Working directory inside the sandbox. Defaults to /workspace. */
+  workdir?: string;
+  /**
+   * Extra environment for the process. The sandbox can read these values,
+   * so callers pass placeholders and paths here, never secrets.
+   */
+  env?: Record<string, string>;
+}
+
+/** A long-running sandbox process with raw, binary-safe stdio. */
+export interface WorkSandboxProcess {
+  readonly stdin: Writable;
+  readonly stdout: Readable;
+  readonly stderr: Readable;
+  /** Settles with the exit code, or null when the client was killed. */
+  readonly exited: Promise<number | null>;
+  /**
+   * Drop the client side of the exec. The sandbox process sees its stdin
+   * close; anything that ignores that must be stopped inside the sandbox.
+   */
+  kill(): void;
+}
+
+const ENV_NAME_PATTERN = /^[A-Za-z_][A-Za-z0-9_]*$/;
+
+/** Validated `NAME=value` pairs for a sandbox process environment. */
+export function sandboxEnvironmentPairs(
+  env: Record<string, string> | undefined
+): string[] {
+  const pairs: string[] = [];
+  for (const [name, value] of Object.entries(env ?? {})) {
+    if (!ENV_NAME_PATTERN.test(name) || value.includes('\0')) {
+      throw new WorkRuntimeError(
+        `Invalid sandbox environment variable "${name}".`,
+        500,
+        'WORK_PROCESS_ENV_INVALID'
+      );
+    }
+    pairs.push(`${name}=${value}`);
+  }
+  return pairs;
 }
 
 export interface DiscoveredWorkContainer {
@@ -109,6 +155,16 @@ export interface WorkRuntimeDriver {
     command: string[],
     options?: WorkExecOptions
   ): Promise<ProcessResult>;
+  /**
+   * Start a long-running process inside the sandbox, as the unprivileged
+   * sandbox user, with streaming stdio. Used for agent CLIs and the egress
+   * relay that carries their API traffic.
+   */
+  openProcess(
+    task: WorkTaskRecord,
+    command: string[],
+    options?: WorkProcessOptions
+  ): Promise<WorkSandboxProcess>;
   /**
    * Endpoint the backend can reach the task's preview server on, if any.
    * The host is private server routing state. Docker returns its reachable
@@ -337,6 +393,55 @@ export class DockerWorkRuntimeDriver implements WorkRuntimeDriver {
       ...command,
     ];
     return this.docker(args, options);
+  }
+
+  async openProcess(
+    task: WorkTaskRecord,
+    command: string[],
+    options: WorkProcessOptions = {}
+  ): Promise<WorkSandboxProcess> {
+    const args = [
+      'exec',
+      '--interactive',
+      '--user',
+      '1000:1000',
+      '--workdir',
+      options.workdir ?? '/workspace',
+    ];
+    for (const pair of sandboxEnvironmentPairs(options.env)) {
+      args.push('--env', pair);
+    }
+    args.push(task.containerName, ...command);
+    const child = spawn(config.dockerCommand, args, {
+      stdio: ['pipe', 'pipe', 'pipe'],
+      env: process.env,
+    });
+    activeDockerProcesses.add(child);
+    const exited = new Promise<number | null>(resolve => {
+      child.once('error', error => {
+        logger.warn(`Could not start a Work sandbox process: ${error.message}`);
+        activeDockerProcesses.delete(child);
+        resolve(null);
+      });
+      child.once('close', code => {
+        activeDockerProcesses.delete(child);
+        resolve(code);
+      });
+    });
+    // A client that exits first turns later writes into EPIPE; the exit
+    // code is the signal callers act on.
+    child.stdin.on('error', () => undefined);
+    return {
+      stdin: child.stdin,
+      stdout: child.stdout,
+      stderr: child.stderr,
+      exited,
+      kill: () => {
+        if (child.exitCode === null && child.signalCode === null) {
+          child.kill('SIGKILL');
+        }
+      },
+    };
   }
 
   async previewEndpoint(
@@ -771,6 +876,16 @@ export class DockerWorkRuntimeDriver implements WorkRuntimeDriver {
     const workspaceMount = mounts.find(
       mount => mount.Destination === '/workspace'
     );
+    const toolchainVolume = workAgentToolchainVolume();
+    const toolchainMount = mounts.find(
+      mount => mount.Destination === WORK_AGENT_TOOLCHAIN_MOUNT
+    );
+    // Sandboxes created before the toolchain existed are recreated once.
+    const toolchainMatches = toolchainVolume
+      ? toolchainMount?.Type === 'volume' &&
+        toolchainMount.Name === toolchainVolume &&
+        toolchainMount.RW === false
+      : toolchainMount === undefined;
     const expectedNetwork = task.networkEnabled ? config.networkName : 'none';
     const portBindings = objectRecord(hostConfig.PortBindings);
     const previewBindings = Array.isArray(
@@ -822,7 +937,8 @@ export class DockerWorkRuntimeDriver implements WorkRuntimeDriver {
       portPolicyMatches &&
       workspaceMount?.Type === 'volume' &&
       workspaceMount.Name === task.volumeName &&
-      workspaceMount.RW === true
+      workspaceMount.RW === true &&
+      toolchainMatches
     );
   }
 
@@ -1032,12 +1148,17 @@ export function buildWorkContainerRunArgs(
       ? // Host-folder workspaces are opt-in per deployment and validated
         // against an allowlist before ever reaching this point.
         `type=bind,src=${task.hostPath},dst=/workspace`
-      : `type=volume,src=${task.volumeName},dst=/workspace,volume-nocopy`,
-    policy.image,
-    'tail',
-    '-f',
-    '/dev/null'
+      : `type=volume,src=${task.volumeName},dst=/workspace,volume-nocopy`
   );
+  const toolchain = workAgentToolchainVolume();
+  if (toolchain) {
+    // Agent CLIs for Work, shared by every sandbox and never writable here.
+    args.push(
+      '--mount',
+      `type=volume,src=${toolchain},dst=${WORK_AGENT_TOOLCHAIN_MOUNT},readonly`
+    );
+  }
+  args.push(policy.image, 'tail', '-f', '/dev/null');
   return args;
 }
 

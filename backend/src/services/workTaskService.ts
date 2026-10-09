@@ -1471,7 +1471,7 @@ const normalizeProvider = (
   provider: WorkProviderSelection
 ): WorkProviderSelection => {
   if (provider.providerType === 'ollama') return { providerType: 'ollama' };
-  if (provider.providerType !== 'plugin')
+  if (provider.providerType !== 'plugin' && provider.providerType !== 'agent')
     throw new Error('Unknown Work model provider type.');
   const providerId = provider.providerId?.trim();
   if (!providerId) throw new Error('The model provider ID cannot be empty.');

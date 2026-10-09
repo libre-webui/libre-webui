@@ -645,7 +645,8 @@
       "sessions": "Phiên đăng nhập",
       "apiKeys": "Khóa API",
       "notifications": "Thông báo",
-      "ollamaDisabled": "Ollama đã bị quản trị viên vô hiệu hóa"
+      "ollamaDisabled": "Ollama đã bị quản trị viên vô hiệu hóa",
+      "agentClis": "CLI tác tử"
     },
     "appearance": {
       "title": "Giao diện",
@@ -1295,6 +1296,34 @@
       "emailMentionsHint": "Gửi email cho tôi khi có người nhắc đến tôi trong một kênh.",
       "emailAutomations": "Kết quả tự động hóa",
       "emailAutomationsHint": "Gửi email cho tôi kết quả của mỗi lần chạy tự động hóa, dù thành công hay thất bại."
+    },
+    "agentClis": {
+      "title": "CLI tác tử trong Work",
+      "description": "Claude Code, Codex, Kiro, OpenCode và Pi có thể làm các tác vụ Work bên trong sandbox. Một lần chạy chỉ thấy giá trị giữ chỗ; proxy đi ra chỉ thêm khóa thật cho API của chính tác tử.",
+      "accessHint": "Chọn ai được dùng chúng trong Quản lý người dùng, mục Quyền truy cập và chính sách.",
+      "unavailable": "CLI tác tử trong Work cần môi trường chạy Docker, hoặc máy chủ này đã tắt chúng.",
+      "keysTitle": "Khóa",
+      "keysDescription": "Khóa đã lưu được mã hóa và dùng chung cho mọi người được phép dùng CLI tác tử trong Work.",
+      "saved": "Đã lưu",
+      "environment": "Đặt trong môi trường máy chủ",
+      "missing": "Chưa đặt",
+      "usedBy": "Dùng bởi {{agents}}",
+      "providerFallback": "hoặc khóa {{provider}} của từng người dùng",
+      "placeholder": "Dán khóa",
+      "save": "Lưu",
+      "remove": "Xóa",
+      "keySaved": "Đã lưu khóa.",
+      "keyRemoved": "Đã xóa khóa.",
+      "keyFailed": "Không thể lưu khóa.",
+      "toolchainTitle": "Tác tử đã cài",
+      "toolchainDescription": "Mỗi tác tử được cài ở lần chạy đầu tiên. Cài trước để khỏi phải chờ.",
+      "installing": "Đang cài…",
+      "installed": "Phiên bản {{version}}",
+      "notInstalled": "Chưa cài",
+      "install": "Cài đặt",
+      "installStarted": "Đang cài {{agent}}.",
+      "installFailed": "Không thể bắt đầu cài đặt.",
+      "loadFailed": "Không thể tải cài đặt tác tử."
     }
   },
   "models": {
@@ -1948,7 +1977,8 @@
         "stt": "Chuyển giọng nói thành văn bản",
         "tts": "Chuyển văn bản thành giọng nói",
         "voice-mode": "Chế độ giọng nói",
-        "voice-cloning": "Nhân bản giọng nói"
+        "voice-cloning": "Nhân bản giọng nói",
+        "work-agents": "CLI tác tử trong Work"
       },
       "grantViaKinds": {
         "user": "cấp trực tiếp",
@@ -2082,6 +2112,18 @@
       "title": "Mô hình tác tử CLI",
       "description": "Quản trị viên có thể dùng Kiro, Pi, OpenCode, Codex và Claude Code đã cài đặt làm mô hình trò chuyện. Chúng chạy trên máy chủ, bên ngoài môi trường cách ly Work.",
       "lockedByEnv": "Bị khóa bởi biến môi trường AGENT_CLI_MODELS_ENABLED."
+    },
+    "workAgentAccess": {
+      "title": "CLI tác tử trong Work",
+      "description": "Chọn ai có thể giao tác vụ Work cho Claude Code, Codex, Kiro, OpenCode hoặc Pi bên trong sandbox. Khóa được thêm trong Cài đặt → Kết nối → CLI tác tử.",
+      "lockedByEnv": "Được cố định bởi biến môi trường LIBRE_WORK_AGENTS_ACCESS.",
+      "saved": "Đã cập nhật quyền dùng CLI tác tử trong Work",
+      "saveFailed": "Không thể cập nhật quyền dùng CLI tác tử trong Work",
+      "modes": {
+        "disabled": "Tắt",
+        "admins": "Quản trị viên",
+        "all-users": "Tất cả người dùng Work"
+      }
     }
   },
   "usageAnalytics": {
@@ -3106,7 +3148,8 @@
     "sources": "Nguồn mô hình",
     "defaultModel": "Mô hình mặc định",
     "contextSize": "ngữ cảnh {{size}}",
-    "via": "qua {{provider}}"
+    "via": "qua {{provider}}",
+    "agentNeedsKey": "cần khóa"
   },
   "whatsNew": {
     "title": "Có gì mới",

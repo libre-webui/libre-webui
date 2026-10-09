@@ -2704,6 +2704,129 @@
       }
     },
     {
+      "id": "work-agent-clis",
+      "title": "Agent CLIs in Work",
+      "uiRoutes": [],
+      "documentation": [
+        {
+          "file": "docs/33-WORKSPACES.md",
+          "patterns": [
+            "^## Agent CLIs in Work$",
+            "\\*\\*Credentials stay outside the sandbox\\.\\*\\*"
+          ]
+        },
+        {
+          "file": "docs/26-ENVIRONMENT_VARIABLES.md",
+          "patterns": [
+            "`WORK_AGENT_TOOLCHAIN_VOLUME`",
+            "`LIBRE_WORK_AGENTS_ACCESS`"
+          ]
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "scripts/test-work-agents.mjs",
+          "runner": "test:package",
+          "name": "a sandboxed agent run reaches its API only through the injecting proxy",
+          "behaviorPatterns": ["Bearer ksk_real", "result\\.changedFiles"]
+        },
+        {
+          "file": "scripts/test-work-egress.mjs",
+          "runner": "test:package",
+          "name": "a credential is injected only on its own intercepted host",
+          "behaviorPatterns": [
+            "sk-real-anthropic",
+            "credential === 'KIRO_API_KEY'"
+          ]
+        },
+        {
+          "file": "scripts/test-work-agents.mjs",
+          "runner": "test:package",
+          "name": "agent CLIs in Work start disabled and need Work access too",
+          "behaviorPatterns": [
+            "setWorkAgentAccessMode\\('admins'\\)",
+            "Work itself is admin-only"
+          ]
+        }
+      ],
+      "backendRoutes": [
+        {
+          "file": "backend/src/routes/work.ts",
+          "mount": "/api/work",
+          "method": "GET",
+          "path": "/agents/access"
+        },
+        {
+          "file": "backend/src/routes/work.ts",
+          "mount": "/api/work",
+          "method": "PUT",
+          "path": "/agents/access"
+        },
+        {
+          "file": "backend/src/routes/work.ts",
+          "mount": "/api/work",
+          "method": "GET",
+          "path": "/agents/credentials"
+        },
+        {
+          "file": "backend/src/routes/work.ts",
+          "mount": "/api/work",
+          "method": "PUT",
+          "path": "/agents/credentials/:name"
+        },
+        {
+          "file": "backend/src/routes/work.ts",
+          "mount": "/api/work",
+          "method": "GET",
+          "path": "/agents/toolchain"
+        },
+        {
+          "file": "backend/src/routes/work.ts",
+          "mount": "/api/work",
+          "method": "POST",
+          "path": "/agents/toolchain/:cli"
+        },
+        {
+          "file": "backend/src/routes/work.ts",
+          "mount": "/api/work",
+          "method": "GET",
+          "path": "/agents"
+        }
+      ],
+      "contractSurfaces": {
+        "schemas": {
+          "evidence": [
+            {
+              "file": "backend/src/types/work.ts",
+              "patterns": [
+                "export type WorkProviderType = 'ollama' \\| 'plugin' \\| 'agent'",
+                "agents\\?: \\{"
+              ]
+            }
+          ]
+        },
+        "manifests": {
+          "evidence": [
+            {
+              "file": "backend/src/services/workAgentCatalog.ts",
+              "patterns": ["export const WORK_AGENT_CLIS", "kind: 'kiro'"]
+            }
+          ]
+        },
+        "defaults": {
+          "evidence": [
+            {
+              "file": "backend/src/services/workAgentAccessService.ts",
+              "patterns": [
+                "mode: isWorkAgentAccessMode\\(value\\) \\? value : 'disabled'",
+                "WORK_AGENT_ACCESS_MODE_KEY"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
       "id": "agent-cli",
       "title": "Agent CLI models",
       "uiRoutes": [],
@@ -3443,7 +3566,7 @@
           "file": "docs/12-AUTHENTICATION.md",
           "patterns": [
             "Every login also creates a server-side session record bound into the JWT",
-            "Settings \u2192 API keys mints personal access tokens"
+            "Settings → API keys mints personal access tokens"
           ]
         },
         {
@@ -3998,7 +4121,7 @@
         {
           "file": "docs/41-DATA_PORTABILITY.md",
           "patterns": [
-            "Settings \u2192 Data Management",
+            "Settings → Data Management",
             "GET`  \\| `/api/preferences/export"
           ]
         }

@@ -645,7 +645,8 @@
       "sessions": "Sesi",
       "apiKeys": "Kunci API",
       "notifications": "Pemberitahuan",
-      "ollamaDisabled": "Ollama dilumpuhkan oleh pentadbir"
+      "ollamaDisabled": "Ollama dilumpuhkan oleh pentadbir",
+      "agentClis": "CLI ejen"
     },
     "appearance": {
       "title": "Penampilan",
@@ -1295,6 +1296,34 @@
       "emailMentionsHint": "Hantar e-mel kepada saya apabila seseorang menyebut saya dalam saluran.",
       "emailAutomations": "Keputusan automasi",
       "emailAutomationsHint": "Hantar e-mel kepada saya keputusan setiap larian automasi, sama ada berjaya atau gagal."
+    },
+    "agentClis": {
+      "title": "CLI ejen dalam Work",
+      "description": "Claude Code, Codex, Kiro, OpenCode dan Pi boleh melakukan tugas Work di dalam kotak pasir. Sesuatu larian hanya melihat pemegang tempat; proksi keluar menambah kunci sebenar hanya untuk API ejen itu sendiri.",
+      "accessHint": "Pilih siapa yang boleh menggunakannya dalam Pengurusan Pengguna, di bawah Akses dan dasar.",
+      "unavailable": "CLI ejen dalam Work memerlukan masa jalan Docker, atau pelayan ini telah mematikannya.",
+      "keysTitle": "Kunci",
+      "keysDescription": "Kunci yang disimpan disulitkan dan dikongsi oleh semua yang dibenarkan menggunakan CLI ejen dalam Work.",
+      "saved": "Disimpan",
+      "environment": "Ditetapkan dalam persekitaran pelayan",
+      "missing": "Belum ditetapkan",
+      "usedBy": "Digunakan oleh {{agents}}",
+      "providerFallback": "atau kunci {{provider}} setiap pengguna",
+      "placeholder": "Tampal kunci",
+      "save": "Simpan",
+      "remove": "Buang",
+      "keySaved": "Kunci disimpan.",
+      "keyRemoved": "Kunci dibuang.",
+      "keyFailed": "Kunci tidak dapat disimpan.",
+      "toolchainTitle": "Ejen dipasang",
+      "toolchainDescription": "Setiap ejen dipasang pada larian pertamanya. Pasang lebih awal untuk mengelakkan menunggu.",
+      "installing": "Memasang…",
+      "installed": "Versi {{version}}",
+      "notInstalled": "Belum dipasang",
+      "install": "Pasang",
+      "installStarted": "Memasang {{agent}}.",
+      "installFailed": "Pemasangan tidak dapat dimulakan.",
+      "loadFailed": "Tetapan ejen tidak dapat dimuatkan."
     }
   },
   "models": {
@@ -1948,7 +1977,8 @@
         "stt": "Ucapan ke teks",
         "tts": "Teks ke ucapan",
         "voice-mode": "Mod suara",
-        "voice-cloning": "Pengklonan suara"
+        "voice-cloning": "Pengklonan suara",
+        "work-agents": "CLI ejen dalam Work"
       },
       "grantViaKinds": {
         "user": "pemberian terus",
@@ -2082,6 +2112,18 @@
       "title": "Model ejen CLI",
       "description": "Pentadbir boleh menggunakan Kiro, Pi, OpenCode, Codex dan Claude Code yang dipasang sebagai model sembang. Semuanya berjalan pada hos, di luar kotak pasir Work.",
       "lockedByEnv": "Ditetapkan oleh pemboleh ubah persekitaran AGENT_CLI_MODELS_ENABLED."
+    },
+    "workAgentAccess": {
+      "title": "CLI ejen dalam Work",
+      "description": "Pilih siapa yang boleh meminta Claude Code, Codex, Kiro, OpenCode atau Pi melakukan tugas Work di dalam kotak pasir. Kunci ditambah dalam Tetapan → Sambungan → CLI ejen.",
+      "lockedByEnv": "Ditetapkan oleh pemboleh ubah persekitaran LIBRE_WORK_AGENTS_ACCESS.",
+      "saved": "Akses CLI ejen dalam Work dikemas kini",
+      "saveFailed": "Akses CLI ejen dalam Work tidak dapat dikemas kini",
+      "modes": {
+        "disabled": "Mati",
+        "admins": "Pentadbir",
+        "all-users": "Semua pengguna Work"
+      }
     }
   },
   "usageAnalytics": {
@@ -3106,7 +3148,8 @@
     "sources": "Sumber model",
     "defaultModel": "Model lalai",
     "contextSize": "konteks {{size}}",
-    "via": "melalui {{provider}}"
+    "via": "melalui {{provider}}",
+    "agentNeedsKey": "perlu kunci"
   },
   "whatsNew": {
     "title": "Apa yang baharu",

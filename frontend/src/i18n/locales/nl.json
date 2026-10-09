@@ -645,7 +645,8 @@
       "sessions": "Sessies",
       "apiKeys": "API-sleutels",
       "notifications": "Meldingen",
-      "ollamaDisabled": "Ollama is uitgeschakeld door een beheerder"
+      "ollamaDisabled": "Ollama is uitgeschakeld door een beheerder",
+      "agentClis": "Agent-CLI's"
     },
     "appearance": {
       "title": "Weergave",
@@ -1295,6 +1296,34 @@
       "emailMentionsHint": "Stuur me een e-mail als iemand me in een kanaal vermeldt.",
       "emailAutomations": "Resultaten van automatiseringen",
       "emailAutomationsHint": "Stuur me een e-mail met het resultaat van elke automatiseringsrun, geslaagd of niet."
+    },
+    "agentClis": {
+      "title": "Agent-CLI's in Work",
+      "description": "Claude Code, Codex, Kiro, OpenCode en Pi kunnen Work-taken uitvoeren in de sandbox. Een run ziet alleen een placeholder; de uitgaande proxy voegt de echte sleutel alleen toe voor de eigen API van de agent.",
+      "accessHint": "Kies in Gebruikersbeheer, onder Toegang en beleid, wie ze mag gebruiken.",
+      "unavailable": "Agent-CLI's in Work hebben de Docker-runtime nodig, of deze server heeft ze uitgeschakeld.",
+      "keysTitle": "Sleutels",
+      "keysDescription": "Opgeslagen sleutels worden versleuteld en gedeeld door iedereen die agent-CLI's in Work mag gebruiken.",
+      "saved": "Opgeslagen",
+      "environment": "Ingesteld in de serveromgeving",
+      "missing": "Niet ingesteld",
+      "usedBy": "Gebruikt door {{agents}}",
+      "providerFallback": "of de {{provider}}-sleutel van elke gebruiker",
+      "placeholder": "Plak een sleutel",
+      "save": "Opslaan",
+      "remove": "Verwijderen",
+      "keySaved": "Sleutel opgeslagen.",
+      "keyRemoved": "Sleutel verwijderd.",
+      "keyFailed": "De sleutel kon niet worden opgeslagen.",
+      "toolchainTitle": "Geïnstalleerde agents",
+      "toolchainDescription": "Elke agent wordt bij de eerste run geïnstalleerd. Installeer hem vooraf om het wachten te besparen.",
+      "installing": "Installeren…",
+      "installed": "Versie {{version}}",
+      "notInstalled": "Niet geïnstalleerd",
+      "install": "Installeren",
+      "installStarted": "{{agent}} wordt geïnstalleerd.",
+      "installFailed": "De installatie kon niet worden gestart.",
+      "loadFailed": "De agentinstellingen konden niet worden geladen."
     }
   },
   "models": {
@@ -1948,7 +1977,8 @@
         "stt": "Spraak naar tekst",
         "tts": "Tekst naar spraak",
         "voice-mode": "Spraakmodus",
-        "voice-cloning": "Stemklonen"
+        "voice-cloning": "Stemklonen",
+        "work-agents": "Agent-CLI's in Work"
       },
       "grantViaKinds": {
         "user": "directe toekenning",
@@ -2082,6 +2112,18 @@
       "title": "CLI-agentmodellen",
       "description": "Beheerders kunnen geïnstalleerde Kiro, Pi, OpenCode, Codex en Claude Code als chatmodellen gebruiken. Ze draaien op de host, buiten de Work-sandboxes.",
       "lockedByEnv": "Vastgezet door de omgevingsvariabele AGENT_CLI_MODELS_ENABLED."
+    },
+    "workAgentAccess": {
+      "title": "Agent-CLI's in Work",
+      "description": "Kies wie Claude Code, Codex, Kiro, OpenCode of Pi Work-taken in de sandbox mag laten uitvoeren. Sleutels voeg je toe onder Instellingen → Verbindingen → Agent-CLI's.",
+      "lockedByEnv": "Vastgezet door de omgevingsvariabele LIBRE_WORK_AGENTS_ACCESS.",
+      "saved": "Toegang tot agent-CLI's in Work bijgewerkt",
+      "saveFailed": "Toegang tot agent-CLI's in Work kon niet worden bijgewerkt",
+      "modes": {
+        "disabled": "Uit",
+        "admins": "Beheerders",
+        "all-users": "Alle Work-gebruikers"
+      }
     }
   },
   "usageAnalytics": {
@@ -3106,7 +3148,8 @@
     "sources": "Modelbronnen",
     "defaultModel": "Standaardmodel",
     "contextSize": "{{size}} context",
-    "via": "via {{provider}}"
+    "via": "via {{provider}}",
+    "agentNeedsKey": "sleutel nodig"
   },
   "whatsNew": {
     "title": "Wat is nieuw",

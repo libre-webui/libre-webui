@@ -44,6 +44,7 @@ import { encryptionService } from './encryptionService.js';
 import { getWorkAccessMode } from './workAccessService.js';
 import { getModelDownloadMode } from './modelAccessService.js';
 import { getStrandsAccessMode } from './strandsAccessService.js';
+import { getWorkAgentAccessMode } from './workAgentAccessService.js';
 import { getWebSearchAccessMode } from './webSearchService.js';
 import { getToolAccessMode } from './toolAccessService.js';
 import { getVoiceAccessMode, isVoiceFeatureKey } from './voiceAccessService.js';
@@ -52,6 +53,7 @@ export type AuthzAction = 'read' | 'write' | 'manage' | 'use';
 
 export type FeatureId =
   | 'work'
+  | 'work-agents'
   | 'model-download'
   | 'web-search'
   | 'strands'
@@ -132,6 +134,18 @@ const featureDecision = async (
   actor: AuthzActor,
   featureId: FeatureId
 ): Promise<AuthzDecision> => {
+  if (featureId === 'work-agents') {
+    // Like Strands, agent CLIs in Work can be switched off for everyone:
+    // every run spends a credential an administrator configured.
+    const mode = await getWorkAgentAccessMode();
+    if (mode === 'disabled') {
+      return { allowed: false, reason: 'feature-disabled' };
+    }
+    if (actor.role === 'admin') return { allowed: true, reason: 'admin-role' };
+    return mode === 'all-users'
+      ? { allowed: true, reason: 'feature-open-to-all-users' }
+      : { allowed: false, reason: 'feature-restricted-to-admins' };
+  }
   if (featureId === 'strands') {
     // Strands is the one feature an administrator can switch off for
     // everyone, admins included, because it runs model-driven tool loops.
@@ -278,6 +292,7 @@ export const explainEffectiveAccess = async (user: {
   const groups = await security().groups.listGroupsForUser(user.id);
   const [
     work,
+    workAgents,
     modelDownload,
     webSearch,
     strands,
@@ -288,6 +303,7 @@ export const explainEffectiveAccess = async (user: {
     voiceCloning,
   ] = await Promise.all([
     authorize(actor, 'use', { type: 'feature', id: 'work' }),
+    authorize(actor, 'use', { type: 'feature', id: 'work-agents' }),
     authorize(actor, 'use', { type: 'feature', id: 'model-download' }),
     authorize(actor, 'use', { type: 'feature', id: 'web-search' }),
     authorize(actor, 'use', { type: 'feature', id: 'strands' }),
@@ -314,6 +330,8 @@ export const explainEffectiveAccess = async (user: {
     groups: groups.map(group => ({ id: group.id, name: group.name })),
     features: {
       work: work.allowed,
+      // Agent CLIs need Work itself as well as their own gate.
+      'work-agents': work.allowed && workAgents.allowed,
       'model-download': modelDownload.allowed,
       'web-search': webSearch.allowed,
       strands: strands.allowed,

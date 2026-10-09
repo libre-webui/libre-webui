@@ -70,16 +70,41 @@ interface WorkComposerProps {
 }
 
 const workSelectorModelValue = (model: OllamaModel): string =>
-  workModelSelectionKey({
-    model: model.name,
-    providerType: model.isPlugin ? 'plugin' : 'ollama',
-    providerId: model.isPlugin ? model.pluginId : undefined,
-  });
+  // A persona entry is keyed by its own name; it resolves to a base model.
+  model.isPersona
+    ? model.name
+    : workModelSelectionKey({
+        model: model.name,
+        providerType: model.isAgent
+          ? 'agent'
+          : model.isPlugin
+            ? 'plugin'
+            : 'ollama',
+        providerId: model.isAgent
+          ? model.agentId
+          : model.isPlugin
+            ? model.pluginId
+            : undefined,
+      });
 
 const workSelectorModelId = (model: OllamaModel): string =>
   baseWorkModel(model.name);
 
 const modelFromOption = (option: WorkModelOption): OllamaModel => {
+  if (option.providerType === 'agent') {
+    return {
+      name: option.model,
+      model: option.model,
+      size: 0,
+      digest: '',
+      modified_at: '',
+      details: {},
+      isAgent: true,
+      agentId: option.providerId,
+      agentName: option.label,
+      ...(option.unavailable ? { isUnavailable: true } : {}),
+    };
+  }
   const providerPrefix = `${option.model} · `;
   return {
     name: option.model,
@@ -189,9 +214,11 @@ export function WorkComposer({
       cancelled = true;
     };
   }, [ollamaModelName, onThinkChange]);
+  // An agent CLI picks its own reasoning depth; the control would do nothing.
   const thinkingAvailable = Boolean(
     onThinkChange &&
     selectedEntry &&
+    !selectedEntry.isAgent &&
     (selectedEntry.isPlugin
       ? selectedEntry.reasoningSupport !== false
       : !(
@@ -291,42 +318,44 @@ export function WorkComposer({
     });
   };
 
-  const engineSelector = (strandsEnabled || engine === 'strands') && (
-    <div
-      className={cn(
-        landing
-          ? 'min-w-0 flex-[1_1_11rem]'
-          : 'mb-2 flex flex-wrap items-center gap-2 px-2'
-      )}
-    >
-      <span
-        id={engineLabelId}
+  // Agent CLIs bring their own loop, so the engine choice does not apply.
+  const engineSelector = (strandsEnabled || engine === 'strands') &&
+    selectedModel?.providerType !== 'agent' && (
+      <div
         className={cn(
-          'text-ink-muted',
-          landing ? 'mb-1.5 block text-[11px] font-medium' : 'text-xs'
+          landing
+            ? 'min-w-0 flex-[1_1_11rem]'
+            : 'mb-2 flex flex-wrap items-center gap-2 px-2'
         )}
       >
-        {t('work.composer.engine')}
-      </span>
-      <Select
-        aria-labelledby={engineLabelId}
-        data-testid='work-engine-select'
-        value={engine}
-        onChange={event => changeEngine(event.target.value as WorkEngine)}
-        disabled={running || loading}
-        options={[
-          { value: 'libre', label: 'Libre WebUI' },
-          { value: 'strands', label: 'Strands' },
-        ]}
-        className={cn(
-          'motion-reduce:transition-none',
-          landing
-            ? 'h-11 min-h-[44px] min-w-0 bg-surface-subtle px-3 py-2 text-[13px]'
-            : 'h-9 min-h-[44px] max-w-52 py-1 text-sm sm:min-h-9'
-        )}
-      />
-    </div>
-  );
+        <span
+          id={engineLabelId}
+          className={cn(
+            'text-ink-muted',
+            landing ? 'mb-1.5 block text-[11px] font-medium' : 'text-xs'
+          )}
+        >
+          {t('work.composer.engine')}
+        </span>
+        <Select
+          aria-labelledby={engineLabelId}
+          data-testid='work-engine-select'
+          value={engine}
+          onChange={event => changeEngine(event.target.value as WorkEngine)}
+          disabled={running || loading}
+          options={[
+            { value: 'libre', label: 'Libre WebUI' },
+            { value: 'strands', label: 'Strands' },
+          ]}
+          className={cn(
+            'motion-reduce:transition-none',
+            landing
+              ? 'h-11 min-h-[44px] min-w-0 bg-surface-subtle px-3 py-2 text-[13px]'
+              : 'h-9 min-h-[44px] max-w-52 py-1 text-sm sm:min-h-9'
+          )}
+        />
+      </div>
+    );
 
   return (
     <div

@@ -23,6 +23,8 @@ import workModelProviderService, {
   type WorkModelStreamObserver,
 } from './workModelProviderService.js';
 import workEventService from './workEventService.js';
+import type { PreparedWorkAgentRun } from './workAgents.js';
+import type { WorkAgentRunSink } from './workAgentCliRunner.js';
 import {
   buildWorkAgentSystemPrompt,
   buildWorkBudgetExhaustionPrompt,
@@ -1049,6 +1051,17 @@ export class WorkAgentService {
           userId
         );
       }
+      // Agent CLIs: access, toolchain, and credential are checked before the
+      // sandbox starts, so a missing key fails fast with what to set up.
+      let agentRun: PreparedWorkAgentRun | undefined;
+      if (run.providerType === 'agent') {
+        const { prepareWorkAgentRun } = await import('./workAgents.js');
+        agentRun = await prepareWorkAgentRun(
+          run.model,
+          { providerType: run.providerType, providerId: run.providerId },
+          userId
+        );
+      }
       releaseExecutionLease = await workRuntimeService.prepare(
         task,
         controller.signal
@@ -1056,6 +1069,21 @@ export class WorkAgentService {
       await this.throwIfCancelled(runId, controller);
       await workTaskService.updateRun(runId, 'running', { started: true });
       await workTaskService.updateTaskStatus(taskId, 'running');
+      if (agentRun) {
+        await this.executeAgentCliRun({
+          task,
+          run,
+          runId,
+          userId,
+          controller,
+          prepared: agentRun,
+          persona,
+          durableAttemptIdentity,
+          changedFiles,
+          settleExecutionContainer,
+        });
+        return;
+      }
       const roundLimit = workRuntimeService.limits.maxRounds;
       const toolCallLimit = workToolCallBudget(roundLimit);
       const providerSelection = {
@@ -2136,6 +2164,245 @@ export class WorkAgentService {
         }
       }
     }
+  }
+
+  /**
+   * One run driven by an agent CLI inside the sandbox. The CLI owns its loop
+   * and its tools; Work records what it does, streams its text, and settles
+   * the run exactly as a model-driven run settles.
+   */
+  private async executeAgentCliRun(input: {
+    task: WorkTaskRecord;
+    run: WorkRun;
+    runId: string;
+    userId: string;
+    controller: AbortController;
+    prepared: PreparedWorkAgentRun;
+    persona?: { name: string; instructions?: string };
+    durableAttemptIdentity: string;
+    changedFiles: string[];
+    settleExecutionContainer: () => Promise<void>;
+  }): Promise<void> {
+    const { task, run, runId, userId, controller, prepared } = input;
+    const taskId = task.id;
+    const { cli } = prepared;
+    const { workAgentRunner } = await import('./workAgents.js');
+    const { default: pluginUsageService } =
+      await import('./pluginUsageService.js');
+    const messages = await workTaskService.getMessages(taskId);
+    const runDelegation = delegationSourceOf(messages, runId);
+    const prompt = buildWorkAgentCliPrompt(messages, runId, input.persona);
+    const assistantStream = new WorkDeltaPublisher(
+      taskId,
+      runId,
+      'assistant_delta',
+      '',
+      'agent-cli',
+      input.durableAttemptIdentity
+    );
+    const reasoningStream = new WorkDeltaPublisher(
+      taskId,
+      runId,
+      'reasoning_delta',
+      '',
+      'agent-cli',
+      input.durableAttemptIdentity
+    );
+    const startedAt = Date.now();
+    let toolCalls = 0;
+    let lastUsage:
+      | { promptTokens: number; completionTokens: number; totalTokens: number }
+      | undefined;
+    const sink: WorkAgentRunSink = {
+      phase: async phase => {
+        await workEventService.publish(
+          taskId,
+          runId,
+          'run_state',
+          {
+            status: 'running',
+            phase:
+              phase === 'installing'
+                ? 'installing'
+                : phase === 'starting'
+                  ? 'preparing'
+                  : 'thinking',
+          },
+          `agent-cli:${phase}`,
+          input.durableAttemptIdentity
+        );
+      },
+      text: delta => assistantStream.push(delta),
+      reasoning: delta => reasoningStream.push(delta),
+      toolStart: async call => {
+        toolCalls += 1;
+        assistantStream.flush();
+        const message = await workTaskService.addMessage(
+          taskId,
+          runId,
+          'assistant',
+          'tool_call',
+          call.name,
+          {
+            toolCallId: call.id,
+            name: call.name,
+            ...(call.input ? { arguments: call.input } : {}),
+            agentCli: cli.id,
+          }
+        );
+        await workEventService.publish(
+          taskId,
+          runId,
+          'tool_call',
+          {
+            toolCallId: call.id,
+            name: call.name,
+            ...(call.input ? { arguments: call.input } : {}),
+            phase: 'running',
+            message,
+          },
+          `agent-cli:tool:${call.id}`,
+          input.durableAttemptIdentity
+        );
+      },
+      toolEnd: async result => {
+        const message = await workTaskService.addMessage(
+          taskId,
+          runId,
+          'tool',
+          'tool_result',
+          result.output,
+          {
+            toolCallId: result.id,
+            name: result.name,
+            error: result.isError,
+            agentCli: cli.id,
+          }
+        );
+        await workEventService.publish(
+          taskId,
+          runId,
+          'tool_result',
+          {
+            toolCallId: result.id,
+            name: result.name,
+            phase: result.isError ? 'failed' : 'completed',
+            content: result.output,
+            error: result.isError,
+            message,
+          },
+          `agent-cli:result:${result.id}`,
+          input.durableAttemptIdentity
+        );
+      },
+      usage: usage => {
+        lastUsage = usage;
+        void workEventService.publish(taskId, runId, 'usage', {
+          inputTokens: usage.promptTokens,
+          outputTokens: usage.completionTokens,
+          totalTokens: usage.totalTokens,
+          durationMs: Date.now() - startedAt,
+        });
+      },
+    };
+    const recordUsage = (status: 'success' | 'error' | 'cancelled'): void => {
+      pluginUsageService.record({
+        userId,
+        pluginId: `agent-cli:${cli.id}`,
+        pluginName: cli.name,
+        capability: 'chat',
+        model: run.model,
+        status,
+        durationMs: Date.now() - startedAt,
+        ...(lastUsage ? { tokens: lastUsage } : {}),
+      });
+    };
+    let result;
+    try {
+      result = await workAgentRunner.run(
+        {
+          task,
+          runId,
+          cli,
+          model: prepared.model,
+          credential: prepared.credential,
+          prompt,
+          signal: controller.signal,
+        },
+        sink
+      );
+    } catch (error) {
+      assistantStream.flush();
+      reasoningStream.flush();
+      recordUsage(controller.signal.aborted ? 'cancelled' : 'error');
+      throw error;
+    }
+    assistantStream.flush();
+    reasoningStream.flush();
+    recordUsage('success');
+    for (const path of result.changedFiles) {
+      if (input.changedFiles.length >= WORK_RUN_CHANGED_FILES_MAX) break;
+      if (!input.changedFiles.includes(path)) input.changedFiles.push(path);
+    }
+    const finalContent =
+      result.finalText ||
+      `${cli.name} completed without returning a text response.`;
+    await workTaskService.addMessage(
+      taskId,
+      runId,
+      'assistant',
+      'message',
+      finalContent,
+      result.finalText
+        ? { agentCli: cli.id }
+        : { agentCli: cli.id, [WORK_EMPTY_MODEL_RESPONSE_METADATA_KEY]: true }
+    );
+    await input.settleExecutionContainer();
+    await this.throwIfCancelled(runId, controller);
+    if (!isActiveRunStatus((await workTaskService.getRun(runId))?.status)) {
+      return;
+    }
+    const completedBlurb = deriveStatusBlurb(finalContent);
+    await workTaskService.updateRun(runId, 'completed', {
+      finished: true,
+      summary: finalContent,
+      changedFiles: input.changedFiles,
+      exitState: workRunExitState('completed'),
+    });
+    await workTaskService.updateTaskStatus(taskId, 'completed', completedBlurb);
+    await workEventService.publish(
+      taskId,
+      runId,
+      'done',
+      {
+        status: 'completed',
+        loopStats: {
+          rounds: 1,
+          toolCalls,
+          screenshots: 0,
+          fences: 0,
+          expectationsPassed: 0,
+          expectationsPending: 0,
+          stallNudges: 0,
+          ambiguityNudges: 0,
+        },
+      },
+      'terminal:completed'
+    );
+    if (task.isAgent === true) {
+      await this.notifyAgentLifecycle(task, {
+        type: 'work-run-finished',
+        title: `${task.title} finished its run`,
+        body: completedBlurb,
+        sourceKey: `work-run:${runId}:completed`,
+      });
+    }
+    await this.reportDelegationOutcome(
+      task,
+      runDelegation,
+      'completed',
+      finalContent
+    );
   }
 
   private async cleanupExecutionContainer(task: WorkTaskRecord): Promise<void> {
@@ -3769,6 +4036,65 @@ function workRunExitState(
     .replace(/^-+|-+$/g, '')
     .slice(0, 60);
   return slug ? `${state}:${slug}` : state;
+}
+
+const AGENT_CLI_CONTEXT_MESSAGES = 24;
+const AGENT_CLI_CONTEXT_MAX_CHARS = 48_000;
+
+/**
+ * The prompt an agent CLI receives on stdin. A CLI runs each turn fresh, so
+ * the earlier conversation of this task travels with the new request; the
+ * workspace itself carries everything the agent produced before.
+ */
+export function buildWorkAgentCliPrompt(
+  messages: readonly WorkMessage[],
+  runId: string,
+  persona?: { name: string; instructions?: string }
+): string {
+  const current = messages
+    .filter(
+      message =>
+        message.runId === runId &&
+        message.role === 'user' &&
+        message.kind === 'message'
+    )
+    .map(message => message.content.trim())
+    .filter(Boolean);
+  const earlier = messages
+    .filter(
+      message =>
+        message.runId !== runId &&
+        message.kind === 'message' &&
+        (message.role === 'user' || message.role === 'assistant') &&
+        message.metadata?.[WORK_EMPTY_MODEL_RESPONSE_METADATA_KEY] !== true
+    )
+    .slice(-AGENT_CLI_CONTEXT_MESSAGES);
+  let transcript = earlier
+    .map(
+      message =>
+        `${message.role === 'user' ? 'User' : 'Assistant'}: ${message.content.trim()}`
+    )
+    .join('\n\n');
+  if (transcript.length > AGENT_CLI_CONTEXT_MAX_CHARS) {
+    transcript = `...\n${transcript.slice(-AGENT_CLI_CONTEXT_MAX_CHARS)}`;
+  }
+  const sections: string[] = [];
+  if (persona) {
+    sections.push(
+      persona.instructions
+        ? `You are working as ${persona.name}.\n\n${persona.instructions}`
+        : `You are working as ${persona.name}.`
+    );
+  }
+  if (transcript) {
+    sections.push(
+      `Earlier in this task (the files you changed are still in the workspace):\n\n${transcript}`
+    );
+    sections.push(`The new request:\n\n${current.join('\n\n')}`);
+  } else {
+    sections.push(current.join('\n\n'));
+  }
+  return sections.join('\n\n');
 }
 
 function summarizeToolCall(call: WorkToolCall): Record<string, unknown> {

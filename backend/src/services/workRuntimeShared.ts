@@ -138,6 +138,23 @@ export const workRuntimeConfig = {
   dnsServers: parseDnsServers(process.env.WORK_RUNTIME_DNS),
 };
 
+/** Where the shared agent CLI toolchain is mounted inside sandboxes. */
+export const WORK_AGENT_TOOLCHAIN_MOUNT = '/opt/libre-agents';
+export const WORK_AGENT_TOOLCHAIN_DEFAULT_VOLUME = 'libre-webui-work-agents';
+
+/**
+ * The Docker volume holding agent CLIs for Work, or undefined when an
+ * operator turned agent CLIs in Work off with an empty
+ * WORK_AGENT_TOOLCHAIN_VOLUME (or `off`).
+ */
+export function workAgentToolchainVolume(): string | undefined {
+  const raw = process.env.WORK_AGENT_TOOLCHAIN_VOLUME;
+  if (raw === undefined) return WORK_AGENT_TOOLCHAIN_DEFAULT_VOLUME;
+  const name = raw.trim();
+  if (!name || name.toLowerCase() === 'off') return undefined;
+  return /^[A-Za-z0-9][A-Za-z0-9_.-]{0,127}$/.test(name) ? name : undefined;
+}
+
 /**
  * The runtime configuration one task's sandbox is actually built with: the
  * global config, with a named policy's overrides applied. `workspaceSize`

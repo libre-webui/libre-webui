@@ -31,6 +31,7 @@ import { ModelDownloadSettings } from '@/components/ModelDownloadSettings';
 import { OllamaProviderSettings } from '@/components/OllamaProviderSettings';
 import { WebSearchAccessSettings } from '@/components/WebSearchAccessSettings';
 import { WorkAccessSettings } from '@/components/WorkAccessSettings';
+import { WorkAgentAccessSettings } from '@/components/WorkAgentAccessSettings';
 import { WorkPoliciesSettings } from '@/components/WorkPoliciesSettings';
 import { cn } from '@/utils';
 
@@ -60,6 +61,7 @@ const renderSection = (section: SectionId) => {
           <WebSearchAccessSettings />
           <AgentAccessSettings />
           <StrandsAccessSettings />
+          <WorkAgentAccessSettings />
           <ToolAccessSettings />
           <VoiceAccessSettings />
           <EmailNotificationSettings />

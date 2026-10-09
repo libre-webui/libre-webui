@@ -37,7 +37,11 @@ export type WorkRunStatus =
 
 export type WorkPreviewStatus = 'stopped' | 'starting' | 'running' | 'failed';
 
-export type WorkProviderType = 'ollama' | 'plugin';
+/**
+ * `agent` runs an agent CLI (Claude Code, Codex, Kiro, OpenCode, Pi) inside
+ * the sandbox; providerId names the CLI, as it does for Chat agent models.
+ */
+export type WorkProviderType = 'ollama' | 'plugin' | 'agent';
 
 export type WorkRunEventType =
   | 'snapshot'
@@ -170,6 +174,61 @@ export interface WorkModelOption extends WorkModelSelection {
   key: string;
   label: string;
   remote: boolean;
+  /**
+   * A persona entry in the picker: choosing it hires the persona for a new
+   * task and selects its base model, which the selection fields name.
+   */
+  personaId?: string;
+  /** An agent CLI with no credential configured yet. */
+  unavailable?: boolean;
+}
+
+/** One agent CLI as Work offers it to the current user. */
+export interface WorkAgentOffer {
+  id: string;
+  name: string;
+  /** Whether a credential this user can use is configured. */
+  configured: boolean;
+  /** `<cli>` (its default) or `<cli>:<model>`, with a display label. */
+  models: Array<{ id: string; label: string }>;
+}
+
+export interface WorkAgentAvailability {
+  enabled: boolean;
+  reason?: string;
+  agents: WorkAgentOffer[];
+}
+
+export type WorkAgentAccessMode = 'disabled' | 'admins' | 'all-users';
+
+export interface WorkAgentAccess {
+  mode: WorkAgentAccessMode;
+  lockedByEnv: boolean;
+}
+
+export interface WorkAgentCredential {
+  /** The environment variable the CLI reads, e.g. KIRO_API_KEY. */
+  name: string;
+  configured: boolean;
+  source: 'stored' | 'environment' | null;
+  lockedByEnv: boolean;
+  usedBy: string[];
+  /** Bundled provider whose saved key can stand in for this slot. */
+  providerPlugin?: string;
+}
+
+export interface WorkAgentToolchainEntry {
+  id: string;
+  name: string;
+  wantedVersion: string;
+  installedVersion?: string;
+  installing: boolean;
+}
+
+export interface WorkAgentToolchain {
+  available: boolean;
+  reason?: string;
+  agents: WorkAgentToolchainEntry[];
 }
 
 export type WorkAccessMode = 'admins' | 'all-users';
@@ -245,6 +304,11 @@ export interface WorkCapabilities {
   runtimeAvailable?: boolean;
   ollamaAvailable?: boolean;
   pluginAvailable?: boolean;
+  /** Agent CLIs (Claude Code, Codex, Kiro, OpenCode, Pi) in the sandbox. */
+  agents?: {
+    enabled: boolean;
+    reason?: string;
+  };
   /** Whether this account may run Work tasks on the Strands engine. */
   strands?: {
     enabled: boolean;
@@ -521,6 +585,9 @@ export const workModelSelectionKey = (
   selection: WorkModelSelection
 ): string => {
   const model = encodeURIComponent(selection.model);
+  if (selection.providerType === 'agent') {
+    return `agent:${encodeURIComponent(selection.providerId || '')}:${model}`;
+  }
   return selection.providerType === 'plugin'
     ? `plugin:${encodeURIComponent(selection.providerId || '')}:${model}`
     : `ollama:${model}`;

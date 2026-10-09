@@ -645,7 +645,8 @@
       "sessions": "Sessions",
       "apiKeys": "API keys",
       "notifications": "Notifications",
-      "ollamaDisabled": "Ollama is disabled by an administrator"
+      "ollamaDisabled": "Ollama is disabled by an administrator",
+      "agentClis": "Agent CLIs"
     },
     "appearance": {
       "title": "Appearance",
@@ -1295,6 +1296,34 @@
       "emailMentionsHint": "Email me when someone mentions me in a channel.",
       "emailAutomations": "Automation results",
       "emailAutomationsHint": "Email me the result of each automation run, whether it succeeded or failed."
+    },
+    "agentClis": {
+      "title": "Agent CLIs in Work",
+      "description": "Claude Code, Codex, Kiro, OpenCode, and Pi can do Work tasks inside the sandbox. A run only ever sees a placeholder; the egress proxy adds the real key for the agent's own API.",
+      "accessHint": "Choose who may use them in User Management, under Access & policies.",
+      "unavailable": "Agent CLIs in Work need the Docker runtime, or this server has turned them off.",
+      "keysTitle": "Keys",
+      "keysDescription": "Saved keys are encrypted and shared by everyone allowed to use agent CLIs in Work.",
+      "saved": "Saved",
+      "environment": "Set in the server environment",
+      "missing": "Not set",
+      "usedBy": "Used by {{agents}}",
+      "providerFallback": "or each user's {{provider}} key",
+      "placeholder": "Paste a key",
+      "save": "Save",
+      "remove": "Remove",
+      "keySaved": "Key saved.",
+      "keyRemoved": "Key removed.",
+      "keyFailed": "Could not save the key.",
+      "toolchainTitle": "Installed agents",
+      "toolchainDescription": "Each agent installs on its first run. Install one ahead of time to skip the wait.",
+      "installing": "Installing…",
+      "installed": "Version {{version}}",
+      "notInstalled": "Not installed",
+      "install": "Install",
+      "installStarted": "Installing {{agent}}.",
+      "installFailed": "Could not start the install.",
+      "loadFailed": "Could not load the agent settings."
     }
   },
   "models": {
@@ -1948,7 +1977,8 @@
         "stt": "Speech to text",
         "tts": "Text to speech",
         "voice-mode": "Voice mode",
-        "voice-cloning": "Voice cloning"
+        "voice-cloning": "Voice cloning",
+        "work-agents": "Agent CLIs in Work"
       },
       "grantViaKinds": {
         "user": "direct grant",
@@ -2082,6 +2112,18 @@
       "title": "Agent CLI models",
       "description": "Administrators can use installed Kiro, Pi, OpenCode, Codex, and Claude Code as chat models. They run on the host, outside Work sandboxes.",
       "lockedByEnv": "Pinned by the AGENT_CLI_MODELS_ENABLED environment variable."
+    },
+    "workAgentAccess": {
+      "title": "Agent CLIs in Work",
+      "description": "Choose who can have Claude Code, Codex, Kiro, OpenCode, or Pi do Work tasks inside the sandbox. Keys are added in Settings → Connections → Agent CLIs.",
+      "lockedByEnv": "Pinned by the LIBRE_WORK_AGENTS_ACCESS environment variable.",
+      "saved": "Agent CLI access in Work updated",
+      "saveFailed": "Could not update agent CLI access in Work",
+      "modes": {
+        "disabled": "Off",
+        "admins": "Administrators",
+        "all-users": "All Work users"
+      }
     }
   },
   "usageAnalytics": {
@@ -3106,7 +3148,8 @@
     "sources": "Model sources",
     "defaultModel": "Default model",
     "contextSize": "{{size}} context",
-    "via": "via {{provider}}"
+    "via": "via {{provider}}",
+    "agentNeedsKey": "needs a key"
   },
   "whatsNew": {
     "title": "What's new",

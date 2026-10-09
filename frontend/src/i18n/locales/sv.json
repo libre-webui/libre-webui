@@ -645,7 +645,8 @@
       "sessions": "Sessioner",
       "apiKeys": "API-nycklar",
       "notifications": "Aviseringar",
-      "ollamaDisabled": "Ollama är inaktiverat av en administratör"
+      "ollamaDisabled": "Ollama är inaktiverat av en administratör",
+      "agentClis": "Agent-CLI:er"
     },
     "appearance": {
       "title": "Utseende",
@@ -1295,6 +1296,34 @@
       "emailMentionsHint": "Mejla mig när någon nämner mig i en kanal.",
       "emailAutomations": "Automatiseringsresultat",
       "emailAutomationsHint": "Mejla mig resultatet av varje automatiseringskörning, oavsett om den lyckades eller misslyckades."
+    },
+    "agentClis": {
+      "title": "Agent-CLI:er i Work",
+      "description": "Claude Code, Codex, Kiro, OpenCode och Pi kan utföra Work-uppgifter i sandlådan. En körning ser bara en platshållare; den utgående proxyn lägger till den riktiga nyckeln bara för agentens eget API.",
+      "accessHint": "Välj vem som får använda dem i Användarhantering, under Åtkomst och policyer.",
+      "unavailable": "Agent-CLI:er i Work kräver Docker-körmiljön, eller så har den här servern stängt av dem.",
+      "keysTitle": "Nycklar",
+      "keysDescription": "Sparade nycklar krypteras och delas av alla som får använda agent-CLI:er i Work.",
+      "saved": "Sparad",
+      "environment": "Satt i servermiljön",
+      "missing": "Inte satt",
+      "usedBy": "Används av {{agents}}",
+      "providerFallback": "eller varje användares {{provider}}-nyckel",
+      "placeholder": "Klistra in en nyckel",
+      "save": "Spara",
+      "remove": "Ta bort",
+      "keySaved": "Nyckeln sparades.",
+      "keyRemoved": "Nyckeln togs bort.",
+      "keyFailed": "Det gick inte att spara nyckeln.",
+      "toolchainTitle": "Installerade agenter",
+      "toolchainDescription": "Varje agent installeras vid sin första körning. Installera den i förväg för att slippa vänta.",
+      "installing": "Installerar…",
+      "installed": "Version {{version}}",
+      "notInstalled": "Inte installerad",
+      "install": "Installera",
+      "installStarted": "Installerar {{agent}}.",
+      "installFailed": "Det gick inte att starta installationen.",
+      "loadFailed": "Det gick inte att läsa in agentinställningarna."
     }
   },
   "models": {
@@ -1948,7 +1977,8 @@
         "stt": "Tal till text",
         "tts": "Text till tal",
         "voice-mode": "Röstläge",
-        "voice-cloning": "Röstkloning"
+        "voice-cloning": "Röstkloning",
+        "work-agents": "Agent-CLI:er i Work"
       },
       "grantViaKinds": {
         "user": "direkt tilldelning",
@@ -2082,6 +2112,18 @@
       "title": "CLI-agentmodeller",
       "description": "Administratörer kan använda installerade Kiro, Pi, OpenCode, Codex och Claude Code som chattmodeller. De körs på värddatorn utanför Work-sandlådor.",
       "lockedByEnv": "Låst av miljövariabeln AGENT_CLI_MODELS_ENABLED."
+    },
+    "workAgentAccess": {
+      "title": "Agent-CLI:er i Work",
+      "description": "Välj vem som får låta Claude Code, Codex, Kiro, OpenCode eller Pi utföra Work-uppgifter i sandlådan. Nycklar läggs till under Inställningar → Anslutningar → Agent-CLI:er.",
+      "lockedByEnv": "Låst av miljövariabeln LIBRE_WORK_AGENTS_ACCESS.",
+      "saved": "Åtkomsten till agent-CLI:er i Work uppdaterades",
+      "saveFailed": "Det gick inte att uppdatera åtkomsten till agent-CLI:er i Work",
+      "modes": {
+        "disabled": "Av",
+        "admins": "Administratörer",
+        "all-users": "Alla Work-användare"
+      }
     }
   },
   "usageAnalytics": {
@@ -3106,7 +3148,8 @@
     "sources": "Modellkällor",
     "defaultModel": "Standardmodell",
     "contextSize": "{{size}} kontext",
-    "via": "via {{provider}}"
+    "via": "via {{provider}}",
+    "agentNeedsKey": "nyckel saknas"
   },
   "whatsNew": {
     "title": "Nyheter",

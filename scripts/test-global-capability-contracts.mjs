@@ -47,6 +47,7 @@ const canonicalCapabilityIds = [
   'skills',
   'chat-tools',
   'work',
+  'work-agent-clis',
   'agent-cli',
   'artifacts',
   'usage',

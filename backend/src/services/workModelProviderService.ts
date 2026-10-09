@@ -186,6 +186,23 @@ export class WorkModelProviderService {
     provider: WorkProviderSelection,
     userId: string
   ): Promise<void> {
+    if (provider.providerType === 'agent') {
+      // Agent CLIs bring their own tools and run inside the sandbox; what
+      // they need is access, the toolchain, and a configured credential.
+      const { prepareWorkAgentRun } = await import('./workAgents.js');
+      try {
+        await prepareWorkAgentRun(model, provider, userId);
+      } catch (error) {
+        throw new WorkModelProviderError(
+          error instanceof Error ? error.message : String(error),
+          typeof (error as { status?: unknown }).status === 'number'
+            ? (error as { status: number }).status
+            : 422,
+          'WORK_MODEL_TOOLS_UNSUPPORTED'
+        );
+      }
+      return;
+    }
     const cleaned = await this.providerModel(model, provider, userId);
     if (!cleaned) {
       throw new WorkModelProviderError(
@@ -205,7 +222,7 @@ export class WorkModelProviderService {
       )
     ) {
       throw new WorkModelProviderError(
-        'Agent CLI models are chat-only: they run on the host, outside the Work sandbox. Pick an Ollama or provider model for Work.',
+        'Pick the agent from the Agents group: in Work it runs inside the sandbox, not on the host.',
         422,
         'WORK_MODEL_TOOLS_UNSUPPORTED'
       );
