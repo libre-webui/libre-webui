@@ -90,6 +90,8 @@ test('SQLite driver imports stay inside audited adapter and recovery boundaries'
     'platform/storage/storageFactory.ts',
     'platform/workPersistence/sqliteWorkPersistence.ts',
     'services/healthService.ts',
+    // The Kiro CLI's own login database, never Libre WebUI's storage.
+    'services/kiroLoginDatabase.ts',
     'services/legacyCiphertextIntegrity.ts',
     'services/recoveryInventoryService.ts',
   ]);

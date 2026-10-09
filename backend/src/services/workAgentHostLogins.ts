@@ -38,10 +38,13 @@ import { createHash, randomBytes } from 'node:crypto';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import Database from 'better-sqlite3';
 import { createLogger } from '../utils/logger.js';
 import { providerRequest } from '../utils/providerFetch.js';
 import { resolveBinary } from './agentCliService.js';
+import {
+  readKiroLoginRows,
+  scrubbedKiroDatabase,
+} from './kiroLoginDatabase.js';
 import codexOAuthService from './codexOAuthService.js';
 import type { WorkAgentCliId } from './workAgentCatalog.js';
 import {
@@ -917,15 +920,8 @@ export class KiroHostLogin implements WorkAgentHostLogin {
 
   /** Login rows: auth_kv entries ending in `:token` with an access token. */
   private readTokens(): KiroToken[] {
-    const file = this.databasePath();
-    if (!fs.existsSync(file)) return [];
-    let database: Database.Database | undefined;
     try {
-      database = new Database(file, { readonly: true, fileMustExist: true });
-      const rows = database
-        .prepare("SELECT key, value FROM auth_kv WHERE key LIKE '%:token'")
-        .all() as Array<{ key: string; value: string }>;
-      return rows.flatMap(row => {
+      return readKiroLoginRows(this.databasePath()).flatMap(row => {
         try {
           const value = JSON.parse(row.value) as Record<string, unknown>;
           return typeof value.access_token === 'string' && value.access_token
@@ -938,8 +934,6 @@ export class KiroHostLogin implements WorkAgentHostLogin {
     } catch (error) {
       logger.warn('Could not read the Kiro login database', error);
       return [];
-    } finally {
-      database?.close();
     }
   }
 
@@ -964,47 +958,16 @@ export class KiroHostLogin implements WorkAgentHostLogin {
     return tokens;
   }
 
-  private async sandboxDatabase(
+  /** The login rows become placeholders; every other auth_kv row goes. */
+  private sandboxDatabase(
     placeholders: ReadonlyMap<string, string>
   ): Promise<Buffer> {
-    const scratch = fs.mkdtempSync(path.join(os.tmpdir(), 'libre-kiro-'));
-    const copy = path.join(scratch, 'data.sqlite3');
-    let source: Database.Database | undefined;
-    let database: Database.Database | undefined;
-    try {
-      source = new Database(this.databasePath(), {
-        readonly: true,
-        fileMustExist: true,
-      });
-      await source.backup(copy);
-      source.close();
-      source = undefined;
-      database = new Database(copy);
-      const tables = database
-        .prepare(
-          "SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%'"
-        )
-        .all() as Array<{ name: string }>;
-      const keep = new Set(['auth_kv', 'state', 'migrations']);
-      for (const { name } of tables) {
-        if (!keep.has(name)) {
-          database.prepare(`DELETE FROM "${name.replace(/"/g, '""')}"`).run();
-        }
-      }
-      const rows = database
-        .prepare('SELECT key, value FROM auth_kv')
-        .all() as Array<{ key: string; value: string }>;
-      const update = database.prepare(
-        'UPDATE auth_kv SET value = ? WHERE key = ?'
-      );
-      const remove = database.prepare('DELETE FROM auth_kv WHERE key = ?');
-      for (const row of rows) {
-        const placeholder = placeholders.get(row.key);
-        if (!placeholder) {
-          remove.run(row.key);
-          continue;
-        }
-        const value = JSON.parse(row.value) as Record<string, unknown>;
+    return scrubbedKiroDatabase(
+      this.databasePath(),
+      (key, raw) => {
+        const placeholder = placeholders.get(key);
+        if (!placeholder) return null;
+        const value = JSON.parse(raw) as Record<string, unknown>;
         const expiresAt = new Date(Date.now() + SANDBOX_VALIDITY_MS);
         const rewritten: Record<string, unknown> = {
           ...value,
@@ -1018,29 +981,10 @@ export class KiroHostLogin implements WorkAgentHostLogin {
               ? Math.floor(expiresAt.getTime() / 1000)
               : expiresAt.toISOString();
         }
-        update.run(JSON.stringify(rewritten), row.key);
-      }
-      try {
-        const state = database.prepare('SELECT key FROM state').all() as Array<{
-          key: string;
-        }>;
-        const dropState = database.prepare('DELETE FROM state WHERE key = ?');
-        for (const { key } of state) {
-          if (KIRO_PRIVATE_STATE.test(key)) dropState.run(key);
-        }
-      } catch {
-        // Older databases have no state table.
-      }
-      database.pragma('journal_mode = DELETE');
-      database.exec('VACUUM');
-      database.close();
-      database = undefined;
-      return fs.readFileSync(copy);
-    } finally {
-      source?.close();
-      database?.close();
-      fs.rmSync(scratch, { recursive: true, force: true });
-    }
+        return JSON.stringify(rewritten);
+      },
+      KIRO_PRIVATE_STATE
+    );
   }
 }
 

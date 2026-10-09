@@ -2712,7 +2712,7 @@
           "file": "docs/33-WORKSPACES.md",
           "patterns": [
             "^## Agent CLIs in Work$",
-            "\\*\\*Credentials stay outside the sandbox\\.\\*\\*"
+            "\\*\\*Logins stay on the server\\.\\*\\*"
           ]
         },
         {
