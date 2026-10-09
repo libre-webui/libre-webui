@@ -34,6 +34,7 @@
 
 import { createLogger } from '../utils/logger.js';
 import {
+  KIRO_KAS_SERVER,
   WORK_AGENT_CLI_IDS,
   WORK_AGENT_CLIS,
   type WorkAgentCliId,
@@ -108,7 +109,9 @@ link=$(mktemp -u "$root/node/.current-XXXXXX")
 ln -s "$node_version" "$link"
 mv -T "$link" "$root/node/current"
 dest="$root/cli/$CLI_ID/$CLI_VERSION"
-if [ ! -f "$dest/.libre-installed" ]; then
+# A Kiro install from before its engine was unpacked here is incomplete.
+if [ ! -f "$dest/.libre-installed" ] ||
+  { [ "$CLI_KIND" = kiro ] && [ ! -x "$dest/kas-node" ]; }; then
   staging=$(mktemp -d "$root/cli/$CLI_ID/.staging-XXXXXX")
   mkdir -p "$staging/bin"
   if [ "$CLI_KIND" = npm ]; then
@@ -131,6 +134,26 @@ if [ ! -f "$dest/.libre-installed" ]; then
     tar -xzf "$archive" -C /tmp/kiro-extract
     cp -R /tmp/kiro-extract/kirocli/bin/. "$staging/bin/"
     rm -rf /tmp/kiro-extract "$archive"
+    # Kiro's v3 engine (a Node server with its own node) unpacks itself into
+    # the data directory on a first chat. Unpack it here, where it can run: a
+    # sandbox's /tmp is noexec and its image is read-only. The key is a dummy;
+    # the run only has to get far enough to unpack, not to answer.
+    warm=$(mktemp -d /tmp/kiro-warm-XXXXXX)
+    echo hi | HOME="$warm" PATH="$staging/bin:$PATH" \
+      KIRO_API_KEY=ksk_libre_toolchain_unpack timeout 180 \
+      kiro-cli chat --no-interactive --output-format stream-json \
+      --agent-engine v3 --agent vibe >/dev/null 2>&1 || true
+    data="$warm/.local/share/kiro-cli"
+    for kas in "$data/kas/$CLI_VERSION"-*; do
+      if [ -d "$kas" ]; then mv -T "$kas" "$staging/kas"; fi
+    done
+    if [ -x "$data/node" ]; then mv "$data/node" "$staging/kas-node"; fi
+    rm -rf "$warm"
+    if [ ! -x "$staging/kas-node" ] ||
+      [ ! -f "$staging/kas/$KIRO_KAS_SERVER" ]; then
+      echo "Kiro's v3 engine did not unpack." >&2
+      exit 6
+    fi
   fi
   printf '{"cli":"%s","version":"%s"}\n' "$CLI_ID" "$CLI_VERSION" > "$staging/.libre-installed"
   chmod -R a+rX "$staging"
@@ -152,6 +175,8 @@ const STATUS_SCRIPT = String.raw`root="$LIBRE_TOOLCHAIN_ROOT"
 for marker in "$root"/cli/*/current/.libre-installed; do
   [ -f "$marker" ] || continue
   cli=$(basename "$(dirname "$(dirname "$marker")")")
+  # Kiro is only usable with its unpacked v3 engine beside it.
+  [ "$cli" = kiro ] && [ ! -x "$(dirname "$marker")/kas-node" ] && continue
   version=$(basename "$(readlink "$(dirname "$marker")")")
   [ -x "$root/node/current/bin/node" ] && echo "$cli $version"
 done
@@ -343,6 +368,7 @@ export class WorkAgentToolchainService {
     } else {
       env.KIRO_SHA256_X86_64 = install.sha256.x86_64;
       env.KIRO_SHA256_AARCH64 = install.sha256.aarch64;
+      env.KIRO_KAS_SERVER = KIRO_KAS_SERVER;
     }
     logger.info(
       `Installing ${cli.name} ${install.version} into the Work agent toolchain`

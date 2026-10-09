@@ -22,6 +22,8 @@
  * where its tokens may travel, lives in workAgentHostLogins.ts.
  */
 
+import { WORK_AGENT_TOOLCHAIN_MOUNT } from './workRuntimeShared.js';
+
 export type WorkAgentCliId =
   'claude-code' | 'codex' | 'kiro' | 'opencode' | 'pi';
 
@@ -62,6 +64,11 @@ export interface WorkAgentCliSpec {
    */
   buildArgs(model: string | undefined): string[];
 }
+
+/** Kiro's v3 engine server, relative to its unpacked `kas` directory. */
+export const KIRO_KAS_SERVER =
+  'node_modules/@kiro/agent/dist/server/acp-server.js';
+const KIRO_ROOT = `${WORK_AGENT_TOOLCHAIN_MOUNT}/cli/kiro/current`;
 
 export const WORK_AGENT_CLIS: Readonly<
   Record<WorkAgentCliId, WorkAgentCliSpec>
@@ -127,6 +134,10 @@ export const WORK_AGENT_CLIS: Readonly<
     supportHosts: [],
     env: {
       KIRO_NO_AUTO_UPDATE: '1',
+      // The v3 engine, unpacked into the read-only toolchain at install:
+      // Kiro's own unpack target, under the agent home in /tmp, is noexec.
+      KIRO_KAS_NODE_PATH: `${KIRO_ROOT}/kas-node`,
+      KIRO_KAS_SERVER_PATH: `${KIRO_ROOT}/kas/${KIRO_KAS_SERVER}`,
       KIRO_DISABLE_TELEMETRY: '1',
       Q_DISABLE_TELEMETRY: '1',
     },

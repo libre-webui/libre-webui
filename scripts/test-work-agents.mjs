@@ -115,6 +115,18 @@ test('agent CLIs run non-interactively with their tools approved in the sandbox'
   );
   const kiro = WORK_AGENT_CLIS.kiro.buildArgs();
   assert.ok(kiro.includes('--trust-all-tools'));
+  // Kiro's v3 engine runs from the read-only toolchain: the agent home in a
+  // sandbox's /tmp is noexec, so Kiro's own unpack there cannot start.
+  assert.deepEqual(
+    [
+      WORK_AGENT_CLIS.kiro.env.KIRO_KAS_NODE_PATH,
+      WORK_AGENT_CLIS.kiro.env.KIRO_KAS_SERVER_PATH,
+    ],
+    [
+      '/opt/libre-agents/cli/kiro/current/kas-node',
+      '/opt/libre-agents/cli/kiro/current/kas/node_modules/@kiro/agent/dist/server/acp-server.js',
+    ]
+  );
   assert.deepEqual(
     kiro.slice(kiro.indexOf('--agent'), kiro.indexOf('--agent') + 2),
     ['--agent', 'vibe']
