@@ -68,8 +68,11 @@ export const WORK_ADMISSION_DEFAULTS = {
   // runtimes per administrator, three per instance.
   maxActiveRuntimesGlobal: 3,
   maxActiveRuntimesPerUser: 2,
-  maxTasksGlobal: 500,
-  maxTasksPerUser: 100,
+  // Kept tasks cost only their workspace's disk; the runtime limits above
+  // bound what runs. These are a backstop against runaway task creation,
+  // high enough that daily use with hired agents never meets them.
+  maxTasksGlobal: 5_000,
+  maxTasksPerUser: 1_000,
 } as const;
 
 const workAdmissionLimits = {
@@ -1263,12 +1266,12 @@ const translatePersistenceError = (
       return new WorkForbiddenError();
     case 'WORK_USER_TASK_LIMIT':
       return new WorkAdmissionError(
-        `This administrator already has the maximum of ${workAdmissionLimits.maxTasksPerUser} Work tasks.`,
+        `This account already has the maximum of ${workAdmissionLimits.maxTasksPerUser} Work tasks. Delete finished tasks, or ask an administrator to raise WORK_MAX_TASKS_PER_USER.`,
         error.code
       );
     case 'WORK_GLOBAL_TASK_LIMIT':
       return new WorkAdmissionError(
-        `This Libre WebUI instance already has the maximum of ${workAdmissionLimits.maxTasksGlobal} Work tasks.`,
+        `This Libre WebUI instance already has the maximum of ${workAdmissionLimits.maxTasksGlobal} Work tasks. Delete finished tasks, or ask an administrator to raise WORK_MAX_TASKS_GLOBAL.`,
         error.code
       );
     case 'WORK_USER_RUNTIME_LIMIT':

@@ -1485,8 +1485,8 @@ Work reads these variables in the backend process:
 | `WORK_RUN_LEASE_WAIT_MS`              | `60000`                                                                                       | How long a run waits out a transient runtime-lease holder  |
 | `WORK_MAX_ACTIVE_RUNTIMES_GLOBAL`     | `3`                                                                                           | Concurrent container-backed tasks per Libre WebUI instance |
 | `WORK_MAX_ACTIVE_RUNTIMES_PER_USER`   | `2`                                                                                           | Concurrent container-backed tasks per administrator        |
-| `WORK_MAX_TASKS_GLOBAL`               | `500`                                                                                         | Persisted Work task limit per Libre WebUI instance         |
-| `WORK_MAX_TASKS_PER_USER`             | `100`                                                                                         | Persisted Work task limit per administrator                |
+| `WORK_MAX_TASKS_GLOBAL`               | `5000`                                                                                        | Persisted Work task limit per Libre WebUI instance         |
+| `WORK_MAX_TASKS_PER_USER`             | `1000`                                                                                        | Persisted Work task limit per account                      |
 | `WORK_NETWORK_NAME`                   | `libre-webui-work`                                                                            | Managed sandbox bridge network for networked tasks         |
 | `WORK_RUNTIME_DNS`                    | unset                                                                                         | Comma-separated resolver IPs forced onto networked tasks   |
 | `WORK_DOCKER_SOCKET`                  | `DOCKER_HOST` if `unix://` or `tcp://`, else `/var/run/docker.sock`                           | Docker Engine endpoint used for interactive terminals      |
