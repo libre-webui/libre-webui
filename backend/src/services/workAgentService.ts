@@ -1051,8 +1051,8 @@ export class WorkAgentService {
           userId
         );
       }
-      // Agent CLIs: access, toolchain, and credential are checked before the
-      // sandbox starts, so a missing key fails fast with what to set up.
+      // Agent CLIs: access, install, and login are checked before the
+      // sandbox starts, so a missing login fails fast with what to do.
       let agentRun: PreparedWorkAgentRun | undefined;
       if (run.providerType === 'agent') {
         const { prepareWorkAgentRun } = await import('./workAgents.js');
@@ -2325,7 +2325,7 @@ export class WorkAgentService {
           runId,
           cli,
           model: prepared.model,
-          credential: prepared.credential,
+          login: prepared.login,
           prompt,
           signal: controller.signal,
         },

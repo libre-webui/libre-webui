@@ -80,45 +80,55 @@ approved: the container, not the agent, is the security boundary. Its replies,
 reasoning, and tool calls stream into the run like any Work run, and the files
 it changed appear on the run.
 
-These are not the [Agent CLI chat models](./AGENT_CLI_MODELS). Those run on the
-server host with the server user's own logins. Agents in Work never see the
-host, and they never see a real credential either.
+These are the same agents as the [Agent CLI chat models](./AGENT_CLI_MODELS),
+with the same model choices and the same logins. The picker lists an agent
+when its CLI is installed on the server, exactly as Chat does. What differs is
+where the agent runs: Chat runs it on the host, Work runs it in the sandbox,
+where it never sees the host or a real token.
 
-**Credentials stay outside the sandbox.** A run gets a placeholder such as
-`lwui_ph_…` in place of each key. The agent's traffic leaves the sandbox
-through Libre WebUI's egress proxy, which recognizes the credential's own API
-hosts, swaps the placeholder for the real key on the way out, and passes every
-other connection through untouched. A placeholder sent anywhere else stays
-useless. The proxy refuses private addresses, and a task without network can
-reach only its agent's API.
+**Logins stay on the server.** Each agent uses the login its CLI already has
+for the server user, the one Chat uses:
 
-| Agent        | Credential, any one of                                                                               | Sent only to                                                    |
-| ------------ | ---------------------------------------------------------------------------------------------------- | --------------------------------------------------------------- |
-| Claude Code  | `CLAUDE_CODE_OAUTH_TOKEN` (from `claude setup-token`), `ANTHROPIC_API_KEY`, or an Amazon Bedrock key | `api.anthropic.com`, or `bedrock-runtime` in the Bedrock Region |
-| Codex        | `CODEX_API_KEY` or an OpenAI key                                                                     | `api.openai.com`                                                |
-| Kiro         | `KIRO_API_KEY`, a `ksk_` key from app.kiro.dev (Kiro Pro and above)                                  | Kiro's management and runtime hosts                             |
-| OpenCode, Pi | an OpenRouter, Anthropic, or OpenAI key, matching the model's provider                               | that provider's API                                             |
+| Agent       | Login                                                                                      | Sent only to                                      |
+| ----------- | ------------------------------------------------------------------------------------------ | ------------------------------------------------- |
+| Claude Code | the `claude` login (the macOS keychain, or `~/.claude/.credentials.json`)                  | `api.anthropic.com`                               |
+| Codex       | the `codex login` (`~/.codex/auth.json`), ChatGPT sign-in or API key                       | `chatgpt.com`, or `api.openai.com` for an API key |
+| Kiro        | the `kiro-cli login`                                                                       | Kiro's management and runtime hosts               |
+| OpenCode    | the `opencode auth login` entry for the chosen model's provider                            | that provider's API                               |
+| Pi          | Pi's login for its default provider (`~/.pi/agent`), on the default model Pi is set to use | that provider's API                               |
 
-Administrators add headless keys under **Settings → Connections → Agent CLIs**,
-where they are stored encrypted, or set `WORK_AGENT_<NAME>` in the server
-environment (for example `WORK_AGENT_KIRO_API_KEY`). The server's own
-`KIRO_API_KEY` or `ANTHROPIC_API_KEY` is never picked up implicitly. Provider
-keys come from the key each user saved for that provider, exactly as Chat uses
-them, so OpenCode and Pi work with an OpenRouter connection, and Claude Code
-works with an Amazon Bedrock connection.
+A run gets the CLI's own login file with a placeholder such as `lwui_ph_…`
+in place of every token. The agent's traffic leaves the sandbox through
+Libre WebUI's egress proxy, which recognizes the login's own API hosts, swaps
+the placeholder for the real token on the way out, and passes every other
+connection through untouched. A placeholder sent anywhere else stays useless.
+The proxy refuses private addresses, and a task without network can reach
+only its agent's API.
+
+A sandboxed agent cannot refresh its own login, so the server does it: before
+a run, and every few minutes during a long one, it refreshes a login that is
+about to expire, the way the CLI would, and saves the result where the CLI
+keeps it, so the CLI keeps working on the host too. The Kiro copy carries only
+the login, never chat history. Variables the server process already has, such
+as `ANTHROPIC_API_KEY`, `CODEX_API_KEY`, or `KIRO_API_KEY`, are used the same
+way Chat's CLIs would use them.
+
+When an agent cannot run, the picker keeps it visible with the reason: the CLI
+is not installed on the server, it is not signed in, or its login expired and
+could not be refreshed. Signing the CLI in as the server user, the same fix as
+for Chat, makes it available.
 
 **Access.** Agent CLIs in Work start **off**. An administrator opens them to
 administrators or to every Work user under **Settings → User Management →
 Access & policies → Agent CLIs in Work**, or pins the choice with
-`LIBRE_WORK_AGENTS_ACCESS`. An agent with no credential stays visible in the
-picker, marked unavailable, until a key is added.
+`LIBRE_WORK_AGENTS_ACCESS`. Everyone allowed shares the server's logins, and
+so its subscriptions and usage limits.
 
 **Installation.** The first run of each agent installs a pinned version into a
 shared, read-only toolchain volume (`libre-webui-work-agents`) with a
 short-lived installer container, so sandboxes never install anything
 themselves; the run shows **Installing** meanwhile. An administrator can also
-install an agent ahead of time from the same settings page. Agent CLIs in Work
-need the Docker runtime.
+Agent CLIs in Work need the Docker runtime.
 
 **Turns and limits.** Each message starts a fresh agent turn that receives the
 task's earlier conversation, and the workspace keeps everything it made. Stop

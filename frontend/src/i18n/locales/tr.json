@@ -645,8 +645,7 @@
       "sessions": "Oturumlar",
       "apiKeys": "API Anahtarları",
       "notifications": "Bildirimler",
-      "ollamaDisabled": "Ollama bir yönetici tarafından devre dışı bırakıldı",
-      "agentClis": "Ajan CLI'ları"
+      "ollamaDisabled": "Ollama bir yönetici tarafından devre dışı bırakıldı"
     },
     "appearance": {
       "title": "Görünüm",
@@ -1296,34 +1295,6 @@
       "emailMentionsHint": "Bir kanalda biri benden bahsettiğinde e-posta gönder.",
       "emailAutomations": "Otomasyon sonuçları",
       "emailAutomationsHint": "Her otomasyon çalışmasının sonucunu, başarılı ya da başarısız olsun, e-postayla bildir."
-    },
-    "agentClis": {
-      "title": "Work'te ajan CLI'ları",
-      "description": "Claude Code, Codex, Kiro, OpenCode ve Pi, Work görevlerini korumalı alanın içinde yapabilir. Bir çalıştırma yalnızca bir yer tutucu görür; gerçek anahtarı çıkış proxy'si yalnızca ajanın kendi API'si için ekler.",
-      "accessHint": "Bunları kimlerin kullanabileceğini Kullanıcı Yönetimi içinde Erişim ve ilkeler bölümünden seçin.",
-      "unavailable": "Work'teki ajan CLI'ları Docker çalışma zamanı gerektirir ya da bu sunucu onları kapattı.",
-      "keysTitle": "Anahtarlar",
-      "keysDescription": "Kaydedilen anahtarlar şifrelenir ve Work'te ajan CLI'larını kullanmasına izin verilen herkes tarafından paylaşılır.",
-      "saved": "Kaydedildi",
-      "environment": "Sunucu ortamında ayarlı",
-      "missing": "Ayarlanmadı",
-      "usedBy": "Kullanan: {{agents}}",
-      "providerFallback": "veya her kullanıcının {{provider}} anahtarı",
-      "placeholder": "Bir anahtar yapıştırın",
-      "save": "Kaydet",
-      "remove": "Kaldır",
-      "keySaved": "Anahtar kaydedildi.",
-      "keyRemoved": "Anahtar kaldırıldı.",
-      "keyFailed": "Anahtar kaydedilemedi.",
-      "toolchainTitle": "Yüklü ajanlar",
-      "toolchainDescription": "Her ajan ilk çalıştırmasında yüklenir. Beklememek için önceden yükleyin.",
-      "installing": "Yükleniyor…",
-      "installed": "Sürüm {{version}}",
-      "notInstalled": "Yüklü değil",
-      "install": "Yükle",
-      "installStarted": "{{agent}} yükleniyor.",
-      "installFailed": "Yükleme başlatılamadı.",
-      "loadFailed": "Ajan ayarları yüklenemedi."
     }
   },
   "models": {
@@ -2115,7 +2086,7 @@
     },
     "workAgentAccess": {
       "title": "Work'te ajan CLI'ları",
-      "description": "Korumalı alanın içinde Claude Code, Codex, Kiro, OpenCode veya Pi'ye Work görevleri yaptırabilecek kişileri seçin. Anahtarlar Ayarlar → Bağlantılar → Ajan CLI'ları bölümünden eklenir.",
+      "description": "Korumalı alanın içinde Claude Code, Codex, Kiro, OpenCode veya Pi'ye Work görevleri yaptırabilecek kişileri seçin. Bu sunucudaki Chat ile aynı oturum açma bilgilerini kullanırlar.",
       "lockedByEnv": "LIBRE_WORK_AGENTS_ACCESS ortam değişkeniyle sabitlendi.",
       "saved": "Work'te ajan CLI erişimi güncellendi",
       "saveFailed": "Work'te ajan CLI erişimi güncellenemedi",
@@ -3148,8 +3119,7 @@
     "sources": "Model kaynakları",
     "defaultModel": "Varsayılan model",
     "contextSize": "{{size}} bağlam",
-    "via": "{{provider}} üzerinden",
-    "agentNeedsKey": "anahtar gerekli"
+    "via": "{{provider}} üzerinden"
   },
   "whatsNew": {
     "title": "Yenilikler",

@@ -211,8 +211,8 @@ export default function WorkPage() {
       }),
     [models]
   );
-  // Agent CLIs Work runs inside the sandbox (not the host CLIs Chat lists).
-  // Unconfigured agents stay visible so the picker can say what is missing.
+  // The agent CLIs Chat lists, run inside the task's sandbox under the same
+  // logins. Agents that cannot run stay visible with the reason.
   const agentsEnabled = capabilities?.agents?.enabled === true;
   const [loadedAgentOffers, setAgentOffers] = useState<WorkAgentOffer[]>([]);
   const [agentListVersion, setAgentListVersion] = useState(0);
@@ -250,7 +250,12 @@ export default function WorkPage() {
                 ? offer.name
                 : `${offer.name} · ${entry.label}`,
             remote: true,
-            ...(offer.configured ? {} : { unavailable: true }),
+            ...(offer.configured
+              ? {}
+              : {
+                  unavailable: true,
+                  ...(offer.reason ? { unavailableReason: offer.reason } : {}),
+                }),
           };
         })
       ),
@@ -269,6 +274,9 @@ export default function WorkPage() {
         agentId: option.providerId,
         agentName: option.label,
         ...(option.unavailable ? { isUnavailable: true } : {}),
+        ...(option.unavailableReason
+          ? { unavailableReason: option.unavailableReason }
+          : {}),
       })),
     [agentModelOptions]
   );

@@ -645,8 +645,7 @@
       "sessions": "Sessioner",
       "apiKeys": "API-nøgler",
       "notifications": "Notifikationer",
-      "ollamaDisabled": "Ollama er deaktiveret af en administrator",
-      "agentClis": "Agent-CLI'er"
+      "ollamaDisabled": "Ollama er deaktiveret af en administrator"
     },
     "appearance": {
       "title": "Udseende",
@@ -1296,34 +1295,6 @@
       "emailMentionsHint": "Send mig en e-mail, når nogen nævner mig i en kanal.",
       "emailAutomations": "Automatiseringsresultater",
       "emailAutomationsHint": "Send mig en e-mail med resultatet af hver automatiseringskørsel, uanset om den lykkedes eller fejlede."
-    },
-    "agentClis": {
-      "title": "Agent-CLI'er i Work",
-      "description": "Claude Code, Codex, Kiro, OpenCode og Pi kan udføre Work-opgaver inde i sandkassen. En kørsel ser kun en pladsholder; den udgående proxy tilføjer den rigtige nøgle kun til agentens eget API.",
-      "accessHint": "Vælg, hvem der må bruge dem, i Brugeradministration under Adgang og politikker.",
-      "unavailable": "Agent-CLI'er i Work kræver Docker-runtime, eller også har denne server slået dem fra.",
-      "keysTitle": "Nøgler",
-      "keysDescription": "Gemte nøgler krypteres og deles af alle, der må bruge agent-CLI'er i Work.",
-      "saved": "Gemt",
-      "environment": "Sat i servermiljøet",
-      "missing": "Ikke sat",
-      "usedBy": "Bruges af {{agents}}",
-      "providerFallback": "eller hver brugers {{provider}}-nøgle",
-      "placeholder": "Indsæt en nøgle",
-      "save": "Gem",
-      "remove": "Fjern",
-      "keySaved": "Nøglen er gemt.",
-      "keyRemoved": "Nøglen er fjernet.",
-      "keyFailed": "Nøglen kunne ikke gemmes.",
-      "toolchainTitle": "Installerede agenter",
-      "toolchainDescription": "Hver agent installeres ved sin første kørsel. Installer den på forhånd for at undgå ventetiden.",
-      "installing": "Installerer…",
-      "installed": "Version {{version}}",
-      "notInstalled": "Ikke installeret",
-      "install": "Installer",
-      "installStarted": "Installerer {{agent}}.",
-      "installFailed": "Installationen kunne ikke startes.",
-      "loadFailed": "Agentindstillingerne kunne ikke indlæses."
     }
   },
   "models": {
@@ -2115,7 +2086,7 @@
     },
     "workAgentAccess": {
       "title": "Agent-CLI'er i Work",
-      "description": "Vælg, hvem der kan lade Claude Code, Codex, Kiro, OpenCode eller Pi udføre Work-opgaver inde i sandkassen. Nøgler tilføjes under Indstillinger → Forbindelser → Agent-CLI'er.",
+      "description": "Vælg, hvem der kan lade Claude Code, Codex, Kiro, OpenCode eller Pi udføre Work-opgaver inde i sandkassen. De bruger de samme logins som i Chat på denne server.",
       "lockedByEnv": "Fastlåst af miljøvariablen LIBRE_WORK_AGENTS_ACCESS.",
       "saved": "Adgangen til agent-CLI'er i Work er opdateret",
       "saveFailed": "Adgangen til agent-CLI'er i Work kunne ikke opdateres",
@@ -3148,8 +3119,7 @@
     "sources": "Modelkilder",
     "defaultModel": "Standardmodel",
     "contextSize": "{{size}} kontekst",
-    "via": "via {{provider}}",
-    "agentNeedsKey": "mangler nøgle"
+    "via": "via {{provider}}"
   },
   "whatsNew": {
     "title": "Nyheder",

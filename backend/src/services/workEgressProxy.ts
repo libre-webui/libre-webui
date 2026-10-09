@@ -82,7 +82,11 @@ export interface EgressCredential {
   readonly name: string;
   /** The value the sandbox holds instead of the secret. */
   readonly placeholder: string;
-  readonly secret: string;
+  /**
+   * The real value, or a reader for it when a login can be refreshed while
+   * the run is going: each request then carries the current token.
+   */
+  readonly secret: string | (() => string);
   /**
    * Host patterns where the placeholder is replaced. A `*` stands for one
    * DNS label, so `runtime.*.kiro.dev` matches `runtime.us-east-1.kiro.dev`
@@ -222,7 +226,11 @@ function substitute(
   let result = value;
   for (const credential of credentials) {
     if (result.includes(credential.placeholder)) {
-      result = result.split(credential.placeholder).join(credential.secret);
+      const secret =
+        typeof credential.secret === 'function'
+          ? credential.secret()
+          : credential.secret;
+      result = result.split(credential.placeholder).join(secret);
       used.add(credential.name);
     }
   }

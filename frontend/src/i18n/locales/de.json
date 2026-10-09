@@ -645,8 +645,7 @@
       "sessions": "Sitzungen",
       "apiKeys": "API-Schlüssel",
       "notifications": "Benachrichtigungen",
-      "ollamaDisabled": "Ollama wurde von einem Administrator deaktiviert",
-      "agentClis": "Agent-CLIs"
+      "ollamaDisabled": "Ollama wurde von einem Administrator deaktiviert"
     },
     "appearance": {
       "title": "Darstellung",
@@ -1296,34 +1295,6 @@
       "emailMentionsHint": "Per E-Mail benachrichtigen, wenn mich jemand in einem Kanal erwähnt.",
       "emailAutomations": "Automatisierungsergebnisse",
       "emailAutomationsHint": "Per E-Mail über das Ergebnis jedes Automatisierungslaufs informieren, egal ob erfolgreich oder fehlgeschlagen."
-    },
-    "agentClis": {
-      "title": "Agent-CLIs in Work",
-      "description": "Claude Code, Codex, Kiro, OpenCode und Pi können Work-Aufgaben in der Sandbox erledigen. Ein Lauf sieht nur einen Platzhalter; der ausgehende Proxy fügt den echten Schlüssel nur für die API des jeweiligen Agenten ein.",
-      "accessHint": "Lege in Benutzerverwaltung unter Zugriff und Richtlinien fest, wer sie nutzen darf.",
-      "unavailable": "Agent-CLIs in Work benötigen die Docker-Laufzeit, oder dieser Server hat sie deaktiviert.",
-      "keysTitle": "Schlüssel",
-      "keysDescription": "Gespeicherte Schlüssel werden verschlüsselt und gelten für alle, die Agent-CLIs in Work nutzen dürfen.",
-      "saved": "Gespeichert",
-      "environment": "In der Serverumgebung gesetzt",
-      "missing": "Nicht gesetzt",
-      "usedBy": "Verwendet von {{agents}}",
-      "providerFallback": "oder der {{provider}}-Schlüssel des jeweiligen Benutzers",
-      "placeholder": "Schlüssel einfügen",
-      "save": "Speichern",
-      "remove": "Entfernen",
-      "keySaved": "Schlüssel gespeichert.",
-      "keyRemoved": "Schlüssel entfernt.",
-      "keyFailed": "Der Schlüssel konnte nicht gespeichert werden.",
-      "toolchainTitle": "Installierte Agenten",
-      "toolchainDescription": "Jeder Agent wird bei seinem ersten Lauf installiert. Installiere ihn vorab, um die Wartezeit zu sparen.",
-      "installing": "Wird installiert…",
-      "installed": "Version {{version}}",
-      "notInstalled": "Nicht installiert",
-      "install": "Installieren",
-      "installStarted": "{{agent}} wird installiert.",
-      "installFailed": "Die Installation konnte nicht gestartet werden.",
-      "loadFailed": "Die Agent-Einstellungen konnten nicht geladen werden."
     }
   },
   "models": {
@@ -2115,7 +2086,7 @@
     },
     "workAgentAccess": {
       "title": "Agent-CLIs in Work",
-      "description": "Lege fest, wer Claude Code, Codex, Kiro, OpenCode oder Pi Work-Aufgaben in der Sandbox erledigen lassen darf. Schlüssel fügst du unter Einstellungen → Verbindungen → Agent-CLIs hinzu.",
+      "description": "Lege fest, wer Claude Code, Codex, Kiro, OpenCode oder Pi Work-Aufgaben in der Sandbox erledigen lassen darf. Sie nutzen dieselben Anmeldungen wie im Chat auf diesem Server.",
       "lockedByEnv": "Durch die Umgebungsvariable LIBRE_WORK_AGENTS_ACCESS festgelegt.",
       "saved": "Zugriff auf Agent-CLIs in Work aktualisiert",
       "saveFailed": "Zugriff auf Agent-CLIs in Work konnte nicht aktualisiert werden",
@@ -3148,8 +3119,7 @@
     "sources": "Modellquellen",
     "defaultModel": "Standardmodell",
     "contextSize": "{{size}} Kontext",
-    "via": "über {{provider}}",
-    "agentNeedsKey": "Schlüssel fehlt"
+    "via": "über {{provider}}"
   },
   "whatsNew": {
     "title": "Was ist neu",

@@ -645,8 +645,7 @@
       "sessions": "الجلسات",
       "apiKeys": "مفاتيح API",
       "notifications": "الإشعارات",
-      "ollamaDisabled": "تم تعطيل Ollama من قبل مسؤول",
-      "agentClis": "واجهات CLI للوكلاء"
+      "ollamaDisabled": "تم تعطيل Ollama من قبل مسؤول"
     },
     "appearance": {
       "title": "المظهر",
@@ -1296,34 +1295,6 @@
       "emailMentionsHint": "أرسل لي بريدًا إلكترونيًا عندما يشير إليّ أحدهم في إحدى القنوات.",
       "emailAutomations": "نتائج الأتمتة",
       "emailAutomationsHint": "أرسل لي بريدًا إلكترونيًا بنتيجة كل تشغيل للأتمتة، سواء نجح أو فشل."
-    },
-    "agentClis": {
-      "title": "واجهات CLI للوكلاء في Work",
-      "description": "يمكن لـ Claude Code وCodex وKiro وOpenCode وPi إنجاز مهام Work داخل بيئة العزل. لا ترى أي عملية تشغيل سوى عنصر نائب، ويضيف وكيل الخروج المفتاح الحقيقي لواجهة API الخاصة بالوكيل فقط.",
-      "accessHint": "اختر من يمكنه استخدامها في إدارة المستخدمين، ضمن الوصول والسياسات.",
-      "unavailable": "تحتاج واجهات CLI للوكلاء في Work إلى بيئة تشغيل Docker، أو أن هذا الخادم أوقفها.",
-      "keysTitle": "المفاتيح",
-      "keysDescription": "تُشفَّر المفاتيح المحفوظة ويشترك فيها كل من يُسمح له باستخدام واجهات CLI للوكلاء في Work.",
-      "saved": "محفوظ",
-      "environment": "مضبوط في بيئة الخادم",
-      "missing": "غير مضبوط",
-      "usedBy": "يستخدمه {{agents}}",
-      "providerFallback": "أو مفتاح {{provider}} الخاص بكل مستخدم",
-      "placeholder": "الصق مفتاحًا",
-      "save": "حفظ",
-      "remove": "إزالة",
-      "keySaved": "تم حفظ المفتاح.",
-      "keyRemoved": "تمت إزالة المفتاح.",
-      "keyFailed": "تعذّر حفظ المفتاح.",
-      "toolchainTitle": "الوكلاء المثبّتون",
-      "toolchainDescription": "يُثبَّت كل وكيل عند أول تشغيل له. ثبّته مسبقًا لتجنّب الانتظار.",
-      "installing": "جارٍ التثبيت…",
-      "installed": "الإصدار {{version}}",
-      "notInstalled": "غير مثبّت",
-      "install": "تثبيت",
-      "installStarted": "جارٍ تثبيت {{agent}}.",
-      "installFailed": "تعذّر بدء التثبيت.",
-      "loadFailed": "تعذّر تحميل إعدادات الوكلاء."
     }
   },
   "models": {
@@ -2115,7 +2086,7 @@
     },
     "workAgentAccess": {
       "title": "واجهات CLI للوكلاء في Work",
-      "description": "اختر من يمكنه تكليف Claude Code أو Codex أو Kiro أو OpenCode أو Pi بمهام Work داخل بيئة العزل. تُضاف المفاتيح في الإعدادات ← الاتصالات ← واجهات CLI للوكلاء.",
+      "description": "اختر من يمكنه تكليف Claude Code أو Codex أو Kiro أو OpenCode أو Pi بمهام Work داخل بيئة العزل. تستخدم تسجيلات الدخول نفسها التي تستخدمها في Chat على هذا الخادم.",
       "lockedByEnv": "مثبّت بواسطة متغير البيئة LIBRE_WORK_AGENTS_ACCESS.",
       "saved": "تم تحديث الوصول إلى واجهات CLI للوكلاء في Work",
       "saveFailed": "تعذّر تحديث الوصول إلى واجهات CLI للوكلاء في Work",
@@ -3148,8 +3119,7 @@
     "sources": "مصادر النماذج",
     "defaultModel": "النموذج الافتراضي",
     "contextSize": "سياق {{size}}",
-    "via": "عبر {{provider}}",
-    "agentNeedsKey": "يحتاج إلى مفتاح"
+    "via": "عبر {{provider}}"
   },
   "whatsNew": {
     "title": "ما الجديد",

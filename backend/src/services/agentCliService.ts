@@ -225,7 +225,7 @@ const MAX_CONTEXT_MESSAGES = 30;
 
 const agentsEnabled = (): Promise<boolean> => getAgentCliModelsEnabled();
 
-function resolveBinary(command: string): string | null {
+export function resolveBinary(command: string): string | null {
   const pathValue = process.env.PATH || '';
   for (const dir of pathValue.split(path.delimiter)) {
     if (!dir) continue;
@@ -630,6 +630,51 @@ export function parseKiroLine(
   }
 }
 
+/** The model choices Chat offers for one installed CLI. */
+async function agentCliModelOptions(
+  definition: AgentCliDefinition,
+  binaryPath: string
+): Promise<AgentCliModelOption[]> {
+  let options = definition.modelOptions ?? [];
+  if (definition.discoverModels) {
+    try {
+      const discovered = await definition.discoverModels(binaryPath);
+      if (discovered.length > 0) options = discovered;
+    } catch (error) {
+      logger.warn(`Model discovery failed for ${definition.command}:`, error);
+    }
+  }
+  return options;
+}
+
+export interface InstalledAgentCli {
+  binaryPath: string;
+  /** Chat lists no CLI-default entry for this CLI. */
+  requiresModel: boolean;
+  options: AgentCliModelOption[];
+}
+
+/**
+ * One CLI exactly as Chat sees it on this server: where it is installed and
+ * the model choices Chat lists for it. Null when it is not on the PATH.
+ * Work offers the same entries, so the two pickers cannot drift apart.
+ */
+export async function findInstalledAgentCli(
+  id: string
+): Promise<InstalledAgentCli | null> {
+  const definition = AGENT_CLI_DEFINITIONS.find(
+    item => item.id === id && !item.inProcess
+  );
+  if (!definition) return null;
+  const binaryPath = resolveBinary(definition.command);
+  if (!binaryPath) return null;
+  return {
+    binaryPath,
+    requiresModel: definition.requiresModel === true,
+    options: await agentCliModelOptions(definition, binaryPath),
+  };
+}
+
 export class AgentCliService {
   async listAgentModels(userId?: string): Promise<AgentCliModel[]> {
     // Installed CLIs need the server opt-in and, for an account, admin; the
@@ -690,19 +735,7 @@ export class AgentCliService {
         });
       }
 
-      let options = definition.modelOptions ?? [];
-      if (definition.discoverModels) {
-        try {
-          const discovered = await definition.discoverModels(binaryPath);
-          if (discovered.length > 0) options = discovered;
-        } catch (error) {
-          logger.warn(
-            `Model discovery failed for ${definition.command}:`,
-            error
-          );
-        }
-      }
-      for (const option of options) {
+      for (const option of await agentCliModelOptions(definition, binaryPath)) {
         models.push({
           id: `${definition.id}:${option.id}`,
           name: `${definition.name} · ${option.label}`,

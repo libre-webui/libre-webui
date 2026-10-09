@@ -123,16 +123,52 @@ export class CodexOAuthService {
   }
 
   /** Refresh the access token when missing or near expiry (single flight). */
-  async ensureFreshToken(signal?: AbortSignal): Promise<void> {
-    throwIfAborted(signal);
-    if (!codexEnabled()) return;
-    if (!this.cachedAccessToken) this.loadFromDisk();
-    if (
-      this.cachedAccessToken &&
-      Date.now() < this.cachedExpiryMs - EXPIRY_MARGIN_MS
-    ) {
-      return;
+  ensureFreshToken(signal?: AbortSignal): Promise<void> {
+    if (signal?.aborted) {
+      return Promise.reject(
+        signal.reason instanceof Error
+          ? signal.reason
+          : new Error('Codex token refresh was cancelled')
+      );
     }
+    if (!codexEnabled()) return Promise.resolve();
+    // Returned as is: callers join the shared refresh without an extra hop.
+    return this.ensureValidFor(EXPIRY_MARGIN_MS, signal);
+  }
+
+  /**
+   * The CLI's ChatGPT sign-in, valid for at least `minValidityMs`. Work uses
+   * this whether or not the Codex (ChatGPT) models are offered in Chat,
+   * because it runs the Codex CLI itself rather than this provider.
+   */
+  async signIn(
+    minValidityMs: number,
+    signal?: AbortSignal
+  ): Promise<{ accessToken: string; accountId?: string; expiresAtMs: number }> {
+    throwIfAborted(signal);
+    await this.ensureValidFor(minValidityMs, signal);
+    if (!this.cachedAccessToken) {
+      throw new Error(
+        'Codex sign-in not found on this server. Run "codex login" as the server user.'
+      );
+    }
+    return {
+      accessToken: this.cachedAccessToken,
+      ...(this.cachedAccountId ? { accountId: this.cachedAccountId } : {}),
+      expiresAtMs: this.cachedExpiryMs,
+    };
+  }
+
+  private async ensureValidFor(
+    marginMs: number,
+    signal?: AbortSignal
+  ): Promise<void> {
+    const fresh = () =>
+      this.cachedAccessToken && Date.now() < this.cachedExpiryMs - marginMs;
+    if (fresh()) return;
+    // The CLI may have refreshed on its own since this process last looked.
+    this.loadFromDisk();
+    if (fresh()) return;
     if (!this.refreshFlight) {
       const controller = new AbortController();
       const flight = {

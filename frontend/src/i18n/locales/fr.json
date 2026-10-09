@@ -645,8 +645,7 @@
       "sessions": "Sessions",
       "apiKeys": "Clés API",
       "notifications": "Notifications",
-      "ollamaDisabled": "Ollama est désactivé par un administrateur",
-      "agentClis": "CLI d’agents"
+      "ollamaDisabled": "Ollama est désactivé par un administrateur"
     },
     "appearance": {
       "title": "Apparence",
@@ -1296,34 +1295,6 @@
       "emailMentionsHint": "M'avertir par e-mail quand quelqu'un me mentionne dans un canal.",
       "emailAutomations": "Résultats des automatisations",
       "emailAutomationsHint": "M'avertir par e-mail du résultat de chaque exécution d'automatisation, qu'elle réussisse ou échoue."
-    },
-    "agentClis": {
-      "title": "CLI d’agents dans Work",
-      "description": "Claude Code, Codex, Kiro, OpenCode et Pi peuvent réaliser des tâches Work dans le bac à sable. Une exécution ne voit qu’un espace réservé ; le proxy de sortie ajoute la vraie clé uniquement pour l’API de l’agent.",
-      "accessHint": "Choisissez qui peut les utiliser dans « Gestion des utilisateurs », section « Accès et politiques ».",
-      "unavailable": "Les CLI d’agents dans Work nécessitent le runtime Docker, ou ce serveur les a désactivés.",
-      "keysTitle": "Clés",
-      "keysDescription": "Les clés enregistrées sont chiffrées et partagées par toutes les personnes autorisées à utiliser les CLI d’agents dans Work.",
-      "saved": "Enregistrée",
-      "environment": "Définie dans l’environnement du serveur",
-      "missing": "Non définie",
-      "usedBy": "Utilisée par {{agents}}",
-      "providerFallback": "ou la clé {{provider}} de chaque utilisateur",
-      "placeholder": "Collez une clé",
-      "save": "Enregistrer",
-      "remove": "Supprimer",
-      "keySaved": "Clé enregistrée.",
-      "keyRemoved": "Clé supprimée.",
-      "keyFailed": "Impossible d’enregistrer la clé.",
-      "toolchainTitle": "Agents installés",
-      "toolchainDescription": "Chaque agent s’installe lors de sa première exécution. Installez-le à l’avance pour éviter l’attente.",
-      "installing": "Installation…",
-      "installed": "Version {{version}}",
-      "notInstalled": "Non installé",
-      "install": "Installer",
-      "installStarted": "Installation de {{agent}}.",
-      "installFailed": "Impossible de lancer l’installation.",
-      "loadFailed": "Impossible de charger les réglages des agents."
     }
   },
   "models": {
@@ -2115,7 +2086,7 @@
     },
     "workAgentAccess": {
       "title": "CLI d’agents dans Work",
-      "description": "Choisissez qui peut confier des tâches Work à Claude Code, Codex, Kiro, OpenCode ou Pi dans le bac à sable. Les clés s’ajoutent dans Paramètres → Connexions → CLI d’agents.",
+      "description": "Choisissez qui peut confier des tâches Work à Claude Code, Codex, Kiro, OpenCode ou Pi dans le bac à sable. Ils utilisent les mêmes connexions que dans Chat sur ce serveur.",
       "lockedByEnv": "Fixé par la variable d’environnement LIBRE_WORK_AGENTS_ACCESS.",
       "saved": "Accès aux CLI d’agents dans Work mis à jour",
       "saveFailed": "Impossible de mettre à jour l’accès aux CLI d’agents dans Work",
@@ -3148,8 +3119,7 @@
     "sources": "Sources de modèles",
     "defaultModel": "Modèle par défaut",
     "contextSize": "contexte de {{size}}",
-    "via": "via {{provider}}",
-    "agentNeedsKey": "clé manquante"
+    "via": "via {{provider}}"
   },
   "whatsNew": {
     "title": "Nouveautés",

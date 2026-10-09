@@ -20,9 +20,10 @@
  *
  * The CLI works in /workspace as the sandbox user, with its own tools
  * approved: the container is the security boundary, exactly as it is for
- * Work's built-in agent. It holds a placeholder instead of its credential,
- * and its API traffic leaves through the egress relay to the backend proxy,
- * which injects the real value only for the credential's own hosts.
+ * Work's built-in agent. It is signed in with a copy of the login it uses
+ * on this server in which every token is a placeholder, and its API
+ * traffic leaves through the egress relay to the backend proxy, which
+ * injects the real token only for that login's own hosts.
  *
  * The CLI starts under a small Node supervisor in a new process group, so
  * a cancel or timeout stops the CLI and every command it started, even when
@@ -34,12 +35,12 @@ import { agentCliTokenUsage } from './agentCliUsage.js';
 import type { ProviderTokenUsage } from './pluginUsageService.js';
 import type { WorkTaskRecord } from '../types/work.js';
 import type { WorkAgentCliSpec } from './workAgentCatalog.js';
-import type { ResolvedWorkAgentCredential } from './workAgentCredentialService.js';
 import {
-  createEgressPlaceholder,
-  type EgressEvent,
-  type WorkEgressProxy,
-} from './workEgressProxy.js';
+  WorkAgentLoginError,
+  type WorkAgentHostLogin,
+  type WorkAgentLogin,
+} from './workAgentHostLogins.js';
+import type { EgressEvent, WorkEgressProxy } from './workEgressProxy.js';
 import { RELAY_SCRIPT, RelayMultiplexer } from './workEgressRelay.js';
 import {
   WORK_AGENT_NODE,
@@ -68,6 +69,8 @@ const MAX_STDERR_CHARS = 16_000;
 const MAX_CHANGED_FILES = 50;
 const MAX_RECORDED_EGRESS_EVENTS = 20;
 const STOP_GRACE_SECONDS = 3;
+/** How often a running agent's real login is checked for expiry. */
+const LOGIN_REFRESH_INTERVAL_MS = 4 * 60_000;
 
 /**
  * Writes the authority's certificate (stdin) and a bundle with the image's
@@ -103,6 +106,30 @@ for (const signal of ['SIGTERM', 'SIGINT', 'SIGHUP']) process.on(signal, () => s
 child.on('exit', (code, signal) => {
   try { fs.unlinkSync(pidFile); } catch {}
   process.exit(code === null ? (signal ? 137 : 1) : code);
+});
+`;
+
+/**
+ * Writes the run's login files into the agent home: a JSON list of
+ * { path, content (base64) } on stdin, paths relative to the home given as
+ * the first argument. Owner-only, like the CLIs keep them.
+ */
+const LOGIN_FILES_SCRIPT = String.raw`'use strict';
+const fs = require('fs');
+const path = require('path');
+const home = path.resolve(process.argv[1]);
+let input = '';
+process.stdin.on('data', chunk => (input += chunk));
+process.stdin.on('end', () => {
+  for (const file of JSON.parse(input)) {
+    const target = path.resolve(home, file.path);
+    if (!target.startsWith(home + path.sep)) throw new Error('Refusing ' + file.path);
+    fs.mkdirSync(path.dirname(target), { recursive: true, mode: 0o700 });
+    for (const stale of [target, target + '-wal', target + '-shm', target + '-journal']) {
+      fs.rmSync(stale, { force: true });
+    }
+    fs.writeFileSync(target, Buffer.from(file.content, 'base64'), { mode: 0o600 });
+  }
 });
 `;
 
@@ -146,7 +173,8 @@ export interface WorkAgentRunRequest {
   runId: string;
   cli: WorkAgentCliSpec;
   model: string | undefined;
-  credential: ResolvedWorkAgentCredential;
+  /** The CLI's login on this server; the run gets a placeholder copy. */
+  login: WorkAgentHostLogin;
   prompt: string;
   signal: AbortSignal;
 }
@@ -219,21 +247,25 @@ export class WorkAgentCliRunner {
     signal.throwIfAborted();
     await sink.phase('starting');
 
+    let login: WorkAgentLogin;
+    try {
+      login = await request.login.prepare(request.model, signal);
+    } catch (error) {
+      signal.throwIfAborted();
+      if (error instanceof WorkAgentLoginError) {
+        throw new WorkRuntimeError(error.message, error.status, error.code);
+      }
+      throw error;
+    }
+    const model = request.model ?? login.model;
+
     const driver = this.deps.driver();
     const runKey = request.runId.replace(/[^A-Za-z0-9-]/g, '').slice(0, 64);
     const pidFile = `${AGENT_DIR}/run-${runKey}.pid`;
     const startMarker = `${AGENT_DIR}/run-${runKey}.start`;
-    const placeholder = createEgressPlaceholder();
     const egressProblems: EgressEvent[] = [];
     const { session, certificateAuthorityPem } = this.deps.proxy.createSession({
-      credentials: [
-        {
-          name: request.credential.slot.env,
-          placeholder,
-          secret: request.credential.secret,
-          hosts: request.credential.slot.hosts,
-        },
-      ],
+      credentials: login.credentials,
       allowOtherHosts: task.networkEnabled,
       supportHosts: cli.supportHosts,
       onEvent: event => {
@@ -251,12 +283,41 @@ export class WorkAgentCliRunner {
     let relay: RelayMultiplexer | undefined;
     let agent: WorkSandboxProcess | undefined;
     let agentRunning = false;
+    let refreshTimer: ReturnType<typeof setInterval> | undefined;
     try {
       await driver.exec(task, ['sh', '-c', PREPARE_SCRIPT, 'sh', startMarker], {
         input: certificateAuthorityPem,
         timeoutMs: 30_000,
         abortSignal: signal,
       });
+      if (login.files.length > 0) {
+        await driver.exec(
+          task,
+          [WORK_AGENT_NODE, '-e', LOGIN_FILES_SCRIPT, `${AGENT_DIR}/home`],
+          {
+            input: JSON.stringify(
+              login.files.map(file => ({
+                path: file.path,
+                content: file.content.toString('base64'),
+              }))
+            ),
+            timeoutMs: 30_000,
+            abortSignal: signal,
+          }
+        );
+      }
+      if (login.refresh) {
+        const refresh = login.refresh;
+        refreshTimer = setInterval(() => {
+          refresh(signal).catch(error =>
+            logger.warn(
+              `Could not refresh the ${cli.name} login during task ${task.id}:`,
+              error
+            )
+          );
+        }, LOGIN_REFRESH_INTERVAL_MS);
+        refreshTimer.unref?.();
+      }
 
       relayProcess = await driver.openProcess(
         task,
@@ -284,8 +345,7 @@ export class WorkAgentCliRunner {
       const bundle = `${AGENT_DIR}/ca-bundle.pem`;
       const env: Record<string, string> = {
         ...cli.env,
-        ...request.credential.env,
-        [request.credential.slot.env]: placeholder,
+        ...login.env,
         HOME: `${AGENT_DIR}/home`,
         PATH: workAgentSandboxPath(cli.id),
         HTTPS_PROXY: proxyUrl,
@@ -310,7 +370,7 @@ export class WorkAgentCliRunner {
           '--',
           pidFile,
           workAgentExecutable(cli),
-          ...cli.buildArgs(request.model),
+          ...cli.buildArgs(model),
         ],
         { env, workdir: '/workspace' }
       );
@@ -413,6 +473,7 @@ export class WorkAgentCliRunner {
       const usage = agentCliTokenUsage(state.usage);
       return { finalText: answer, changedFiles, ...(usage ? { usage } : {}) };
     } finally {
+      if (refreshTimer) clearInterval(refreshTimer);
       if (agentRunning) await this.stopAgent(driver, task, pidFile);
       agent?.kill();
       relay?.close();

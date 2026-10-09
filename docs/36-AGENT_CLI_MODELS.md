@@ -156,11 +156,10 @@ container with an isolated workspace.
 
 ## The same agents in Work
 
-Work offers these agents too, but runs them differently: inside the task's
-sandbox instead of on the host, with headless keys an administrator stores in
-Libre WebUI instead of the server user's logins, and behind an egress proxy
-that keeps the real keys out of the sandbox. They have their own access mode,
-**Agent CLIs in Work**, and do not need the switch above. See
+Work offers the same agents with the same model choices and the same logins,
+but runs them inside the task's sandbox instead of on the host, behind an
+egress proxy that keeps the real tokens out of the sandbox. They have their
+own access mode, **Agent CLIs in Work**, and do not need the switch above. See
 [Agent CLIs in Work](./WORKSPACES#agent-clis-in-work).
 
 ## Usage tracking

@@ -2766,18 +2766,6 @@
           "file": "backend/src/routes/work.ts",
           "mount": "/api/work",
           "method": "GET",
-          "path": "/agents/credentials"
-        },
-        {
-          "file": "backend/src/routes/work.ts",
-          "mount": "/api/work",
-          "method": "PUT",
-          "path": "/agents/credentials/:name"
-        },
-        {
-          "file": "backend/src/routes/work.ts",
-          "mount": "/api/work",
-          "method": "GET",
           "path": "/agents/toolchain"
         },
         {

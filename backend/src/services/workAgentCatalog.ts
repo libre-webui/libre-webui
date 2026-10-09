@@ -17,13 +17,9 @@
 
 /**
  * The agent CLIs that can run inside a Work sandbox, and everything Work
- * needs to know about each: how it is installed into the shared toolchain,
- * which headless credential it reads and where that credential may travel,
- * and how a non-interactive turn is started.
- *
- * Hosts are the only places the egress proxy will put a real secret, so
- * they are exact service endpoints, never a provider-wide wildcard that a
- * customer could also host content under.
+ * needs to know about each: how it is installed into the shared toolchain
+ * and how a non-interactive turn is started. Which login a run uses, and
+ * where its tokens may travel, lives in workAgentHostLogins.ts.
  */
 
 export type WorkAgentCliId =
@@ -36,22 +32,6 @@ export const WORK_AGENT_CLI_IDS: readonly WorkAgentCliId[] = [
   'opencode',
   'pi',
 ];
-
-/** Provider families an OpenCode or Pi model can be routed through. */
-export type WorkAgentProviderFamily = 'openrouter' | 'anthropic' | 'openai';
-
-export interface WorkAgentCredentialSlot {
-  /** Environment variable the CLI reads; also the setting's identity. */
-  readonly env: string;
-  /** Hosts where the proxy replaces the placeholder with the secret. */
-  readonly hosts: readonly string[];
-  /** Bundled provider whose saved key can fill this slot. */
-  readonly providerPlugin?: string;
-  /** Provider family an OpenCode or Pi model prefix maps to. */
-  readonly family?: WorkAgentProviderFamily;
-  /** Non-secret environment the CLI needs alongside this credential. */
-  readonly env_extra?: Readonly<Record<string, string>>;
-}
 
 export type WorkAgentInstall =
   | {
@@ -66,72 +46,21 @@ export type WorkAgentInstall =
       readonly sha256: Readonly<Record<'x86_64' | 'aarch64', string>>;
     };
 
-export interface WorkAgentModelOption {
-  readonly id: string;
-  readonly label: string;
-}
-
 export interface WorkAgentCliSpec {
   readonly id: WorkAgentCliId;
   readonly name: string;
   readonly install: WorkAgentInstall;
   /** Executable in the installed CLI's bin directory. */
   readonly executable: string;
-  /**
-   * Credential slots in preference order. Claude Code, Codex, and Kiro need
-   * any one; OpenCode and Pi need the slot for the chosen model's provider.
-   */
-  readonly credentials: readonly WorkAgentCredentialSlot[];
   /** Non-credential hosts reachable even when the task has no network. */
   readonly supportHosts: readonly string[];
   /** Static environment: telemetry, update checks, and similar off. */
   readonly env: Readonly<Record<string, string>>;
-  /** Whether a model must be chosen (it encodes the provider). */
-  readonly requiresModel: boolean;
-  /** Fixed model choices offered beside the CLI default. */
-  readonly modelOptions: readonly WorkAgentModelOption[];
   /**
    * Arguments for one non-interactive turn whose prompt arrives on stdin.
    * Tools are auto-approved: the sandbox, not the CLI, is the boundary.
    */
   buildArgs(model: string | undefined): string[];
-}
-
-const ANTHROPIC_API_HOSTS = ['api.anthropic.com'];
-const OPENAI_API_HOSTS = ['api.openai.com'];
-const OPENROUTER_API_HOSTS = ['openrouter.ai'];
-
-const PROVIDER_KEYS: readonly WorkAgentCredentialSlot[] = [
-  {
-    env: 'OPENROUTER_API_KEY',
-    hosts: OPENROUTER_API_HOSTS,
-    providerPlugin: 'openrouter',
-    family: 'openrouter',
-  },
-  {
-    env: 'ANTHROPIC_API_KEY',
-    hosts: ANTHROPIC_API_HOSTS,
-    providerPlugin: 'anthropic',
-    family: 'anthropic',
-  },
-  {
-    env: 'OPENAI_API_KEY',
-    hosts: OPENAI_API_HOSTS,
-    providerPlugin: 'openai',
-    family: 'openai',
-  },
-];
-
-/** `provider/model` → the provider family, when it is one Work can key. */
-export function workAgentModelFamily(
-  model: string | undefined
-): WorkAgentProviderFamily | undefined {
-  const prefix = model?.split('/')[0]?.trim().toLowerCase();
-  return prefix === 'openrouter' ||
-    prefix === 'anthropic' ||
-    prefix === 'openai'
-    ? prefix
-    : undefined;
 }
 
 export const WORK_AGENT_CLIS: Readonly<
@@ -146,22 +75,6 @@ export const WORK_AGENT_CLIS: Readonly<
       version: '2.1.295',
     },
     executable: 'claude',
-    credentials: [
-      // A subscription token from `claude setup-token`.
-      { env: 'CLAUDE_CODE_OAUTH_TOKEN', hosts: ANTHROPIC_API_HOSTS },
-      {
-        env: 'ANTHROPIC_API_KEY',
-        hosts: ANTHROPIC_API_HOSTS,
-        providerPlugin: 'anthropic',
-      },
-      {
-        // Claude through Amazon Bedrock with a Bedrock API key.
-        env: 'AWS_BEARER_TOKEN_BEDROCK',
-        hosts: ['bedrock-runtime.*.amazonaws.com'],
-        providerPlugin: 'bedrock',
-        env_extra: { CLAUDE_CODE_USE_BEDROCK: '1' },
-      },
-    ],
     supportHosts: [],
     env: {
       DISABLE_AUTOUPDATER: '1',
@@ -169,15 +82,6 @@ export const WORK_AGENT_CLIS: Readonly<
       DISABLE_ERROR_REPORTING: '1',
       CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC: '1',
     },
-    requiresModel: false,
-    modelOptions: [
-      { id: 'sonnet', label: 'Sonnet' },
-      { id: 'claude-sonnet-5-5', label: 'Sonnet 5.5' },
-      { id: 'opus', label: 'Opus' },
-      { id: 'claude-opus-5-5', label: 'Opus 5.5' },
-      { id: 'haiku', label: 'Haiku' },
-      { id: 'claude-haiku-5-5', label: 'Haiku 5.5' },
-    ],
     buildArgs: model => [
       '-p',
       '--output-format',
@@ -193,17 +97,8 @@ export const WORK_AGENT_CLIS: Readonly<
     name: 'Codex',
     install: { kind: 'npm', package: '@openai/codex', version: '0.162.0' },
     executable: 'codex',
-    credentials: [
-      {
-        env: 'CODEX_API_KEY',
-        hosts: OPENAI_API_HOSTS,
-        providerPlugin: 'openai',
-      },
-    ],
     supportHosts: [],
     env: {},
-    requiresModel: false,
-    modelOptions: [],
     buildArgs: model => [
       'exec',
       '--json',
@@ -229,26 +124,12 @@ export const WORK_AGENT_CLIS: Readonly<
       },
     },
     executable: 'kiro-cli',
-    credentials: [
-      {
-        // A `ksk_` key from app.kiro.dev (Kiro Pro and above).
-        env: 'KIRO_API_KEY',
-        hosts: [
-          'management.*.kiro.dev',
-          'runtime.*.kiro.dev',
-          'q.*.amazonaws.com',
-          'codewhisperer.*.amazonaws.com',
-        ],
-      },
-    ],
     supportHosts: [],
     env: {
       KIRO_NO_AUTO_UPDATE: '1',
       KIRO_DISABLE_TELEMETRY: '1',
       Q_DISABLE_TELEMETRY: '1',
     },
-    requiresModel: false,
-    modelOptions: [],
     buildArgs: model => [
       'chat',
       '--no-interactive',
@@ -267,7 +148,6 @@ export const WORK_AGENT_CLIS: Readonly<
     name: 'OpenCode',
     install: { kind: 'npm', package: 'opencode-ai', version: '1.18.35' },
     executable: 'opencode',
-    credentials: PROVIDER_KEYS,
     // OpenCode reads its model catalog before every run.
     supportHosts: ['models.dev', 'models.opencode.ai'],
     env: {
@@ -275,8 +155,6 @@ export const WORK_AGENT_CLIS: Readonly<
       // Everything is allowed: the sandbox is the boundary.
       OPENCODE_PERMISSION: '{"edit":"allow","bash":"allow","webfetch":"allow"}',
     },
-    requiresModel: true,
-    modelOptions: [],
     buildArgs: model => [
       'run',
       '--format',
@@ -293,11 +171,8 @@ export const WORK_AGENT_CLIS: Readonly<
       version: '1.1.0',
     },
     executable: 'pi',
-    credentials: PROVIDER_KEYS,
     supportHosts: [],
     env: {},
-    requiresModel: true,
-    modelOptions: [],
     buildArgs: model => {
       const [provider, ...rest] = (model ?? '').split('/');
       return [
@@ -305,32 +180,12 @@ export const WORK_AGENT_CLIS: Readonly<
         'json',
         '-p',
         '--no-session',
-        ...(provider && rest.length > 0
-          ? ['--provider', provider, '--model', rest.join('/')]
-          : []),
+        ...(provider ? ['--provider', provider] : []),
+        ...(provider && rest.join('/') ? ['--model', rest.join('/')] : []),
       ];
     },
   },
 };
-
-/** Credential slots a run of this CLI and model can use, in order. */
-export function workAgentCredentialSlots(
-  cli: WorkAgentCliSpec,
-  model: string | undefined
-): readonly WorkAgentCredentialSlot[] {
-  if (!cli.requiresModel) return cli.credentials;
-  const family = workAgentModelFamily(model);
-  return cli.credentials.filter(slot => slot.family === family);
-}
-
-/** Every distinct credential environment name the catalog knows. */
-export function workAgentCredentialNames(): string[] {
-  const names = new Set<string>();
-  for (const id of WORK_AGENT_CLI_IDS) {
-    for (const slot of WORK_AGENT_CLIS[id].credentials) names.add(slot.env);
-  }
-  return [...names];
-}
 
 export function isWorkAgentCliId(value: unknown): value is WorkAgentCliId {
   return (

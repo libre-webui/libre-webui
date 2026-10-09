@@ -645,8 +645,7 @@
       "sessions": "Sesi",
       "apiKeys": "API key",
       "notifications": "Notifikasi",
-      "ollamaDisabled": "Ollama dinonaktifkan oleh administrator",
-      "agentClis": "CLI agen"
+      "ollamaDisabled": "Ollama dinonaktifkan oleh administrator"
     },
     "appearance": {
       "title": "Tampilan",
@@ -1296,34 +1295,6 @@
       "emailMentionsHint": "Kirim email saat seseorang menyebut saya di sebuah kanal.",
       "emailAutomations": "Hasil otomatisasi",
       "emailAutomationsHint": "Kirim email berisi hasil setiap otomatisasi yang dijalankan, baik berhasil maupun gagal."
-    },
-    "agentClis": {
-      "title": "CLI agen di Work",
-      "description": "Claude Code, Codex, Kiro, OpenCode, dan Pi dapat mengerjakan tugas Work di dalam sandbox. Sebuah eksekusi hanya melihat placeholder; proksi keluar menambahkan kunci asli hanya untuk API agen itu sendiri.",
-      "accessHint": "Pilih siapa yang dapat menggunakannya di Manajemen Pengguna, bagian Akses dan kebijakan.",
-      "unavailable": "CLI agen di Work memerlukan runtime Docker, atau server ini telah menonaktifkannya.",
-      "keysTitle": "Kunci",
-      "keysDescription": "Kunci yang disimpan dienkripsi dan dipakai bersama oleh semua orang yang diizinkan menggunakan CLI agen di Work.",
-      "saved": "Tersimpan",
-      "environment": "Diatur di lingkungan server",
-      "missing": "Belum diatur",
-      "usedBy": "Digunakan oleh {{agents}}",
-      "providerFallback": "atau kunci {{provider}} milik setiap pengguna",
-      "placeholder": "Tempel kunci",
-      "save": "Simpan",
-      "remove": "Hapus",
-      "keySaved": "Kunci disimpan.",
-      "keyRemoved": "Kunci dihapus.",
-      "keyFailed": "Kunci tidak dapat disimpan.",
-      "toolchainTitle": "Agen terpasang",
-      "toolchainDescription": "Setiap agen dipasang saat pertama kali dijalankan. Pasang lebih dulu agar tidak perlu menunggu.",
-      "installing": "Memasang…",
-      "installed": "Versi {{version}}",
-      "notInstalled": "Belum terpasang",
-      "install": "Pasang",
-      "installStarted": "Memasang {{agent}}.",
-      "installFailed": "Pemasangan tidak dapat dimulai.",
-      "loadFailed": "Pengaturan agen tidak dapat dimuat."
     }
   },
   "models": {
@@ -2115,7 +2086,7 @@
     },
     "workAgentAccess": {
       "title": "CLI agen di Work",
-      "description": "Pilih siapa yang dapat meminta Claude Code, Codex, Kiro, OpenCode, atau Pi mengerjakan tugas Work di dalam sandbox. Kunci ditambahkan di Pengaturan → Koneksi → CLI agen.",
+      "description": "Pilih siapa yang dapat meminta Claude Code, Codex, Kiro, OpenCode, atau Pi mengerjakan tugas Work di dalam sandbox. Semuanya memakai login yang sama seperti di Chat pada server ini.",
       "lockedByEnv": "Dikunci oleh variabel lingkungan LIBRE_WORK_AGENTS_ACCESS.",
       "saved": "Akses CLI agen di Work diperbarui",
       "saveFailed": "Akses CLI agen di Work tidak dapat diperbarui",
@@ -3148,8 +3119,7 @@
     "sources": "Sumber model",
     "defaultModel": "Model default",
     "contextSize": "konteks {{size}}",
-    "via": "melalui {{provider}}",
-    "agentNeedsKey": "perlu kunci"
+    "via": "melalui {{provider}}"
   },
   "whatsNew": {
     "title": "Yang baru",

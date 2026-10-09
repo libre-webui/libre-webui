@@ -401,6 +401,8 @@ export interface OllamaModel {
   agentId?: string;
   isLegacySelection?: boolean;
   isUnavailable?: boolean;
+  /** Why an unavailable entry cannot be used, when the server said. */
+  unavailableReason?: string;
   /**
    * Tokens the model can hold, when that is known. Ollama reports it through
    * the model's own defaults; provider models carry whatever their listing

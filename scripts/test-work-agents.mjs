@@ -7,6 +7,7 @@ import {
   mkdtempSync,
   readFileSync,
   rmSync,
+  statSync,
   writeFileSync,
 } from 'node:fs';
 import https from 'node:https';
@@ -15,6 +16,7 @@ import path from 'node:path';
 import test from 'node:test';
 import tls from 'node:tls';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import Database from 'better-sqlite3';
 import { initializeWorkTestPlatform } from './lib/work-test-platform.mjs';
 
 process.env.ENCRYPTION_KEY ||= '0'.repeat(64);
@@ -31,26 +33,31 @@ const dist = relativePath =>
   );
 
 await dist('db.js');
-const {
-  WORK_AGENT_CLIS,
-  WORK_AGENT_CLI_IDS,
-  parseWorkAgentModel,
-  workAgentCredentialSlots,
-  workAgentModelFamily,
-} = await dist('services/workAgentCatalog.js');
+const { WORK_AGENT_CLIS, parseWorkAgentModel } = await dist(
+  'services/workAgentCatalog.js'
+);
 const { createWorkAgentStreamState, parseWorkAgentLine } = await dist(
   'services/workAgentStream.js'
 );
-const { WorkAgentCredentialService } = await dist(
-  'services/workAgentCredentialService.js'
-);
+const {
+  ClaudeCodeHostLogin,
+  CodexHostLogin,
+  KiroHostLogin,
+  OpenCodeHostLogin,
+  PiHostLogin,
+  WORK_AGENT_PROVIDER_HOSTS,
+  placeholderFor,
+} = await dist('services/workAgentHostLogins.js');
 const { getWorkAgentAccess, setWorkAgentAccessMode, userHasWorkAgentAccess } =
   await dist('services/workAgentAccessService.js');
 const { setWorkAccessMode } = await dist('services/workAccessService.js');
 const { WorkAgentCliRunner } = await dist('services/workAgentCliRunner.js');
-const { WorkEgressProxy, compileHostPatterns, publicOnlyLookup } = await dist(
-  'services/workEgressProxy.js'
-);
+const {
+  WorkEgressProxy,
+  compileHostPatterns,
+  createEgressPlaceholder,
+  publicOnlyLookup,
+} = await dist('services/workEgressProxy.js');
 const { createCertificateAuthority, issueServerCertificate } =
   await dist('utils/x509.js');
 const { buildWorkAgentCliPrompt } = await dist('services/workAgentService.js');
@@ -74,33 +81,27 @@ const parseAll = (cli, lines) => {
   return { events, state };
 };
 
-test('every agent CLI keys only its own exact service hosts', () => {
-  for (const id of WORK_AGENT_CLI_IDS) {
-    const cli = WORK_AGENT_CLIS[id];
-    assert.ok(cli.credentials.length > 0, `${id} needs a credential slot`);
-    for (const slot of cli.credentials) {
-      assert.match(slot.env, /^[A-Z][A-Z0-9_]+$/);
-      for (const host of slot.hosts) {
-        // A wildcard may stand for a Region label, never for a whole
-        // provider domain someone else could host content under.
-        assert.ok(!host.startsWith('*.'), `${id} ${slot.env} ${host}`);
-        assert.doesNotMatch(host, /^\*|\.\*$/);
-      }
+test("a login is only ever sent to its provider's exact API hosts", async () => {
+  for (const [provider, hosts] of Object.entries(WORK_AGENT_PROVIDER_HOSTS)) {
+    for (const host of hosts) {
+      // Exact hosts: never a provider-wide domain someone else could host
+      // content under.
+      assert.ok(!host.includes('*'), `${provider} ${host}`);
     }
   }
-  const kiro = compileHostPatterns(WORK_AGENT_CLIS.kiro.credentials[0].hosts);
-  assert.equal(kiro('runtime.us-east-1.kiro.dev'), true);
-  assert.equal(kiro('management.eu-central-1.kiro.dev'), true);
-  assert.equal(kiro('q.us-east-1.amazonaws.com'), true);
-  assert.equal(kiro('attacker.execute-api.us-east-1.amazonaws.com'), false);
-  assert.equal(kiro('app.kiro.dev'), false);
-  const bedrock = compileHostPatterns(
-    WORK_AGENT_CLIS['claude-code'].credentials.find(
-      slot => slot.env === 'AWS_BEARER_TOKEN_BEDROCK'
-    ).hosts
-  );
-  assert.equal(bedrock('bedrock-runtime.us-east-1.amazonaws.com'), true);
-  assert.equal(bedrock('bucket.s3.us-east-1.amazonaws.com'), false);
+  process.env.KIRO_API_KEY = 'ksk_server';
+  try {
+    const login = await new KiroHostLogin(() => '/nonexistent').prepare();
+    // A wildcard in Kiro's hosts stands for a Region label only.
+    const kiro = compileHostPatterns(login.credentials[0].hosts);
+    assert.equal(kiro('runtime.us-east-1.kiro.dev'), true);
+    assert.equal(kiro('management.eu-central-1.kiro.dev'), true);
+    assert.equal(kiro('q.us-east-1.amazonaws.com'), true);
+    assert.equal(kiro('attacker.execute-api.us-east-1.amazonaws.com'), false);
+    assert.equal(kiro('app.kiro.dev'), false);
+  } finally {
+    delete process.env.KIRO_API_KEY;
+  }
 });
 
 test('agent CLIs run non-interactively with their tools approved in the sandbox', () => {
@@ -124,6 +125,11 @@ test('agent CLIs run non-interactively with their tools approved in the sandbox'
       .slice(-4),
     ['--provider', 'openrouter', '--model', 'anthropic/claude-haiku-4.5']
   );
+  // Pi's own default model for a provider, when only the provider is known.
+  assert.deepEqual(WORK_AGENT_CLIS.pi.buildArgs('anthropic/').slice(-2), [
+    '--provider',
+    'anthropic',
+  ]);
   assert.deepEqual(
     WORK_AGENT_CLIS.opencode
       .buildArgs('openrouter/openai/gpt-5-mini')
@@ -136,15 +142,6 @@ test('agent CLIs run non-interactively with their tools approved in the sandbox'
     'claude-sonnet-4.6'
   );
   assert.equal(parseWorkAgentModel('kiro', 'codex:gpt'), undefined);
-  assert.equal(workAgentModelFamily('openrouter/x/y'), 'openrouter');
-  assert.equal(workAgentModelFamily('google/gemini'), undefined);
-  assert.deepEqual(
-    workAgentCredentialSlots(
-      WORK_AGENT_CLIS.pi,
-      'anthropic/claude-haiku-4.5'
-    ).map(slot => slot.env),
-    ['ANTHROPIC_API_KEY']
-  );
 });
 
 test('Claude Code streams text, tools, and its final result', () => {
@@ -443,79 +440,408 @@ test('OpenCode and Pi report tools, text, and provider errors', () => {
   );
 });
 
-test('agent credentials resolve stored, then environment, then provider keys', async () => {
-  const providers = {
-    calls: [],
-    apiKey: async (pluginId, userId) => {
-      providers.calls.push([pluginId, userId]);
-      return pluginId === 'openrouter'
-        ? 'sk-or-user'
-        : pluginId === 'bedrock'
-          ? 'bedrock-user'
-          : null;
+// --- Host logins: the CLI's own sign-in, carried into the sandbox as
+// placeholders. Every fixture below holds a recognisable fake secret, and
+// each test checks it never appears in what the sandbox receives.
+
+const loginRoot = mkdtempSync(path.join(tmpdir(), 'libre-work-logins-'));
+const sandboxBytes = login =>
+  JSON.stringify(login.env) +
+  login.files.map(file => file.content.toString('latin1')).join('\n');
+const credentialSecret = item =>
+  typeof item.secret === 'function' ? item.secret() : item.secret;
+
+function memoryClaudeStore(initial) {
+  const store = {
+    value: initial,
+    writes: 0,
+    read: async () => store.value,
+    write: async value => {
+      store.value = value;
+      store.writes += 1;
     },
-    variables: async pluginId =>
-      pluginId === 'bedrock' ? { region: 'eu-west-2' } : {},
   };
-  const service = new WorkAgentCredentialService(providers);
-  const kiro = WORK_AGENT_CLIS.kiro;
-  assert.equal(await service.resolve(kiro, undefined, 'user-1'), null);
-  process.env.WORK_AGENT_KIRO_API_KEY = 'ksk_environment';
-  try {
-    const fromEnvironment = await service.resolve(kiro, undefined, 'user-1');
-    assert.equal(fromEnvironment.secret, 'ksk_environment');
-    assert.equal(fromEnvironment.origin, 'environment');
-    await service.set('KIRO_API_KEY', '  ksk_saved  ');
-    const saved = await service.resolve(kiro, undefined, 'user-1');
-    assert.equal(saved.secret, 'ksk_saved');
-    assert.equal(saved.origin, 'stored');
-    const view = (await service.list()).find(
-      item => item.name === 'KIRO_API_KEY'
-    );
-    assert.equal(view.configured, true);
-    assert.equal(view.source, 'stored');
-    assert.deepEqual(view.usedBy, ['kiro']);
-    assert.ok(!JSON.stringify(await service.list()).includes('ksk_saved'));
-    await service.set('KIRO_API_KEY', '');
-    assert.equal(
-      (await service.resolve(kiro, undefined, 'user-1')).origin,
-      'environment'
-    );
-  } finally {
-    delete process.env.WORK_AGENT_KIRO_API_KEY;
-  }
-  // The server's own variable is never picked up implicitly.
-  process.env.KIRO_API_KEY = 'ksk_server_owned';
-  try {
-    assert.equal(await service.resolve(kiro, undefined, 'user-1'), null);
-  } finally {
-    delete process.env.KIRO_API_KEY;
-  }
+  return store;
+}
 
-  const fromProvider = await service.resolve(
-    WORK_AGENT_CLIS.opencode,
-    'openrouter/openai/gpt-5-mini',
-    'user-2'
+test('Claude Code runs on the Claude login, refreshed and written back', async () => {
+  const missing = new ClaudeCodeHostLogin(memoryClaudeStore(null));
+  const status = await missing.status();
+  assert.equal(status.ready, false);
+  assert.match(status.reason, /not signed in on this server.*`claude`/);
+  await assert.rejects(
+    missing.prepare(),
+    error => error.code === 'WORK_AGENT_NOT_SIGNED_IN'
   );
-  assert.equal(fromProvider.secret, 'sk-or-user');
-  assert.equal(fromProvider.origin, 'provider');
-  assert.equal(fromProvider.slot.env, 'OPENROUTER_API_KEY');
-  assert.deepEqual(providers.calls.at(-1), ['openrouter', 'user-2']);
 
-  const bedrock = await service.resolve(
-    WORK_AGENT_CLIS['claude-code'],
-    'haiku',
-    'user-3'
-  );
-  assert.equal(bedrock.slot.env, 'AWS_BEARER_TOKEN_BEDROCK');
-  assert.deepEqual(bedrock.env, {
-    CLAUDE_CODE_USE_BEDROCK: '1',
-    AWS_REGION: 'eu-west-2',
+  const store = memoryClaudeStore({
+    claudeAiOauth: {
+      accessToken: 'sk-ant-oat01-REAL-OLD',
+      refreshToken: 'sk-ant-ort01-REAL-REFRESH',
+      expiresAt: Date.now() + 60_000,
+      scopes: ['user:inference'],
+      subscriptionType: 'max',
+    },
+    other: 'kept',
   });
+  const refreshed = [];
+  const login = new ClaudeCodeHostLogin(store, async refreshToken => {
+    refreshed.push(refreshToken);
+    return {
+      access: `sk-ant-oat01-REAL-NEW-${refreshed.length}`,
+      refresh: `sk-ant-ort01-REAL-ROTATED-${refreshed.length}`,
+      expiresAtMs: Date.now() + 8 * 60 * 60_000,
+    };
+  });
+  assert.deepEqual(await login.status(), { ready: true });
+  const prepared = await login.prepare(undefined);
+  assert.deepEqual(refreshed, ['sk-ant-ort01-REAL-REFRESH']);
+  // Written back where the CLI keeps it, other fields untouched.
+  assert.equal(store.writes, 1);
+  assert.equal(store.value.other, 'kept');
+  assert.equal(store.value.claudeAiOauth.subscriptionType, 'max');
+  assert.equal(
+    store.value.claudeAiOauth.refreshToken,
+    'sk-ant-ort01-REAL-ROTATED-1'
+  );
+  // The sandbox sees a placeholder as the CLI's headless subscription token.
+  const placeholder = prepared.env.CLAUDE_CODE_OAUTH_TOKEN;
+  assert.match(placeholder, /^lwui_ph_/);
+  assert.doesNotMatch(sandboxBytes(prepared), /REAL/);
+  assert.deepEqual(prepared.credentials[0].hosts, ['api.anthropic.com']);
+  assert.equal(
+    credentialSecret(prepared.credentials[0]),
+    'sk-ant-oat01-REAL-NEW-1'
+  );
+  // A fresh login is not refreshed again; a long run picks up the next one.
+  await prepared.refresh();
+  assert.equal(refreshed.length, 1);
+  store.value.claudeAiOauth.expiresAt = Date.now() + 1000;
+  await prepared.refresh();
+  assert.equal(refreshed.length, 2);
+  assert.equal(
+    credentialSecret(prepared.credentials[0]),
+    'sk-ant-oat01-REAL-NEW-2'
+  );
 
-  await assert.rejects(service.set('PATH', 'x'), /Unknown agent credential/);
-  await assert.rejects(service.set('KIRO_API_KEY', 'two words'), /whitespace/);
+  // A failed refresh says what to do instead of running unauthenticated.
+  store.value.claudeAiOauth.expiresAt = Date.now() + 1000;
+  const failing = new ClaudeCodeHostLogin(store, async () => {
+    throw new Error('invalid_grant');
+  });
+  await assert.rejects(failing.prepare(), /has expired.*`claude`/);
+
+  // The server's own variables win, as they do for the CLI in Chat.
+  process.env.ANTHROPIC_API_KEY = 'sk-ant-api-REAL-ENV';
+  try {
+    const fromEnvironment = await new ClaudeCodeHostLogin(store).prepare();
+    assert.match(fromEnvironment.env.ANTHROPIC_API_KEY, /^lwui_ph_/);
+    assert.equal(
+      credentialSecret(fromEnvironment.credentials[0]),
+      'sk-ant-api-REAL-ENV'
+    );
+  } finally {
+    delete process.env.ANTHROPIC_API_KEY;
+  }
+  process.env.CLAUDE_CODE_USE_BEDROCK = '1';
+  try {
+    const bedrock = new ClaudeCodeHostLogin(store);
+    assert.match((await bedrock.status()).reason, /CLAUDE_CODE_USE_BEDROCK/);
+  } finally {
+    delete process.env.CLAUDE_CODE_USE_BEDROCK;
+  }
 });
+
+const fakeJwt = claims =>
+  `${Buffer.from('{"alg":"RS256"}').toString('base64url')}.${Buffer.from(JSON.stringify(claims)).toString('base64url')}.REALSIG`;
+
+test('Codex runs on its ChatGPT login with a token-shaped placeholder', async () => {
+  const home = path.join(loginRoot, 'codex');
+  mkdirSync(home, { recursive: true });
+  const none = new CodexHostLogin(() => home);
+  assert.match((await none.status()).reason, /`codex login`/);
+
+  const realAccess = fakeJwt({
+    exp: Math.floor(Date.now() / 1000) + 3600,
+    'https://api.openai.com/auth': {
+      chatgpt_account_id: 'acct-1',
+      chatgpt_plan_type: 'pro',
+    },
+    email: 'person@example.test',
+  });
+  writeFileSync(
+    path.join(home, 'auth.json'),
+    JSON.stringify({
+      OPENAI_API_KEY: null,
+      tokens: {
+        id_token: fakeJwt({
+          email: 'person@example.test',
+          'https://api.openai.com/auth': {
+            chatgpt_plan_type: 'pro',
+            chatgpt_account_id: 'acct-1',
+          },
+        }),
+        access_token: realAccess,
+        refresh_token: 'rt-REAL',
+        account_id: 'acct-1',
+      },
+    })
+  );
+  writeFileSync(
+    path.join(home, 'config.toml'),
+    'model = "gpt-6-sol"\n\n[profiles.x]\nmodel = "other"\n'
+  );
+  const asked = [];
+  const login = new CodexHostLogin(() => home, {
+    signIn: async margin => {
+      asked.push(margin);
+      return {
+        accessToken: realAccess,
+        accountId: 'acct-1',
+        expiresAtMs: Date.now() + 3600_000,
+      };
+    },
+  });
+  assert.deepEqual(await login.status(), { ready: true });
+  const prepared = await login.prepare(undefined);
+  assert.ok(asked[0] > 0, 'asks for a token valid well into the run');
+  assert.equal(prepared.model, 'gpt-6-sol');
+  assert.doesNotMatch(sandboxBytes(prepared), /REAL|rt-REAL|person@example/);
+  const auth = JSON.parse(prepared.files[0].content);
+  assert.equal(prepared.files[0].path, '.codex/auth.json');
+  assert.equal(auth.tokens.account_id, 'acct-1');
+  // The placeholder still reads as a ChatGPT token for the same account.
+  const claims = JSON.parse(
+    Buffer.from(auth.tokens.access_token.split('.')[1], 'base64url')
+  );
+  assert.equal(
+    claims['https://api.openai.com/auth'].chatgpt_account_id,
+    'acct-1'
+  );
+  assert.ok(claims.exp * 1000 > Date.now() + 30 * 24 * 3600_000);
+  const idClaims = JSON.parse(
+    Buffer.from(auth.tokens.id_token.split('.')[1], 'base64url')
+  );
+  assert.equal(
+    idClaims['https://api.openai.com/auth'].chatgpt_plan_type,
+    'pro'
+  );
+  assert.equal(prepared.credentials[0].placeholder, auth.tokens.access_token);
+  assert.deepEqual(prepared.credentials[0].hosts, ['chatgpt.com']);
+  assert.equal(credentialSecret(prepared.credentials[0]), realAccess);
+  assert.match(placeholderFor('not-a-jwt'), /^lwui_ph_[0-9a-f]+$/);
+});
+
+function kiroDatabase(file, expiresAt) {
+  const database = new Database(file);
+  database.exec(`
+    CREATE TABLE migrations (id INTEGER PRIMARY KEY, version INTEGER);
+    CREATE TABLE auth_kv (key TEXT PRIMARY KEY, value TEXT);
+    CREATE TABLE state (key TEXT PRIMARY KEY, value BLOB);
+    CREATE TABLE conversations (key TEXT PRIMARY KEY, value TEXT);
+    INSERT INTO migrations (version) VALUES (7);
+    INSERT INTO conversations VALUES ('/workspace', 'SECRET CHAT HISTORY');
+    INSERT INTO state VALUES ('api.codewhisperer.profile', '{"arn":"arn:aws:codewhisperer:us-east-1:1:profile/P"}');
+    INSERT INTO state VALUES ('auth.session.cookie', 'SECRET SESSION');
+  `);
+  database.prepare('INSERT INTO auth_kv VALUES (?, ?)').run(
+    'kirocli:social:token',
+    JSON.stringify({
+      access_token: 'aoa-REAL-ACCESS',
+      refresh_token: 'aor-REAL-REFRESH',
+      expires_at: new Date(expiresAt).toISOString(),
+      region: 'us-east-1',
+    })
+  );
+  database
+    .prepare('INSERT INTO auth_kv VALUES (?, ?)')
+    .run(
+      'kirocli:odic:device-registration',
+      '{"client_secret":"REAL-CLIENT-SECRET"}'
+    );
+  database.close();
+}
+
+test('Kiro gets a scrubbed copy of its login database', async () => {
+  const file = path.join(loginRoot, 'kiro.sqlite3');
+  assert.match(
+    (await new KiroHostLogin(() => file).status()).reason,
+    /`kiro-cli login`/
+  );
+  kiroDatabase(file, Date.now() + 3600_000);
+  let hostRefreshes = 0;
+  const login = new KiroHostLogin(
+    () => file,
+    async () => {
+      hostRefreshes += 1;
+    }
+  );
+  assert.deepEqual(await login.status(), { ready: true });
+  const prepared = await login.prepare(undefined);
+  assert.equal(hostRefreshes, 0);
+  assert.equal(prepared.files[0].path, '.local/share/kiro-cli/data.sqlite3');
+  const bytes = prepared.files[0].content.toString('latin1');
+  for (const secret of ['REAL', 'SECRET CHAT', 'SECRET SESSION']) {
+    assert.ok(!bytes.includes(secret), `${secret} left in the sandbox copy`);
+  }
+  const copy = path.join(loginRoot, 'kiro-copy.sqlite3');
+  writeFileSync(copy, prepared.files[0].content);
+  const database = new Database(copy, { readonly: true });
+  const token = JSON.parse(
+    database
+      .prepare("SELECT value FROM auth_kv WHERE key = 'kirocli:social:token'")
+      .get().value
+  );
+  assert.equal(token.access_token, prepared.credentials[0].placeholder);
+  assert.equal(token.region, 'us-east-1');
+  assert.ok(Date.parse(token.expires_at) > Date.now() + 30 * 24 * 3600_000);
+  assert.equal(
+    database.prepare('SELECT COUNT(*) AS n FROM auth_kv').get().n,
+    1
+  );
+  assert.equal(
+    database.prepare('SELECT COUNT(*) AS n FROM conversations').get().n,
+    0
+  );
+  assert.equal(
+    database.prepare('SELECT version FROM migrations').get().version,
+    7
+  );
+  assert.ok(
+    database
+      .prepare("SELECT 1 FROM state WHERE key = 'api.codewhisperer.profile'")
+      .get()
+  );
+  database.close();
+  assert.equal(credentialSecret(prepared.credentials[0]), 'aoa-REAL-ACCESS');
+
+  // Close to expiry, Kiro refreshes on the host first; if it cannot, the
+  // run stops with what to do.
+  const stale = path.join(loginRoot, 'kiro-stale.sqlite3');
+  kiroDatabase(stale, Date.now() + 60_000);
+  const refreshing = new KiroHostLogin(
+    () => stale,
+    async () => {
+      const database = new Database(stale);
+      database
+        .prepare(
+          "UPDATE auth_kv SET value = ? WHERE key = 'kirocli:social:token'"
+        )
+        .run(
+          JSON.stringify({
+            access_token: 'aoa-REAL-NEXT',
+            expires_at: new Date(Date.now() + 3600_000).toISOString(),
+          })
+        );
+      database.close();
+    }
+  );
+  const next = await refreshing.prepare(undefined);
+  assert.equal(credentialSecret(next.credentials[0]), 'aoa-REAL-NEXT');
+  kiroDatabase(path.join(loginRoot, 'kiro-dead.sqlite3'), Date.now() + 60_000);
+  await assert.rejects(
+    new KiroHostLogin(
+      () => path.join(loginRoot, 'kiro-dead.sqlite3'),
+      async () => undefined
+    ).prepare(),
+    /has expired.*`kiro-cli login`/
+  );
+});
+
+test("OpenCode and Pi carry the chosen provider's login only", async () => {
+  const authFile = path.join(loginRoot, 'opencode-auth.json');
+  writeFileSync(
+    authFile,
+    JSON.stringify({
+      openrouter: { type: 'api', key: 'sk-or-REAL' },
+      anthropic: {
+        type: 'oauth',
+        access: 'sk-ant-oat-REAL-OLD',
+        refresh: 'rt-REAL',
+        expires: Date.now() - 1,
+      },
+      mystery: { type: 'api', key: 'REAL-MYSTERY' },
+    })
+  );
+  const refreshed = [];
+  const opencode = new OpenCodeHostLogin(() => authFile, {
+    anthropic: async token => {
+      refreshed.push(token);
+      return {
+        access: 'sk-ant-oat-REAL-NEW',
+        refresh: 'rt-REAL-2',
+        expiresAtMs: Date.now() + 3600_000,
+      };
+    },
+  });
+  const viaKey = await opencode.prepare('openrouter/openai/gpt-5-mini');
+  assert.deepEqual(Object.keys(JSON.parse(viaKey.files[0].content)), [
+    'openrouter',
+  ]);
+  assert.equal(viaKey.files[0].path, '.local/share/opencode/auth.json');
+  assert.deepEqual(viaKey.credentials[0].hosts, ['openrouter.ai']);
+  assert.doesNotMatch(sandboxBytes(viaKey), /REAL/);
+
+  const viaOauth = await opencode.prepare('anthropic/claude-sonnet-5-5');
+  assert.deepEqual(refreshed, ['rt-REAL']);
+  const entry = JSON.parse(viaOauth.files[0].content).anthropic;
+  assert.equal(entry.type, 'oauth');
+  assert.equal(entry.access, viaOauth.credentials[0].placeholder);
+  assert.ok(entry.expires > Date.now() + 30 * 24 * 3600_000);
+  assert.doesNotMatch(sandboxBytes(viaOauth), /REAL/);
+  assert.equal(
+    credentialSecret(viaOauth.credentials[0]),
+    'sk-ant-oat-REAL-NEW'
+  );
+  // Written back for the CLI on the host, other logins untouched.
+  const saved = JSON.parse(readFileSync(authFile, 'utf8'));
+  assert.equal(saved.anthropic.refresh, 'rt-REAL-2');
+  assert.equal(saved.openrouter.key, 'sk-or-REAL');
+
+  await assert.rejects(
+    opencode.prepare('mystery/model'),
+    /does not know which API hosts/
+  );
+  await assert.rejects(
+    opencode.prepare('groq/llama'),
+    /no login for "groq".*`opencode auth login`/
+  );
+
+  const piDir = path.join(loginRoot, 'pi');
+  mkdirSync(piDir, { recursive: true });
+  writeFileSync(
+    path.join(piDir, 'auth.json'),
+    JSON.stringify({ anthropic: { type: 'api_key', key: 'sk-ant-REAL' } })
+  );
+  writeFileSync(
+    path.join(piDir, 'settings.json'),
+    JSON.stringify({
+      defaultProvider: 'anthropic',
+      defaultModel: 'claude-sonnet-5-5',
+      theme: 'dark',
+    })
+  );
+  const pi = await new PiHostLogin(() => piDir).prepare(undefined);
+  assert.equal(pi.model, 'anthropic/claude-sonnet-5-5');
+  assert.deepEqual(
+    pi.files.map(file => file.path),
+    ['.pi/agent/auth.json', '.pi/agent/settings.json']
+  );
+  assert.deepEqual(JSON.parse(pi.files[1].content), {
+    defaultProvider: 'anthropic',
+    defaultModel: 'claude-sonnet-5-5',
+  });
+  assert.doesNotMatch(sandboxBytes(pi), /REAL/);
+  assert.equal(credentialSecret(pi.credentials[0]), 'sk-ant-REAL');
+  const emptyPi = path.join(loginRoot, 'pi-empty');
+  mkdirSync(emptyPi, { recursive: true });
+  assert.match(
+    (await new PiHostLogin(() => emptyPi).status()).reason ?? 'ready',
+    /ready|`pi`/
+  );
+});
+
+test.after(() => rmSync(loginRoot, { recursive: true, force: true }));
 
 test('agent CLIs in Work start disabled and need Work access too', async () => {
   delete process.env.LIBRE_WORK_AGENTS_ACCESS;
@@ -649,7 +975,11 @@ chmodSync(fakeCli, 0o755);
 /** Runs "sandbox" commands as local processes under the scratch root. */
 const fakeDriver = {
   async exec(_task, command, options = {}) {
-    const args = command.map(mapPath);
+    const args = command.map(value =>
+      value === '/opt/libre-agents/node/current/bin/node'
+        ? process.execPath
+        : mapPath(value)
+    );
     return new Promise((resolve, reject) => {
       const child = spawn(args[0], args.slice(1), { cwd: workspace });
       let stdout = '';
@@ -761,11 +1091,28 @@ const kiroRequest = (prompt, signal) => ({
   runId: `run-${Math.random().toString(36).slice(2)}`,
   cli: WORK_AGENT_CLIS.kiro,
   model: undefined,
-  credential: {
-    slot: { env: 'KIRO_API_KEY', hosts: ['runtime.*.example.test'] },
-    secret: 'ksk_real',
-    env: {},
-    origin: 'stored',
+  login: {
+    status: async () => ({ ready: true }),
+    prepare: async () => {
+      const placeholder = createEgressPlaceholder();
+      return {
+        credentials: [
+          {
+            name: 'KIRO_API_KEY',
+            placeholder,
+            secret: () => 'ksk_real',
+            hosts: ['runtime.*.example.test'],
+          },
+        ],
+        env: { KIRO_API_KEY: placeholder },
+        files: [
+          {
+            path: '.kiro-test/login.json',
+            content: Buffer.from(JSON.stringify({ token: placeholder })),
+          },
+        ],
+      };
+    },
   },
   prompt,
   signal,
@@ -799,6 +1146,15 @@ test('a sandboxed agent run reaches its API only through the injecting proxy', a
     const certificate = readFileSync(path.join(sandboxRoot, 'ca.pem'), 'utf8');
     assert.match(certificate, /BEGIN CERTIFICATE/);
     assert.ok(!existsSync(path.join(sandboxRoot, 'ksk_real')));
+    // The login file landed in the agent home, owner-only, placeholder only.
+    const loginFile = path.join(
+      sandboxRoot,
+      'home',
+      '.kiro-test',
+      'login.json'
+    );
+    assert.match(readFileSync(loginFile, 'utf8'), /lwui_ph_/);
+    assert.equal(statSync(loginFile).mode & 0o777, 0o600);
   } finally {
     upstream.server.closeAllConnections();
     upstream.server.close();

@@ -48,11 +48,9 @@ import {
   isWorkAgentCliId,
   WORK_AGENT_CLIS,
 } from '../services/workAgentCatalog.js';
-import type { WorkAgentCredentialView } from '../services/workAgentCredentialService.js';
 import type { WorkAgentToolchainState } from '../services/workAgentToolchainService.js';
 import {
   listWorkAgents,
-  workAgentCredentials,
   workAgentToolchain,
   workAgentUnavailableReason,
   type WorkAgentAvailability,
@@ -196,9 +194,9 @@ router.put(
   }
 );
 
-// Agent CLIs in Work: who may use them, the headless keys behind them, and
-// the shared toolchain they run from. Configuration, so admin-only and
-// registered before the Work gate like the access mode above.
+// Agent CLIs in Work: who may use them and the shared toolchain they run
+// from. Configuration, so admin-only and registered before the Work gate
+// like the access mode above.
 router.get(
   '/agents/access',
   requireAdmin,
@@ -237,41 +235,6 @@ router.put(
       }
       await setWorkAgentAccessMode(mode);
       sendSuccess(res, await getWorkAgentAccess());
-    } catch (error) {
-      sendError(res, error);
-    }
-  }
-);
-
-router.get(
-  '/agents/credentials',
-  requireAdmin,
-  async (
-    _req: AuthenticatedRequest,
-    res: Response<ApiResponse<WorkAgentCredentialView[]>>
-  ): Promise<void> => {
-    try {
-      sendSuccess(res, await workAgentCredentials.list());
-    } catch (error) {
-      sendError(res, error);
-    }
-  }
-);
-
-router.put(
-  '/agents/credentials/:name',
-  requireAdmin,
-  async (
-    req: AuthenticatedRequest,
-    res: Response<ApiResponse<WorkAgentCredentialView[]>>
-  ): Promise<void> => {
-    try {
-      const value: unknown = req.body?.value;
-      if (typeof value !== 'string') {
-        throw new WorkRouteError('Field "value" must be a string.', 400);
-      }
-      await workAgentCredentials.set(String(req.params.name), value);
-      sendSuccess(res, await workAgentCredentials.list());
     } catch (error) {
       sendError(res, error);
     }
@@ -333,8 +296,8 @@ router.post(
 
 router.use(requireWorkAccess);
 
-// The agent entries this user may pick for a Work task. Unconfigured agents
-// are listed too, so the picker can say what an administrator must add.
+// The agent entries this user may pick for a Work task: the ones Chat lists.
+// An agent that cannot run is listed too, with the reason.
 router.get(
   '/agents',
   async (

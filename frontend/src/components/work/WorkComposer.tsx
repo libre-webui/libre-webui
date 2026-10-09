@@ -103,6 +103,9 @@ const modelFromOption = (option: WorkModelOption): OllamaModel => {
       agentId: option.providerId,
       agentName: option.label,
       ...(option.unavailable ? { isUnavailable: true } : {}),
+      ...(option.unavailableReason
+        ? { unavailableReason: option.unavailableReason }
+        : {}),
     };
   }
   const providerPrefix = `${option.model} · `;

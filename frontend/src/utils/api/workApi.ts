@@ -25,9 +25,6 @@ import type {
   WorkAgentAccess,
   WorkAgentAccessMode,
   WorkAgentAvailability,
-  WorkAgentCredential,
-  WorkAgentToolchain,
-  WorkAgentToolchainEntry,
   WorkAdminOverview,
   WorkCapabilities,
   WorkFile,
@@ -75,28 +72,6 @@ export const workApi = {
     mode: WorkAgentAccessMode
   ): Promise<ApiResponse<WorkAgentAccess>> =>
     api.put('/work/agents/access', { mode }).then(response => response.data),
-
-  agentCredentials: (): Promise<ApiResponse<WorkAgentCredential[]>> =>
-    api.get('/work/agents/credentials').then(response => response.data),
-
-  /** Save, replace, or (with an empty value) clear one headless key. */
-  setAgentCredential: (
-    name: string,
-    value: string
-  ): Promise<ApiResponse<WorkAgentCredential[]>> =>
-    api
-      .put(`/work/agents/credentials/${encodeURIComponent(name)}`, { value })
-      .then(response => response.data),
-
-  agentToolchain: (): Promise<ApiResponse<WorkAgentToolchain>> =>
-    api.get('/work/agents/toolchain').then(response => response.data),
-
-  installAgent: (
-    cli: string
-  ): Promise<ApiResponse<WorkAgentToolchainEntry[]>> =>
-    api
-      .post(`/work/agents/toolchain/${encodeURIComponent(cli)}`)
-      .then(response => response.data),
 
   adminOverview: (): Promise<ApiResponse<WorkAdminOverview>> =>
     api.get('/work/admin/overview').then(response => response.data),

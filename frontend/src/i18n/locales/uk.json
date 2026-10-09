@@ -645,8 +645,7 @@
       "sessions": "Сеанси",
       "apiKeys": "API-ключі",
       "notifications": "Сповіщення",
-      "ollamaDisabled": "Ollama вимкнено адміністратором",
-      "agentClis": "CLI агентів"
+      "ollamaDisabled": "Ollama вимкнено адміністратором"
     },
     "appearance": {
       "title": "Зовнішній вигляд",
@@ -1296,34 +1295,6 @@
       "emailMentionsHint": "Надсилати мені листа, коли хтось згадує мене в каналі.",
       "emailAutomations": "Результати автоматизацій",
       "emailAutomationsHint": "Надсилати мені листа з результатом кожного запуску автоматизації, незалежно від успіху чи невдачі."
-    },
-    "agentClis": {
-      "title": "CLI агентів у Work",
-      "description": "Claude Code, Codex, Kiro, OpenCode і Pi можуть виконувати завдання Work усередині пісочниці. Запуск бачить лише заповнювач; справжній ключ додає вихідний проксі й лише для API самого агента.",
-      "accessHint": "Виберіть, хто може ними користуватися, у розділі Керування користувачами → Доступ і політики.",
-      "unavailable": "CLI агентів у Work потребують середовища виконання Docker, або цей сервер їх вимкнув.",
-      "keysTitle": "Ключі",
-      "keysDescription": "Збережені ключі шифруються й спільні для всіх, кому дозволено використовувати CLI агентів у Work.",
-      "saved": "Збережено",
-      "environment": "Задано в середовищі сервера",
-      "missing": "Не задано",
-      "usedBy": "Використовує: {{agents}}",
-      "providerFallback": "або ключ {{provider}} кожного користувача",
-      "placeholder": "Вставте ключ",
-      "save": "Зберегти",
-      "remove": "Видалити",
-      "keySaved": "Ключ збережено.",
-      "keyRemoved": "Ключ видалено.",
-      "keyFailed": "Не вдалося зберегти ключ.",
-      "toolchainTitle": "Встановлені агенти",
-      "toolchainDescription": "Кожен агент встановлюється під час першого запуску. Установіть його заздалегідь, щоб не чекати.",
-      "installing": "Встановлення…",
-      "installed": "Версія {{version}}",
-      "notInstalled": "Не встановлено",
-      "install": "Встановити",
-      "installStarted": "Встановлюється {{agent}}.",
-      "installFailed": "Не вдалося почати встановлення.",
-      "loadFailed": "Не вдалося завантажити налаштування агентів."
     }
   },
   "models": {
@@ -2115,7 +2086,7 @@
     },
     "workAgentAccess": {
       "title": "CLI агентів у Work",
-      "description": "Виберіть, хто може доручати завдання Work агентам Claude Code, Codex, Kiro, OpenCode або Pi усередині пісочниці. Ключі додаються в Налаштування → З'єднання → CLI агентів.",
+      "description": "Виберіть, хто може доручати завдання Work агентам Claude Code, Codex, Kiro, OpenCode або Pi усередині пісочниці. Вони використовують ті самі входи, що й у Chat на цьому сервері.",
       "lockedByEnv": "Задано змінною середовища LIBRE_WORK_AGENTS_ACCESS.",
       "saved": "Доступ до CLI агентів у Work оновлено",
       "saveFailed": "Не вдалося оновити доступ до CLI агентів у Work",
@@ -3148,8 +3119,7 @@
     "sources": "Джерела моделей",
     "defaultModel": "Модель за замовчуванням",
     "contextSize": "контекст {{size}}",
-    "via": "через {{provider}}",
-    "agentNeedsKey": "потрібен ключ"
+    "via": "через {{provider}}"
   },
   "whatsNew": {
     "title": "Що нового",

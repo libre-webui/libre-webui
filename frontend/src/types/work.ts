@@ -179,16 +179,19 @@ export interface WorkModelOption extends WorkModelSelection {
    * task and selects its base model, which the selection fields name.
    */
   personaId?: string;
-  /** An agent CLI with no credential configured yet. */
+  /** An agent CLI that cannot run now; `unavailableReason` says why. */
   unavailable?: boolean;
+  unavailableReason?: string;
 }
 
 /** One agent CLI as Work offers it to the current user. */
 export interface WorkAgentOffer {
   id: string;
   name: string;
-  /** Whether a credential this user can use is configured. */
+  /** Whether the agent can run now: installed and signed in. */
   configured: boolean;
+  /** Why it cannot, when it cannot. */
+  reason?: string;
   /** `<cli>` (its default) or `<cli>:<model>`, with a display label. */
   models: Array<{ id: string; label: string }>;
 }
@@ -204,31 +207,6 @@ export type WorkAgentAccessMode = 'disabled' | 'admins' | 'all-users';
 export interface WorkAgentAccess {
   mode: WorkAgentAccessMode;
   lockedByEnv: boolean;
-}
-
-export interface WorkAgentCredential {
-  /** The environment variable the CLI reads, e.g. KIRO_API_KEY. */
-  name: string;
-  configured: boolean;
-  source: 'stored' | 'environment' | null;
-  lockedByEnv: boolean;
-  usedBy: string[];
-  /** Bundled provider whose saved key can stand in for this slot. */
-  providerPlugin?: string;
-}
-
-export interface WorkAgentToolchainEntry {
-  id: string;
-  name: string;
-  wantedVersion: string;
-  installedVersion?: string;
-  installing: boolean;
-}
-
-export interface WorkAgentToolchain {
-  available: boolean;
-  reason?: string;
-  agents: WorkAgentToolchainEntry[];
 }
 
 export type WorkAccessMode = 'admins' | 'all-users';

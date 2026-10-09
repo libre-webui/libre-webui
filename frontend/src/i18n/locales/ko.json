@@ -645,8 +645,7 @@
       "sessions": "세션",
       "apiKeys": "API 키",
       "notifications": "알림",
-      "ollamaDisabled": "관리자가 Ollama를 비활성화했습니다",
-      "agentClis": "에이전트 CLI"
+      "ollamaDisabled": "관리자가 Ollama를 비활성화했습니다"
     },
     "appearance": {
       "title": "외관",
@@ -1296,34 +1295,6 @@
       "emailMentionsHint": "채널에서 누군가 나를 멘션하면 이메일로 알려줍니다.",
       "emailAutomations": "자동화 실행 결과",
       "emailAutomationsHint": "자동화가 실행될 때마다 성공 여부와 관계없이 결과를 이메일로 보내줍니다."
-    },
-    "agentClis": {
-      "title": "Work의 에이전트 CLI",
-      "description": "Claude Code, Codex, Kiro, OpenCode, Pi가 샌드박스 안에서 Work 작업을 할 수 있습니다. 실행에는 자리 표시자만 보이며, 실제 키는 송신 프록시가 에이전트 자체 API에만 추가합니다.",
-      "accessHint": "사용할 수 있는 사람은 사용자 관리의 접근 및 정책에서 선택하세요.",
-      "unavailable": "Work의 에이전트 CLI에는 Docker 런타임이 필요하거나, 이 서버에서 꺼져 있습니다.",
-      "keysTitle": "키",
-      "keysDescription": "저장된 키는 암호화되며 Work에서 에이전트 CLI를 사용할 수 있는 모든 사람이 함께 사용합니다.",
-      "saved": "저장됨",
-      "environment": "서버 환경에 설정됨",
-      "missing": "설정 안 됨",
-      "usedBy": "사용: {{agents}}",
-      "providerFallback": "또는 각 사용자의 {{provider}} 키",
-      "placeholder": "키 붙여넣기",
-      "save": "저장",
-      "remove": "제거",
-      "keySaved": "키를 저장했습니다.",
-      "keyRemoved": "키를 제거했습니다.",
-      "keyFailed": "키를 저장할 수 없습니다.",
-      "toolchainTitle": "설치된 에이전트",
-      "toolchainDescription": "각 에이전트는 처음 실행할 때 설치됩니다. 미리 설치하면 기다리지 않아도 됩니다.",
-      "installing": "설치 중…",
-      "installed": "버전 {{version}}",
-      "notInstalled": "설치 안 됨",
-      "install": "설치",
-      "installStarted": "{{agent}} 설치 중.",
-      "installFailed": "설치를 시작할 수 없습니다.",
-      "loadFailed": "에이전트 설정을 불러올 수 없습니다."
     }
   },
   "models": {
@@ -2115,7 +2086,7 @@
     },
     "workAgentAccess": {
       "title": "Work의 에이전트 CLI",
-      "description": "샌드박스 안에서 Claude Code, Codex, Kiro, OpenCode, Pi에게 Work 작업을 맡길 수 있는 사람을 선택하세요. 키는 설정 → 연결 → 에이전트 CLI에서 추가합니다.",
+      "description": "샌드박스 안에서 Claude Code, Codex, Kiro, OpenCode, Pi에게 Work 작업을 맡길 수 있는 사람을 선택하세요. 이 서버의 Chat과 같은 로그인을 사용합니다.",
       "lockedByEnv": "LIBRE_WORK_AGENTS_ACCESS 환경 변수로 고정되었습니다.",
       "saved": "Work의 에이전트 CLI 접근을 업데이트했습니다",
       "saveFailed": "Work의 에이전트 CLI 접근을 업데이트할 수 없습니다",
@@ -3148,8 +3119,7 @@
     "sources": "모델 출처",
     "defaultModel": "기본 모델",
     "contextSize": "컨텍스트 {{size}}",
-    "via": "{{provider}} 경유",
-    "agentNeedsKey": "키 필요"
+    "via": "{{provider}} 경유"
   },
   "whatsNew": {
     "title": "새로운 기능",

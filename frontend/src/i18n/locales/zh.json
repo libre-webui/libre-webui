@@ -645,8 +645,7 @@
       "sessions": "登录会话",
       "apiKeys": "API 密钥",
       "notifications": "通知",
-      "ollamaDisabled": "管理员已禁用 Ollama",
-      "agentClis": "智能体 CLI"
+      "ollamaDisabled": "管理员已禁用 Ollama"
     },
     "appearance": {
       "title": "外观",
@@ -1296,34 +1295,6 @@
       "emailMentionsHint": "有人在频道中提及我时通过邮件通知我。",
       "emailAutomations": "自动化结果",
       "emailAutomationsHint": "每次自动化运行的结果都通过邮件通知我，无论成功还是失败。"
-    },
-    "agentClis": {
-      "title": "Work 中的智能体 CLI",
-      "description": "Claude Code、Codex、Kiro、OpenCode 和 Pi 可以在沙盒内完成 Work 任务。每次运行只能看到占位符；真实密钥由出站代理仅为智能体自己的 API 添加。",
-      "accessHint": "在“用户管理”的“访问与策略”中选择谁可以使用它们。",
-      "unavailable": "Work 中的智能体 CLI 需要 Docker 运行时，或者此服务器已将其关闭。",
-      "keysTitle": "密钥",
-      "keysDescription": "已保存的密钥会加密存储，并由所有获准在 Work 中使用智能体 CLI 的人共用。",
-      "saved": "已保存",
-      "environment": "已在服务器环境中设置",
-      "missing": "未设置",
-      "usedBy": "使用者：{{agents}}",
-      "providerFallback": "或每位用户的 {{provider}} 密钥",
-      "placeholder": "粘贴密钥",
-      "save": "保存",
-      "remove": "移除",
-      "keySaved": "密钥已保存。",
-      "keyRemoved": "密钥已移除。",
-      "keyFailed": "无法保存密钥。",
-      "toolchainTitle": "已安装的智能体",
-      "toolchainDescription": "每个智能体在首次运行时安装。提前安装可免去等待。",
-      "installing": "正在安装…",
-      "installed": "版本 {{version}}",
-      "notInstalled": "未安装",
-      "install": "安装",
-      "installStarted": "正在安装 {{agent}}。",
-      "installFailed": "无法开始安装。",
-      "loadFailed": "无法加载智能体设置。"
     }
   },
   "models": {
@@ -2115,7 +2086,7 @@
     },
     "workAgentAccess": {
       "title": "Work 中的智能体 CLI",
-      "description": "选择谁可以让 Claude Code、Codex、Kiro、OpenCode 或 Pi 在沙盒内完成 Work 任务。密钥在“设置”→“连接”→“智能体 CLI”中添加。",
+      "description": "选择谁可以让 Claude Code、Codex、Kiro、OpenCode 或 Pi 在沙盒内完成 Work 任务。它们使用与此服务器上 Chat 相同的登录。",
       "lockedByEnv": "由环境变量 LIBRE_WORK_AGENTS_ACCESS 固定。",
       "saved": "Work 中的智能体 CLI 访问权限已更新",
       "saveFailed": "无法更新 Work 中的智能体 CLI 访问权限",
@@ -3148,8 +3119,7 @@
     "sources": "模型来源",
     "defaultModel": "默认模型",
     "contextSize": "{{size}} 上下文",
-    "via": "通过 {{provider}}",
-    "agentNeedsKey": "需要密钥"
+    "via": "通过 {{provider}}"
   },
   "whatsNew": {
     "title": "新功能",

@@ -645,8 +645,7 @@
       "sessions": "Relace",
       "apiKeys": "API klíče",
       "notifications": "Oznámení",
-      "ollamaDisabled": "Ollama je zakázána správcem",
-      "agentClis": "Agentní CLI"
+      "ollamaDisabled": "Ollama je zakázána správcem"
     },
     "appearance": {
       "title": "Vzhled",
@@ -1296,34 +1295,6 @@
       "emailMentionsHint": "Pošlete mi e-mail, když mě někdo zmíní v kanálu.",
       "emailAutomations": "Výsledky automatizací",
       "emailAutomationsHint": "Pošlete mi e-mail s výsledkem každého běhu automatizace, ať už proběhl úspěšně, nebo selhal."
-    },
-    "agentClis": {
-      "title": "Agentní CLI ve Work",
-      "description": "Claude Code, Codex, Kiro, OpenCode a Pi mohou plnit úlohy Work uvnitř sandboxu. Běh vidí jen zástupnou hodnotu; skutečný klíč doplní výstupní proxy jen pro vlastní API agenta.",
-      "accessHint": "Kdo je smí používat, vyberte v části Správa uživatelů → Přístup a zásady.",
-      "unavailable": "Agentní CLI ve Work potřebují běhové prostředí Docker, nebo je tento server vypnul.",
-      "keysTitle": "Klíče",
-      "keysDescription": "Uložené klíče jsou šifrované a sdílejí je všichni, kdo smějí používat agentní CLI ve Work.",
-      "saved": "Uloženo",
-      "environment": "Nastaveno v prostředí serveru",
-      "missing": "Nenastaveno",
-      "usedBy": "Používá: {{agents}}",
-      "providerFallback": "nebo klíč {{provider}} každého uživatele",
-      "placeholder": "Vložte klíč",
-      "save": "Uložit",
-      "remove": "Odstranit",
-      "keySaved": "Klíč uložen.",
-      "keyRemoved": "Klíč odstraněn.",
-      "keyFailed": "Klíč se nepodařilo uložit.",
-      "toolchainTitle": "Nainstalovaní agenti",
-      "toolchainDescription": "Každý agent se nainstaluje při prvním spuštění. Instalací předem se vyhnete čekání.",
-      "installing": "Instaluje se…",
-      "installed": "Verze {{version}}",
-      "notInstalled": "Nenainstalováno",
-      "install": "Nainstalovat",
-      "installStarted": "Instaluje se {{agent}}.",
-      "installFailed": "Instalaci se nepodařilo spustit.",
-      "loadFailed": "Nastavení agentů se nepodařilo načíst."
     }
   },
   "models": {
@@ -2115,7 +2086,7 @@
     },
     "workAgentAccess": {
       "title": "Agentní CLI ve Work",
-      "description": "Vyberte, kdo může nechat Claude Code, Codex, Kiro, OpenCode nebo Pi plnit úlohy Work uvnitř sandboxu. Klíče se přidávají v Nastavení → Připojení → Agentní CLI.",
+      "description": "Vyberte, kdo může nechat Claude Code, Codex, Kiro, OpenCode nebo Pi plnit úlohy Work uvnitř sandboxu. Používají stejná přihlášení jako v Chatu na tomto serveru.",
       "lockedByEnv": "Nastaveno proměnnou prostředí LIBRE_WORK_AGENTS_ACCESS.",
       "saved": "Přístup k agentním CLI ve Work aktualizován",
       "saveFailed": "Přístup k agentním CLI ve Work se nepodařilo aktualizovat",
@@ -3148,8 +3119,7 @@
     "sources": "Zdroje modelů",
     "defaultModel": "Výchozí model",
     "contextSize": "kontext {{size}}",
-    "via": "přes {{provider}}",
-    "agentNeedsKey": "chybí klíč"
+    "via": "přes {{provider}}"
   },
   "whatsNew": {
     "title": "Co je nového",

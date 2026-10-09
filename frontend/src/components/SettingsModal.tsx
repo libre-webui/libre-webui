@@ -45,7 +45,6 @@ import {
   BookText,
   GraduationCap,
   Wrench,
-  SquareTerminal,
 } from 'lucide-react';
 // Administration lives in its own chunk; most sessions never open it.
 const UserManagementPanel = React.lazy(
@@ -63,7 +62,6 @@ import { SettingsModelsTab } from '@/components/settings/SettingsModelsTab';
 import { SettingsShortcutsTab } from '@/components/settings/SettingsShortcutsTab';
 import { SettingsPluginsTab } from '@/components/settings/SettingsPluginsTab';
 import { SettingsSearchTab } from '@/components/settings/SettingsSearchTab';
-import { SettingsAgentClisTab } from '@/components/settings/SettingsAgentClisTab';
 import { SettingsSessionsTab } from '@/components/settings/SettingsSessionsTab';
 import { SettingsNotificationsTab } from '@/components/settings/SettingsNotificationsTab';
 import { SettingsApiKeysTab } from '@/components/settings/SettingsApiKeysTab';
@@ -1794,14 +1792,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           icon: Wrench,
         },
         ...(isSettingsAdmin
-          ? [
-              { id: 'search', label: t('settings.tabs.search'), icon: Globe },
-              {
-                id: 'agent-clis',
-                label: t('settings.tabs.agentClis'),
-                icon: SquareTerminal,
-              },
-            ]
+          ? [{ id: 'search', label: t('settings.tabs.search'), icon: Globe }]
           : []),
       ],
     },
@@ -1974,8 +1965,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
       case 'search':
         return <SettingsSearchTab />;
-      case 'agent-clis':
-        return <SettingsAgentClisTab />;
 
       case 'users':
         return (
