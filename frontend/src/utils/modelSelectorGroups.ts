@@ -240,20 +240,56 @@ export function modelMatchesSearch(
 }
 
 /**
+ * The highest version a model name carries ("claude-sonnet-5-5" → 5.5,
+ * "gpt-5.6-sol" → 5.6), ignoring dates and sizes; -1 when it has none.
+ */
+export function modelVersionRank(name: string): number {
+  let best = -1;
+  for (const match of name.matchAll(
+    /(?<![\d.])(\d{1,2})(?:[.-](\d{1,2}))?(?!\d|\.\d|b\b)/gi
+  )) {
+    const rank = Number(match[1]) * 100 + Number(match[2] ?? 0);
+    if (rank > best) best = rank;
+  }
+  return best;
+}
+
+/**
  * The rows a group shows in the combined view. Large groups are cut to a
- * preview, which always keeps the current selection visible.
+ * preview, which always keeps the current selection visible. A provider or
+ * agent group previews its newest models, so a release such as Sonnet 5.5
+ * is not hidden behind older ones that sort first by name; the rows keep
+ * the group's order.
  */
 export function previewSourceModels(
   models: OllamaModel[],
-  isSelected: (model: OllamaModel) => boolean
+  isSelected: (model: OllamaModel) => boolean,
+  options: { newestFirst?: boolean } = {}
 ): { visible: OllamaModel[]; hidden: number } {
   if (models.length <= SOURCE_PREVIEW_THRESHOLD) {
     return { visible: models, hidden: 0 };
   }
-  const visible = models.slice(0, SOURCE_PREVIEW_SIZE);
-  if (!visible.some(isSelected)) {
-    const selected = models.find(isSelected);
-    if (selected) visible[visible.length - 1] = selected;
+  let chosen: OllamaModel[];
+  if (options.newestFirst) {
+    const pinned = models.filter(isDefaultAgentEntry);
+    const byVersion = models
+      .filter(model => !isDefaultAgentEntry(model))
+      .map((model, index) => ({
+        model,
+        index,
+        rank: modelVersionRank(model.name),
+      }))
+      .sort((a, b) => b.rank - a.rank || a.index - b.index)
+      .map(entry => entry.model);
+    chosen = [...pinned, ...byVersion].slice(0, SOURCE_PREVIEW_SIZE);
+  } else {
+    chosen = models.slice(0, SOURCE_PREVIEW_SIZE);
   }
+  if (!chosen.some(isSelected)) {
+    const selected = models.find(isSelected);
+    if (selected) chosen[chosen.length - 1] = selected;
+  }
+  const keep = new Set(chosen);
+  const visible = models.filter(model => keep.has(model));
   return { visible, hidden: models.length - visible.length };
 }

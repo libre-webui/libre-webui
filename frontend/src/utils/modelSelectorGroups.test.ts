@@ -23,6 +23,7 @@ import {
   buildModelSources,
   isEmbeddingModel,
   modelMatchesSearch,
+  modelVersionRank,
   previewSourceModels,
   SOURCE_PREVIEW_SIZE,
 } from './modelSelectorGroups';
@@ -163,6 +164,69 @@ test('previews keep small groups whole and always show the selection', () => {
   assert.equal(preview.visible.length, SOURCE_PREVIEW_SIZE);
   assert.equal(preview.hidden, 40 - SOURCE_PREVIEW_SIZE);
   assert.ok(preview.visible.some(entry => entry.name === 'm30'));
+});
+
+test('provider and agent previews show the newest models first', () => {
+  assert.equal(modelVersionRank('claude-sonnet-5-5'), 505);
+  assert.equal(modelVersionRank('global.anthropic.claude-haiku-5-5'), 505);
+  assert.equal(modelVersionRank('claude-haiku-4-5-20251001'), 405);
+  assert.equal(modelVersionRank('gpt-5.6-sol'), 506);
+  assert.equal(modelVersionRank('kiro:claude-sonnet-5.5'), 505);
+  assert.equal(modelVersionRank('llama3.1:70b'), 301);
+  assert.equal(modelVersionRank('auto'), -1);
+
+  // Bedrock's Sonnet and Haiku 5.5 are global profiles, which sort last.
+  const bedrock = [
+    'amazon.nova-pro-v1',
+    'anthropic.claude-haiku-4-5',
+    'anthropic.claude-opus-5-5',
+    'anthropic.claude-sonnet-5',
+    'deepseek.v3-v1',
+    'meta.llama3-3-70b-instruct-v1',
+    'mistral.mistral-large-2407-v1',
+    'qwen.qwen3-coder-30b-a3b-v1',
+    'global.anthropic.claude-haiku-5-5',
+    'global.anthropic.claude-sonnet-5-5',
+  ].map(name => plugin(name, 'bedrock', 'Amazon Bedrock'));
+  const preview = previewSourceModels(bedrock, () => false, {
+    newestFirst: true,
+  });
+  const names = preview.visible.map(entry => entry.name);
+  assert.equal(names.length, SOURCE_PREVIEW_SIZE);
+  for (const wanted of [
+    'anthropic.claude-opus-5-5',
+    'global.anthropic.claude-haiku-5-5',
+    'global.anthropic.claude-sonnet-5-5',
+  ]) {
+    assert.ok(names.includes(wanted), wanted);
+  }
+  // Rows keep the group's own order.
+  assert.deepEqual(
+    names,
+    bedrock.map(entry => entry.name).filter(name => names.includes(name))
+  );
+
+  // An agent keeps its default entry, then its newest models.
+  const kiro = [
+    agent('kiro', 'kiro', 'Kiro'),
+    ...[
+      'auto',
+      'claude-haiku-4.5',
+      'claude-opus-4.5',
+      'claude-opus-4.6',
+      'claude-opus-5',
+      'claude-opus-5.5',
+      'claude-sonnet-4.6',
+      'claude-sonnet-5',
+      'claude-sonnet-5.5',
+    ].map(id => agent(`kiro:${id}`, 'kiro', `Kiro · ${id}`)),
+  ];
+  const kiroNames = previewSourceModels(kiro, () => false, {
+    newestFirst: true,
+  }).visible.map(entry => entry.name);
+  assert.equal(kiroNames[0], 'kiro');
+  assert.ok(kiroNames.includes('kiro:claude-opus-5.5'));
+  assert.ok(kiroNames.includes('kiro:claude-sonnet-5.5'));
 });
 
 test('embedding models stay out of the chat list', () => {

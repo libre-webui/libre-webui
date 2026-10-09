@@ -752,7 +752,9 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
     .map(({ source, matches }) => {
       const preview =
         combinedView && showSourceFilter
-          ? previewSourceModels(matches, isSelectedModel)
+          ? previewSourceModels(matches, isSelectedModel, {
+              newestFirst: source.kind === 'plugin' || source.kind === 'agent',
+            })
           : { visible: matches, hidden: 0 };
       return {
         key: source.key,
