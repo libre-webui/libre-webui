@@ -321,44 +321,52 @@ export function WorkComposer({
     });
   };
 
-  // Agent CLIs bring their own loop, so the engine choice does not apply.
-  const engineSelector = (strandsEnabled || engine === 'strands') &&
-    selectedModel?.providerType !== 'agent' && (
-      <div
+  // Agent CLIs bring their own loop: the selector stays put and names the
+  // agent as the engine, locked, instead of vanishing from the layout.
+  const agentEngineName =
+    selectedModel?.providerType === 'agent'
+      ? selectedModel.label.split(' · ')[0]
+      : undefined;
+  const engineSelector = (strandsEnabled || engine === 'strands') && (
+    <div
+      className={cn(
+        landing
+          ? 'min-w-0 flex-[1_1_11rem]'
+          : 'mb-2 flex flex-wrap items-center gap-2 px-2'
+      )}
+    >
+      <span
+        id={engineLabelId}
         className={cn(
-          landing
-            ? 'min-w-0 flex-[1_1_11rem]'
-            : 'mb-2 flex flex-wrap items-center gap-2 px-2'
+          'text-ink-muted',
+          landing ? 'mb-1.5 block text-[11px] font-medium' : 'text-xs'
         )}
       >
-        <span
-          id={engineLabelId}
-          className={cn(
-            'text-ink-muted',
-            landing ? 'mb-1.5 block text-[11px] font-medium' : 'text-xs'
-          )}
-        >
-          {t('work.composer.engine')}
-        </span>
-        <Select
-          aria-labelledby={engineLabelId}
-          data-testid='work-engine-select'
-          value={engine}
-          onChange={event => changeEngine(event.target.value as WorkEngine)}
-          disabled={running || loading}
-          options={[
-            { value: 'libre', label: 'Libre WebUI' },
-            { value: 'strands', label: 'Strands' },
-          ]}
-          className={cn(
-            'motion-reduce:transition-none',
-            landing
-              ? 'h-11 min-h-[44px] min-w-0 bg-surface-subtle px-3 py-2 text-[13px]'
-              : 'h-9 min-h-[44px] max-w-52 py-1 text-sm sm:min-h-9'
-          )}
-        />
-      </div>
-    );
+        {t('work.composer.engine')}
+      </span>
+      <Select
+        aria-labelledby={engineLabelId}
+        data-testid='work-engine-select'
+        value={agentEngineName ? 'agent' : engine}
+        onChange={event => changeEngine(event.target.value as WorkEngine)}
+        disabled={running || loading || Boolean(agentEngineName)}
+        options={
+          agentEngineName
+            ? [{ value: 'agent', label: agentEngineName }]
+            : [
+                { value: 'libre', label: 'Libre WebUI' },
+                { value: 'strands', label: 'Strands' },
+              ]
+        }
+        className={cn(
+          'motion-reduce:transition-none',
+          landing
+            ? 'h-11 min-h-[44px] min-w-0 bg-surface-subtle px-3 py-2 text-[13px]'
+            : 'h-9 min-h-[44px] max-w-52 py-1 text-sm sm:min-h-9'
+        )}
+      />
+    </div>
+  );
 
   return (
     <div
