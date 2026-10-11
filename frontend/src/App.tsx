@@ -287,7 +287,6 @@ const AppContent: React.FC = () => {
   const {
     systemInfo,
     isLoading: authLoading,
-    user: _user,
     isAuthenticated,
   } = useAuthStore();
   const { isDemoMode, demoConfig } = useAppStore();

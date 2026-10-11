@@ -16,7 +16,8 @@
  */
 
 import crypto from 'node:crypto';
-import { Readable } from 'node:stream';
+import { Readable, Writable } from 'node:stream';
+import { pipeline } from 'node:stream/promises';
 import {
   DeleteObjectCommand,
   GetObjectCommand,
@@ -1901,9 +1902,15 @@ export class S3EncryptedBlobStore implements BlobStore {
         ownerUserId: row.owner_user_id,
         signal: options.signal,
       });
-      for await (const _chunk of opened.body) {
-        // Authentication and both checksums are verified by a complete read.
-      }
+      // Authentication and both checksums are verified by a complete read.
+      await pipeline(
+        opened.body,
+        new Writable({
+          write(_chunk, _encoding, callback) {
+            callback();
+          },
+        })
+      );
     }
     return { objects, encryptedBytes, plaintextBytes };
   }

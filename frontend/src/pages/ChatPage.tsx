@@ -657,23 +657,6 @@ export const ChatPage: React.FC = () => {
     }
   }, [welcomeMessage]);
 
-  const _handleCreateSession = async () => {
-    if (selectedModel) {
-      const newSession = await createSession(
-        selectedModel,
-        undefined,
-        selectedModel.startsWith('persona:')
-          ? selectedModel.slice('persona:'.length)
-          : undefined,
-        selectedProviderType,
-        selectedProviderId
-      );
-      if (newSession) {
-        navigate(`/c/${newSession.id}`, { replace: true });
-      }
-    }
-  };
-
   // Handle welcome screen message submission
   const handleWelcomeSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

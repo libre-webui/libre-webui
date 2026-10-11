@@ -1103,14 +1103,14 @@ test('a nonzero CLI exit with partial text records failure with its reported tok
     records.push(input);
   });
   await assert.rejects(async () => {
-    for await (const _chunk of agentCliService.executeAgentStreamRequest(
-      'codex',
-      [{ id: 'u', role: 'user', content: 'Fixture', timestamp: 1 }],
-      await cliUsageActor(),
-      { cwd: fixture.directory }
-    )) {
-      /* drain */
-    }
+    await Array.fromAsync(
+      agentCliService.executeAgentStreamRequest(
+        'codex',
+        [{ id: 'u', role: 'user', content: 'Fixture', timestamp: 1 }],
+        await cliUsageActor(),
+        { cwd: fixture.directory }
+      )
+    );
   }, /exited unsuccessfully/);
   assert.equal(records.length, 1);
   assert.equal(records[0].status, 'error');

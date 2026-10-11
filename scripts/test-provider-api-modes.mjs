@@ -2049,11 +2049,10 @@ test('Responses streaming bounds incomplete SSE events and accumulated text', as
   });
   let oversizedEventError;
   try {
-    for await (const _chunk of streamAdapter.streamOpenAIResponsesResponse(
-      oversizedEvent
-    )) {
-      // No chunk may be emitted for an oversized incomplete event.
-    }
+    // No chunk may be emitted for an oversized incomplete event.
+    await Array.fromAsync(
+      streamAdapter.streamOpenAIResponsesResponse(oversizedEvent)
+    );
   } catch (error) {
     oversizedEventError = error;
   }
@@ -2115,11 +2114,10 @@ test('Responses streaming rejects malformed and non-object SSE payloads', async 
   });
   let malformedJsonError;
   try {
-    for await (const _chunk of streamAdapter.streamOpenAIResponsesResponse(
-      malformedJsonResponse
-    )) {
-      // Malformed events must not emit chunks.
-    }
+    // Malformed events must not emit chunks.
+    await Array.fromAsync(
+      streamAdapter.streamOpenAIResponsesResponse(malformedJsonResponse)
+    );
   } catch (error) {
     malformedJsonError = error;
   }

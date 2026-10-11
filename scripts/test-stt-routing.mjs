@@ -300,9 +300,8 @@ test('STT excludes inactive providers and preserves provider status details', as
 
 test('legacy direct STT plugins execute through their primary route', async () => {
   const { server, port } = await startServer(async (req, res) => {
-    for await (const _chunk of req) {
-      // Drain the multipart body before responding.
-    }
+    // Drain the multipart body before responding.
+    await Array.fromAsync(req);
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({ text: 'legacy transcript' }));
   });
@@ -442,9 +441,8 @@ test('bundled OpenAI and Hugging Face STT manifests are executable contracts', (
 
 test('STT rejects oversized provider transcripts', async () => {
   const { server, port } = await startServer(async (req, res) => {
-    for await (const _chunk of req) {
-      // Drain request.
-    }
+    // Drain request.
+    await Array.fromAsync(req);
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({ text: 'x'.repeat(200_001) }));
   });

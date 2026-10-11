@@ -14,7 +14,6 @@ import https from 'node:https';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
-import tls from 'node:tls';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import Database from 'better-sqlite3';
 import { initializeWorkTestPlatform } from './lib/work-test-platform.mjs';
