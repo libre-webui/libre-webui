@@ -16,7 +16,7 @@
  */
 
 import { expect, test } from '@playwright/test';
-import { mockLibreWebUiApi } from './lib/mockApi';
+import { defaultWorkCapabilities, mockLibreWebUiApi } from './lib/mockApi';
 
 const createdAt = new Date('2026-07-26T12:00:00.000Z').getTime();
 
@@ -3698,6 +3698,27 @@ test('a recovering Work runtime explains itself instead of saying "unavailable"'
   await expect(notice).toContainText('Administrators can retry');
   // A non-administrator gets the pointer, never the destructive control.
   await expect(page.getByTestId('work-recovery-notice-retry')).toHaveCount(0);
+});
+
+test('a recovery blocked by an unreachable runtime names the runtime, not the cleanups', async ({
+  page,
+}) => {
+  const reason =
+    'Cannot connect to the Docker daemon. Start Docker, then retry.';
+  await mockLibreWebUiApi(page, {
+    workRecovery,
+    workCapabilities: {
+      ...defaultWorkCapabilities,
+      runtimeAvailable: false,
+      reason,
+    },
+  });
+
+  await page.goto('/work');
+  const notice = page.getByTestId('work-recovery-notice');
+  await expect(notice).toContainText(reason);
+  await expect(notice).not.toContainText('sandbox cleanup');
+  await expect(notice).toContainText('Blocked since');
 });
 
 test('an administrator retries the pending cleanups from the Work notice', async ({

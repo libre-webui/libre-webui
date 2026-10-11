@@ -335,11 +335,13 @@ router.get(
     const recoveryPending = workRuntimeService.recoveryPending;
     const recoveryPendingCount = workRuntimeService.recoveryPendingCount;
     const available = runtimeAvailable && !recoveryPending && providerAvailable;
-    const reason = recoveryPending
-      ? `Work is safely retrying ${recoveryPendingCount} sandbox cleanup(s). New operations remain blocked until the configured runtime proves they are stopped.`
-      : !runtimeAvailable
-        ? workRuntimeService.runtimeUnavailableReason ||
-          `The ${workRuntimeService.runtimeKind} runtime is not available to the Libre WebUI backend.`
+    // An unreachable runtime is the cause whenever it holds: pending cleanups
+    // only wait on it, so naming them would send the operator the wrong way.
+    const reason = !runtimeAvailable
+      ? workRuntimeService.runtimeUnavailableReason ||
+        `The ${workRuntimeService.runtimeKind} runtime is not available to the Libre WebUI backend.`
+      : recoveryPending
+        ? `Work is safely retrying ${recoveryPendingCount} sandbox cleanup(s). New operations remain blocked until the configured runtime proves they are stopped.`
         : !providerAvailable
           ? 'No configured Work model provider is available.'
           : undefined;

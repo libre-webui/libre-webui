@@ -1756,11 +1756,15 @@ export default function WorkPage() {
             <CircleAlert className='h-4 w-4 shrink-0' />
             <span dir='auto' className='min-w-0 flex-1'>
               {[
-                t('work.recovery.pending', {
-                  pending: recovery.pending,
-                  defaultValue:
-                    'Work is confirming {{pending}} sandbox cleanup(s) before it accepts new operations.',
-                }),
+                // Cleanups only wait on the runtime; when it is unreachable,
+                // say why (Docker not running) instead of counting them.
+                capabilities?.runtimeAvailable === false && capabilities.reason
+                  ? capabilities.reason
+                  : t('work.recovery.pending', {
+                      pending: recovery.pending,
+                      defaultValue:
+                        'Work is confirming {{pending}} sandbox cleanup(s) before it accepts new operations.',
+                    }),
                 recovery.since
                   ? t('work.recovery.since', {
                       time: formatRelativeTime(recovery.since, i18n.language),

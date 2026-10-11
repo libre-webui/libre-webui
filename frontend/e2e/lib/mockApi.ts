@@ -732,7 +732,7 @@ const defaultCloudLibraryModels: MockLibraryModel[] = [
   },
 ];
 
-const defaultWorkCapabilities: MockWorkCapabilities = {
+export const defaultWorkCapabilities: MockWorkCapabilities = {
   available: true,
   runtime: 'docker',
   image: 'ghcr.io/libre-webui/work-runtime:0.1.0-e2e',
@@ -832,7 +832,12 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
     ...(workRecovery
       ? {
           available: false,
-          reason: `Work is safely retrying ${workRecovery.pending} sandbox cleanup(s). New operations remain blocked until the configured runtime proves they are stopped.`,
+          // Mirrors the route: an unreachable runtime outranks the cleanups.
+          reason:
+            options.workCapabilities?.runtimeAvailable === false &&
+            options.workCapabilities.reason
+              ? options.workCapabilities.reason
+              : `Work is safely retrying ${workRecovery.pending} sandbox cleanup(s). New operations remain blocked until the configured runtime proves they are stopped.`,
           recovery: {
             pending: workRecovery.pending,
             since: workRecovery.since ?? null,
