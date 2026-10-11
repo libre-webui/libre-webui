@@ -280,20 +280,54 @@ test('title ownership and unsupported agents are checked before DSH/provider wor
     fixture.calls.resolved.length + fixture.calls.prepared.length,
     0
   );
-  await assert.rejects(
-    fixture.service.generateTitleForSession({
-      ...dshTitleRequest,
-      requestedModel: 'codex',
-      providerId: 'codex',
-    }),
-    { name: 'ChatProviderSelectionError' }
-  );
   assert.equal(
     fixture.calls.resolved.length +
       fixture.calls.prepared.length +
       fixture.calls.updates.length,
     0
   );
+});
+
+test('CLI agent chats (Kiro, Codex, ...) get their title from the same agent', async () => {
+  const agentCalls = [];
+  const fixture = dshTitleFixture({
+    async runAgentCliTitle(...args) {
+      agentCalls.push(args);
+      return 'Project configuration overview.';
+    },
+  });
+  const result = await fixture.service.generateTitleForSession({
+    ...dshTitleRequest,
+    requestedModel: 'kiro:claude-sonnet-5.5',
+    providerId: 'kiro',
+  });
+  assert.equal(result.title, 'Project configuration overview');
+  assert.equal(result.source, 'plugin');
+  assert.equal(agentCalls[0][0], 'kiro');
+  assert.equal(agentCalls[0][1], 'kiro:claude-sonnet-5.5');
+  assert.equal(agentCalls[0][3], 'dsh-admin');
+  assert.equal(
+    fixture.calls.prepared.length +
+      fixture.calls.plugin.length +
+      fixture.calls.ollama.length,
+    0
+  );
+});
+
+test('a failing CLI agent still names the chat instead of erroring', async () => {
+  const fixture = dshTitleFixture({
+    async runAgentCliTitle() {
+      throw new Error('kiro-cli is not logged in');
+    },
+  });
+  const result = await fixture.service.generateTitleForSession({
+    ...dshTitleRequest,
+    requestedModel: 'kiro',
+    providerId: 'kiro',
+  });
+  assert.equal(result.source, 'fallback');
+  assert.equal(result.title, 'Explain the project configurat...');
+  assert.equal(fixture.calls.updates.length, 1);
 });
 
 test('an explicitly selected task persona can use its backing plugin for a title', async () => {
@@ -322,4 +356,3 @@ test('an explicitly selected task persona can use its backing plugin for a title
   assert.equal(fixture.calls.plugin[0][4], 'persona-provider');
   assert.equal(fixture.calls.ollama.length + fixture.calls.resolved.length, 0);
 });
-

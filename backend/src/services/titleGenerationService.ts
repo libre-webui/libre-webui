@@ -26,7 +26,6 @@ import type {
   PluginResponse,
 } from '../types/index.js';
 import {
-  ChatProviderSelectionError,
   normalizeChatProviderSelection,
   type QualifiedChatProviderSelection,
 } from '../utils/chatProviderSelection.js';
@@ -41,6 +40,52 @@ export type StrandsAuxiliaryTargetResolver = (
   providerType: 'ollama' | 'plugin';
   providerId: string | null;
 }>;
+
+export type AgentCliTitleRunner = (
+  agentId: string,
+  model: string,
+  prompt: string,
+  userId: string
+) => Promise<string>;
+
+const AGENT_TITLE_TIMEOUT_MS = 90_000;
+
+/**
+ * CLI agents (Kiro, Claude Code, Codex, ...) have no plain text endpoint, so
+ * the title prompt runs as a one-shot turn on the same agent. It starts in an
+ * empty scratch directory so nothing the agent does can touch real files.
+ */
+export const runAgentCliTitle: AgentCliTitleRunner = async (
+  agentId,
+  model,
+  prompt,
+  userId
+) => {
+  const [{ default: agentCliService }, fs, os, path] = await Promise.all([
+    import('./agentCliService.js'),
+    import('node:fs/promises'),
+    import('node:os'),
+    import('node:path'),
+  ]);
+  const cwd = await fs.mkdtemp(path.join(os.tmpdir(), 'libre-title-'));
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), AGENT_TITLE_TIMEOUT_MS);
+  try {
+    let text = '';
+    for await (const chunk of agentCliService.executeAgentStreamRequest(
+      agentId,
+      [{ id: 'title', role: 'user', content: prompt, timestamp: Date.now() }],
+      userId,
+      { cwd, model, signal: controller.signal }
+    )) {
+      if (chunk.type === 'content' && chunk.content) text += chunk.content;
+    }
+    return text;
+  } finally {
+    clearTimeout(timer);
+    await fs.rm(cwd, { recursive: true, force: true }).catch(() => {});
+  }
+};
 
 /** Resolve text calls without creating an agent session or invoking tools. */
 export const resolveStrandsAuxiliaryTarget: StrandsAuxiliaryTargetResolver =
@@ -144,6 +189,7 @@ export interface TitleGenerationServiceDependencies {
   now?: () => number;
   logger?: Pick<Console, 'error'>;
   resolveStrandsProviderTarget?: StrandsAuxiliaryTargetResolver;
+  runAgentCliTitle?: AgentCliTitleRunner;
 }
 
 export function buildTitlePrompt(message: string): string {
@@ -229,6 +275,7 @@ export class TitleGenerationService {
   private now: () => number;
   private logger: Pick<Console, 'error'>;
   private resolveStrandsProviderTarget: StrandsAuxiliaryTargetResolver;
+  private runAgentCliTitle: AgentCliTitleRunner;
 
   constructor({
     chatService,
@@ -238,6 +285,7 @@ export class TitleGenerationService {
     now = Date.now,
     logger = console,
     resolveStrandsProviderTarget = resolveStrandsAuxiliaryTarget,
+    runAgentCliTitle: agentCliTitleRunner = runAgentCliTitle,
   }: TitleGenerationServiceDependencies) {
     this.chatService = chatService;
     this.chatGenerationService = chatGenerationService;
@@ -246,6 +294,7 @@ export class TitleGenerationService {
     this.now = now;
     this.logger = logger;
     this.resolveStrandsProviderTarget = resolveStrandsProviderTarget;
+    this.runAgentCliTitle = agentCliTitleRunner;
   }
 
   async resolveTitleGenerationModel(
@@ -297,11 +346,10 @@ export class TitleGenerationService {
     const usesStrands =
       providerSelection?.providerType === 'agent' &&
       providerSelection.providerId === 'strands';
-    if (providerSelection?.providerType === 'agent' && !usesStrands) {
-      throw new ChatProviderSelectionError(
-        'Title generation requires an Ollama, plugin, or Strands model.'
-      );
-    }
+    const agentCliId =
+      providerSelection?.providerType === 'agent' && !usesStrands
+        ? providerSelection.providerId
+        : undefined;
     let model = await this.resolveTitleGenerationModel(
       requestedModel,
       session,
@@ -312,26 +360,41 @@ export class TitleGenerationService {
     let source: GenerateTitleForSessionResult['source'] = 'fallback';
 
     try {
-      if (usesStrands) {
-        // Titles are a plain text call on the engine's underlying model. No
-        // agent session or tool loop is created for them.
-        const resolved = await this.resolveStrandsProviderTarget(model, userId);
-        model = resolved.model;
-        providerSelection = normalizeChatProviderSelection(resolved);
+      if (agentCliId) {
+        const raw = await this.runAgentCliTitle(
+          agentCliId,
+          model,
+          buildTitlePrompt(message),
+          userId
+        );
+        const sanitizedTitle = sanitizeGeneratedTitleResult(raw, message);
+        title = sanitizedTitle.title;
+        source = sanitizedTitle.usedFallback ? 'fallback' : 'plugin';
+      } else {
+        if (usesStrands) {
+          // Titles are a plain text call on the engine's underlying model. No
+          // agent session or tool loop is created for them.
+          const resolved = await this.resolveStrandsProviderTarget(
+            model,
+            userId
+          );
+          model = resolved.model;
+          providerSelection = normalizeChatProviderSelection(resolved);
+        }
+        const generation = await this.generateTitleWithModel(
+          sessionId,
+          model,
+          message,
+          userId,
+          providerSelection
+        );
+        const sanitizedTitle = sanitizeGeneratedTitleResult(
+          generation.title,
+          message
+        );
+        title = sanitizedTitle.title;
+        source = sanitizedTitle.usedFallback ? 'fallback' : generation.source;
       }
-      const generation = await this.generateTitleWithModel(
-        sessionId,
-        model,
-        message,
-        userId,
-        providerSelection
-      );
-      const sanitizedTitle = sanitizeGeneratedTitleResult(
-        generation.title,
-        message
-      );
-      title = sanitizedTitle.title;
-      source = sanitizedTitle.usedFallback ? 'fallback' : generation.source;
     } catch (error) {
       this.logger.error('Error generating title:', error);
     }
