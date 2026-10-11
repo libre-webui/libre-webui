@@ -769,8 +769,9 @@ export const PluginManager: React.FC<PluginManagerProps> = ({ onClose }) => {
   };
 
   const handleActivatePlugin = async (id: string) => {
-    if (activePlugin?.id === id) {
-      await deactivatePlugin();
+    // Several plugins can be active; only toggle the one that was clicked.
+    if (plugins.find(plugin => plugin.id === id)?.active) {
+      await deactivatePlugin(id);
     } else {
       await activatePlugin(id);
     }
