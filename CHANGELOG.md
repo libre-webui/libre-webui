@@ -9,10 +9,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### ✨ New Features
 
-- **Kiro as a chat agent.** The Agents group now detects the `kiro-cli` CLI
-  beside Claude Code, Codex, OpenCode, and Pi. Kiro lists the models its
-  signed-in account can use, replies stream from non-interactive runs on the
-  CLI's V3 agent engine, and each run pins the CLI's built-in default agent.
+### 🔧 Improvements
+
+### 🐛 Bug Fixes
+
+### 📚 Documentation
+
+## [0.41.0] - 2026-10-11
+
+Coding agents now work inside Work. Claude Code, Codex, Kiro, OpenCode, and
+Pi run in the task's sandbox on the logins the server already has, and Kiro
+joins Chat's Agents group beside Claude Haiku 5.5.
+
+### ✨ New Features
+
+- **Agent CLIs in Work**: The Work model picker has the same **Agents** groups
+  as Chat. Pick **Claude Code**, **Codex**, **Kiro**, **OpenCode**, or **Pi**
+  and that agent does the task inside the task's sandbox, in `/workspace`, with
+  its own tools approved and its replies, reasoning, and tool calls streaming
+  into the run. Each agent uses the login its CLI already has on the server,
+  the same one Chat uses. The sandbox only ever holds a placeholder such as
+  `lwui_ph_…`; Libre WebUI's egress proxy swaps in the real token for the
+  login's own API hosts, refuses private addresses, and limits a task without
+  network to its agent's API. The server refreshes logins before and during
+  long runs and writes them back for the host CLI. Each CLI is installed on
+  first use at a pinned version into a shared, read-only toolchain volume
+  (`libre-webui-work-agents`). Agent CLIs in Work start **off**; an
+  administrator opens them under **Settings → User Management → Access &
+  policies → Agent CLIs in Work** or pins `LIBRE_WORK_AGENTS_ACCESS`. They need
+  the Docker runtime.
+- **Personas in the Work picker**: The Work model picker lists your personas.
+  Picking one hires the persona for the new task, as **Hire as an agent** does.
+- **Kiro as a chat agent**: The Agents group detects the `kiro-cli` CLI beside
+  Claude Code, Codex, OpenCode, and Pi. Kiro lists the models its signed-in
+  account can use, replies stream from non-interactive runs on the CLI's V3
+  agent engine, and each run pins the CLI's built-in default agent.
 - **Claude Haiku 5.5**: The Anthropic and Amazon Bedrock providers offer
   Claude Haiku 5.5 (`claude-haiku-5-5`; `global.anthropic.claude-haiku-5-5` on
   Bedrock), and Claude Code adds an explicit **Haiku 5.5** choice (Claude Code
@@ -21,8 +52,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 🔧 Improvements
 
+- **Kept Work tasks**: The default limits rise to 1,000 Work tasks per account
+  (`WORK_MAX_TASKS_PER_USER`) and 5,000 per instance
+  (`WORK_MAX_TASKS_GLOBAL`), and the message at the limit names the account and
+  says how to continue.
+- **Newest models in the picker**: Large provider and agent groups now preview
+  their newest models instead of the first ones by name, so Bedrock's Claude
+  5.5 profiles and Kiro's Sonnet 5.5 no longer hide behind **+N more**.
+- **Chat titles for agent chats**: Chats with Kiro, Claude Code, Codex,
+  OpenCode, or Pi get a generated title from the same agent instead of
+  **Failed to generate chat title**. If the agent cannot answer, the chat is
+  named from its first message.
+- **Engine selector with agents**: The Work engine selector stays in place
+  when an agent CLI is picked and shows that agent as the engine, locked,
+  instead of disappearing.
+
 ### 🐛 Bug Fixes
 
+- **Work on Docker 28 and 29**: New Work tasks failed with `volume libre-work-…
+not found` because Docker 29 words a missing volume differently from Docker 28. Both responses are recognized again, ownership checks stay strict, and
+  durable Work error events with an optional empty field are no longer
+  dropped.
+- **Blocked Work cleanups**: When the container runtime cannot be reached, the
+  Work notice now names the runtime problem (for example, Docker not running)
+  instead of counting the sandbox cleanups waiting on it.
 - **Claude 5.5 on Amazon Bedrock**: AWS serves Claude Haiku 5.5 and Sonnet 5.5
   in commercial Regions only on `bedrock-runtime`, through cross-Region
   inference profiles, so they never appeared in the Mantle model list. The
@@ -37,10 +90,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **npm audit fixes**: `proxy-addr` moves to 2.0.8 (GHSA-jqcg-44mw-7w3h),
   `source-map-js` to 1.2.2 (GHSA-68fv-2mgg-jv7q), and the enforced
-  `shell-quote` to 1.11.0 (GHSA-pqg4-j6r4-53mv). KaTeX outside Mermaid moves
-  to 0.19 (GHSA-238p-pmpm-9mq7).
+  `shell-quote` to 1.11.0 (GHSA-pqg4-j6r4-53mv). KaTeX moves to 0.19
+  everywhere, including inside Mermaid (GHSA-238p-pmpm-9mq7).
+- **Dependencies**: 16 updates, including the AWS SDK, the MCP SDK, `pg`,
+  `redis`, `ws`, TanStack Query, Framer Motion, and Vite 8.3.2.
 
 ### 📚 Documentation
+
+- **Workspaces**: A new **Agent CLIs in Work** section covers logins, the
+  egress proxy, installation, access, turns, and limits.
+- **Agent CLI chat models, provider connections, environment variables, and
+  system monitoring** cover Kiro, Claude Haiku 5.5, the new Work task limits,
+  and the `WORK_AGENT_TOOLCHAIN_VOLUME`, `WORK_AGENT_RUN_TIMEOUT_MS`, and
+  `LIBRE_WORK_AGENTS_ACCESS` variables.
 
 ## [0.40.0] - 2026-10-03
 

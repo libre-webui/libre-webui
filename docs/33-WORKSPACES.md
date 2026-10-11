@@ -127,8 +127,8 @@ so its subscriptions and usage limits.
 **Installation.** The first run of each agent installs a pinned version into a
 shared, read-only toolchain volume (`libre-webui-work-agents`) with a
 short-lived installer container, so sandboxes never install anything
-themselves; the run shows **Installing** meanwhile. An administrator can also
-Agent CLIs in Work need the Docker runtime.
+themselves; the run shows **Installing** meanwhile. Agent CLIs in Work need
+the Docker runtime.
 
 **Turns and limits.** Each message starts a fresh agent turn that receives the
 task's earlier conversation, and the workspace keeps everything it made. Stop
