@@ -228,13 +228,30 @@ function findFile(root, name) {
 }
 
 test.after(async () => {
-  await runtime.stopStrandsEngine();
-  server.closeAllConnections();
-  await new Promise(resolve => server.close(resolve));
-  ollama.closeAllConnections();
-  await new Promise(resolve => ollama.close(resolve));
-  await persistence.closePersistence();
-  await rm(directory, { recursive: true, force: true });
+  // Every step runs even if an earlier one throws; a skipped close leaves a
+  // listener open and the test process never exits.
+  const failures = [];
+  const steps = [
+    () => runtime.stopStrandsEngine(),
+    () => {
+      server.closeAllConnections();
+      return new Promise(resolve => server.close(resolve));
+    },
+    () => {
+      ollama.closeAllConnections();
+      return new Promise(resolve => ollama.close(resolve));
+    },
+    () => persistence.closePersistence(),
+    () => rm(directory, { recursive: true, force: true }),
+  ];
+  for (const step of steps) {
+    try {
+      await step();
+    } catch (error) {
+      failures.push(error);
+    }
+  }
+  if (failures.length) throw new AggregateError(failures, 'cleanup failed');
 });
 
 test('Strands access fails closed and follows the admin setting and environment pin', async () => {
