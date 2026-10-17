@@ -105,6 +105,23 @@ export const WORK_EMPTY_MODEL_RESPONSE_METADATA_KEY = 'emptyModelResponse';
 // tool calls. Treating that as the final answer strands the run mid-task,
 // so nudge it back to work a bounded number of times per run first.
 const WORK_EMPTY_ROUND_NUDGE_LIMIT = 2;
+// A dropped provider connection or a gateway/overload status is usually a
+// blip, not a verdict on the run. Replay the round after a short pause, a
+// bounded number of times per run, before failing the task. Tests shorten
+// the pauses.
+export const workProviderRetryPolicy = { delaysMs: [2_000, 5_000] };
+const TRANSIENT_PROVIDER_ERROR_PATTERN =
+  /\bterminated\b|other side closed|socket hang up|fetch failed|ECONNRESET|ECONNREFUSED|EPIPE|UND_ERR_SOCKET|Plugin API error: (?:502|503|504|529)\b/i;
+
+export const isTransientWorkProviderError = (error: unknown): boolean => {
+  if (!(error instanceof Error) || error.name === 'AbortError') return false;
+  const cause = (error as { cause?: unknown }).cause;
+  const causeText =
+    cause instanceof Error
+      ? `${cause.message} ${(cause as { code?: unknown }).code ?? ''}`
+      : '';
+  return TRANSIENT_PROVIDER_ERROR_PATTERN.test(`${error.message} ${causeText}`);
+};
 // Cross-run replay only needs the shape of past tool calls, not full
 // write_file payloads; bound each persisted argument set.
 const WORK_CHAT_TOOL_CALL_ARGUMENTS_MAX_BYTES = 4_096;
@@ -1204,6 +1221,10 @@ export class WorkAgentService {
       // attach. That is a degradation, not a run-ending failure: after the
       // first rejection the run continues on text observations alone.
       let screenshotsRejected = false;
+      let transientProviderRetries = 0;
+      // Each replayed round streams under a fresh event scope; reusing the
+      // first attempt's occurrence ids would dedupe the replay's deltas away.
+      let roundReplays = 0;
       roundLoop: for (let round = 0; round < roundLimit; round++) {
         await this.throwIfCancelled(runId, controller);
         loopStats.rounds = round + 1;
@@ -1232,12 +1253,16 @@ export class WorkAgentService {
           `round:${round + 1}:thinking`,
           durableAttemptIdentity
         );
+        const deltaScope =
+          roundReplays > 0
+            ? `round:${round + 1}:replay:${roundReplays}`
+            : `round:${round + 1}`;
         const contentStream = new WorkDeltaPublisher(
           taskId,
           runId,
           'assistant_delta',
           streamedAssistantTotal,
-          `round:${round + 1}`,
+          deltaScope,
           durableAttemptIdentity
         );
         const reasoningStream = new WorkDeltaPublisher(
@@ -1245,7 +1270,7 @@ export class WorkAgentService {
           runId,
           'reasoning_delta',
           streamedReasoningTotal,
-          `round:${round + 1}`,
+          deltaScope,
           durableAttemptIdentity
         );
         let roundInputTokens = 0;
@@ -1340,6 +1365,29 @@ export class WorkAgentService {
               // Explanatory, not model speech: keep it out of model context.
               { [WORK_EMPTY_MODEL_RESPONSE_METADATA_KEY]: true }
             );
+            roundReplays += 1;
+            round -= 1;
+            continue;
+          }
+          if (
+            !controller.signal.aborted &&
+            transientProviderRetries <
+              workProviderRetryPolicy.delaysMs.length &&
+            isTransientWorkProviderError(error)
+          ) {
+            // Drop the half-streamed text so the replay's first delta
+            // rewrites the live draft instead of appending to the fragment.
+            contentStream.rewind();
+            reasoningStream.rewind();
+            const delayMs =
+              workProviderRetryPolicy.delaysMs[transientProviderRetries];
+            transientProviderRetries += 1;
+            logger.warn(
+              `Work run ${runId} lost its provider response (${providerMessage.slice(0, 200)}); retrying round ${round + 1} in ${delayMs}ms`
+            );
+            await waitUnlessAborted(delayMs, controller.signal);
+            await this.throwIfCancelled(runId, controller);
+            roundReplays += 1;
             round -= 1;
             continue;
           }
@@ -3263,6 +3311,18 @@ export class WorkAgentService {
   }
 }
 
+const waitUnlessAborted = (ms: number, signal: AbortSignal): Promise<void> =>
+  new Promise(resolve => {
+    if (ms <= 0 || signal.aborted) return resolve();
+    const done = () => {
+      clearTimeout(timer);
+      signal.removeEventListener('abort', done);
+      resolve();
+    };
+    const timer = setTimeout(done, ms);
+    signal.addEventListener('abort', done, { once: true });
+  });
+
 class WorkDeltaPublisher {
   private pending = '';
   private total = '';
@@ -3274,7 +3334,7 @@ class WorkDeltaPublisher {
     private readonly taskId: string,
     private readonly runId: string,
     private readonly type: 'assistant_delta' | 'reasoning_delta',
-    initialTotal = '',
+    private readonly initialTotal = '',
     private readonly occurrenceScope = 'stream',
     private readonly attemptIdentity = '0'
   ) {
@@ -3284,6 +3344,17 @@ class WorkDeltaPublisher {
 
   get currentTotal(): string {
     return this.total;
+  }
+
+  /** Discard this publisher's output, unpublished and published alike. */
+  rewind(): void {
+    if (this.timer) {
+      clearTimeout(this.timer);
+      this.timer = undefined;
+    }
+    this.pending = '';
+    this.total = this.initialTotal;
+    this.separatorPending = this.initialTotal ? '\n\n' : '';
   }
 
   push(delta: string): void {

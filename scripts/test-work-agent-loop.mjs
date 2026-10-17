@@ -23,10 +23,12 @@ const [
   { getDatabase },
   {
     default: workAgentService,
+    isTransientWorkProviderError,
     normalizeToolCalls,
     restorePersistedWorkContext,
     WORK_COMPUTER_TOOL_SCHEMAS,
     WORK_TOOL_SCHEMAS,
+    workProviderRetryPolicy,
   },
   { default: workEventService },
   {
@@ -1559,6 +1561,176 @@ test('empty rounds are nudged back to work instead of completing', async () => {
     ),
     false
   );
+});
+
+test('transient provider errors are told apart from real failures', () => {
+  const dropped = new TypeError('terminated');
+  assert.equal(isTransientWorkProviderError(dropped), true);
+  const wrapped = new TypeError('fetch failed', {
+    cause: Object.assign(new Error('other side closed'), {
+      code: 'UND_ERR_SOCKET',
+    }),
+  });
+  assert.equal(isTransientWorkProviderError(wrapped), true);
+  assert.equal(
+    isTransientWorkProviderError(
+      new Error('Plugin API error: 503 - upstream overloaded')
+    ),
+    true
+  );
+  assert.equal(
+    isTransientWorkProviderError(
+      new Error('Plugin API error: 401 - {"error":"User not found."}')
+    ),
+    false
+  );
+  const aborted = new Error('terminated');
+  aborted.name = 'AbortError';
+  assert.equal(isTransientWorkProviderError(aborted), false);
+  assert.equal(isTransientWorkProviderError('terminated'), false);
+});
+
+test('a dropped provider stream replays the round instead of failing the run', async () => {
+  const now = Date.now();
+  const userId = 'agent-loop-transient-retry-admin';
+  getDatabase()
+    .prepare(
+      `INSERT INTO users (
+        id, username, email, password_hash, role, avatar, created_at, updated_at
+      ) VALUES (?, ?, NULL, 'unused', 'admin', NULL, ?, ?)`
+    )
+    .run(userId, userId, now, now);
+
+  replaceMethod(
+    workModelProviderService,
+    'getResponsesStateScope',
+    () => undefined
+  );
+  const originalDelays = workProviderRetryPolicy.delaysMs;
+  workProviderRetryPolicy.delaysMs = [0, 0];
+  // Durable events dedupe by occurrence id; the replay must not reuse the
+  // dropped attempt's ids or its deltas are silently swallowed.
+  const [
+    { getDurableJobRuntime },
+    { getCoordinator },
+    { closeDurableEventGateway, initializeDurableEventGateway },
+  ] = await Promise.all([
+    distModule('platform/jobs/durableJobRuntime.js'),
+    distModule('platform/coordination/service.js'),
+    distModule('platform/events/service.js'),
+  ]);
+  workEventService.initializeDurableGateway(
+    initializeDurableEventGateway(
+      getDurableJobRuntime().service,
+      getCoordinator()
+    )
+  );
+
+  let requests = 0;
+  replaceMethod(
+    workModelProviderService,
+    'generateChatStreamResponse',
+    async (request, _provider, _userId, observer) => {
+      requests += 1;
+      if (requests === 1) {
+        observer.onContent?.('Half a sent');
+        await new Promise(resolve => setTimeout(resolve, 50));
+        throw new TypeError('terminated');
+      }
+      observer.onContent?.('The full digest.');
+      return {
+        model: request.model,
+        created_at: new Date().toISOString(),
+        message: { role: 'assistant', content: 'The full digest.' },
+        done: true,
+      };
+    }
+  );
+
+  try {
+    const detail = await workTaskService.createTaskWithRun(
+      userId,
+      'Write the digest.',
+      'test-model',
+      true,
+      { providerType: 'plugin', providerId: 'test-plugin' }
+    );
+    const runId = detail.activeRun?.id;
+    assert.ok(runId);
+    await workAgentService.execute(detail.id, runId, userId);
+
+    assert.equal(requests, 2);
+    assert.equal((await workTaskService.getRun(runId)).status, 'completed');
+    const deltas = workEventService
+      .replay(detail.id, runId, 0)
+      .events.filter(event => event.type === 'assistant_delta');
+    // The replay's delta is published (not deduped against the first
+    // attempt) and its total drops the fragment from the dropped stream.
+    assert.equal(deltas.at(-1).data.total, 'The full digest.');
+    // Both attempts reach the durable log, which reconnecting viewers read.
+    const durableDeltas = (
+      await getDurableJobRuntime().service.replayEvents(0, {
+        streamId: `work:${detail.id}:${runId}`,
+        limit: 500,
+      })
+    ).filter(event => event.eventType === 'work.assistant_delta.v1');
+    assert.equal(durableDeltas.length, 2);
+  } finally {
+    workProviderRetryPolicy.delaysMs = originalDelays;
+    workEventService.durableGateway = undefined;
+    await closeDurableEventGateway();
+    workEventService.reset();
+  }
+});
+
+test('a provider that keeps dropping fails the run once retries run out', async () => {
+  const now = Date.now();
+  const userId = 'agent-loop-transient-exhausted-admin';
+  getDatabase()
+    .prepare(
+      `INSERT INTO users (
+        id, username, email, password_hash, role, avatar, created_at, updated_at
+      ) VALUES (?, ?, NULL, 'unused', 'admin', NULL, ?, ?)`
+    )
+    .run(userId, userId, now, now);
+
+  replaceMethod(
+    workModelProviderService,
+    'getResponsesStateScope',
+    () => undefined
+  );
+  const originalDelays = workProviderRetryPolicy.delaysMs;
+  workProviderRetryPolicy.delaysMs = [0, 0];
+
+  let requests = 0;
+  replaceMethod(
+    workModelProviderService,
+    'generateChatStreamResponse',
+    async () => {
+      requests += 1;
+      throw new TypeError('terminated');
+    }
+  );
+
+  try {
+    const detail = await workTaskService.createTaskWithRun(
+      userId,
+      'Write the digest.',
+      'test-model',
+      true,
+      { providerType: 'plugin', providerId: 'test-plugin' }
+    );
+    const runId = detail.activeRun?.id;
+    assert.ok(runId);
+    await workAgentService.execute(detail.id, runId, userId);
+
+    assert.equal(requests, 3);
+    const run = await workTaskService.getRun(runId);
+    assert.equal(run.status, 'failed');
+    assert.equal(run.error, 'terminated');
+  } finally {
+    workProviderRetryPolicy.delaysMs = originalDelays;
+  }
 });
 
 test('a run that stays empty completes with a placeholder hidden from replay', async () => {
@@ -3216,4 +3388,3 @@ test('a failed run persists the error as its summary and a failed exit state', a
   // Work the run did before it failed is still recorded.
   assert.deepEqual(run.changedFiles, ['half-done.txt']);
 });
-

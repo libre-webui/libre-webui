@@ -553,6 +553,82 @@ test('a successful Work run is emailed to its owner when settled', async () => {
   }
 });
 
+test('a failed Work run is emailed with the reason the run recorded', async () => {
+  const { emailService } = await distModule('services/emailService.js');
+  const createResponse = await fetch(baseUrl, {
+    method: 'POST',
+    headers: headersFor(ownerToken),
+    body: JSON.stringify({
+      name: 'News digest',
+      instructions: 'Summarize the news.',
+      triggers: [{ kind: 'daily', hour: 8, minute: 0 }],
+      target: 'work',
+    }),
+  });
+  const automation = (await createResponse.json()).data;
+  const runNowResponse = await fetch(`${baseUrl}/${automation.id}/run`, {
+    method: 'POST',
+    headers: headersFor(ownerToken),
+  });
+  const { runId } = (await runNowResponse.json()).data;
+
+  const taskId = 'digest-task-0002';
+  const now = Date.now();
+  database
+    .prepare(
+      `INSERT INTO work_tasks (
+        id, user_id, title, model, volume_name, container_name, status,
+        created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, 'failed', ?, ?)`
+    )
+    .run(
+      taskId,
+      'automation-owner',
+      'News digest',
+      'test',
+      `libre-work-${taskId}`,
+      `libre-work-${taskId}`,
+      now,
+      now
+    );
+  database
+    .prepare(
+      `INSERT INTO work_runs (
+        id, task_id, model, provider_type, provider_id, status, error,
+        created_at, started_at, finished_at
+      ) VALUES (?, ?, 'test', 'plugin', 'deepseek', 'failed', ?, ?, ?, ?)`
+    )
+    .run('digest-run-0002', taskId, 'terminated', now, now, now);
+  database
+    .prepare(
+      `UPDATE automation_runs SET work_task_id = ?, status = 'running',
+        started_at = ? WHERE id = ?`
+    )
+    .run(taskId, now, runId);
+
+  const emailed = [];
+  const originalRecipientFor = emailService.recipientFor;
+  const originalNotify = emailService.notifyAutomationRun;
+  emailService.recipientFor = async () => 'owner@example.test';
+  emailService.notifyAutomationRun = async input => {
+    emailed.push(input);
+    return true;
+  };
+  try {
+    await automationSchedulerService.tick(Date.now());
+    const settled = database
+      .prepare('SELECT status, error FROM automation_runs WHERE id = ?')
+      .get(runId);
+    assert.equal(settled.status, 'failed');
+    assert.equal(settled.error, 'work-task-failed: terminated');
+    assert.equal(emailed.length, 1);
+    assert.equal(emailed[0].error, 'work-task-failed: terminated');
+  } finally {
+    emailService.recipientFor = originalRecipientFor;
+    emailService.notifyAutomationRun = originalNotify;
+  }
+});
+
 test('webhook secrets gate inbound fires with constant-time checks', async () => {
   // A fresh automation starts with the webhook disabled.
   const createResponse = await fetch(baseUrl, {

@@ -292,11 +292,17 @@ class AutomationSchedulerService {
               settled += 1;
             }
           } else if (task.status === 'failed' || task.status === 'cancelled') {
+            // Keep the stable code first, then the run's own reason, so the
+            // notification and email say why instead of just "failed".
+            const [lastRun] = await workTaskService.listRuns(task.id, 1);
+            const reason = lastRun?.error?.trim().replace(/\s+/g, ' ');
             if (
               await automationService.finalizeRun(
                 run.id,
                 'failed',
-                `work-task-${task.status}`,
+                reason
+                  ? `work-task-${task.status}: ${reason.slice(0, 500)}`
+                  : `work-task-${task.status}`,
                 { userId: run.user_id, automationId: run.automation_id }
               )
             ) {
