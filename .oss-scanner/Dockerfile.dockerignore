@@ -1,0 +1,20 @@
+# The scanner image keeps docs, markdown and compose files (the root .dockerignore drops
+# them for the production image). Only local build output, dependencies and secrets stay out.
+node_modules
+*/node_modules
+frontend/dist
+backend/dist
+frontend/test-results
+frontend/playwright-report
+test-results
+.env
+.env.*
+backend/data/
+backend/temp/
+temp/
+tmp/
+venv/
+*.log
+*.sqlite
+*.db
+.DS_Store
