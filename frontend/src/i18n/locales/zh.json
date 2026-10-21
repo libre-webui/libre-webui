@@ -2846,7 +2846,9 @@
       "diffAdded": "已添加",
       "diffRemoved": "已移除",
       "unsavedChanges": "未保存的更改",
-      "editingLocked": "本轮结束后才能编辑。"
+      "editingLocked": "本轮结束后才能编辑。",
+      "rendered": "渲染",
+      "renderedTitle": "以渲染形式查看此 Markdown，或切换回可编辑的源文件"
     },
     "activity": {
       "empty": "命令、文件操作和工具结果将显示在这里。",

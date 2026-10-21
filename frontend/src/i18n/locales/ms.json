@@ -2846,7 +2846,9 @@
       "diffAdded": "Ditambah",
       "diffRemoved": "Dialih keluar",
       "unsavedChanges": "perubahan belum disimpan",
-      "editingLocked": "Penyuntingan dibuka selepas giliran tamat."
+      "editingLocked": "Penyuntingan dibuka selepas giliran tamat.",
+      "rendered": "Dipaparkan",
+      "renderedTitle": "Paparkan Markdown ini dalam bentuk terformat, atau kembali ke sumber yang boleh disunting"
     },
     "activity": {
       "empty": "Perintah, operasi fail dan hasil alat akan dipaparkan di sini.",

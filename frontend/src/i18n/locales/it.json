@@ -2846,7 +2846,9 @@
       "diffAdded": "Aggiunto",
       "diffRemoved": "Rimosso",
       "unsavedChanges": "modifiche non salvate",
-      "editingLocked": "La modifica si sblocca al termine del turno."
+      "editingLocked": "La modifica si sblocca al termine del turno.",
+      "rendered": "Visualizzato",
+      "renderedTitle": "Mostra questo Markdown formattato o torna al sorgente modificabile"
     },
     "activity": {
       "empty": "I comandi, le operazioni sui file e i risultati degli strumenti appariranno qui.",

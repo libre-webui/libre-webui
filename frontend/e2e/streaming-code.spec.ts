@@ -173,6 +173,16 @@ test('LaTeX preprocessing never changes generated code', () => {
   );
 });
 
+test('dollar amounts stay text while real math still converts', () => {
+  expect(
+    preprocessLaTeX(
+      'Net loss **$80.7B** (but $72B non-cash), and \\(2x\\) plus $x^2$ and $$1+1$$'
+    )
+  ).toBe(
+    'Net loss **\\$80.7B** (but \\$72B non-cash), and $2x$ plus $x^2$ and $$1+1$$'
+  );
+});
+
 test('code stays in a specialized block throughout a live response', async ({
   page,
 }) => {

@@ -2846,7 +2846,9 @@
       "diffAdded": "Tillagd",
       "diffRemoved": "Borttagen",
       "unsavedChanges": "osparade ändringar",
-      "editingLocked": "Redigering låses upp när turen är klar."
+      "editingLocked": "Redigering låses upp när turen är klar.",
+      "rendered": "Renderad",
+      "renderedTitle": "Visa denna Markdown renderad, eller växla tillbaka till den redigerbara källan"
     },
     "activity": {
       "empty": "Kommandon, filåtgärder och verktygsresultat visas här.",

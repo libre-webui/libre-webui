@@ -2846,7 +2846,9 @@
       "diffAdded": "Bætt við",
       "diffRemoved": "Fjarlægt",
       "unsavedChanges": "óvistaðar breytingar",
-      "editingLocked": "Hægt er að breyta þegar umferðinni lýkur."
+      "editingLocked": "Hægt er að breyta þegar umferðinni lýkur.",
+      "rendered": "Birt",
+      "renderedTitle": "Sýna þetta Markdown birt, eða skipta aftur yfir í breytanlega frumkóðann"
     },
     "activity": {
       "empty": "Skipanir, skráaraðgerðir og niðurstöður verkfæra birtast hér.",

@@ -2846,7 +2846,9 @@
       "diffAdded": "Eklendi",
       "diffRemoved": "Kaldırıldı",
       "unsavedChanges": "kaydedilmemiş değişiklikler",
-      "editingLocked": "Düzenleme, tur bittiğinde açılır."
+      "editingLocked": "Düzenleme, tur bittiğinde açılır.",
+      "rendered": "İşlenmiş",
+      "renderedTitle": "Bu Markdown dosyasını biçimlendirilmiş göster veya düzenlenebilir kaynağa geri dön"
     },
     "activity": {
       "empty": "Komutlar, dosya işlemleri ve araç sonuçları burada görünür.",

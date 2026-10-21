@@ -2846,7 +2846,9 @@
       "diffAdded": "Ditambahkan",
       "diffRemoved": "Dihapus",
       "unsavedChanges": "perubahan belum disimpan",
-      "editingLocked": "Pengeditan terbuka setelah giliran selesai."
+      "editingLocked": "Pengeditan terbuka setelah giliran selesai.",
+      "rendered": "Dirender",
+      "renderedTitle": "Tampilkan Markdown ini dalam bentuk dirender, atau kembali ke sumber yang bisa diedit"
     },
     "activity": {
       "empty": "Perintah, operasi file, dan hasil alat akan muncul di sini.",

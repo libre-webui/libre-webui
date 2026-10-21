@@ -2846,7 +2846,9 @@
       "diffAdded": "Ajouté",
       "diffRemoved": "Supprimé",
       "unsavedChanges": "modifications non enregistrées",
-      "editingLocked": "La modification sera disponible à la fin du tour."
+      "editingLocked": "La modification sera disponible à la fin du tour.",
+      "rendered": "Rendu",
+      "renderedTitle": "Afficher ce Markdown mis en forme, ou revenir à la source modifiable"
     },
     "activity": {
       "empty": "Les commandes, les opérations sur les fichiers et les résultats des outils apparaîtront ici.",

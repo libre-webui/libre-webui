@@ -2846,7 +2846,9 @@
       "diffAdded": "Dodano",
       "diffRemoved": "Usunięto",
       "unsavedChanges": "niezapisane zmiany",
-      "editingLocked": "Edycja odblokuje się po zakończeniu tury."
+      "editingLocked": "Edycja odblokuje się po zakończeniu tury.",
+      "rendered": "Wyrenderowany",
+      "renderedTitle": "Pokaż ten Markdown w formie wyrenderowanej lub wróć do edytowalnego źródła"
     },
     "activity": {
       "empty": "Tutaj pojawią się polecenia, operacje na plikach i wyniki narzędzi.",

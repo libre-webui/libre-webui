@@ -2846,7 +2846,9 @@
       "diffAdded": "Tilføjet",
       "diffRemoved": "Fjernet",
       "unsavedChanges": "ikke-gemte ændringer",
-      "editingLocked": "Redigering låses op, når turen er slut."
+      "editingLocked": "Redigering låses op, når turen er slut.",
+      "rendered": "Gengivet",
+      "renderedTitle": "Vis denne Markdown gengivet, eller skift tilbage til den redigerbare kilde"
     },
     "activity": {
       "empty": "Kommandoer, filhandlinger og værktøjsresultater vises her.",

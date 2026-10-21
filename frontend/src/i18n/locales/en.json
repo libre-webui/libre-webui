@@ -2846,7 +2846,9 @@
       "diffAdded": "Added",
       "diffRemoved": "Removed",
       "unsavedChanges": "unsaved changes",
-      "editingLocked": "Editing unlocks when the turn finishes."
+      "editingLocked": "Editing unlocks when the turn finishes.",
+      "rendered": "Rendered",
+      "renderedTitle": "Show this Markdown rendered, or switch back to the editable source"
     },
     "activity": {
       "empty": "Commands, file operations, and tool results will appear here.",

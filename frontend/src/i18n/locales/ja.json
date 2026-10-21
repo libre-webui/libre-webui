@@ -2846,7 +2846,9 @@
       "diffAdded": "追加",
       "diffRemoved": "削除",
       "unsavedChanges": "未保存の変更",
-      "editingLocked": "ターンの完了後に編集できるようになります。"
+      "editingLocked": "ターンの完了後に編集できるようになります。",
+      "rendered": "プレビュー",
+      "renderedTitle": "この Markdown を整形表示するか、編集可能なソースに戻ります"
     },
     "activity": {
       "empty": "コマンド、ファイル操作、ツールの結果がここに表示されます。",

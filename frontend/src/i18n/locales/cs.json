@@ -2846,7 +2846,9 @@
       "diffAdded": "Přidáno",
       "diffRemoved": "Odebráno",
       "unsavedChanges": "neuložené změny",
-      "editingLocked": "Úpravy se odemknou po dokončení kola."
+      "editingLocked": "Úpravy se odemknou po dokončení kola.",
+      "rendered": "Vykreslené",
+      "renderedTitle": "Zobrazit tento Markdown vykreslený, nebo přepnout zpět na upravitelný zdroj"
     },
     "activity": {
       "empty": "Zde se zobrazí příkazy, operace se soubory a výsledky nástrojů.",

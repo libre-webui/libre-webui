@@ -2846,7 +2846,9 @@
       "diffAdded": "Toegevoegd",
       "diffRemoved": "Verwijderd",
       "unsavedChanges": "niet-opgeslagen wijzigingen",
-      "editingLocked": "Bewerken wordt ontgrendeld zodra de beurt klaar is."
+      "editingLocked": "Bewerken wordt ontgrendeld zodra de beurt klaar is.",
+      "rendered": "Weergegeven",
+      "renderedTitle": "Toon deze Markdown opgemaakt, of schakel terug naar de bewerkbare bron"
     },
     "activity": {
       "empty": "Opdrachten, bestandsbewerkingen en toolresultaten verschijnen hier.",

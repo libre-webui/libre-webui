@@ -18,6 +18,7 @@
 import {
   Activity,
   ArrowLeft,
+  BookOpen,
   ExternalLink,
   File,
   Files as FilesIcon,
@@ -50,6 +51,7 @@ import { WorkAgentPanel } from '@/components/work/WorkAgentPanel';
 import { WorkLiveRunSurface } from '@/components/work/WorkLiveRunSurface';
 import { WorkRunHistory } from '@/components/work/WorkRunHistory';
 import { WorkspaceCodeEditor } from '@/components/work/WorkspaceCodeEditor';
+import { RichMessageContent } from '@/components/ui/RichMessageContent';
 import { WorkspaceDiffView } from '@/components/work/WorkspaceDiffView';
 import { WorkspaceGitPanel } from '@/components/work/WorkspaceGitPanel';
 import { WorkspaceTerminal } from '@/components/work/WorkspaceTerminal';
@@ -131,6 +133,12 @@ const safePreviewUrl = (value?: string | null): string | null => {
   return null;
 };
 
+// Past this size a rendered Markdown pass would stall the pane; such files
+// stay in the editor.
+const MARKDOWN_RENDER_MAX_CHARACTERS = 400_000;
+const isMarkdownPath = (path: string): boolean =>
+  /\.(?:md|markdown)$/i.test(path);
+
 const parentPath = (path: string): string => {
   const parts = path.split('/').filter(Boolean);
   parts.pop();
@@ -178,6 +186,8 @@ export function WorkspacePane({
   const [previewCommand, setPreviewCommand] = useState('');
   const [formatting, setFormatting] = useState(false);
   const [showDiff, setShowDiff] = useState(false);
+  // Markdown opens rendered; the choice to read the source sticks across files.
+  const [markdownSource, setMarkdownSource] = useState(false);
   // Server-side content the client has seen, and its frozen copy from the
   // moment the current/most recent model turn started.
   const knownContentsRef = useRef(new Map<string, string>());
@@ -242,6 +252,12 @@ export function WorkspacePane({
   const formatSizeSupported =
     !selectedFile || isWorkCodeFormatSizeSupported(editorContent);
   const formatSupported = formatTypeSupported && formatSizeSupported;
+  const markdownRenderable = Boolean(
+    selectedFile &&
+    isMarkdownPath(selectedFile.path) &&
+    editorContent.length <= MARKDOWN_RENDER_MAX_CHARACTERS
+  );
+  const showRenderedMarkdown = markdownRenderable && !markdownSource;
 
   useEffect(() => {
     editorContentRef.current = editorContent;
@@ -737,6 +753,26 @@ export function WorkspacePane({
                   </span>
                 </button>
               )}
+              {markdownRenderable && !showDiff && (
+                <button
+                  type='button'
+                  data-testid='work-markdown-render-toggle'
+                  aria-pressed={showRenderedMarkdown}
+                  onClick={() => setMarkdownSource(current => !current)}
+                  title={t('work.files.renderedTitle')}
+                  className={cn(
+                    'inline-flex h-8 items-center gap-1.5 rounded-lg border px-2 text-[11px] font-medium transition-colors',
+                    showRenderedMarkdown
+                      ? 'border-transparent bg-ink text-ink-inverse'
+                      : 'border-line text-ink-muted hover:bg-surface-subtle hover:text-ink'
+                  )}
+                >
+                  <BookOpen className='h-3.5 w-3.5 shrink-0' />
+                  <span className='hidden sm:inline'>
+                    {t('work.files.rendered')}
+                  </span>
+                </button>
+              )}
               {selectedFile && !showDiff && (
                 <>
                   <Button
@@ -1012,22 +1048,39 @@ export function WorkspacePane({
                     {t('work.files.editingLocked')}
                   </p>
                 )}
-                <WorkspaceCodeEditor
-                  path={selectedFile.path}
-                  value={editorContent}
-                  ariaLabel={t('work.files.editorLabel', {
-                    path: selectedFile.path,
-                    defaultValue: 'File editor: {{path}}',
-                  })}
-                  onChange={updateEditorContent}
-                  onSaveShortcut={() => {
-                    if (dirty && !taskActive && !actionLoading && !formatting) {
-                      void saveFile();
-                    }
-                  }}
-                  onFormatShortcut={() => void formatCurrentFile()}
-                  disabled={taskActive || formatting}
-                />
+                {showRenderedMarkdown ? (
+                  <div
+                    data-testid='work-markdown-rendered'
+                    className='min-h-0 flex-1 overflow-y-auto px-5 py-4 sm:px-8 sm:py-6'
+                  >
+                    <RichMessageContent
+                      content={editorContent}
+                      className='mx-auto max-w-3xl text-sm'
+                    />
+                  </div>
+                ) : (
+                  <WorkspaceCodeEditor
+                    path={selectedFile.path}
+                    value={editorContent}
+                    ariaLabel={t('work.files.editorLabel', {
+                      path: selectedFile.path,
+                      defaultValue: 'File editor: {{path}}',
+                    })}
+                    onChange={updateEditorContent}
+                    onSaveShortcut={() => {
+                      if (
+                        dirty &&
+                        !taskActive &&
+                        !actionLoading &&
+                        !formatting
+                      ) {
+                        void saveFile();
+                      }
+                    }}
+                    onFormatShortcut={() => void formatCurrentFile()}
+                    disabled={taskActive || formatting}
+                  />
+                )}
               </>
             ) : (
               <div className='m-auto px-6 text-center text-xs text-ink-muted'>

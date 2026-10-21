@@ -2846,7 +2846,9 @@
       "diffAdded": "Añadido",
       "diffRemoved": "Eliminado",
       "unsavedChanges": "cambios sin guardar",
-      "editingLocked": "La edición se habilita cuando termina el turno."
+      "editingLocked": "La edición se habilita cuando termina el turno.",
+      "rendered": "Renderizado",
+      "renderedTitle": "Muestra este Markdown renderizado o vuelve al código fuente editable"
     },
     "activity": {
       "empty": "Los comandos, las operaciones de archivos y los resultados de las herramientas aparecerán aquí.",

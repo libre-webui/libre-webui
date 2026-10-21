@@ -228,6 +228,9 @@ export function getStreamingMarkdownSegments(
 export function preprocessLaTeX(content: string): string {
   const convertLaTeX = (text: string) =>
     text
+      // A dollar sign right before a digit is money ("$80.7B ... $72B"), not
+      // the start of inline math; escape it before \( \) becomes $...$.
+      .replace(/(^|[^\\$])\$(?=\d)/g, '$1\\$')
       .replace(/\\\[([\s\S]*?)\\\]/g, (_, value) => `$$${value}$$`)
       .replace(/\\\(([\s\S]*?)\\\)/g, (_, value) => `$${value}$`);
   const processText = (text: string) => {

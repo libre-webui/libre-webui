@@ -2846,7 +2846,9 @@
       "diffAdded": "Hinzugefügt",
       "diffRemoved": "Entfernt",
       "unsavedChanges": "nicht gespeicherte Änderungen",
-      "editingLocked": "Bearbeiten wird freigeschaltet, wenn der Durchgang beendet ist."
+      "editingLocked": "Bearbeiten wird freigeschaltet, wenn der Durchgang beendet ist.",
+      "rendered": "Gerendert",
+      "renderedTitle": "Dieses Markdown gerendert anzeigen oder zurück zur bearbeitbaren Quelle wechseln"
     },
     "activity": {
       "empty": "Befehle, Dateioperationen und Werkzeugergebnisse werden hier angezeigt.",

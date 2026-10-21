@@ -2774,6 +2774,82 @@ test('keeps unsupported and large workspace files readable when highlighting fal
   await expect(editor).toHaveValue('{"missing":}');
 });
 
+test('opens Markdown rendered and toggles to the editable source', async ({
+  page,
+}) => {
+  const briefing =
+    '# AI News Briefing\n\n**Funding:** a **$80.7B** loss (but $72B non-cash).\n\n- first item\n- second item';
+  const markdownTask = task(
+    'markdown-workspace',
+    'Markdown workspace',
+    'The briefing is ready.'
+  );
+  await mockLibreWebUiApi(page, {
+    workTasks: [markdownTask],
+    workFiles: {
+      'markdown-workspace': [
+        {
+          path: 'briefing.md',
+          name: 'briefing.md',
+          type: 'file',
+          size: briefing.length,
+          modifiedAt: createdAt,
+        },
+        {
+          path: 'notes.txt',
+          name: 'notes.txt',
+          type: 'file',
+          size: 5,
+          modifiedAt: createdAt,
+        },
+      ],
+    },
+    workFileContents: {
+      'markdown-workspace:briefing.md': briefing,
+      'markdown-workspace:notes.txt': 'plain',
+    },
+  });
+
+  await page.goto('/work/markdown-workspace');
+  await page
+    .getByTestId('work-file-item')
+    .filter({ hasText: 'briefing.md' })
+    .click();
+
+  const rendered = page.getByTestId('work-markdown-rendered');
+  const toggle = page.getByTestId('work-markdown-render-toggle');
+  await expect(toggle).toHaveAttribute('aria-pressed', 'true');
+  await expect(
+    rendered.getByRole('heading', { name: 'AI News Briefing' })
+  ).toBeVisible();
+  await expect(rendered.locator('li')).toHaveCount(2);
+  // Dollar amounts read as money, not inline math.
+  await expect(rendered).toContainText('$80.7B loss (but $72B non-cash)');
+  await expect(rendered.locator('.katex')).toHaveCount(0);
+  await expect(page.getByTestId('work-file-editor')).toHaveCount(0);
+
+  await toggle.click();
+  await expect(toggle).toHaveAttribute('aria-pressed', 'false');
+  await expect(page.getByTestId('work-file-editor')).toHaveValue(briefing);
+  await expect(rendered).toHaveCount(0);
+
+  // Non-Markdown files have no toggle; the source choice sticks for the
+  // next Markdown file.
+  await page
+    .getByTestId('work-file-item')
+    .filter({ hasText: 'notes.txt' })
+    .click();
+  await expect(toggle).toHaveCount(0);
+  await expect(page.getByTestId('work-file-editor')).toHaveValue('plain');
+  await page
+    .getByTestId('work-file-item')
+    .filter({ hasText: 'briefing.md' })
+    .click();
+  await expect(page.getByTestId('work-file-editor')).toHaveValue(briefing);
+  await toggle.click();
+  await expect(rendered).toBeVisible();
+});
+
 test('keeps the current workspace draft editable when saving fails', async ({
   page,
 }) => {
