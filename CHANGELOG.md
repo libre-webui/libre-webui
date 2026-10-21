@@ -15,6 +15,61 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 📚 Documentation
 
+## [0.42.0] - 2026-10-21
+
+Markdown files now read like documents in Work, and a dropped provider
+connection no longer ends a Work run. This release also carries a round of
+dependency security updates.
+
+### ✨ New Features
+
+- **Markdown viewer in Work**: Markdown files in the workspace (`.md` and
+  `.markdown`) open rendered, with headings, lists, tables, code, math, and
+  diagrams drawn the same way as in chat. The **Rendered** toggle in the file
+  toolbar switches to the editable source and back, and that choice carries
+  over to the next Markdown file you open. The rendered view follows unsaved
+  edits. Files over 400,000 characters stay in the editor.
+
+### 🔧 Improvements
+
+- **Work runs survive a dropped connection**: When a model provider cuts a
+  streaming response short (`terminated`, a reset connection) or answers 502,
+  503, 504, or 529, the Work agent replays that round after a short pause, up
+  to twice per run, instead of failing the task. The half-streamed text is
+  discarded, so the live view does not keep a fragment. Real errors, such as a
+  rejected API key, still fail at once.
+- **Automation failures say why**: A failed Work automation now records the
+  run's own error after its code, for example
+  `work-task-failed: terminated`, so the failure notification and email name
+  the reason.
+
+### 🐛 Bug Fixes
+
+- **Dollar amounts in replies**: Prices such as `$80.7B` and `$72B` in the same
+  paragraph no longer turn into a math formula. A dollar sign directly before
+  a digit is read as money; `\( … \)`, `$x^2$`, and `$$ … $$` math still
+  renders.
+- **Replayed rounds kept after reconnecting**: A Work round that is replayed,
+  after a dropped connection or a model that rejects screenshots, now streams
+  under its own event IDs. Before, the durable event log refused the replay as
+  a duplicate, so anyone who reloaded or reconnected saw the broken first
+  attempt.
+- **Deactivating one plugin**: With several plugins active, deactivating one in
+  the plugin manager no longer switches off a different plugin.
+- **Strands engine on Strands 1.20 and later**: The Strands engine loads again.
+  Strands 1.20 needs the MCP client package as a peer, which the install had
+  skipped.
+
+### 🔒 Security
+
+- **Dependency updates**: The MCP TypeScript SDK moves to 1.32.1 (cross-origin
+  redirects that re-sent request headers, bearer tokens accepted for another
+  service, experimental tasks not tied to their session, and a memory
+  exhaustion during validation), Hono to 4.13.13 (`serveStatic` path decoding,
+  GHSA-5r4p-p66f-jhc7), and Vite to 8.3.4 (`launch-editor` on Windows, dev
+  server only). React 19.3.1, Strands 1.21, undici 8.12.2, and the AWS SDK are
+  also current.
+
 ## [0.41.0] - 2026-10-11
 
 Coding agents now work inside Work. Claude Code, Codex, Kiro, OpenCode, and
