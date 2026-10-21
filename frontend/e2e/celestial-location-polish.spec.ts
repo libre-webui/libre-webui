@@ -55,6 +55,10 @@ async function prepareLocationForm(page: Page, language = 'en') {
     },
     { location: savedLocation, locale: language }
   );
+  // These tests cover the form, not the sky. A live night sky keeps CI
+  // WebKit's software renderer busy enough that clicks never see a stable
+  // frame, so hold the scene still like the other celestial specs do.
+  await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('/chat');
   await openSettingsTab(page, 'appearance');
   await expect(page.getByTestId('celestial-location')).toBeVisible();
