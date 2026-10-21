@@ -2228,6 +2228,11 @@ test('shows tool activity, saves files, and isolates preview content', async ({
         expectedUpdatedAt: createdAt,
       },
     ]);
+  // The save toast opens top-right, under the pointer that just clicked Save,
+  // and pauses while hovered. Move away so it expires; a click on Start
+  // preview while it is up lands on the toast instead.
+  await page.mouse.move(0, 0);
+  await expect(page.getByText('File saved.')).toBeHidden({ timeout: 10_000 });
 
   await page.getByTestId('work-preview-tab').click();
   const previewToolbar = page.getByTestId('work-workspace-toolbar');
