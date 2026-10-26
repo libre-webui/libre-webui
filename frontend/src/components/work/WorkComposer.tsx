@@ -190,8 +190,13 @@ export function WorkComposer({
   const selectedEntry = effectiveSelectorModels.find(
     model => workSelectorModelValue(model) === modelKey
   );
+  // Only Ollama's own models are worth asking Ollama about: an agent CLI or
+  // a persona is a name Ollama has never heard of.
   const ollamaModelName =
-    selectedEntry && !selectedEntry.isPlugin
+    selectedEntry &&
+    !selectedEntry.isPlugin &&
+    !selectedEntry.isAgent &&
+    !selectedEntry.isPersona
       ? baseWorkModel(selectedEntry.name)
       : undefined;
   const [ollamaThinking, setOllamaThinking] = useState<{

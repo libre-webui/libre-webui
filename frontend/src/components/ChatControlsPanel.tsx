@@ -92,6 +92,18 @@ export const ChatControlsPanel: React.FC<ChatControlsPanelProps> = ({
   const pinnedForModel = useAppStore(
     state => state.preferences.modelGenerationOptions?.[model]
   );
+  const modelEntry = useChatStore(state =>
+    state.models.find(candidate => candidate.name === model)
+  );
+  // Only a local Ollama model has defaults to read: agents, personas, and
+  // plugin models are names Ollama has never heard of.
+  const ollamaModel =
+    modelEntry &&
+    !modelEntry.isPlugin &&
+    !modelEntry.isAgent &&
+    !modelEntry.isPersona
+      ? model
+      : '';
   const [modelDefaults, setModelDefaults] = useState<{
     options: Partial<GenerationOptions>;
     trainedContextLength?: number;
@@ -102,11 +114,11 @@ export const ChatControlsPanel: React.FC<ChatControlsPanelProps> = ({
   // panel reports the value a message will actually run with, rather than an
   // application default the model overrides.
   useEffect(() => {
-    if (!open || !model) return;
+    if (!open || !ollamaModel) return;
 
     let cancelled = false;
     void ollamaApi
-      .getModelDefaults(model)
+      .getModelDefaults(ollamaModel)
       .then(response => {
         if (cancelled || !response.success || !response.data) return;
         setModelDefaults({
@@ -122,7 +134,7 @@ export const ChatControlsPanel: React.FC<ChatControlsPanelProps> = ({
     return () => {
       cancelled = true;
     };
-  }, [open, model]);
+  }, [open, ollamaModel]);
 
   const effectiveDefaults = useMemo(
     () => ({

@@ -36,6 +36,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 🐛 Bug Fixes
 
+- **No Ollama lookups for agents**: with an agent CLI or a persona selected,
+  the Work composer and Chat's controls panel no longer ask Ollama for that
+  model's defaults, which filled the server log with "Failed to show model"
+  errors and did nothing.
+
 ### 📚 Documentation
 
 ### 🙏 Acknowledgements
