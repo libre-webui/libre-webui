@@ -443,6 +443,76 @@ test('fresh SQLite state uses private filesystem permissions', t => {
   assert.equal(fs.statSync(databasePath).mode & 0o777, 0o600);
 });
 
+test('agent CLI Work routes survive a restart, and reset ones are repaired', t => {
+  const dataDir = fs.mkdtempSync(
+    path.join(os.tmpdir(), 'libre-work-agent-routes-')
+  );
+  t.after(() => fs.rmSync(dataDir, { recursive: true, force: true }));
+  const databasePath = initializeApplicationDatabase(dataDir);
+  const database = new Database(databasePath);
+  database.pragma('foreign_keys = OFF');
+  const task = (id, model, providerType, providerId) =>
+    database
+      .prepare(
+        `INSERT INTO work_tasks (
+           id, user_id, title, model, provider_type, provider_id, status,
+           network_enabled, volume_name, container_name, preview_status,
+           created_at, updated_at
+         ) VALUES (?, 'default', 'task', ?, ?, ?, 'idle', 1, ?, ?, 'stopped', 1, 1)`
+      )
+      .run(id, model, providerType, providerId, `${id}-vol`, `${id}-ctr`);
+  task('kept', 'muse:muse-wonder-1.0', 'agent', 'muse');
+  // What every start did to agent rows before agent routes were kept.
+  task('reset', 'codex:gpt-6-sol', 'ollama', null);
+  task('reset-default', 'claude-code', 'ollama', null);
+  task('real-ollama', 'llama3.2:latest', 'ollama', null);
+  task('plugin', 'gpt-5.5', 'plugin', 'openai');
+  task('bogus', 'model', 'invalid-provider', 'x');
+  database
+    .prepare(
+      `INSERT INTO work_runs (
+         id, task_id, model, provider_type, provider_id, status, created_at
+       ) VALUES ('reset-run', 'reset', 'codex:gpt-6-sol', 'ollama', NULL,
+                 'completed', 1)`
+    )
+    .run();
+  database.close();
+
+  initializeApplicationDatabase(dataDir);
+  const after = new Database(databasePath, { readonly: true });
+  try {
+    assert.deepEqual(
+      after
+        .prepare(
+          'SELECT id, provider_type, provider_id FROM work_tasks ORDER BY id'
+        )
+        .all(),
+      [
+        { id: 'bogus', provider_type: 'ollama', provider_id: null },
+        { id: 'kept', provider_type: 'agent', provider_id: 'muse' },
+        { id: 'plugin', provider_type: 'plugin', provider_id: 'openai' },
+        { id: 'real-ollama', provider_type: 'ollama', provider_id: null },
+        { id: 'reset', provider_type: 'agent', provider_id: 'codex' },
+        {
+          id: 'reset-default',
+          provider_type: 'agent',
+          provider_id: 'claude-code',
+        },
+      ]
+    );
+    assert.deepEqual(
+      after
+        .prepare(
+          "SELECT provider_type, provider_id FROM work_runs WHERE id = 'reset-run'"
+        )
+        .get(),
+      { provider_type: 'agent', provider_id: 'codex' }
+    );
+  } finally {
+    after.close();
+  }
+});
+
 test('read-only bootstrap preflight accepts every supported starting state', t => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'libre-bootstrap-valid-'));
   t.after(() => fs.rmSync(root, { recursive: true, force: true }));

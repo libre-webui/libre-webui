@@ -39,6 +39,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 🐛 Bug Fixes
 
+- **Agent tasks keep their agent after a restart**: on SQLite installs, every
+  server start turned Work tasks and runs on an agent CLI (Claude Code, Codex,
+  Kiro, Muse Code, OpenCode, Pi) into Ollama tasks with no provider, so after a
+  restart the task showed the Libre WebUI engine, asked Ollama about the agent's
+  model, and the next message failed. Agent tasks are now left alone, and the
+  ones an earlier start already changed get their agent back.
 - **Preview runs ready-made dev scripts as written**: a `package.json` `dev`
   script that already listens on `0.0.0.0` and the preview port (such as
   `python3 -m http.server 4173 --bind 0.0.0.0`) now starts on one click. Before,

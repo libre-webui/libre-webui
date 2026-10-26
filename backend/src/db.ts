@@ -20,6 +20,7 @@ import path from 'path';
 import fs from 'fs';
 import { createLogger } from './utils/logger.js';
 import { resolveDataDirectory } from './utils/dataDirectory.js';
+import { WORK_AGENT_CLI_IDS } from './services/workAgentCatalog.js';
 import {
   getSchemaCompatibilityState,
   preflightSQLiteBootstrapSchema,
@@ -1327,9 +1328,21 @@ function runMigrations(): void {
         `UPDATE ${table}
          SET provider_type = 'ollama', provider_id = NULL
          WHERE provider_type IS NULL
-            OR provider_type NOT IN ('ollama', 'plugin')
+            OR provider_type NOT IN ('ollama', 'plugin', 'agent')
             OR (provider_type = 'ollama' AND provider_id IS NOT NULL)`
       ).run();
+      // Until agent CLIs were allowed above, every start turned their rows
+      // into provider-less Ollama rows. Give them back their agent: a Work
+      // model named `<agent>` or `<agent>:<model>` can only be an agent CLI,
+      // because Work refuses those names for Ollama and plugin models.
+      const agentPrefix = `CASE WHEN instr(model, ':') > 0
+             THEN substr(model, 1, instr(model, ':') - 1) ELSE model END`;
+      db.prepare(
+        `UPDATE ${table}
+         SET provider_type = 'agent', provider_id = ${agentPrefix}
+         WHERE provider_type = 'ollama' AND provider_id IS NULL
+           AND ${agentPrefix} IN (${WORK_AGENT_CLI_IDS.map(() => '?').join(', ')})`
+      ).run(...WORK_AGENT_CLI_IDS);
     }
 
     // Work networking is now an implementation detail instead of a task-level
