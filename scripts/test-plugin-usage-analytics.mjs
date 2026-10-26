@@ -729,6 +729,7 @@ const supportedAgentIds = [
   'strands',
   'codex',
   'kiro',
+  'muse',
   'opencode',
   'pi',
 ];
@@ -790,6 +791,12 @@ const agentUsageFixtures = now => [
   { pluginId: 'agent-cli:pi', model: 'pi-real', durationMs: 30 },
   { pluginId: 'agent-cli:kiro', model: 'kiro-real', durationMs: 15 },
   {
+    pluginId: 'agent-cli:muse',
+    model: 'muse:muse-spark-1.3',
+    tokens: 7,
+    durationMs: 25,
+  },
+  {
     pluginId: 'agent-cli:strands',
     model: 'shared',
     tokens: 20,
@@ -835,6 +842,7 @@ const assertAgentUsageFixtures = agents => {
       [2, 20, 1, 1, 55],
       [1, 0, 1, 0, 20],
       [1, 0, 0, 0, 15],
+      [1, 7, 0, 1, 25],
       [1, 0, 1, 1, 40],
       [1, 0, 0, 0, 30],
     ]
@@ -881,7 +889,7 @@ test('agent totals bypass provider/model top limits and never attribute ordinary
   assertAgentUsageFixtures(analytics.agents);
   assert.equal(
     analytics.totals.calls,
-    339,
+    340,
     'agent views must not add events to aggregate cards'
   );
   assertDailyModelReconciliation(analytics);
@@ -928,7 +936,7 @@ test('agent model details are bounded while full summary totals remain complete'
   const analytics = await usageModule.default.getAnalytics(7);
   assert.equal(
     analytics.agents.reduce((count, agent) => count + agent.models.length, 0),
-    120
+    140
   );
   for (const agent of analytics.agents) {
     assert.equal(agent.calls, 21);
@@ -938,7 +946,7 @@ test('agent model details are bounded while full summary totals remain complete'
     assert.equal(agent.models[0].model, 'model-00');
     assert.equal(agent.models.at(-1).model, 'model-19');
   }
-  assert.equal(analytics.totals.calls, 126);
+  assert.equal(analytics.totals.calls, 147);
 });
 
 test(
@@ -1024,8 +1032,8 @@ test(
         );
         assert.equal(
           bounded.length,
-          126,
-          'six complete summaries plus at most 120 model rows'
+          147,
+          'seven complete summaries plus at most 140 model rows'
         );
         for (const agentId of supportedAgentIds) {
           const agentRows = bounded.filter(row => row.agent_id === agentId);

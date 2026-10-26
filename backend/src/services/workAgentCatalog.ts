@@ -25,12 +25,13 @@
 import { WORK_AGENT_TOOLCHAIN_MOUNT } from './workRuntimeShared.js';
 
 export type WorkAgentCliId =
-  'claude-code' | 'codex' | 'kiro' | 'opencode' | 'pi';
+  'claude-code' | 'codex' | 'kiro' | 'muse' | 'opencode' | 'pi';
 
 export const WORK_AGENT_CLI_IDS: readonly WorkAgentCliId[] = [
   'claude-code',
   'codex',
   'kiro',
+  'muse',
   'opencode',
   'pi',
 ];
@@ -46,6 +47,12 @@ export type WorkAgentInstall =
       readonly version: string;
       /** SHA-256 of kirocli-<arch>-linux-musl.tar.gz from the release manifest. */
       readonly sha256: Readonly<Record<'x86_64' | 'aarch64', string>>;
+    }
+  | {
+      readonly kind: 'muse';
+      readonly version: string;
+      /** SHA-256 of the static muse-<arch>-linux binary from the release manifest. */
+      readonly sha256: Readonly<Record<'x86_64' | 'aarch64', string>>;
     };
 
 export interface WorkAgentCliSpec {
@@ -59,8 +66,15 @@ export interface WorkAgentCliSpec {
   /** Static environment: telemetry, update checks, and similar off. */
   readonly env: Readonly<Record<string, string>>;
   /**
-   * Arguments for one non-interactive turn whose prompt arrives on stdin.
-   * Tools are auto-approved: the sandbox, not the CLI, is the boundary.
+   * Set when the CLI reads its prompt from a file named by this option
+   * rather than from stdin: the runner writes the prompt into the sandbox
+   * and appends the option and the file's path to the arguments.
+   */
+  readonly promptFileOption?: string;
+  /**
+   * Arguments for one non-interactive turn; its prompt arrives on stdin
+   * unless promptFileOption is set. Tools are auto-approved: the sandbox,
+   * not the CLI, is the boundary.
    */
   buildArgs(model: string | undefined): string[];
 }
@@ -151,6 +165,35 @@ export const WORK_AGENT_CLIS: Readonly<
       'v3',
       '--agent',
       'vibe',
+      ...(model ? ['--model', model] : []),
+    ],
+  },
+  muse: {
+    id: 'muse',
+    name: 'Muse Code',
+    install: {
+      kind: 'muse',
+      version: '1.4.13-R6996.1',
+      sha256: {
+        x86_64:
+          '51e97f8de0aa175080e6576cbc055510a95dfe0ededf175c7f6b34fc8e3bf524',
+        aarch64:
+          'c7f278b5f12862f5721c73433976256aa2a8abd433a12da0e484d30b08c024ff',
+      },
+    },
+    executable: 'muse',
+    supportHosts: [],
+    // A sandbox has no keychain or secret service: logins are plain files.
+    env: { TBH_CREDENTIAL_BACKEND: 'file' },
+    // `muse exec` takes its prompt as an argument or a regular file only.
+    promptFileOption: '--prompt-file',
+    buildArgs: model => [
+      'exec',
+      '--json',
+      '--no-session-log',
+      // The Work sandbox is the boundary; Muse's own bubblewrap sandbox
+      // needs kernel features a locked-down container does not grant.
+      '--yolo',
       ...(model ? ['--model', model] : []),
     ],
   },

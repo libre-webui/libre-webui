@@ -118,6 +118,23 @@ test('drops discovered non-chat model families from the chat list', () => {
   );
 });
 
+test("drops Meta's image, transcription, and segmentation models", () => {
+  assert.deepEqual(
+    getPluginChatModels({
+      model_map: [
+        'muse-wonder-1.0',
+        'muse-spark-1.3',
+        'muse-spark-1.3-contributor',
+        'muse-image-1.0',
+        'muse-voice-transcribe-1.0',
+        'sam-3.1',
+      ],
+      capabilities: undefined,
+    }),
+    ['muse-wonder-1.0', 'muse-spark-1.3', 'muse-spark-1.3-contributor']
+  );
+});
+
 test('searches provider identity and configured model ids', () => {
   assert.equal(pluginMatchesProviderSearch(plugin, 'multi provider'), true);
   assert.equal(pluginMatchesProviderSearch(plugin, 'multi-provider'), true);

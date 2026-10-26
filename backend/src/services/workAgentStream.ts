@@ -65,6 +65,10 @@ export interface WorkAgentStreamState {
   readonly seenParts: Set<string>;
   /** Text since the last tool activity: the best final-answer fallback. */
   trailingText: string;
+  /** The run a Muse turn answers in; its child runs are not the reply. */
+  mainRunId?: string;
+  /** Muse tool tasks by the call id its results carry. */
+  readonly callTasks: Map<string, string>;
 }
 
 export function createWorkAgentStreamState(): WorkAgentStreamState {
@@ -74,6 +78,7 @@ export function createWorkAgentStreamState(): WorkAgentStreamState {
     finished: new Set(),
     seenParts: new Set(),
     trailingText: '',
+    callTasks: new Map(),
   };
 }
 
@@ -454,6 +459,99 @@ function parsePi(event: Json, state: WorkAgentStreamState) {
   return events;
 }
 
+/**
+ * Muse Code's exec stream is its session event log, keyed by
+ * `payload_type`. Each tool call is a task: proposed with a `tool.<name>`
+ * kind, linked to its call id when it is about to run, and finished by a
+ * `tool.result` for that call. Records from child runs (subagents,
+ * background reviewers) are not the reply and are skipped.
+ */
+function parseMuse(event: Json, state: WorkAgentStreamState) {
+  captureAgentCliUsage('muse', event, state);
+  const events: WorkAgentStreamEvent[] = [];
+  const payload = record(event.payload);
+  if (!payload) return events;
+  const runId = text(record(payload.run_stream)?.id);
+  if (event.payload_type === 'run.lifecycle.started') {
+    state.mainRunId ??= runId;
+    return events;
+  }
+  if (state.mainRunId && runId && runId !== state.mainRunId) return events;
+  const task = record(payload.event);
+  const taskId = text(task?.task_id) ?? text(payload.task_id);
+  switch (event.payload_type) {
+    case 'run.output.delta':
+      if (text(payload.text)) {
+        events.push(...streamedText(state, payload.text as string));
+      }
+      break;
+    case 'task.lifecycle.proposed': {
+      const kind = text(task?.task_kind);
+      if (taskId && kind?.startsWith('tool.')) {
+        state.tools.set(taskId, kind.slice('tool.'.length) || 'tool');
+      }
+      break;
+    }
+    case 'task.lifecycle.side_effect_intent': {
+      const key = text(task?.idempotency_key);
+      if (taskId && state.tools.has(taskId) && key?.startsWith('tool:')) {
+        state.callTasks.set(key.slice('tool:'.length), taskId);
+      }
+      break;
+    }
+    case 'task.lifecycle.started':
+      if (taskId && state.tools.has(taskId)) {
+        events.push(
+          ...toolStart(state, taskId, state.tools.get(taskId) as string)
+        );
+      }
+      break;
+    case 'tool.result': {
+      const callId = text(payload.call_id);
+      if (!callId) break;
+      const id = state.callTasks.get(callId) ?? callId;
+      const facts = record(payload.correlation_facts);
+      events.push(
+        ...toolEnd(
+          state,
+          id,
+          contentText(payload.text),
+          typeof facts?.outcome === 'string' && facts.outcome !== 'success',
+          text(facts?.tool_name)
+        )
+      );
+      break;
+    }
+    case 'task.lifecycle.failed':
+    case 'task.lifecycle.cancelled':
+    case 'task.lifecycle.timed_out':
+      if (taskId && state.started.has(taskId)) {
+        events.push(
+          ...toolEnd(
+            state,
+            taskId,
+            text(task?.reason) ?? String(event.payload_type).split('.').pop()!,
+            true
+          )
+        );
+      }
+      break;
+    case 'run.terminal.completed':
+      if (text(payload.text)) {
+        events.push({ type: 'final', text: payload.text as string });
+      }
+      break;
+    case 'run.terminal.failed':
+    case 'run.terminal.cancelled':
+      events.push({
+        type: 'failure',
+        message: `Muse Code failed: ${text(payload.reason) ?? text(payload.terminal) ?? 'run failed'}`,
+      });
+      break;
+  }
+  return events;
+}
+
 const PARSERS: Record<
   WorkAgentCliId,
   (event: Json, state: WorkAgentStreamState) => WorkAgentStreamEvent[]
@@ -461,6 +559,7 @@ const PARSERS: Record<
   'claude-code': parseClaude,
   codex: parseCodex,
   kiro: parseKiro,
+  muse: parseMuse,
   opencode: parseOpencode,
   pi: parsePi,
 };

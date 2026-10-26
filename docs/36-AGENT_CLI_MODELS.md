@@ -1,7 +1,7 @@
 ---
 sidebar_position: 14
 title: 'Use an Installed Coding Agent as a Chat Model'
-description: 'Expose the Claude Code, Codex, Kiro, OpenCode, or Pi CLI already installed on your server as a selectable Libre WebUI chat model, without adding an API key.'
+description: 'Expose the Claude Code, Codex, Kiro, Muse Code, OpenCode, or Pi CLI already installed on your server as a selectable Libre WebUI chat model, without adding an API key.'
 slug: /AGENT_CLI_MODELS
 keywords:
   [
@@ -9,6 +9,8 @@ keywords:
     claude code,
     codex,
     kiro,
+    muse code,
+    meta,
     opencode,
     pi,
     coding agent,
@@ -35,6 +37,7 @@ these commands:
 | **Claude Code** | `claude`   | Anthropic     |
 | **Codex**       | `codex`    | OpenAI        |
 | **Kiro**        | `kiro-cli` | AWS           |
+| **Muse Code**   | `muse`     | Meta          |
 | **OpenCode**    | `opencode` | SST           |
 | **Pi**          | `pi`       | Mario Zechner |
 
@@ -70,6 +73,12 @@ Each CLI can expose several entries in the Agents group:
   non-interactively on the CLI's V3 agent engine with its built-in default
   agent (`vibe`) pinned, so a custom `chat.defaultAgent` does not apply.
   Requires Kiro CLI 2.27 or later.
+- **Muse Code** offers its configured default plus **Muse Spark 1.3**
+  (`muse-spark-1.3`), **Muse Spark 1.3 Contributor**
+  (`muse-spark-1.3-contributor`), and **Muse Wonder 1.0** (`muse-wonder-1.0`).
+  It signs in with `muse login` (a Meta account) or a Meta Model API key from
+  `META_API_KEY` or `muse auth set`. Contributor models are billed at a lower
+  rate because Meta may train on what you send them.
 - **Pi** runs with the model configured in the CLI itself.
 - **OpenCode** lists the models of every provider it is authenticated with
   (from `opencode models`), and always requires an explicit choice — its
@@ -107,6 +116,14 @@ database. Kiro's tools stay enabled: whatever those permission rules trust —
 by default, reads and read-only commands such as `date` — runs without asking,
 and any tool call that needs approval is refused, because a chat turn cannot
 answer the prompt.
+
+Muse Code reads the prompt from a private file and runs headless with
+approvals off (`--approval-mode never`), since a chat turn cannot answer an
+approval prompt. Its own sandbox stays on, and each turn gets a scratch
+workspace that is deleted afterwards, so its file writes cannot land in the
+server user's home. Turns are not saved in Muse's session log
+(`--no-session-log`), but the server user's Muse settings, rules, and default
+model apply.
 
 ## Using it
 
@@ -165,7 +182,7 @@ own access mode, **Agent CLIs in Work**, and do not need the switch above. See
 ## Usage tracking
 
 Open **Provider Usage** (`/usage`) and find **Agents** near the top. Claude Code,
-Codex, Kiro, OpenCode, Pi, and Strands activity have explicit entries, including
+Codex, Kiro, Muse Code, OpenCode, Pi, and Strands activity have explicit entries, including
 a clear message when the selected period has no recorded calls.
 
 CLI calls made through LWUI record their outcome, duration, and reported token
@@ -195,7 +212,7 @@ just your interactive shell. A service manager, Docker container, or desktop
 launcher often starts with a much smaller `PATH` than a login terminal.
 
 **The reply fails immediately.** Run the same command by hand as the server user
-(`claude -p "hello"`, `codex exec "hello"`, or
+(`claude -p "hello"`, `codex exec "hello"`, `muse exec "hello"`, or
 `echo hello | kiro-cli chat --no-interactive --output-format stream-json --agent-engine v3 --agent vibe`).
 Kiro CLI 2.27 or later is required; an older CLI fails here first, where its
 error is visible — in chat the same failure only shows as
@@ -203,7 +220,8 @@ error is visible — in chat the same failure only shows as
 for a login that has expired, or a rate limit on the underlying subscription.
 OpenCode in particular reports an expired provider login only in its own logs;
 re-run `opencode auth login` as the server user. Kiro signs in through
-`kiro-cli login`; an expired session fails the same way.
+`kiro-cli login`; an expired session fails the same way. Muse Code says
+`missing meta credentials` until `muse login` has run as the server user.
 
 **Replies stop partway.** A long turn may have hit `AGENT_CLI_TIMEOUT_MS`. Raise
 it, or break the request into smaller steps.

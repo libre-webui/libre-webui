@@ -68,6 +68,7 @@ const VENDORS: Record<string, string> = {
   deepseek: 'DeepSeek',
   google: 'Google',
   liquid: 'Liquid AI',
+  meta: 'Meta',
   microsoft: 'Microsoft',
   minimax: 'MiniMax',
   mistralai: 'Mistral',

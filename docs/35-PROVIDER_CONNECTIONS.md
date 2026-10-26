@@ -127,9 +127,10 @@ to the model in Amazon Bedrock.
 ## Choose a Bundled or Imported Provider
 
 Libre WebUI includes definitions for OpenAI, Anthropic, Gemini, Groq, Mistral,
-DeepSeek, Amazon Bedrock, OpenRouter, Kimi Code by Moonshot AI, Hugging Face,
-GitHub Models, local MLX LM, and other model or media services. Start with a bundled entry when
-its protocol and authentication contract match the service you want to use.
+DeepSeek, Meta, Amazon Bedrock, OpenRouter, Kimi Code by Moonshot AI, Hugging
+Face, GitHub Models, local MLX LM, and other model or media services. Start with
+a bundled entry when its protocol and authentication contract match the service
+you want to use.
 
 For another compatible service, an administrator can import a plugin JSON
 definition. This minimal example describes an OpenAI-compatible gateway:

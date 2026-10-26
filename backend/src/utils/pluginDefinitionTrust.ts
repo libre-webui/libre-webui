@@ -48,6 +48,7 @@ export const BUNDLED_PLUGIN_DEFINITION_FINGERPRINTS: Readonly<
     'df2a449df1f367400999599e48df53b05a104d59e5df269eb13ed1d9720073f8',
   'longcat-audiodit':
     'ac898aaad95181722b4f53303edd4939a9f9b0fcd0c5a8126f39fa80e45cba25',
+  meta: '11bee2648abc5147ba51d220dd622ad565f55e5011fc2cbd899b7367b4ab172c',
   mistral: 'a8a188cc75799a4b0a4c8fa4b448a8601b5ed72babc358ee460683459a75fbed',
   'mlx-lm': 'c5aad700fd557216a1e1eda361c0d67f92d51d1fe46d9c2028354f8ca8f25503',
   'openai-tts':

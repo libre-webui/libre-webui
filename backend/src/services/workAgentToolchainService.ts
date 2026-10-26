@@ -117,10 +117,26 @@ if [ ! -f "$dest/.libre-installed" ] ||
   if [ "$CLI_KIND" = npm ]; then
     npm install -g --prefix "$staging" --no-fund --no-audit \
       --no-update-notifier "$CLI_PACKAGE@$CLI_VERSION"
+  elif [ "$CLI_KIND" = muse ]; then
+    # One static binary, so it runs in any sandbox image. Meta publishes it
+    # without a sign-in; the launcher it ships with is left out because it
+    # updates itself, and a pinned toolchain must not change underneath.
+    case "$(uname -m)" in
+      x86_64|amd64) arch=x86; want="$CLI_SHA256_X86_64" ;;
+      aarch64|arm64) arch=aarch64; want="$CLI_SHA256_AARCH64" ;;
+      *) echo "Unsupported architecture $(uname -m)" >&2; exit 4 ;;
+    esac
+    curl -fsSL "https://lookaside.facebook.com/lookaside/muse/download/?channel=muse&version=$CLI_VERSION&file=muse-$arch-linux" -o "$staging/bin/muse"
+    got=$(sha256sum "$staging/bin/muse" | cut -d' ' -f1)
+    if [ "$got" != "$want" ]; then
+      echo "Muse Code checksum mismatch: $got" >&2
+      exit 5
+    fi
+    chmod 755 "$staging/bin/muse"
   else
     case "$(uname -m)" in
-      x86_64|amd64) arch=x86_64; want="$KIRO_SHA256_X86_64" ;;
-      aarch64|arm64) arch=aarch64; want="$KIRO_SHA256_AARCH64" ;;
+      x86_64|amd64) arch=x86_64; want="$CLI_SHA256_X86_64" ;;
+      aarch64|arm64) arch=aarch64; want="$CLI_SHA256_AARCH64" ;;
       *) echo "Unsupported architecture $(uname -m)" >&2; exit 4 ;;
     esac
     archive="/tmp/kirocli-$arch-linux-musl.tar.gz"
@@ -366,9 +382,9 @@ export class WorkAgentToolchainService {
       }
       env.CLI_PACKAGE = install.package;
     } else {
-      env.KIRO_SHA256_X86_64 = install.sha256.x86_64;
-      env.KIRO_SHA256_AARCH64 = install.sha256.aarch64;
-      env.KIRO_KAS_SERVER = KIRO_KAS_SERVER;
+      env.CLI_SHA256_X86_64 = install.sha256.x86_64;
+      env.CLI_SHA256_AARCH64 = install.sha256.aarch64;
+      if (install.kind === 'kiro') env.KIRO_KAS_SERVER = KIRO_KAS_SERVER;
     }
     logger.info(
       `Installing ${cli.name} ${install.version} into the Work agent toolchain`

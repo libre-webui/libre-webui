@@ -45,6 +45,7 @@ const {
   parseClaudeLine,
   parseCodexLine,
   parseKiroLine,
+  parseMuseLine,
   default: agentCliService,
 } = await import(serviceUrl);
 const { agentCliTokenUsage } = await import(
@@ -101,6 +102,80 @@ test('every agent CLI passes an explicit model through to its argv', () => {
   assert.deepEqual(
     definition('kiro').buildArgs('claude-sonnet-4.6').slice(-2),
     ['--model', 'claude-sonnet-4.6']
+  );
+  assert.deepEqual(definition('muse').buildArgs('muse-spark-1.3').slice(-2), [
+    '--model',
+    'muse-spark-1.3',
+  ]);
+});
+
+test('muse runs headless with approvals off and its own sandbox on', () => {
+  const muse = definition('muse');
+  const args = muse.buildArgs();
+  assert.deepEqual(args.slice(0, 3), ['exec', '--json', '--no-session-log']);
+  const approval = args.indexOf('--approval-mode');
+  assert.deepEqual(args.slice(approval, approval + 2), [
+    '--approval-mode',
+    'never',
+  ]);
+  assert.ok(!args.includes('--yolo'), 'the host run keeps its sandbox');
+  assert.equal(muse.promptFileOption, '--prompt-file');
+  assert.equal(muse.scratchWorkspace, true);
+  assert.deepEqual(
+    muse.modelOptions.map(option => option.id),
+    ['muse-spark-1.3', 'muse-spark-1.3-contributor', 'muse-wonder-1.0']
+  );
+});
+
+test('muse parser streams the main run and falls back to its terminal text', () => {
+  const record = (type, payload) =>
+    JSON.stringify({
+      schema_version: 1,
+      stream: { kind: 'session', id: 'muse-session' },
+      payload_type: type,
+      payload,
+    });
+  const run = id => ({ kind: 'run', id });
+  const streamed = collect();
+  for (const line of [
+    record('run.lifecycle.started', { run_stream: run('r1') }),
+    record('run.output.delta', { run_stream: run('r1'), text: 'Hel' }),
+    record('run.output.delta', { run_stream: run('child'), text: 'LGTM' }),
+    record('run.output.delta', { run_stream: run('r1'), text: 'lo' }),
+    record('run.terminal.completed', {
+      run_stream: run('r1'),
+      terminal: 'completed',
+      text: 'Hello',
+    }),
+  ]) {
+    parseMuseLine(line, streamed.queue, streamed.state);
+  }
+  assert.deepEqual(streamed.chunks, [
+    { type: 'content', content: 'Hel' },
+    { type: 'content', content: 'lo' },
+  ]);
+  assert.equal(streamed.state.agentSessionId, 'muse-session');
+
+  const whole = collect();
+  parseMuseLine(
+    record('run.terminal.completed', { terminal: 'completed', text: 'Hi' }),
+    whole.queue,
+    whole.state
+  );
+  assert.deepEqual(whole.chunks, [{ type: 'content', content: 'Hi' }]);
+
+  const failed = collect();
+  assert.throws(
+    () =>
+      parseMuseLine(
+        record('run.terminal.failed', {
+          terminal: 'failed',
+          reason: 'quota exhausted',
+        }),
+        failed.queue,
+        failed.state
+      ),
+    /Muse Code failed: quota exhausted/
   );
 });
 
@@ -941,6 +1016,33 @@ const cliFixtureEvents = {
       part: { id: 'reply', type: 'text', text: 'fixture reply' },
     },
   ],
+  muse: [
+    {
+      stream: { kind: 'session', id: 'muse-session' },
+      payload_type: 'run.output.delta',
+      payload: { text: 'fixture reply' },
+    },
+    {
+      stream: { kind: 'exec.usage', id: 'muse-session' },
+      payload_type: 'run.usage',
+      payload: {
+        models: [
+          {
+            model: 'fixture',
+            input_tokens: 12,
+            cached_tokens: 3,
+            output_tokens: 2,
+            reasoning_tokens: 1,
+          },
+        ],
+      },
+    },
+    {
+      stream: { kind: 'session', id: 'muse-session' },
+      payload_type: 'run.terminal.completed',
+      payload: { terminal: 'completed', text: 'fixture reply' },
+    },
+  ],
   pi: [
     { type: 'turn_start' },
     {
@@ -989,6 +1091,7 @@ async function cliUsageActor() {
 for (const [agent, model] of [
   ['claude-code', 'fixture/model'],
   ['codex', 'fixture/model'],
+  ['muse', 'muse-spark-1.3-contributor'],
   ['opencode', 'fixture/model'],
   ['pi', 'fixture/model'],
   ['claude-code', 'claude-sonnet-5-5'],
@@ -1039,6 +1142,62 @@ for (const [agent, model] of [
     assert.equal(chunks.at(-1).type, 'done');
   });
 }
+
+test('muse reads a private prompt file and writes only to a scratch workspace', async t => {
+  const actor = await cliUsageActor();
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'muse-turn-'));
+  const seenFile = path.join(directory, 'seen.json');
+  const program = [
+    `#!${process.execPath}`,
+    "const fs = require('node:fs');",
+    'const args = process.argv.slice(2);',
+    "const promptFile = args[args.indexOf('--prompt-file') + 1];",
+    "const stdin = fs.readFileSync(0, 'utf8');",
+    `fs.writeFileSync(${JSON.stringify(seenFile)}, JSON.stringify({ cwd: process.cwd(), promptFile, prompt: fs.readFileSync(promptFile, 'utf8'), mode: fs.statSync(promptFile).mode & 0o777, stdin }));`,
+    "fs.writeFileSync('scratch.txt', 'written by the agent');",
+    `process.stdout.write(${JSON.stringify(
+      JSON.stringify({
+        stream: { kind: 'session', id: 's' },
+        payload_type: 'run.terminal.completed',
+        payload: { terminal: 'completed', text: 'done' },
+      }) + '\n'
+    )});`,
+  ].join('\n');
+  fs.writeFileSync(path.join(directory, 'muse'), program, { mode: 0o755 });
+  const previousPath = process.env.PATH;
+  process.env.PATH = directory;
+  t.after(() => {
+    process.env.PATH = previousPath;
+    fs.rmSync(directory, { recursive: true, force: true });
+  });
+  const chunks = [];
+  for await (const chunk of agentCliService.executeAgentStreamRequest(
+    'muse',
+    [{ id: 'user', role: 'user', content: 'Line "one"\ntwo', timestamp: 1 }],
+    actor,
+    { model: 'muse' }
+  ))
+    chunks.push(chunk);
+  assert.deepEqual(
+    chunks.filter(chunk => chunk.type === 'content'),
+    [{ type: 'content', content: 'done' }]
+  );
+  const seen = JSON.parse(fs.readFileSync(seenFile, 'utf8'));
+  assert.match(seen.prompt, /User: Line "one"\ntwo/);
+  assert.equal(seen.stdin, '', 'the prompt is not also piped');
+  assert.equal(seen.mode, 0o600);
+  assert.notEqual(path.resolve(seen.cwd), path.resolve(os.homedir()));
+  // One private turn directory holds both; macOS may report its real path.
+  assert.equal(
+    path.basename(path.dirname(seen.cwd)),
+    path.basename(path.dirname(seen.promptFile))
+  );
+  assert.equal(
+    fs.existsSync(path.dirname(seen.promptFile)),
+    false,
+    'the turn directory, prompt, and scratch writes are gone afterwards'
+  );
+});
 
 test('kiro records one successful invocation whose stream has no token counters', async t => {
   const actor = await cliUsageActor();

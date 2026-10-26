@@ -52,8 +52,21 @@ export interface AgentCliDefinition {
   name: string;
   /** Binary looked up on PATH. */
   command: string;
-  parser: 'claude' | 'codex' | 'kiro' | 'opencode' | 'pi';
+  parser: 'claude' | 'codex' | 'kiro' | 'muse' | 'opencode' | 'pi';
   buildArgs: (model?: string) => string[];
+  /**
+   * Set when the CLI reads its prompt from a file named by this option
+   * rather than from stdin. The file is private to the turn and removed
+   * when it ends.
+   */
+  promptFileOption?: string;
+  /**
+   * Run in a scratch workspace removed after the turn, unless the caller
+   * names a working directory: for a CLI whose own sandbox lets it write
+   * wherever it runs, so a chat reply cannot change files in the server
+   * user's home.
+   */
+  scratchWorkspace?: boolean;
   /** Fixed model choices offered beside the CLI-default entry. */
   modelOptions?: AgentCliModelOption[];
   /** Discover model choices from the installed CLI; results are cached. */
@@ -175,6 +188,33 @@ export const AGENT_CLI_DEFINITIONS: AgentCliDefinition[] = [
         ['chat', '--list-models', '--format', 'json', '--no-interactive'],
         parseKiroCatalog
       ),
+  },
+  {
+    id: 'muse',
+    name: 'Muse Code',
+    command: 'muse',
+    parser: 'muse',
+    // Headless runs never stop for an approval: nobody could answer it.
+    // Muse's own sandbox stays on and keeps writes inside the workspace.
+    buildArgs: model => [
+      'exec',
+      '--json',
+      '--no-session-log',
+      '--approval-mode',
+      'never',
+      ...(model ? ['--model', model] : []),
+    ],
+    promptFileOption: '--prompt-file',
+    scratchWorkspace: true,
+    // The Meta Model API's Muse models; Muse has no command that lists them.
+    modelOptions: [
+      { id: 'muse-spark-1.3', label: 'Muse Spark 1.3' },
+      {
+        id: 'muse-spark-1.3-contributor',
+        label: 'Muse Spark 1.3 Contributor',
+      },
+      { id: 'muse-wonder-1.0', label: 'Muse Wonder 1.0' },
+    ],
   },
   {
     id: 'opencode',
@@ -392,6 +432,8 @@ export interface ParserState {
   itemErrors: string[];
   /** Per-part emitted text length for parsers that stream snapshots. */
   partTextLengths: Record<string, number>;
+  /** The run a Muse turn answers in; its child runs are not the reply. */
+  mainRunId?: string;
   usage?: AgentCliUsageState;
 }
 
@@ -563,6 +605,75 @@ export function parsePiLine(
     const detail =
       typeof event.message === 'string' ? event.message : 'agent error';
     state.itemErrors.push(detail);
+  }
+}
+
+/**
+ * Muse Code's exec stream is its session event log: one record per line,
+ * keyed by `payload_type`. The reply streams as output deltas of the main
+ * run and is repeated whole in the terminal record.
+ */
+export function parseMuseLine(
+  line: string,
+  queue: AgentParserSink,
+  state: ParserState
+): void {
+  const event = JSON.parse(line) as Record<string, unknown>;
+  captureAgentCliUsage('muse', event, state);
+  const stream = event.stream as { kind?: unknown; id?: unknown } | undefined;
+  if (
+    stream?.kind === 'session' &&
+    typeof stream.id === 'string' &&
+    !state.agentSessionId
+  ) {
+    state.agentSessionId = stream.id;
+  }
+  const payload = event.payload as
+    | {
+        text?: unknown;
+        reason?: unknown;
+        terminal?: unknown;
+        run_stream?: { id?: unknown };
+      }
+    | undefined;
+  if (!payload) return;
+  const runId =
+    typeof payload.run_stream?.id === 'string'
+      ? payload.run_stream.id
+      : undefined;
+  if (event.payload_type === 'run.lifecycle.started') {
+    state.mainRunId ??= runId;
+    return;
+  }
+  // Subagents and background reviewers run as child runs of their own.
+  if (state.mainRunId && runId && runId !== state.mainRunId) return;
+  if (event.payload_type === 'run.output.delta') {
+    if (typeof payload.text === 'string' && payload.text) {
+      state.emittedContent = true;
+      queue.push({ type: 'content', content: payload.text });
+    }
+    return;
+  }
+  if (event.payload_type === 'run.terminal.completed') {
+    if (
+      !state.emittedContent &&
+      typeof payload.text === 'string' &&
+      payload.text
+    ) {
+      state.emittedContent = true;
+      queue.push({ type: 'content', content: payload.text });
+    }
+    return;
+  }
+  if (
+    event.payload_type === 'run.terminal.failed' ||
+    event.payload_type === 'run.terminal.cancelled'
+  ) {
+    const detail =
+      typeof payload.reason === 'string' && payload.reason
+        ? payload.reason
+        : String(payload.terminal ?? 'failed');
+    throw new Error(`Muse Code failed: ${detail}`);
   }
 }
 
@@ -899,9 +1010,35 @@ export class AgentCliService {
       );
     }
 
-    const cwd =
-      options.cwd && fs.existsSync(options.cwd) ? options.cwd : os.homedir();
     const prompt = buildAgentPrompt(messages);
+    // A private directory per turn, for the prompt file and the scratch
+    // workspace of the CLIs that use them; removed when the turn ends.
+    const turnDirectory =
+      definition.promptFileOption || definition.scratchWorkspace
+        ? fs.mkdtempSync(path.join(os.tmpdir(), 'libre-agent-turn-'))
+        : undefined;
+    const removeTurnDirectory = () => {
+      if (turnDirectory) {
+        fs.rmSync(turnDirectory, { recursive: true, force: true });
+      }
+    };
+    let promptArgs: string[] = [];
+    let cwd =
+      options.cwd && fs.existsSync(options.cwd) ? options.cwd : os.homedir();
+    try {
+      if (turnDirectory && definition.promptFileOption) {
+        const promptFile = path.join(turnDirectory, 'prompt.md');
+        fs.writeFileSync(promptFile, prompt, { mode: 0o600 });
+        promptArgs = [definition.promptFileOption, promptFile];
+      }
+      if (turnDirectory && definition.scratchWorkspace && !options.cwd) {
+        cwd = path.join(turnDirectory, 'workspace');
+        fs.mkdirSync(cwd, { mode: 0o700 });
+      }
+    } catch (error) {
+      removeTurnDirectory();
+      throw error;
+    }
     const queue = new ChunkQueue();
     const state: ParserState = {
       emittedContent: false,
@@ -912,6 +1049,7 @@ export class AgentCliService {
       claude: parseClaudeLine,
       codex: parseCodexLine,
       kiro: parseKiroLine,
+      muse: parseMuseLine,
       opencode: parseOpencodeLine,
       pi: parsePiLine,
     }[definition.parser];
@@ -920,11 +1058,15 @@ export class AgentCliService {
       `Spawning agent CLI ${definition.id} (${binaryPath}) in ${cwd} for user ${userId}`
     );
 
-    const child = spawn(binaryPath, definition.buildArgs(model), {
-      cwd,
-      env: process.env,
-      stdio: ['pipe', 'pipe', 'pipe'],
-    });
+    const child = spawn(
+      binaryPath,
+      [...definition.buildArgs(model), ...promptArgs],
+      {
+        cwd,
+        env: process.env,
+        stdio: ['pipe', 'pipe', 'pipe'],
+      }
+    );
 
     let stdoutBuffer = '';
     let stderrBuffer = '';
@@ -1064,7 +1206,7 @@ export class AgentCliService {
       // The CLI may exit before consuming the prompt; close handles reporting.
     });
     if (!settled) {
-      child.stdin.write(prompt);
+      if (!promptArgs.length) child.stdin.write(prompt);
       child.stdin.end();
     }
 
@@ -1074,6 +1216,7 @@ export class AgentCliService {
       // Iterator return/throw is also cancellation, even if no external
       // AbortSignal fired. Stop the process and finalize its one usage row.
       if (!settled) cancel();
+      removeTurnDirectory();
     }
   }
 }

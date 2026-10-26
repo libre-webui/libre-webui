@@ -90,7 +90,16 @@ function providerModelName(value: string): boolean {
     !['persona:', 'agent:', 'lwui:'].some(prefix =>
       normalized.startsWith(prefix)
     ) &&
-    !['strands', 'dsh', 'claude-code', 'codex', 'kiro', 'opencode', 'pi'].some(
+    ![
+      'strands',
+      'dsh',
+      'claude-code',
+      'codex',
+      'kiro',
+      'muse',
+      'opencode',
+      'pi',
+    ].some(
       selector =>
         normalized === selector || normalized.startsWith(`${selector}:`)
     )

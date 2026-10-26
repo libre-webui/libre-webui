@@ -695,7 +695,8 @@ function buildOpenAICompatibleChatPayload(
       }),
       ...getOpenAICompatibleSamplingParameters(plugin, params),
       max_tokens: params.maxTokens,
-      stop: options.stop,
+      // Meta's Muse models reason, and its API rejects stop sequences then.
+      stop: plugin.id === 'meta' ? undefined : options.stop,
       stream: params.shouldStream,
       ...openAICompatibleReasoningFields(plugin, options.think),
       ...(tools ? { tools } : {}),

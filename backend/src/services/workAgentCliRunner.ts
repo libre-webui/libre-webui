@@ -146,6 +146,11 @@ kill -KILL -"$pid" 2>/dev/null
 exit 0
 `;
 
+/** Writes stdin to the file given as the first argument, owner-only. */
+const PROMPT_FILE_SCRIPT = String.raw`umask 077
+cat > "$1"
+`;
+
 /** Files this run created or modified, newest first is not guaranteed. */
 const CHANGED_FILES_SCRIPT = String.raw`find . -path ./.git -prune -o -type f -newer "$1" -print 2>/dev/null | head -n ${MAX_CHANGED_FILES}`;
 
@@ -263,6 +268,9 @@ export class WorkAgentCliRunner {
     const runKey = request.runId.replace(/[^A-Za-z0-9-]/g, '').slice(0, 64);
     const pidFile = `${AGENT_DIR}/run-${runKey}.pid`;
     const startMarker = `${AGENT_DIR}/run-${runKey}.start`;
+    const promptFile = cli.promptFileOption
+      ? `${AGENT_DIR}/run-${runKey}.prompt`
+      : undefined;
     const egressProblems: EgressEvent[] = [];
     const { session, certificateAuthorityPem } = this.deps.proxy.createSession({
       credentials: login.credentials,
@@ -301,6 +309,17 @@ export class WorkAgentCliRunner {
                 content: file.content.toString('base64'),
               }))
             ),
+            timeoutMs: 30_000,
+            abortSignal: signal,
+          }
+        );
+      }
+      if (promptFile) {
+        await driver.exec(
+          task,
+          ['sh', '-c', PROMPT_FILE_SCRIPT, 'sh', promptFile],
+          {
+            input: request.prompt,
             timeoutMs: 30_000,
             abortSignal: signal,
           }
@@ -371,13 +390,16 @@ export class WorkAgentCliRunner {
           pidFile,
           workAgentExecutable(cli),
           ...cli.buildArgs(model),
+          ...(promptFile && cli.promptFileOption
+            ? [cli.promptFileOption, promptFile]
+            : []),
         ],
         { env, workdir: '/workspace' }
       );
       agentRunning = true;
       await sink.phase('running');
       const agentErrors = collectTail(agent.stderr);
-      agent.stdin.end(request.prompt);
+      agent.stdin.end(promptFile ? '' : request.prompt);
 
       const state = createWorkAgentStreamState();
       let finalText = '';
@@ -479,6 +501,22 @@ export class WorkAgentCliRunner {
       relay?.close();
       relayProcess?.kill();
       session.close();
+      if (promptFile) await this.removeFile(driver, task, promptFile);
+    }
+  }
+
+  private async removeFile(
+    driver: WorkRuntimeDriver,
+    task: WorkTaskRecord,
+    file: string
+  ): Promise<void> {
+    try {
+      await driver.exec(task, ['rm', '-f', file], {
+        timeoutMs: 30_000,
+        acceptFailure: true,
+      });
+    } catch (error) {
+      logger.warn(`Could not remove ${file} in task ${task.id}:`, error);
     }
   }
 

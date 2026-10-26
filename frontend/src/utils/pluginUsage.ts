@@ -23,6 +23,7 @@ const agentNames: Record<string, string> = {
   'claude-code': 'Claude Code',
   codex: 'Codex',
   kiro: 'Kiro',
+  muse: 'Muse Code',
   opencode: 'OpenCode',
   pi: 'Pi',
 };

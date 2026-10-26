@@ -165,6 +165,7 @@ Supported integrations include:
 - Groq
 - Mistral
 - DeepSeek
+- Meta (Muse models)
 - Amazon Bedrock
 - OpenRouter
 - Hugging Face

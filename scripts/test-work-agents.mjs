@@ -42,6 +42,8 @@ const {
   ClaudeCodeHostLogin,
   CodexHostLogin,
   KiroHostLogin,
+  MuseHostLogin,
+  MuseLoginStore,
   OpenCodeHostLogin,
   PiHostLogin,
   WORK_AGENT_PROVIDER_HOSTS,
@@ -147,6 +149,22 @@ test('agent CLIs run non-interactively with their tools approved in the sandbox'
       .slice(-2),
     ['-m', 'openrouter/openai/gpt-5-mini']
   );
+  // Muse takes its prompt from a file, never stdin, and its own bubblewrap
+  // sandbox cannot start in a locked-down container.
+  const muse = WORK_AGENT_CLIS.muse;
+  assert.equal(muse.promptFileOption, '--prompt-file');
+  assert.deepEqual(muse.buildArgs('muse-spark-1.3-contributor'), [
+    'exec',
+    '--json',
+    '--no-session-log',
+    '--yolo',
+    '--model',
+    'muse-spark-1.3-contributor',
+  ]);
+  assert.equal(muse.env.TBH_CREDENTIAL_BACKEND, 'file');
+  assert.equal(muse.install.kind, 'muse');
+  assert.match(muse.install.sha256.x86_64, /^[0-9a-f]{64}$/);
+  assert.match(muse.install.sha256.aarch64, /^[0-9a-f]{64}$/);
   assert.equal(parseWorkAgentModel('kiro', 'kiro'), undefined);
   assert.equal(
     parseWorkAgentModel('kiro', 'kiro:claude-sonnet-4.6'),
@@ -357,6 +375,140 @@ test('Kiro session updates map onto Work tool activity', () => {
       .events,
     [{ type: 'failure', message: 'Kiro failed: bad key' }]
   );
+});
+
+test("Muse Code's event log becomes the run's text and answer", () => {
+  const run = id => ({ kind: 'run', id });
+  const record = (payloadType, payload) => ({
+    schema_version: 1,
+    stream: { kind: 'session', id: 's1' },
+    payload_type: payloadType,
+    payload,
+  });
+  const { events, state } = parseAll('muse', [
+    record('run.lifecycle.started', { run_stream: run('r1'), prompt: 'go' }),
+    // Each tool call is a task, in the shape Muse 1.4.13 records it.
+    record('task.lifecycle.proposed', {
+      run_stream: run('r1'),
+      task_id: 't1',
+      event: { kind: 'proposed', task_id: 't1', task_kind: 'tool.write_file' },
+    }),
+    record('task.lifecycle.side_effect_intent', {
+      run_stream: run('r1'),
+      task_id: 't1',
+      event: {
+        kind: 'side_effect_intent',
+        task_id: 't1',
+        operation: 'tool:write_file',
+        idempotency_key: 'tool:call_1',
+      },
+    }),
+    record('task.lifecycle.started', {
+      run_stream: run('r1'),
+      task_id: 't1',
+      event: { kind: 'started', task_id: 't1' },
+    }),
+    record('tool.result', {
+      run_stream: run('r1'),
+      call_id: 'call_1',
+      text: 'wrote 2 bytes to /workspace/note.txt',
+      correlation_facts: { tool_name: 'write_file', outcome: 'success' },
+    }),
+    // Model calls are tasks too, but not tools.
+    record('task.lifecycle.proposed', {
+      run_stream: run('r1'),
+      task_id: 'm1',
+      event: {
+        kind: 'proposed',
+        task_id: 'm1',
+        task_kind: 'model.meta.response',
+      },
+    }),
+    record('task.lifecycle.started', {
+      run_stream: run('r1'),
+      task_id: 'm1',
+      event: { kind: 'started', task_id: 'm1' },
+    }),
+    record('task.lifecycle.proposed', {
+      run_stream: run('r1'),
+      task_id: 't2',
+      event: { kind: 'proposed', task_id: 't2', task_kind: 'tool.bash' },
+    }),
+    record('task.lifecycle.started', {
+      run_stream: run('r1'),
+      task_id: 't2',
+      event: { kind: 'started', task_id: 't2' },
+    }),
+    record('task.lifecycle.failed', {
+      run_stream: run('r1'),
+      task_id: 't2',
+      event: { kind: 'failed', task_id: 't2', reason: 'command timed out' },
+    }),
+    record('run.output.delta', { run_stream: run('r1'), text: 'Wrote ' }),
+    // A background reviewer's own run is not the reply.
+    record('run.output.delta', { run_stream: run('child'), text: 'LGTM' }),
+    record('run.output.delta', { run_stream: run('r1'), text: 'note.txt.' }),
+    record('run.terminal.completed', {
+      run_stream: run('r1'),
+      terminal: 'completed',
+      text: 'Wrote note.txt.',
+      reason: null,
+    }),
+    {
+      ...record('run.usage', {
+        run_stream: run('r1'),
+        models: [
+          {
+            model: 'muse-spark-1.3',
+            input_tokens: 1200,
+            cached_tokens: 1000,
+            output_tokens: 80,
+            reasoning_tokens: 30,
+          },
+          { model: 'muse-spark-1.3', input_tokens: 300, output_tokens: 20 },
+        ],
+      }),
+      stream: { kind: 'exec.usage', id: 's1' },
+    },
+  ]);
+  assert.deepEqual(events, [
+    { type: 'tool_start', id: 't1', name: 'write_file' },
+    {
+      type: 'tool_end',
+      id: 't1',
+      name: 'write_file',
+      output: 'wrote 2 bytes to /workspace/note.txt',
+      isError: false,
+    },
+    { type: 'tool_start', id: 't2', name: 'bash' },
+    {
+      type: 'tool_end',
+      id: 't2',
+      name: 'bash',
+      output: 'command timed out',
+      isError: true,
+    },
+    { type: 'text', text: 'Wrote ' },
+    { type: 'text', text: 'note.txt.' },
+    { type: 'final', text: 'Wrote note.txt.' },
+  ]);
+  // Cached input and reasoning output are already inside the totals.
+  assert.deepEqual(state.usage.aggregate, {
+    promptTokens: 1500,
+    completionTokens: 100,
+    totalTokens: 1600,
+  });
+  const failed = parseAll('muse', [
+    record('run.lifecycle.started', { run_stream: run('r2') }),
+    record('run.terminal.failed', {
+      run_stream: run('r2'),
+      terminal: 'failed',
+      reason: 'model step limit reached',
+    }),
+  ]);
+  assert.deepEqual(failed.events, [
+    { type: 'failure', message: 'Muse Code failed: model step limit reached' },
+  ]);
 });
 
 test('OpenCode and Pi report tools, text, and provider errors', () => {
@@ -852,6 +1004,126 @@ test("OpenCode and Pi carry the chosen provider's login only", async () => {
   );
 });
 
+test('Muse Code runs on its Meta key or its Meta-account login', async () => {
+  const museDir = path.join(loginRoot, 'muse');
+  mkdirSync(museDir, { recursive: true });
+  const authFile = path.join(museDir, 'auth.json');
+  const settingsFile = path.join(museDir, 'settings.json');
+  const muse = () =>
+    new MuseHostLogin(
+      new MuseLoginStore('linux', () => authFile),
+      () => settingsFile
+    );
+  assert.match((await muse().status()).reason, /`muse login`/);
+  await assert.rejects(muse().prepare(), /`muse login`/);
+
+  const telemetryOff = login =>
+    JSON.parse(
+      login.files.find(file => file.path === '.config/muse/settings.json')
+        .content
+    );
+
+  // A key saved with `muse auth set` travels as META_API_KEY, which Muse
+  // prefers over anything stored; the settings carry telemetry off only.
+  writeFileSync(
+    authFile,
+    JSON.stringify({
+      schema_version: 1,
+      providers: { meta: { api_key: 'LLM_1_REAL' } },
+    })
+  );
+  writeFileSync(
+    settingsFile,
+    JSON.stringify({ schema_version: 1, model: 'muse-wonder-1.0' })
+  );
+  const viaKey = await muse().prepare(undefined);
+  assert.deepEqual(Object.keys(viaKey.env), ['META_API_KEY']);
+  assert.equal(viaKey.env.META_API_KEY, viaKey.credentials[0].placeholder);
+  assert.deepEqual(viaKey.credentials[0].hosts, ['api.meta.ai']);
+  assert.equal(credentialSecret(viaKey.credentials[0]), 'LLM_1_REAL');
+  assert.deepEqual(telemetryOff(viaKey), {
+    schema_version: 1,
+    telemetry: { enabled: false },
+  });
+  assert.equal(viaKey.model, 'muse-wonder-1.0');
+  assert.doesNotMatch(sandboxBytes(viaKey), /REAL/);
+
+  // A default model behind a custom endpoint does not come along.
+  writeFileSync(
+    settingsFile,
+    JSON.stringify({
+      schema_version: 1,
+      model: 'meta/muse-spark-1.3-contributor',
+      endpoint_transport: { base_url: 'https://openrouter.ai/api/v1' },
+    })
+  );
+  assert.equal((await muse().prepare(undefined)).model, undefined);
+
+  // A Meta-account login becomes a file-backed copy with placeholders.
+  const expiresAt = Math.floor(Date.now() / 1000) + 3600;
+  writeFileSync(
+    authFile,
+    JSON.stringify({
+      schema_version: 1,
+      providers: {
+        meta: {
+          mechanism: 'oauth',
+          access_token: 'meta-REAL-ACCESS',
+          refresh_token: 'meta-REAL-REFRESH',
+          expires_at: expiresAt,
+          obtained_via: 'device',
+          api_base_url: 'https://graph.meta.ai/v1',
+          user_email: 'REAL@example.com',
+          user_full_name: 'REAL Person',
+        },
+      },
+    })
+  );
+  const viaAccount = await muse().prepare(undefined);
+  const copy = JSON.parse(
+    viaAccount.files.find(file => file.path === '.config/muse/auth.json')
+      .content
+  ).providers.meta;
+  assert.equal(copy.access_token, viaAccount.credentials[0].placeholder);
+  assert.match(copy.refresh_token, /^lwui_ph_/);
+  assert.equal(copy.mechanism, 'oauth');
+  assert.equal(copy.obtained_via, 'device');
+  assert.ok(copy.expires_at > expiresAt + 30 * 24 * 3600);
+  assert.equal('user_email' in copy, false);
+  assert.deepEqual(viaAccount.env, {});
+  assert.deepEqual(viaAccount.credentials[0].hosts, [
+    'api.meta.ai',
+    'graph.meta.ai',
+  ]);
+  assert.equal(credentialSecret(viaAccount.credentials[0]), 'meta-REAL-ACCESS');
+  assert.doesNotMatch(sandboxBytes(viaAccount), /REAL/);
+
+  // The host CLI keeps the login fresh; Work picks the new token up.
+  const saved = JSON.parse(readFileSync(authFile, 'utf8'));
+  saved.providers.meta.access_token = 'meta-REAL-NEXT';
+  writeFileSync(authFile, JSON.stringify(saved));
+  await viaAccount.refresh();
+  assert.equal(credentialSecret(viaAccount.credentials[0]), 'meta-REAL-NEXT');
+
+  // An expired account login asks for `muse login` again.
+  saved.providers.meta.expires_at = Math.floor(Date.now() / 1000) + 60;
+  writeFileSync(authFile, JSON.stringify(saved));
+  await assert.rejects(muse().prepare(), /has expired.*`muse login`/);
+
+  // The server's own META_API_KEY comes first, as it does for Muse.
+  process.env.META_API_KEY = 'LLM_2_REAL_ENV';
+  try {
+    const viaEnvironment = await muse().prepare(undefined);
+    assert.equal(
+      credentialSecret(viaEnvironment.credentials[0]),
+      'LLM_2_REAL_ENV'
+    );
+    assert.deepEqual(Object.keys(viaEnvironment.env), ['META_API_KEY']);
+  } finally {
+    delete process.env.META_API_KEY;
+  }
+});
+
 test.after(() => rmSync(loginRoot, { recursive: true, force: true }));
 
 test('agent CLIs in Work start disabled and need Work access too', async () => {
@@ -983,6 +1255,25 @@ else {
 );
 chmodSync(fakeCli, 0o755);
 
+// A fake Muse-format CLI: its prompt arrives as a file, never on stdin.
+const fakeMuse = path.join(scratch, 'fake-muse.mjs');
+writeFileSync(
+  fakeMuse,
+  `#!${process.execPath}
+import fs from 'node:fs';
+const emit = (type, payload) => process.stdout.write(JSON.stringify({ schema_version: 1, stream: { kind: 'session', id: 's1' }, payload_type: type, payload }) + '\\n');
+const promptFile = process.argv[process.argv.indexOf('--prompt-file') + 1];
+const stdin = fs.readFileSync(0, 'utf8');
+fs.writeFileSync('muse-note.txt', fs.readFileSync(promptFile, 'utf8') + '|stdin=' + stdin + '|mode=' + (fs.statSync(promptFile).mode & 0o777).toString(8));
+const run = { kind: 'run', id: 'r1' };
+emit('run.lifecycle.started', { run_stream: run });
+emit('run.output.delta', { run_stream: run, text: 'Saved.' });
+emit('run.output.delta', { run_stream: { kind: 'run', id: 'reviewer' }, text: 'LGTM' });
+emit('run.terminal.completed', { run_stream: run, terminal: 'completed', text: 'Saved.', reason: null });
+`
+);
+chmodSync(fakeMuse, 0o755);
+
 /** Runs "sandbox" commands as local processes under the scratch root. */
 const fakeDriver = {
   async exec(_task, command, options = {}) {
@@ -1012,9 +1303,11 @@ const fakeDriver = {
     const args = command.map(value =>
       value === '/opt/libre-agents/node/current/bin/node'
         ? process.execPath
-        : value.startsWith('/opt/libre-agents/cli/')
-          ? fakeCli
-          : mapPath(value)
+        : value.startsWith('/opt/libre-agents/cli/muse/')
+          ? fakeMuse
+          : value.startsWith('/opt/libre-agents/cli/')
+            ? fakeCli
+            : mapPath(value)
     );
     const env = { ...process.env };
     for (const [name, value] of Object.entries(options.env ?? {})) {
@@ -1166,6 +1459,35 @@ test('a sandboxed agent run reaches its API only through the injecting proxy', a
     );
     assert.match(readFileSync(loginFile, 'utf8'), /lwui_ph_/);
     assert.equal(statSync(loginFile).mode & 0o777, 0o600);
+  } finally {
+    upstream.server.closeAllConnections();
+    upstream.server.close();
+  }
+});
+
+test('Muse reads its prompt from a private file that is gone after the run', async () => {
+  const upstream = await startUpstream();
+  try {
+    const { calls, sink } = recordingSink();
+    const request = {
+      ...kiroRequest('Line one\nLine "two"', new AbortController().signal),
+      cli: WORK_AGENT_CLIS.muse,
+    };
+    const result = await runnerFor(upstream).run(request, sink);
+    assert.equal(result.finalText, 'Saved.');
+    assert.deepEqual(
+      calls.filter(call => call[0] === 'text'),
+      [['text', 'Saved.']],
+      "a reviewer's child run is not part of the reply"
+    );
+    assert.equal(
+      readFileSync(path.join(workspace, 'muse-note.txt'), 'utf8'),
+      'Line one\nLine "two"|stdin=|mode=600'
+    );
+    assert.ok(
+      !existsSync(path.join(sandboxRoot, `run-${request.runId}.prompt`)),
+      'the prompt file is removed when the run ends'
+    );
   } finally {
     upstream.server.closeAllConnections();
     upstream.server.close();

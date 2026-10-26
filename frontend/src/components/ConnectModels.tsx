@@ -60,6 +60,7 @@ const CLOUD_PROVIDERS = [
   { id: 'gemini', name: 'Google Gemini' },
   { id: 'mistral', name: 'Mistral' },
   { id: 'deepseek', name: 'DeepSeek' },
+  { id: 'meta', name: 'Meta' },
   { id: 'bedrock', name: 'Amazon Bedrock' },
 ] as const;
 

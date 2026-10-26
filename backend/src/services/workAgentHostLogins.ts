@@ -988,6 +988,224 @@ export class KiroHostLogin implements WorkAgentHostLogin {
   }
 }
 
+// --- Muse Code -----------------------------------------------------------
+
+const META_HOSTS = ['api.meta.ai'];
+const MUSE_KEYCHAIN_SERVICE = 'ai.meta.dev.credentials';
+/** Profile fields of a Meta-account login; a sandbox has no use for them. */
+const MUSE_PROFILE_FIELD = /^user_/;
+
+type MuseSlot = Record<string, unknown>;
+
+function museExpiry(slot: MuseSlot): number {
+  const raw = slot.expires_at;
+  if (typeof raw !== 'number') return 0;
+  return raw > 1e12 ? raw : raw * 1000;
+}
+
+/** The slot itself, from a whole auth document or a bare slot. */
+function museMetaSlot(document: unknown): MuseSlot | null {
+  if (!document || typeof document !== 'object') return null;
+  const providers = (document as { providers?: unknown }).providers;
+  const slot =
+    providers && typeof providers === 'object'
+      ? (providers as Record<string, unknown>).meta
+      : document;
+  return slot && typeof slot === 'object' && !Array.isArray(slot)
+    ? (slot as MuseSlot)
+    : null;
+}
+
+/**
+ * Where Muse Code keeps its login: `auth.json` in its config directory, or,
+ * on macOS, the login keychain with `auth.json` only pointing at it.
+ */
+export class MuseLoginStore {
+  constructor(
+    private readonly platform: NodeJS.Platform = process.platform,
+    private readonly authPath: () => string = () =>
+      environmentValue('MUSE_AUTH_PATH') ??
+      path.join(
+        environmentValue('XDG_CONFIG_HOME') ??
+          path.join(os.homedir(), '.config'),
+        'muse',
+        'auth.json'
+      )
+  ) {}
+
+  /** The Meta slot with its secret in it, or null when there is none. */
+  async read(): Promise<MuseSlot | null> {
+    const slot = museMetaSlot(readJson(this.authPath()));
+    if (slot && (typeof slot.api_key === 'string' || slot.access_token)) {
+      return slot;
+    }
+    if (this.platform !== 'darwin') return null;
+    const result = await runHost('security', [
+      'find-generic-password',
+      '-a',
+      'meta',
+      '-s',
+      MUSE_KEYCHAIN_SERVICE,
+      '-w',
+    ]);
+    const stored = result.code === 0 ? result.stdout.trim() : '';
+    if (!stored) return null;
+    try {
+      return museMetaSlot(JSON.parse(stored));
+    } catch {
+      // A bare key rather than a JSON slot.
+      return /^\S+$/.test(stored) ? { api_key: stored } : null;
+    }
+  }
+}
+
+/**
+ * Muse Code on the Meta Model API: a key from the server's environment, a
+ * key saved with `muse auth set`, or a Meta-account login from `muse login`,
+ * the order Muse itself prefers them in. The sandbox gets a file-backed
+ * copy with a placeholder for the secret, and Muse's telemetry off.
+ *
+ * Muse refreshes an account login itself and publishes no refresh flow, so
+ * Work only rereads the stored login, which the CLI on the host keeps fresh.
+ */
+export class MuseHostLogin implements WorkAgentHostLogin {
+  constructor(
+    private readonly store = new MuseLoginStore(),
+    private readonly settingsPath: () => string = () =>
+      path.join(
+        environmentValue('XDG_CONFIG_HOME') ??
+          path.join(os.homedir(), '.config'),
+        'muse',
+        'settings.json'
+      )
+  ) {}
+
+  readonly status = cachedStatus(async () => {
+    if (environmentValue('META_API_KEY')) return { ready: true };
+    return (await this.store.read())
+      ? { ready: true }
+      : { ready: false, reason: signInHint('Muse Code', 'muse login') };
+  });
+
+  async prepare(
+    _model: string | undefined,
+    _signal?: AbortSignal
+  ): Promise<WorkAgentLogin> {
+    const model = this.configuredModel();
+    const withModel = model ? { model } : {};
+    const settings = jsonFile('.config/muse/settings.json', {
+      schema_version: 1,
+      telemetry: { enabled: false },
+    });
+    const fromEnvironment = environmentValue('META_API_KEY');
+    const slot = fromEnvironment ? null : await this.store.read();
+    const apiKey =
+      fromEnvironment ??
+      (typeof slot?.api_key === 'string' && slot.api_key
+        ? slot.api_key
+        : undefined);
+    if (apiKey) {
+      const placeholder = createEgressPlaceholder();
+      return {
+        credentials: [
+          credential('META_API_KEY', placeholder, apiKey, META_HOSTS),
+        ],
+        env: { META_API_KEY: placeholder },
+        files: [settings],
+        ...withModel,
+      };
+    }
+    const access = await this.freshAccess(slot);
+    const secret = new LiveSecret(access.token);
+    const placeholder = placeholderFor(access.token);
+    const sandboxSlot: MuseSlot = {};
+    for (const [key, value] of Object.entries(access.slot)) {
+      if (!MUSE_PROFILE_FIELD.test(key)) sandboxSlot[key] = value;
+    }
+    sandboxSlot.access_token = placeholder;
+    if ('refresh_token' in sandboxSlot) {
+      sandboxSlot.refresh_token = createEgressPlaceholder();
+    }
+    if (typeof access.slot.expires_at === 'number') {
+      const until = Date.now() + SANDBOX_VALIDITY_MS;
+      sandboxSlot.expires_at =
+        access.slot.expires_at > 1e12 ? until : Math.floor(until / 1000);
+    }
+    return {
+      credentials: [
+        credential('MUSE_LOGIN', placeholder, secret, this.hosts(access.slot)),
+      ],
+      env: {},
+      files: [
+        jsonFile('.config/muse/auth.json', {
+          schema_version: 1,
+          providers: { meta: sandboxSlot },
+        }),
+        settings,
+      ],
+      ...withModel,
+      refresh: async () => {
+        secret.set((await this.freshAccess(await this.store.read())).token);
+      },
+    };
+  }
+
+  /** The account login, if it is still good for the refresh margin. */
+  private async freshAccess(
+    slot: MuseSlot | null
+  ): Promise<{ slot: MuseSlot; token: string }> {
+    const token = slot?.access_token;
+    if (!slot || typeof token !== 'string' || !token) {
+      throw new WorkAgentLoginError(signInHint('Muse Code', 'muse login'));
+    }
+    const expiresAt = museExpiry(slot);
+    if (expiresAt && expiresAt - Date.now() < LOGIN_REFRESH_MARGIN_MS) {
+      throw new WorkAgentLoginError(expiredHint('Muse Code', 'muse login'));
+    }
+    return { slot, token };
+  }
+
+  /** Meta's API, plus the login's own API host when it names a Meta one. */
+  private hosts(slot: MuseSlot): readonly string[] {
+    try {
+      const host =
+        typeof slot.api_base_url === 'string'
+          ? new URL(slot.api_base_url).hostname.toLowerCase()
+          : '';
+      if (
+        host &&
+        !META_HOSTS.includes(host) &&
+        (host.endsWith('.meta.ai') || host.endsWith('.meta.com'))
+      ) {
+        return [...META_HOSTS, host];
+      }
+    } catch {
+      // A malformed base URL adds nothing.
+    }
+    return META_HOSTS;
+  }
+
+  /**
+   * The CLI's default model, the one Chat's runs pick up, when it is a
+   * Meta model: a custom endpoint in the settings does not come along.
+   */
+  private configuredModel(): string | undefined {
+    const settings = readJson(this.settingsPath());
+    const transport = settings?.endpoint_transport as
+      { base_url?: unknown } | undefined;
+    if (
+      typeof transport?.base_url === 'string' &&
+      !/^https:\/\/api\.meta\.ai(\/|$)/.test(transport.base_url)
+    ) {
+      return undefined;
+    }
+    return typeof settings?.model === 'string' &&
+      /^[\w./:@+-]{1,200}$/.test(settings.model)
+      ? settings.model
+      : undefined;
+  }
+}
+
 // --- OpenCode and Pi -----------------------------------------------------
 
 type ProviderEntry = Record<string, unknown> & { type?: unknown };
@@ -1287,6 +1505,7 @@ export function createWorkAgentHostLogins(): Record<
     'claude-code': new ClaudeCodeHostLogin(),
     codex: new CodexHostLogin(),
     kiro: new KiroHostLogin(),
+    muse: new MuseHostLogin(),
     opencode: new OpenCodeHostLogin(),
     pi: new PiHostLogin(),
   };

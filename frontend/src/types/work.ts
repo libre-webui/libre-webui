@@ -38,7 +38,7 @@ export type WorkRunStatus =
 export type WorkPreviewStatus = 'stopped' | 'starting' | 'running' | 'failed';
 
 /**
- * `agent` runs an agent CLI (Claude Code, Codex, Kiro, OpenCode, Pi) inside
+ * `agent` runs an agent CLI (Claude Code, Codex, Kiro, Muse Code, OpenCode, Pi) inside
  * the sandbox; providerId names the CLI, as it does for Chat agent models.
  */
 export type WorkProviderType = 'ollama' | 'plugin' | 'agent';
@@ -282,7 +282,7 @@ export interface WorkCapabilities {
   runtimeAvailable?: boolean;
   ollamaAvailable?: boolean;
   pluginAvailable?: boolean;
-  /** Agent CLIs (Claude Code, Codex, Kiro, OpenCode, Pi) in the sandbox. */
+  /** Agent CLIs (Claude Code, Codex, Kiro, Muse Code, OpenCode, Pi) in the sandbox. */
   agents?: {
     enabled: boolean;
     reason?: string;

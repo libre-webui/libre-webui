@@ -93,10 +93,11 @@ export function agentCliTokenUsage(
  * Source contracts: Codex rust-v0.154.0 exec JSONL uses ThreadTokenUsage.total;
  * OpenCode v1.18.31 step-finish uses disjoint input/cache and output/reasoning;
  * Pi 0.84.3 JSON events repeat per-turn usage; Claude SDK result.modelUsage is
- * query-cumulative and includes main-loop/subagent/auxiliary model calls.
+ * query-cumulative and includes main-loop/subagent/auxiliary model calls;
+ * Muse Code 1.4.13 `run.usage` totals the run per model.
  */
 export function captureAgentCliUsage(
-  parser: 'claude' | 'codex' | 'opencode' | 'pi',
+  parser: 'claude' | 'codex' | 'muse' | 'opencode' | 'pi',
   event: Record<string, unknown>,
   carrier: UsageCarrier
 ): void {
@@ -113,6 +114,22 @@ export function captureAgentCliUsage(
         output: 'output_tokens',
       });
       if (next) state.aggregate = total([next]);
+    }
+    return;
+  }
+  if (parser === 'muse') {
+    if (event.payload_type === 'run.usage') {
+      const payload = object(event.payload);
+      const models = Array.isArray(payload?.models) ? payload.models : [];
+      // Cached input and reasoning output are subsets, already included.
+      const parts = models.flatMap(value => {
+        const next = counts(value, {
+          input: 'input_tokens',
+          output: 'output_tokens',
+        });
+        return next ? [next] : [];
+      });
+      if (parts.length) state.aggregate = total(parts);
     }
     return;
   }

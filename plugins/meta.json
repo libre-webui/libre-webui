@@ -1,0 +1,77 @@
+{
+  "id": "meta",
+  "name": "Meta",
+  "type": "completion",
+  "endpoint": "https://api.meta.ai/v1/chat/completions",
+  "auth": {
+    "header": "Authorization",
+    "prefix": "Bearer ",
+    "key_env": "META_API_KEY"
+  },
+  "model_map": [
+    "muse-spark-1.3",
+    "muse-spark-1.3-contributor",
+    "muse-wonder-1.0"
+  ],
+  "variables": [
+    {
+      "name": "endpoint",
+      "type": "string",
+      "label": "API Endpoint",
+      "description": "Override the default API endpoint URL.",
+      "default": "https://api.meta.ai/v1/chat/completions"
+    },
+    {
+      "name": "temperature",
+      "type": "number",
+      "label": "Temperature",
+      "description": "Controls randomness. Lower values are more focused, higher values more creative.",
+      "default": 0.7,
+      "min": 0,
+      "max": 2
+    },
+    {
+      "name": "max_tokens",
+      "type": "number",
+      "label": "Max Tokens",
+      "description": "Maximum number of tokens to generate, reasoning included.",
+      "default": 16384,
+      "min": 1,
+      "max": 131072
+    },
+    {
+      "name": "top_p",
+      "type": "number",
+      "label": "Top P",
+      "description": "Nucleus sampling. Lower values make output more focused.",
+      "default": 1,
+      "min": 0,
+      "max": 1
+    },
+    {
+      "name": "frequency_penalty",
+      "type": "number",
+      "label": "Frequency Penalty",
+      "description": "Reduces repetition of frequent tokens.",
+      "default": 0,
+      "min": -2,
+      "max": 2
+    },
+    {
+      "name": "presence_penalty",
+      "type": "number",
+      "label": "Presence Penalty",
+      "description": "Encourages the model to talk about new topics.",
+      "default": 0,
+      "min": -2,
+      "max": 2
+    },
+    {
+      "name": "stream",
+      "type": "boolean",
+      "label": "Stream Response",
+      "description": "Stream the response token by token.",
+      "default": true
+    }
+  ]
+}

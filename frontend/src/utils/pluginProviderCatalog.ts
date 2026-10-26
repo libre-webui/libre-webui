@@ -112,10 +112,13 @@ const NON_CHAT_MODEL_PATTERNS = [
   'embed',
   'gpt-image',
   'moderation',
+  'muse-image',
   'rerank',
+  'sam-3',
   'sora',
   'stable-diffusion',
   'text-to-speech',
+  'transcribe',
   'tts',
   'whisper',
 ];

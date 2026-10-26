@@ -73,7 +73,7 @@ Existing tasks remain readable and can select the Libre WebUI engine again.
 ## Agent CLIs in Work
 
 The model picker in Work has the same **Agents** groups as Chat: **Claude
-Code**, **Codex**, **Kiro**, **OpenCode**, and **Pi**. Pick one and that coding
+Code**, **Codex**, **Kiro**, **Muse Code**, **OpenCode**, and **Pi**. Pick one and that coding
 agent does the task. It runs inside the task's sandbox, in `/workspace`, as
 the same unprivileged user as every other Work command, with its own tools
 approved: the container, not the agent, is the security boundary. Its replies,
@@ -94,6 +94,7 @@ for the server user, the one Chat uses:
 | Claude Code | the `claude` login (the macOS keychain, or `~/.claude/.credentials.json`)                  | `api.anthropic.com`                               |
 | Codex       | the `codex login` (`~/.codex/auth.json`), ChatGPT sign-in or API key                       | `chatgpt.com`, or `api.openai.com` for an API key |
 | Kiro        | the `kiro-cli login`                                                                       | Kiro's management and runtime hosts               |
+| Muse Code   | the `muse login` (Meta account) or `muse auth set` key, or `META_API_KEY`                  | `api.meta.ai`                                     |
 | OpenCode    | the `opencode auth login` entry for the chosen model's provider                            | that provider's API                               |
 | Pi          | Pi's login for its default provider (`~/.pi/agent`), on the default model Pi is set to use | that provider's API                               |
 
@@ -110,8 +111,15 @@ a run, and every few minutes during a long one, it refreshes a login that is
 about to expire, the way the CLI would, and saves the result where the CLI
 keeps it, so the CLI keeps working on the host too. The Kiro copy carries only
 the login, never chat history. Variables the server process already has, such
-as `ANTHROPIC_API_KEY`, `CODEX_API_KEY`, or `KIRO_API_KEY`, are used the same
-way Chat's CLIs would use them.
+as `ANTHROPIC_API_KEY`, `CODEX_API_KEY`, `KIRO_API_KEY`, or `META_API_KEY`, are
+used the same way Chat's CLIs would use them.
+
+Muse Code publishes no way to refresh a Meta-account login from outside the
+CLI, so Work rereads the login Muse keeps on the server and asks you to run
+`muse login` again once it has expired. The sandbox copy of Muse runs with its
+telemetry off, its own approvals and sandbox off (`--yolo`, since the Work
+container is the boundary), and without the server user's Muse settings: only
+a default Meta model set there comes along.
 
 When an agent cannot run, the picker keeps it visible with the reason: the CLI
 is not installed on the server, it is not signed in, or its login expired and
@@ -127,8 +135,10 @@ so its subscriptions and usage limits.
 **Installation.** The first run of each agent installs a pinned version into a
 shared, read-only toolchain volume (`libre-webui-work-agents`) with a
 short-lived installer container, so sandboxes never install anything
-themselves; the run shows **Installing** meanwhile. Agent CLIs in Work need
-the Docker runtime.
+themselves; the run shows **Installing** meanwhile. Muse Code is one static
+binary of about 400 MB, downloaded from Meta and checked against a pinned
+SHA-256, so the first Muse run takes a while. Agent CLIs in Work need the
+Docker runtime.
 
 **Turns and limits.** Each message starts a fresh agent turn that receives the
 task's earlier conversation, and the workspace keeps everything it made. Stop

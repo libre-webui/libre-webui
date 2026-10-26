@@ -9,6 +9,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### ✨ New Features
 
+- **Muse Code in Chat and Work**: Meta's coding agent joins the Agents group
+  next to Claude Code, Codex, Kiro, OpenCode, and Pi, with Muse Spark 1.3,
+  Muse Spark 1.3 Contributor, and Muse Wonder 1.0 beside its configured
+  default. It runs on the login `muse` already has on the server: a Meta
+  account from `muse login`, a key saved with `muse auth set`, or
+  `META_API_KEY`. In Chat each turn gets a private prompt file and a scratch
+  workspace that is deleted afterwards, with Muse's own sandbox on. In Work it
+  runs inside the task sandbox from a pinned, checksum-verified binary in the
+  agent toolchain, with its telemetry off, and only ever holds a placeholder
+  for the key: the egress proxy adds the real one on its way to
+  `api.meta.ai`. Its file edits and commands show up in the run's activity,
+  and its token usage is counted under Agents in Provider Usage.
+- **Meta provider**: a bundled plugin for the Meta Model API. Add a key from
+  dev.meta.ai (or set `META_API_KEY`) to chat with Muse Spark and Muse Wonder
+  models; the model list refreshes from the API, and Meta's image,
+  transcription, and segmentation models stay out of the chat picker. Stop
+  sequences are left out of requests because Muse models reject them.
+
 ### 🔧 Improvements
 
 ### 🐛 Bug Fixes

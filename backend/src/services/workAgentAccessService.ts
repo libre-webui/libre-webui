@@ -16,7 +16,7 @@
  */
 
 /**
- * Who may run agent CLIs (Claude Code, Codex, Kiro, OpenCode, Pi) in Work.
+ * Who may run agent CLIs (Claude Code, Codex, Kiro, Muse Code, OpenCode, Pi) in Work.
  *
  * Inside Work these agents are confined to the task sandbox, unlike the
  * host-side Agent CLI chat models, but each run still spends a credential
