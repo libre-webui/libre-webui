@@ -4170,7 +4170,7 @@ export function buildWorkAgentCliPrompt(
   if (environment?.previewPort) {
     const port = environment.previewPort;
     sections.push(
-      `You are working in a Libre WebUI Work sandbox; the project is in /workspace. The user cannot open ports in this sandbox from their browser. Their Preview tab shows a web app listening on 0.0.0.0:${port}: it starts an index.html at the top of /workspace or a package.json dev script by itself, or a start command the user enters. A server you leave running yourself is not reachable, so for a browser app put index.html at the top of /workspace, or tell the user which command to give Preview (listening on 0.0.0.0:${port}).`
+      `You are working in a Libre WebUI Work sandbox; the project is in /workspace. The user cannot open ports in this sandbox from their browser; their Preview tab shows a web app on 0.0.0.0:${port} and finds it by itself. A folder with an index.html is served as a static site, so a plain HTML/CSS/JS app needs no server and no package.json. A package.json dev script is run as \`npm run dev -- --host 0.0.0.0 --port ${port}\`, so it must accept those two flags (Vite does; python's http.server does not). For anything else, tell the user the start command to enter in Preview, listening on 0.0.0.0:${port}. A server you leave running yourself is not reachable.`
     );
   }
   if (transcript) {

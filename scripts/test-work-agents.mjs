@@ -1213,6 +1213,9 @@ test('the agent prompt carries the task conversation and the persona', () => {
     /^You are working as Libra\.\n\nYou are working in a Libre WebUI Work sandbox/
   );
   assert.match(withPreview, /listening on 0\.0\.0\.0:4173/);
+  // How Preview finds the app, so a dev script is written to accept it.
+  assert.match(withPreview, /npm run dev -- --host 0\.0\.0\.0 --port 4173/);
+  assert.match(withPreview, /needs no server and no package\.json/);
   assert.match(withPreview, /Build a site$/);
 });
 
