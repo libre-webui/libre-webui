@@ -9,6 +9,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### ✨ New Features
 
+### 🔧 Improvements
+
+### 🐛 Bug Fixes
+
+### 📚 Documentation
+
+## [0.43.0] - 2026-10-26
+
+Meta's Muse Code joins the agent CLIs in Chat and Work, and a bundled Meta
+provider brings Muse models to chat. Agents in Work now build apps that open in
+the Preview tab, keep their agent across restarts, and no longer freeze mid-run.
+DOMPurify moves past three sanitizer advisories.
+
+### ✨ New Features
+
 - **Muse Code in Chat and Work**: Meta's coding agent joins the Agents group
   next to Claude Code, Codex, Kiro, OpenCode, and Pi, with Muse Spark 1.3,
   Muse Spark 1.3 Contributor, and Muse Wonder 1.0 beside its configured
@@ -45,6 +60,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   restart the task showed the Libre WebUI engine, asked Ollama about the agent's
   model, and the next message failed. Agent tasks are now left alone, and the
   ones an earlier start already changed get their agent back.
+- **Agent CLIs in Work no longer freeze mid-run**: the relay that carries an
+  agent CLI's API traffic out of the Work sandbox could stop for good when the
+  agent closed a connection while a reply was still arriving on it. Every later
+  request from that sandbox then hung until the run timed out. A connection
+  that closes no longer blocks the rest.
 - **Preview runs ready-made dev scripts as written**: a `package.json` `dev`
   script that already listens on `0.0.0.0` and the preview port (such as
   `python3 -m http.server 4173 --bind 0.0.0.0`) now starts on one click. Before,
@@ -56,7 +76,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   model's defaults, which filled the server log with "Failed to show model"
   errors and did nothing.
 
+### 🔒 Security
+
+- **Dependency updates**: DOMPurify moves to 3.4.17 (GHSA-cg2g-xh64-v4q7,
+  GHSA-mrv2-3pqr-j5jr, GHSA-c6gr-qvv4-5v3f) and ip-address to 10.7.5, which
+  stops a long IPv6 zone identifier from stalling the process
+  (GHSA-rxp7-6hxx-x8q5). Multer 2.5.0, undici, Vite 8.3.5, React Router 8.5,
+  i18next, zod, body-parser, fast-uri, Strands, and the AWS SDK are also
+  current, and `npm audit` reports no vulnerabilities.
+
 ### 📚 Documentation
+
+- **Muse Code and Meta**: the agent CLI, Workspaces, provider connection,
+  environment variable, and plugin guides cover Muse Code's sign-in options,
+  its models, how it runs in Chat and in the Work sandbox, and the Meta
+  provider's `META_API_KEY`. The Workspaces guide also spells out when Preview
+  adds `--host` and `--port` to a dev script and when it runs one as written.
 
 ### 🙏 Acknowledgements
 
