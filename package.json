@@ -99,11 +99,11 @@
     },
     "minimatch": ">=10.2.1",
     "brace-expansion": "^5.0.9",
-    "ip-address": "10.7.2",
+    "ip-address": "10.7.5",
     "js-yaml": "^4.3.2",
     "shell-quote": "1.11.0",
     "katex": "^0.19.0",
-    "dompurify": "3.4.16"
+    "dompurify": "3.4.17"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.4",
