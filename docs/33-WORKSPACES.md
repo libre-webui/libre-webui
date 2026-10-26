@@ -141,7 +141,11 @@ SHA-256, so the first Muse run takes a while. Agent CLIs in Work need the
 Docker runtime.
 
 **Turns and limits.** Each message starts a fresh agent turn that receives the
-task's earlier conversation, and the workspace keeps everything it made. Stop
+task's earlier conversation, and the workspace keeps everything it made. When
+the task has network, the turn is also told how **Preview** works: a web app
+must listen on `0.0.0.0:4173` (or the configured preview port) to be seen, and
+a server the agent leaves running on another port is not reachable from your
+browser. Stop
 ends the agent and every command it started. A turn may run for up to
 `WORK_AGENT_RUN_TIMEOUT_MS` (60 minutes). Action approvals do not apply,
 because the agent executes its own tools; the sandbox policy and the task's

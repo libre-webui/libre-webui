@@ -29,6 +29,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 🔧 Improvements
 
+- **Agent CLIs find Work's Preview**: Claude Code, Codex, Kiro, Muse Code,
+  OpenCode, and Pi in Work are now told that the Preview tab shows a web app
+  on `0.0.0.0:4173`. Before, they started their own server on a port the
+  browser could not reach and handed you a localhost link that did not open.
+
 ### 🐛 Bug Fixes
 
 ### 📚 Documentation

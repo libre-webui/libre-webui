@@ -1201,6 +1201,19 @@ test('the agent prompt carries the task conversation and the persona', () => {
     buildWorkAgentCliPrompt(messages.slice(0, 1), 'r1'),
     'Build a site'
   );
+  // With a preview, the agent learns where the user can see a web app.
+  const withPreview = buildWorkAgentCliPrompt(
+    messages.slice(0, 1),
+    'r1',
+    { name: 'Libra' },
+    { previewPort: 4173 }
+  );
+  assert.match(
+    withPreview,
+    /^You are working as Libra\.\n\nYou are working in a Libre WebUI Work sandbox/
+  );
+  assert.match(withPreview, /listening on 0\.0\.0\.0:4173/);
+  assert.match(withPreview, /Build a site$/);
 });
 
 // --- Runner integration: the real relay, proxy, and supervisor against a

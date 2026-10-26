@@ -2239,7 +2239,14 @@ export class WorkAgentService {
       await import('./pluginUsageService.js');
     const messages = await workTaskService.getMessages(taskId);
     const runDelegation = delegationSourceOf(messages, runId);
-    const prompt = buildWorkAgentCliPrompt(messages, runId, input.persona);
+    const prompt = buildWorkAgentCliPrompt(
+      messages,
+      runId,
+      input.persona,
+      task.networkEnabled
+        ? { previewPort: workRuntimeService.previewPort }
+        : undefined
+    );
     const assistantStream = new WorkDeltaPublisher(
       taskId,
       runId,
@@ -4120,7 +4127,8 @@ const AGENT_CLI_CONTEXT_MAX_CHARS = 48_000;
 export function buildWorkAgentCliPrompt(
   messages: readonly WorkMessage[],
   runId: string,
-  persona?: { name: string; instructions?: string }
+  persona?: { name: string; instructions?: string },
+  environment?: { previewPort?: number }
 ): string {
   const current = messages
     .filter(
@@ -4155,6 +4163,14 @@ export function buildWorkAgentCliPrompt(
       persona.instructions
         ? `You are working as ${persona.name}.\n\n${persona.instructions}`
         : `You are working as ${persona.name}.`
+    );
+  }
+  // An agent CLI knows nothing of Work's Preview, and a server it leaves
+  // running on its own port is unreachable from the user's browser.
+  if (environment?.previewPort) {
+    const port = environment.previewPort;
+    sections.push(
+      `You are working in a Libre WebUI Work sandbox; the project is in /workspace. The user cannot open ports in this sandbox from their browser. Their Preview tab shows a web app listening on 0.0.0.0:${port}: it starts an index.html at the top of /workspace or a package.json dev script by itself, or a start command the user enters. A server you leave running yourself is not reachable, so for a browser app put index.html at the top of /workspace, or tell the user which command to give Preview (listening on 0.0.0.0:${port}).`
     );
   }
   if (transcript) {
