@@ -640,7 +640,8 @@ type PreviewLaunch =
 interface PreviewDetection {
   kind: 'npm' | 'static' | 'none' | 'ambiguous';
   workdir?: string;
-  runner?: 'standard' | 'next';
+  /** `as-is`: the dev script already listens on 0.0.0.0 and the preview port. */
+  runner?: 'standard' | 'next' | 'as-is';
   candidates?: string[];
 }
 
@@ -3474,7 +3475,14 @@ export class WorkRuntimeService {
     try {
       const result = await this.driver.exec(
         task,
-        ['node', '-e', PREVIEW_TARGET_SCRIPT, '--', '/workspace'],
+        [
+          'node',
+          '-e',
+          PREVIEW_TARGET_SCRIPT,
+          '--',
+          '/workspace',
+          String(config.previewPort),
+        ],
         {
           acceptFailure: true,
           timeoutMs: 5_000,
@@ -3529,7 +3537,8 @@ export class WorkRuntimeService {
       if (
         detection.runner !== undefined &&
         detection.runner !== 'standard' &&
-        detection.runner !== 'next'
+        detection.runner !== 'next' &&
+        detection.runner !== 'as-is'
       ) {
         throw new WorkRuntimeError(
           'Workspace preview detection returned an unsupported npm runner.',
@@ -3540,10 +3549,14 @@ export class WorkRuntimeService {
       return {
         kind: 'shell',
         workdir: detection.workdir,
+        // A script that already binds the preview address is run as written:
+        // appending host and port flags breaks servers that do not take them.
         command:
-          detection.runner === 'next'
-            ? `npm run dev -- --hostname 0.0.0.0 --port ${config.previewPort}`
-            : `npm run dev -- --host 0.0.0.0 --port ${config.previewPort}`,
+          detection.runner === 'as-is'
+            ? 'npm run dev'
+            : detection.runner === 'next'
+              ? `npm run dev -- --hostname 0.0.0.0 --port ${config.previewPort}`
+              : `npm run dev -- --host 0.0.0.0 --port ${config.previewPort}`,
       };
     } catch (error) {
       try {
@@ -4488,6 +4501,11 @@ export const PREVIEW_TARGET_SCRIPT = String.raw`
 const fs = require('node:fs');
 const path = require('node:path');
 const root = fs.realpathSync(process.argv[1] || '/workspace');
+const previewPort = Number(process.argv[2]) || 0;
+const servesPreview = script =>
+  previewPort > 0 &&
+  /0\.0\.0\.0/.test(script) &&
+  new RegExp('(^|[^0-9])' + previewPort + '($|[^0-9])').test(script);
 const ignored = new Set([
   '.git',
   '.next',
@@ -4536,9 +4554,10 @@ while (cursor < queue.length && cursor < 500) {
           ...(manifest.dependencies || {}),
           ...(manifest.devDependencies || {})
         };
-        const runner =
-          typeof dependencies.next === 'string' ||
-          /(^|\\s)next(?:\\s|$)/.test(manifest.scripts.dev)
+        const runner = servesPreview(manifest.scripts.dev)
+          ? 'as-is'
+          : typeof dependencies.next === 'string' ||
+              /(^|\s)next(?:\s|$)/.test(manifest.scripts.dev)
             ? 'next'
             : 'standard';
         candidates.push({

@@ -39,6 +39,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 🐛 Bug Fixes
 
+- **Preview runs ready-made dev scripts as written**: a `package.json` `dev`
+  script that already listens on `0.0.0.0` and the preview port (such as
+  `python3 -m http.server 4173 --bind 0.0.0.0`) now starts on one click. Before,
+  Preview always added `--host` and `--port`, which servers like Python's
+  `http.server` reject, so the preview exited. Next.js apps are also recognized
+  from a `next dev` script alone, not only from their dependencies.
 - **No Ollama lookups for agents**: with an agent CLI or a persona selected,
   the Work composer and Chat's controls panel no longer ask Ollama for that
   model's defaults, which filled the server log with "Failed to show model"

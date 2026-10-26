@@ -749,7 +749,9 @@ appear in the task's Activity timeline.
 The Preview tab starts, stops, embeds, and opens the generated web application.
 When the command field is empty, Libre WebUI inspects the workspace and:
 
-- runs a root `package.json` `dev` script with the required host and port;
+- runs a root `package.json` `dev` script with the required host and port
+  added (`--host 0.0.0.0 --port 4173`, or `--hostname` for Next.js), or as
+  written when the script already listens on `0.0.0.0` and the preview port;
 - serves a root `index.html` with a bundled, zero-dependency static server; or
 - uses the same rules for a single app in a nested directory.
 

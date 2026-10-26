@@ -55,11 +55,17 @@ const {
   validateWorkGitRepositoryPaths,
 } = gitModule;
 
-const detectPreview = workspace =>
+const detectPreview = (workspace, previewPort) =>
   JSON.parse(
     execFileSync(
       process.execPath,
-      ['-e', PREVIEW_TARGET_SCRIPT, '--', workspace],
+      [
+        '-e',
+        PREVIEW_TARGET_SCRIPT,
+        '--',
+        workspace,
+        ...(previewPort ? [String(previewPort)] : []),
+      ],
       { encoding: 'utf8' }
     )
   );
@@ -1351,6 +1357,35 @@ test('preview discovery identifies Next.js and searches shallow apps first', t =
   });
 });
 
+test('a dev script that already binds the preview port runs as written', t => {
+  const workspace = mkdtempSync(path.join(tmpdir(), 'libre-work-as-is-'));
+  t.after(() => rmSync(workspace, { recursive: true, force: true }));
+  mkdirSync(path.join(workspace, 'game'));
+  writeFileSync(path.join(workspace, 'game', 'index.html'), '<html></html>');
+  const devScript = dev =>
+    writeFileSync(
+      path.join(workspace, 'package.json'),
+      JSON.stringify({ scripts: { dev } })
+    );
+  const root = realpathSync(workspace);
+
+  // Appending --host and --port would break python's http.server.
+  devScript('python3 -m http.server 4173 --bind 0.0.0.0 --directory game');
+  assert.deepEqual(detectPreview(workspace, 4173), {
+    kind: 'npm',
+    workdir: root,
+    runner: 'as-is',
+  });
+  // Another port, or no address at all, still gets the flags.
+  devScript('python3 -m http.server 41730 --bind 0.0.0.0');
+  assert.equal(detectPreview(workspace, 4173).runner, 'standard');
+  devScript('vite');
+  assert.equal(detectPreview(workspace, 4173).runner, 'standard');
+  // Next.js is recognized from the script alone, too.
+  devScript('next dev --turbopack');
+  assert.equal(detectPreview(workspace, 4173).runner, 'next');
+});
+
 test('preview discovery keeps entry points beyond the child traversal cap', t => {
   const workspace = mkdtempSync(
     path.join(tmpdir(), 'libre-work-large-preview-')
@@ -1526,6 +1561,25 @@ test('preview startup wires detected targets into safe Docker launch arguments',
   assert.deepEqual(nextLaunch.slice(-3), [
     'shell',
     `npm run dev -- --hostname 0.0.0.0 --port ${WORK_RUNTIME_DEFAULTS.previewPort}`,
+    String(WORK_RUNTIME_DEFAULTS.previewPort),
+  ]);
+  // Detection is told the preview port, so it can spot a script that binds it.
+  const detectCall = nextCalls.find(args =>
+    args.includes(PREVIEW_TARGET_SCRIPT)
+  );
+  assert.equal(detectCall.at(-1), String(WORK_RUNTIME_DEFAULTS.previewPort));
+
+  const asIsCalls = await runHarness({
+    kind: 'npm',
+    workdir: '/workspace',
+    runner: 'as-is',
+  });
+  const asIsLaunch = asIsCalls.find(
+    args => args[0] === 'exec' && args.includes('/bin/bash')
+  );
+  assert.deepEqual(asIsLaunch.slice(-3), [
+    'shell',
+    'npm run dev',
     String(WORK_RUNTIME_DEFAULTS.previewPort),
   ]);
 });
