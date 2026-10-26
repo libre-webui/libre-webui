@@ -28,7 +28,7 @@ export const BUNDLED_PLUGIN_DEFINITION_FINGERPRINTS: Readonly<
   anthropic: '3623dc1cb04bcebf9d41cca59f0e36a2a1c51bb722132e8fe90f0f6e6b52146a',
   bedrock: '3cfcf2c3728f621b4b9f22ecb8f6d30cb4aec2164302a3fb65268bdc2f6eca64',
   'codex-oauth':
-    '685ec47cc56dcf8cb9bd1667f41ad69a94eb66c1d6dd9aeca5564134c1b1b1f3',
+    '82f39cd30da614cbdba5fc504962947e59d616592b334abb8afa6e498a81a216',
   comfyui: 'eaefe81897b58bffdf92bae8f0d0b675a062af276d5379e43147d6a0adaf0f47',
   deepseek: '32cc8662939e304869f9e02ef3b7c8ced6ffe14c333bea9230bfabe2f2350181',
   elevenlabs:
@@ -53,9 +53,9 @@ export const BUNDLED_PLUGIN_DEFINITION_FINGERPRINTS: Readonly<
   'mlx-lm': 'c5aad700fd557216a1e1eda361c0d67f92d51d1fe46d9c2028354f8ca8f25503',
   'openai-tts':
     'ebc3677f4f0ef2ec1628408d59a9e273059cc50d2f9d462e7a3b7f0c4eefe843',
-  openai: 'f7a8104551d63b5fe9a771832d7e99cff5e907de66c443f3440323eeef32423c',
+  openai: '0034ebae22d4ca4b1bce9193c263760328e5d59f95065be00addf7a2086992c1',
   openrouter:
-    '7377f21a07da8d202e09d2437e3b529d53814a80f7cd1ecef7ce0a18b38710db',
+    '93a5ce8d1da1f405e798cb8b21eca225485ddff5cb8e098cf74a13c9b71a87d9',
   'qwen-tts':
     '3a663efb46a9a228a78f850996b8006e886a67c32b52d0e31627586f856a9ba9',
 });

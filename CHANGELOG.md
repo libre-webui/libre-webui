@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### ✨ New Features
 
+- **GPT-6.1 Terra**: OpenAI's new mid-tier model (`gpt-6.1-terra`), priced
+  below GPT-6.1 Sol, is offered by the Codex provider and the Codex agent CLI,
+  subject to the signed-in account's access. It is also in the bundled OpenAI
+  provider for API keys and in the OpenRouter catalog (`openai/gpt-6.1-terra`).
+
 ### 🔧 Improvements
 
 ### 🐛 Bug Fixes

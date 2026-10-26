@@ -180,6 +180,7 @@ test('the bundled codex plugin omits sampling parameters and adds ChatGPT header
   for (const model of [
     'gpt-6-astra',
     'gpt-6.1-sol',
+    'gpt-6.1-terra',
     'gpt-6-sol',
     'gpt-6-luna',
   ]) {
@@ -210,6 +211,7 @@ test('the bundled codex plugin omits sampling parameters and adds ChatGPT header
   for (const model of [
     'gpt-6-astra',
     'gpt-6.1-sol',
+    'gpt-6.1-terra',
     'gpt-6-sol',
     'gpt-6-luna',
     'gpt-5.6-luna',
@@ -244,4 +246,31 @@ test('the bundled codex plugin omits sampling parameters and adds ChatGPT header
   assert.equal(headers['ChatGPT-Account-Id'], 'acct-2');
   assert.equal(headers['OpenAI-Beta'], 'responses=experimental');
   assert.equal(headers['Authorization'], 'Bearer token-value');
+});
+
+test('GPT-6.1 Terra is also bundled for the OpenAI API and OpenRouter', async () => {
+  const trust = await import(
+    pathToFileURL(
+      path.join(
+        repoRoot,
+        'backend',
+        'dist',
+        'utils',
+        'pluginDefinitionTrust.js'
+      )
+    ).href
+  );
+  for (const [id, model] of [
+    ['openai', 'gpt-6.1-terra'],
+    ['openrouter', 'openai/gpt-6.1-terra'],
+  ]) {
+    const plugin = JSON.parse(
+      fs.readFileSync(path.join(repoRoot, 'plugins', `${id}.json`), 'utf8')
+    );
+    assert.ok(plugin.model_map.includes(model), `${id} must list ${model}`);
+    assert.ok(
+      trust.matchesBundledPluginTrustAnchor(plugin),
+      `bundled ${id} manifest must match its shipped trust anchor`
+    );
+  }
 });

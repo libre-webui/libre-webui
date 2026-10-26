@@ -202,6 +202,7 @@ test('Codex lists the GPT-6 family alongside the bundled ChatGPT models', async 
     for (const [model, label] of [
       ['gpt-6-astra', 'GPT-6 Astra'],
       ['gpt-6.1-sol', 'GPT-6.1 Sol'],
+      ['gpt-6.1-terra', 'GPT-6.1 Terra'],
       ['gpt-6-sol', 'GPT-6 Sol'],
       ['gpt-6-luna', 'GPT-6 Luna'],
     ]) {
@@ -1098,6 +1099,7 @@ for (const [agent, model] of [
   ['claude-code', 'claude-opus-5-5'],
   ['claude-code', 'claude-haiku-5-5'],
   ['codex', 'gpt-6.1-sol'],
+  ['codex', 'gpt-6.1-terra'],
   ['codex', 'gpt-6-sol'],
   ['codex', 'gpt-6-luna'],
 ]) {
