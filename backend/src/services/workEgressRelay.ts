@@ -57,6 +57,7 @@ const H = 9, READY = 1, OPEN = 2, DATA = 3, END = 4, CLOSE = 5;
 const CHUNK = 65536, MAX = 1048576;
 const sockets = new Map();
 const waiting = new Set();
+const blocked = new Set();
 let nextId = 1;
 let pending = Buffer.alloc(0);
 function send(type, id, payload) {
@@ -72,6 +73,11 @@ process.stdout.on('drain', () => {
   waiting.clear();
 });
 process.stdout.on('error', () => process.exit(0));
+// A full socket holds stdin until it drains, finishes, or closes: once it
+// is ending, 'drain' never fires.
+function release(socket) {
+  if (blocked.delete(socket) && blocked.size === 0) process.stdin.resume();
+}
 const server = net.createServer(socket => {
   const id = nextId++;
   sockets.set(id, socket);
@@ -84,8 +90,13 @@ const server = net.createServer(socket => {
       }
     }
   });
+  socket.on('drain', () => release(socket));
+  socket.on('finish', () => release(socket));
   socket.on('end', () => { if (sockets.has(id)) send(END, id); });
-  socket.on('close', () => { if (sockets.delete(id)) send(CLOSE, id); });
+  socket.on('close', () => {
+    release(socket);
+    if (sockets.delete(id)) send(CLOSE, id);
+  });
   socket.on('error', () => {});
 });
 server.on('error', () => process.exit(2));
@@ -105,9 +116,11 @@ process.stdin.on('data', chunk => {
     const socket = sockets.get(id);
     if (!socket) continue;
     if (type === DATA) {
-      if (!socket.write(payload)) {
+      // A socket the client half-closed is no longer writable; its data
+      // has nowhere to go.
+      if (socket.writable && !socket.write(payload) && !blocked.has(socket)) {
+        blocked.add(socket);
         process.stdin.pause();
-        socket.once('drain', () => process.stdin.resume());
       }
     } else if (type === END) {
       socket.end();
@@ -331,7 +344,9 @@ export class RelayMultiplexer extends EventEmitter {
     const stream = this.streams.get(id);
     if (!stream) return;
     if (type === RELAY_FRAME_DATA) {
-      if (!stream.push(payload)) {
+      // A push after END destroys the stream and returns false; a destroyed
+      // stream never reads again, so it must not hold the input.
+      if (!stream.push(payload) && !stream.destroyed) {
         this.paused.add(stream);
         this.input.pause();
       }

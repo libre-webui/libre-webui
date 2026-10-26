@@ -564,6 +564,67 @@ test('the relay carries proxy connections over one stdio channel', async () => {
   assert.equal(child.exitCode, 0);
 });
 
+test('a client that half-closes a full relay connection does not stall the others', async () => {
+  const child = spawn(process.execPath, ['-e', RELAY_SCRIPT], {
+    stdio: ['pipe', 'pipe', 'inherit'],
+  });
+  const relay = new RelayMultiplexer(child.stdout, child.stdin);
+  closers.push(async () => {
+    relay.close();
+    child.kill();
+    await new Promise(resolve =>
+      child.exitCode === null ? child.once('exit', resolve) : resolve()
+    );
+  });
+  const relayPort = await relay.ready;
+
+  // The first client stops reading while the backend floods it, so the
+  // sandbox side holds its stdin until that socket drains.
+  const first = net.connect(relayPort, '127.0.0.1');
+  first.pause();
+  const flooded = await new Promise(resolve =>
+    relay.once('connection', resolve)
+  );
+  flooded.resume();
+  const chunk = Buffer.alloc(256 * 1024, 0x61);
+  for (let index = 0; index < 32; index += 1) flooded.write(chunk);
+  let last = -1;
+  for (let still = 0; still < 10;) {
+    await new Promise(resolve => setTimeout(resolve, 20));
+    const length = child.stdin.writableLength;
+    still = length > 0 && length === last ? still + 1 : 0;
+    last = length;
+  }
+
+  // Half-close while blocked: the socket is ending, so it never emits
+  // 'drain', and stdin must still be released once the client reads.
+  const ended = new Promise(resolve => flooded.once('end', resolve));
+  first.end();
+  await ended;
+  const firstClosed = new Promise(resolve => first.once('close', resolve));
+  first.resume();
+  await firstClosed;
+
+  relay.on('connection', stream =>
+    stream.on('data', data => stream.write(data))
+  );
+  const second = net.connect(relayPort, '127.0.0.1');
+  const echoed = new Promise(resolve =>
+    second.once('data', data => resolve(String(data)))
+  );
+  second.write('ping');
+  let timer;
+  const reply = await Promise.race([
+    echoed,
+    new Promise(resolve => {
+      timer = setTimeout(() => resolve('stalled'), 10_000);
+    }),
+  ]);
+  clearTimeout(timer);
+  second.destroy();
+  assert.equal(reply, 'ping');
+});
+
 test('a malformed relay frame closes the relay instead of throwing', async () => {
   const { PassThrough } = await import('node:stream');
   const input = new PassThrough();
