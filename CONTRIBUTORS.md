@@ -24,6 +24,13 @@ We appreciate all the amazing people who have contributed to making Libre WebUI 
   - Implemented CORS support for private network IPs
   - Enhanced development workflow for network testing
 
+## Sponsors
+
+Thank you to everyone who supports Libre WebUI through
+[GitHub Sponsors](https://github.com/sponsors/libre-webui)!
+
+- **[ae-workteam](https://github.com/ae-workteam)** - Project champion, our first sponsor
+
 ## How to Contribute
 
 We welcome contributions from everyone! Here are some ways you can help:

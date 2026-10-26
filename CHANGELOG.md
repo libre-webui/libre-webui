@@ -15,6 +15,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 📚 Documentation
 
+### 🙏 Acknowledgements
+
+Libre WebUI has its first sponsor. Thank you
+[ae-workteam](https://github.com/ae-workteam) for backing the project as a
+Project champion on [GitHub Sponsors](https://github.com/sponsors/libre-webui).
+You're in [CONTRIBUTORS.md](CONTRIBUTORS.md) now.
+
 ## [0.42.0] - 2026-10-21
 
 Markdown files now read like documents in Work, and a dropped provider
