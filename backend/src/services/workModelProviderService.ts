@@ -1982,6 +1982,7 @@ function providerErrorMessage(value: unknown): string {
   const payload = asObject(value);
   const error = asObject(payload?.error);
   if (typeof error?.message === 'string') return error.message;
+  if (typeof payload?.error === 'string') return payload.error;
   if (typeof payload?.message === 'string') return payload.message;
   return 'Request failed.';
 }

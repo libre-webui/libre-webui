@@ -17,7 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Shared Endpoints (Kimi K3, GLM 5.3, DeepSeek V4.1 Flash, Qwen3.8-Max, Muse
   Spark Open, Inkling, and more) in Chat and Work with a Modal proxy token
   saved in Settings or set as `MODAL_PROXY_TOKEN`. It lists every endpoint the
-  token can reach, and keeps each conversation and Work run on one Modal
+  token can reach under the endpoint's name, with its context window and
+  reasoning support, and keeps each conversation and Work run on one Modal
   container so its prompt stays cached. A Dedicated Endpoint works by setting
   its URL as the provider's endpoint. OpenCode in Work can use the same token
   for its `modal/…` models.
@@ -29,6 +30,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   context window.
 
 ### 🐛 Bug Fixes
+
+- **Provider error text**: when a provider returns its error as a plain string
+  (`{"error": "…"}`), Chat and Work now show that message instead of "Not
+  Found" or "Request failed."
 
 ### 📚 Documentation
 

@@ -107,7 +107,7 @@ test('the bundled Modal manifest routes to the shared inference router', () => {
   assert.ok(
     plugin.model_map.includes('moonshotai/Kimi-K3') &&
       plugin.model_map.includes('meta-models/Muse-Spark-Open-816B-A42B'),
-    "the shared models Modal bills per token, until discovery lists the workspace's own"
+    "the shared models by the names an endpoint's own URL serves them under; the router's listing replaces them with endpoint hostnames"
   );
   const endpoint = plugin.variables.find(
     variable => variable.name === 'endpoint'
@@ -142,17 +142,41 @@ test('Modal uses Chat Completions semantics and derives its model list', () => {
   );
 });
 
-test("a vLLM-style listing reports each model's window", () => {
+test("Modal's listing gives each endpoint's window and reasoning support", () => {
+  // The router's GET /v1/models, as Modal answered it for a Shared Endpoint.
   const entries = [
     {
-      id: 'kimi-chat.us-west.modal.direct',
+      base_model_id: 'meta-models/Muse-Spark-Open-816B-A42B',
+      context_length: 1000000,
+      id: 'acme--ep-muse-spark-open-816b-a42b-server.us-west.modal.direct',
+      interleaved: { field: 'reasoning_content' },
+      max_output_length: 262144,
+      name: 'Meta: Muse Spark Open',
       object: 'model',
-      owned_by: 'modal',
-      max_model_len: 1048576,
+      reasoning_options: [
+        { type: 'effort', values: ['low', 'medium', 'high', 'xhigh'] },
+      ],
+      supported_features: [
+        'tools',
+        'json_mode',
+        'structured_outputs',
+        'reasoning',
+      ],
+      supported_sampling_parameters: [
+        'temperature',
+        'top_p',
+        'stop',
+        'max_tokens',
+      ],
     },
+    { id: 'vllm-model', object: 'model', max_model_len: 131072 },
   ];
   assert.deepEqual(pluginModelCatalog.readModelContextMap(entries), {
-    'kimi-chat.us-west.modal.direct': 1048576,
+    'acme--ep-muse-spark-open-816b-a42b-server.us-west.modal.direct': 1000000,
+    'vllm-model': 131072,
+  });
+  assert.deepEqual(pluginModelCatalog.readModelReasoningMap(entries), {
+    'acme--ep-muse-spark-open-816b-a42b-server.us-west.modal.direct': true,
   });
 });
 

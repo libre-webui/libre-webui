@@ -2670,12 +2670,19 @@ export class PluginService {
         const httpError = error as {
           response: {
             status: number;
-            data?: { error?: { message?: string } };
+            data?: { error?: string | { message?: string } };
             statusText: string;
           };
         };
+        const providerError = httpError.response.data?.error;
+        // Most providers nest the message; some, Modal among them, send it
+        // as the error itself.
+        const detail =
+          typeof providerError === 'string'
+            ? providerError
+            : providerError?.message;
         throw new Error(
-          `Plugin API error: ${httpError.response.status} - ${httpError.response.data?.error?.message || httpError.response.statusText}`
+          `Plugin API error: ${httpError.response.status} - ${detail || httpError.response.statusText}`
         );
       } else if (error && typeof error === 'object' && 'request' in error) {
         throw new Error(

@@ -139,12 +139,13 @@ the Shared Endpoints in your Modal workspace, which Modal bills per token.
    the result as the provider's API key, or set `MODAL_PROXY_TOKEN` on the
    server.
 
-Libre WebUI then lists every model the token can reach from the router's
-`/v1/models`, with each model's context window when Modal reports one. An
-endpoint listed by its hostname, such as `kimi-chat.us-west.modal.direct`, reads
-as "Kimi Chat" in the model picker. Until the first listing arrives, the picker
-offers Modal's shared models: Kimi K3, GLM 5.3, GLM 5.3 Flash, DeepSeek V4.1
-Flash, Qwen3.8-Max, Muse Spark Open, and Inkling.
+Libre WebUI then lists every endpoint the token can reach from the router's
+`/v1/models`, with its context window and whether it reasons. The router knows
+a model only by its endpoint's hostname, such as
+`acme--ep-muse-spark-open-816b-a42b-server.us-west.modal.direct`, so that is
+the model ID Libre WebUI sends; the model picker shows it by the endpoint's
+name, here "Muse Spark Open 816B A42B". A model with no endpoint in your
+workspace answers `unknown inference model`.
 
 Every request of one conversation carries the same `Modal-Routing-Affinity-Key`,
 derived from the model and the conversation's first message, so Modal routes it
@@ -153,9 +154,13 @@ Work does the same for every step of a run's agent loop. Cached input tokens
 cost a fraction of the normal rate. When compaction rewrites the history, the
 key changes, as Modal recommends.
 
-For a Dedicated Endpoint, set the provider's **API Endpoint** to the endpoint's
-URL followed by `/v1/chat/completions`. Shared Endpoints limit concurrent
-requests per model and answer `429` above the limit.
+To call one endpoint directly, set the provider's **API Endpoint** to its URL
+(`modal endpoint info <name>` shows it as `service_url`) followed by
+`/v1/chat/completions`. That is how a Dedicated Endpoint is reached; there the
+model keeps its Hugging Face name, such as `moonshotai/Kimi-K3`, which is also
+how the bundled list names Modal's shared models before a token is saved.
+Shared Endpoints limit concurrent requests per model and answer `429` above the
+limit.
 
 OpenCode in Work can use the same token. With `MODAL_PROXY_TOKEN` set on the
 server, or a Modal login saved with `opencode auth login`, a `modal/…` model

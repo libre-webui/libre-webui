@@ -66,6 +66,12 @@ test("Modal's model ids and endpoint hostnames read cleanly", () => {
     name: 'Inkling NVFP4',
     vendor: 'Thinking Machines',
   });
+  assert.deepEqual(
+    modelNameParts(
+      'rob-x-ai--ep-muse-spark-open-816b-a42b-server.us-west.modal.direct'
+    ),
+    { name: 'Muse Spark Open 816B A42B' }
+  );
   assert.deepEqual(modelNameParts('kimi-chat.us-west.modal.direct'), {
     name: 'Kimi Chat',
   });

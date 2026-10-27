@@ -108,6 +108,15 @@ export function readModelReasoningSupport(
     );
   }
 
+  // Modal lists what each endpoint supports, reasoning among it.
+  const supportedFeatures = entry.supported_features;
+  if (
+    Array.isArray(supportedFeatures) &&
+    supportedFeatures.includes('reasoning')
+  ) {
+    return true;
+  }
+
   const capabilities = entry.capabilities;
   if (
     Array.isArray(capabilities) &&

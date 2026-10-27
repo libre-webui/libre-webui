@@ -84,9 +84,12 @@ const VENDORS: Record<string, string> = {
 };
 
 const REGISTRY_PREFIX = /^(?:hf\.co|huggingface\.co)\//i;
-/** A Modal Endpoint is called by its hostname: "kimi-chat.us-west.modal.direct". */
+/**
+ * A Modal Endpoint is called by its hostname, which carries the endpoint's
+ * name: "acme--ep-kimi-chat-server.us-west.modal.direct" is "kimi-chat".
+ */
 const MODAL_ENDPOINT_HOST =
-  /^([a-z0-9][a-z0-9-]*)\.[a-z0-9-]+\.modal\.direct$/i;
+  /^(?:[a-z0-9-]+?--)?(?:ep-)?([a-z0-9][a-z0-9-]*?)(?:-server)?\.[a-z0-9-]+\.modal\.direct$/i;
 const NOISE_TOKENS = new Set(['gguf']);
 
 function formatToken(token: string): string {
