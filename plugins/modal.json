@@ -1,0 +1,82 @@
+{
+  "id": "modal",
+  "name": "Modal",
+  "type": "completion",
+  "endpoint": "https://inference.us-west.modal.direct/v1/chat/completions",
+  "auth": {
+    "header": "Authorization",
+    "prefix": "Bearer ",
+    "key_env": "MODAL_PROXY_TOKEN"
+  },
+  "model_map": [
+    "moonshotai/Kimi-K3",
+    "zai-org/GLM-5.3",
+    "zai-org/GLM-5.3-Flash",
+    "nvidia/GLM-5.3-Flash-NVFP4",
+    "deepseek-ai/DeepSeek-V4.1-Flash",
+    "Qwen/Qwen3.8-2.4T-A95B",
+    "meta-models/Muse-Spark-Open-816B-A42B",
+    "thinkingmachines/Inkling-NVFP4"
+  ],
+  "variables": [
+    {
+      "name": "endpoint",
+      "type": "string",
+      "label": "API Endpoint",
+      "description": "Override the default API endpoint URL, for example with a Dedicated Endpoint's URL followed by /v1/chat/completions.",
+      "default": "https://inference.us-west.modal.direct/v1/chat/completions"
+    },
+    {
+      "name": "temperature",
+      "type": "number",
+      "label": "Temperature",
+      "description": "Controls randomness. Lower values are more focused, higher values more creative.",
+      "default": 0.7,
+      "min": 0,
+      "max": 2
+    },
+    {
+      "name": "max_tokens",
+      "type": "number",
+      "label": "Max Tokens",
+      "description": "Maximum number of tokens to generate, reasoning included.",
+      "default": 16384,
+      "min": 1,
+      "max": 384000
+    },
+    {
+      "name": "top_p",
+      "type": "number",
+      "label": "Top P",
+      "description": "Nucleus sampling. Lower values make output more focused.",
+      "default": 1,
+      "min": 0,
+      "max": 1
+    },
+    {
+      "name": "frequency_penalty",
+      "type": "number",
+      "label": "Frequency Penalty",
+      "description": "Reduces repetition of frequent tokens.",
+      "default": 0,
+      "min": -2,
+      "max": 2
+    },
+    {
+      "name": "presence_penalty",
+      "type": "number",
+      "label": "Presence Penalty",
+      "description": "Encourages the model to talk about new topics.",
+      "default": 0,
+      "min": -2,
+      "max": 2
+    },
+    {
+      "name": "stream",
+      "type": "boolean",
+      "label": "Stream Response",
+      "description": "Stream the response token by token.",
+      "default": true
+    }
+  ]
+}

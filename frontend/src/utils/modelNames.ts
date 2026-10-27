@@ -59,9 +59,12 @@ const WORDS: Record<string, string> = {
 };
 
 const VENDORS: Record<string, string> = {
+  'deepseek-ai': 'DeepSeek',
   'meta-llama': 'Meta',
+  'meta-models': 'Meta',
   'x-ai': 'xAI',
   'z-ai': 'Z.ai',
+  'zai-org': 'Z.ai',
   amazon: 'Amazon',
   anthropic: 'Anthropic',
   cohere: 'Cohere',
@@ -77,9 +80,13 @@ const VENDORS: Record<string, string> = {
   openai: 'OpenAI',
   perplexity: 'Perplexity',
   qwen: 'Qwen',
+  thinkingmachines: 'Thinking Machines',
 };
 
 const REGISTRY_PREFIX = /^(?:hf\.co|huggingface\.co)\//i;
+/** A Modal Endpoint is called by its hostname: "kimi-chat.us-west.modal.direct". */
+const MODAL_ENDPOINT_HOST =
+  /^([a-z0-9][a-z0-9-]*)\.[a-z0-9-]+\.modal\.direct$/i;
 const NOISE_TOKENS = new Set(['gguf']);
 
 function formatToken(token: string): string {
@@ -140,6 +147,8 @@ export function modelNameParts(
   options: { prettify?: boolean } = {}
 ): ModelNameParts {
   const trimmed = id.trim();
+  const endpoint = MODAL_ENDPOINT_HOST.exec(trimmed);
+  if (endpoint) return { name: formatModelName(endpoint[1]) };
   const alias = trimmed.startsWith('~');
   const withoutAlias = alias ? trimmed.slice(1) : trimmed;
   const path = withoutAlias.replace(REGISTRY_PREFIX, '');

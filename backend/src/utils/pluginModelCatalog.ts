@@ -35,6 +35,8 @@ const CONTEXT_LENGTH_KEYS = [
   'max_context_tokens',
   'max_input_tokens',
   'inputTokenLimit',
+  // vLLM and SGLang servers, such as Modal's endpoints.
+  'max_model_len',
 ] as const;
 
 /**

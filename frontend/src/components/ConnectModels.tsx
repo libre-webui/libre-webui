@@ -61,6 +61,7 @@ const CLOUD_PROVIDERS = [
   { id: 'mistral', name: 'Mistral' },
   { id: 'deepseek', name: 'DeepSeek' },
   { id: 'meta', name: 'Meta' },
+  { id: 'modal', name: 'Modal' },
   { id: 'bedrock', name: 'Amazon Bedrock' },
 ] as const;
 

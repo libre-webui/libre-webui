@@ -30,6 +30,11 @@ test('a context window is read from whichever field the provider uses', () => {
     catalog.readModelContextLength({ id: 'a', max_input_tokens: '8192' }),
     8192
   );
+  assert.equal(
+    catalog.readModelContextLength({ id: 'a', max_model_len: 1048576 }),
+    1048576,
+    'vLLM and SGLang servers report their window as max_model_len'
+  );
 
   // The provider actually serving the model wins over the catalog-wide value.
   assert.equal(

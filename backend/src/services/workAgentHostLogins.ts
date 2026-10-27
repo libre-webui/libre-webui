@@ -147,6 +147,7 @@ export const WORK_AGENT_PROVIDER_HOSTS: Readonly<
   'zai-coding-plan': ['api.z.ai'],
   opencode: ['opencode.ai'],
   huggingface: ['router.huggingface.co'],
+  modal: ['inference.us-west.modal.direct'],
 };
 
 /** The variable each provider's key is read from when no login is saved. */
@@ -164,6 +165,7 @@ const PROVIDER_KEY_VARIABLES: Readonly<Record<string, readonly string[]>> = {
   'fireworks-ai': ['FIREWORKS_API_KEY'],
   moonshotai: ['MOONSHOT_API_KEY'],
   huggingface: ['HF_TOKEN'],
+  modal: ['MODAL_PROXY_TOKEN'],
 };
 
 // --- Shared helpers ------------------------------------------------------

@@ -13,8 +13,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   below GPT-6.1 Sol, is offered by the Codex provider and the Codex agent CLI,
   subject to the signed-in account's access. It is also in the bundled OpenAI
   provider for API keys and in the OpenRouter catalog (`openai/gpt-6.1-terra`).
+- **Modal provider**: a bundled Modal provider runs the open models on Modal's
+  Shared Endpoints (Kimi K3, GLM 5.3, DeepSeek V4.1 Flash, Qwen3.8-Max, Muse
+  Spark Open, Inkling, and more) in Chat and Work with a Modal proxy token
+  saved in Settings or set as `MODAL_PROXY_TOKEN`. It lists every endpoint the
+  token can reach, and keeps each conversation and Work run on one Modal
+  container so its prompt stays cached. A Dedicated Endpoint works by setting
+  its URL as the provider's endpoint. OpenCode in Work can use the same token
+  for its `modal/…` models.
 
 ### 🔧 Improvements
+
+- **Context windows from vLLM servers**: model listings that report
+  `max_model_len`, as vLLM and SGLang servers do, now give each model its
+  context window.
 
 ### 🐛 Bug Fixes
 

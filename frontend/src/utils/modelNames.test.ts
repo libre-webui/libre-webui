@@ -49,6 +49,31 @@ test('path ids read as a name, a vendor, and a tag', () => {
   });
 });
 
+test("Modal's model ids and endpoint hostnames read cleanly", () => {
+  assert.deepEqual(modelNameParts('meta-models/Muse-Spark-Open-816B-A42B'), {
+    name: 'Muse Spark Open 816B A42B',
+    vendor: 'Meta',
+  });
+  assert.deepEqual(modelNameParts('zai-org/GLM-5.3-Flash'), {
+    name: 'GLM 5.3 Flash',
+    vendor: 'Z.ai',
+  });
+  assert.deepEqual(modelNameParts('deepseek-ai/DeepSeek-V4.1-Flash'), {
+    name: 'DeepSeek V4.1 Flash',
+    vendor: 'DeepSeek',
+  });
+  assert.deepEqual(modelNameParts('thinkingmachines/Inkling-NVFP4'), {
+    name: 'Inkling NVFP4',
+    vendor: 'Thinking Machines',
+  });
+  assert.deepEqual(modelNameParts('kimi-chat.us-west.modal.direct'), {
+    name: 'Kimi Chat',
+  });
+  assert.deepEqual(modelNameParts('example.modal.direct'), {
+    name: 'example.modal.direct',
+  });
+});
+
 test('bare Ollama names stay exactly as typed', () => {
   assert.deepEqual(modelNameParts('llama3.2:3b'), { name: 'llama3.2:3b' });
   assert.deepEqual(modelNameParts('smollm2:latest'), {

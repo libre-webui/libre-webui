@@ -124,13 +124,51 @@ is sent with the same API key to the selected Region's
 only goes to that Region's two Bedrock hosts. Your account still needs access
 to the model in Amazon Bedrock.
 
+## Modal
+
+The bundled **Modal** provider calls Modal's shared inference router,
+`https://inference.us-west.modal.direct/v1`, with Chat Completions. It reaches
+the Shared Endpoints in your Modal workspace, which Modal bills per token.
+
+1. Create a Shared Endpoint for each model you want, from the **Endpoints** tab
+   in the Modal dashboard or with
+   `modal endpoint create --shared --model moonshotai/Kimi-K3`.
+2. Create a proxy token in the Modal dashboard's settings or with
+   `modal workspace proxy-tokens create`.
+3. Join the token ID and secret with a period, `wk-<id>.ws-<secret>`, and save
+   the result as the provider's API key, or set `MODAL_PROXY_TOKEN` on the
+   server.
+
+Libre WebUI then lists every model the token can reach from the router's
+`/v1/models`, with each model's context window when Modal reports one. An
+endpoint listed by its hostname, such as `kimi-chat.us-west.modal.direct`, reads
+as "Kimi Chat" in the model picker. Until the first listing arrives, the picker
+offers Modal's shared models: Kimi K3, GLM 5.3, GLM 5.3 Flash, DeepSeek V4.1
+Flash, Qwen3.8-Max, Muse Spark Open, and Inkling.
+
+Every request of one conversation carries the same `Modal-Routing-Affinity-Key`,
+derived from the model and the conversation's first message, so Modal routes it
+to the container that already holds the conversation's prompt in its cache.
+Work does the same for every step of a run's agent loop. Cached input tokens
+cost a fraction of the normal rate. When compaction rewrites the history, the
+key changes, as Modal recommends.
+
+For a Dedicated Endpoint, set the provider's **API Endpoint** to the endpoint's
+URL followed by `/v1/chat/completions`. Shared Endpoints limit concurrent
+requests per model and answer `429` above the limit.
+
+OpenCode in Work can use the same token. With `MODAL_PROXY_TOKEN` set on the
+server, or a Modal login saved with `opencode auth login`, a `modal/…` model
+runs in the sandbox, and the token is only ever sent to
+`inference.us-west.modal.direct`.
+
 ## Choose a Bundled or Imported Provider
 
 Libre WebUI includes definitions for OpenAI, Anthropic, Gemini, Groq, Mistral,
-DeepSeek, Meta, Amazon Bedrock, OpenRouter, Kimi Code by Moonshot AI, Hugging
-Face, GitHub Models, local MLX LM, and other model or media services. Start with
-a bundled entry when its protocol and authentication contract match the service
-you want to use.
+DeepSeek, Meta, Modal, Amazon Bedrock, OpenRouter, Kimi Code by Moonshot AI,
+Hugging Face, GitHub Models, local MLX LM, and other model or media services.
+Start with a bundled entry when its protocol and authentication contract match
+the service you want to use.
 
 For another compatible service, an administrator can import a plugin JSON
 definition. This minimal example describes an OpenAI-compatible gateway:

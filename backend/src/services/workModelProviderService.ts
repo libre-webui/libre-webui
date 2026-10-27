@@ -37,6 +37,7 @@ import type {
 import {
   getOpenAICompatibleSamplingParameters,
   openAICompatibleReasoningFields,
+  providerRoutingHeaders,
   resolveAnthropicThinking,
   resolveGeminiThinking,
   resolvePluginChatParameters,
@@ -861,6 +862,29 @@ export function buildPluginWorkPayload(
   variables: PluginVariables = {},
   apiMode: PluginApiMode = resolvePluginApiConfig(plugin, variables).apiMode,
   providerStateScope?: string
+): { payload: JsonObject; extraHeaders: Record<string, string> } {
+  const built = buildPluginWorkRequest(
+    plugin,
+    request,
+    variables,
+    apiMode,
+    providerStateScope
+  );
+  return {
+    payload: built.payload,
+    extraHeaders: {
+      ...built.extraHeaders,
+      ...providerRoutingHeaders(plugin, request.model, request.messages),
+    },
+  };
+}
+
+function buildPluginWorkRequest(
+  plugin: Plugin,
+  request: OllamaChatRequest,
+  variables: PluginVariables,
+  apiMode: PluginApiMode,
+  providerStateScope: string | undefined
 ): { payload: JsonObject; extraHeaders: Record<string, string> } {
   const options = (request.options || {}) as GenerationOptions;
   const params = resolvePluginChatParameters(options, variables);

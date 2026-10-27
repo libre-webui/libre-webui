@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 
+import { createHash } from 'crypto';
 import {
   bedrockAnthropicModelName,
   pluginChatProtocol,
@@ -704,6 +705,33 @@ function buildOpenAICompatibleChatPayload(
   };
 }
 
+/**
+ * Modal routes a request to the container most likely to hold its prompt
+ * prefix in cache when every request of a conversation carries the same
+ * `Modal-Routing-Affinity-Key`. The key is derived from what the prefix
+ * starts with, the model and the first user message, so it stays the same
+ * turn after turn and changes when compaction rewrites the history, which
+ * is when Modal says a new key belongs.
+ */
+export function providerRoutingHeaders(
+  plugin: Pick<Plugin, 'id'>,
+  model: string,
+  messages: ReadonlyArray<{ role: string; content?: unknown }>
+): Record<string, string> {
+  if (plugin.id !== 'modal') return {};
+  const first = messages.find(message => message.role === 'user');
+  if (!first) return {};
+  const content =
+    typeof first.content === 'string'
+      ? first.content
+      : JSON.stringify(first.content ?? '');
+  const key = createHash('sha256')
+    .update(JSON.stringify([model, content]))
+    .digest('hex')
+    .slice(0, 32);
+  return { 'Modal-Routing-Affinity-Key': key };
+}
+
 export function buildPluginChatPayload(
   plugin: Plugin,
   model: string,
@@ -713,6 +741,31 @@ export function buildPluginChatPayload(
   streamOverride?: boolean,
   apiMode: PluginApiMode = 'chat_completions',
   providerStateScope?: string
+): PluginChatPayloadResult {
+  const result = buildPluginChatRequest(
+    plugin,
+    model,
+    messages,
+    options,
+    pluginVars,
+    streamOverride,
+    apiMode,
+    providerStateScope
+  );
+  const routing = providerRoutingHeaders(plugin, model, messages);
+  if (Object.keys(routing).length === 0) return result;
+  return { ...result, headers: { ...result.headers, ...routing } };
+}
+
+function buildPluginChatRequest(
+  plugin: Plugin,
+  model: string,
+  messages: ChatMessage[],
+  options: GenerationOptions,
+  pluginVars: PluginVariables,
+  streamOverride: boolean | undefined,
+  apiMode: PluginApiMode,
+  providerStateScope: string | undefined
 ): PluginChatPayloadResult {
   const params = resolvePluginChatParameters(options, pluginVars);
   if (streamOverride !== undefined) {

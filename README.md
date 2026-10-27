@@ -166,6 +166,7 @@ Supported integrations include:
 - Mistral
 - DeepSeek
 - Meta (Muse models)
+- Modal
 - Amazon Bedrock
 - OpenRouter
 - Hugging Face
