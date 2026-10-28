@@ -450,6 +450,7 @@
     },
     "controls": {
       "title": "Chatbediening",
+      "steeredLabel": "Chatinstellingen (sturing aan)",
       "systemPrompt": "Systeemprompt",
       "systemPromptPlaceholder": "Instructies die alleen voor deze chat gelden…",
       "advancedParams": "Geavanceerde parameters",
@@ -474,7 +475,16 @@
       "compaction": "Contextcompactie",
       "compactionDescription": "Wanneer de server lange gesprekken compacteert, kan deze chat zich daarvan uitsluiten en zijn volledige geschiedenis behouden.",
       "compactionDefault": "Serverstandaard",
-      "compactionOff": "Uit voor deze chat"
+      "compactionOff": "Uit voor deze chat",
+      "steering": {
+        "title": "Sturing",
+        "description": "Vectoren die de server van dit model aanbiedt. Elke vector verschuift de activaties van het model bij elk token, dus het effect blijft de hele chat. Sterktes rond 0,2 tot 0,5 houden het best over een gesprek.",
+        "checking": "Server van dit model controleren op stuurvectoren…",
+        "filter": "Vectoren filteren",
+        "remove": "{{name}} verwijderen",
+        "noMatches": "Geen vectoren gevonden.",
+        "otherGroup": "Overig"
+      }
     },
     "message": {
       "sources": "Bronnen",
@@ -1945,6 +1955,7 @@
         "web-search": "Zoeken op het web",
         "strands": "Strands-engine",
         "tools": "Tools",
+        "steering": "Modelsturing",
         "stt": "Spraak naar tekst",
         "tts": "Tekst naar spraak",
         "voice-mode": "Spraakmodus",
@@ -1976,6 +1987,13 @@
       "description": "Iedereen toestaan gereedschapsservers aan te roepen. Staat dit uit, dan mogen alleen beheerders dat.",
       "saved": "Gereedschapstoegang bijgewerkt",
       "saveFailed": "De gereedschapstoegang kon niet worden bijgewerkt.",
+      "lockedByEnv": "Vergrendeld door een omgevingsvariabele op deze server."
+    },
+    "steering": {
+      "title": "Modelsturing",
+      "description": "Iedereen modellen laten sturen waarvan de server stuurvectoren aanbiedt. Uit betekent dat alleen beheerders dat kunnen.",
+      "saved": "Toegang tot sturing bijgewerkt",
+      "saveFailed": "Kon de toegang tot sturing niet bijwerken.",
       "lockedByEnv": "Vergrendeld door een omgevingsvariabele op deze server."
     },
     "voice": {

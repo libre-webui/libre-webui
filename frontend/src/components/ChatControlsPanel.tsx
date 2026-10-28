@@ -20,6 +20,7 @@ import { useTranslation } from 'react-i18next';
 import { X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { Button } from '@/components/ui';
+import { ChatSteeringControls } from '@/components/ChatSteeringControls';
 import { useAppStore } from '@/store/appStore';
 import { useChatStore } from '@/store/chatStore';
 import { chatApi, ollamaApi } from '@/utils/api';
@@ -95,6 +96,20 @@ export const ChatControlsPanel: React.FC<ChatControlsPanelProps> = ({
   const modelEntry = useChatStore(state =>
     state.models.find(candidate => candidate.name === model)
   );
+  const selectedProviderType = useChatStore(
+    state => state.selectedProviderType
+  );
+  const selectedProviderId = useChatStore(state => state.selectedProviderId);
+  // Steering lives on llama.cpp servers, which Libre reaches as a provider
+  // plugin: a chat pinned to one, or an unpinned chat on a plugin model.
+  const providerType = session ? session.providerType : selectedProviderType;
+  const providerId =
+    providerType === 'plugin'
+      ? ((session ? session.providerId : selectedProviderId) ?? undefined)
+      : undefined;
+  const steeringPossible =
+    providerType === 'plugin' ||
+    (!providerType && Boolean(modelEntry?.isPlugin));
   // Only a local Ollama model has defaults to read: agents, personas, and
   // plugin models are names Ollama has never heard of.
   const ollamaModel =
@@ -183,6 +198,15 @@ export const ChatControlsPanel: React.FC<ChatControlsPanelProps> = ({
     );
     setCompactionAllowed(session?.settings?.compaction !== false);
   }
+
+  const setSteeringOverride = (next: Record<string, number> | undefined) => {
+    setOverrides(previous => {
+      const updated = { ...previous };
+      if (next) updated.steering = next;
+      else delete updated.steering;
+      return updated;
+    });
+  };
 
   // A chat's own thinking setting. Absent means the model decides, which is
   // why the choice is removed rather than stored as a value.
@@ -388,6 +412,14 @@ export const ChatControlsPanel: React.FC<ChatControlsPanelProps> = ({
             {t('chat.controls.thinkingDescription')}
           </p>
         </div>
+
+        <ChatSteeringControls
+          model={model}
+          providerId={providerId}
+          enabled={open && steeringPossible}
+          value={overrides.steering}
+          onChange={setSteeringOverride}
+        />
 
         {session && (
           <div>

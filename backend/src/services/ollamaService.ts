@@ -76,9 +76,15 @@ export function sanitizeOptionsForModel(
   rawOptions: Record<string, unknown> | undefined
 ): Record<string, unknown> | undefined {
   // `think` rides along with the generation options so a chat can carry it,
-  // but Ollama takes it beside them, not inside.
-  const { options } = splitThinkingOption(rawOptions);
-  if (!options) return options;
+  // but Ollama takes it beside them, not inside. Steering is a llama.cpp
+  // server feature Ollama has no option for.
+  const { options: thinkless } = splitThinkingOption(rawOptions);
+  if (!thinkless) return thinkless;
+  let options = thinkless;
+  if ('steering' in options) {
+    const { steering: _steering, ...rest } = options;
+    options = rest;
+  }
   const isInvalid = (value: unknown) => typeof value === 'number' && value <= 0;
   const dropNumCtx = isInvalid(options.num_ctx);
   const dropNumPredict = isCloudModel(model) && isInvalid(options.num_predict);

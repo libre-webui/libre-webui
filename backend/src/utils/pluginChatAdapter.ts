@@ -701,6 +701,11 @@ function buildOpenAICompatibleChatPayload(
       stream: params.shouldStream,
       ...openAICompatibleReasoningFields(plugin, options.think),
       ...(tools ? { tools } : {}),
+      // Only a server that listed these vectors gets here with any: the
+      // plugin service drops the mix for every other provider.
+      ...(options.steering && Object.keys(options.steering).length > 0
+        ? { steering: options.steering }
+        : {}),
     },
   };
 }

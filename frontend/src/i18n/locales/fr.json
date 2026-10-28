@@ -450,6 +450,7 @@
     },
     "controls": {
       "title": "Contrôles de la discussion",
+      "steeredLabel": "Contrôles de la discussion (pilotage actif)",
       "systemPrompt": "Prompt système",
       "systemPromptPlaceholder": "Instructions valables uniquement pour cette discussion…",
       "advancedParams": "Paramètres avancés",
@@ -474,7 +475,16 @@
       "compaction": "Compactage du contexte",
       "compactionDescription": "Quand le serveur compacte les longues conversations, cette discussion peut s’en exclure et garder tout son historique.",
       "compactionDefault": "Réglage du serveur",
-      "compactionOff": "Désactivé pour cette discussion"
+      "compactionOff": "Désactivé pour cette discussion",
+      "steering": {
+        "title": "Pilotage",
+        "description": "Vecteurs proposés par le serveur de ce modèle. Chacun décale les activations du modèle à chaque token, donc l'effet dure toute la discussion. Des intensités de 0,2 à 0,5 tiennent le mieux sur une conversation.",
+        "checking": "Recherche de vecteurs de pilotage sur le serveur de ce modèle…",
+        "filter": "Filtrer les vecteurs",
+        "remove": "Retirer {{name}}",
+        "noMatches": "Aucun vecteur ne correspond.",
+        "otherGroup": "Autres"
+      }
     },
     "message": {
       "sources": "Sources",
@@ -1945,6 +1955,7 @@
         "web-search": "Recherche web",
         "strands": "Moteur Strands",
         "tools": "Outils",
+        "steering": "Pilotage du modèle",
         "stt": "Reconnaissance vocale",
         "tts": "Synthèse vocale",
         "voice-mode": "Mode vocal",
@@ -1976,6 +1987,13 @@
       "description": "Autoriser tout le monde à appeler les serveurs d'outils. Si c'est désactivé, seuls les administrateurs le peuvent.",
       "saved": "Accès aux outils mis à jour",
       "saveFailed": "Impossible de mettre à jour l'accès aux outils.",
+      "lockedByEnv": "Verrouillé par une variable d'environnement sur ce serveur."
+    },
+    "steering": {
+      "title": "Pilotage du modèle",
+      "description": "Autoriser tout le monde à piloter les modèles dont le serveur propose des vecteurs de pilotage. Désactivé, seuls les administrateurs le peuvent.",
+      "saved": "Accès au pilotage mis à jour",
+      "saveFailed": "Impossible de mettre à jour l'accès au pilotage.",
       "lockedByEnv": "Verrouillé par une variable d'environnement sur ce serveur."
     },
     "voice": {

@@ -450,6 +450,7 @@
     },
     "controls": {
       "title": "Ustawienia czatu",
+      "steeredLabel": "Ustawienia czatu (sterowanie włączone)",
       "systemPrompt": "Prompt systemowy",
       "systemPromptPlaceholder": "Instrukcje obowiązujące tylko w tym czacie…",
       "advancedParams": "Parametry zaawansowane",
@@ -474,7 +475,16 @@
       "compaction": "Kompaktowanie kontekstu",
       "compactionDescription": "Gdy serwer kompaktuje długie rozmowy, ten czat może zostać z tego wyłączony i zachować pełną historię.",
       "compactionDefault": "Domyślne ustawienie serwera",
-      "compactionOff": "Wyłączone dla tego czatu"
+      "compactionOff": "Wyłączone dla tego czatu",
+      "steering": {
+        "title": "Sterowanie",
+        "description": "Wektory, które oferuje serwer tego modelu. Każdy przesuwa aktywacje modelu przy każdym tokenie, więc efekt trwa przez cały czat. Siły około 0,2 do 0,5 utrzymują się najlepiej w rozmowie.",
+        "checking": "Sprawdzanie wektorów sterujących na serwerze tego modelu…",
+        "filter": "Filtruj wektory",
+        "remove": "Usuń {{name}}",
+        "noMatches": "Brak pasujących wektorów.",
+        "otherGroup": "Inne"
+      }
     },
     "message": {
       "sources": "Źródła",
@@ -1945,6 +1955,7 @@
         "web-search": "Wyszukiwanie w sieci",
         "strands": "Silnik Strands",
         "tools": "Narzędzia",
+        "steering": "Sterowanie modelem",
         "stt": "Mowa na tekst",
         "tts": "Tekst na mowę",
         "voice-mode": "Tryb głosowy",
@@ -1976,6 +1987,13 @@
       "description": "Pozwól wszystkim wywoływać serwery narzędzi. Gdy jest wyłączone, mogą tylko administratorzy.",
       "saved": "Dostęp do narzędzi zaktualizowany",
       "saveFailed": "Nie udało się zaktualizować dostępu do narzędzi.",
+      "lockedByEnv": "Zablokowane zmienną środowiskową na tym serwerze."
+    },
+    "steering": {
+      "title": "Sterowanie modelem",
+      "description": "Pozwól wszystkim sterować modelami, których serwer oferuje wektory sterujące. Gdy wyłączone, mogą to robić tylko administratorzy.",
+      "saved": "Zaktualizowano dostęp do sterowania",
+      "saveFailed": "Nie udało się zaktualizować dostępu do sterowania.",
       "lockedByEnv": "Zablokowane zmienną środowiskową na tym serwerze."
     },
     "voice": {

@@ -224,6 +224,8 @@ export class FollowUpService {
       throw new Error('The selected follow-up provider is unavailable.');
     }
     const prompt = buildFollowUpPrompt(userMessage, assistantMessage);
+    // Suggestions are written in the user's voice, never a steered one.
+    const { steering: _steering, ...mergedOptions } = target.mergedOptions;
 
     if (target.activePlugin) {
       const pluginResponse = await this.pluginService.executePluginRequest(
@@ -238,7 +240,7 @@ export class FollowUpService {
         ],
         // Suggestions are a side task; they should not spend the chat's
         // reasoning budget, whatever it is set to.
-        { ...target.mergedOptions, think: false },
+        { ...mergedOptions, think: false },
         userId,
         target.activePlugin.id
       );
@@ -250,7 +252,7 @@ export class FollowUpService {
 
     // Ollama takes the thinking setting beside the options, never inside
     // them, and this call answers it for itself below.
-    const { think: _think, ...ollamaOptions } = target.mergedOptions;
+    const { think: _think, ...ollamaOptions } = mergedOptions;
 
     const response = await this.ollamaService.generateResponse({
       model: target.actualModelName,

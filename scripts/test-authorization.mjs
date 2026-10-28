@@ -248,6 +248,7 @@ test('explainEffectiveAccess returns groups, feature booleans, and grants', asyn
     'web-search': false,
     strands: false,
     tools: false,
+    steering: false,
     stt: true,
     tts: true,
     'voice-mode': true,

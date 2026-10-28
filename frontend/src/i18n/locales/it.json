@@ -450,6 +450,7 @@
     },
     "controls": {
       "title": "Controlli della chat",
+      "steeredLabel": "Controlli della chat (orientamento attivo)",
       "systemPrompt": "Prompt di sistema",
       "systemPromptPlaceholder": "Istruzioni valide solo per questa chat…",
       "advancedParams": "Parametri avanzati",
@@ -474,7 +475,16 @@
       "compaction": "Compattazione del contesto",
       "compactionDescription": "Quando il server compatta le conversazioni lunghe, questa chat può esserne esclusa e mantenere l’intera cronologia.",
       "compactionDefault": "Predefinito del server",
-      "compactionOff": "Disattivata per questa chat"
+      "compactionOff": "Disattivata per questa chat",
+      "steering": {
+        "title": "Orientamento",
+        "description": "Vettori offerti dal server di questo modello. Ognuno sposta le attivazioni del modello a ogni token, quindi l'effetto dura per tutta la chat. Intensità tra 0,2 e 0,5 reggono meglio lungo una conversazione.",
+        "checking": "Ricerca dei vettori di orientamento sul server di questo modello…",
+        "filter": "Filtra i vettori",
+        "remove": "Rimuovi {{name}}",
+        "noMatches": "Nessun vettore corrisponde.",
+        "otherGroup": "Altro"
+      }
     },
     "message": {
       "sources": "Fonti",
@@ -1945,6 +1955,7 @@
         "web-search": "Ricerca web",
         "strands": "Motore Strands",
         "tools": "Strumenti",
+        "steering": "Orientamento del modello",
         "stt": "Da voce a testo",
         "tts": "Da testo a voce",
         "voice-mode": "Modalità vocale",
@@ -1976,6 +1987,13 @@
       "description": "Consenti a tutti di chiamare i server di strumenti. Se è disattivato possono farlo solo gli amministratori.",
       "saved": "Accesso agli strumenti aggiornato",
       "saveFailed": "Impossibile aggiornare l'accesso agli strumenti.",
+      "lockedByEnv": "Bloccato da una variabile d'ambiente su questo server."
+    },
+    "steering": {
+      "title": "Orientamento del modello",
+      "description": "Consenti a tutti di orientare i modelli il cui server offre vettori di orientamento. Se disattivato, solo gli amministratori possono farlo.",
+      "saved": "Accesso all'orientamento aggiornato",
+      "saveFailed": "Impossibile aggiornare l'accesso all'orientamento.",
       "lockedByEnv": "Bloccato da una variabile d'ambiente su questo server."
     },
     "voice": {

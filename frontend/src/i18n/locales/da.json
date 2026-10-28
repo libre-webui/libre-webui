@@ -450,6 +450,7 @@
     },
     "controls": {
       "title": "Chatstyring",
+      "steeredLabel": "Chatindstillinger (styring slået til)",
       "systemPrompt": "Systemprompt",
       "systemPromptPlaceholder": "Instruktioner der kun gælder denne chat…",
       "advancedParams": "Avancerede parametre",
@@ -474,7 +475,16 @@
       "compaction": "Komprimering af kontekst",
       "compactionDescription": "Når serveren komprimerer lange samtaler, kan denne chat fravælge det og beholde hele sin historik.",
       "compactionDefault": "Serverens standard",
-      "compactionOff": "Slået fra for denne chat"
+      "compactionOff": "Slået fra for denne chat",
+      "steering": {
+        "title": "Styring",
+        "description": "Vektorer, som denne models server tilbyder. Hver af dem forskyder modellens aktiveringer ved hvert token, så hele chatten beholder effekten. Styrker omkring 0,2 til 0,5 holder bedst gennem en samtale.",
+        "checking": "Søger efter styringsvektorer på denne models server…",
+        "filter": "Filtrér vektorer",
+        "remove": "Fjern {{name}}",
+        "noMatches": "Ingen vektorer matcher.",
+        "otherGroup": "Andet"
+      }
     },
     "message": {
       "sources": "Kilder",
@@ -1945,6 +1955,7 @@
         "web-search": "Websøgning",
         "strands": "Strands-motor",
         "tools": "Værktøjer",
+        "steering": "Modelstyring",
         "stt": "Tale til tekst",
         "tts": "Tekst til tale",
         "voice-mode": "Stemmetilstand",
@@ -1976,6 +1987,13 @@
       "description": "Tillad alle at kalde værktøjsservere. Når det er slået fra, kan kun administratorer.",
       "saved": "Værktøjsadgang opdateret",
       "saveFailed": "Værktøjsadgangen kunne ikke opdateres.",
+      "lockedByEnv": "Låst af en miljøvariabel på denne server."
+    },
+    "steering": {
+      "title": "Modelstyring",
+      "description": "Lad alle styre modeller, hvis server tilbyder styringsvektorer. Når det er slået fra, kan kun administratorer.",
+      "saved": "Adgang til styring opdateret",
+      "saveFailed": "Kunne ikke opdatere adgang til styring.",
       "lockedByEnv": "Låst af en miljøvariabel på denne server."
     },
     "voice": {

@@ -450,6 +450,7 @@
     },
     "controls": {
       "title": "Kontrol obrolan",
+      "steeredLabel": "Kontrol obrolan (pengarahan aktif)",
       "systemPrompt": "Prompt sistem",
       "systemPromptPlaceholder": "Instruksi yang hanya berlaku untuk obrolan ini…",
       "advancedParams": "Parameter lanjutan",
@@ -474,7 +475,16 @@
       "compaction": "Pemadatan konteks",
       "compactionDescription": "Saat server memadatkan percakapan panjang, obrolan ini dapat memilih keluar dan menyimpan riwayat lengkapnya.",
       "compactionDefault": "Bawaan server",
-      "compactionOff": "Nonaktif untuk obrolan ini"
+      "compactionOff": "Nonaktif untuk obrolan ini",
+      "steering": {
+        "title": "Pengarahan",
+        "description": "Vektor yang ditawarkan server model ini. Masing-masing menggeser aktivasi model pada setiap token, sehingga efeknya bertahan sepanjang obrolan. Kekuatan sekitar 0,2 hingga 0,5 paling stabil dalam percakapan.",
+        "checking": "Memeriksa vektor pengarahan di server model ini…",
+        "filter": "Saring vektor",
+        "remove": "Hapus {{name}}",
+        "noMatches": "Tidak ada vektor yang cocok.",
+        "otherGroup": "Lainnya"
+      }
     },
     "message": {
       "sources": "Sumber",
@@ -1945,6 +1955,7 @@
         "web-search": "Pencarian web",
         "strands": "Mesin Strands",
         "tools": "Alat",
+        "steering": "Pengarahan model",
         "stt": "Ucapan ke teks",
         "tts": "Teks ke ucapan",
         "voice-mode": "Mode suara",
@@ -1976,6 +1987,13 @@
       "description": "Izinkan semua orang memanggil server alat. Saat mati, hanya administrator yang bisa.",
       "saved": "Akses alat diperbarui",
       "saveFailed": "Akses alat tidak dapat diperbarui.",
+      "lockedByEnv": "Terkunci oleh variabel lingkungan di server ini."
+    },
+    "steering": {
+      "title": "Pengarahan model",
+      "description": "Izinkan semua orang mengarahkan model yang servernya menawarkan vektor pengarahan. Jika nonaktif, hanya administrator yang bisa.",
+      "saved": "Akses pengarahan diperbarui",
+      "saveFailed": "Tidak dapat memperbarui akses pengarahan.",
       "lockedByEnv": "Terkunci oleh variabel lingkungan di server ini."
     },
     "voice": {

@@ -360,6 +360,26 @@ chat that moves between models never errors over it. When a global or pinned
 default is set, the composer button shows the level the next reply actually
 runs with, and the "Default" entry names what it currently resolves to.
 
+## Steer a Local Model
+
+A llama.cpp server built with per-request steering lists its control vectors at
+`GET /steering` and adds a request's `"steering": {"name": strength}` mix to the
+model's activations on every token. When a chat runs on such a server through
+the llama.cpp provider, or a provider an administrator added, the chat controls
+panel shows a **Steering** section with one slider per vector, grouped the way
+the server groups them. The mix belongs to the conversation, so every reply in
+it runs steered, and the controls button carries a dot while it is on.
+
+Libre looks for the list beside the provider's API root, then through
+llama-swap's `/upstream/<model>/` passthrough, and only when the panel opens:
+on llama-swap, asking can load that model. A server is sent only the vectors
+it listed, so a chat that moves to another model keeps its mix stored but sends
+nothing. Strengths around 0.2 to 0.5 hold best over a
+conversation, because the effect compounds as steered replies fill the context.
+
+Steering is admins-only by default. The **Model steering** card in User
+Management > Access opens it to everyone, and `STEERING_ACCESS_MODE` pins it.
+
 ## Watch the Context Window
 
 The ring beside the model name fills as the conversation grows. Hover it for how

@@ -450,6 +450,7 @@
     },
     "controls": {
       "title": "聊天控制",
+      "steeredLabel": "聊天设置（引导已开启）",
       "systemPrompt": "系统提示词",
       "systemPromptPlaceholder": "仅适用于此聊天的指令…",
       "advancedParams": "高级参数",
@@ -474,7 +475,16 @@
       "compaction": "上下文压缩",
       "compactionDescription": "当服务器压缩长对话时，此对话可以不参与并保留完整历史。",
       "compactionDefault": "服务器默认",
-      "compactionOff": "此对话中关闭"
+      "compactionOff": "此对话中关闭",
+      "steering": {
+        "title": "引导",
+        "description": "此模型的服务器提供的向量。每个向量都会在每个 token 上偏移模型的激活，因此效果贯穿整个聊天。在整段对话中，0.2 到 0.5 左右的强度最稳定。",
+        "checking": "正在检查此模型服务器上的引导向量…",
+        "filter": "筛选向量",
+        "remove": "移除 {{name}}",
+        "noMatches": "没有匹配的向量。",
+        "otherGroup": "其他"
+      }
     },
     "message": {
       "sources": "来源",
@@ -1945,6 +1955,7 @@
         "web-search": "网络搜索",
         "strands": "Strands 引擎",
         "tools": "工具",
+        "steering": "模型引导",
         "stt": "语音转文字",
         "tts": "文字转语音",
         "voice-mode": "语音模式",
@@ -1976,6 +1987,13 @@
       "description": "允许所有人调用工具服务器。关闭后，只有管理员可以。",
       "saved": "工具访问权限已更新",
       "saveFailed": "无法更新工具访问权限。",
+      "lockedByEnv": "已被本服务器上的环境变量锁定。"
+    },
+    "steering": {
+      "title": "模型引导",
+      "description": "允许所有人引导服务器提供引导向量的模型。关闭时仅管理员可以使用。",
+      "saved": "引导权限已更新",
+      "saveFailed": "无法更新引导权限。",
       "lockedByEnv": "已被本服务器上的环境变量锁定。"
     },
     "voice": {

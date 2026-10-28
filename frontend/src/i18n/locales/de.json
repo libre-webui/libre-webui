@@ -450,6 +450,7 @@
     },
     "controls": {
       "title": "Chat-Steuerung",
+      "steeredLabel": "Chat-Steuerung (Lenkung aktiv)",
       "systemPrompt": "Systemprompt",
       "systemPromptPlaceholder": "Anweisungen nur für diesen Chat…",
       "advancedParams": "Erweiterte Parameter",
@@ -474,7 +475,16 @@
       "compaction": "Kontextverdichtung",
       "compactionDescription": "Wenn der Server lange Gespräche verdichtet, kann dieser Chat sich ausnehmen und seinen vollen Verlauf behalten.",
       "compactionDefault": "Serverstandard",
-      "compactionOff": "Für diesen Chat aus"
+      "compactionOff": "Für diesen Chat aus",
+      "steering": {
+        "title": "Lenkung",
+        "description": "Vektoren, die der Server dieses Modells anbietet. Jeder verschiebt die Aktivierungen des Modells bei jedem Token, sodass der Effekt den ganzen Chat über anhält. Stärken um 0,2 bis 0,5 halten über ein Gespräch am besten.",
+        "checking": "Suche auf dem Server dieses Modells nach Lenkungsvektoren…",
+        "filter": "Vektoren filtern",
+        "remove": "{{name}} entfernen",
+        "noMatches": "Keine Vektoren gefunden.",
+        "otherGroup": "Sonstige"
+      }
     },
     "message": {
       "sources": "Quellen",
@@ -1945,6 +1955,7 @@
         "web-search": "Websuche",
         "strands": "Strands-Engine",
         "tools": "Werkzeuge",
+        "steering": "Modell-Lenkung",
         "stt": "Sprache zu Text",
         "tts": "Text zu Sprache",
         "voice-mode": "Sprachmodus",
@@ -1976,6 +1987,13 @@
       "description": "Allen erlauben, Werkzeugserver aufzurufen. Ist das aus, dürfen es nur Administratoren.",
       "saved": "Werkzeugzugriff aktualisiert",
       "saveFailed": "Der Werkzeugzugriff konnte nicht aktualisiert werden.",
+      "lockedByEnv": "Durch eine Umgebungsvariable auf diesem Server gesperrt."
+    },
+    "steering": {
+      "title": "Modell-Lenkung",
+      "description": "Allen erlauben, Modelle zu lenken, deren Server Lenkungsvektoren anbietet. Wenn aus, können das nur Administratoren.",
+      "saved": "Zugriff auf Lenkung aktualisiert",
+      "saveFailed": "Zugriff auf Lenkung konnte nicht aktualisiert werden.",
       "lockedByEnv": "Durch eine Umgebungsvariable auf diesem Server gesperrt."
     },
     "voice": {

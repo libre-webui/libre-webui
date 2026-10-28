@@ -450,6 +450,7 @@
     },
     "controls": {
       "title": "채팅 컨트롤",
+      "steeredLabel": "채팅 설정 (스티어링 켜짐)",
       "systemPrompt": "시스템 프롬프트",
       "systemPromptPlaceholder": "이 채팅에만 적용되는 지시사항…",
       "advancedParams": "고급 매개변수",
@@ -474,7 +475,16 @@
       "compaction": "컨텍스트 압축",
       "compactionDescription": "서버가 긴 대화를 압축할 때 이 채팅은 제외되어 전체 기록을 유지할 수 있습니다.",
       "compactionDefault": "서버 기본값",
-      "compactionOff": "이 채팅에서는 끔"
+      "compactionOff": "이 채팅에서는 끔",
+      "steering": {
+        "title": "스티어링",
+        "description": "이 모델의 서버가 제공하는 벡터입니다. 각 벡터는 모든 토큰에서 모델의 활성화를 이동시키므로 효과가 채팅 전체에 유지됩니다. 대화 내내 0.2~0.5 정도의 강도가 가장 잘 유지됩니다.",
+        "checking": "이 모델의 서버에서 스티어링 벡터를 확인하는 중…",
+        "filter": "벡터 필터",
+        "remove": "{{name}} 제거",
+        "noMatches": "일치하는 벡터가 없습니다.",
+        "otherGroup": "기타"
+      }
     },
     "message": {
       "sources": "출처",
@@ -1945,6 +1955,7 @@
         "web-search": "웹 검색",
         "strands": "Strands 엔진",
         "tools": "도구",
+        "steering": "모델 스티어링",
         "stt": "음성 인식",
         "tts": "음성 합성",
         "voice-mode": "음성 모드",
@@ -1976,6 +1987,13 @@
       "description": "모두가 도구 서버를 호출할 수 있게 합니다. 꺼 두면 관리자만 호출할 수 있습니다.",
       "saved": "도구 접근 권한을 업데이트했습니다",
       "saveFailed": "도구 접근 권한을 업데이트하지 못했습니다.",
+      "lockedByEnv": "이 서버의 환경 변수로 잠겨 있습니다."
+    },
+    "steering": {
+      "title": "모델 스티어링",
+      "description": "스티어링 벡터를 제공하는 서버의 모델을 모두가 스티어링할 수 있게 합니다. 끄면 관리자만 사용할 수 있습니다.",
+      "saved": "스티어링 접근 권한이 업데이트되었습니다",
+      "saveFailed": "스티어링 접근 권한을 업데이트할 수 없습니다.",
       "lockedByEnv": "이 서버의 환경 변수로 잠겨 있습니다."
     },
     "voice": {

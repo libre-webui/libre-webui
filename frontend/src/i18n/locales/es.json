@@ -450,6 +450,7 @@
     },
     "controls": {
       "title": "Controles del chat",
+      "steeredLabel": "Controles del chat (direccionamiento activo)",
       "systemPrompt": "Prompt del sistema",
       "systemPromptPlaceholder": "Instrucciones que solo se aplican a este chat…",
       "advancedParams": "Parámetros avanzados",
@@ -474,7 +475,16 @@
       "compaction": "Compactación del contexto",
       "compactionDescription": "Cuando el servidor compacta conversaciones largas, este chat puede quedar fuera y conservar todo su historial.",
       "compactionDefault": "Predeterminado del servidor",
-      "compactionOff": "Desactivada en este chat"
+      "compactionOff": "Desactivada en este chat",
+      "steering": {
+        "title": "Direccionamiento",
+        "description": "Vectores que ofrece el servidor de este modelo. Cada uno desplaza las activaciones del modelo en cada token, así que el efecto dura todo el chat. Las intensidades entre 0,2 y 0,5 se mantienen mejor a lo largo de una conversación.",
+        "checking": "Buscando vectores de direccionamiento en el servidor de este modelo…",
+        "filter": "Filtrar vectores",
+        "remove": "Quitar {{name}}",
+        "noMatches": "Ningún vector coincide.",
+        "otherGroup": "Otros"
+      }
     },
     "message": {
       "sources": "Fuentes",
@@ -1945,6 +1955,7 @@
         "web-search": "Búsqueda web",
         "strands": "Motor Strands",
         "tools": "Herramientas",
+        "steering": "Direccionamiento del modelo",
         "stt": "Voz a texto",
         "tts": "Texto a voz",
         "voice-mode": "Modo de voz",
@@ -1976,6 +1987,13 @@
       "description": "Permitir que todos llamen a servidores de herramientas. Si está desactivado, solo los administradores pueden.",
       "saved": "Acceso a herramientas actualizado",
       "saveFailed": "No se pudo actualizar el acceso a herramientas.",
+      "lockedByEnv": "Bloqueado por una variable de entorno en este servidor."
+    },
+    "steering": {
+      "title": "Direccionamiento del modelo",
+      "description": "Permitir que todos dirijan los modelos cuyo servidor ofrece vectores de direccionamiento. Si está desactivado, solo los administradores pueden.",
+      "saved": "Acceso al direccionamiento actualizado",
+      "saveFailed": "No se pudo actualizar el acceso al direccionamiento.",
       "lockedByEnv": "Bloqueado por una variable de entorno en este servidor."
     },
     "voice": {

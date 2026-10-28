@@ -450,6 +450,7 @@
     },
     "controls": {
       "title": "Chat controls",
+      "steeredLabel": "Chat controls (steering on)",
       "systemPrompt": "System prompt",
       "systemPromptPlaceholder": "Instructions that apply only to this chat…",
       "advancedParams": "Advanced parameters",
@@ -474,7 +475,16 @@
       "compaction": "Context compaction",
       "compactionDescription": "When the server compacts long conversations, this chat can opt out and keep its full history.",
       "compactionDefault": "Server default",
-      "compactionOff": "Off for this chat"
+      "compactionOff": "Off for this chat",
+      "steering": {
+        "title": "Steering",
+        "description": "Vectors this model's server offers. Each one shifts the model's activations on every token, so the whole chat keeps the effect. Strengths around 0.2 to 0.5 hold best over a conversation.",
+        "checking": "Checking this model's server for steering vectors…",
+        "filter": "Filter vectors",
+        "remove": "Remove {{name}}",
+        "noMatches": "No vectors match.",
+        "otherGroup": "Other"
+      }
     },
     "message": {
       "sources": "Sources",
@@ -1945,6 +1955,7 @@
         "web-search": "Web search",
         "strands": "Strands engine",
         "tools": "Tools",
+        "steering": "Model steering",
         "stt": "Speech to text",
         "tts": "Text to speech",
         "voice-mode": "Voice mode",
@@ -1976,6 +1987,13 @@
       "description": "Allow everyone to call tool servers. When off, only administrators can.",
       "saved": "Tool access updated",
       "saveFailed": "Could not update tool access.",
+      "lockedByEnv": "Locked by an environment variable on this server."
+    },
+    "steering": {
+      "title": "Model steering",
+      "description": "Allow everyone to steer models whose server offers steering vectors. When off, only administrators can.",
+      "saved": "Steering access updated",
+      "saveFailed": "Could not update steering access.",
       "lockedByEnv": "Locked by an environment variable on this server."
     },
     "voice": {

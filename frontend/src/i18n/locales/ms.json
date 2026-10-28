@@ -450,6 +450,7 @@
     },
     "controls": {
       "title": "Kawalan sembang",
+      "steeredLabel": "Kawalan sembang (pengemudian aktif)",
       "systemPrompt": "Prompt sistem",
       "systemPromptPlaceholder": "Arahan yang terpakai untuk sembang ini sahaja…",
       "advancedParams": "Parameter lanjutan",
@@ -474,7 +475,16 @@
       "compaction": "Pemadatan konteks",
       "compactionDescription": "Apabila pelayan memadatkan perbualan panjang, sembang ini boleh dikecualikan dan menyimpan sejarah penuhnya.",
       "compactionDefault": "Lalai pelayan",
-      "compactionOff": "Dimatikan untuk sembang ini"
+      "compactionOff": "Dimatikan untuk sembang ini",
+      "steering": {
+        "title": "Pengemudian",
+        "description": "Vektor yang ditawarkan oleh pelayan model ini. Setiap satu mengalihkan pengaktifan model pada setiap token, jadi kesannya kekal sepanjang sembang. Kekuatan sekitar 0.2 hingga 0.5 paling stabil sepanjang perbualan.",
+        "checking": "Menyemak vektor pengemudian pada pelayan model ini…",
+        "filter": "Tapis vektor",
+        "remove": "Alih keluar {{name}}",
+        "noMatches": "Tiada vektor yang sepadan.",
+        "otherGroup": "Lain-lain"
+      }
     },
     "message": {
       "sources": "Sumber",
@@ -1945,6 +1955,7 @@
         "web-search": "Carian web",
         "strands": "Enjin Strands",
         "tools": "Alat",
+        "steering": "Pengemudian model",
         "stt": "Ucapan ke teks",
         "tts": "Teks ke ucapan",
         "voice-mode": "Mod suara",
@@ -1976,6 +1987,13 @@
       "description": "Benarkan semua orang memanggil pelayan alat. Apabila dimatikan, hanya pentadbir boleh.",
       "saved": "Akses alat dikemas kini",
       "saveFailed": "Akses alat tidak dapat dikemas kini.",
+      "lockedByEnv": "Dikunci oleh pemboleh ubah persekitaran pada pelayan ini."
+    },
+    "steering": {
+      "title": "Pengemudian model",
+      "description": "Benarkan semua orang mengemudi model yang pelayannya menawarkan vektor pengemudian. Apabila dimatikan, hanya pentadbir yang boleh.",
+      "saved": "Akses pengemudian dikemas kini",
+      "saveFailed": "Tidak dapat mengemas kini akses pengemudian.",
       "lockedByEnv": "Dikunci oleh pemboleh ubah persekitaran pada pelayan ini."
     },
     "voice": {

@@ -338,6 +338,22 @@ export const ChatPage: React.FC = () => {
     state => state.setDraftSessionSettings
   );
   const welcomeThinking = draftSessionSettings.generationOptions?.think;
+  // A steered chat says so on its controls button, since the mix applies to
+  // every reply and is otherwise only visible inside the panel.
+  const steered = Object.keys(
+    (currentSession
+      ? currentSession.settings?.generationOptions?.steering
+      : draftSessionSettings.generationOptions?.steering) ?? {}
+  ).length;
+  const controlsLabel = steered
+    ? t('chat.controls.steeredLabel')
+    : t('chat.controls.title');
+  const steeredDot = steered ? (
+    <span
+      aria-hidden='true'
+      className='absolute -top-0.5 -end-0.5 h-2.5 w-2.5 rounded-full bg-primary-500 ring-2 ring-surface dark:ring-dark-100'
+    />
+  ) : null;
   const welcomeInheritedThinking = useAppStore(state => {
     const pinned = selectedModel
       ? state.preferences.modelGenerationOptions?.[selectedModel]?.think
@@ -867,11 +883,12 @@ export const ChatPage: React.FC = () => {
               controlsOpen && 'text-primary-600 dark:text-primary-400'
             )}
             type='button'
-            title={t('chat.controls.title')}
-            aria-label={t('chat.controls.title')}
+            title={controlsLabel}
+            aria-label={controlsLabel}
             aria-expanded={controlsOpen}
           >
             <SlidersHorizontal className='h-4 w-4' />
+            {steeredDot}
           </button>
 
           {/* Private Mode Button - Top Right Corner */}
@@ -1203,11 +1220,12 @@ export const ChatPage: React.FC = () => {
                 controlsOpen && 'text-primary-600 dark:text-primary-400'
               )}
               type='button'
-              title={t('chat.controls.title')}
-              aria-label={t('chat.controls.title')}
+              title={controlsLabel}
+              aria-label={controlsLabel}
               aria-expanded={controlsOpen}
             >
               <SlidersHorizontal className='h-3.5 w-3.5' />
+              {steeredDot}
             </button>
             {currentSession.settings?.forkedFrom && (
               <button

@@ -31,6 +31,7 @@ import {
   EmbeddingModel,
   OllamaEmbeddingsResponse,
   Plugin,
+  PluginApiMode,
   PluginStatus,
   PluginResponse,
   ChatMessage,
@@ -132,6 +133,13 @@ import {
   getPluginDefinitionFingerprint,
   matchesBundledPluginTrustAnchor,
 } from '../utils/pluginDefinitionTrust.js';
+import {
+  getSteeringList,
+  normalizeSteeringMix,
+  restrictSteeringMix,
+  userCanSteer,
+  type SteeringVector,
+} from './steeringService.js';
 import { encryptionService } from './encryptionService.js';
 import type { StoredPluginDefinition } from '../persistence/extensionTypes.js';
 
@@ -1051,6 +1059,108 @@ export class PluginService {
     );
     const { think: _think, ...rest } = options;
     return rest;
+  }
+
+  /**
+   * Steering is a llama.cpp server feature, so it is only ever looked for on
+   * the bundled llama.cpp provider and on providers an administrator added:
+   * a hosted API never offers it, and a plain chat request to one should
+   * not be preceded by a probe.
+   */
+  private canOfferSteering(
+    plugin: Plugin,
+    model: string,
+    apiMode: PluginApiMode
+  ): boolean {
+    return (
+      apiMode === 'chat_completions' &&
+      pluginChatProtocol(plugin, model) === 'openai' &&
+      (plugin.id === 'llama-cpp' || !matchesBundledPluginTrustAnchor(plugin))
+    );
+  }
+
+  private steeringCacheKey(
+    pluginId: string,
+    model: string,
+    endpoint: string,
+    userId?: string
+  ): string {
+    return [pluginId, userId || 'default', model, endpoint].join('\u0000');
+  }
+
+  /**
+   * A chat's steering mix, kept only when this user may steer, and then only
+   * the vectors the server behind the endpoint listed; with none left the
+   * request goes without the field.
+   */
+  private async applySteering(
+    plugin: Plugin,
+    model: string,
+    options: GenerationOptions,
+    apiMode: PluginApiMode,
+    endpoint: string,
+    headers: Record<string, string>,
+    userId?: string,
+    signal?: AbortSignal
+  ): Promise<GenerationOptions> {
+    if (!('steering' in options)) return options;
+    const { steering, ...rest } = options;
+    const mix = normalizeSteeringMix(steering);
+    if (
+      !mix ||
+      !this.canOfferSteering(plugin, model, apiMode) ||
+      !(await userCanSteer(userId))
+    ) {
+      return rest;
+    }
+    const vectors = await getSteeringList(
+      this.steeringCacheKey(plugin.id, model, endpoint, userId),
+      endpoint,
+      model,
+      headers,
+      signal
+    );
+    const applied = restrictSteeringMix(mix, vectors);
+    if (!applied) {
+      logger.warn(
+        `${model} on ${plugin.id} offers none of the requested steering vectors; sending the request unsteered.`
+      );
+      return rest;
+    }
+    return { ...rest, steering: applied };
+  }
+
+  /**
+   * The steering vectors the server behind this model offers, for the chat
+   * controls. Asking may load the model on a llama-swap proxy, so it happens
+   * only when someone opens the controls, never while listing models.
+   */
+  async getSteeringVectors(
+    model: string,
+    userId?: string,
+    pluginId?: string,
+    signal?: AbortSignal
+  ): Promise<SteeringVector[] | null> {
+    const plugin = await this.getActivePluginForModel(
+      model,
+      userId,
+      pluginId
+    ).catch(() => null);
+    if (!plugin) return null;
+    const pluginVars = await this.getPluginVariables(plugin, userId);
+    const { apiMode, endpoint } = resolvePluginApiConfig(plugin, pluginVars);
+    if (!this.canOfferSteering(plugin, model, apiMode)) return null;
+    const processedEndpoint = applyModelEndpointTemplate(endpoint, model);
+    assertSafePluginEndpoint(processedEndpoint);
+    const apiKey = await this.getApiKey(plugin, userId);
+    const headers = buildPluginAuthHeaders(plugin, apiKey, processedEndpoint);
+    return getSteeringList(
+      this.steeringCacheKey(plugin.id, model, processedEndpoint, userId),
+      processedEndpoint,
+      model,
+      headers,
+      signal
+    );
   }
 
   private ensurePluginsDirectory(): void {
@@ -2594,6 +2704,16 @@ export class PluginService {
       apiKey,
       processedEndpoint
     );
+    options = await this.applySteering(
+      activePlugin,
+      model,
+      options,
+      apiMode,
+      processedEndpoint,
+      headers,
+      userId,
+      signal
+    );
     const { payload, headers: payloadHeaders } = buildPluginChatPayload(
       activePlugin,
       model,
@@ -2764,6 +2884,16 @@ export class PluginService {
       activePlugin,
       apiKey,
       processedEndpoint
+    );
+    options = await this.applySteering(
+      activePlugin,
+      model,
+      options,
+      apiMode,
+      processedEndpoint,
+      headers,
+      userId,
+      signal
     );
     const pluginRequest = buildPluginChatPayload(
       activePlugin,

@@ -450,6 +450,7 @@
     },
     "controls": {
       "title": "Controlos do chat",
+      "steeredLabel": "Controles do chat (direcionamento ativo)",
       "systemPrompt": "Prompt de sistema",
       "systemPromptPlaceholder": "Instruções que se aplicam apenas a este chat…",
       "advancedParams": "Parâmetros avançados",
@@ -474,7 +475,16 @@
       "compaction": "Compactação de contexto",
       "compactionDescription": "Quando o servidor compacta conversas longas, este chat pode ficar de fora e manter todo o seu histórico.",
       "compactionDefault": "Padrão do servidor",
-      "compactionOff": "Desativada neste chat"
+      "compactionOff": "Desativada neste chat",
+      "steering": {
+        "title": "Direcionamento",
+        "description": "Vetores que o servidor deste modelo oferece. Cada um desloca as ativações do modelo em cada token, então o efeito dura o chat inteiro. Intensidades entre 0,2 e 0,5 se mantêm melhor ao longo de uma conversa.",
+        "checking": "Procurando vetores de direcionamento no servidor deste modelo…",
+        "filter": "Filtrar vetores",
+        "remove": "Remover {{name}}",
+        "noMatches": "Nenhum vetor corresponde.",
+        "otherGroup": "Outros"
+      }
     },
     "message": {
       "sources": "Fontes",
@@ -1945,6 +1955,7 @@
         "web-search": "Pesquisa na web",
         "strands": "Mecanismo Strands",
         "tools": "Ferramentas",
+        "steering": "Direcionamento do modelo",
         "stt": "Fala para texto",
         "tts": "Texto para fala",
         "voice-mode": "Modo de voz",
@@ -1976,6 +1987,13 @@
       "description": "Permitir que todos chamem servidores de ferramentas. Quando desligado, só administradores podem.",
       "saved": "Acesso a ferramentas atualizado",
       "saveFailed": "Não foi possível atualizar o acesso a ferramentas.",
+      "lockedByEnv": "Bloqueado por uma variável de ambiente neste servidor."
+    },
+    "steering": {
+      "title": "Direcionamento do modelo",
+      "description": "Permitir que todos direcionem modelos cujo servidor oferece vetores de direcionamento. Desativado, apenas administradores podem.",
+      "saved": "Acesso ao direcionamento atualizado",
+      "saveFailed": "Não foi possível atualizar o acesso ao direcionamento.",
       "lockedByEnv": "Bloqueado por uma variável de ambiente neste servidor."
     },
     "voice": {

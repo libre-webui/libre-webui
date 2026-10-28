@@ -403,6 +403,14 @@ export interface GenerationOptions {
    * forwarded inside provider option objects.
    */
   tools?: ProviderToolSpec[];
+
+  /**
+   * Steering vectors and their strengths, {name: strength}, for a llama.cpp
+   * server that lists them at GET /steering. Like `think`, this is lifted out
+   * at the provider boundary: a server gets only the names it listed, and
+   * only for users the steering access mode lets steer.
+   */
+  steering?: Record<string, number>;
 }
 
 export interface EmbeddingSettings {

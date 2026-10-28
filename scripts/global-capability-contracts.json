@@ -61,7 +61,7 @@
         },
         {
           "file": "docs/03-PRO_TIPS.md",
-          "patterns": ["## Follow Live Thinking"]
+          "patterns": ["## Follow Live Thinking", "## Steer a Local Model"]
         }
       ],
       "focusedTests": [
@@ -106,6 +106,15 @@
           "runner": "test:e2e",
           "name": "collapsed topics update from serialized requests using the latest bounded reasoning",
           "behaviorPatterns": ["summarize-thinking", "thinking-summary"]
+        },
+        {
+          "file": "scripts/test-steering.mjs",
+          "runner": "test:package",
+          "name": "a mix reaches only a llama.cpp server that listed it, for users who may steer",
+          "behaviorPatterns": [
+            "applySteering\\(llamaCpp, 'glimmer-studio', mix, bob\\.userId\\)",
+            "\\{ steering: \\{ tsundere: 0\\.4 \\}, temperature: 0\\.7 \\}"
+          ]
         }
       ],
       "backendRoutes": [
@@ -306,6 +315,24 @@
           "mount": "/api/chat",
           "method": "POST",
           "path": "/sessions/:sessionId/fork"
+        },
+        {
+          "file": "backend/src/routes/steering.ts",
+          "mount": "/api/steering",
+          "method": "GET",
+          "path": "/vectors"
+        },
+        {
+          "file": "backend/src/routes/steering.ts",
+          "mount": "/api/steering",
+          "method": "GET",
+          "path": "/access"
+        },
+        {
+          "file": "backend/src/routes/steering.ts",
+          "mount": "/api/steering",
+          "method": "PUT",
+          "path": "/access"
         }
       ],
       "websocketRoutes": [

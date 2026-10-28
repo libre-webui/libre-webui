@@ -301,7 +301,11 @@ export class ThinkingSummaryService {
         throw new Error('The selected summary provider is unavailable.');
       }
       const prompt = buildThinkingSummaryPrompt(request.thinking);
-      const { tools: _tools, ...textOptions } = target.mergedOptions;
+      const {
+        tools: _tools,
+        steering: _steering,
+        ...textOptions
+      } = target.mergedOptions;
       let raw: string;
       if (target.activePlugin) {
         const response = await wait(() =>

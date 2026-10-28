@@ -47,6 +47,7 @@ import { getStrandsAccessMode } from './strandsAccessService.js';
 import { getWorkAgentAccessMode } from './workAgentAccessService.js';
 import { getWebSearchAccessMode } from './webSearchService.js';
 import { getToolAccessMode } from './toolAccessService.js';
+import { getSteeringAccessMode } from './steeringService.js';
 import { getVoiceAccessMode, isVoiceFeatureKey } from './voiceAccessService.js';
 
 export type AuthzAction = 'read' | 'write' | 'manage' | 'use';
@@ -58,6 +59,7 @@ export type FeatureId =
   | 'web-search'
   | 'strands'
   | 'tools'
+  | 'steering'
   | 'stt'
   | 'tts'
   | 'voice-mode'
@@ -174,6 +176,10 @@ const featureDecision = async (
         : { allowed: false, reason: 'feature-restricted-to-admins' };
     case 'tools':
       return (await getToolAccessMode()) === 'all-users'
+        ? { allowed: true, reason: 'feature-open-to-all-users' }
+        : { allowed: false, reason: 'feature-restricted-to-admins' };
+    case 'steering':
+      return (await getSteeringAccessMode()) === 'all-users'
         ? { allowed: true, reason: 'feature-open-to-all-users' }
         : { allowed: false, reason: 'feature-restricted-to-admins' };
     case 'stt':
@@ -297,6 +303,7 @@ export const explainEffectiveAccess = async (user: {
     webSearch,
     strands,
     tools,
+    steering,
     stt,
     tts,
     voiceMode,
@@ -308,6 +315,7 @@ export const explainEffectiveAccess = async (user: {
     authorize(actor, 'use', { type: 'feature', id: 'web-search' }),
     authorize(actor, 'use', { type: 'feature', id: 'strands' }),
     authorize(actor, 'use', { type: 'feature', id: 'tools' }),
+    authorize(actor, 'use', { type: 'feature', id: 'steering' }),
     authorize(actor, 'use', { type: 'feature', id: 'stt' }),
     authorize(actor, 'use', { type: 'feature', id: 'tts' }),
     authorize(actor, 'use', { type: 'feature', id: 'voice-mode' }),
@@ -336,6 +344,7 @@ export const explainEffectiveAccess = async (user: {
       'web-search': webSearch.allowed,
       strands: strands.allowed,
       tools: tools.allowed,
+      steering: steering.allowed,
       stt: stt.allowed,
       tts: tts.allowed,
       'voice-mode': voiceMode.allowed,

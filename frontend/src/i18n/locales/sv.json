@@ -450,6 +450,7 @@
     },
     "controls": {
       "title": "Chattkontroller",
+      "steeredLabel": "Chattinställningar (styrning på)",
       "systemPrompt": "Systemprompt",
       "systemPromptPlaceholder": "Instruktioner som endast gäller den här chatten…",
       "advancedParams": "Avancerade parametrar",
@@ -474,7 +475,16 @@
       "compaction": "Kontextkomprimering",
       "compactionDescription": "När servern komprimerar långa samtal kan den här chatten stå utanför och behålla hela sin historik.",
       "compactionDefault": "Serverns standard",
-      "compactionOff": "Av för den här chatten"
+      "compactionOff": "Av för den här chatten",
+      "steering": {
+        "title": "Styrning",
+        "description": "Vektorer som den här modellens server erbjuder. Var och en förskjuter modellens aktiveringar vid varje token, så effekten håller hela chatten. Styrkor kring 0,2 till 0,5 håller bäst genom ett samtal.",
+        "checking": "Söker efter styrvektorer på den här modellens server…",
+        "filter": "Filtrera vektorer",
+        "remove": "Ta bort {{name}}",
+        "noMatches": "Inga vektorer matchar.",
+        "otherGroup": "Övrigt"
+      }
     },
     "message": {
       "sources": "Källor",
@@ -1945,6 +1955,7 @@
         "web-search": "Webbsökning",
         "strands": "Strands-motor",
         "tools": "Verktyg",
+        "steering": "Modellstyrning",
         "stt": "Tal till text",
         "tts": "Text till tal",
         "voice-mode": "Röstläge",
@@ -1976,6 +1987,13 @@
       "description": "Låt alla anropa verktygsservrar. När det är av kan bara administratörer göra det.",
       "saved": "Verktygsåtkomsten uppdaterades",
       "saveFailed": "Verktygsåtkomsten kunde inte uppdateras.",
+      "lockedByEnv": "Låst av en miljövariabel på den här servern."
+    },
+    "steering": {
+      "title": "Modellstyrning",
+      "description": "Låt alla styra modeller vars server erbjuder styrvektorer. När det är av kan bara administratörer.",
+      "saved": "Åtkomst till styrning uppdaterad",
+      "saveFailed": "Kunde inte uppdatera åtkomst till styrning.",
       "lockedByEnv": "Låst av en miljövariabel på den här servern."
     },
     "voice": {

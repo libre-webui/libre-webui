@@ -450,6 +450,7 @@
     },
     "controls": {
       "title": "Sohbet denetimleri",
+      "steeredLabel": "Sohbet denetimleri (yönlendirme açık)",
       "systemPrompt": "Sistem istemi",
       "systemPromptPlaceholder": "Yalnızca bu sohbete uygulanan talimatlar…",
       "advancedParams": "Gelişmiş parametreler",
@@ -474,7 +475,16 @@
       "compaction": "Bağlam sıkıştırma",
       "compactionDescription": "Sunucu uzun konuşmaları sıkıştırdığında bu sohbet bunun dışında kalıp tüm geçmişini koruyabilir.",
       "compactionDefault": "Sunucu varsayılanı",
-      "compactionOff": "Bu sohbet için kapalı"
+      "compactionOff": "Bu sohbet için kapalı",
+      "steering": {
+        "title": "Yönlendirme",
+        "description": "Bu modelin sunucusunun sunduğu vektörler. Her biri modelin aktivasyonlarını her belirteçte kaydırır, bu yüzden etki tüm sohbet boyunca sürer. 0,2 ile 0,5 civarındaki güçler bir konuşma boyunca en iyi tutunur.",
+        "checking": "Bu modelin sunucusunda yönlendirme vektörleri aranıyor…",
+        "filter": "Vektörleri filtrele",
+        "remove": "{{name}} kaldır",
+        "noMatches": "Eşleşen vektör yok.",
+        "otherGroup": "Diğer"
+      }
     },
     "message": {
       "sources": "Kaynaklar",
@@ -1945,6 +1955,7 @@
         "web-search": "Web araması",
         "strands": "Strands motoru",
         "tools": "Araçlar",
+        "steering": "Model yönlendirme",
         "stt": "Konuşmadan metne",
         "tts": "Metinden konuşmaya",
         "voice-mode": "Ses modu",
@@ -1976,6 +1987,13 @@
       "description": "Herkesin araç sunucularını çağırmasına izin verin. Kapalıyken yalnızca yöneticiler çağırabilir.",
       "saved": "Araç erişimi güncellendi",
       "saveFailed": "Araç erişimi güncellenemedi.",
+      "lockedByEnv": "Bu sunucudaki bir ortam değişkeniyle kilitlenmiş."
+    },
+    "steering": {
+      "title": "Model yönlendirme",
+      "description": "Sunucusu yönlendirme vektörleri sunan modelleri herkesin yönlendirmesine izin ver. Kapalıyken yalnızca yöneticiler yapabilir.",
+      "saved": "Yönlendirme erişimi güncellendi",
+      "saveFailed": "Yönlendirme erişimi güncellenemedi.",
       "lockedByEnv": "Bu sunucudaki bir ortam değişkeniyle kilitlenmiş."
     },
     "voice": {

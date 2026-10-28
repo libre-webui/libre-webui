@@ -450,6 +450,7 @@
     },
     "controls": {
       "title": "Spjallstýringar",
+      "steeredLabel": "Spjallstillingar (stýring virk)",
       "systemPrompt": "Kerfisleiðbeining",
       "systemPromptPlaceholder": "Leiðbeiningar sem gilda aðeins fyrir þetta spjall…",
       "advancedParams": "Ítarlegar stillingar",
@@ -474,7 +475,16 @@
       "compaction": "Samþjöppun samhengis",
       "compactionDescription": "Þegar þjónninn þjappar löngum samtölum getur þetta spjall staðið utan við og haldið allri sögu sinni.",
       "compactionDefault": "Sjálfgefið hjá þjóni",
-      "compactionOff": "Slökkt fyrir þetta spjall"
+      "compactionOff": "Slökkt fyrir þetta spjall",
+      "steering": {
+        "title": "Stýring",
+        "description": "Vigrar sem netþjónn þessa líkans býður. Hver þeirra hliðrar virkjunum líkansins við hvert tákn, svo áhrifin haldast allt spjallið. Styrkur um 0,2 til 0,5 heldur best í gegnum samtal.",
+        "checking": "Leita að stýrivigrum á netþjóni þessa líkans…",
+        "filter": "Sía vigra",
+        "remove": "Fjarlægja {{name}}",
+        "noMatches": "Engir vigrar passa.",
+        "otherGroup": "Annað"
+      }
     },
     "message": {
       "sources": "Heimildir",
@@ -1945,6 +1955,7 @@
         "web-search": "Vefleit",
         "strands": "Strands-vél",
         "tools": "Tól",
+        "steering": "Líkanastýring",
         "stt": "Tal í texta",
         "tts": "Texti í tal",
         "voice-mode": "Raddstilling",
@@ -1976,6 +1987,13 @@
       "description": "Leyfa öllum að kalla á tólaþjóna. Þegar slökkt er geta aðeins stjórnendur það.",
       "saved": "Aðgangur að tólum uppfærður",
       "saveFailed": "Ekki tókst að uppfæra aðgang að tólum.",
+      "lockedByEnv": "Læst með umhverfisbreytu á þessum þjóni."
+    },
+    "steering": {
+      "title": "Líkanastýring",
+      "description": "Leyfa öllum að stýra líkönum sem hafa netþjón sem býður stýrivigra. Þegar slökkt er geta aðeins stjórnendur það.",
+      "saved": "Aðgangur að stýringu uppfærður",
+      "saveFailed": "Ekki tókst að uppfæra aðgang að stýringu.",
       "lockedByEnv": "Læst með umhverfisbreytu á þessum þjóni."
     },
     "voice": {

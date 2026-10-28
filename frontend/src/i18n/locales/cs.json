@@ -450,6 +450,7 @@
     },
     "controls": {
       "title": "Ovládání chatu",
+      "steeredLabel": "Ovládání chatu (řízení zapnuto)",
       "systemPrompt": "Systémový prompt",
       "systemPromptPlaceholder": "Pokyny platné jen pro tento chat…",
       "advancedParams": "Pokročilé parametry",
@@ -474,7 +475,16 @@
       "compaction": "Zhutnění kontextu",
       "compactionDescription": "Když server zhutňuje dlouhé konverzace, tento chat se může vyjmout a ponechat si celou historii.",
       "compactionDefault": "Výchozí nastavení serveru",
-      "compactionOff": "Vypnuto pro tento chat"
+      "compactionOff": "Vypnuto pro tento chat",
+      "steering": {
+        "title": "Řízení",
+        "description": "Vektory, které nabízí server tohoto modelu. Každý posouvá aktivace modelu u každého tokenu, takže účinek trvá celý chat. Síly kolem 0,2 až 0,5 vydrží v konverzaci nejlépe.",
+        "checking": "Hledám vektory řízení na serveru tohoto modelu…",
+        "filter": "Filtrovat vektory",
+        "remove": "Odebrat {{name}}",
+        "noMatches": "Žádné vektory neodpovídají.",
+        "otherGroup": "Ostatní"
+      }
     },
     "message": {
       "sources": "Zdroje",
@@ -1945,6 +1955,7 @@
         "web-search": "Vyhledávání na webu",
         "strands": "Engine Strands",
         "tools": "Nástroje",
+        "steering": "Řízení modelu",
         "stt": "Řeč na text",
         "tts": "Text na řeč",
         "voice-mode": "Hlasový režim",
@@ -1976,6 +1987,13 @@
       "description": "Povolit všem volat nástrojové servery. Když je vypnuto, mohou jen správci.",
       "saved": "Přístup k nástrojům aktualizován",
       "saveFailed": "Přístup k nástrojům se nepodařilo aktualizovat.",
+      "lockedByEnv": "Uzamčeno proměnnou prostředí na tomto serveru."
+    },
+    "steering": {
+      "title": "Řízení modelu",
+      "description": "Povolit všem řídit modely, jejichž server nabízí vektory řízení. Když je vypnuto, mohou to jen správci.",
+      "saved": "Přístup k řízení byl aktualizován",
+      "saveFailed": "Přístup k řízení se nepodařilo aktualizovat.",
       "lockedByEnv": "Uzamčeno proměnnou prostředí na tomto serveru."
     },
     "voice": {
