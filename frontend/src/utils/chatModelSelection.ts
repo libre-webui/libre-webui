@@ -18,6 +18,7 @@
 import type {
   ChatModelSelection,
   ChatProviderType,
+  ChatSession,
   OllamaModel,
 } from '@/types';
 
@@ -74,6 +75,33 @@ export function chatModelSelectionFromModel(
     model: model.name,
     providerType: 'ollama',
     providerId: null,
+  };
+}
+
+/**
+ * The picker selection a chat session stands for. A persona chat is the
+ * persona itself, whatever provider the session stored: a chat started on a
+ * persona deliberately stores none, since the persona's backing model
+ * resolves its own provider server-side, and reading that as a legacy
+ * name-only record labeled it "provider not recorded".
+ */
+export function chatModelSelectionFromSession(
+  session:
+    | Pick<ChatSession, 'model' | 'personaId' | 'providerType' | 'providerId'>
+    | null
+    | undefined
+): ChatModelSelection {
+  if (session?.personaId) {
+    return {
+      model: `${PERSONA_PREFIX}${session.personaId}`,
+      providerType: 'ollama',
+      providerId: null,
+    };
+  }
+  return {
+    model: session?.model || '',
+    providerType: session?.providerType ?? null,
+    providerId: session?.providerId ?? null,
   };
 }
 

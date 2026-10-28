@@ -50,7 +50,6 @@ import {
   compareTargetsFromKeys,
   type CompareTarget,
 } from '@/components/composer/compareTargets';
-import { chatModelSelectionKey } from '@/utils/chatModelSelection';
 import { X } from 'lucide-react';
 import { applyPromptQueueToChatStore } from '@/utils/promptQueue';
 import { UPLOAD_ACCEPT_ATTRIBUTE } from '@/utils/documentUploadTypes';
@@ -92,6 +91,8 @@ import {
   chatModelOptionKey,
   isChatModelSelectionAvailable,
   chatModelSelectionFromKey,
+  chatModelSelectionFromSession,
+  chatModelSelectionKey,
   chatModelSelectionKeyForModels,
   withUnavailableChatModel,
 } from '@/utils/chatModelSelection';
@@ -215,13 +216,13 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const suggestionsRef = useRef<ComposerSuggestionsHandle>(null);
   const sessionSelection = useMemo(
-    () => ({
-      model: currentSession?.personaId
-        ? `persona:${currentSession.personaId}`
-        : currentSession?.model || '',
-      providerType: currentSession?.providerType,
-      providerId: currentSession?.providerId,
-    }),
+    () =>
+      chatModelSelectionFromSession({
+        model: currentSession?.model ?? '',
+        personaId: currentSession?.personaId,
+        providerType: currentSession?.providerType,
+        providerId: currentSession?.providerId,
+      }),
     [
       currentSession?.model,
       currentSession?.personaId,
@@ -1210,13 +1211,9 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                   {!isPrivateSession && currentSession && !compact && (
                     <ComposerCompareMenu
                       models={models}
-                      currentModelKey={chatModelSelectionKey({
-                        model: currentSession.personaId
-                          ? `persona:${currentSession.personaId}`
-                          : currentSession.model,
-                        providerType: currentSession.providerType ?? null,
-                        providerId: currentSession.providerId ?? null,
-                      })}
+                      currentModelKey={chatModelSelectionKey(
+                        chatModelSelectionFromSession(currentSession)
+                      )}
                       selectedKeys={compareKeys}
                       onChange={setCompareKeys}
                       disabled={disabled}

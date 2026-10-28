@@ -21,6 +21,7 @@ import type { OllamaModel } from '@/types';
 import {
   chatModelOptionKey,
   chatModelSelectionFromKey,
+  chatModelSelectionFromSession,
   chatModelSelectionKeyForModels,
   findChatModelForSelection,
   isAvailableOllamaModel,
@@ -193,6 +194,57 @@ test('keeps persona UI keys stable and records new persona selections as Ollama-
       providerId: null,
     }
   );
+});
+
+test('a chat started on a persona selects the persona, not a legacy record', () => {
+  const persona = model('persona:mia', undefined, {
+    isPersona: true,
+    personaName: 'Mia K.',
+  });
+  // Created from the welcome composer: the persona's backing model resolves
+  // its provider server-side, so the session stores none.
+  const started = chatModelSelectionFromSession({
+    model: 'persona:mia',
+    personaId: 'mia',
+    providerType: undefined,
+    providerId: undefined,
+  });
+  assert.deepEqual(started, {
+    model: 'persona:mia',
+    providerType: 'ollama',
+    providerId: null,
+  });
+  const options = withUnavailableChatModel([persona], started);
+  assert.equal(options.length, 1, 'no "provider not recorded" placeholder');
+  assert.equal(
+    chatModelSelectionKeyForModels(options, started),
+    chatModelOptionKey(persona)
+  );
+  assert.equal(isChatModelSelectionAvailable([persona], started), true);
+
+  // A persona picked later in an existing chat resolves the same way.
+  assert.deepEqual(
+    chatModelSelectionFromSession({
+      model: 'persona:mia',
+      personaId: 'mia',
+      providerType: 'ollama',
+      providerId: null,
+    }),
+    started
+  );
+  assert.deepEqual(
+    chatModelSelectionFromSession({
+      model: 'gpt-5.5',
+      providerType: 'plugin',
+      providerId: 'openai',
+    }),
+    { model: 'gpt-5.5', providerType: 'plugin', providerId: 'openai' }
+  );
+  assert.deepEqual(chatModelSelectionFromSession(null), {
+    model: '',
+    providerType: null,
+    providerId: null,
+  });
 });
 
 test('adds an unavailable placeholder without changing an explicit selection', () => {

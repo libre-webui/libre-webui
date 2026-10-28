@@ -41,7 +41,10 @@ import { createLogger } from '@/utils/logger';
 import { announce } from '@/components/ui/liveAnnouncerStore';
 import { markdownToPlainText } from '@/utils/markdownPlainText';
 import toast from 'react-hot-toast';
-import { isChatModelSelectionAvailable } from '@/utils/chatModelSelection';
+import {
+  chatModelSelectionFromSession,
+  isChatModelSelectionAvailable,
+} from '@/utils/chatModelSelection';
 import {
   acceptDurableGenerationJob,
   cancelDurableChatGeneration,
@@ -802,13 +805,7 @@ export const useChat = (sessionId: string) => {
       try {
         const chatState = useChatStore.getState();
         const session = chatState.currentSession;
-        const selection = {
-          model: session?.personaId
-            ? `persona:${session.personaId}`
-            : session?.model || '',
-          providerType: session?.providerType,
-          providerId: session?.providerId,
-        };
+        const selection = chatModelSelectionFromSession(session);
         if (!isChatModelSelectionAvailable(chatState.models, selection)) {
           toast.error(t('chat.model.selectBeforeSending'));
           return;
@@ -1207,13 +1204,10 @@ export const useChat = (sessionId: string) => {
     const session = chatState.currentSession;
     if (!session || !sessionId) return;
     if (
-      !isChatModelSelectionAvailable(chatState.models, {
-        model: session.personaId
-          ? `persona:${session.personaId}`
-          : session.model,
-        providerType: session.providerType,
-        providerId: session.providerId,
-      })
+      !isChatModelSelectionAvailable(
+        chatState.models,
+        chatModelSelectionFromSession(session)
+      )
     ) {
       toast.error(t('chat.model.selectBeforeRegenerating'));
       return;
