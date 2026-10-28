@@ -177,8 +177,10 @@ models and bills per token, so there is nothing to deploy first.
    keys**.
 2. Save it as the provider's API key, or set `BASETEN_API_KEY` on the server.
 
-Libre WebUI then lists the Model APIs catalog from `/v1/models`. Models keep
-Baseten's slugs, such as `zai-org/GLM-5.3` or `moonshotai/Kimi-K3`; the picker
+Libre WebUI then lists the Model APIs catalog from `/v1/models`, with each
+model's context window and whether it reasons. Baseten's decision models
+(`decision-models/…`) are left out: they answer only Baseten's System One API,
+not Chat Completions. Models keep Baseten's slugs, such as `zai-org/GLM-5.3` or `moonshotai/Kimi-K3`; the picker
 shows them as "GLM 5.3" by Z.ai and "Kimi K3" by Moonshot AI. A **Fast**
 variant runs the same weights on dedicated capacity at its own price.
 

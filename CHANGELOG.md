@@ -26,9 +26,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Baseten's Model APIs (GLM 5.3, Kimi K3, DeepSeek V4 Pro and V4.1 Flash, Muse
   Spark Open, Nemotron, GPT OSS 120B, and more) in Chat and Work with a
   Baseten API key saved in Settings or set as `BASETEN_API_KEY`. It lists the
-  Model APIs catalog, maps the thinking control onto each model's
-  `reasoning_effort` (off sends `none`), and keeps each conversation and Work
-  run on one replica so its prompt stays cached. A dedicated deployment works
+  Model APIs catalog with each model's context window (leaving out Baseten's
+  decision models, which do not chat), maps the thinking control onto each
+  model's `reasoning_effort` (off sends `none`), and keeps each conversation
+  and Work run on one replica so its prompt stays cached. A dedicated deployment works
   by setting its URL as the provider's endpoint. OpenCode in Work can use the
   same key for its `baseten/…` models.
 

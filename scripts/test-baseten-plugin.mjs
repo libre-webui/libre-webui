@@ -49,6 +49,7 @@ const pluginDefinitionTrust = await distModule(
   'utils/pluginDefinitionTrust.js'
 );
 const pluginValidation = await distModule('utils/pluginValidation.js');
+const pluginModelCatalog = await distModule('utils/pluginModelCatalog.js');
 const chatAdapter = await distModule('utils/pluginChatAdapter.js');
 const { buildPluginWorkPayload } = await distModule(
   'services/workModelProviderService.js'
@@ -146,6 +147,69 @@ test('Baseten uses Chat Completions semantics and derives its model list', () =>
     dedicated,
     'a dedicated deployment is reached by overriding the endpoint'
   );
+});
+
+test("Baseten's listing gives each model's window and reasoning, without its decision models", () => {
+  // Entries from Baseten's GET /v1/models, trimmed to the fields that matter.
+  const entries = [
+    {
+      id: 'meta-models/muse-spark-open-1026',
+      object: 'model',
+      owned_by: 'baseten',
+      name: 'Muse Spark Open',
+      context_length: 1048576,
+      max_completion_tokens: 1048576,
+      supported_features: ['tools', 'json_mode', 'reasoning'],
+      input_modalities: ['text', 'image'],
+      output_modalities: ['text'],
+    },
+    {
+      id: 'openai/gpt-oss-120b',
+      object: 'model',
+      owned_by: 'baseten',
+      context_length: 128072,
+      max_completion_tokens: 128072,
+      supported_features: [
+        'tools',
+        'reasoning',
+        'json_mode',
+        'structured_outputs',
+        'reasoning_effort',
+      ],
+    },
+    {
+      id: 'decision-models/baseten-elephant-9b-latest',
+      object: 'model',
+      owned_by: 'baseten',
+      name: 'elephant-1',
+      context_length: 16384,
+      supported_sampling_parameters: [],
+      supported_features: [],
+      input_modalities: ['text', 'image'],
+      output_modalities: ['text'],
+    },
+  ];
+  const callable = entries.filter(entry =>
+    pluginModelCatalog.isCallableListedModel('baseten', entry)
+  );
+  assert.deepEqual(
+    callable.map(entry => entry.id),
+    ['meta-models/muse-spark-open-1026', 'openai/gpt-oss-120b'],
+    'decision models answer only the System One API, so Chat never offers them'
+  );
+  assert.equal(
+    pluginModelCatalog.isCallableListedModel('openrouter', entries[2]),
+    true,
+    'the namespace only means a decision model on Baseten'
+  );
+  assert.deepEqual(pluginModelCatalog.readModelContextMap(callable), {
+    'meta-models/muse-spark-open-1026': 1048576,
+    'openai/gpt-oss-120b': 128072,
+  });
+  assert.deepEqual(pluginModelCatalog.readModelReasoningMap(callable), {
+    'meta-models/muse-spark-open-1026': true,
+    'openai/gpt-oss-120b': true,
+  });
 });
 
 test("Baseten's reasoning controls follow the chat's thinking choice", () => {

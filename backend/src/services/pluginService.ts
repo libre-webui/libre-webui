@@ -73,6 +73,7 @@ import {
 } from '../utils/pluginChatAdapter.js';
 import {
   inferReasoningFromModelId,
+  isCallableListedModel,
   parseDiscoveredCatalog,
   readModelContextMap,
   readModelReasoningMap,
@@ -2031,13 +2032,12 @@ export class PluginService {
         timeoutMs: MODEL_DISCOVERY_REQUEST_TIMEOUT_MS,
       });
 
-      const entries = response.data?.data;
-      if (entries && Array.isArray(entries)) {
-        const listed = entries
-          // Bedrock lists models the account cannot call, marked unavailable.
-          .filter((m: { status?: unknown }) => m?.status !== 'unavailable')
-          .map((m: { id?: string }) => m.id)
-          .filter((id: unknown): id is string => typeof id === 'string');
+      const listing = response.data?.data;
+      if (listing && Array.isArray(listing)) {
+        const entries = listing.filter(entry =>
+          isCallableListedModel(pluginId, entry)
+        );
+        const listed = entries.map((m: { id: string }) => m.id);
         // Mantle cannot list the Claude models only bedrock-runtime serves.
         const models =
           isBedrockPlugin(plugin) && listed.length > 0

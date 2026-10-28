@@ -55,6 +55,24 @@ const asContextLength = (value: unknown): number | undefined => {
 };
 
 /**
+ * Whether an entry of a model listing is a model Chat can call. Bedrock lists
+ * models the account cannot use yet, marked unavailable. Baseten lists its
+ * decision models beside its language models; they answer only its System One
+ * API, never Chat Completions.
+ */
+export function isCallableListedModel(
+  pluginId: string,
+  entry: { id?: unknown; status?: unknown } | null | undefined
+): boolean {
+  if (!entry || typeof entry.id !== 'string') return false;
+  if (entry.status === 'unavailable') return false;
+  if (pluginId === 'baseten' && entry.id.startsWith('decision-models/')) {
+    return false;
+  }
+  return true;
+}
+
+/**
  * The context window from one entry of a model listing. OpenRouter repeats it
  * under `top_provider`, where it reflects the provider actually serving the
  * model, so that copy wins when the two disagree.
