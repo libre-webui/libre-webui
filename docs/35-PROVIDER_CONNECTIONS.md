@@ -167,11 +167,49 @@ server, or a Modal login saved with `opencode auth login`, a `modal/…` model
 runs in the sandbox, and the token is only ever sent to
 `inference.us-west.modal.direct`.
 
+## Baseten
+
+The bundled **Baseten** provider calls Baseten's Model APIs,
+`https://inference.baseten.co/v1`, with Chat Completions. Baseten hosts the
+models and bills per token, so there is nothing to deploy first.
+
+1. Create a personal API key in the Baseten dashboard under **Settings > API
+   keys**.
+2. Save it as the provider's API key, or set `BASETEN_API_KEY` on the server.
+
+Libre WebUI then lists the Model APIs catalog from `/v1/models`. Models keep
+Baseten's slugs, such as `zai-org/GLM-5.3` or `moonshotai/Kimi-K3`; the picker
+shows them as "GLM 5.3" by Z.ai and "Kimi K3" by Moonshot AI. A **Fast**
+variant runs the same weights on dedicated capacity at its own price.
+
+Most of these models reason by default. The chat's thinking control sets
+Baseten's `reasoning_effort`: **Low** and **High** are sent as they are, the
+middle setting leaves the model at its own default depth, and **Off** sends
+`none`. Baseten documents a few exceptions: Muse Spark Open and Beam always
+reason, and GLM 5.3 still reasons lightly with `none`. Earlier reasoning is sent
+back as `reasoning_content`, which Beam requires on every earlier answer.
+
+Every request of one conversation carries the same `x-session-affinity` key,
+derived from the model and the conversation's first message, so Baseten routes
+it to the replica that already holds the conversation's prompt in its cache.
+Work does the same for every step of a run's agent loop. When compaction
+rewrites the history, the key changes.
+
+To call a dedicated deployment instead, set the provider's **API Endpoint** to
+`https://model-<model id>.api.baseten.co/environments/production/sync/v1/chat/completions`.
+The same API key works there.
+
+OpenCode in Work can use the same key. With `BASETEN_API_KEY` set on the
+server, or a Baseten login saved with `opencode auth login`, a `baseten/…`
+model runs in the sandbox, and the key is only ever sent to
+`inference.baseten.co`.
+
 ## Choose a Bundled or Imported Provider
 
 Libre WebUI includes definitions for OpenAI, Anthropic, Gemini, Groq, Mistral,
-DeepSeek, Meta, Modal, Amazon Bedrock, OpenRouter, Kimi Code by Moonshot AI,
-Hugging Face, GitHub Models, local MLX LM, and other model or media services.
+DeepSeek, Meta, Modal, Baseten, Amazon Bedrock, OpenRouter, Kimi Code by
+Moonshot AI, Hugging Face, GitHub Models, local MLX LM, and other model or media
+services.
 Start with a bundled entry when its protocol and authentication contract match
 the service you want to use.
 

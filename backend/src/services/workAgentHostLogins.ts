@@ -148,6 +148,7 @@ export const WORK_AGENT_PROVIDER_HOSTS: Readonly<
   opencode: ['opencode.ai'],
   huggingface: ['router.huggingface.co'],
   modal: ['inference.us-west.modal.direct'],
+  baseten: ['inference.baseten.co'],
 };
 
 /** The variable each provider's key is read from when no login is saved. */
@@ -166,6 +167,7 @@ const PROVIDER_KEY_VARIABLES: Readonly<Record<string, readonly string[]>> = {
   moonshotai: ['MOONSHOT_API_KEY'],
   huggingface: ['HF_TOKEN'],
   modal: ['MODAL_PROXY_TOKEN'],
+  baseten: ['BASETEN_API_KEY'],
 };
 
 // --- Shared helpers ------------------------------------------------------

@@ -167,6 +167,7 @@ Supported integrations include:
 - DeepSeek
 - Meta (Muse models)
 - Modal
+- Baseten
 - Amazon Bedrock
 - OpenRouter
 - Hugging Face

@@ -62,6 +62,7 @@ const CLOUD_PROVIDERS = [
   { id: 'deepseek', name: 'DeepSeek' },
   { id: 'meta', name: 'Meta' },
   { id: 'modal', name: 'Modal' },
+  { id: 'baseten', name: 'Baseten' },
   { id: 'bedrock', name: 'Amazon Bedrock' },
 ] as const;
 

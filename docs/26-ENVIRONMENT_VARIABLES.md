@@ -541,6 +541,7 @@ Provider plugins can use environment keys as deployment-wide defaults:
 | `DEEPSEEK_API_KEY`         | DeepSeek                                    |
 | `META_API_KEY`             | Meta (Muse models), and Muse Code in Work   |
 | `MODAL_PROXY_TOKEN`        | Modal proxy token, and OpenCode in Work     |
+| `BASETEN_API_KEY`          | Baseten API key, and OpenCode in Work       |
 | `AWS_BEARER_TOKEN_BEDROCK` | Amazon Bedrock API key                      |
 | `OPENROUTER_API_KEY`       | OpenRouter                                  |
 | `KIMI_API_KEY`             | Kimi Code by Moonshot AI                    |

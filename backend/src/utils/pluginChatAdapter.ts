@@ -550,15 +550,21 @@ export function resolveGeminiThinking(
  * Nothing is sent unless thinking was asked for: the field is unknown to
  * models that do not reason. DeepSeek documents low, high and max only; its
  * middle is the provider default, so a plain "thinking on" preference sends
- * no effort at all, and it toggles thinking with its own object.
+ * no effort at all, and it toggles thinking with its own object. Most of
+ * Baseten's models take the same levels and reason by default, so the middle
+ * is left to the model there too, and thinking off is an explicit `none`.
  */
 export function openAICompatibleReasoningFields(
   plugin: Pick<Plugin, 'id'>,
   think: unknown
 ): Record<string, unknown> {
+  if (plugin.id === 'baseten' && normalizeThinkingPreference(think) === false) {
+    return { reasoning_effort: 'none' };
+  }
   const thinkingLevel = thinkingEffort(think);
   const effort =
-    plugin.id === 'deepseek' && thinkingLevel === 'medium'
+    (plugin.id === 'deepseek' || plugin.id === 'baseten') &&
+    thinkingLevel === 'medium'
       ? undefined
       : thinkingLevel;
   return {
@@ -680,18 +686,23 @@ function buildOpenAICompatibleChatPayload(
 ): PluginChatPayloadResult {
   const tools = toOpenAICompatibleTools(options.tools);
   // Replayed reasoning has no single wire name: OpenRouter reads `reasoning`,
-  // while DeepSeek requires `reasoning_content` beside its tool calls. Both
+  // while DeepSeek requires `reasoning_content` beside its tool calls, and
+  // so does Baseten's Beam on every earlier assistant turn. They all
   // deliberately replay whatever thinking the session stored, even turns an
   // earlier provider produced: the provider treats it as context.
   const reasoningField: 'reasoning' | 'reasoning_content' =
-    plugin.id === 'deepseek' ? 'reasoning_content' : 'reasoning';
+    plugin.id === 'deepseek' || plugin.id === 'baseten'
+      ? 'reasoning_content'
+      : 'reasoning';
 
   return {
     payload: {
       model,
       messages: toOpenAICompatibleMessages(messages, {
         includeReasoning:
-          plugin.id === 'openrouter' || plugin.id === 'deepseek',
+          plugin.id === 'openrouter' ||
+          plugin.id === 'deepseek' ||
+          plugin.id === 'baseten',
         reasoningField,
       }),
       ...getOpenAICompatibleSamplingParameters(plugin, params),
@@ -710,20 +721,27 @@ function buildOpenAICompatibleChatPayload(
   };
 }
 
+/** The header each provider reads a conversation's routing key from. */
+const ROUTING_AFFINITY_HEADERS: ReadonlyMap<string, string> = new Map([
+  ['modal', 'Modal-Routing-Affinity-Key'],
+  ['baseten', 'x-session-affinity'],
+]);
+
 /**
- * Modal routes a request to the container most likely to hold its prompt
- * prefix in cache when every request of a conversation carries the same
- * `Modal-Routing-Affinity-Key`. The key is derived from what the prefix
- * starts with, the model and the first user message, so it stays the same
- * turn after turn and changes when compaction rewrites the history, which
- * is when Modal says a new key belongs.
+ * Modal and Baseten route a request to the replica most likely to hold its
+ * prompt prefix in cache when every request of a conversation carries the
+ * same routing key. The key is derived from what the prefix starts with, the
+ * model and the first user message, so it stays the same turn after turn and
+ * changes when compaction rewrites the history, which is when Modal says a
+ * new key belongs.
  */
 export function providerRoutingHeaders(
   plugin: Pick<Plugin, 'id'>,
   model: string,
   messages: ReadonlyArray<{ role: string; content?: unknown }>
 ): Record<string, string> {
-  if (plugin.id !== 'modal') return {};
+  const header = ROUTING_AFFINITY_HEADERS.get(plugin.id);
+  if (!header) return {};
   const first = messages.find(message => message.role === 'user');
   if (!first) return {};
   const content =
@@ -734,7 +752,7 @@ export function providerRoutingHeaders(
     .update(JSON.stringify([model, content]))
     .digest('hex')
     .slice(0, 32);
-  return { 'Modal-Routing-Affinity-Key': key };
+  return { [header]: key };
 }
 
 export function buildPluginChatPayload(
