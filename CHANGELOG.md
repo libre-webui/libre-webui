@@ -9,6 +9,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### ✨ New Features
 
+### 🔧 Improvements
+
+### 🐛 Bug Fixes
+
+### 📚 Documentation
+
+## [0.44.0] - 2026-11-14
+
+Two new bundled providers, Modal and Baseten, run the open models in Chat and
+Work, and GPT-6.1 Terra joins the Codex, OpenAI, and OpenRouter catalogs.
+Persona chats keep their name in the composer, and hono and minimatch move past
+their advisories.
+
+### ✨ New Features
+
 - **GPT-6.1 Terra**: OpenAI's new mid-tier model (`gpt-6.1-terra`), priced
   below GPT-6.1 Sol, is offered by the Codex provider and the Codex agent CLI,
   subject to the signed-in account's access. It is also in the bundled OpenAI
@@ -29,9 +44,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Model APIs catalog with each model's context window (leaving out Baseten's
   decision models, which do not chat), maps the thinking control onto each
   model's `reasoning_effort` (off sends `none`), and keeps each conversation
-  and Work run on one replica so its prompt stays cached. A dedicated deployment works
-  by setting its URL as the provider's endpoint. OpenCode in Work can use the
-  same key for its `baseten/…` models.
+  and Work run on one replica so its prompt stays cached. A dedicated
+  deployment works by setting its URL as the provider's endpoint. OpenCode in
+  Work can use the same key for its `baseten/…` models.
 
 ### 🔧 Improvements
 
@@ -41,11 +56,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 🐛 Bug Fixes
 
+- **Persona chats show their persona**: a chat started on a persona from the
+  welcome composer showed the persona as "(provider not recorded)" in the
+  model picker until the model was changed. The composer, the comparison
+  picker, send, and regenerate now all read a persona chat as that persona.
 - **Provider error text**: when a provider returns its error as a plain string
   (`{"error": "…"}`), Chat and Work now show that message instead of "Not
   Found" or "Request failed."
 
+### 🔒 Security
+
+- **Dependency updates**: hono moves to 4.13.18 and @hono/node-server to 2.1.8,
+  both pulled in by the MCP SDK (GHSA-4m76-xfj5-7975, GHSA-h7mg-cq63-vhpq,
+  GHSA-46wx-v44x-9hh2, GHSA-4h7h-rv7c-7m2v, GHSA-3gg2-335m-rxc6,
+  GHSA-rmxm-3fg6-px4f, GHSA-qv5m-9pm6-hqp3, GHSA-jpvv-r467-5p4w), and
+  minimatch in the lint toolchain to 11.0.8 (GHSA-g3hv-75wg-m249). Vite 8.3.6,
+  React Router 8.5.1, Mermaid 12.3, three.js 0.187, pdf.js 6.5, TanStack Query,
+  framer-motion, i18next, lucide-react, Strands, the MCP SDK, the AWS SDK, and
+  Playwright 1.65 are also current, and `npm audit` reports no
+  vulnerabilities.
+
 ### 📚 Documentation
+
+- **Provider Connections**: new Modal and Baseten sections cover the proxy
+  token and API key, endpoint hostnames, dedicated endpoints, and what an
+  "unknown inference model" answer means. Quick Start, Environment Variables,
+  Plugin Architecture, and the comparison page list both providers, and
+  Agent CLI Models adds GPT-6.1 Terra.
 
 ## [0.43.0] - 2026-10-26
 
