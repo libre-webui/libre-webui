@@ -52,7 +52,7 @@
     "@types/js-yaml": "^4.0.9",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/multer": "^2.3.0",
-    "@types/node": "^26.6.5",
+    "@types/node": "^26.6.6",
     "@types/pg": "^8.23.1",
     "@types/ws": "^8.18.2",
     "eslint": "^9.39.4",
