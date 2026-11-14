@@ -463,13 +463,6 @@ export interface GenerationOptions {
    * key cannot do once one has been saved.
    */
   think?: ThinkingPreference | null;
-
-  /**
-   * Steering vectors and their strengths, {name: strength}, for a llama.cpp
-   * server that lists them. The server sends a model only the names its own
-   * server listed, and only for users allowed to steer.
-   */
-  steering?: Record<string, number>;
 }
 
 export interface ApiResponse<T = unknown> {

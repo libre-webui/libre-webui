@@ -438,12 +438,7 @@ export class TitleGenerationService {
     ) {
       throw new Error('The selected title provider is unavailable.');
     }
-    // A title is plain text about the chat, never in a steered voice.
-    const {
-      tools: _tools,
-      steering: _steering,
-      ...textOptions
-    } = target.mergedOptions;
+    const { tools: _tools, ...textOptions } = target.mergedOptions;
     const prompt = buildTitlePrompt(message);
 
     if (target.activePlugin) {

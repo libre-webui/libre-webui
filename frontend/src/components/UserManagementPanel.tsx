@@ -22,7 +22,6 @@ import { AgentAccessSettings } from '@/components/AgentAccessSettings';
 import { StrandsAccessSettings } from '@/components/StrandsAccessSettings';
 import { DefaultThemeSettings } from '@/components/DefaultThemeSettings';
 import { ToolAccessSettings } from '@/components/ToolAccessSettings';
-import { SteeringAccessSettings } from '@/components/SteeringAccessSettings';
 import { VoiceAccessSettings } from '@/components/VoiceAccessSettings';
 import { EmailNotificationSettings } from './EmailNotificationSettings';
 import { MfaPolicySettings } from '@/components/MfaPolicySettings';
@@ -64,7 +63,6 @@ const renderSection = (section: SectionId) => {
           <StrandsAccessSettings />
           <WorkAgentAccessSettings />
           <ToolAccessSettings />
-          <SteeringAccessSettings />
           <VoiceAccessSettings />
           <EmailNotificationSettings />
         </div>
