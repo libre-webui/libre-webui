@@ -1538,6 +1538,102 @@ test('buildPluginChatPayload sends adaptive thinking to Claude Fable 5.2, which 
   assert.equal(unset.max_tokens, 128000);
 });
 
+test('buildPluginChatPayload never sends a thinking budget to Claude Opus 4.7 and later', () => {
+  const build = (model, think, extra = {}) =>
+    pluginChatAdapter.buildPluginChatPayload(
+      { id: 'anthropic' },
+      model,
+      [{ role: 'user', content: 'Plan the migration.' }],
+      { temperature: 0.2, think, ...extra },
+      { top_p: 0.8 },
+      true
+    ).payload;
+
+  // `type: 'enabled'` with budget_tokens is a 400 on every one of these.
+  for (const model of [
+    'claude-fable-5',
+    'claude-opus-5',
+    'claude-opus-4-8',
+    'claude-opus-4-7',
+    'claude-sonnet-5',
+    'anthropic.claude-opus-5',
+    'anthropic.claude-sonnet-5',
+  ]) {
+    const high = build(model, 'high');
+    assert.deepEqual(high.thinking, { type: 'adaptive' }, model);
+    assert.deepEqual(high.output_config, { effort: 'high' }, model);
+    assert.equal('temperature' in high, false, model);
+    assert.equal('top_p' in high, false, model);
+
+    const on = build(model, true);
+    assert.deepEqual(on.thinking, { type: 'adaptive' }, model);
+    assert.equal('output_config' in on, false, model);
+
+    const unset = build(model, undefined);
+    assert.equal('thinking' in unset, false, model);
+    assert.equal('output_config' in unset, false, model);
+  }
+
+  // Opus 5 (at its default high effort), Opus 4.8, 4.7, and Sonnet 5 accept
+  // `disabled`; Fable 5 rejects it, so off leaves it at its own default.
+  for (const model of [
+    'claude-opus-5',
+    'claude-opus-4-8',
+    'claude-opus-4-7',
+    'claude-sonnet-5',
+  ]) {
+    const off = build(model, false);
+    assert.deepEqual(off.thinking, { type: 'disabled' }, model);
+    assert.equal('output_config' in off, false, model);
+  }
+  const fableOff = build('claude-fable-5', false);
+  assert.equal('thinking' in fableOff, false);
+  assert.equal('output_config' in fableOff, false);
+
+  // Opus 4.6 and Sonnet 4.6 still accept budgets (deprecated) and keep them.
+  assert.equal(build('claude-opus-4-6', 'low').thinking.type, 'enabled');
+});
+
+test('anthropicMaxOutputTokens follows the documented ceiling of each model', () => {
+  const ceilings = {
+    'claude-fable-5': 128000,
+    'claude-fable-5-2': 128000,
+    'claude-opus-5': 128000,
+    'claude-opus-5-5': 128000,
+    'claude-sonnet-5': 128000,
+    'claude-sonnet-5-5': 128000,
+    'claude-haiku-5-5': 128000,
+    'claude-opus-4-8': 128000,
+    'claude-opus-4-7': 128000,
+    'claude-opus-4-6': 128000,
+    'claude-sonnet-4-6': 128000,
+    'claude-opus-4-5-20251101': 64000,
+    'claude-sonnet-4-5-20250929': 64000,
+    'claude-haiku-4-5-20251001': 64000,
+    'claude-opus-4-1-20250805': 32000,
+    'anthropic.claude-opus-5': 128000,
+    'global.anthropic.claude-haiku-5-5': 128000,
+  };
+  for (const [model, ceiling] of Object.entries(ceilings)) {
+    assert.equal(
+      pluginChatAdapter.anthropicMaxOutputTokens(model),
+      ceiling,
+      model
+    );
+  }
+
+  // A long reply on Opus 4.8 is no longer cut to the Opus 4.1 ceiling.
+  const payload = pluginChatAdapter.buildPluginChatPayload(
+    { id: 'anthropic' },
+    'claude-opus-4-8',
+    [{ role: 'user', content: 'Write the full report.' }],
+    { num_predict: 64000 },
+    {},
+    true
+  ).payload;
+  assert.equal(payload.max_tokens, 64000);
+});
+
 test('buildPluginChatPayload sends adaptive thinking to Claude Haiku 5.5 and turns it off with disabled', () => {
   const build = (model, think, extra = {}) =>
     pluginChatAdapter.buildPluginChatPayload(

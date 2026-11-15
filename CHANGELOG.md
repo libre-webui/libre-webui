@@ -23,6 +23,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 🐛 Bug Fixes
 
+- **Thinking on newer Claude models**: turning thinking on for Claude Fable 5,
+  Opus 5, Opus 4.8, Opus 4.7, or Sonnet 5, through the Anthropic provider or
+  Amazon Bedrock in Chat and Work, sent a thinking budget, which these models
+  reject, so the reply failed. They now think adaptively with the chosen level
+  as their effort, and **off** turns thinking off on the models that allow it.
+- **Long replies on Claude Opus 4.6 to 4.8 and Sonnet 4.6**: a Max Tokens
+  setting above 32K on these Opus models, or above 64K on Sonnet 4.6, was cut
+  to an older model's ceiling. They now get up to their documented 128K.
+
 ### 📚 Documentation
 
 ## [0.44.0] - 2026-11-14

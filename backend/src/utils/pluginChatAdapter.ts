@@ -96,23 +96,36 @@ const ANTHROPIC_MAX_OUTPUT_TOKENS: ReadonlyArray<[string, number]> = [
   ['claude-3-haiku', 4096],
   ['claude-3-opus', 4096],
   ['claude-3-sonnet', 4096],
+  ['claude-sonnet-4-6', 128000],
   ['claude-sonnet-4', 64000],
   ['claude-haiku-4', 64000],
+  ['claude-opus-4-8', 128000],
+  ['claude-opus-4-7', 128000],
+  ['claude-opus-4-6', 128000],
+  ['claude-opus-4-5', 64000],
   ['claude-opus-4', 32000],
-  ['claude-fable-5-2', 128000],
-  ['claude-opus-5-5', 128000],
-  ['claude-sonnet-5-5', 128000],
+  ['claude-fable-5', 128000],
+  ['claude-opus-5', 128000],
+  ['claude-sonnet-5', 128000],
   ['claude-haiku-5-5', 128000],
 ];
 
 /**
- * Claude models that reject manual thinking budgets (`type: 'enabled'`).
- * They think adaptively by default; depth is set with `output_config.effort`.
- * How each one switches thinking off differs, so that is listed separately.
+ * Claude models that reject manual thinking budgets (`type: 'enabled'` is a
+ * 400 from Claude Opus 4.7 on). Thinking on sends `adaptive`, and a named
+ * level becomes `output_config.effort`. Left unset, the Claude 5 models think
+ * adaptively and Opus 4.7 and 4.8 do not think. How each one switches
+ * thinking off differs, so that is listed separately. Opus 4.6 and Sonnet 4.6
+ * still take budgets (deprecated) and stay on them.
  */
 const ANTHROPIC_ADAPTIVE_THINKING_MODELS = new Set([
+  'claude-fable-5',
   'claude-fable-5-2',
+  'claude-opus-4-7',
+  'claude-opus-4-8',
+  'claude-opus-5',
   'claude-opus-5-5',
+  'claude-sonnet-5',
   'claude-sonnet-5-5',
   'claude-haiku-5-5',
 ]);
@@ -124,11 +137,18 @@ const ANTHROPIC_ADAPTIVE_THINKING_MODELS = new Set([
 const ANTHROPIC_BETWEEN_TOOLS_MODELS = new Set(['claude-sonnet-5-5']);
 
 /**
- * Adaptive models that accept `disabled` at high effort or below. Off sends no
- * effort, so the request runs at the model's default level. Adaptive models in
- * neither set have no way to switch thinking off.
+ * Adaptive models that accept `disabled`. Claude Opus 5 and Haiku 5.5 accept
+ * it only at high effort or below; off sends no effort, so the request runs at
+ * the model's default level (high and medium). Adaptive models in neither set
+ * (Fable 5, Fable 5.2, Opus 5.5) have no way to switch thinking off.
  */
-const ANTHROPIC_DISABLED_THINKING_MODELS = new Set(['claude-haiku-5-5']);
+const ANTHROPIC_DISABLED_THINKING_MODELS = new Set([
+  'claude-haiku-5-5',
+  'claude-opus-4-7',
+  'claude-opus-4-8',
+  'claude-opus-5',
+  'claude-sonnet-5',
+]);
 
 /** Room for adaptive thinking plus the answer when no ceiling was set. */
 const ANTHROPIC_ADAPTIVE_DEFAULT_MAX_TOKENS = 16384;
