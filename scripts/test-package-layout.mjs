@@ -398,6 +398,7 @@ test('packed npm artifact resolves package metadata and frontend dist', async ()
     );
     assert.deepEqual(anthropicPlugin.model_map, [
       'claude-fable-5',
+      'claude-fable-5-2',
       'claude-haiku-4-5-20251001',
       'claude-haiku-5-5',
       'claude-opus-4-5-20251101',

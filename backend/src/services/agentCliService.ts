@@ -119,6 +119,7 @@ export const AGENT_CLI_DEFINITIONS: AgentCliDefinition[] = [
       { id: 'claude-sonnet-5-5', label: 'Sonnet 5.5' },
       { id: 'opus', label: 'Opus' },
       { id: 'claude-opus-5-5', label: 'Opus 5.5' },
+      { id: 'claude-fable-5-2', label: 'Fable 5.2' },
       { id: 'haiku', label: 'Haiku' },
       { id: 'claude-haiku-5-5', label: 'Haiku 5.5' },
     ],
@@ -209,6 +210,7 @@ export const AGENT_CLI_DEFINITIONS: AgentCliDefinition[] = [
     scratchWorkspace: true,
     // The Meta Model API's Muse models; Muse has no command that lists them.
     modelOptions: [
+      { id: 'muse-ember-1.0', label: 'Muse Ember 1.0' },
       { id: 'muse-spark-1.3', label: 'Muse Spark 1.3' },
       {
         id: 'muse-spark-1.3-contributor',

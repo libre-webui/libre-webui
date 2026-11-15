@@ -1503,6 +1503,41 @@ test('buildPluginChatPayload sends adaptive thinking to Claude Sonnet 5.5', () =
   assert.equal(build('claude-sonnet-4-6', 'low').thinking.type, 'enabled');
 });
 
+test('buildPluginChatPayload sends adaptive thinking to Claude Fable 5.2, which cannot turn it off', () => {
+  const build = (model, think, extra = {}) =>
+    pluginChatAdapter.buildPluginChatPayload(
+      { id: 'anthropic' },
+      model,
+      [{ role: 'user', content: 'Plan the migration.' }],
+      { temperature: 0.2, think, ...extra },
+      { top_p: 0.8 },
+      true
+    ).payload;
+
+  // A manual budget (`type: 'enabled'`) is a 400 on Fable 5.2.
+  const high = build('claude-fable-5-2', 'high', { num_predict: 4096 });
+  assert.deepEqual(high.thinking, { type: 'adaptive' });
+  assert.deepEqual(high.output_config, { effort: 'high' });
+  assert.equal(high.max_tokens, 4096);
+  assert.equal('temperature' in high, false);
+  assert.equal('top_p' in high, false);
+
+  const on = build('claude-fable-5-2', true);
+  assert.deepEqual(on.thinking, { type: 'adaptive' });
+  assert.equal('output_config' in on, false);
+  assert.equal(on.max_tokens, 16384);
+
+  // `disabled` is a 400 too, so off leaves the model at its own default.
+  const off = build('claude-fable-5-2', false);
+  assert.equal('thinking' in off, false);
+  assert.equal('output_config' in off, false);
+  assert.equal('temperature' in off, false);
+
+  const unset = build('claude-fable-5-2', undefined, { num_predict: 200000 });
+  assert.equal('thinking' in unset, false);
+  assert.equal(unset.max_tokens, 128000);
+});
+
 test('buildPluginChatPayload sends adaptive thinking to Claude Haiku 5.5 and turns it off with disabled', () => {
   const build = (model, think, extra = {}) =>
     pluginChatAdapter.buildPluginChatPayload(

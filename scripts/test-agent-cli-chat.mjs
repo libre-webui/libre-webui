@@ -123,7 +123,12 @@ test('muse runs headless with approvals off and its own sandbox on', () => {
   assert.equal(muse.scratchWorkspace, true);
   assert.deepEqual(
     muse.modelOptions.map(option => option.id),
-    ['muse-spark-1.3', 'muse-spark-1.3-contributor', 'muse-wonder-1.0']
+    [
+      'muse-ember-1.0',
+      'muse-spark-1.3',
+      'muse-spark-1.3-contributor',
+      'muse-wonder-1.0',
+    ]
   );
 });
 
@@ -245,6 +250,7 @@ test('Claude Code lists explicit Sonnet 5.5, Opus 5.5, and Haiku 5.5 while prese
         'claude-code:claude-sonnet-5-5',
         'claude-code:opus',
         'claude-code:claude-opus-5-5',
+        'claude-code:claude-fable-5-2',
         'claude-code:haiku',
         'claude-code:claude-haiku-5-5',
       ]
@@ -266,6 +272,15 @@ test('Claude Code lists explicit Sonnet 5.5, Opus 5.5, and Haiku 5.5 while prese
     assert.deepEqual(
       definition('claude-code').buildArgs('claude-sonnet-5-5').slice(-2),
       ['--model', 'claude-sonnet-5-5']
+    );
+    const fable = models.find(
+      model => model.id === 'claude-code:claude-fable-5-2'
+    );
+    assert.equal(fable?.name, 'Claude Code · Fable 5.2');
+    assert.equal(fable?.agentId, 'claude-code');
+    assert.deepEqual(
+      definition('claude-code').buildArgs('claude-fable-5-2').slice(-2),
+      ['--model', 'claude-fable-5-2']
     );
     const haiku = models.find(
       model => model.id === 'claude-code:claude-haiku-5-5'
@@ -560,6 +575,7 @@ test('listAgentModels expands CLIs into per-model entries with a shared agentId'
       'claude-code:claude-sonnet-5-5',
       'claude-code:opus',
       'claude-code:claude-opus-5-5',
+      'claude-code:claude-fable-5-2',
       'claude-code:haiku',
       'claude-code:claude-haiku-5-5',
       'opencode:opencode/big-pickle',
@@ -1098,6 +1114,8 @@ for (const [agent, model] of [
   ['claude-code', 'claude-sonnet-5-5'],
   ['claude-code', 'claude-opus-5-5'],
   ['claude-code', 'claude-haiku-5-5'],
+  ['claude-code', 'claude-fable-5-2'],
+  ['muse', 'muse-ember-1.0'],
   ['codex', 'gpt-6.1-sol'],
   ['codex', 'gpt-6.1-terra'],
   ['codex', 'gpt-6-sol'],

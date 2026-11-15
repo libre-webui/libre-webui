@@ -80,6 +80,7 @@ test('the bundled Meta manifest routes to the Meta Model API', () => {
     key_env: 'META_API_KEY',
   });
   assert.deepEqual(plugin.model_map, [
+    'muse-ember-1.0',
     'muse-spark-1.3',
     'muse-spark-1.3-contributor',
     'muse-wonder-1.0',

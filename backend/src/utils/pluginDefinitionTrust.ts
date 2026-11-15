@@ -25,7 +25,7 @@ import { Plugin } from '../types/index.js';
 export const BUNDLED_PLUGIN_DEFINITION_FINGERPRINTS: Readonly<
   Record<string, string>
 > = Object.freeze({
-  anthropic: '3623dc1cb04bcebf9d41cca59f0e36a2a1c51bb722132e8fe90f0f6e6b52146a',
+  anthropic: '22dd38869e2a3fc71bc906a9cef5055ee45458c1f948ac54e4fe3e8f0df10bb2',
   baseten: '729ed500ed1950941ec69b649906b866a059c8ef31a50de7cb143bf3187157dd',
   bedrock: '3cfcf2c3728f621b4b9f22ecb8f6d30cb4aec2164302a3fb65268bdc2f6eca64',
   'codex-oauth':
@@ -49,7 +49,7 @@ export const BUNDLED_PLUGIN_DEFINITION_FINGERPRINTS: Readonly<
     'df2a449df1f367400999599e48df53b05a104d59e5df269eb13ed1d9720073f8',
   'longcat-audiodit':
     'ac898aaad95181722b4f53303edd4939a9f9b0fcd0c5a8126f39fa80e45cba25',
-  meta: '11bee2648abc5147ba51d220dd622ad565f55e5011fc2cbd899b7367b4ab172c',
+  meta: '4e3a7061dd82562ff9978d98aedf25e9e247dd73b5f3df2b60cf8e5afa14a270',
   mistral: 'a8a188cc75799a4b0a4c8fa4b448a8601b5ed72babc358ee460683459a75fbed',
   'mlx-lm': 'c5aad700fd557216a1e1eda361c0d67f92d51d1fe46d9c2028354f8ca8f25503',
   modal: '1090d56f1358d0bfeaea52db7551d2a0e10ce19898a4999b754a2cb801c67189',

@@ -99,6 +99,7 @@ const ANTHROPIC_MAX_OUTPUT_TOKENS: ReadonlyArray<[string, number]> = [
   ['claude-sonnet-4', 64000],
   ['claude-haiku-4', 64000],
   ['claude-opus-4', 32000],
+  ['claude-fable-5-2', 128000],
   ['claude-opus-5-5', 128000],
   ['claude-sonnet-5-5', 128000],
   ['claude-haiku-5-5', 128000],
@@ -110,6 +111,7 @@ const ANTHROPIC_MAX_OUTPUT_TOKENS: ReadonlyArray<[string, number]> = [
  * How each one switches thinking off differs, so that is listed separately.
  */
 const ANTHROPIC_ADAPTIVE_THINKING_MODELS = new Set([
+  'claude-fable-5-2',
   'claude-opus-5-5',
   'claude-sonnet-5-5',
   'claude-haiku-5-5',

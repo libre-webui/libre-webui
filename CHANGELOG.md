@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### ✨ New Features
 
+- **Claude Fable 5.2**: Anthropic's most capable widely released model
+  (`claude-fable-5-2`) is in the bundled Anthropic provider and in the Claude
+  Code agent CLI. It always thinks adaptively, so a thinking level becomes its
+  effort setting and **off** leaves it at its own default, and replies can run
+  to 128K tokens. Claude Code needs version 2.1.321 or later, and depending on
+  the plan, Fable usage can bill to usage credits.
+- **Muse Ember**: Meta's smallest, most efficient Muse model (`muse-ember-1.0`)
+  is in the bundled Meta provider and in the Muse Code agent CLI, for sub-agent
+  work, tool calls, and bulk processing.
+
 ### 🔧 Improvements
 
 ### 🐛 Bug Fixes

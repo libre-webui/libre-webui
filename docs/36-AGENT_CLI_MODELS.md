@@ -57,11 +57,14 @@ Each CLI can expose several entries in the Agents group:
 
 - **Claude Code** offers its signed-in default plus Sonnet, Opus, Haiku, and
   explicit **Sonnet 5.5** (`claude-sonnet-5-5`), **Opus 5.5**
-  (`claude-opus-5-5`), and **Haiku 5.5** (`claude-haiku-5-5`) choices. Sonnet
-  5.5 requires Claude Code 2.1.284 or later, Opus 5.5 requires
+  (`claude-opus-5-5`), **Fable 5.2** (`claude-fable-5-2`), and **Haiku 5.5**
+  (`claude-haiku-5-5`) choices. Sonnet 5.5 requires Claude Code 2.1.284 or
+  later, Opus 5.5 requires
   [Claude Code 2.1.280 or later](https://code.claude.com/docs/en/model-config),
-  and Haiku 5.5 requires Claude Code 2.1.293 or later, all with access through
-  the signed-in account; run `claude update` to update the CLI. The existing
+  Fable 5.2 requires Claude Code 2.1.321 or later, and Haiku 5.5 requires
+  Claude Code 2.1.293 or later, all with access through the signed-in account;
+  run `claude update` to update the CLI. Depending on the plan, Fable usage can
+  bill to usage credits instead of the plan's included limits. The existing
   **Sonnet**, **Opus**, and **Haiku** aliases continue to follow the CLI's
   current model mapping.
 - **Codex** offers its configured default plus the documented ChatGPT sign-in
@@ -74,9 +77,12 @@ Each CLI can expose several entries in the Agents group:
   non-interactively on the CLI's V3 agent engine with its built-in default
   agent (`vibe`) pinned, so a custom `chat.defaultAgent` does not apply.
   Requires Kiro CLI 2.27 or later.
-- **Muse Code** offers its configured default plus **Muse Spark 1.3**
-  (`muse-spark-1.3`), **Muse Spark 1.3 Contributor**
-  (`muse-spark-1.3-contributor`), and **Muse Wonder 1.0** (`muse-wonder-1.0`).
+- **Muse Code** offers its configured default plus **Muse Ember 1.0**
+  (`muse-ember-1.0`), **Muse Spark 1.3** (`muse-spark-1.3`), **Muse Spark 1.3
+  Contributor** (`muse-spark-1.3-contributor`), and **Muse Wonder 1.0**
+  (`muse-wonder-1.0`). Muse Ember is Meta's smallest, most efficient Muse model,
+  meant for sub-agent work, tool calls, and bulk processing; it runs in
+  Standard mode only.
   It signs in with `muse login` (a Meta account) or a Meta Model API key from
   `META_API_KEY` or `muse auth set`. Contributor models are billed at a lower
   rate because Meta may train on what you send them.
