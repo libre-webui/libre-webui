@@ -9,6 +9,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### ✨ New Features
 
+### 🔧 Improvements
+
+### 🐛 Bug Fixes
+
+### 📚 Documentation
+
+## [0.44.1] - 2026-11-15
+
+Claude Fable 5.2 joins the Anthropic provider and Claude Code, and Muse Ember
+joins the Meta provider and Muse Code. Thinking works again on the Claude
+models from Opus 4.7 on, and long replies on Opus 4.6 to 4.8 and Sonnet 4.6
+are no longer cut short.
+
+### ✨ New Features
+
 - **Claude Fable 5.2**: Anthropic's most capable widely released model
   (`claude-fable-5-2`) is in the bundled Anthropic provider and in the Claude
   Code agent CLI. It always thinks adaptively, so a thinking level becomes its
@@ -18,8 +33,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Muse Ember**: Meta's smallest, most efficient Muse model (`muse-ember-1.0`)
   is in the bundled Meta provider and in the Muse Code agent CLI, for sub-agent
   work, tool calls, and bulk processing.
-
-### 🔧 Improvements
 
 ### 🐛 Bug Fixes
 
@@ -33,6 +46,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   to an older model's ceiling. They now get up to their documented 128K.
 
 ### 📚 Documentation
+
+- **Agent CLI Models and Pro Tips**: the agent guide lists Fable 5.2 (with the
+  Claude Code version it needs) and Muse Ember, and the thinking section of Pro
+  Tips says which Claude models think adaptively and what **off** does on each.
 
 ## [0.44.0] - 2026-11-14
 
