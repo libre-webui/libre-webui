@@ -15,6 +15,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 📚 Documentation
 
+## [0.45.1] - 2026-11-16
+
+Decision answers keep their table intact when a question or option contains
+a backslash, and the Ollama library's categories now read in your language.
+
+### 🐛 Bug Fixes
+
+- **Decision tables with backslashes**: a backslash before a pipe in a
+  decision question or option split that row of the reply's answer table,
+  which is the text exports, the API, and search see. Backslashes are now
+  escaped along with pipes.
+- **Ollama library categories in every language**: the category buttons in
+  the model picker's Ollama tab and in the model manager (All, General,
+  Coding, Reasoning, Vision, Embedding, Decision, Cloud), and each model's
+  category tag, showed the English category name in every language. They now
+  follow the interface language.
+
 ## [0.45.0] - 2026-11-16
 
 Decision models arrive: typed yes/no, choice, and score answers with
