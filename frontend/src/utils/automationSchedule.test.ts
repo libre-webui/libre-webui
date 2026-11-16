@@ -16,6 +16,7 @@
  */
 
 import assert from 'node:assert/strict';
+import type { TFunction } from 'i18next';
 import { test } from 'node:test';
 import {
   describeTrigger,
@@ -23,8 +24,9 @@ import {
   isTriggerValid,
 } from './automationSchedule';
 
-const t = (key: string, options?: Record<string, unknown>) =>
-  `${key}|${JSON.stringify(options ?? {})}`;
+// Echoes the key and options so the tests can see what was asked for.
+const t = ((key: string, options?: Record<string, unknown>) =>
+  `${key}|${JSON.stringify(options ?? {})}`) as unknown as TFunction;
 
 test('describeTrigger localizes every trigger kind through Intl', () => {
   const daily = describeTrigger(

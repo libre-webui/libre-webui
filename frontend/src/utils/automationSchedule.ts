@@ -17,6 +17,7 @@
 
 /** Human-readable trigger summaries. Names come from Intl, not the catalog. */
 
+import type { TFunction } from 'i18next';
 import type { AutomationTrigger, NotificationType } from '@/types';
 
 /**
@@ -72,7 +73,7 @@ const monthDayText = (
 export function describeTrigger(
   trigger: AutomationTrigger,
   locale: string,
-  t: (key: string, options?: Record<string, unknown>) => string
+  t: TFunction
 ): string {
   switch (trigger.kind) {
     case 'event':
@@ -128,7 +129,7 @@ export function describeTrigger(
 export function describeTriggers(
   triggers: AutomationTrigger[],
   locale: string,
-  t: (key: string, options?: Record<string, unknown>) => string
+  t: TFunction
 ): string {
   return triggers
     .map(trigger => describeTrigger(trigger, locale, t))
