@@ -3187,7 +3187,17 @@
     "defaultModel": "Varsayılan model",
     "contextSize": "{{size}} bağlam",
     "via": "{{provider}} üzerinden",
-    "decisionBadge": "Karar"
+    "decisionBadge": "Karar",
+    "libraryCategories": {
+      "all": "Tümü",
+      "general": "Genel",
+      "coding": "Kodlama",
+      "reasoning": "muhakeme",
+      "vision": "Görme",
+      "embedding": "Gömme",
+      "decision": "Karar",
+      "cloud": "Bulut"
+    }
   },
   "whatsNew": {
     "title": "Yenilikler",

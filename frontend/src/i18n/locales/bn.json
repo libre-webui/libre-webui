@@ -3187,7 +3187,17 @@
     "defaultModel": "ডিফল্ট মডেল",
     "contextSize": "{{size}} কনটেক্সট",
     "via": "{{provider}} এর মাধ্যমে",
-    "decisionBadge": "সিদ্ধান্ত"
+    "decisionBadge": "সিদ্ধান্ত",
+    "libraryCategories": {
+      "all": "সব",
+      "general": "সাধারণ",
+      "coding": "কোডিং",
+      "reasoning": "যুক্তি",
+      "vision": "ভিশন",
+      "embedding": "এম্বেডিং",
+      "decision": "সিদ্ধান্ত",
+      "cloud": "ক্লাউড"
+    }
   },
   "whatsNew": {
     "title": "নতুন কী আছে",

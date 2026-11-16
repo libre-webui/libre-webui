@@ -3187,7 +3187,17 @@
     "defaultModel": "默认模型",
     "contextSize": "{{size}} 上下文",
     "via": "通过 {{provider}}",
-    "decisionBadge": "判定"
+    "decisionBadge": "判定",
+    "libraryCategories": {
+      "all": "全部",
+      "general": "通用",
+      "coding": "编程",
+      "reasoning": "推理",
+      "vision": "视觉",
+      "embedding": "嵌入",
+      "decision": "判定",
+      "cloud": "云端"
+    }
   },
   "whatsNew": {
     "title": "新功能",

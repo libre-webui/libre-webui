@@ -3187,7 +3187,17 @@
     "defaultModel": "Výchozí model",
     "contextSize": "kontext {{size}}",
     "via": "přes {{provider}}",
-    "decisionBadge": "Rozhodnutí"
+    "decisionBadge": "Rozhodnutí",
+    "libraryCategories": {
+      "all": "Vše",
+      "general": "Obecné",
+      "coding": "Programování",
+      "reasoning": "Zdůvodnění",
+      "vision": "Vidění",
+      "embedding": "Embedding",
+      "decision": "Rozhodnutí",
+      "cloud": "Cloud"
+    }
   },
   "whatsNew": {
     "title": "Co je nového",

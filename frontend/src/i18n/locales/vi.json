@@ -3187,7 +3187,17 @@
     "defaultModel": "Mô hình mặc định",
     "contextSize": "ngữ cảnh {{size}}",
     "via": "qua {{provider}}",
-    "decisionBadge": "Quyết định"
+    "decisionBadge": "Quyết định",
+    "libraryCategories": {
+      "all": "Tất cả",
+      "general": "Chung",
+      "coding": "Lập trình",
+      "reasoning": "Lý luận",
+      "vision": "Thị giác",
+      "embedding": "Embedding",
+      "decision": "Quyết định",
+      "cloud": "Đám mây"
+    }
   },
   "whatsNew": {
     "title": "Có gì mới",

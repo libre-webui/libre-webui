@@ -3187,7 +3187,17 @@
     "defaultModel": "デフォルトモデル",
     "contextSize": "コンテキスト {{size}}",
     "via": "{{provider}} 経由",
-    "decisionBadge": "判定"
+    "decisionBadge": "判定",
+    "libraryCategories": {
+      "all": "すべて",
+      "general": "一般",
+      "coding": "コーディング",
+      "reasoning": "推論",
+      "vision": "ビジョン",
+      "embedding": "エンベディング",
+      "decision": "判定",
+      "cloud": "クラウド"
+    }
   },
   "whatsNew": {
     "title": "新機能",

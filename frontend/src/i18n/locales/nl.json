@@ -3187,7 +3187,17 @@
     "defaultModel": "Standaardmodel",
     "contextSize": "{{size}} context",
     "via": "via {{provider}}",
-    "decisionBadge": "Beslissing"
+    "decisionBadge": "Beslissing",
+    "libraryCategories": {
+      "all": "Alle",
+      "general": "Algemeen",
+      "coding": "Programmeren",
+      "reasoning": "Redenering",
+      "vision": "Vision",
+      "embedding": "Embedding",
+      "decision": "Beslissing",
+      "cloud": "Cloud"
+    }
   },
   "whatsNew": {
     "title": "Wat is nieuw",

@@ -3187,7 +3187,17 @@
     "defaultModel": "النموذج الافتراضي",
     "contextSize": "سياق {{size}}",
     "via": "عبر {{provider}}",
-    "decisionBadge": "قرار"
+    "decisionBadge": "قرار",
+    "libraryCategories": {
+      "all": "الكل",
+      "general": "عام",
+      "coding": "البرمجة",
+      "reasoning": "المنطق",
+      "vision": "الرؤية",
+      "embedding": "تضمين",
+      "decision": "قرار",
+      "cloud": "السحابة"
+    }
   },
   "whatsNew": {
     "title": "ما الجديد",

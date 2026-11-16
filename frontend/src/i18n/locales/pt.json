@@ -3187,7 +3187,17 @@
     "defaultModel": "Modelo padrão",
     "contextSize": "contexto de {{size}}",
     "via": "via {{provider}}",
-    "decisionBadge": "Decisão"
+    "decisionBadge": "Decisão",
+    "libraryCategories": {
+      "all": "Todos",
+      "general": "Geral",
+      "coding": "Programação",
+      "reasoning": "Raciocínio",
+      "vision": "Visão",
+      "embedding": "Embedding",
+      "decision": "Decisão",
+      "cloud": "Nuvem"
+    }
   },
   "whatsNew": {
     "title": "Novidades",

@@ -3187,7 +3187,17 @@
     "defaultModel": "Модель за замовчуванням",
     "contextSize": "контекст {{size}}",
     "via": "через {{provider}}",
-    "decisionBadge": "Рішення"
+    "decisionBadge": "Рішення",
+    "libraryCategories": {
+      "all": "Усі",
+      "general": "Загальні",
+      "coding": "Програмування",
+      "reasoning": "Міркування",
+      "vision": "Зір",
+      "embedding": "Вбудовування",
+      "decision": "Рішення",
+      "cloud": "Хмара"
+    }
   },
   "whatsNew": {
     "title": "Що нового",

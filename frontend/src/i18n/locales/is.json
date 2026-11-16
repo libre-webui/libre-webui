@@ -3187,7 +3187,17 @@
     "defaultModel": "Sjálfgefið líkan",
     "contextSize": "{{size}} samhengi",
     "via": "í gegnum {{provider}}",
-    "decisionBadge": "Ákvörðun"
+    "decisionBadge": "Ákvörðun",
+    "libraryCategories": {
+      "all": "Allt",
+      "general": "Almennt",
+      "coding": "Forritun",
+      "reasoning": "Rökstuðningur",
+      "vision": "Sjón",
+      "embedding": "Ívefing",
+      "decision": "Ákvörðun",
+      "cloud": "Ský"
+    }
   },
   "whatsNew": {
     "title": "Nýjungar",

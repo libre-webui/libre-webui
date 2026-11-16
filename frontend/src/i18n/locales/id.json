@@ -3187,7 +3187,17 @@
     "defaultModel": "Model default",
     "contextSize": "konteks {{size}}",
     "via": "melalui {{provider}}",
-    "decisionBadge": "Keputusan"
+    "decisionBadge": "Keputusan",
+    "libraryCategories": {
+      "all": "Semua",
+      "general": "Umum",
+      "coding": "Pemrograman",
+      "reasoning": "Penalaran",
+      "vision": "Visi",
+      "embedding": "Embedding",
+      "decision": "Keputusan",
+      "cloud": "Cloud"
+    }
   },
   "whatsNew": {
     "title": "Yang baru",

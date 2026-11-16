@@ -3187,7 +3187,17 @@
     "defaultModel": "Model lalai",
     "contextSize": "konteks {{size}}",
     "via": "melalui {{provider}}",
-    "decisionBadge": "Keputusan"
+    "decisionBadge": "Keputusan",
+    "libraryCategories": {
+      "all": "Semua",
+      "general": "Umum",
+      "coding": "Pengekodan",
+      "reasoning": "Penaakulan",
+      "vision": "Penglihatan",
+      "embedding": "Pembenaman",
+      "decision": "Keputusan",
+      "cloud": "Awan"
+    }
   },
   "whatsNew": {
     "title": "Apa yang baharu",

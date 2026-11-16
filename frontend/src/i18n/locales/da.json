@@ -3187,7 +3187,17 @@
     "defaultModel": "Standardmodel",
     "contextSize": "{{size}} kontekst",
     "via": "via {{provider}}",
-    "decisionBadge": "Beslutning"
+    "decisionBadge": "Beslutning",
+    "libraryCategories": {
+      "all": "Alle",
+      "general": "Generelt",
+      "coding": "Kodning",
+      "reasoning": "Ræsonnement",
+      "vision": "Vision",
+      "embedding": "Embedding",
+      "decision": "Beslutning",
+      "cloud": "Cloud"
+    }
   },
   "whatsNew": {
     "title": "Nyheder",

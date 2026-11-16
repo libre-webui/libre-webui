@@ -3187,7 +3187,17 @@
     "defaultModel": "기본 모델",
     "contextSize": "컨텍스트 {{size}}",
     "via": "{{provider}} 경유",
-    "decisionBadge": "판단"
+    "decisionBadge": "판단",
+    "libraryCategories": {
+      "all": "모두",
+      "general": "일반",
+      "coding": "코딩",
+      "reasoning": "추론",
+      "vision": "비전",
+      "embedding": "임베딩",
+      "decision": "판단",
+      "cloud": "클라우드"
+    }
   },
   "whatsNew": {
     "title": "새로운 기능",

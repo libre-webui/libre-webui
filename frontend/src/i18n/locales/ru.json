@@ -3187,7 +3187,17 @@
     "defaultModel": "Модель по умолчанию",
     "contextSize": "контекст {{size}}",
     "via": "через {{provider}}",
-    "decisionBadge": "Решение"
+    "decisionBadge": "Решение",
+    "libraryCategories": {
+      "all": "Все",
+      "general": "Общие",
+      "coding": "Программирование",
+      "reasoning": "Рассуждение",
+      "vision": "Зрение",
+      "embedding": "Эмбеддинг",
+      "decision": "Решение",
+      "cloud": "Облако"
+    }
   },
   "whatsNew": {
     "title": "Что нового",

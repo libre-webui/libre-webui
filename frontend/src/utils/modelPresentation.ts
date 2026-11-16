@@ -47,3 +47,24 @@ export function modelOptionLabel(
     ? `${name} · ${provider}${unavailable ? ` (${unavailable})` : ''}`
     : `${name} (${provider}${unavailable ? `, ${unavailable}` : ''})`;
 }
+
+const LIBRARY_CATEGORIES = new Set([
+  'all',
+  'general',
+  'coding',
+  'reasoning',
+  'vision',
+  'embedding',
+  'decision',
+  'cloud',
+]);
+
+/**
+ * The Ollama library's category chips and tags. A category the app does not
+ * know yet keeps its own name, capitalized.
+ */
+export function libraryCategoryLabel(category: string, t: TFunction): string {
+  return LIBRARY_CATEGORIES.has(category)
+    ? t(`modelSelector.libraryCategories.${category}`)
+    : category.charAt(0).toUpperCase() + category.slice(1);
+}

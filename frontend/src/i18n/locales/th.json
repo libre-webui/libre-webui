@@ -3187,7 +3187,17 @@
     "defaultModel": "โมเดลเริ่มต้น",
     "contextSize": "บริบท {{size}}",
     "via": "ผ่าน {{provider}}",
-    "decisionBadge": "การตัดสิน"
+    "decisionBadge": "การตัดสิน",
+    "libraryCategories": {
+      "all": "ทั้งหมด",
+      "general": "ทั่วไป",
+      "coding": "การเขียนโค้ด",
+      "reasoning": "การใช้เหตุผล",
+      "vision": "การมองเห็น",
+      "embedding": "การฝังข้อมูล",
+      "decision": "การตัดสิน",
+      "cloud": "คลาวด์"
+    }
   },
   "whatsNew": {
     "title": "มีอะไรใหม่",

@@ -29,6 +29,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { cn } from '@/utils';
+import { libraryCategoryLabel } from '@/utils/modelPresentation';
 import type { LibraryModel } from './types';
 
 interface ModelLibrarySectionProps {
@@ -149,7 +150,7 @@ export function ModelLibrarySection({
                         : 'bg-gray-100 dark:bg-dark-200 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-dark-300'
                     )}
                   >
-                    {category.charAt(0).toUpperCase() + category.slice(1)}
+                    {libraryCategoryLabel(category, t)}
                   </button>
                 ))}
               </div>
@@ -297,13 +298,13 @@ function LibraryModelCard({
           )}
           <span
             className={cn(
-              'px-1.5 py-0.5 rounded-sm capitalize',
+              'px-1.5 py-0.5 rounded-sm',
               model.category === 'cloud'
                 ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400'
                 : 'bg-gray-100 dark:bg-dark-200'
             )}
           >
-            {model.category}
+            {libraryCategoryLabel(model.category, t)}
           </span>
         </div>
 
