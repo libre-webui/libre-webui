@@ -25,11 +25,11 @@ A decision model answers questions about an input with probabilities instead
 of writing text. You give it a **state** (a message, a JSON object, or an
 image) and **questions**, and every answer comes back typed:
 
-| Question type | What you define                             | What comes back                                             |
-| ------------- | ------------------------------------------- | ----------------------------------------------------------- |
-| Yes/no        | A question, optionally what yes and no mean | The probability that the answer is yes                      |
-| Choice        | 2 to 255 named options                      | The likeliest option and every option's probability         |
-| Score         | 2 to 10 levels, lowest first                | The probability-weighted level, from 0 to the highest level |
+| Question type | What you define                             | What comes back                                                              |
+| ------------- | ------------------------------------------- | ---------------------------------------------------------------------------- |
+| Yes/no        | A question, optionally what yes and no mean | The probability that the answer is yes                                       |
+| Choice        | 2 to 255 named options                      | The likeliest option and every option's probability                          |
+| Score         | 2 to 10 levels, lowest first                | The probability-weighted level, counted from 1 in Chat and from 0 in the API |
 
 They are fast and cheap, which makes them good at routing, classification,
 moderation, and checking a draft against a rubric. They cannot write.

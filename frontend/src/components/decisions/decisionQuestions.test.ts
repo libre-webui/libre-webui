@@ -129,7 +129,7 @@ test('decision answers read as the answer, its probability, and the spread', () 
     }
   );
   assert.equal(score.label, 'Soon');
-  assert.deepEqual(score.score, { value: 0.83, max: 2 });
+  assert.deepEqual(score.score, { value: 1.83, max: 3 });
   assert.deepEqual(
     score.distribution.map(entry => entry.label),
     ['Soon', 'Routine', 'Immediate']

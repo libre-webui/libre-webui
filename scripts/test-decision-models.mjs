@@ -429,7 +429,7 @@ test('a decision chat follows ollama run: state first, then yes/no lines, /clear
   );
   assert.match(
     table,
-    /\| How urgent is this\? \| Soon \(1\.20 of 2\) \| 60\.0% \|/
+    /\| How urgent is this\? \| Soon \(2\.20 of 3\) \| 60\.0% \|/
   );
 });
 

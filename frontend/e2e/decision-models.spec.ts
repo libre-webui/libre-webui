@@ -168,9 +168,9 @@ test('a decision chat shows its answers and saves the questions it asks', async 
     .getByLabel('Question', { exact: true })
     .last()
     .fill('How urgent is this?');
-  await dialog.getByLabel('Level 0', { exact: true }).last().fill('Routine');
-  await dialog.getByLabel('Level 1', { exact: true }).last().fill('Soon');
-  await dialog.getByLabel('Level 2', { exact: true }).last().fill('Immediate');
+  await dialog.getByLabel('Level 1', { exact: true }).last().fill('Routine');
+  await dialog.getByLabel('Level 2', { exact: true }).last().fill('Soon');
+  await dialog.getByLabel('Level 3', { exact: true }).last().fill('Immediate');
   await dialog.getByTestId('decision-questions-save').click();
 
   await expect(dialog).toHaveCount(0);

@@ -166,7 +166,7 @@ export interface DecisionAnswerView {
   /** The answer's own probability, 0 to 1. */
   probability?: number;
   kind: 'yes' | 'no' | 'choice' | 'score' | 'refusal';
-  /** For a score: the weighted position and the top of the scale. */
+  /** For a score: the weighted level and the number of levels, counted from 1. */
   score?: { value: number; max: number };
   /** Every candidate with its probability, highest first. */
   distribution: Array<{ label: string; probability: number }>;
@@ -221,7 +221,8 @@ export function viewDecisionAnswer(
     label: distribution[0]?.label ?? '',
     kind: 'score',
     probability: distribution[0]?.probability,
-    score: { value: answer.score, max: Math.max(levels - 1, 0) },
+    // Providers number levels from 0; people count them from 1.
+    score: { value: answer.score + 1, max: levels },
     distribution,
     ...(answer.confidence !== undefined
       ? { confidence: answer.confidence }

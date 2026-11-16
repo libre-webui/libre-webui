@@ -1015,12 +1015,15 @@ export function renderDecisionMarkdown(
       const p = answer.probabilities[answer.choice];
       return `| ${asked} | ${escapeCell(answer.choice)} | ${p === undefined ? '' : percent(p)} |`;
     }
-    const levels = question.type === 'score' ? question.criteria.length : 0;
+    const levels =
+      question.type === 'score'
+        ? question.criteria.length
+        : Object.keys(answer.legend).length;
     const top = Object.entries(answer.probabilities).sort(
       (a, b) => b[1] - a[1]
     )[0];
     const label = top ? (answer.legend[top[0]] ?? top[0]) : '';
-    return `| ${asked} | ${escapeCell(label)} (${answer.score.toFixed(2)} of ${Math.max(levels - 1, 0)}) | ${top ? percent(top[1]) : ''} |`;
+    return `| ${asked} | ${escapeCell(label)} (${(answer.score + 1).toFixed(2)} of ${levels}) | ${top ? percent(top[1]) : ''} |`;
   });
   return [
     '| Question | Answer | Probability |',

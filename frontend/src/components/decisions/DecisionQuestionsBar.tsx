@@ -391,12 +391,12 @@ const DecisionQuestionsDialog: React.FC<DecisionQuestionsDialogProps> = ({
                 {draft.levels.map((level, levelIndex) => (
                   <div key={levelIndex} className='flex items-center gap-2'>
                     <span className='w-5 shrink-0 text-end text-xs tabular-nums text-ink-muted'>
-                      {levelIndex}
+                      {levelIndex + 1}
                     </span>
                     <input
                       dir='auto'
                       aria-label={t('chat.decision.levelLabel', {
-                        number: levelIndex,
+                        number: levelIndex + 1,
                       })}
                       placeholder={t('chat.decision.levelPlaceholder')}
                       value={level}
@@ -413,7 +413,7 @@ const DecisionQuestionsDialog: React.FC<DecisionQuestionsDialogProps> = ({
                     <button
                       type='button'
                       aria-label={t('chat.decision.removeLevel', {
-                        number: levelIndex,
+                        number: levelIndex + 1,
                       })}
                       onClick={() =>
                         update(index, current => ({
