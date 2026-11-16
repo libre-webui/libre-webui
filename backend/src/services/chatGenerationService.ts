@@ -39,6 +39,9 @@ import type {
 import { createLogger } from '../utils/logger.js';
 import { normalizeChatProviderSelection } from '../utils/chatProviderSelection.js';
 import { throwIfChatGenerationCancelled } from '../utils/chatCancellation.js';
+import type { DecisionQuestions } from '../utils/decisionProtocol.js';
+import type { OllamaModelDefaults } from '../utils/ollamaModelDefaults.js';
+import { getDecisionService, type DecisionTarget } from './decisionService.js';
 
 const logger = createLogger('services:chat-generation-service');
 
@@ -49,6 +52,32 @@ export interface GenerationTarget {
   pluginVariables: Record<string, string | number | boolean>;
   providerType?: ChatProviderType;
   providerId?: string;
+  /**
+   * Set when the model is a decision model: it answers typed questions with
+   * probabilities through its decision API, never through chat.
+   */
+  decision?: GenerationDecisionTarget;
+}
+
+export type GenerationDecisionTarget = DecisionTarget & {
+  /** The chat's saved question set, when it has one. */
+  questions?: DecisionQuestions;
+};
+
+/** Whether a target is answered by a decision model. */
+export const isDecisionGenerationTarget = (
+  target: Pick<GenerationTarget, 'decision'> | undefined
+): target is GenerationTarget & { decision: GenerationDecisionTarget } =>
+  Boolean(target?.decision);
+
+/** A decision model was asked to write text. */
+export class DecisionModelTextError extends Error {
+  constructor(model: string) {
+    super(
+      `${model} is a decision model: it answers questions with probabilities and cannot write text. Use it in Chat or through the Decisions API.`
+    );
+    this.name = 'DecisionModelTextError';
+  }
 }
 
 export type PluginFallbackPolicy = 'allow' | 'disabled';
@@ -125,7 +154,8 @@ class ChatGenerationService {
     userId: string,
     options: GenerationOptions = {},
     signal?: AbortSignal,
-    includeOllamaDefaults = true
+    includeOllamaDefaults = true,
+    knownOllamaDefaults?: OllamaModelDefaults
   ): Promise<GenerationOptions> {
     const [global, pinned] = await Promise.all([
       preferencesService.getGenerationOptions(userId),
@@ -137,7 +167,10 @@ class ChatGenerationService {
       !includeOllamaDefaults ||
       (Object.keys(pinned).length > 0 && pinned.num_ctx !== undefined)
         ? {}
-        : (await ollamaService.getModelDefaults(model, signal)).options;
+        : (
+            knownOllamaDefaults ??
+            (await ollamaService.getModelDefaults(model, signal))
+          ).options;
 
     return mergeGenerationOptions(
       mergeGenerationOptions(
@@ -153,7 +186,8 @@ class ChatGenerationService {
     userId: string,
     options: GenerationOptions = {},
     providerSelection?: ChatProviderSelection,
-    signal?: AbortSignal
+    signal?: AbortSignal,
+    { allowDecisionModels = false }: { allowDecisionModels?: boolean } = {}
   ): Promise<GenerationTarget> {
     // A persona session's provider binding describes the persona
     // pseudo-model, not its backing model (the UI historically stamped
@@ -166,6 +200,30 @@ class ChatGenerationService {
       sessionModel,
       userId
     );
+    // A decision model answers through its decision API; it has no chat
+    // endpoint, generation options, or plugin chat route to resolve. Only a
+    // chat turn knows how to ask one; titles, summaries, evaluations, and
+    // the text APIs need a model that writes.
+    const decisionTarget = (decision: DecisionTarget): GenerationTarget => {
+      if (!allowDecisionModels) {
+        throw new DecisionModelTextError(actualModelName);
+      }
+      return {
+        actualModelName,
+        mergedOptions: {},
+        activePlugin: null,
+        pluginVariables: {},
+        ...provider,
+        decision,
+      };
+    };
+    // A provider's decision models are named by the plugin that serves them.
+    if (provider?.providerType === 'plugin') {
+      const decision = await (
+        await getDecisionService()
+      ).resolveTarget(actualModelName, provider, userId, signal);
+      if (decision) return decisionTarget(decision);
+    }
     const activePlugin =
       provider?.providerType === 'ollama' || provider?.providerType === 'agent'
         ? null
@@ -176,12 +234,21 @@ class ChatGenerationService {
           );
     const includeOllamaDefaults =
       provider?.providerType === 'ollama' || (!provider && !activePlugin);
+    // Ollama marks its decision models in the same /api/show answer that
+    // carries a model's defaults, so one probe serves both.
+    const ollamaDefaults = includeOllamaDefaults
+      ? await ollamaService.getModelDefaults(actualModelName, signal)
+      : undefined;
+    if (ollamaDefaults?.capabilities?.includes('decision')) {
+      return decisionTarget({ providerType: 'ollama', model: actualModelName });
+    }
     const mergedOptions = await this.mergeOptionsForModel(
       actualModelName,
       userId,
       options,
       signal,
-      includeOllamaDefaults
+      includeOllamaDefaults,
+      ollamaDefaults
     );
     const pluginVariables = activePlugin
       ? await pluginService.getPluginVariables(activePlugin, userId)
@@ -301,6 +368,42 @@ class ChatGenerationService {
       stream: false,
       options: target.mergedOptions as Record<string, unknown>,
     };
+
+    if (isDecisionGenerationTarget(target)) {
+      let assistantContent = '';
+      let providerMetadata: Record<string, unknown> | undefined;
+      let usage:
+        { promptTokens?: number; completionTokens?: number } | undefined;
+      let timings: { promptMs?: number; predictedMs?: number } | undefined;
+      const decisionService = await getDecisionService();
+      for await (const chunk of decisionService.streamChatTurn(
+        target.decision,
+        pluginMessages,
+        userId,
+        { questions: target.decision.questions, signal }
+      )) {
+        if (chunk.type === 'content' && chunk.content) {
+          assistantContent += chunk.content;
+        } else if (chunk.type === 'usage') {
+          if (chunk.usage) usage = { ...usage, ...chunk.usage };
+          if (chunk.timings) timings = { ...timings, ...chunk.timings };
+        } else if (chunk.type === 'done' && chunk.providerMetadata) {
+          providerMetadata = chunk.providerMetadata;
+        }
+      }
+      return {
+        response: this.createStreamedChatResponse(
+          target.actualModelName,
+          assistantContent,
+          undefined,
+          providerMetadata,
+          usage,
+          timings
+        ),
+        assistantContent,
+        source: target.decision.providerType === 'ollama' ? 'ollama' : 'plugin',
+      };
+    }
 
     if (target.providerType === 'agent' && target.providerId) {
       let assistantContent = '';

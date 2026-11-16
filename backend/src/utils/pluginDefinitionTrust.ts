@@ -26,7 +26,7 @@ export const BUNDLED_PLUGIN_DEFINITION_FINGERPRINTS: Readonly<
   Record<string, string>
 > = Object.freeze({
   anthropic: '22dd38869e2a3fc71bc906a9cef5055ee45458c1f948ac54e4fe3e8f0df10bb2',
-  baseten: '729ed500ed1950941ec69b649906b866a059c8ef31a50de7cb143bf3187157dd',
+  baseten: 'd0486c8c44a5f2ca7bdb5407869f411fe3ca7ba0ee2b2a30d1cd5f96a18cfc35',
   bedrock: '3cfcf2c3728f621b4b9f22ecb8f6d30cb4aec2164302a3fb65268bdc2f6eca64',
   'codex-oauth':
     '82f39cd30da614cbdba5fc504962947e59d616592b334abb8afa6e498a81a216',
@@ -34,7 +34,7 @@ export const BUNDLED_PLUGIN_DEFINITION_FINGERPRINTS: Readonly<
   deepseek: '32cc8662939e304869f9e02ef3b7c8ced6ffe14c333bea9230bfabe2f2350181',
   elevenlabs:
     'de6afcbd123600f484a078227618b5c9687bc56f6e2637b57514349fbcea63d6',
-  gemini: '400de79b1d5b4b876c5ed14d177bd01b7eecbf9d6ce856ae031d98b1c7c8a5ce',
+  gemini: '7e30204972d3e009ab08a641bb6440da1bd63f58776d3b3a469450deb1dd2798',
   github: '482f22da003d73fe0d6684572dc2d959b46d7f8dbecf0f92205c2b4ef2f03817',
   groq: 'd03908e9caddae5ad838de9967fdc0b5dfb249d13f24391af1c9822fcf28e823',
   huggingface:
@@ -46,7 +46,7 @@ export const BUNDLED_PLUGIN_DEFINITION_FINGERPRINTS: Readonly<
   'kyutai-tts':
     '22b48b58b8d7d3021e6c0163771830e2e4e4d973466e700def41fe85ec90644f',
   'llama-cpp':
-    'df2a449df1f367400999599e48df53b05a104d59e5df269eb13ed1d9720073f8',
+    '3f33346f01c22fd051c342a2dad66497c8b1a5562cab731f96bd646d04e21101',
   'longcat-audiodit':
     'ac898aaad95181722b4f53303edd4939a9f9b0fcd0c5a8126f39fa80e45cba25',
   meta: '4e3a7061dd82562ff9978d98aedf25e9e247dd73b5f3df2b60cf8e5afa14a270',
@@ -55,9 +55,9 @@ export const BUNDLED_PLUGIN_DEFINITION_FINGERPRINTS: Readonly<
   modal: '1090d56f1358d0bfeaea52db7551d2a0e10ce19898a4999b754a2cb801c67189',
   'openai-tts':
     'ebc3677f4f0ef2ec1628408d59a9e273059cc50d2f9d462e7a3b7f0c4eefe843',
-  openai: '0034ebae22d4ca4b1bce9193c263760328e5d59f95065be00addf7a2086992c1',
+  openai: 'b09166167dabcce34818526331dd128b07f9995ef192f85ee9dbaeb98841ac57',
   openrouter:
-    '93a5ce8d1da1f405e798cb8b21eca225485ddff5cb8e098cf74a13c9b71a87d9',
+    '52e400545e141c4e021ebc600966ce83665c37b1e0b877308dc6782bd449fe54',
   'qwen-tts':
     '3a663efb46a9a228a78f850996b8006e886a67c32b52d0e31627586f856a9ba9',
 });
@@ -128,6 +128,44 @@ function someString(
 /** Model catalog fields: which models exist, never where a request goes. */
 const MODEL_CATALOG_FIELDS = ['model_map', 'model_context', 'model_reasoning'];
 
+const ABSOLUTE_URL = /^(?:[a-z][a-z0-9+.-]*:|\/\/)/i;
+
+function originOf(value: unknown): string | undefined {
+  if (typeof value !== 'string' || !value) return undefined;
+  try {
+    return new URL(value.replace(/\{model\}/g, 'model')).origin;
+  } catch {
+    return undefined;
+  }
+}
+
+/**
+ * Whether a decision capability sends the key nowhere the chat route does
+ * not already go: a relative path under the provider's own API root, or an
+ * endpoint on the chat endpoint's origin. Such a capability adds a request
+ * shape, not a destination, so it does not change what a saved key is
+ * bound to, and adding one to a provider keeps every saved key.
+ */
+function decisionStaysOnChatOrigin(
+  plugin: Record<string, unknown>,
+  capability: unknown
+): boolean {
+  if (!capability || typeof capability !== 'object') return false;
+  const { endpoint, config } = capability as {
+    endpoint?: unknown;
+    config?: { path?: unknown; models_path?: unknown };
+  };
+  for (const relative of [config?.path, config?.models_path]) {
+    if (relative === undefined) continue;
+    if (typeof relative !== 'string' || ABSOLUTE_URL.test(relative.trim())) {
+      return false;
+    }
+  }
+  if (typeof config?.path === 'string') return true;
+  const chatOrigin = originOf(plugin.endpoint);
+  return chatOrigin !== undefined && originOf(endpoint) === chatOrigin;
+}
+
 /**
  * Definition fingerprint that binds a saved credential. The model catalogs,
  * top-level and per capability, are left out so adding a model does not
@@ -157,16 +195,26 @@ export function getCredentialBindingDefinitionFingerprint(
   );
   const capabilities = definition.capabilities;
   if (capabilities && typeof capabilities === 'object') {
-    definition.capabilities = Object.fromEntries(
-      Object.entries(capabilities as Record<string, unknown>).map(
-        ([name, capability]) => [
-          name,
-          capability && typeof capability === 'object'
-            ? withoutCatalog(capability as Record<string, unknown>)
-            : capability,
-        ]
+    const bound = Object.entries(capabilities as Record<string, unknown>)
+      .filter(
+        ([name, capability]) =>
+          !(
+            name === 'decision' &&
+            decisionStaysOnChatOrigin(definition, capability)
+          )
       )
-    );
+      .map(([name, capability]) => [
+        name,
+        capability && typeof capability === 'object'
+          ? withoutCatalog(capability as Record<string, unknown>)
+          : capability,
+      ]);
+    if (bound.length > 0 || Object.keys(capabilities).length === 0) {
+      definition.capabilities = Object.fromEntries(bound);
+    } else {
+      // Only the unbound decision capability was there: hash as before it.
+      delete definition.capabilities;
+    }
   }
   return getPluginDefinitionFingerprint(definition as unknown as Plugin);
 }

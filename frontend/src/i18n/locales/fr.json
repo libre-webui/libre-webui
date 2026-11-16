@@ -562,6 +562,62 @@
       "replyFinishedNoText": "{{name}} a terminé de répondre.",
       "codeBlock": "bloc de code",
       "generationStopped": "Génération arrêtée"
+    },
+    "decision": {
+      "barTitle": "Questions de décision",
+      "interactiveHint": "Aucune question définie. Votre premier message est l'état, et chaque ligne envoyée ensuite est une question oui/non à son sujet. Envoyez /clear pour recommencer.",
+      "add": "Définir des questions",
+      "edit": "Modifier les questions",
+      "dialogTitle": "Questions de décision",
+      "dialogSubtitle": "Le modèle de décision répond à ces questions pour chaque message envoyé, avec une probabilité pour chaque réponse.",
+      "useInteractive": "Utiliser le mode interactif",
+      "questionNumber": "Question {{number}}",
+      "removeQuestion": "Supprimer la question",
+      "typeLabel": "Type de question",
+      "types": {
+        "noul": "Oui/non",
+        "choice": "Choix",
+        "score": "Note"
+      },
+      "question": "Question",
+      "placeholders": {
+        "noul": "Un remboursement est-il demandé ?",
+        "choice": "Quelle équipe doit traiter ceci ?",
+        "score": "Quelle est l’urgence ?"
+      },
+      "yesMeans": "Oui signifie (facultatif)",
+      "noMeans": "Non signifie (facultatif)",
+      "options": "Options",
+      "optionName": "Nom de l'option {{number}}",
+      "optionDescription": "Description de l'option {{number}}",
+      "optionNamePlaceholder": "facturation",
+      "optionDescriptionPlaceholder": "Description (facultatif)",
+      "removeOption": "Supprimer l'option {{number}}",
+      "addOption": "Ajouter une option",
+      "levels": "Niveaux, du plus bas au plus haut",
+      "levelLabel": "Niveau {{number}}",
+      "levelPlaceholder": "Décrire ce niveau",
+      "removeLevel": "Supprimer le niveau {{number}}",
+      "addLevel": "Ajouter un niveau",
+      "addQuestion": "Ajouter une question",
+      "saved": "Questions de décision enregistrées",
+      "saveFailed": "Les questions de décision n'ont pas pu être enregistrées",
+      "errors": {
+        "tooMany": "Posez au plus {{max}} questions.",
+        "instructions": "La question {{number}} doit avoir un texte.",
+        "options": "La question {{number}} doit avoir de 2 à 255 options, chacune avec son propre nom.",
+        "levels": "La question {{number}} doit avoir de 2 à 10 niveaux."
+      },
+      "result": {
+        "yes": "Oui",
+        "no": "Non",
+        "declined": "Refusé",
+        "score": "{{value}} sur {{max}}",
+        "stateSaved": "Enregistré comme état. Posez des questions oui/non à son sujet, une par ligne, ou définissez des questions pour ce chat.",
+        "cleared": "Effacé. Votre prochain message sera le nouvel état.",
+        "via": "{{model}} via {{provider}}",
+        "inputTokens": "{{tokens}} tokens d'entrée"
+      }
     }
   },
   "sidebar": {
@@ -846,7 +902,8 @@
         "embedding": "Embedding",
         "image": "Image",
         "speech": "Parole",
-        "transcription": "Transcription"
+        "transcription": "Transcription",
+        "decision": "Décision"
       },
       "exportPlugin": "Exporter le plugin",
       "deletePlugin": "Supprimer le plugin",
@@ -1949,7 +2006,8 @@
         "tts": "Synthèse vocale",
         "voice-mode": "Mode vocal",
         "voice-cloning": "Clonage vocal",
-        "work-agents": "CLI d’agents dans Work"
+        "work-agents": "CLI d’agents dans Work",
+        "decision-models": "Modèles de décision"
       },
       "grantViaKinds": {
         "user": "accès direct",
@@ -2095,6 +2153,13 @@
         "admins": "Administrateurs",
         "all-users": "Tous les utilisateurs de Work"
       }
+    },
+    "decisionAccess": {
+      "title": "Modèles de décision",
+      "description": "Autoriser tous les utilisateurs actifs à utiliser les modèles de décision dans les chats et via l'API Decisions. Les administrateurs y ont toujours accès.",
+      "lockedByEnv": "Fixé par la variable d'environnement DECISION_MODELS_ACCESS_MODE",
+      "saved": "Accès aux modèles de décision mis à jour",
+      "saveFailed": "Impossible de mettre à jour l'accès aux modèles de décision"
     }
   },
   "usageAnalytics": {
@@ -3121,7 +3186,8 @@
     "sources": "Sources de modèles",
     "defaultModel": "Modèle par défaut",
     "contextSize": "contexte de {{size}}",
-    "via": "via {{provider}}"
+    "via": "via {{provider}}",
+    "decisionBadge": "Décision"
   },
   "whatsNew": {
     "title": "Nouveautés",

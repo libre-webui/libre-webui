@@ -48,6 +48,7 @@ import { getWorkAgentAccessMode } from './workAgentAccessService.js';
 import { getWebSearchAccessMode } from './webSearchService.js';
 import { getToolAccessMode } from './toolAccessService.js';
 import { getVoiceAccessMode, isVoiceFeatureKey } from './voiceAccessService.js';
+import { getDecisionAccessMode } from './decisionAccessService.js';
 
 export type AuthzAction = 'read' | 'write' | 'manage' | 'use';
 
@@ -61,7 +62,8 @@ export type FeatureId =
   | 'stt'
   | 'tts'
   | 'voice-mode'
-  | 'voice-cloning';
+  | 'voice-cloning'
+  | 'decision-models';
 
 /**
  * Grantable resource families: the portable-archive taxonomy plus prompts,
@@ -174,6 +176,10 @@ const featureDecision = async (
         : { allowed: false, reason: 'feature-restricted-to-admins' };
     case 'tools':
       return (await getToolAccessMode()) === 'all-users'
+        ? { allowed: true, reason: 'feature-open-to-all-users' }
+        : { allowed: false, reason: 'feature-restricted-to-admins' };
+    case 'decision-models':
+      return (await getDecisionAccessMode()) === 'all-users'
         ? { allowed: true, reason: 'feature-open-to-all-users' }
         : { allowed: false, reason: 'feature-restricted-to-admins' };
     case 'stt':
@@ -301,6 +307,7 @@ export const explainEffectiveAccess = async (user: {
     tts,
     voiceMode,
     voiceCloning,
+    decisionModels,
   ] = await Promise.all([
     authorize(actor, 'use', { type: 'feature', id: 'work' }),
     authorize(actor, 'use', { type: 'feature', id: 'work-agents' }),
@@ -312,6 +319,7 @@ export const explainEffectiveAccess = async (user: {
     authorize(actor, 'use', { type: 'feature', id: 'tts' }),
     authorize(actor, 'use', { type: 'feature', id: 'voice-mode' }),
     authorize(actor, 'use', { type: 'feature', id: 'voice-cloning' }),
+    authorize(actor, 'use', { type: 'feature', id: 'decision-models' }),
   ]);
 
   const grantRows = [
@@ -340,6 +348,7 @@ export const explainEffectiveAccess = async (user: {
       tts: tts.allowed,
       'voice-mode': voiceMode.allowed,
       'voice-cloning': voiceCloning.allowed,
+      'decision-models': decisionModels.allowed,
     },
     grants: grantRows.map(grant => ({
       id: grant.id,

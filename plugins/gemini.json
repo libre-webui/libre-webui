@@ -18,6 +18,15 @@
     "gemini-3.5-flash",
     "gemini-flash-latest"
   ],
+  "capabilities": {
+    "decision": {
+      "endpoint": "https://generativelanguage.googleapis.com/v1beta/decisions",
+      "model_map": ["gemini-decision-1"],
+      "config": {
+        "api": "gemini"
+      }
+    }
+  },
   "variables": [
     {
       "name": "endpoint",

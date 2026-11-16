@@ -438,6 +438,32 @@
         "poll_interval_ms": 30000,
         "timeout_ms": 900000
       }
+    },
+    "decision": {
+      "endpoint": "https://openrouter.ai/api/alpha/decisions",
+      "model_map": [
+        "typesafe/jev-1.14",
+        "typesafe/jev-1.13",
+        "openai/gpt-6-luna-decisions",
+        "microsoft/microsoft-decision-1",
+        "perplexity/pplx-decider-v1.2",
+        "perplexity/pplx-decider-flash-v1.2",
+        "cloudflare/clef",
+        "cloudflare/clef-flash",
+        "cloudflare/clef-omni",
+        "inception/mercury-decide",
+        "liquid/d1",
+        "liquid/d1-ultra",
+        "upstage/solar-decide",
+        "upstage/solar-decide-flash"
+      ],
+      "config": {
+        "api": "systemone",
+        "path": "../alpha/decisions",
+        "image_input": "state-parts",
+        "discovery": "output-modality",
+        "models_path": "models?output_modalities=decisions"
+      }
     }
   },
   "variables": [

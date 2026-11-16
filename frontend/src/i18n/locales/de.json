@@ -562,6 +562,62 @@
       "replyFinishedNoText": "{{name}} hat die Antwort beendet.",
       "codeBlock": "Codeblock",
       "generationStopped": "Generierung gestoppt"
+    },
+    "decision": {
+      "barTitle": "Entscheidungsfragen",
+      "interactiveHint": "Keine Fragen festgelegt. Ihre erste Nachricht ist der Zustand, und jede Zeile, die Sie danach senden, ist eine Ja/Nein-Frage dazu. Senden Sie /clear, um neu zu beginnen.",
+      "add": "Fragen festlegen",
+      "edit": "Fragen bearbeiten",
+      "dialogTitle": "Entscheidungsfragen",
+      "dialogSubtitle": "Das Entscheidungsmodell beantwortet diese Fragen zu jeder Nachricht, die Sie senden, mit einer Wahrscheinlichkeit für jede Antwort.",
+      "useInteractive": "Interaktiven Modus verwenden",
+      "questionNumber": "Frage {{number}}",
+      "removeQuestion": "Frage entfernen",
+      "typeLabel": "Fragetyp",
+      "types": {
+        "noul": "Ja/Nein",
+        "choice": "Auswahl",
+        "score": "Bewertung"
+      },
+      "question": "Frage",
+      "placeholders": {
+        "noul": "Wird eine Rückerstattung verlangt?",
+        "choice": "Welches Team soll sich darum kümmern?",
+        "score": "Wie dringend ist das?"
+      },
+      "yesMeans": "Ja bedeutet (optional)",
+      "noMeans": "Nein bedeutet (optional)",
+      "options": "Optionen",
+      "optionName": "Name von Option {{number}}",
+      "optionDescription": "Beschreibung von Option {{number}}",
+      "optionNamePlaceholder": "abrechnung",
+      "optionDescriptionPlaceholder": "Beschreibung (optional)",
+      "removeOption": "Option {{number}} entfernen",
+      "addOption": "Option hinzufügen",
+      "levels": "Stufen, niedrigste zuerst",
+      "levelLabel": "Stufe {{number}}",
+      "levelPlaceholder": "Diese Stufe beschreiben",
+      "removeLevel": "Stufe {{number}} entfernen",
+      "addLevel": "Stufe hinzufügen",
+      "addQuestion": "Frage hinzufügen",
+      "saved": "Entscheidungsfragen gespeichert",
+      "saveFailed": "Die Entscheidungsfragen konnten nicht gespeichert werden",
+      "errors": {
+        "tooMany": "Stellen Sie höchstens {{max}} Fragen.",
+        "instructions": "Frage {{number}} braucht einen Text.",
+        "options": "Frage {{number}} braucht 2 bis 255 Optionen mit jeweils eigenem Namen.",
+        "levels": "Frage {{number}} braucht 2 bis 10 Stufen."
+      },
+      "result": {
+        "yes": "Ja",
+        "no": "Nein",
+        "declined": "Abgelehnt",
+        "score": "{{value}} von {{max}}",
+        "stateSaved": "Als Zustand gespeichert. Stellen Sie Ja/Nein-Fragen dazu, eine pro Zeile, oder legen Sie Fragen für diesen Chat fest.",
+        "cleared": "Zurückgesetzt. Ihre nächste Nachricht ist der neue Zustand.",
+        "via": "{{model}} über {{provider}}",
+        "inputTokens": "{{tokens}} Eingabe-Tokens"
+      }
     }
   },
   "sidebar": {
@@ -846,7 +902,8 @@
         "embedding": "Embedding",
         "image": "Bild",
         "speech": "Sprache",
-        "transcription": "Transkription"
+        "transcription": "Transkription",
+        "decision": "Entscheidung"
       },
       "exportPlugin": "Plugin exportieren",
       "deletePlugin": "Plugin löschen",
@@ -1949,7 +2006,8 @@
         "tts": "Text zu Sprache",
         "voice-mode": "Sprachmodus",
         "voice-cloning": "Stimmklonen",
-        "work-agents": "Agent-CLIs in Work"
+        "work-agents": "Agent-CLIs in Work",
+        "decision-models": "Entscheidungsmodelle"
       },
       "grantViaKinds": {
         "user": "direkte Freigabe",
@@ -2095,6 +2153,13 @@
         "admins": "Administratoren",
         "all-users": "Alle Work-Benutzer"
       }
+    },
+    "decisionAccess": {
+      "title": "Entscheidungsmodelle",
+      "description": "Allen aktiven Benutzern Entscheidungsmodelle in Chats und über die Decisions-API erlauben. Administratoren können sie immer nutzen.",
+      "lockedByEnv": "Durch die Umgebungsvariable DECISION_MODELS_ACCESS_MODE festgelegt",
+      "saved": "Zugriff auf Entscheidungsmodelle aktualisiert",
+      "saveFailed": "Zugriff auf Entscheidungsmodelle konnte nicht aktualisiert werden"
     }
   },
   "usageAnalytics": {
@@ -3121,7 +3186,8 @@
     "sources": "Modellquellen",
     "defaultModel": "Standardmodell",
     "contextSize": "{{size}} Kontext",
-    "via": "über {{provider}}"
+    "via": "über {{provider}}",
+    "decisionBadge": "Entscheidung"
   },
   "whatsNew": {
     "title": "Was ist neu",

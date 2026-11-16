@@ -562,6 +562,62 @@
       "replyFinishedNoText": "{{name}} lauk við að svara.",
       "codeBlock": "kóðablokk",
       "generationStopped": "Myndun stöðvuð"
+    },
+    "decision": {
+      "barTitle": "Ákvörðunarspurningar",
+      "interactiveHint": "Engar spurningar skilgreindar. Fyrstu skilaboðin þín eru staðan og hver lína sem þú sendir á eftir er já/nei-spurning um hana. Sendu /clear til að byrja upp á nýtt.",
+      "add": "Skilgreina spurningar",
+      "edit": "Breyta spurningum",
+      "dialogTitle": "Ákvörðunarspurningar",
+      "dialogSubtitle": "Ákvörðunarlíkanið svarar þessum spurningum um hver skilaboð sem þú sendir, með líkum fyrir hvert svar.",
+      "useInteractive": "Nota gagnvirkan ham",
+      "questionNumber": "Spurning {{number}}",
+      "removeQuestion": "Fjarlægja spurningu",
+      "typeLabel": "Tegund spurningar",
+      "types": {
+        "noul": "Já/nei",
+        "choice": "Val",
+        "score": "Einkunn"
+      },
+      "question": "Spurning",
+      "placeholders": {
+        "noul": "Er beðið um endurgreiðslu?",
+        "choice": "Hvaða teymi á að sjá um þetta?",
+        "score": "Hversu áríðandi er þetta?"
+      },
+      "yesMeans": "Já þýðir (valfrjálst)",
+      "noMeans": "Nei þýðir (valfrjálst)",
+      "options": "Valkostir",
+      "optionName": "Heiti valkosts {{number}}",
+      "optionDescription": "Lýsing valkosts {{number}}",
+      "optionNamePlaceholder": "reikningar",
+      "optionDescriptionPlaceholder": "Lýsing (valfrjálst)",
+      "removeOption": "Fjarlægja valkost {{number}}",
+      "addOption": "Bæta við valkosti",
+      "levels": "Stig, lægst fyrst",
+      "levelLabel": "Stig {{number}}",
+      "levelPlaceholder": "Lýstu þessu stigi",
+      "removeLevel": "Fjarlægja stig {{number}}",
+      "addLevel": "Bæta við stigi",
+      "addQuestion": "Bæta við spurningu",
+      "saved": "Ákvörðunarspurningar vistaðar",
+      "saveFailed": "Ekki tókst að vista ákvörðunarspurningarnar",
+      "errors": {
+        "tooMany": "Spyrðu í mesta lagi {{max}} spurninga.",
+        "instructions": "Spurning {{number}} þarf texta.",
+        "options": "Spurning {{number}} þarf 2 til 255 valkosti, hvern með eigið heiti.",
+        "levels": "Spurning {{number}} þarf 2 til 10 stig."
+      },
+      "result": {
+        "yes": "Já",
+        "no": "Nei",
+        "declined": "Hafnað",
+        "score": "{{value}} af {{max}}",
+        "stateSaved": "Vistað sem staða. Spyrðu já/nei-spurninga um hana, einnar í hverri línu, eða skilgreindu spurningar fyrir þetta spjall.",
+        "cleared": "Hreinsað. Næstu skilaboð þín verða nýja staðan.",
+        "via": "{{model}} í gegnum {{provider}}",
+        "inputTokens": "{{tokens}} inntakstákn"
+      }
     }
   },
   "sidebar": {
@@ -846,7 +902,8 @@
         "embedding": "Ívefing",
         "image": "Mynd",
         "speech": "Tal",
-        "transcription": "Ritskráning"
+        "transcription": "Ritskráning",
+        "decision": "Ákvörðun"
       },
       "exportPlugin": "Flytja út viðbót",
       "deletePlugin": "Eyða viðbót",
@@ -1949,7 +2006,8 @@
         "tts": "Texti í tal",
         "voice-mode": "Raddstilling",
         "voice-cloning": "Raddafritun",
-        "work-agents": "CLI-agentar í Work"
+        "work-agents": "CLI-agentar í Work",
+        "decision-models": "Ákvörðunarlíkön"
       },
       "grantViaKinds": {
         "user": "bein úthlutun",
@@ -2095,6 +2153,13 @@
         "admins": "Stjórnendur",
         "all-users": "Allir Work-notendur"
       }
+    },
+    "decisionAccess": {
+      "title": "Ákvörðunarlíkön",
+      "description": "Leyfa öllum virkum notendum að nota ákvörðunarlíkön í spjalli og í gegnum Decisions-API. Stjórnendur geta alltaf notað þau.",
+      "lockedByEnv": "Fest með umhverfisbreytunni DECISION_MODELS_ACCESS_MODE",
+      "saved": "Aðgangur að ákvörðunarlíkönum uppfærður",
+      "saveFailed": "Ekki tókst að uppfæra aðgang að ákvörðunarlíkönum"
     }
   },
   "usageAnalytics": {
@@ -3121,7 +3186,8 @@
     "sources": "Uppruni líkana",
     "defaultModel": "Sjálfgefið líkan",
     "contextSize": "{{size}} samhengi",
-    "via": "í gegnum {{provider}}"
+    "via": "í gegnum {{provider}}",
+    "decisionBadge": "Ákvörðun"
   },
   "whatsNew": {
     "title": "Nýjungar",

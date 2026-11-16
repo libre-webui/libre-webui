@@ -562,6 +562,62 @@
       "replyFinishedNoText": "{{name}} ตอบเสร็จแล้ว",
       "codeBlock": "บล็อกโค้ด",
       "generationStopped": "หยุดการสร้างแล้ว"
+    },
+    "decision": {
+      "barTitle": "คำถามสำหรับการตัดสิน",
+      "interactiveHint": "ยังไม่ได้ตั้งคำถาม ข้อความแรกของคุณคือสถานะ และทุกบรรทัดที่ส่งหลังจากนั้นคือคำถามใช่/ไม่ใช่เกี่ยวกับสถานะนั้น ส่ง /clear เพื่อเริ่มใหม่",
+      "add": "ตั้งคำถาม",
+      "edit": "แก้ไขคำถาม",
+      "dialogTitle": "คำถามสำหรับการตัดสิน",
+      "dialogSubtitle": "โมเดลตัดสินใจจะตอบคำถามเหล่านี้สำหรับทุกข้อความที่คุณส่ง พร้อมความน่าจะเป็นของแต่ละคำตอบ",
+      "useInteractive": "ใช้โหมดโต้ตอบ",
+      "questionNumber": "คำถาม {{number}}",
+      "removeQuestion": "ลบคำถาม",
+      "typeLabel": "ประเภทคำถาม",
+      "types": {
+        "noul": "ใช่/ไม่ใช่",
+        "choice": "ตัวเลือก",
+        "score": "คะแนน"
+      },
+      "question": "คำถาม",
+      "placeholders": {
+        "noul": "มีการขอคืนเงินหรือไม่?",
+        "choice": "ทีมใดควรดูแลเรื่องนี้?",
+        "score": "เรื่องนี้เร่งด่วนแค่ไหน?"
+      },
+      "yesMeans": "ใช่ หมายถึง (ไม่บังคับ)",
+      "noMeans": "ไม่ใช่ หมายถึง (ไม่บังคับ)",
+      "options": "ตัวเลือก",
+      "optionName": "ชื่อตัวเลือก {{number}}",
+      "optionDescription": "คำอธิบายตัวเลือก {{number}}",
+      "optionNamePlaceholder": "billing",
+      "optionDescriptionPlaceholder": "คำอธิบาย (ไม่บังคับ)",
+      "removeOption": "ลบตัวเลือก {{number}}",
+      "addOption": "เพิ่มตัวเลือก",
+      "levels": "ระดับ เริ่มจากต่ำสุด",
+      "levelLabel": "ระดับ {{number}}",
+      "levelPlaceholder": "อธิบายระดับนี้",
+      "removeLevel": "ลบระดับ {{number}}",
+      "addLevel": "เพิ่มระดับ",
+      "addQuestion": "เพิ่มคำถาม",
+      "saved": "บันทึกคำถามสำหรับการตัดสินแล้ว",
+      "saveFailed": "ไม่สามารถบันทึกคำถามสำหรับการตัดสินได้",
+      "errors": {
+        "tooMany": "ถามได้ไม่เกิน {{max}} คำถาม",
+        "instructions": "คำถาม {{number}} ต้องมีข้อความ",
+        "options": "คำถาม {{number}} ต้องมีตัวเลือก 2 ถึง 255 ตัว โดยแต่ละตัวมีชื่อของตัวเอง",
+        "levels": "คำถาม {{number}} ต้องมี 2 ถึง 10 ระดับ"
+      },
+      "result": {
+        "yes": "ใช่",
+        "no": "ไม่ใช่",
+        "declined": "ปฏิเสธ",
+        "score": "{{value}} จาก {{max}}",
+        "stateSaved": "บันทึกเป็นสถานะแล้ว ถามคำถามใช่/ไม่ใช่เกี่ยวกับสถานะนี้ บรรทัดละหนึ่งคำถาม หรือตั้งคำถามสำหรับแชทนี้",
+        "cleared": "ล้างแล้ว ข้อความถัดไปของคุณจะเป็นสถานะใหม่",
+        "via": "{{model}} ผ่าน {{provider}}",
+        "inputTokens": "โทเค็นอินพุต {{tokens}}"
+      }
     }
   },
   "sidebar": {
@@ -846,7 +902,8 @@
         "embedding": "การฝังข้อมูล",
         "image": "รูปภาพ",
         "speech": "เสียงพูด",
-        "transcription": "การถอดเสียง"
+        "transcription": "การถอดเสียง",
+        "decision": "การตัดสิน"
       },
       "exportPlugin": "ส่งออกปลั๊กอิน",
       "deletePlugin": "ลบปลั๊กอิน",
@@ -1949,7 +2006,8 @@
         "tts": "ข้อความเป็นเสียง",
         "voice-mode": "โหมดเสียง",
         "voice-cloning": "การโคลนเสียง",
-        "work-agents": "CLI ของเอเจนต์ใน Work"
+        "work-agents": "CLI ของเอเจนต์ใน Work",
+        "decision-models": "โมเดลตัดสินใจ"
       },
       "grantViaKinds": {
         "user": "ให้สิทธิ์โดยตรง",
@@ -2095,6 +2153,13 @@
         "admins": "ผู้ดูแลระบบ",
         "all-users": "ผู้ใช้ Work ทั้งหมด"
       }
+    },
+    "decisionAccess": {
+      "title": "โมเดลตัดสินใจ",
+      "description": "อนุญาตให้ผู้ใช้ที่ใช้งานอยู่ทุกคนใช้โมเดลตัดสินใจในแชทและผ่าน Decisions API ผู้ดูแลระบบใช้ได้เสมอ",
+      "lockedByEnv": "กำหนดตายตัวโดยตัวแปรสภาพแวดล้อม DECISION_MODELS_ACCESS_MODE",
+      "saved": "อัปเดตสิทธิ์การใช้โมเดลตัดสินใจแล้ว",
+      "saveFailed": "ไม่สามารถอัปเดตสิทธิ์การใช้โมเดลตัดสินใจได้"
     }
   },
   "usageAnalytics": {
@@ -3121,7 +3186,8 @@
     "sources": "แหล่งที่มาของโมเดล",
     "defaultModel": "โมเดลเริ่มต้น",
     "contextSize": "บริบท {{size}}",
-    "via": "ผ่าน {{provider}}"
+    "via": "ผ่าน {{provider}}",
+    "decisionBadge": "การตัดสิน"
   },
   "whatsNew": {
     "title": "มีอะไรใหม่",

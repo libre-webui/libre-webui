@@ -25,6 +25,7 @@ import {
   type PluginVariables,
 } from '../utils/pluginChatContext.js';
 import type { GenerationTarget } from './chatGenerationService.js';
+import { parseOptionalDecisionQuestions } from '../utils/decisionProtocol.js';
 import type {
   ChatMessage,
   ChatProviderSelection,
@@ -48,7 +49,8 @@ export interface ChatGenerationTargetService {
     userId: string,
     options?: GenerationOptions,
     providerSelection?: ChatProviderSelection,
-    signal?: AbortSignal
+    signal?: AbortSignal,
+    targetOptions?: { allowDecisionModels?: boolean }
   ): Promise<GenerationTarget>;
 }
 
@@ -71,6 +73,16 @@ export interface ChatRequestServiceDependencies {
   chatGenerationService: ChatGenerationTargetService;
   personaService?: ChatPersonaLookupService;
   preferencesService?: ChatPreferencesLookupService;
+  /**
+   * Whether the chat's own model is a decision model, which reads its own
+   * images and so never hands them to the configured vision model.
+   */
+  isDecisionModel?: (
+    model: string,
+    selection: ChatProviderSelection | undefined,
+    userId: string,
+    signal?: AbortSignal
+  ) => Promise<boolean>;
 }
 
 export interface PrepareGenerationMessagesOptions {
@@ -103,7 +115,8 @@ export interface PrepareChatGenerationRequestOptions extends Omit<
   session: Pick<
     ChatSession,
     'model' | 'personaId' | 'providerType' | 'providerId'
-  >;
+  > &
+    Partial<Pick<ChatSession, 'settings'>>;
   userId: string;
   options?: GenerationOptions;
   providerType?: ChatProviderSelection['providerType'];
@@ -215,15 +228,18 @@ export class ChatRequestService {
   private readonly chatGenerationService: ChatGenerationTargetService;
   private readonly personaService?: ChatPersonaLookupService;
   private readonly preferencesService?: ChatPreferencesLookupService;
+  private readonly isDecisionModel?: ChatRequestServiceDependencies['isDecisionModel'];
 
   constructor({
     chatGenerationService,
     personaService,
     preferencesService,
+    isDecisionModel,
   }: ChatRequestServiceDependencies) {
     this.chatGenerationService = chatGenerationService;
     this.personaService = personaService;
     this.preferencesService = preferencesService;
+    this.isDecisionModel = isDecisionModel;
   }
 
   async resolvePersonaSystemPrompt(
@@ -303,7 +319,19 @@ export class ChatRequestService {
       const preferences = await this.preferencesService.getPreferences(userId);
       const visionModel = preferences.visionModel?.trim();
 
-      if (visionModel) {
+      // A decision model reads its own images (Clef, Elephant); the vision
+      // model never takes its turn.
+      const decisionChat =
+        Boolean(visionModel) &&
+        !session.model.startsWith('persona:') &&
+        (await this.isDecisionModel?.(
+          session.model,
+          providerSelection,
+          userId,
+          signal
+        )) === true;
+
+      if (visionModel && !decisionChat) {
         const visionProviderSelection = normalizeChatProviderSelection({
           providerType: preferences.visionProviderType,
           providerId: preferences.visionProviderId,
@@ -320,13 +348,25 @@ export class ChatRequestService {
       }
     }
 
-    const target = await this.chatGenerationService.prepareGenerationTarget(
+    let target = await this.chatGenerationService.prepareGenerationTarget(
       generationModel,
       userId,
       options,
       generationProviderSelection,
-      signal
+      signal,
+      { allowDecisionModels: generationModel === session.model }
     );
+    if (target.decision) {
+      target = {
+        ...target,
+        decision: {
+          ...target.decision,
+          questions: parseOptionalDecisionQuestions(
+            session.settings?.decisionQuestions
+          ),
+        },
+      };
+    }
 
     const resolvedPersonaSystemPrompt =
       personaSystemPrompt ??

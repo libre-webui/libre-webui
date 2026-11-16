@@ -83,6 +83,7 @@ import {
   Persona,
   KnowledgeCollection,
   ChatSession,
+  DecisionQuestions,
   GenerationOptions,
   ThinkingPreference,
 } from '@/types';
@@ -94,8 +95,10 @@ import {
   chatModelSelectionFromSession,
   chatModelSelectionKey,
   chatModelSelectionKeyForModels,
+  findChatModelForSelection,
   withUnavailableChatModel,
 } from '@/utils/chatModelSelection';
+import { DecisionQuestionsBar } from '@/components/decisions/DecisionQuestionsBar';
 
 const logger = createLogger('components:chat-input');
 
@@ -241,6 +244,12 @@ export const ChatInput: React.FC<ChatInputProps> = ({
     models,
     sessionSelection
   );
+  // A decision model answers typed questions about each message; the text
+  // model controls (web search, tools, thinking, comparison, structured
+  // output) mean nothing to it.
+  const isDecisionModel =
+    findChatModelForSelection(models, sessionSelection)?.isDecision === true;
+  const webSearchOffered = webSearchAvailable && !isDecisionModel;
 
   // Check if image generation plugins are available
   useEffect(() => {
@@ -390,6 +399,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
 
   const thinkingAvailable = Boolean(
     currentSession &&
+    !isDecisionModel &&
     !activeModelEntry?.isAgent &&
     (activeModelEntry?.isPlugin
       ? activeModelEntry.reasoningSupport !== false
@@ -452,6 +462,41 @@ export const ChatInput: React.FC<ChatInputProps> = ({
           : session
       ),
     }));
+  };
+
+  const saveDecisionQuestions = async (
+    questions: DecisionQuestions | undefined
+  ) => {
+    if (!currentSession) return;
+    const previous = currentSession.settings?.decisionQuestions;
+    const settings: NonNullable<ChatSession['settings']> = {
+      ...currentSession.settings,
+    };
+    if (questions) settings.decisionQuestions = questions;
+    else delete settings.decisionQuestions;
+
+    useChatStore.setState(state => ({
+      currentSession:
+        state.currentSession?.id === currentSession.id
+          ? { ...state.currentSession, settings }
+          : state.currentSession,
+      sessions: state.sessions.map(session =>
+        session.id === currentSession.id ? { ...session, settings } : session
+      ),
+    }));
+
+    if (currentSession.isPrivate) return;
+    try {
+      const response = await chatApi.updateSession(currentSession.id, {
+        settings,
+      } as Partial<ChatSession>);
+      if (!response.success) throw new Error(response.error);
+      toast.success(t('chat.decision.saved'));
+    } catch (error) {
+      logger.error('Failed to save the decision questions:', error);
+      restoreSessionSetting(currentSession.id, 'decisionQuestions', previous);
+      toast.error(t('chat.decision.saveFailed'));
+    }
   };
 
   const applyThinking = async (think: ThinkingPreference | null) => {
@@ -641,17 +686,19 @@ export const ChatInput: React.FC<ChatInputProps> = ({
       return;
     }
 
-    const toolsRequest = isPrivateSession
-      ? {}
-      : composerToolsRequest(composerTools);
-    const compareTargets = isPrivateSession
-      ? []
-      : compareTargetsFromKeys(models, compareKeys);
+    const toolsRequest =
+      isPrivateSession || isDecisionModel
+        ? {}
+        : composerToolsRequest(composerTools);
+    const compareTargets =
+      isPrivateSession || isDecisionModel
+        ? []
+        : compareTargetsFromKeys(models, compareKeys);
     onSendMessage(
       message.trim(),
       images.length > 0 ? images : undefined,
-      format || undefined,
-      webSearchAvailable && webSearchActive ? true : undefined,
+      isDecisionModel ? undefined : format || undefined,
+      webSearchOffered && webSearchActive ? true : undefined,
       toolsRequest.tools,
       toolsRequest.toolSelection,
       compareTargets.length > 0 ? compareTargets : undefined
@@ -837,7 +884,9 @@ export const ChatInput: React.FC<ChatInputProps> = ({
               sessionId={currentSession?.id}
               disabled={disabled}
             />
-            <StructuredOutput format={format} onFormatChange={setFormat} />
+            {!isDecisionModel && (
+              <StructuredOutput format={format} onFormatChange={setFormat} />
+            )}
           </div>
         )}
 
@@ -887,6 +936,13 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                   ))}
               </div>
             )}
+          {isDecisionModel && currentSession && (
+            <DecisionQuestionsBar
+              questions={currentSession.settings?.decisionQuestions}
+              onSave={saveDecisionQuestions}
+              disabled={disabled}
+            />
+          )}
           <form onSubmit={handleSubmit}>
             {/* Unified Input Container: text row above, controls row below. */}
             <div data-composer-box='' className={composerSurfaceClass}>
@@ -1112,7 +1168,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                           </button>
 
                           {/* Controls folded out of the narrow icon row */}
-                          {compact && webSearchAvailable && (
+                          {compact && webSearchOffered && (
                             <button
                               type='button'
                               onClick={() => {
@@ -1178,7 +1234,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                   )}
 
                   {/* Web search toggle */}
-                  {webSearchAvailable && !compact && (
+                  {webSearchOffered && !compact && (
                     <Button
                       type='button'
                       variant='ghost'
@@ -1200,7 +1256,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                   )}
 
                   {/* Native tool-call picker */}
-                  {!isPrivateSession && (
+                  {!isPrivateSession && !isDecisionModel && (
                     <ComposerToolsMenu
                       value={composerTools}
                       onChange={setComposerTools}
@@ -1208,17 +1264,20 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                   )}
 
                   {/* Multi-model comparison picker */}
-                  {!isPrivateSession && currentSession && !compact && (
-                    <ComposerCompareMenu
-                      models={models}
-                      currentModelKey={chatModelSelectionKey(
-                        chatModelSelectionFromSession(currentSession)
-                      )}
-                      selectedKeys={compareKeys}
-                      onChange={setCompareKeys}
-                      disabled={disabled}
-                    />
-                  )}
+                  {!isPrivateSession &&
+                    !isDecisionModel &&
+                    currentSession &&
+                    !compact && (
+                      <ComposerCompareMenu
+                        models={models}
+                        currentModelKey={chatModelSelectionKey(
+                          chatModelSelectionFromSession(currentSession)
+                        )}
+                        selectedKeys={compareKeys}
+                        onChange={setCompareKeys}
+                        disabled={disabled}
+                      />
+                    )}
 
                   {/* Voice input. Selecting a provider makes the audio transfer
                     explicit before the user starts recording. */}

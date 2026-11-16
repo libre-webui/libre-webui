@@ -72,6 +72,8 @@ const PATH_SCOPES: ReadonlyArray<{ prefix: string; scope: ApiTokenScope }> = [
   { prefix: '/api/preferences', scope: 'chat' },
   { prefix: '/api/search', scope: 'chat' },
   { prefix: '/api/jobs', scope: 'chat' },
+  // Decisions are inference like chat; the access toggle stays admin-only.
+  { prefix: '/api/decisions', scope: 'chat' },
   { prefix: '/api/ollama', scope: 'models' },
   { prefix: '/api/huggingface-hub', scope: 'models' },
   { prefix: '/api/documents', scope: 'documents' },

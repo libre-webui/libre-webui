@@ -43,6 +43,10 @@ import preferencesService from './services/preferencesService.js';
 import assistantCompletionService from './services/assistantCompletionService.js';
 import { personaService } from './services/personaService.js';
 import { ChatRequestService } from './services/chatRequestService.js';
+import {
+  getDecisionService,
+  isDecisionChatModel,
+} from './services/decisionService.js';
 import { streamOllamaChatResponse } from './utils/ollamaStreaming.js';
 import { streamPluginResponse } from './utils/pluginStreaming.js';
 import { createLogger } from './utils/logger.js';
@@ -112,6 +116,7 @@ const chatRequestService = new ChatRequestService({
   chatGenerationService,
   personaService,
   preferencesService,
+  isDecisionModel: isDecisionChatModel,
 });
 const logger = createLogger('websocket');
 const CHAT_WS_MAX_PAYLOAD_BYTES = positiveInteger(
@@ -738,8 +743,11 @@ export function registerWebSocketServer(
             generationTarget.providerType === 'agent'
               ? generationTarget.providerId
               : undefined;
+          // Decision models answer through their decision API in the same
+          // stream shape as agent CLIs, with no tools.
+          const decisionTarget = generationTarget.decision;
 
-          if (activePlugin || agentProviderId) {
+          if (activePlugin || agentProviderId || decisionTarget) {
             logger.debug(
               `[WebSocket] Using ${
                 agentProviderId
@@ -758,7 +766,10 @@ export function registerWebSocketServer(
               // Agent CLI targets run with --no-tools; the loop applies to
               // plugin providers only.
               const pluginToolLoop =
-                toolCatalog && !agentProviderId && activePlugin
+                toolCatalog &&
+                !agentProviderId &&
+                !decisionTarget &&
+                activePlugin
                   ? runPluginToolLoop({
                       actor: toolActor,
                       sessionId,
@@ -778,26 +789,42 @@ export function registerWebSocketServer(
                         ),
                     })
                   : undefined;
-              if (agentProviderId || shouldStreamPlugin || pluginToolLoop) {
+              if (
+                agentProviderId ||
+                decisionTarget ||
+                shouldStreamPlugin ||
+                pluginToolLoop
+              ) {
                 const streamResult = await streamPluginResponse({
                   ws,
                   chunks: pluginToolLoop
                     ? pluginToolLoop.chunks
-                    : agentProviderId
-                      ? agentCliService.executeAgentStreamRequest(
-                          agentProviderId,
+                    : decisionTarget
+                      ? (await getDecisionService()).streamChatTurn(
+                          decisionTarget,
                           pluginMessages,
                           userId,
-                          { model: actualModelName, signal: generationSignal }
+                          {
+                            questions: decisionTarget.questions,
+                            signal: generationSignal,
+                          }
                         )
-                      : pluginService.executePluginStreamRequest(
-                          actualModelName,
-                          pluginMessages,
-                          mergedOptions,
-                          userId,
-                          (activePlugin as NonNullable<typeof activePlugin>).id,
-                          generationSignal
-                        ),
+                      : agentProviderId
+                        ? agentCliService.executeAgentStreamRequest(
+                            agentProviderId,
+                            pluginMessages,
+                            userId,
+                            { model: actualModelName, signal: generationSignal }
+                          )
+                        : pluginService.executePluginStreamRequest(
+                            actualModelName,
+                            pluginMessages,
+                            mergedOptions,
+                            userId,
+                            (activePlugin as NonNullable<typeof activePlugin>)
+                              .id,
+                            generationSignal
+                          ),
                   messageId: assistantMessageId,
                   signal: generationSignal,
                 });

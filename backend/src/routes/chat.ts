@@ -46,6 +46,10 @@ import { userModel } from '../models/userModel.js';
 import chatGenerationService from '../services/chatGenerationService.js';
 import preferencesService from '../services/preferencesService.js';
 import { ChatRequestService } from '../services/chatRequestService.js';
+import {
+  getDecisionService,
+  isDecisionChatModel,
+} from '../services/decisionService.js';
 import { TitleGenerationService } from '../services/titleGenerationService.js';
 import {
   ThinkingSummaryInputError,
@@ -173,6 +177,7 @@ const chatRequestService = new ChatRequestService({
   chatGenerationService,
   personaService,
   preferencesService,
+  isDecisionModel: isDecisionChatModel,
 });
 const followUpService = new FollowUpService({
   chatService,
@@ -1506,13 +1511,24 @@ router.post(
       let streamedTimings:
         { promptMs?: number; predictedMs?: number } | undefined;
 
-      if (target.providerType === 'agent' && target.providerId) {
-        for await (const chunk of agentCliService.executeAgentStreamRequest(
-          target.providerId,
-          pluginMessages,
-          userId,
-          { model: target.actualModelName, signal }
-        )) {
+      // Agent CLIs and decision models both answer in one stream shape.
+      const directChunks = target.decision
+        ? (await getDecisionService()).streamChatTurn(
+            target.decision,
+            pluginMessages,
+            userId,
+            { questions: target.decision.questions, signal }
+          )
+        : target.providerType === 'agent' && target.providerId
+          ? agentCliService.executeAgentStreamRequest(
+              target.providerId,
+              pluginMessages,
+              userId,
+              { model: target.actualModelName, signal }
+            )
+          : undefined;
+      if (directChunks) {
+        for await (const chunk of directChunks) {
           if (chunk.type === 'content' && chunk.content) {
             fullResponse += chunk.content;
             await emitDurable({

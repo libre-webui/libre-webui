@@ -562,6 +562,62 @@
       "replyFinishedNoText": "{{name}}が返信を完了しました。",
       "codeBlock": "コードブロック",
       "generationStopped": "生成を停止しました"
+    },
+    "decision": {
+      "barTitle": "判定の質問",
+      "interactiveHint": "質問が設定されていません。最初のメッセージが状態になり、その後に送る各行がそれに関する「はい/いいえ」の質問になります。/clear を送るとやり直せます。",
+      "add": "質問を設定",
+      "edit": "質問を編集",
+      "dialogTitle": "判定の質問",
+      "dialogSubtitle": "判定モデルは、送信したメッセージごとにこれらの質問に答え、各回答の確率を示します。",
+      "useInteractive": "対話モードを使う",
+      "questionNumber": "質問 {{number}}",
+      "removeQuestion": "質問を削除",
+      "typeLabel": "質問の種類",
+      "types": {
+        "noul": "はい/いいえ",
+        "choice": "選択",
+        "score": "スコア"
+      },
+      "question": "質問",
+      "placeholders": {
+        "noul": "返金が求められていますか？",
+        "choice": "どのチームが対応すべきですか？",
+        "score": "どのくらい緊急ですか？"
+      },
+      "yesMeans": "「はい」の意味（任意）",
+      "noMeans": "「いいえ」の意味（任意）",
+      "options": "選択肢",
+      "optionName": "選択肢 {{number}} の名前",
+      "optionDescription": "選択肢 {{number}} の説明",
+      "optionNamePlaceholder": "billing",
+      "optionDescriptionPlaceholder": "説明（任意）",
+      "removeOption": "選択肢 {{number}} を削除",
+      "addOption": "選択肢を追加",
+      "levels": "レベル（低い順）",
+      "levelLabel": "レベル {{number}}",
+      "levelPlaceholder": "このレベルを説明",
+      "removeLevel": "レベル {{number}} を削除",
+      "addLevel": "レベルを追加",
+      "addQuestion": "質問を追加",
+      "saved": "判定の質問を保存しました",
+      "saveFailed": "判定の質問を保存できませんでした",
+      "errors": {
+        "tooMany": "質問は最大 {{max}} 件までです。",
+        "instructions": "質問 {{number}} に本文が必要です。",
+        "options": "質問 {{number}} には、それぞれ名前の異なる 2〜255 個の選択肢が必要です。",
+        "levels": "質問 {{number}} には 2〜10 個のレベルが必要です。"
+      },
+      "result": {
+        "yes": "はい",
+        "no": "いいえ",
+        "declined": "回答拒否",
+        "score": "{{value}} / {{max}}",
+        "stateSaved": "状態として保存しました。これについて「はい/いいえ」の質問を 1 行に 1 つずつ送るか、このチャットの質問を設定してください。",
+        "cleared": "クリアしました。次のメッセージが新しい状態になります。",
+        "via": "{{model}}（{{provider}} 経由）",
+        "inputTokens": "入力トークン {{tokens}}"
+      }
     }
   },
   "sidebar": {
@@ -846,7 +902,8 @@
         "embedding": "エンベディング",
         "image": "画像",
         "speech": "音声合成",
-        "transcription": "文字起こし"
+        "transcription": "文字起こし",
+        "decision": "判定"
       },
       "exportPlugin": "プラグインをエクスポート",
       "deletePlugin": "プラグインを削除",
@@ -1949,7 +2006,8 @@
         "tts": "音声合成",
         "voice-mode": "音声モード",
         "voice-cloning": "音声クローン",
-        "work-agents": "Work のエージェントCLI"
+        "work-agents": "Work のエージェントCLI",
+        "decision-models": "判定モデル"
       },
       "grantViaKinds": {
         "user": "直接付与",
@@ -2095,6 +2153,13 @@
         "admins": "管理者",
         "all-users": "Work のすべてのユーザー"
       }
+    },
+    "decisionAccess": {
+      "title": "判定モデル",
+      "description": "すべての有効なユーザーに、チャットと Decisions API で判定モデルの使用を許可します。管理者は常に使用できます。",
+      "lockedByEnv": "環境変数 DECISION_MODELS_ACCESS_MODE で固定されています",
+      "saved": "判定モデルへのアクセスを更新しました",
+      "saveFailed": "判定モデルへのアクセスを更新できませんでした"
     }
   },
   "usageAnalytics": {
@@ -3121,7 +3186,8 @@
     "sources": "モデルの提供元",
     "defaultModel": "デフォルトモデル",
     "contextSize": "コンテキスト {{size}}",
-    "via": "{{provider}} 経由"
+    "via": "{{provider}} 経由",
+    "decisionBadge": "判定"
   },
   "whatsNew": {
     "title": "新機能",

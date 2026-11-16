@@ -562,6 +562,62 @@
       "replyFinishedNoText": "{{name}} ने उत्तर देना पूरा किया।",
       "codeBlock": "कोड ब्लॉक",
       "generationStopped": "जनरेशन रोका गया"
+    },
+    "decision": {
+      "barTitle": "निर्णय प्रश्न",
+      "interactiveHint": "कोई प्रश्न सेट नहीं है। आपका पहला संदेश स्थिति है, और उसके बाद भेजी गई हर पंक्ति उसके बारे में हाँ/नहीं प्रश्न है। फिर से शुरू करने के लिए /clear भेजें।",
+      "add": "प्रश्न सेट करें",
+      "edit": "प्रश्न संपादित करें",
+      "dialogTitle": "निर्णय प्रश्न",
+      "dialogSubtitle": "निर्णय मॉडल आपके भेजे हर संदेश के बारे में इन प्रश्नों का उत्तर देता है, हर उत्तर की प्रायिकता के साथ।",
+      "useInteractive": "इंटरैक्टिव मोड का उपयोग करें",
+      "questionNumber": "प्रश्न {{number}}",
+      "removeQuestion": "प्रश्न हटाएँ",
+      "typeLabel": "प्रश्न का प्रकार",
+      "types": {
+        "noul": "हाँ/नहीं",
+        "choice": "विकल्प चुनें",
+        "score": "स्कोर"
+      },
+      "question": "प्रश्न",
+      "placeholders": {
+        "noul": "क्या रिफ़ंड माँगा जा रहा है?",
+        "choice": "इसे कौन सी टीम संभाले?",
+        "score": "यह कितना ज़रूरी है?"
+      },
+      "yesMeans": "हाँ का अर्थ (वैकल्पिक)",
+      "noMeans": "नहीं का अर्थ (वैकल्पिक)",
+      "options": "विकल्प",
+      "optionName": "विकल्प {{number}} का नाम",
+      "optionDescription": "विकल्प {{number}} का विवरण",
+      "optionNamePlaceholder": "बिलिंग",
+      "optionDescriptionPlaceholder": "विवरण (वैकल्पिक)",
+      "removeOption": "विकल्प {{number}} हटाएँ",
+      "addOption": "विकल्प जोड़ें",
+      "levels": "स्तर, सबसे निचला पहले",
+      "levelLabel": "स्तर {{number}}",
+      "levelPlaceholder": "इस स्तर का वर्णन करें",
+      "removeLevel": "स्तर {{number}} हटाएँ",
+      "addLevel": "स्तर जोड़ें",
+      "addQuestion": "प्रश्न जोड़ें",
+      "saved": "निर्णय प्रश्न सहेजे गए",
+      "saveFailed": "निर्णय प्रश्न सहेजे नहीं जा सके",
+      "errors": {
+        "tooMany": "अधिकतम {{max}} प्रश्न पूछें।",
+        "instructions": "प्रश्न {{number}} को पाठ चाहिए।",
+        "options": "प्रश्न {{number}} को 2 से 255 विकल्प चाहिए, हर एक का अपना नाम हो।",
+        "levels": "प्रश्न {{number}} को 2 से 10 स्तर चाहिए।"
+      },
+      "result": {
+        "yes": "हाँ",
+        "no": "नहीं",
+        "declined": "अस्वीकृत",
+        "score": "{{max}} में से {{value}}",
+        "stateSaved": "स्थिति के रूप में सहेजा गया। इसके बारे में हाँ/नहीं प्रश्न पूछें, हर पंक्ति में एक, या इस चैट के लिए प्रश्न सेट करें।",
+        "cleared": "साफ़ किया गया। आपका अगला संदेश नई स्थिति होगा।",
+        "via": "{{provider}} के माध्यम से {{model}}",
+        "inputTokens": "{{tokens}} इनपुट टोकन"
+      }
     }
   },
   "sidebar": {
@@ -846,7 +902,8 @@
         "embedding": "एम्बेडिंग",
         "image": "छवि",
         "speech": "वाक्",
-        "transcription": "प्रतिलेखन"
+        "transcription": "प्रतिलेखन",
+        "decision": "निर्णय"
       },
       "exportPlugin": "प्लगइन निर्यात करें",
       "deletePlugin": "प्लगइन हटाएँ",
@@ -1949,7 +2006,8 @@
         "tts": "टेक्स्ट टू स्पीच",
         "voice-mode": "वॉइस मोड",
         "voice-cloning": "वॉइस क्लोनिंग",
-        "work-agents": "Work में एजेंट CLI"
+        "work-agents": "Work में एजेंट CLI",
+        "decision-models": "निर्णय मॉडल"
       },
       "grantViaKinds": {
         "user": "सीधी अनुमति",
@@ -2095,6 +2153,13 @@
         "admins": "व्यवस्थापक",
         "all-users": "Work के सभी उपयोगकर्ता"
       }
+    },
+    "decisionAccess": {
+      "title": "निर्णय मॉडल",
+      "description": "सभी सक्रिय उपयोगकर्ताओं को चैट में और Decisions API के माध्यम से निर्णय मॉडल उपयोग करने दें। व्यवस्थापक इन्हें हमेशा उपयोग कर सकते हैं।",
+      "lockedByEnv": "DECISION_MODELS_ACCESS_MODE पर्यावरण चर द्वारा तय",
+      "saved": "निर्णय मॉडल पहुँच अपडेट की गई",
+      "saveFailed": "निर्णय मॉडल पहुँच अपडेट नहीं की जा सकी"
     }
   },
   "usageAnalytics": {
@@ -3121,7 +3186,8 @@
     "sources": "मॉडल स्रोत",
     "defaultModel": "डिफ़ॉल्ट मॉडल",
     "contextSize": "{{size}} कॉन्टेक्स्ट",
-    "via": "{{provider}} के ज़रिए"
+    "via": "{{provider}} के ज़रिए",
+    "decisionBadge": "निर्णय"
   },
   "whatsNew": {
     "title": "नया क्या है",

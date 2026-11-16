@@ -55,7 +55,9 @@ The `/v1` surface is **stateless inference**: it never creates chats,
 touches your knowledge base, or runs tools. Stateful conversations with
 durable replayable events, cancellation by identity, idempotent enqueues,
 and the native tool loop live on the native `/api/chat` event API, which
-the same tokens can call with the `chat` scope. Roles other than
+the same tokens can call with the `chat` scope, as they can
+`POST /api/decisions` for decision models (see
+[Decision Models](./68-DECISION_MODELS.md)). Roles other than
 `system`/`user`/`assistant` (for example `tool`) are rejected rather than
 silently accepted.
 

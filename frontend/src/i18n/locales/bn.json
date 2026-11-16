@@ -562,6 +562,62 @@
       "replyFinishedNoText": "{{name}} উত্তর দেওয়া শেষ করেছে।",
       "codeBlock": "কোড ব্লক",
       "generationStopped": "জেনারেশন বন্ধ করা হয়েছে"
+    },
+    "decision": {
+      "barTitle": "সিদ্ধান্তের প্রশ্ন",
+      "interactiveHint": "কোনো প্রশ্ন সেট করা নেই। আপনার প্রথম বার্তাটি অবস্থা, আর এরপর পাঠানো প্রতিটি লাইন সেটি নিয়ে একটি হ্যাঁ/না প্রশ্ন। আবার শুরু করতে /clear পাঠান।",
+      "add": "প্রশ্ন সেট করুন",
+      "edit": "প্রশ্ন সম্পাদনা করুন",
+      "dialogTitle": "সিদ্ধান্তের প্রশ্ন",
+      "dialogSubtitle": "সিদ্ধান্ত মডেল আপনার পাঠানো প্রতিটি বার্তা নিয়ে এই প্রশ্নগুলোর উত্তর দেয়, প্রতিটি উত্তরের সম্ভাবনাসহ।",
+      "useInteractive": "ইন্টারঅ্যাক্টিভ মোড ব্যবহার করুন",
+      "questionNumber": "প্রশ্ন {{number}}",
+      "removeQuestion": "প্রশ্ন সরান",
+      "typeLabel": "প্রশ্নের ধরন",
+      "types": {
+        "noul": "হ্যাঁ/না",
+        "choice": "বাছাই",
+        "score": "স্কোর"
+      },
+      "question": "প্রশ্ন",
+      "placeholders": {
+        "noul": "ফেরতের অনুরোধ করা হচ্ছে কি?",
+        "choice": "কোন দল এটি সামলাবে?",
+        "score": "এটি কতটা জরুরি?"
+      },
+      "yesMeans": "হ্যাঁ মানে (ঐচ্ছিক)",
+      "noMeans": "না মানে (ঐচ্ছিক)",
+      "options": "বিকল্পগুলো",
+      "optionName": "বিকল্প {{number}}-এর নাম",
+      "optionDescription": "বিকল্প {{number}}-এর বিবরণ",
+      "optionNamePlaceholder": "বিলিং",
+      "optionDescriptionPlaceholder": "বিবরণ (ঐচ্ছিক)",
+      "removeOption": "বিকল্প {{number}} সরান",
+      "addOption": "বিকল্প যোগ করুন",
+      "levels": "স্তর, সর্বনিম্ন আগে",
+      "levelLabel": "স্তর {{number}}",
+      "levelPlaceholder": "এই স্তরটি বর্ণনা করুন",
+      "removeLevel": "স্তর {{number}} সরান",
+      "addLevel": "স্তর যোগ করুন",
+      "addQuestion": "প্রশ্ন যোগ করুন",
+      "saved": "সিদ্ধান্তের প্রশ্ন সংরক্ষিত হয়েছে",
+      "saveFailed": "সিদ্ধান্তের প্রশ্ন সংরক্ষণ করা যায়নি",
+      "errors": {
+        "tooMany": "সর্বোচ্চ {{max}}টি প্রশ্ন করুন।",
+        "instructions": "প্রশ্ন {{number}}-এর জন্য লেখা দরকার।",
+        "options": "প্রশ্ন {{number}}-এর জন্য ২ থেকে ২৫৫টি বিকল্প দরকার, প্রতিটির নিজস্ব নাম থাকবে।",
+        "levels": "প্রশ্ন {{number}}-এর জন্য ২ থেকে ১০টি স্তর দরকার।"
+      },
+      "result": {
+        "yes": "হ্যাঁ",
+        "no": "না",
+        "declined": "প্রত্যাখ্যাত",
+        "score": "{{max}}-এর মধ্যে {{value}}",
+        "stateSaved": "অবস্থা হিসেবে সংরক্ষিত। এটি নিয়ে হ্যাঁ/না প্রশ্ন করুন, প্রতি লাইনে একটি, অথবা এই চ্যাটের জন্য প্রশ্ন সেট করুন।",
+        "cleared": "মুছে ফেলা হয়েছে। আপনার পরের বার্তাটি নতুন অবস্থা হবে।",
+        "via": "{{provider}}-এর মাধ্যমে {{model}}",
+        "inputTokens": "{{tokens}}টি ইনপুট টোকেন"
+      }
     }
   },
   "sidebar": {
@@ -846,7 +902,8 @@
         "embedding": "এম্বেডিং",
         "image": "চিত্র",
         "speech": "বক্তৃতা",
-        "transcription": "ট্রান্সক্রিপশন"
+        "transcription": "ট্রান্সক্রিপশন",
+        "decision": "সিদ্ধান্ত"
       },
       "exportPlugin": "প্লাগইন রপ্তানি",
       "deletePlugin": "প্লাগইন মুছুন",
@@ -1949,7 +2006,8 @@
         "tts": "টেক্সট টু স্পিচ",
         "voice-mode": "ভয়েস মোড",
         "voice-cloning": "ভয়েস ক্লোনিং",
-        "work-agents": "Work-এ এজেন্ট CLI"
+        "work-agents": "Work-এ এজেন্ট CLI",
+        "decision-models": "সিদ্ধান্ত মডেল"
       },
       "grantViaKinds": {
         "user": "সরাসরি অনুমতি",
@@ -2095,6 +2153,13 @@
         "admins": "প্রশাসকগণ",
         "all-users": "Work-এর সব ব্যবহারকারী"
       }
+    },
+    "decisionAccess": {
+      "title": "সিদ্ধান্ত মডেল",
+      "description": "সব সক্রিয় ব্যবহারকারীকে চ্যাটে এবং Decisions API-এর মাধ্যমে সিদ্ধান্ত মডেল ব্যবহার করতে দিন। প্রশাসকেরা সবসময় এগুলো ব্যবহার করতে পারেন।",
+      "lockedByEnv": "DECISION_MODELS_ACCESS_MODE পরিবেশ ভেরিয়েবল দ্বারা নির্ধারিত",
+      "saved": "সিদ্ধান্ত মডেলে প্রবেশাধিকার হালনাগাদ হয়েছে",
+      "saveFailed": "সিদ্ধান্ত মডেলে প্রবেশাধিকার হালনাগাদ করা যায়নি"
     }
   },
   "usageAnalytics": {
@@ -3121,7 +3186,8 @@
     "sources": "মডেলের উৎস",
     "defaultModel": "ডিফল্ট মডেল",
     "contextSize": "{{size}} কনটেক্সট",
-    "via": "{{provider}} এর মাধ্যমে"
+    "via": "{{provider}} এর মাধ্যমে",
+    "decisionBadge": "সিদ্ধান্ত"
   },
   "whatsNew": {
     "title": "নতুন কী আছে",

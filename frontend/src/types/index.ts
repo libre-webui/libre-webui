@@ -139,6 +139,74 @@ export interface ChatSessionSettings {
     title?: string;
     forkedAt: number;
   };
+  /** The questions a decision model answers about each message. */
+  decisionQuestions?: DecisionQuestions;
+}
+
+/** One question for a decision model. */
+export type DecisionQuestion =
+  | {
+      type: 'choice';
+      instructions: string;
+      /** Option name to its description; null leaves the bare name. */
+      criteria: Record<string, string | null>;
+    }
+  | {
+      type: 'noul';
+      instructions: string;
+      criteria?: { true?: string; false?: string };
+    }
+  | {
+      type: 'score';
+      instructions: string;
+      /** Levels from the lowest (score 0) to the highest. */
+      criteria: string[];
+    };
+
+export type DecisionQuestions = Record<string, DecisionQuestion>;
+
+export type DecisionAnswer =
+  | {
+      type: 'choice';
+      choice: string;
+      probabilities: Record<string, number>;
+      confidence?: number;
+    }
+  | { type: 'noul'; noul: number; confidence?: number }
+  | {
+      type: 'score';
+      score: number;
+      legend: Record<string, string>;
+      probabilities: Record<string, number>;
+      confidence?: number;
+    }
+  | { type: 'refusal' };
+
+/** What a decision model's chat reply carries in its provider metadata. */
+export type DecisionReplyMetadata =
+  | { kind: 'state' | 'cleared' }
+  | {
+      kind: 'answers';
+      mode: 'questions' | 'interactive';
+      model: string;
+      provider: string;
+      questions: DecisionQuestions;
+      answers: Record<string, DecisionAnswer>;
+      usage?: {
+        inputTokens?: number;
+        outputTokens?: number;
+        cachedTokens?: number;
+        costUsd?: number;
+      };
+    };
+
+/** A decision model as GET /api/decisions/models lists it. */
+export interface DecisionModelEntry {
+  id: string;
+  providerType: 'ollama' | 'plugin';
+  providerId?: string;
+  providerName: string;
+  images?: boolean;
 }
 
 export interface SessionFolder {
@@ -415,6 +483,13 @@ export interface OllamaModel {
    * offered — the same fail-open rule Ollama models follow.
    */
   reasoningSupport?: boolean;
+  /**
+   * A decision model: it answers typed questions with probabilities through
+   * its decision API and never writes text.
+   */
+  isDecision?: boolean;
+  /** Whether the decision model reads images, when that is known. */
+  decisionImages?: boolean;
 }
 
 /** How hard a model should think: off, on, or one of the named levels. */
@@ -692,10 +767,18 @@ export type PluginType =
   | 'tts'
   | 'image'
   | 'audio'
-  | 'video';
+  | 'video'
+  | 'decision';
 
 export type PluginCapabilityType =
-  'completion' | 'embedding' | 'image' | 'stt' | 'tts' | 'audio' | 'video';
+  | 'completion'
+  | 'embedding'
+  | 'image'
+  | 'stt'
+  | 'tts'
+  | 'audio'
+  | 'video'
+  | 'decision';
 
 export interface PluginCapability {
   endpoint?: string;

@@ -24,7 +24,8 @@ export type PluginModelCapability =
   | 'Video'
   | 'Audio'
   | 'Speech'
-  | 'Transcription';
+  | 'Transcription'
+  | 'Decision';
 
 export interface PluginProviderCatalogEntry {
   id: string;
@@ -39,6 +40,7 @@ const CAPABILITY_ORDER: PluginModelCapability[] = [
   'Speech',
   'Transcription',
   'Embedding',
+  'Decision',
 ];
 
 const PRIMARY_CAPABILITY: Record<PluginType, PluginModelCapability> = {
@@ -50,6 +52,7 @@ const PRIMARY_CAPABILITY: Record<PluginType, PluginModelCapability> = {
   stt: 'Transcription',
   tts: 'Speech',
   video: 'Video',
+  decision: 'Decision',
 };
 
 const PLUGIN_CAPABILITY: Record<PluginCapabilityType, PluginModelCapability> = {
@@ -60,6 +63,7 @@ const PLUGIN_CAPABILITY: Record<PluginCapabilityType, PluginModelCapability> = {
   stt: 'Transcription',
   tts: 'Speech',
   video: 'Video',
+  decision: 'Decision',
 };
 
 export function buildPluginProviderCatalog(

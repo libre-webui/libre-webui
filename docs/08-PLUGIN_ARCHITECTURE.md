@@ -22,6 +22,7 @@ Libre WebUI uses plugins to connect external AI providers and model capabilities
 | Speech-to-text   | Transcription providers                          |
 | Audio generation | Sound and audio-generation providers             |
 | Video generation | Asynchronous video-generation providers          |
+| Decision models  | Typed yes/no, choice, and score answers          |
 
 Plugins can expose static model maps and, where supported, refresh available models from provider APIs.
 

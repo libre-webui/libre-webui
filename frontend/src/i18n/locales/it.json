@@ -562,6 +562,62 @@
       "replyFinishedNoText": "{{name}} ha finito di rispondere.",
       "codeBlock": "blocco di codice",
       "generationStopped": "Generazione interrotta"
+    },
+    "decision": {
+      "barTitle": "Domande di decisione",
+      "interactiveHint": "Nessuna domanda impostata. Il primo messaggio è lo stato, e ogni riga inviata dopo è una domanda sì/no su di esso. Invia /clear per ricominciare.",
+      "add": "Imposta domande",
+      "edit": "Modifica domande",
+      "dialogTitle": "Domande di decisione",
+      "dialogSubtitle": "Il modello di decisione risponde a queste domande per ogni messaggio inviato, con una probabilità per ogni risposta.",
+      "useInteractive": "Usa la modalità interattiva",
+      "questionNumber": "Domanda {{number}}",
+      "removeQuestion": "Rimuovi domanda",
+      "typeLabel": "Tipo di domanda",
+      "types": {
+        "noul": "Sì/no",
+        "choice": "Scelta",
+        "score": "Punteggio"
+      },
+      "question": "Domanda",
+      "placeholders": {
+        "noul": "Viene richiesto un rimborso?",
+        "choice": "Quale team deve occuparsene?",
+        "score": "Quanto è urgente?"
+      },
+      "yesMeans": "Sì significa (facoltativo)",
+      "noMeans": "No significa (facoltativo)",
+      "options": "Opzioni",
+      "optionName": "Nome dell'opzione {{number}}",
+      "optionDescription": "Descrizione dell'opzione {{number}}",
+      "optionNamePlaceholder": "fatturazione",
+      "optionDescriptionPlaceholder": "Descrizione (facoltativa)",
+      "removeOption": "Rimuovi l'opzione {{number}}",
+      "addOption": "Aggiungi opzione",
+      "levels": "Livelli, dal più basso",
+      "levelLabel": "Livello {{number}}",
+      "levelPlaceholder": "Descrivi questo livello",
+      "removeLevel": "Rimuovi il livello {{number}}",
+      "addLevel": "Aggiungi livello",
+      "addQuestion": "Aggiungi domanda",
+      "saved": "Domande di decisione salvate",
+      "saveFailed": "Impossibile salvare le domande di decisione",
+      "errors": {
+        "tooMany": "Poni al massimo {{max}} domande.",
+        "instructions": "La domanda {{number}} ha bisogno di un testo.",
+        "options": "La domanda {{number}} ha bisogno di 2-255 opzioni, ognuna con il proprio nome.",
+        "levels": "La domanda {{number}} ha bisogno di 2-10 livelli."
+      },
+      "result": {
+        "yes": "Sì",
+        "no": "No",
+        "declined": "Rifiutata",
+        "score": "{{value}} su {{max}}",
+        "stateSaved": "Salvato come stato. Fai domande sì/no su di esso, una per riga, oppure imposta le domande per questa chat.",
+        "cleared": "Cancellato. Il prossimo messaggio sarà il nuovo stato.",
+        "via": "{{model}} tramite {{provider}}",
+        "inputTokens": "{{tokens}} token di input"
+      }
     }
   },
   "sidebar": {
@@ -846,7 +902,8 @@
         "embedding": "Embedding",
         "image": "Immagine",
         "speech": "Sintesi vocale",
-        "transcription": "Trascrizione"
+        "transcription": "Trascrizione",
+        "decision": "Decisione"
       },
       "exportPlugin": "Esporta plugin",
       "deletePlugin": "Elimina plugin",
@@ -1949,7 +2006,8 @@
         "tts": "Da testo a voce",
         "voice-mode": "Modalità vocale",
         "voice-cloning": "Clonazione vocale",
-        "work-agents": "CLI di agenti in Work"
+        "work-agents": "CLI di agenti in Work",
+        "decision-models": "Modelli di decisione"
       },
       "grantViaKinds": {
         "user": "concessione diretta",
@@ -2095,6 +2153,13 @@
         "admins": "Amministratori",
         "all-users": "Tutti gli utenti di Work"
       }
+    },
+    "decisionAccess": {
+      "title": "Modelli di decisione",
+      "description": "Consenti a tutti gli utenti attivi di usare i modelli di decisione nelle chat e tramite l'API Decisions. Gli amministratori possono sempre usarli.",
+      "lockedByEnv": "Fissato dalla variabile d'ambiente DECISION_MODELS_ACCESS_MODE",
+      "saved": "Accesso ai modelli di decisione aggiornato",
+      "saveFailed": "Impossibile aggiornare l'accesso ai modelli di decisione"
     }
   },
   "usageAnalytics": {
@@ -3121,7 +3186,8 @@
     "sources": "Origini dei modelli",
     "defaultModel": "Modello predefinito",
     "contextSize": "contesto di {{size}}",
-    "via": "tramite {{provider}}"
+    "via": "tramite {{provider}}",
+    "decisionBadge": "Decisione"
   },
   "whatsNew": {
     "title": "Novità",

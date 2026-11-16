@@ -562,6 +562,62 @@
       "replyFinishedNoText": "{{name}} er færdig med at svare.",
       "codeBlock": "kodeblok",
       "generationStopped": "Generering stoppet"
+    },
+    "decision": {
+      "barTitle": "Beslutningsspørgsmål",
+      "interactiveHint": "Ingen spørgsmål angivet. Din første besked er tilstanden, og hver linje, du sender bagefter, er et ja/nej-spørgsmål om den. Send /clear for at starte forfra.",
+      "add": "Angiv spørgsmål",
+      "edit": "Rediger spørgsmål",
+      "dialogTitle": "Beslutningsspørgsmål",
+      "dialogSubtitle": "Beslutningsmodellen besvarer disse spørgsmål om hver besked, du sender, med en sandsynlighed for hvert svar.",
+      "useInteractive": "Brug interaktiv tilstand",
+      "questionNumber": "Spørgsmål {{number}}",
+      "removeQuestion": "Fjern spørgsmål",
+      "typeLabel": "Spørgsmålstype",
+      "types": {
+        "noul": "Ja/nej",
+        "choice": "Valg",
+        "score": "Score"
+      },
+      "question": "Spørgsmål",
+      "placeholders": {
+        "noul": "Bliver der bedt om en refusion?",
+        "choice": "Hvilket team skal tage sig af dette?",
+        "score": "Hvor hastende er dette?"
+      },
+      "yesMeans": "Ja betyder (valgfrit)",
+      "noMeans": "Nej betyder (valgfrit)",
+      "options": "Muligheder",
+      "optionName": "Navn på mulighed {{number}}",
+      "optionDescription": "Beskrivelse af mulighed {{number}}",
+      "optionNamePlaceholder": "fakturering",
+      "optionDescriptionPlaceholder": "Beskrivelse (valgfrit)",
+      "removeOption": "Fjern mulighed {{number}}",
+      "addOption": "Tilføj mulighed",
+      "levels": "Niveauer, laveste først",
+      "levelLabel": "Niveau {{number}}",
+      "levelPlaceholder": "Beskriv dette niveau",
+      "removeLevel": "Fjern niveau {{number}}",
+      "addLevel": "Tilføj niveau",
+      "addQuestion": "Tilføj spørgsmål",
+      "saved": "Beslutningsspørgsmål gemt",
+      "saveFailed": "Beslutningsspørgsmålene kunne ikke gemmes",
+      "errors": {
+        "tooMany": "Stil højst {{max}} spørgsmål.",
+        "instructions": "Spørgsmål {{number}} skal have en tekst.",
+        "options": "Spørgsmål {{number}} skal have 2 til 255 muligheder, hver med sit eget navn.",
+        "levels": "Spørgsmål {{number}} skal have 2 til 10 niveauer."
+      },
+      "result": {
+        "yes": "Ja",
+        "no": "Nej",
+        "declined": "Afvist",
+        "score": "{{value}} af {{max}}",
+        "stateSaved": "Gemt som tilstand. Stil ja/nej-spørgsmål om den, ét pr. linje, eller angiv spørgsmål for denne chat.",
+        "cleared": "Ryddet. Din næste besked bliver den nye tilstand.",
+        "via": "{{model}} via {{provider}}",
+        "inputTokens": "{{tokens}} input-tokens"
+      }
     }
   },
   "sidebar": {
@@ -846,7 +902,8 @@
         "embedding": "Embedding",
         "image": "Billede",
         "speech": "Tale",
-        "transcription": "Transskription"
+        "transcription": "Transskription",
+        "decision": "Beslutning"
       },
       "exportPlugin": "Eksporter plugin",
       "deletePlugin": "Slet plugin",
@@ -1949,7 +2006,8 @@
         "tts": "Tekst til tale",
         "voice-mode": "Stemmetilstand",
         "voice-cloning": "Stemmekloning",
-        "work-agents": "Agent-CLI'er i Work"
+        "work-agents": "Agent-CLI'er i Work",
+        "decision-models": "Beslutningsmodeller"
       },
       "grantViaKinds": {
         "user": "direkte tildeling",
@@ -2095,6 +2153,13 @@
         "admins": "Administratorer",
         "all-users": "Alle Work-brugere"
       }
+    },
+    "decisionAccess": {
+      "title": "Beslutningsmodeller",
+      "description": "Tillad alle aktive brugere at bruge beslutningsmodeller i chats og via Decisions-API’et. Administratorer kan altid bruge dem.",
+      "lockedByEnv": "Fastlagt af miljøvariablen DECISION_MODELS_ACCESS_MODE",
+      "saved": "Adgang til beslutningsmodeller opdateret",
+      "saveFailed": "Adgangen til beslutningsmodeller kunne ikke opdateres"
     }
   },
   "usageAnalytics": {
@@ -3121,7 +3186,8 @@
     "sources": "Modelkilder",
     "defaultModel": "Standardmodel",
     "contextSize": "{{size}} kontekst",
-    "via": "via {{provider}}"
+    "via": "via {{provider}}",
+    "decisionBadge": "Beslutning"
   },
   "whatsNew": {
     "title": "Nyheder",

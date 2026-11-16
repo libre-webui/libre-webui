@@ -34,6 +34,8 @@ import { Button, MessageContent } from '@/components/ui';
 import { GenerationIndicator } from '@/components/ui/GenerationIndicator';
 import { GenerationStats } from '@/components/GenerationStats';
 import { ArtifactContainer } from '@/components/ArtifactContainer';
+import { DecisionResultCard } from '@/components/decisions/DecisionResultCard';
+import { readDecisionReplyMetadata } from '@/components/decisions/decisionQuestions';
 import { TTSButton } from '@/components/TTSButton';
 import { formatTimestamp, cn, parseThinkingContent } from '@/utils';
 import {
@@ -290,6 +292,12 @@ const ChatMessageBase: React.FC<ChatMessageProps> = ({
   };
 
   // Derive thinking content, parsed content, and artifacts from message content
+  // A decision model's reply carries its answers as structured metadata; the
+  // text content is the plain table kept for exports and search.
+  const decisionReply = useMemo(
+    () => readDecisionReplyMetadata(message.providerMetadata),
+    [message.providerMetadata]
+  );
   const { thinkingContent, thinkingStreaming, parsedContent, artifacts } =
     useMemo(() => {
       if (isUser || isSystem || (!message.content && !message.thinking)) {
@@ -989,12 +997,16 @@ const ChatMessageBase: React.FC<ChatMessageProps> = ({
                     </div>
                   </div>
                 )}
-                <MessageContent
-                  content={parsedContent}
-                  isStreaming={
-                    isStreaming && !(thinkingStreaming && !parsedContent)
-                  }
-                />
+                {decisionReply && !isStreaming ? (
+                  <DecisionResultCard metadata={decisionReply} />
+                ) : (
+                  <MessageContent
+                    content={parsedContent}
+                    isStreaming={
+                      isStreaming && !(thinkingStreaming && !parsedContent)
+                    }
+                  />
+                )}
               </div>
             )}
 

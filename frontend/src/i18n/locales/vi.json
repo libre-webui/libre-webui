@@ -562,6 +562,62 @@
       "replyFinishedNoText": "{{name}} đã trả lời xong.",
       "codeBlock": "khối mã",
       "generationStopped": "Đã dừng tạo"
+    },
+    "decision": {
+      "barTitle": "Câu hỏi quyết định",
+      "interactiveHint": "Chưa đặt câu hỏi. Tin nhắn đầu tiên của bạn là trạng thái, và mỗi dòng bạn gửi sau đó là một câu hỏi có/không về nó. Gửi /clear để bắt đầu lại.",
+      "add": "Đặt câu hỏi",
+      "edit": "Sửa câu hỏi",
+      "dialogTitle": "Câu hỏi quyết định",
+      "dialogSubtitle": "Mô hình quyết định trả lời các câu hỏi này cho mỗi tin nhắn bạn gửi, kèm xác suất cho từng câu trả lời.",
+      "useInteractive": "Dùng chế độ tương tác",
+      "questionNumber": "Câu hỏi {{number}}",
+      "removeQuestion": "Xóa câu hỏi",
+      "typeLabel": "Loại câu hỏi",
+      "types": {
+        "noul": "Có/không",
+        "choice": "Lựa chọn",
+        "score": "Điểm"
+      },
+      "question": "Câu hỏi",
+      "placeholders": {
+        "noul": "Có yêu cầu hoàn tiền không?",
+        "choice": "Nhóm nào nên xử lý việc này?",
+        "score": "Việc này khẩn cấp đến mức nào?"
+      },
+      "yesMeans": "Có nghĩa là (tùy chọn)",
+      "noMeans": "Không nghĩa là (tùy chọn)",
+      "options": "Tùy chọn",
+      "optionName": "Tên tùy chọn {{number}}",
+      "optionDescription": "Mô tả tùy chọn {{number}}",
+      "optionNamePlaceholder": "thanh-toan",
+      "optionDescriptionPlaceholder": "Mô tả (tùy chọn)",
+      "removeOption": "Xóa tùy chọn {{number}}",
+      "addOption": "Thêm tùy chọn",
+      "levels": "Các mức, thấp nhất trước",
+      "levelLabel": "Mức {{number}}",
+      "levelPlaceholder": "Mô tả mức này",
+      "removeLevel": "Xóa mức {{number}}",
+      "addLevel": "Thêm mức",
+      "addQuestion": "Thêm câu hỏi",
+      "saved": "Đã lưu câu hỏi quyết định",
+      "saveFailed": "Không thể lưu câu hỏi quyết định",
+      "errors": {
+        "tooMany": "Hỏi tối đa {{max}} câu.",
+        "instructions": "Câu hỏi {{number}} cần có nội dung.",
+        "options": "Câu hỏi {{number}} cần từ 2 đến 255 tùy chọn, mỗi tùy chọn có tên riêng.",
+        "levels": "Câu hỏi {{number}} cần từ 2 đến 10 mức."
+      },
+      "result": {
+        "yes": "Có",
+        "no": "Không",
+        "declined": "Đã từ chối",
+        "score": "{{value}} trên {{max}}",
+        "stateSaved": "Đã lưu làm trạng thái. Hãy hỏi các câu có/không về nó, mỗi dòng một câu, hoặc đặt câu hỏi cho cuộc trò chuyện này.",
+        "cleared": "Đã xóa. Tin nhắn tiếp theo của bạn sẽ là trạng thái mới.",
+        "via": "{{model}} qua {{provider}}",
+        "inputTokens": "{{tokens}} token đầu vào"
+      }
     }
   },
   "sidebar": {
@@ -846,7 +902,8 @@
         "embedding": "Embedding",
         "image": "Hình ảnh",
         "speech": "Giọng nói",
-        "transcription": "Chuyển ngữ"
+        "transcription": "Chuyển ngữ",
+        "decision": "Quyết định"
       },
       "exportPlugin": "Xuất plugin",
       "deletePlugin": "Xóa plugin",
@@ -1949,7 +2006,8 @@
         "tts": "Chuyển văn bản thành giọng nói",
         "voice-mode": "Chế độ giọng nói",
         "voice-cloning": "Nhân bản giọng nói",
-        "work-agents": "CLI tác tử trong Work"
+        "work-agents": "CLI tác tử trong Work",
+        "decision-models": "Mô hình quyết định"
       },
       "grantViaKinds": {
         "user": "cấp trực tiếp",
@@ -2095,6 +2153,13 @@
         "admins": "Quản trị viên",
         "all-users": "Tất cả người dùng Work"
       }
+    },
+    "decisionAccess": {
+      "title": "Mô hình quyết định",
+      "description": "Cho phép mọi người dùng đang hoạt động dùng mô hình quyết định trong trò chuyện và qua Decisions API. Quản trị viên luôn có thể dùng.",
+      "lockedByEnv": "Được cố định bởi biến môi trường DECISION_MODELS_ACCESS_MODE",
+      "saved": "Đã cập nhật quyền truy cập mô hình quyết định",
+      "saveFailed": "Không thể cập nhật quyền truy cập mô hình quyết định"
     }
   },
   "usageAnalytics": {
@@ -3121,7 +3186,8 @@
     "sources": "Nguồn mô hình",
     "defaultModel": "Mô hình mặc định",
     "contextSize": "ngữ cảnh {{size}}",
-    "via": "qua {{provider}}"
+    "via": "qua {{provider}}",
+    "decisionBadge": "Quyết định"
   },
   "whatsNew": {
     "title": "Có gì mới",

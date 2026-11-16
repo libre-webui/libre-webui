@@ -179,8 +179,9 @@ models and bills per token, so there is nothing to deploy first.
 
 Libre WebUI then lists the Model APIs catalog from `/v1/models`, with each
 model's context window and whether it reasons. Baseten's decision models
-(`decision-models/…`) are left out: they answer only Baseten's System One API,
-not Chat Completions. Models keep Baseten's slugs, such as `zai-org/GLM-5.3` or `moonshotai/Kimi-K3`; the picker
+(`decision-models/…`) answer only Baseten's System One API, so they are listed
+as decision models instead of chat models; see
+[Decision Models](./68-DECISION_MODELS.md). Models keep Baseten's slugs, such as `zai-org/GLM-5.3` or `moonshotai/Kimi-K3`; the picker
 shows them as "GLM 5.3" by Z.ai and "Kimi K3" by Moonshot AI. A **Fast**
 variant runs the same weights on dedicated capacity at its own price.
 

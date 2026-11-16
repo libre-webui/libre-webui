@@ -38,6 +38,7 @@ export interface OllamaLibraryQuery {
 const MODEL_CAPABILITY_TAGS = new Set([
   'audio',
   'cloud',
+  'decision',
   'embedding',
   'thinking',
   'tools',
@@ -150,6 +151,22 @@ const CURATED_MODELS: RemoteModelInfo[] = [
     tags: ['embedding', 'rag'],
   },
   {
+    name: 'nimble',
+    description:
+      'A 9B decision model from Bespoke Labs for fast, typed classification.',
+    category: 'decision',
+    sizes: ['9b'],
+    tags: ['decision', 'tools', 'thinking'],
+  },
+  {
+    name: 'clef-flash',
+    description:
+      'A 9B multimodal decision model that turns a state and typed questions into decisions.',
+    category: 'decision',
+    sizes: ['9b'],
+    tags: ['decision', 'vision'],
+  },
+  {
     name: 'starcoder2',
     description: 'Code generation model trained on diverse languages',
     category: 'coding',
@@ -253,13 +270,17 @@ export function parseOllamaSearchHtml(html: string): RemoteModelInfo[] {
       /<p\b[^>]*class=["'][^"']*\btext-neutral-800\b[^"']*["'][^>]*>([\s\S]*?)<\/p>/i
     );
     const { sizes, tags } = parseModelBadges(cardHtml);
-    const category = tags.includes('embedding')
-      ? 'embedding'
-      : tags.includes('vision')
-        ? 'vision'
-        : tags.includes('thinking')
-          ? 'reasoning'
-          : inferOllamaModelCategory(name);
+    // A decision model can also carry tools or vision badges; it is still
+    // a decision model first, since it never writes text.
+    const category = tags.includes('decision')
+      ? 'decision'
+      : tags.includes('embedding')
+        ? 'embedding'
+        : tags.includes('vision')
+          ? 'vision'
+          : tags.includes('thinking')
+            ? 'reasoning'
+            : inferOllamaModelCategory(name);
 
     models.push({
       name,

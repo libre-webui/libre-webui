@@ -562,6 +562,62 @@
       "replyFinishedNoText": "{{name}} terminou de responder.",
       "codeBlock": "bloco de código",
       "generationStopped": "Geração interrompida"
+    },
+    "decision": {
+      "barTitle": "Perguntas de decisão",
+      "interactiveHint": "Nenhuma pergunta definida. A primeira mensagem é o estado, e cada linha enviada depois é uma pergunta de sim/não sobre ele. Envie /clear para recomeçar.",
+      "add": "Definir perguntas",
+      "edit": "Editar perguntas",
+      "dialogTitle": "Perguntas de decisão",
+      "dialogSubtitle": "O modelo de decisão responde a estas perguntas sobre cada mensagem enviada, com uma probabilidade para cada resposta.",
+      "useInteractive": "Usar o modo interativo",
+      "questionNumber": "Pergunta {{number}}",
+      "removeQuestion": "Remover pergunta",
+      "typeLabel": "Tipo de pergunta",
+      "types": {
+        "noul": "Sim/não",
+        "choice": "Escolha",
+        "score": "Pontuação"
+      },
+      "question": "Pergunta",
+      "placeholders": {
+        "noul": "Está sendo pedido um reembolso?",
+        "choice": "Qual equipe deve cuidar disso?",
+        "score": "Quão urgente é isso?"
+      },
+      "yesMeans": "Sim significa (opcional)",
+      "noMeans": "Não significa (opcional)",
+      "options": "Opções",
+      "optionName": "Nome da opção {{number}}",
+      "optionDescription": "Descrição da opção {{number}}",
+      "optionNamePlaceholder": "faturamento",
+      "optionDescriptionPlaceholder": "Descrição (opcional)",
+      "removeOption": "Remover a opção {{number}}",
+      "addOption": "Adicionar opção",
+      "levels": "Níveis, do mais baixo",
+      "levelLabel": "Nível {{number}}",
+      "levelPlaceholder": "Descreva este nível",
+      "removeLevel": "Remover o nível {{number}}",
+      "addLevel": "Adicionar nível",
+      "addQuestion": "Adicionar pergunta",
+      "saved": "Perguntas de decisão salvas",
+      "saveFailed": "Não foi possível salvar as perguntas de decisão",
+      "errors": {
+        "tooMany": "Faça no máximo {{max}} perguntas.",
+        "instructions": "A pergunta {{number}} precisa de um texto.",
+        "options": "A pergunta {{number}} precisa de 2 a 255 opções, cada uma com o próprio nome.",
+        "levels": "A pergunta {{number}} precisa de 2 a 10 níveis."
+      },
+      "result": {
+        "yes": "Sim",
+        "no": "Não",
+        "declined": "Recusada",
+        "score": "{{value}} de {{max}}",
+        "stateSaved": "Salvo como estado. Faça perguntas de sim/não sobre ele, uma por linha, ou defina perguntas para este chat.",
+        "cleared": "Limpo. Sua próxima mensagem será o novo estado.",
+        "via": "{{model}} via {{provider}}",
+        "inputTokens": "{{tokens}} tokens de entrada"
+      }
     }
   },
   "sidebar": {
@@ -846,7 +902,8 @@
         "embedding": "Embedding",
         "image": "Imagem",
         "speech": "Fala",
-        "transcription": "Transcrição"
+        "transcription": "Transcrição",
+        "decision": "Decisão"
       },
       "exportPlugin": "Exportar plugin",
       "deletePlugin": "Excluir plugin",
@@ -1949,7 +2006,8 @@
         "tts": "Texto para fala",
         "voice-mode": "Modo de voz",
         "voice-cloning": "Clonagem de voz",
-        "work-agents": "CLIs de agentes no Work"
+        "work-agents": "CLIs de agentes no Work",
+        "decision-models": "Modelos de decisão"
       },
       "grantViaKinds": {
         "user": "concessão direta",
@@ -2095,6 +2153,13 @@
         "admins": "Administradores",
         "all-users": "Todos os usuários do Work"
       }
+    },
+    "decisionAccess": {
+      "title": "Modelos de decisão",
+      "description": "Permitir que todos os usuários ativos usem modelos de decisão nos chats e pela API Decisions. Os administradores sempre podem usá-los.",
+      "lockedByEnv": "Definido pela variável de ambiente DECISION_MODELS_ACCESS_MODE",
+      "saved": "Acesso aos modelos de decisão atualizado",
+      "saveFailed": "Não foi possível atualizar o acesso aos modelos de decisão"
     }
   },
   "usageAnalytics": {
@@ -3121,7 +3186,8 @@
     "sources": "Origens dos modelos",
     "defaultModel": "Modelo padrão",
     "contextSize": "contexto de {{size}}",
-    "via": "via {{provider}}"
+    "via": "via {{provider}}",
+    "decisionBadge": "Decisão"
   },
   "whatsNew": {
     "title": "Novidades",

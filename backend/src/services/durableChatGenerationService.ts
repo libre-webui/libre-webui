@@ -23,6 +23,7 @@ import { createChatStreamCoalescer } from '../utils/chatStreamCoalescer.js';
 import agentCliService from './agentCliService.js';
 import chatGenerationService from './chatGenerationService.js';
 import { ChatRequestService } from './chatRequestService.js';
+import { getDecisionService, isDecisionChatModel } from './decisionService.js';
 import type { AuthzActor } from './authorizationService.js';
 import {
   runPluginToolLoop,
@@ -75,6 +76,7 @@ const requestService = new ChatRequestService({
   chatGenerationService,
   personaService,
   preferencesService,
+  isDecisionModel: isDecisionChatModel,
 });
 
 /**
@@ -267,16 +269,30 @@ const streamGeneratedAssistant = async (
     });
   };
 
-  if (prepared.target.providerType === 'agent' && prepared.target.providerId) {
+  // Agent CLIs and decision models both answer in one stream shape.
+  const directChunks = prepared.target.decision
+    ? (await getDecisionService()).streamChatTurn(
+        prepared.target.decision,
+        prepared.pluginMessages,
+        input.actorUserId,
+        {
+          questions: prepared.target.decision.questions,
+          signal: context.signal,
+        }
+      )
+    : prepared.target.providerType === 'agent' && prepared.target.providerId
+      ? agentCliService.executeAgentStreamRequest(
+          prepared.target.providerId,
+          prepared.pluginMessages,
+          input.actorUserId,
+          { model: prepared.target.actualModelName, signal: context.signal }
+        )
+      : undefined;
+  if (directChunks) {
     let usage: { promptTokens?: number; completionTokens?: number } | undefined;
     let timings: { promptMs?: number; predictedMs?: number } | undefined;
     try {
-      for await (const chunk of agentCliService.executeAgentStreamRequest(
-        prepared.target.providerId,
-        prepared.pluginMessages,
-        input.actorUserId,
-        { model: prepared.target.actualModelName, signal: context.signal }
-      )) {
+      for await (const chunk of directChunks) {
         if (chunk.type === 'content' && chunk.content) {
           content += chunk.content;
           queuePublish(chunk.content);

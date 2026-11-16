@@ -562,6 +562,62 @@
       "replyFinishedNoText": "{{name}}이(가) 답변을 마쳤습니다.",
       "codeBlock": "코드 블록",
       "generationStopped": "생성이 중지되었습니다"
+    },
+    "decision": {
+      "barTitle": "판단 질문",
+      "interactiveHint": "설정된 질문이 없습니다. 첫 메시지가 상태가 되고, 그 뒤에 보내는 각 줄은 그에 대한 예/아니요 질문이 됩니다. 다시 시작하려면 /clear를 보내세요.",
+      "add": "질문 설정",
+      "edit": "질문 편집",
+      "dialogTitle": "판단 질문",
+      "dialogSubtitle": "판단 모델은 보내는 메시지마다 이 질문에 답하고, 각 답의 확률을 함께 보여 줍니다.",
+      "useInteractive": "대화형 모드 사용",
+      "questionNumber": "질문 {{number}}",
+      "removeQuestion": "질문 삭제",
+      "typeLabel": "질문 유형",
+      "types": {
+        "noul": "예/아니요",
+        "choice": "선택",
+        "score": "점수"
+      },
+      "question": "질문",
+      "placeholders": {
+        "noul": "환불을 요청하고 있나요?",
+        "choice": "어느 팀이 처리해야 하나요?",
+        "score": "얼마나 긴급한가요?"
+      },
+      "yesMeans": "예의 의미 (선택 사항)",
+      "noMeans": "아니요의 의미 (선택 사항)",
+      "options": "선택지",
+      "optionName": "선택지 {{number}} 이름",
+      "optionDescription": "선택지 {{number}} 설명",
+      "optionNamePlaceholder": "billing",
+      "optionDescriptionPlaceholder": "설명 (선택 사항)",
+      "removeOption": "선택지 {{number}} 삭제",
+      "addOption": "선택지 추가",
+      "levels": "단계, 낮은 순서",
+      "levelLabel": "단계 {{number}}",
+      "levelPlaceholder": "이 단계를 설명하세요",
+      "removeLevel": "단계 {{number}} 삭제",
+      "addLevel": "단계 추가",
+      "addQuestion": "질문 추가",
+      "saved": "판단 질문을 저장했습니다",
+      "saveFailed": "판단 질문을 저장하지 못했습니다",
+      "errors": {
+        "tooMany": "질문은 최대 {{max}}개까지입니다.",
+        "instructions": "질문 {{number}}에 내용이 필요합니다.",
+        "options": "질문 {{number}}에는 이름이 서로 다른 선택지가 2~255개 필요합니다.",
+        "levels": "질문 {{number}}에는 단계가 2~10개 필요합니다."
+      },
+      "result": {
+        "yes": "예",
+        "no": "아니요",
+        "declined": "답변 거부",
+        "score": "{{max}} 중 {{value}}",
+        "stateSaved": "상태로 저장했습니다. 이에 대한 예/아니요 질문을 한 줄에 하나씩 보내거나, 이 채팅의 질문을 설정하세요.",
+        "cleared": "지웠습니다. 다음 메시지가 새 상태가 됩니다.",
+        "via": "{{provider}}를 통한 {{model}}",
+        "inputTokens": "입력 토큰 {{tokens}}개"
+      }
     }
   },
   "sidebar": {
@@ -846,7 +902,8 @@
         "embedding": "임베딩",
         "image": "이미지",
         "speech": "음성",
-        "transcription": "전사"
+        "transcription": "전사",
+        "decision": "판단"
       },
       "exportPlugin": "플러그인 내보내기",
       "deletePlugin": "플러그인 삭제",
@@ -1949,7 +2006,8 @@
         "tts": "음성 합성",
         "voice-mode": "음성 모드",
         "voice-cloning": "음성 복제",
-        "work-agents": "Work의 에이전트 CLI"
+        "work-agents": "Work의 에이전트 CLI",
+        "decision-models": "판단 모델"
       },
       "grantViaKinds": {
         "user": "직접 부여",
@@ -2095,6 +2153,13 @@
         "admins": "관리자",
         "all-users": "모든 Work 사용자"
       }
+    },
+    "decisionAccess": {
+      "title": "판단 모델",
+      "description": "모든 활성 사용자가 채팅과 Decisions API에서 판단 모델을 사용할 수 있게 합니다. 관리자는 항상 사용할 수 있습니다.",
+      "lockedByEnv": "DECISION_MODELS_ACCESS_MODE 환경 변수로 고정됨",
+      "saved": "판단 모델 접근 권한을 업데이트했습니다",
+      "saveFailed": "판단 모델 접근 권한을 업데이트하지 못했습니다"
     }
   },
   "usageAnalytics": {
@@ -3121,7 +3186,8 @@
     "sources": "모델 출처",
     "defaultModel": "기본 모델",
     "contextSize": "컨텍스트 {{size}}",
-    "via": "{{provider}} 경유"
+    "via": "{{provider}} 경유",
+    "decisionBadge": "판단"
   },
   "whatsNew": {
     "title": "새로운 기능",

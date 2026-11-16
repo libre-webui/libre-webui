@@ -134,6 +134,14 @@ export function InstalledModelsTab({
                             {tag}
                           </span>
                         )}
+                        {model.isDecision && (
+                          <span
+                            data-testid='model-selector-decision-badge'
+                            className='shrink-0 rounded-sm bg-primary-50 px-1 py-px text-[10px] leading-4 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300'
+                          >
+                            {t('modelSelector.decisionBadge')}
+                          </span>
+                        )}
                       </div>
                       {subLabel && (
                         <div

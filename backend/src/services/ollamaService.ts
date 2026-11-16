@@ -625,6 +625,23 @@ export class OllamaService {
     }
   }
 
+  /**
+   * One System One request (`POST /v1/systemone`, Ollama 0.35 and later).
+   * The first call may load the model, so the long timeout applies. Errors
+   * keep the provider's response so the caller can report its message.
+   */
+  async systemOne(
+    body: Record<string, unknown>,
+    signal?: AbortSignal
+  ): Promise<unknown> {
+    const response = await this.request<unknown>('/v1/systemone', {
+      json: body,
+      signal,
+      long: true,
+    });
+    return response.data;
+  }
+
   async listRunningModels(): Promise<{ models: Record<string, unknown>[] }> {
     try {
       const response = await this.request<{

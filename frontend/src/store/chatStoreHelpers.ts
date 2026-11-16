@@ -18,6 +18,7 @@
 import type {
   ChatMessage,
   ChatSession,
+  DecisionModelEntry,
   OllamaModel,
   Persona,
   Plugin,
@@ -346,4 +347,69 @@ export function buildPluginModels(plugins: PluginModelSource[]): OllamaModel[] {
           : {}),
       }))
     );
+}
+
+/**
+ * Decision models in the model list. Ollama already lists its decision
+ * models (Nimble, Clef) as installed models, so those are marked; a
+ * provider's decision models are added after its chat models. An account
+ * without decision-model access sees none of them, since a turn with one
+ * would be refused.
+ */
+export function applyDecisionModels(
+  models: OllamaModel[],
+  list: { allowed: boolean; models: DecisionModelEntry[] } | null | undefined
+): OllamaModel[] {
+  if (!list || list.models.length === 0) return models;
+  const isEntryFor = (model: OllamaModel, entry: DecisionModelEntry) =>
+    model.name === entry.id &&
+    (entry.providerType === 'ollama'
+      ? !model.isPlugin && !model.isAgent && !model.isPersona
+      : model.isPlugin === true && model.pluginId === entry.providerId);
+
+  if (!list.allowed) {
+    return models.filter(
+      model => !list.models.some(entry => isEntryFor(model, entry))
+    );
+  }
+
+  const result = models.map(model => {
+    const entry = list.models.find(candidate => isEntryFor(model, candidate));
+    return entry
+      ? {
+          ...model,
+          isDecision: true,
+          ...(entry.images !== undefined
+            ? { decisionImages: entry.images }
+            : {}),
+        }
+      : model;
+  });
+  for (const entry of list.models) {
+    if (entry.providerType !== 'plugin') continue;
+    if (result.some(model => isEntryFor(model, entry))) continue;
+    result.push({
+      name: entry.id,
+      model: entry.id,
+      size: 0,
+      digest: '',
+      details: {
+        parent_model: '',
+        format: '',
+        family: '',
+        families: [],
+        parameter_size: '',
+        quantization_level: '',
+      },
+      modified_at: new Date().toISOString(),
+      expires_at: new Date().toISOString(),
+      size_vram: 0,
+      isPlugin: true,
+      pluginId: entry.providerId,
+      pluginName: entry.providerName,
+      isDecision: true,
+      ...(entry.images !== undefined ? { decisionImages: entry.images } : {}),
+    });
+  }
+  return result;
 }

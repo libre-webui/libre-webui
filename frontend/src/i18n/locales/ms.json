@@ -562,6 +562,62 @@
       "replyFinishedNoText": "{{name}} selesai membalas.",
       "codeBlock": "blok kod",
       "generationStopped": "Penjanaan dihentikan"
+    },
+    "decision": {
+      "barTitle": "Soalan keputusan",
+      "interactiveHint": "Tiada soalan ditetapkan. Mesej pertama anda ialah keadaannya, dan setiap baris yang anda hantar selepas itu ialah soalan ya/tidak tentangnya. Hantar /clear untuk bermula semula.",
+      "add": "Tetapkan soalan",
+      "edit": "Sunting soalan",
+      "dialogTitle": "Soalan keputusan",
+      "dialogSubtitle": "Model keputusan menjawab soalan ini untuk setiap mesej yang anda hantar, dengan kebarangkalian bagi setiap jawapan.",
+      "useInteractive": "Guna mod interaktif",
+      "questionNumber": "Soalan {{number}}",
+      "removeQuestion": "Buang soalan",
+      "typeLabel": "Jenis soalan",
+      "types": {
+        "noul": "Ya/tidak",
+        "choice": "Pilihan",
+        "score": "Skor"
+      },
+      "question": "Soalan",
+      "placeholders": {
+        "noul": "Adakah bayaran balik diminta?",
+        "choice": "Pasukan mana yang patut mengendalikan ini?",
+        "score": "Sejauh mana mendesaknya?"
+      },
+      "yesMeans": "Ya bermaksud (pilihan)",
+      "noMeans": "Tidak bermaksud (pilihan)",
+      "options": "Pilihan jawapan",
+      "optionName": "Nama pilihan {{number}}",
+      "optionDescription": "Penerangan pilihan {{number}}",
+      "optionNamePlaceholder": "bil",
+      "optionDescriptionPlaceholder": "Penerangan (pilihan)",
+      "removeOption": "Buang pilihan {{number}}",
+      "addOption": "Tambah pilihan",
+      "levels": "Tahap, terendah dahulu",
+      "levelLabel": "Tahap {{number}}",
+      "levelPlaceholder": "Terangkan tahap ini",
+      "removeLevel": "Buang tahap {{number}}",
+      "addLevel": "Tambah tahap",
+      "addQuestion": "Tambah soalan",
+      "saved": "Soalan keputusan disimpan",
+      "saveFailed": "Soalan keputusan tidak dapat disimpan",
+      "errors": {
+        "tooMany": "Tanya paling banyak {{max}} soalan.",
+        "instructions": "Soalan {{number}} memerlukan teks.",
+        "options": "Soalan {{number}} memerlukan 2 hingga 255 pilihan, setiap satu dengan nama tersendiri.",
+        "levels": "Soalan {{number}} memerlukan 2 hingga 10 tahap."
+      },
+      "result": {
+        "yes": "Ya",
+        "no": "Tidak",
+        "declined": "Ditolak",
+        "score": "{{value}} daripada {{max}}",
+        "stateSaved": "Disimpan sebagai keadaan. Tanya soalan ya/tidak tentangnya, satu setiap baris, atau tetapkan soalan untuk sembang ini.",
+        "cleared": "Dikosongkan. Mesej anda yang seterusnya ialah keadaan baharu.",
+        "via": "{{model}} melalui {{provider}}",
+        "inputTokens": "{{tokens}} token input"
+      }
     }
   },
   "sidebar": {
@@ -846,7 +902,8 @@
         "embedding": "Pembenaman",
         "image": "Imej",
         "speech": "Ucapan",
-        "transcription": "Transkripsi"
+        "transcription": "Transkripsi",
+        "decision": "Keputusan"
       },
       "exportPlugin": "Eksport plugin",
       "deletePlugin": "Padam plugin",
@@ -1949,7 +2006,8 @@
         "tts": "Teks ke ucapan",
         "voice-mode": "Mod suara",
         "voice-cloning": "Pengklonan suara",
-        "work-agents": "CLI ejen dalam Work"
+        "work-agents": "CLI ejen dalam Work",
+        "decision-models": "Model keputusan"
       },
       "grantViaKinds": {
         "user": "pemberian terus",
@@ -2095,6 +2153,13 @@
         "admins": "Pentadbir",
         "all-users": "Semua pengguna Work"
       }
+    },
+    "decisionAccess": {
+      "title": "Model keputusan",
+      "description": "Benarkan semua pengguna aktif menggunakan model keputusan dalam sembang dan melalui Decisions API. Pentadbir sentiasa boleh menggunakannya.",
+      "lockedByEnv": "Ditetapkan oleh pemboleh ubah persekitaran DECISION_MODELS_ACCESS_MODE",
+      "saved": "Akses model keputusan dikemas kini",
+      "saveFailed": "Akses model keputusan tidak dapat dikemas kini"
     }
   },
   "usageAnalytics": {
@@ -3121,7 +3186,8 @@
     "sources": "Sumber model",
     "defaultModel": "Model lalai",
     "contextSize": "konteks {{size}}",
-    "via": "melalui {{provider}}"
+    "via": "melalui {{provider}}",
+    "decisionBadge": "Keputusan"
   },
   "whatsNew": {
     "title": "Apa yang baharu",
