@@ -431,6 +431,31 @@ test('a decision chat follows ollama run: state first, then yes/no lines, /clear
     table,
     /\| How urgent is this\? \| Soon \(2\.20 of 3\) \| 60\.0% \|/
   );
+  // Pipes and backslashes in the text stay inside their cell.
+  const tricky = protocol.renderDecisionMarkdown(
+    {
+      route: {
+        type: 'choice',
+        instructions: 'Path a\\|b or c|d?',
+        criteria: { 'x\\|y': null, z: null },
+      },
+    },
+    {
+      model: 'nimble',
+      usage: {},
+      answers: {
+        route: {
+          type: 'choice',
+          choice: 'x\\|y',
+          probabilities: { 'x\\|y': 0.8, z: 0.2 },
+        },
+      },
+    }
+  );
+  assert.equal(
+    tricky.split('\n').at(-1),
+    '| Path a\\\\\\|b or c\\|d? | x\\\\\\|y | 80.0% |'
+  );
 });
 
 function stubDeps(overrides = {}) {
@@ -464,7 +489,7 @@ function stubDeps(overrides = {}) {
     request: async options => {
       calls.requests.push(options);
       if (options.method === 'GET') {
-        if (options.url.startsWith('https://inference.baseten.co')) {
+        if (new URL(options.url).host === 'inference.baseten.co') {
           return {
             status: 200,
             data: {

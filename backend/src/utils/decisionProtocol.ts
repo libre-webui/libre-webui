@@ -990,8 +990,10 @@ export function resolveDecisionChatTurn(
 const percent = (value: number): string =>
   `${(Math.round(value * 1000) / 10).toFixed(1)}%`;
 
+// Backslashes first, so a `\|` in the text cannot turn the escape for its
+// pipe into an escaped backslash followed by a bare cell separator.
 const escapeCell = (value: string): string =>
-  value.replace(/\|/g, '\\|').replace(/\r?\n/g, ' ');
+  value.replace(/\\/g, '\\\\').replace(/\|/g, '\\|').replace(/\r?\n/g, ' ');
 
 /**
  * The answers as a Markdown table. The chat shows its own rendering from the
