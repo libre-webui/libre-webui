@@ -33,6 +33,13 @@ import {
   normalizeOpenAIResponsesResponse,
 } from './openAIResponsesAdapter.js';
 import {
+  convertGeminiResponse,
+  geminiSamplingConfig,
+  resolveGeminiThinking,
+  toGeminiContents,
+  toGeminiTools,
+} from './geminiProtocol.js';
+import {
   fitThinkingBudget,
   normalizeThinkingPreference,
   thinkingBudgetTokens,
@@ -537,36 +544,6 @@ export function resolveAnthropicThinking(
 }
 
 /**
- * Gemini takes a thinking budget inside the generation config. Only an
- * enabled setting is sent: a zero budget is rejected by the models that
- * always reason, so switching thinking off is left to the model. Thinking
- * tokens count against maxOutputTokens, so the ceiling has to hold the budget
- * plus the answer or the reply arrives empty at MAX_TOKENS.
- */
-export function resolveGeminiThinking(
-  think: unknown,
-  requestedMaxTokens: number | undefined
-): { maxOutputTokens: number; thinkingConfig?: Record<string, unknown> } {
-  const levelBudget = thinkingBudgetTokens(think);
-  const fitted =
-    levelBudget === undefined
-      ? undefined
-      : fitThinkingBudget(requestedMaxTokens, levelBudget);
-  return {
-    maxOutputTokens: fitted?.maxTokens ?? requestedMaxTokens ?? 1024,
-    ...(fitted !== undefined
-      ? {
-          thinkingConfig: {
-            thinkingBudget: fitted.budgetTokens,
-            // Without this the user pays for thinking and sees none.
-            includeThoughts: true,
-          },
-        }
-      : {}),
-  };
-}
-
-/**
  * Reasoning fields for OpenAI-compatible Chat Completions. OpenAI and the
  * providers that copy its shape name the levels instead of budgeting tokens.
  * Nothing is sent unless thinking was asked for: the field is unknown to
@@ -653,44 +630,37 @@ function buildAnthropicChatPayload(
   };
 }
 
+/**
+ * Gemini's own request shape: the whole conversation as `contents`, the
+ * system prompt as `systemInstruction`, and tools as function declarations.
+ * The stream flag is not part of it; streaming is a different method on the
+ * same model, which the caller picks with `geminiStreamingEndpoint`.
+ */
 function buildGeminiChatPayload(
   model: string,
   messages: ChatMessage[],
   options: GenerationOptions,
   params: PluginChatParameters
 ): PluginChatPayloadResult {
-  const lastMessage = messages[messages.length - 1];
-  const parts: Array<{
-    text?: string;
-    inline_data?: { mime_type: string; data: string };
-  }> = [];
-
-  if (lastMessage?.images && lastMessage.images.length > 0) {
-    for (const image of lastMessage.images) {
-      const { mediaType, base64Data } = splitDataUrlImage(image);
-      parts.push({
-        inline_data: {
-          mime_type: mediaType,
-          data: base64Data,
-        },
-      });
-    }
-  }
-
-  if (lastMessage?.content) {
-    parts.push({ text: lastMessage.content });
-  }
-
-  const thinking = resolveGeminiThinking(options.think, params.maxTokens);
+  const { systemInstruction, contents } = toGeminiContents(messages, model);
+  const thinking = resolveGeminiThinking(
+    model,
+    options.think,
+    params.maxTokens
+  );
+  const tools = toGeminiTools(options.tools);
 
   return {
     payload: {
-      contents: [{ parts }],
+      ...(systemInstruction ? { systemInstruction } : {}),
+      contents,
+      ...(tools ? { tools } : {}),
       generationConfig: {
-        temperature: params.temperature,
-        maxOutputTokens: thinking.maxOutputTokens,
-        topP: params.topP,
-        stopSequences: options.stop,
+        ...geminiSamplingConfig(model, params),
+        ...(thinking.maxOutputTokens !== undefined
+          ? { maxOutputTokens: thinking.maxOutputTokens }
+          : {}),
+        ...(options.stop?.length ? { stopSequences: options.stop } : {}),
         ...(thinking.thinkingConfig
           ? { thinkingConfig: thinking.thinkingConfig }
           : {}),
@@ -927,98 +897,6 @@ export function convertAnthropicResponse(
           ...(reasoning ? { reasoning_content: reasoning } : {}),
         },
         finish_reason: stopReason,
-      },
-    ],
-    usage,
-  };
-}
-
-export function convertGeminiResponse(
-  geminiResponse: Record<string, unknown>,
-  model: string
-): PluginResponse {
-  const id = `chatcmpl-${Date.now()}`;
-
-  let content = '';
-  let reasoning = '';
-  let finishReason = 'stop';
-
-  if (Array.isArray(geminiResponse.candidates)) {
-    const candidate = geminiResponse.candidates[0];
-    if (candidate && typeof candidate === 'object') {
-      const candidateObj = candidate as Record<string, unknown>;
-
-      if (candidateObj.content && typeof candidateObj.content === 'object') {
-        const contentObj = candidateObj.content as Record<string, unknown>;
-        if (Array.isArray(contentObj.parts)) {
-          for (const part of contentObj.parts) {
-            if (
-              part &&
-              typeof part === 'object' &&
-              'text' in part &&
-              typeof part.text === 'string'
-            ) {
-              // Thought summaries arrive as parts flagged `thought`; they are
-              // reasoning, not answer text.
-              if ('thought' in part && part.thought === true) {
-                reasoning += part.text;
-              } else {
-                content += part.text;
-              }
-            }
-          }
-        }
-      }
-
-      if (typeof candidateObj.finishReason === 'string') {
-        const finishReasonMap: Record<string, string> = {
-          STOP: 'stop',
-          MAX_TOKENS: 'length',
-          SAFETY: 'content_filter',
-          RECITATION: 'content_filter',
-          OTHER: 'stop',
-        };
-        finishReason = finishReasonMap[candidateObj.finishReason] || 'stop';
-      }
-    }
-  }
-
-  let usage;
-  if (
-    geminiResponse.usageMetadata &&
-    typeof geminiResponse.usageMetadata === 'object'
-  ) {
-    const usageObj = geminiResponse.usageMetadata as Record<string, unknown>;
-    const promptTokens =
-      typeof usageObj.promptTokenCount === 'number'
-        ? usageObj.promptTokenCount
-        : 0;
-    const completionTokens =
-      typeof usageObj.candidatesTokenCount === 'number'
-        ? usageObj.candidatesTokenCount
-        : 0;
-
-    usage = {
-      prompt_tokens: promptTokens,
-      completion_tokens: completionTokens,
-      total_tokens: promptTokens + completionTokens,
-    };
-  }
-
-  return {
-    id,
-    object: 'chat.completion',
-    created: Math.floor(Date.now() / 1000),
-    model,
-    choices: [
-      {
-        index: 0,
-        message: {
-          role: 'assistant',
-          content,
-          ...(reasoning ? { reasoning_content: reasoning } : {}),
-        },
-        finish_reason: finishReason,
       },
     ],
     usage,

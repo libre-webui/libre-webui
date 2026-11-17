@@ -39,10 +39,15 @@ import {
   openAICompatibleReasoningFields,
   providerRoutingHeaders,
   resolveAnthropicThinking,
-  resolveGeminiThinking,
   resolvePluginChatParameters,
   type PluginVariables,
 } from '../utils/pluginChatAdapter.js';
+import {
+  geminiSamplingConfig,
+  geminiStreamingEndpoint,
+  resolveGeminiThinking,
+  streamGeminiResponse,
+} from '../utils/geminiProtocol.js';
 import {
   normalizeThinkingPreference,
   thinkingBudgetTokens,
@@ -777,7 +782,7 @@ export class WorkModelProviderService {
         pluginChatProtocol(plugin, request.model) === 'anthropic'
           ? streamAnthropicResponse(response)
           : plugin.id === 'gemini'
-            ? streamGeminiWorkResponse(response)
+            ? streamGeminiResponse(response, request.model)
             : apiConfig.apiMode === 'responses'
               ? streamOpenAIResponsesResponse(response, providerStateScope, {
                   allowEmptyTerminalOutput: plugin.id === CODEX_OAUTH_PLUGIN_ID,
@@ -904,6 +909,7 @@ function buildPluginWorkRequest(
   if (plugin.id === 'gemini') {
     return {
       payload: buildGeminiWorkPayload(
+        request.model,
         request.messages,
         request.tools || [],
         params,
@@ -1333,6 +1339,7 @@ function buildAnthropicWorkPayload(
 }
 
 function buildGeminiWorkPayload(
+  model: string,
   messages: OllamaChatMessage[],
   tools: JsonObject[],
   params: ReturnType<typeof resolvePluginChatParameters>,
@@ -1425,15 +1432,15 @@ function buildGeminiWorkPayload(
         }
       : {}),
     generationConfig: {
-      temperature: params.temperature,
-      topP: params.topP,
-      ...(normalizeThinkingPreference(think) === undefined
-        ? { maxOutputTokens: params.maxTokens ?? WORK_DEFAULT_MAX_TOKENS }
-        : resolveGeminiThinking(
-            think,
-            params.maxTokens ??
-              workCeilingForThinking(think, WORK_DEFAULT_MAX_TOKENS)
-          )),
+      ...geminiSamplingConfig(model, params),
+      ...resolveGeminiThinking(
+        model,
+        think,
+        params.maxTokens ??
+          (normalizeThinkingPreference(think) === undefined
+            ? WORK_DEFAULT_MAX_TOKENS
+            : workCeilingForThinking(think, WORK_DEFAULT_MAX_TOKENS))
+      ),
     },
   };
 }
@@ -1743,119 +1750,6 @@ function ollamaUsage(response: OllamaChatResponse): PluginStreamUsage {
   };
 }
 
-function geminiStreamingEndpoint(endpoint: string): string {
-  const url = new URL(endpoint);
-  url.pathname = url.pathname.replace(
-    /:generateContent$/,
-    ':streamGenerateContent'
-  );
-  url.searchParams.set('alt', 'sse');
-  return url.toString();
-}
-
-async function* streamGeminiWorkResponse(
-  response: Response
-): AsyncGenerator<PluginStreamChunk, void, unknown> {
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(
-      `Plugin API error: ${response.status} - ${errorText.slice(0, 200)}`
-    );
-  }
-  if (!response.body) {
-    throw new Error('No response body for streaming');
-  }
-
-  const reader = response.body.getReader();
-  const decoder = new TextDecoder();
-  let buffer = '';
-  let callIndex = 0;
-  try {
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      buffer += decoder.decode(value, { stream: true });
-      const lines = buffer.split('\n');
-      buffer = lines.pop() || '';
-      for (const line of lines) {
-        const trimmed = line.trim();
-        if (!trimmed.startsWith('data:')) continue;
-        let payload: JsonObject;
-        try {
-          payload = JSON.parse(trimmed.slice(5).trim()) as JsonObject;
-        } catch {
-          continue;
-        }
-        const streamError = providerStreamErrorMessage(payload);
-        if (streamError) {
-          throw new Error(`Plugin API error: ${streamError}`);
-        }
-        const candidates = Array.isArray(payload.candidates)
-          ? payload.candidates
-          : [];
-        const candidate = asObject(candidates[0]);
-        const candidateContent = asObject(candidate?.content);
-        const parts = Array.isArray(candidateContent?.parts)
-          ? candidateContent.parts
-          : [];
-        for (const rawPart of parts) {
-          const part = asObject(rawPart);
-          if (typeof part?.text === 'string' && part.text) {
-            yield part.thought === true
-              ? { type: 'reasoning', content: part.text }
-              : { type: 'content', content: part.text };
-          }
-          const call = asObject(part?.functionCall);
-          if (call && typeof call.name === 'string') {
-            yield {
-              type: 'tool_call',
-              toolCall: {
-                id:
-                  typeof call.id === 'string'
-                    ? call.id
-                    : `work-gemini-${callIndex++}`,
-                name: call.name,
-                arguments: JSON.stringify(asObject(call.args) || {}),
-                ...(typeof part?.thoughtSignature === 'string'
-                  ? {
-                      providerMetadata: {
-                        geminiThoughtSignature: part.thoughtSignature,
-                      },
-                    }
-                  : {}),
-              },
-            };
-          }
-        }
-        const usageMetadata = asObject(payload.usageMetadata);
-        if (usageMetadata) {
-          const promptTokens =
-            typeof usageMetadata.promptTokenCount === 'number'
-              ? usageMetadata.promptTokenCount
-              : undefined;
-          const completionTokens =
-            typeof usageMetadata.candidatesTokenCount === 'number'
-              ? usageMetadata.candidatesTokenCount
-              : undefined;
-          const totalTokens =
-            typeof usageMetadata.totalTokenCount === 'number'
-              ? usageMetadata.totalTokenCount
-              : promptTokens !== undefined || completionTokens !== undefined
-                ? (promptTokens || 0) + (completionTokens || 0)
-                : undefined;
-          yield {
-            type: 'usage',
-            usage: { promptTokens, completionTokens, totalTokens },
-          };
-        }
-      }
-    }
-    yield { type: 'done' };
-  } finally {
-    reader.releaseLock();
-  }
-}
-
 function normalizeOutboundToolCalls(value: unknown): JsonObject[] {
   if (!Array.isArray(value)) return [];
   return value.flatMap((raw, index) => {
@@ -1985,22 +1879,6 @@ function providerErrorMessage(value: unknown): string {
   if (typeof payload?.error === 'string') return payload.error;
   if (typeof payload?.message === 'string') return payload.message;
   return 'Request failed.';
-}
-
-function providerStreamErrorMessage(value: unknown): string | undefined {
-  const payload = asObject(value);
-  if (!payload) return undefined;
-  const error = asObject(payload.error);
-  const message =
-    typeof error?.message === 'string'
-      ? error.message
-      : typeof payload.error === 'string'
-        ? payload.error
-        : typeof payload.message === 'string' &&
-            (payload.type === 'error' || payload.status === 'error')
-          ? payload.message
-          : undefined;
-  return message?.slice(0, 500);
 }
 
 function asObject(value: unknown): JsonObject | undefined {

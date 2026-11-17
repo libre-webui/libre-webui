@@ -4782,3 +4782,127 @@ test('activation and discovery routes forward the authenticated user ID', async 
     },
   ]);
 });
+
+test('Chat streams Gemini from streamGenerateContent with the whole conversation', async () => {
+  const plugin = {
+    ...JSON.parse(
+      fs.readFileSync(path.join(repoRoot, 'plugins', 'gemini.json'), 'utf8')
+    ),
+    active: true,
+  };
+  const requests = [];
+
+  await withPatchedProperties(
+    pluginService,
+    {
+      getActivePluginForModel: () => plugin,
+      getPluginVariables: () => ({ stream: true, temperature: 0.4 }),
+      getApiKey: () => 'gemini-secret',
+    },
+    async () =>
+      withPatchedProperties(
+        globalThis,
+        {
+          fetch: async (url, config) => {
+            requests.push({ url: String(url), config });
+            return new Response(
+              [
+                {
+                  candidates: [
+                    {
+                      content: {
+                        parts: [{ text: 'Weighing it. ', thought: true }],
+                      },
+                    },
+                  ],
+                },
+                {
+                  candidates: [
+                    {
+                      content: {
+                        parts: [
+                          { text: 'Blue.', thoughtSignature: 'signature-1' },
+                        ],
+                      },
+                      finishReason: 'STOP',
+                    },
+                  ],
+                  usageMetadata: {
+                    promptTokenCount: 12,
+                    candidatesTokenCount: 2,
+                    thoughtsTokenCount: 5,
+                    totalTokenCount: 19,
+                  },
+                },
+              ]
+                .map(event => `data: ${JSON.stringify(event)}\r\n\r\n`)
+                .join(''),
+              { headers: { 'content-type': 'text/event-stream' } }
+            );
+          },
+        },
+        async () => {
+          const chunks = [];
+          for await (const chunk of pluginService.executePluginStreamRequest(
+            'gemini-4-hydrogen',
+            [
+              { role: 'system', content: 'Be brief.' },
+              { role: 'user', content: 'Pick a color.' },
+              { role: 'assistant', content: 'Red?' },
+              { role: 'user', content: 'Another one.' },
+            ],
+            { think: 'high' },
+            'user-42',
+            plugin.id
+          )) {
+            chunks.push(chunk);
+          }
+
+          assert.equal(requests.length, 1);
+          assert.equal(
+            requests[0].url,
+            'https://generativelanguage.googleapis.com/v1beta/models/gemini-4-hydrogen:streamGenerateContent?alt=sse'
+          );
+          assert.equal(
+            requests[0].config.headers['x-goog-api-key'],
+            'gemini-secret'
+          );
+          const body = JSON.parse(requests[0].config.body);
+          // Google rejects fields it does not know, so the OpenAI stream
+          // options must never reach it.
+          assert.equal('stream_options' in body, false);
+          assert.deepEqual(body.systemInstruction, {
+            parts: [{ text: 'Be brief.' }],
+          });
+          assert.deepEqual(
+            body.contents.map(content => content.role),
+            ['user', 'model', 'user']
+          );
+          assert.deepEqual(body.generationConfig.thinkingConfig, {
+            thinkingLevel: 'HIGH',
+            includeThoughts: true,
+          });
+          assert.equal('temperature' in body.generationConfig, false);
+
+          assert.deepEqual(chunks, [
+            { type: 'reasoning', content: 'Weighing it. ' },
+            { type: 'content', content: 'Blue.' },
+            {
+              type: 'usage',
+              usage: { promptTokens: 12, completionTokens: 7, totalTokens: 19 },
+            },
+            {
+              type: 'done',
+              doneReason: 'stop',
+              providerMetadata: {
+                geminiThoughtSignatures: {
+                  model: 'gemini-4-hydrogen',
+                  text: 'signature-1',
+                },
+              },
+            },
+          ]);
+        }
+      )
+  );
+});

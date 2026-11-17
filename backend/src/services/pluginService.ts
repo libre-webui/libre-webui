@@ -22,6 +22,10 @@ import {
   pluginChatProtocol,
   requestPluginChat,
 } from '../utils/bedrockMantle.js';
+import {
+  geminiStreamingEndpoint,
+  streamGeminiResponse,
+} from '../utils/geminiProtocol.js';
 import fs from 'fs';
 import path from 'path';
 import { createHash } from 'crypto';
@@ -2740,10 +2744,16 @@ export class PluginService {
       activePlugin,
       pluginVars
     );
-    const processedEndpoint = applyModelEndpointTemplate(
+    const chatProtocol = pluginChatProtocol(activePlugin, model);
+    const templatedEndpoint = applyModelEndpointTemplate(
       effectiveEndpoint,
       model
     );
+    // Gemini streams from its own method; generateContent answers in one piece.
+    const processedEndpoint =
+      chatProtocol === 'gemini'
+        ? geminiStreamingEndpoint(templatedEndpoint)
+        : templatedEndpoint;
     assertSafePluginEndpoint(processedEndpoint);
     const apiKey = await this.getApiKey(activePlugin, userId);
     if (pluginRequiresApiKey(activePlugin) && !apiKey) {
@@ -2777,10 +2787,7 @@ export class PluginService {
     );
     const payload = pluginRequest.payload;
     Object.assign(headers, pluginRequest.headers);
-    if (
-      pluginChatProtocol(activePlugin, model) !== 'anthropic' &&
-      apiMode !== 'responses'
-    ) {
+    if (chatProtocol === 'openai' && apiMode !== 'responses') {
       // Completion streams otherwise omit usage on OpenAI-compatible servers.
       payload.stream_options = { include_usage: true };
     }
@@ -2829,8 +2836,10 @@ export class PluginService {
         }
       );
 
-      if (pluginChatProtocol(activePlugin, model) === 'anthropic') {
+      if (chatProtocol === 'anthropic') {
         yield* forward(streamAnthropicResponse(response));
+      } else if (chatProtocol === 'gemini') {
+        yield* forward(streamGeminiResponse(response, model));
       } else if (apiMode === 'responses') {
         const contentType = response.headers.get('content-type') || '';
         // The codex endpoint streams SSE without any content-type header.

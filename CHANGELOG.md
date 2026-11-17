@@ -9,11 +9,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### ✨ New Features
 
+- **Gemini 4 and Gemini 3.8 Flash**: the bundled Gemini provider now offers
+  Gemini 4 Hydrogen, Gemini 4 Carbon, Gemini 4 Argon, Gemini 3.8 Flash, Gemini
+  3.6 Flash, and Gemini 3.5 Flash-Lite. Gemini 3.5 Flash is gone from the list
+  because Google now answers it with Gemini 3.6 Flash, so a chat that used it
+  should switch to 3.6 Flash.
+
 ### 🔧 Improvements
+
+- **Gemini thinking levels**: Gemini 3 and later models receive a thinking
+  level instead of a token budget, as Google now asks, and **off** becomes the
+  near-off `minimal` level where a model has one. Temperature and top-p are no
+  longer sent to Gemini 3.6 Flash and newer, which ignore them, and replies are
+  capped at Gemini's 65,536-token output limit.
+- **Gemini thinking in usage**: thinking tokens count toward a Gemini reply's
+  output tokens on the Provider Usage page, the way Google bills them.
 
 ### 🐛 Bug Fixes
 
+- **Gemini in Chat**: streamed Gemini replies failed, because Chat sent the
+  request to the non-streaming method with an OpenAI-only field that Google
+  rejects and then read the answer as an OpenAI stream. Chat now streams from
+  Gemini's own streaming method. Gemini replies in Chat also see the whole
+  conversation and the system prompt instead of only the latest message, read
+  attached images on earlier turns, can use tools, and pass Gemini's thought
+  signatures back so the model keeps its reasoning between turns.
+
 ### 📚 Documentation
+
+- **Pro Tips**: how the thinking control maps to Gemini 3 and later models.
 
 ## [0.45.1] - 2026-11-16
 

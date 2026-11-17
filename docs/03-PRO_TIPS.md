@@ -345,7 +345,7 @@ the same value.
 Leave it unset and nothing is sent, which is what every release before this one
 did. Set it and the server translates the one value for whichever provider
 answers: Ollama takes it in the request body, OpenAI-style providers take a
-reasoning effort, and Anthropic and Gemini take a token budget with room
+reasoning effort, and Anthropic and Gemini 2.5 take a token budget with room
 reserved for the answer. Claude models from Opus 4.7 on (Opus 4.7, 4.8, 5, and
 5.5, Sonnet 5 and 5.5, Fable 5 and 5.2, and Haiku 5.5) take no budget: they
 think adaptively, and a named level becomes their effort setting. **Off** on
@@ -353,6 +353,13 @@ Sonnet 5.5 keeps up-front thinking off with Anthropic's `between_tools` mode,
 and on Haiku 5.5, Opus 4.7, 4.8, and 5, and Sonnet 5 it switches thinking off.
 Opus 5.5 and the Fable models have no off switch, so **off** leaves them at
 their own default.
+
+Gemini 3 and later, including Gemini 3.8 Flash and the Gemini 4 models
+(Hydrogen, Carbon, and Argon), take a named thinking level instead of a budget,
+and **on** leaves them at their default level. None of them can stop thinking
+entirely, so **off** becomes Google's near-off `minimal` level on the models
+that have one (Gemini 3 Flash, 3.1 Flash-Lite, 3.5 Flash-Lite, and 3.6 Flash)
+and leaves the rest at their default.
 
 Two things are worth knowing. A model Ollama reports as unable to reason never
 receives the setting at all, so the control is simply absent for it. And the
