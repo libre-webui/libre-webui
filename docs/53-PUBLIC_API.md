@@ -13,8 +13,8 @@ scripts can point at your instance with only a base-URL change.
 
 ## Authentication
 
-Create a **scoped API token** under Settings → Account → API tokens (tokens
-use the `lwk_` prefix and are stored hashed). The `/v1` surface requires
+Create a **scoped API token** under Settings → API keys (tokens use the
+`lwk_` prefix and are stored hashed). The `/v1` surface requires
 the `chat` scope. Pass the token as an ordinary bearer key:
 
 ```bash
