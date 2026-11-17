@@ -330,8 +330,31 @@ test('extra high reaches the models documented to take it and asks the rest for 
       apiMode
     ).payload;
 
-  // OpenAI publishes xhigh as model-dependent without saying which models.
+  // OpenAI's model pages list xhigh for every GPT model from 5.4 on; older
+  // models, and gpt-5.3-codex-spark, which has no page, get high.
+  for (const model of [
+    'gpt-5.4',
+    'gpt-5.4-mini',
+    'gpt-5.4-nano',
+    'gpt-5.5',
+    'gpt-5.6-terra',
+    'gpt-6-sol',
+    'gpt-6.1-terra',
+  ]) {
+    assert.equal(build('openai', model).reasoning_effort, 'xhigh', model);
+  }
   assert.equal(build('openai', 'gpt-5').reasoning_effort, 'high');
+  assert.equal(build('openai', 'gpt-4o').reasoning_effort, 'high');
+  assert.deepEqual(
+    build('codex-oauth', 'gpt-6.1-sol', {}, 'responses').reasoning,
+    { effort: 'xhigh', summary: 'auto' }
+  );
+  assert.deepEqual(
+    build('codex-oauth', 'gpt-5.3-codex-spark', {}, 'responses').reasoning,
+    { effort: 'high', summary: 'auto' }
+  );
+  // An OpenAI-style provider that serves other vendors' models stays at high.
+  assert.equal(build('groq', 'openai/gpt-oss-120b').reasoning_effort, 'high');
   // OpenRouter lists xhigh and maps it to each model's nearest level;
   // DeepSeek's level above high is max.
   assert.equal(build('openrouter', 'openai/gpt-5').reasoning_effort, 'xhigh');

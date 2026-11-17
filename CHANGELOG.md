@@ -21,9 +21,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Extra high thinking**: the thinking control has a new **Extra high** level
   above high, in Chat, Work, and the Generation settings, in every language.
   Gemini 4 Hydrogen and the Claude models that think adaptively receive their
-  own `xhigh` level, DeepSeek receives `max`, OpenRouter receives `xhigh` and
-  maps it to each model's nearest level, Claude and Gemini 2.5 models that take
-  a budget get the largest one they allow, and every other model receives
+  own `xhigh` level, as do OpenAI's GPT models from 5.4 on, directly or through
+  ChatGPT sign-in. DeepSeek receives `max`, OpenRouter receives `xhigh` and maps
+  it to each model's nearest level, Claude and Gemini 2.5 models that take a
+  budget get the largest one they allow, and every other model receives
   **high**.
 
 ### 🔧 Improvements

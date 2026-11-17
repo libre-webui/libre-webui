@@ -544,6 +544,54 @@ export function resolveAnthropicThinking(
   };
 }
 
+const EXTRA_HIGH_REASONING_EFFORT: Readonly<Record<string, string>> = {
+  // DeepSeek lists none, low, high, and max; it would quietly run `xhigh` at
+  // high, so extra high asks for max.
+  deepseek: 'max',
+  // OpenRouter lists `xhigh` for `reasoning_effort` and maps it to the
+  // nearest level each model supports.
+  openrouter: 'xhigh',
+};
+
+/**
+ * OpenAI's model pages list `xhigh` for every GPT model from 5.4 on (5.4 and
+ * its mini and nano, 5.5, 5.6, and the GPT-6 family). Older models, and
+ * gpt-5.3-codex-spark, which has no model page, are left at high.
+ */
+export function openAIModelTakesExtraHigh(model: string): boolean {
+  const match = /^(?:openai\/)?gpt-(\d+)(?:\.(\d+))?(?![\d.])/.exec(
+    model.toLowerCase()
+  );
+  if (!match) return false;
+  const major = Number(match[1]);
+  const minor = Number(match[2] ?? 0);
+  return major > 5 || (major === 5 && minor >= 4);
+}
+
+/**
+ * The named effort an OpenAI-style provider receives. Extra high goes out as
+ * the provider's own level above high where its docs list one for the model:
+ * OpenAI's `xhigh` on the GPT models whose pages list it, DeepSeek's `max`,
+ * and OpenRouter's `xhigh`. Everywhere else it asks for `high`, which every
+ * reasoning model accepts.
+ */
+export function reasoningEffortFor(
+  plugin: Pick<Plugin, 'id'>,
+  model: string,
+  think: unknown
+): string | undefined {
+  if (thinkingEffort(think) !== 'xhigh') return standardThinkingEffort(think);
+  const providerLevel = EXTRA_HIGH_REASONING_EFFORT[plugin.id];
+  if (providerLevel) return providerLevel;
+  if (
+    (plugin.id === 'openai' || plugin.id === 'codex-oauth') &&
+    openAIModelTakesExtraHigh(model)
+  ) {
+    return 'xhigh';
+  }
+  return 'high';
+}
+
 /**
  * Reasoning fields for OpenAI-compatible Chat Completions. OpenAI and the
  * providers that copy its shape name the levels instead of budgeting tokens.
@@ -554,30 +602,15 @@ export function resolveAnthropicThinking(
  * Baseten's models take the same levels and reason by default, so the middle
  * is left to the model there too, and thinking off is an explicit `none`.
  */
-const EXTRA_HIGH_REASONING_EFFORT: Readonly<Record<string, string>> = {
-  // DeepSeek lists none, low, high, and max; it would quietly run `xhigh` at
-  // high, so extra high asks for max.
-  deepseek: 'max',
-  // OpenRouter lists `xhigh` for `reasoning_effort` and maps it to the
-  // nearest level each model supports.
-  openrouter: 'xhigh',
-};
-
 export function openAICompatibleReasoningFields(
   plugin: Pick<Plugin, 'id'>,
+  model: string,
   think: unknown
 ): Record<string, unknown> {
   if (plugin.id === 'baseten' && normalizeThinkingPreference(think) === false) {
     return { reasoning_effort: 'none' };
   }
-  // Which OpenAI-compatible models take `xhigh` is model-dependent and not
-  // published per model, so extra high asks for `high` here, except where the
-  // provider documents a level above high for every model it serves.
-  const thinkingLevel =
-    thinkingEffort(think) === 'xhigh' &&
-    EXTRA_HIGH_REASONING_EFFORT[plugin.id] !== undefined
-      ? EXTRA_HIGH_REASONING_EFFORT[plugin.id]
-      : standardThinkingEffort(think);
+  const thinkingLevel = reasoningEffortFor(plugin, model, think);
   const effort =
     (plugin.id === 'deepseek' || plugin.id === 'baseten') &&
     thinkingLevel === 'medium'
@@ -719,7 +752,7 @@ function buildOpenAICompatibleChatPayload(
       // Meta's Muse models reason, and its API rejects stop sequences then.
       stop: plugin.id === 'meta' ? undefined : options.stop,
       stream: params.shouldStream,
-      ...openAICompatibleReasoningFields(plugin, options.think),
+      ...openAICompatibleReasoningFields(plugin, model, options.think),
       ...(tools ? { tools } : {}),
     },
   };
@@ -827,7 +860,7 @@ function buildPluginChatRequest(
           // The codex endpoint rejects non-streaming requests outright.
           stream: supportsSampling ? params.shouldStream : true,
           stateScope: providerStateScope,
-          reasoningEffort: standardThinkingEffort(options.think),
+          reasoningEffort: reasoningEffortFor(plugin, model, options.think),
           ...(options.tools?.length
             ? { tools: toOpenAICompatibleTools(options.tools) }
             : {}),

@@ -50,7 +50,7 @@ export interface OpenAIResponsesPayloadOptions {
   stream?: boolean;
   stateScope?: string;
   /** How hard the model should reason, when the caller has an opinion. */
-  reasoningEffort?: 'low' | 'medium' | 'high';
+  reasoningEffort?: string;
 }
 
 export interface OpenAIResponsesPayload extends JsonObject {

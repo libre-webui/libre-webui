@@ -38,6 +38,7 @@ import {
   getOpenAICompatibleSamplingParameters,
   openAICompatibleReasoningFields,
   providerRoutingHeaders,
+  reasoningEffortFor,
   resolveAnthropicThinking,
   resolvePluginChatParameters,
   type PluginVariables,
@@ -50,7 +51,6 @@ import {
 } from '../utils/geminiProtocol.js';
 import {
   normalizeThinkingPreference,
-  standardThinkingEffort,
   thinkingBudgetTokens,
 } from '../utils/thinkingOptions.js';
 import {
@@ -923,7 +923,11 @@ function buildPluginWorkRequest(
     const tools = toOpenAIResponsesTools(request.tools || []);
     // The ChatGPT-backed codex endpoint rejects sampling parameters outright.
     const supportsSampling = plugin.id !== CODEX_OAUTH_PLUGIN_ID;
-    const reasoningEffort = standardThinkingEffort(options.think);
+    const reasoningEffort = reasoningEffortFor(
+      plugin,
+      request.model,
+      options.think
+    );
     return {
       payload: {
         model: request.model,
@@ -955,7 +959,7 @@ function buildPluginWorkRequest(
       tool_choice: request.tools?.length ? 'auto' : undefined,
       ...getOpenAICompatibleSamplingParameters(plugin, params),
       max_tokens: params.maxTokens,
-      ...openAICompatibleReasoningFields(plugin, options.think),
+      ...openAICompatibleReasoningFields(plugin, request.model, options.think),
       stream: Boolean(request.stream),
     },
     extraHeaders: {},

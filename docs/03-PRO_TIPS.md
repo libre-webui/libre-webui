@@ -363,12 +363,14 @@ and leaves the rest at their default.
 
 **Extra high** asks for more than high where a provider documents a level
 above it: Gemini 4 Hydrogen's `xhigh`, the `xhigh` effort on the Claude models
-that think adaptively, DeepSeek's `max`, and OpenRouter's `xhigh`, which
+that think adaptively, OpenAI's `xhigh` on GPT models from 5.4 on (directly or
+through ChatGPT sign-in), DeepSeek's `max`, and OpenRouter's `xhigh`, which
 OpenRouter maps to the nearest level each model supports. Claude and Gemini 2.5
 models that take a budget get the largest one they allow. Everywhere else,
-including OpenAI, Baseten, the other OpenAI-style providers, and gpt-oss on
-Ollama, extra high asks for **high**: those providers don't name a higher level
-that every one of their models accepts, and high is never rejected.
+including older OpenAI models, Baseten, the other OpenAI-style providers, and
+gpt-oss on Ollama, extra high asks for **high**: those providers don't name a
+higher level that every one of their models accepts, and high is never
+rejected.
 
 Two things are worth knowing. A model Ollama reports as unable to reason never
 receives the setting at all, so the control is simply absent for it. And the
