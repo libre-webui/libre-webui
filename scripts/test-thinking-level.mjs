@@ -332,6 +332,13 @@ test('extra high reaches the models documented to take it and asks the rest for 
 
   // OpenAI publishes xhigh as model-dependent without saying which models.
   assert.equal(build('openai', 'gpt-5').reasoning_effort, 'high');
+  // OpenRouter lists xhigh and maps it to each model's nearest level;
+  // DeepSeek's level above high is max.
+  assert.equal(build('openrouter', 'openai/gpt-5').reasoning_effort, 'xhigh');
+  assert.equal(build('deepseek', 'deepseek-flash').reasoning_effort, 'max');
+  // Baseten's models disagree on the level above high (xhigh, max, or
+  // neither), so they get high.
+  assert.equal(build('baseten', 'zai-org/GLM-5.3').reasoning_effort, 'high');
   assert.deepEqual(build('openai', 'gpt-5', {}, 'responses').reasoning, {
     effort: 'high',
     summary: 'auto',

@@ -21,8 +21,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Extra high thinking**: the thinking control has a new **Extra high** level
   above high, in Chat, Work, and the Generation settings, in every language.
   Gemini 4 Hydrogen and the Claude models that think adaptively receive their
-  own `xhigh` level, Claude and Gemini 2.5 models that take a budget get the
-  largest one they allow, and every other model receives **high**.
+  own `xhigh` level, DeepSeek receives `max`, OpenRouter receives `xhigh` and
+  maps it to each model's nearest level, Claude and Gemini 2.5 models that take
+  a budget get the largest one they allow, and every other model receives
+  **high**.
 
 ### 🔧 Improvements
 
@@ -47,8 +49,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### 📚 Documentation
 
 - **Pro Tips**: how the thinking control maps to Gemini 3 and later models,
-  and what **Extra high** sends to each provider.
+  what **Extra high** sends to each provider, and the **Model default** entry's
+  real name.
 - **Plugin Architecture**: how discovery finds Gemini's model list.
+- **Workspaces**: Work's reasoning control lists **extra high**, and the room
+  Work adds for thinking applies to every Anthropic and Gemini model.
+- **Provider Connections**: what **Extra high** sends to Baseten and why.
 
 ## [0.45.1] - 2026-11-16
 

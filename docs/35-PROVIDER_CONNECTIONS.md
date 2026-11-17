@@ -188,7 +188,8 @@ variant runs the same weights on dedicated capacity at its own price.
 Most of these models reason by default. The chat's thinking control sets
 Baseten's `reasoning_effort`: **Low** and **High** are sent as they are, the
 middle setting leaves the model at its own default depth, and **Off** sends
-`none`. Baseten documents a few exceptions: Muse Spark Open and Beam always
+`none`. **Extra high** sends `high`, because Baseten's models disagree on the
+level above it: some take `xhigh`, some only `max`, and some neither. Baseten documents a few exceptions: Muse Spark Open and Beam always
 reason, and GLM 5.3 still reasons lightly with `none`. Earlier reasoning is sent
 back as `reasoning_content`, which Beam requires on every earlier answer.
 

@@ -44,6 +44,7 @@ import {
   normalizeThinkingPreference,
   standardThinkingEffort,
   thinkingBudgetTokens,
+  thinkingEffort,
 } from './thinkingOptions.js';
 
 export type PluginVariables = Record<string, string | number | boolean>;
@@ -553,6 +554,15 @@ export function resolveAnthropicThinking(
  * Baseten's models take the same levels and reason by default, so the middle
  * is left to the model there too, and thinking off is an explicit `none`.
  */
+const EXTRA_HIGH_REASONING_EFFORT: Readonly<Record<string, string>> = {
+  // DeepSeek lists none, low, high, and max; it would quietly run `xhigh` at
+  // high, so extra high asks for max.
+  deepseek: 'max',
+  // OpenRouter lists `xhigh` for `reasoning_effort` and maps it to the
+  // nearest level each model supports.
+  openrouter: 'xhigh',
+};
+
 export function openAICompatibleReasoningFields(
   plugin: Pick<Plugin, 'id'>,
   think: unknown
@@ -561,8 +571,13 @@ export function openAICompatibleReasoningFields(
     return { reasoning_effort: 'none' };
   }
   // Which OpenAI-compatible models take `xhigh` is model-dependent and not
-  // published per model, so extra high asks for `high` here.
-  const thinkingLevel = standardThinkingEffort(think);
+  // published per model, so extra high asks for `high` here, except where the
+  // provider documents a level above high for every model it serves.
+  const thinkingLevel =
+    thinkingEffort(think) === 'xhigh' &&
+    EXTRA_HIGH_REASONING_EFFORT[plugin.id] !== undefined
+      ? EXTRA_HIGH_REASONING_EFFORT[plugin.id]
+      : standardThinkingEffort(think);
   const effort =
     (plugin.id === 'deepseek' || plugin.id === 'baseten') &&
     thinkingLevel === 'medium'

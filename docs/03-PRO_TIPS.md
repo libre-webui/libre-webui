@@ -337,10 +337,10 @@ When a model behaves badly, first lower temperature, then reduce context pressur
 ## Decide How Hard a Model Thinks
 
 The control beside the model name in the composer opens the reasoning levels:
-**off**, **on**, **low**, **medium**, **high**, and **extra high**. The choice belongs to the
-conversation, so it survives a reload and applies to a regenerate; Settings >
-Generation holds the default for new replies, and the chat controls panel shows
-the same value.
+**off**, **on**, **low**, **medium**, **high**, and **extra high**. The choice
+belongs to the conversation, so it survives a reload and applies to a
+regenerate; Settings > Generation holds the default for new replies, and the
+chat controls panel shows the same value.
 
 Leave it unset and nothing is sent, which is what every release before this one
 did. Set it and the server translates the one value for whichever provider
@@ -362,11 +362,13 @@ that have one (Gemini 3 Flash, 3.1 Flash-Lite, 3.5 Flash-Lite, and 3.6 Flash)
 and leaves the rest at their default.
 
 **Extra high** asks for more than high where a provider documents a level
-above it: Gemini 4 Hydrogen's `xhigh`, and the `xhigh` effort on the Claude
-models that think adaptively. Claude and Gemini 2.5 models that take a budget
-get the largest one they allow. Everywhere else, including OpenAI-style
-providers and gpt-oss on Ollama, extra high asks for **high**, so it never
-sends a level a model would reject.
+above it: Gemini 4 Hydrogen's `xhigh`, the `xhigh` effort on the Claude models
+that think adaptively, DeepSeek's `max`, and OpenRouter's `xhigh`, which
+OpenRouter maps to the nearest level each model supports. Claude and Gemini 2.5
+models that take a budget get the largest one they allow. Everywhere else,
+including OpenAI, Baseten, the other OpenAI-style providers, and gpt-oss on
+Ollama, extra high asks for **high**: those providers don't name a higher level
+that every one of their models accepts, and high is never rejected.
 
 Two things are worth knowing. A model Ollama reports as unable to reason never
 receives the setting at all, so the control is simply absent for it. And the
@@ -374,7 +376,7 @@ named levels only exist on the models that publish them, such as gpt-oss; on a
 model that reasons without levels, a named level simply behaves as **on**, so a
 chat that moves between models never errors over it. When a global or pinned
 default is set, the composer button shows the level the next reply actually
-runs with, and the "Default" entry names what it currently resolves to.
+runs with, and the **Model default** entry names what it currently resolves to.
 
 ## Watch the Context Window
 
