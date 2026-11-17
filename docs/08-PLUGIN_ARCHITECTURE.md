@@ -257,8 +257,14 @@ Responses result is not treated as a successful Chat or Work turn; its
 
 Model discovery derives `/models` from either operation path. For example,
 `https://api.example.com/v1/responses` discovers from
-`https://api.example.com/v1/models`. Providers without a compatible model-list
-endpoint can still use a manual `model_map`. Discovery is scoped to the current
+`https://api.example.com/v1/models`. A Gemini-style path that names the model
+and method, such as `/v1beta/models/{model}:generateContent`, discovers from
+its `/v1beta/models` collection. The bundled Gemini provider reads Google's
+`models.list` pages and keeps the text chat models that answer
+`generateContent`, with their input limits as context windows and Google's own
+thinking flag; speech, image, video, embedding, live, and Gemma models are left
+out. Providers without a compatible model-list endpoint can still use a manual
+`model_map`. Discovery is scoped to the current
 user's variables and credentials. Results are persisted per user rather than
 written into the shared plugin manifest. Discovery runs after activation,
 explicit refresh, API-key changes, connection-variable changes, and variable

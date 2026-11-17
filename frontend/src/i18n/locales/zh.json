@@ -979,7 +979,8 @@
         "on": "开启",
         "low": "低",
         "medium": "中",
-        "high": "高"
+        "high": "高",
+        "xhigh": "超高"
       }
     },
     "documents": {

@@ -75,6 +75,18 @@ const GEMINI_MINIMAL_THINKING_MODELS = new Set([
   'gemini-3.6-flash',
 ]);
 
+/**
+ * Models that take the `xhigh` level above high. Google's thinking guide lists
+ * it for Gemini 4 Hydrogen only; elsewhere extra high asks for `high`.
+ */
+const GEMINI_XHIGH_THINKING_MODELS = new Set(['gemini-4-hydrogen']);
+
+/**
+ * Gemini 2.5 Flash and Flash-Lite cap a thinking budget at 24,576 tokens
+ * (Pro at 32,768), so the budget for extra high stays inside every 2.5 model.
+ */
+const GEMINI_MAX_THINKING_BUDGET = 24576;
+
 type JsonObject = Record<string, unknown>;
 
 function asObject(value: unknown): JsonObject | undefined {
@@ -140,12 +152,14 @@ export function resolveGeminiThinking(
         ? { ...requested, thinkingConfig: { thinkingLevel: 'MINIMAL' } }
         : requested;
     }
+    const level =
+      preference === 'xhigh' && !GEMINI_XHIGH_THINKING_MODELS.has(model)
+        ? 'high'
+        : preference;
     return {
       ...requested,
       thinkingConfig: {
-        ...(preference === true
-          ? {}
-          : { thinkingLevel: preference.toUpperCase() }),
+        ...(level === true ? {} : { thinkingLevel: level.toUpperCase() }),
         // Without this the user pays for thinking and sees none.
         includeThoughts: true,
       },
@@ -157,7 +171,10 @@ export function resolveGeminiThinking(
   // thinking off is left to the model.
   const levelBudget = thinkingBudgetTokens(think);
   if (levelBudget === undefined) return requested;
-  const fitted = fitThinkingBudget(requestedMaxTokens, levelBudget);
+  const fitted = fitThinkingBudget(
+    requestedMaxTokens,
+    Math.min(levelBudget, GEMINI_MAX_THINKING_BUDGET)
+  );
   return {
     maxOutputTokens: capOutputTokens(fitted.maxTokens),
     thinkingConfig: {
@@ -322,6 +339,91 @@ export function toGeminiTools(
       })),
     },
   ];
+}
+
+/**
+ * Model families the Gemini API serves through generateContent that are not
+ * text chat: speech, images, video, music, embeddings, live audio, and agents.
+ * Gemma is left out too: the Gemini API serves it without system
+ * instructions, which every chat here can carry.
+ */
+const GEMINI_NON_CHAT_MODEL =
+  /(?:^|-)(?:tts|image|imagen|veo|lyria|embedding|aqa|live|audio|native-audio|computer-use|robotics|nano-banana|omni|decision|deep-research|antigravity|learnlm)(?:-|$)|^gemma-/;
+
+/**
+ * One page of `models.list` as listing entries in the shape model discovery
+ * reads: the id without its `models/` prefix, the input limit as the context
+ * window, and the listing's own `thinking` flag as reasoning support. Only the
+ * text chat models that answer generateContent are kept.
+ */
+export function readGeminiModelListing(
+  models: readonly unknown[]
+): JsonObject[] {
+  const entries: JsonObject[] = [];
+  const seen = new Set<string>();
+  for (const value of models) {
+    const model = asObject(value);
+    if (!model || typeof model.name !== 'string') continue;
+    const id = model.name.replace(/^models\//, '');
+    const methods = Array.isArray(model.supportedGenerationMethods)
+      ? model.supportedGenerationMethods
+      : Array.isArray(model.supportedActions)
+        ? model.supportedActions
+        : [];
+    if (
+      !id ||
+      seen.has(id) ||
+      !methods.includes('generateContent') ||
+      GEMINI_NON_CHAT_MODEL.test(id.toLowerCase())
+    ) {
+      continue;
+    }
+    seen.add(id);
+    entries.push({
+      id,
+      ...(typeof model.inputTokenLimit === 'number'
+        ? { context_length: model.inputTokenLimit }
+        : {}),
+      // An array that names reasoning is how discovery records a listing's
+      // own answer, so a model Google says cannot think is not offered it.
+      ...(typeof model.thinking === 'boolean'
+        ? { supported_parameters: model.thinking ? ['reasoning'] : [] }
+        : {}),
+    });
+  }
+  return entries;
+}
+
+/**
+ * Every page of `models.list`. Google returns at most 1,000 models a page and
+ * omits `nextPageToken` on the last one; the page count is bounded so a
+ * misbehaving server cannot keep discovery going.
+ */
+export async function listGeminiModels(
+  modelsEndpoint: string,
+  fetchPage: (url: string) => Promise<unknown>,
+  maxPages = 10
+): Promise<JsonObject[]> {
+  const entries: JsonObject[] = [];
+  let pageToken: string | undefined;
+  for (let page = 0; page < maxPages; page++) {
+    const url = new URL(modelsEndpoint);
+    url.searchParams.set('pageSize', '1000');
+    if (pageToken) url.searchParams.set('pageToken', pageToken);
+    const body = asObject(await fetchPage(url.toString()));
+    entries.push(
+      ...readGeminiModelListing(Array.isArray(body?.models) ? body.models : [])
+    );
+    pageToken =
+      typeof body?.nextPageToken === 'string' && body.nextPageToken
+        ? body.nextPageToken
+        : undefined;
+    if (!pageToken) break;
+  }
+  const seen = new Set<string>();
+  return entries
+    .filter(entry => !seen.has(String(entry.id)) && seen.add(String(entry.id)))
+    .sort((left, right) => String(left.id).localeCompare(String(right.id)));
 }
 
 /** `:generateContent` becomes the server-sent-events stream of the same call. */

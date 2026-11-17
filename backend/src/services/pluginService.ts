@@ -24,6 +24,7 @@ import {
 } from '../utils/bedrockMantle.js';
 import {
   geminiStreamingEndpoint,
+  listGeminiModels,
   streamGeminiResponse,
 } from '../utils/geminiProtocol.js';
 import fs from 'fs';
@@ -1920,13 +1921,27 @@ export class PluginService {
     );
 
     try {
-      const response = await providerRequest<{ data?: unknown } | null>({
-        url: modelsEndpoint,
-        headers,
-        timeoutMs: MODEL_DISCOVERY_REQUEST_TIMEOUT_MS,
-      });
-
-      const listing = response.data?.data;
+      // Gemini lists `{ models, nextPageToken }` pages instead of `{ data }`.
+      const listing =
+        plugin.id === 'gemini'
+          ? await listGeminiModels(
+              modelsEndpoint,
+              async url =>
+                (
+                  await providerRequest<unknown>({
+                    url,
+                    headers,
+                    timeoutMs: MODEL_DISCOVERY_REQUEST_TIMEOUT_MS,
+                  })
+                ).data
+            )
+          : (
+              await providerRequest<{ data?: unknown } | null>({
+                url: modelsEndpoint,
+                headers,
+                timeoutMs: MODEL_DISCOVERY_REQUEST_TIMEOUT_MS,
+              })
+            ).data?.data;
       if (listing && Array.isArray(listing)) {
         const entries = listing.filter(entry =>
           isCallableListedModel(pluginId, entry)

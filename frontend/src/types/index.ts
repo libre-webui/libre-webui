@@ -493,7 +493,7 @@ export interface OllamaModel {
 }
 
 /** How hard a model should think: off, on, or one of the named levels. */
-export type ThinkingLevel = 'low' | 'medium' | 'high';
+export type ThinkingLevel = 'low' | 'medium' | 'high' | 'xhigh';
 export type ThinkingPreference = boolean | ThinkingLevel;
 
 export interface GenerationOptions {

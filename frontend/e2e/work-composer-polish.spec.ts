@@ -442,7 +442,10 @@ test('the landing composer sends the picked reasoning level with a new task', as
   await expect(control).toBeVisible();
   await control.getByRole('button').click();
   await expect(control.getByRole('menu')).toBeVisible();
-  await control.getByRole('menuitemradio', { name: 'High' }).click();
+  // Exact: "Extra high" also contains "High".
+  await control
+    .getByRole('menuitemradio', { name: 'High', exact: true })
+    .click();
   await page.getByTestId('work-composer-input').fill('Plan the migration.');
   await page.getByTestId('work-submit-button').click();
   await expect.poll(() => body?.think).toBe('high');

@@ -979,7 +979,8 @@
         "on": "Hidup",
         "low": "Rendah",
         "medium": "Sederhana",
-        "high": "Tinggi"
+        "high": "Tinggi",
+        "xhigh": "Sangat tinggi"
       }
     },
     "documents": {

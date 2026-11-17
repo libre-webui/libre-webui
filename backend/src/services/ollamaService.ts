@@ -754,7 +754,8 @@ export class OllamaService {
       return true;
     }
 
-    return think;
+    // gpt-oss names low, medium, and high; extra high asks for its most.
+    return think === 'xhigh' ? 'high' : think;
   }
 
   /**

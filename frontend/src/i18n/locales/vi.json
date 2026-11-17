@@ -979,7 +979,8 @@
         "on": "Bật",
         "low": "Thấp",
         "medium": "Trung bình",
-        "high": "Cao"
+        "high": "Cao",
+        "xhigh": "Rất cao"
       }
     },
     "documents": {

@@ -50,8 +50,8 @@ import {
 } from '../utils/geminiProtocol.js';
 import {
   normalizeThinkingPreference,
+  standardThinkingEffort,
   thinkingBudgetTokens,
-  thinkingEffort,
 } from '../utils/thinkingOptions.js';
 import {
   OPENAI_RESPONSES_OUTPUT_ITEMS_METADATA_KEY,
@@ -923,7 +923,7 @@ function buildPluginWorkRequest(
     const tools = toOpenAIResponsesTools(request.tools || []);
     // The ChatGPT-backed codex endpoint rejects sampling parameters outright.
     const supportsSampling = plugin.id !== CODEX_OAUTH_PLUGIN_ID;
-    const reasoningEffort = thinkingEffort(options.think);
+    const reasoningEffort = standardThinkingEffort(options.think);
     return {
       payload: {
         model: request.model,

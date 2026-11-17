@@ -979,7 +979,8 @@
         "on": "켜기",
         "low": "낮음",
         "medium": "보통",
-        "high": "높음"
+        "high": "높음",
+        "xhigh": "매우 높음"
       }
     },
     "documents": {

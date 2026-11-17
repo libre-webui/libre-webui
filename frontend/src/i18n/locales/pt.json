@@ -979,7 +979,8 @@
         "on": "Ativado",
         "low": "Baixo",
         "medium": "Médio",
-        "high": "Alto"
+        "high": "Alto",
+        "xhigh": "Muito alto"
       }
     },
     "documents": {

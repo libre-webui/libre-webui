@@ -14,6 +14,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   3.6 Flash, and Gemini 3.5 Flash-Lite. Gemini 3.5 Flash is gone from the list
   because Google now answers it with Gemini 3.6 Flash, so a chat that used it
   should switch to 3.6 Flash.
+- **Gemini model discovery**: **Refresh models** and the automatic catalog
+  refresh now work for the Gemini provider. They read every page of Google's
+  model list and keep the text chat models, with their context windows and
+  whether they think, so new Gemini models appear without an update.
+- **Extra high thinking**: the thinking control has a new **Extra high** level
+  above high, in Chat, Work, and the Generation settings, in every language.
+  Gemini 4 Hydrogen and the Claude models that think adaptively receive their
+  own `xhigh` level, Claude and Gemini 2.5 models that take a budget get the
+  largest one they allow, and every other model receives **high**.
 
 ### 🔧 Improvements
 
@@ -37,7 +46,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 📚 Documentation
 
-- **Pro Tips**: how the thinking control maps to Gemini 3 and later models.
+- **Pro Tips**: how the thinking control maps to Gemini 3 and later models,
+  and what **Extra high** sends to each provider.
+- **Plugin Architecture**: how discovery finds Gemini's model list.
 
 ## [0.45.1] - 2026-11-16
 

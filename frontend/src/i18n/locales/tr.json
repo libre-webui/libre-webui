@@ -979,7 +979,8 @@
         "on": "Açık",
         "low": "Düşük",
         "medium": "Orta",
-        "high": "Yüksek"
+        "high": "Yüksek",
+        "xhigh": "Çok yüksek"
       }
     },
     "documents": {

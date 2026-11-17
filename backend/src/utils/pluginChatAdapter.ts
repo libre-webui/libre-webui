@@ -42,8 +42,8 @@ import {
 import {
   fitThinkingBudget,
   normalizeThinkingPreference,
+  standardThinkingEffort,
   thinkingBudgetTokens,
-  thinkingEffort,
 } from './thinkingOptions.js';
 
 export type PluginVariables = Record<string, string | number | boolean>;
@@ -560,7 +560,9 @@ export function openAICompatibleReasoningFields(
   if (plugin.id === 'baseten' && normalizeThinkingPreference(think) === false) {
     return { reasoning_effort: 'none' };
   }
-  const thinkingLevel = thinkingEffort(think);
+  // Which OpenAI-compatible models take `xhigh` is model-dependent and not
+  // published per model, so extra high asks for `high` here.
+  const thinkingLevel = standardThinkingEffort(think);
   const effort =
     (plugin.id === 'deepseek' || plugin.id === 'baseten') &&
     thinkingLevel === 'medium'
@@ -810,7 +812,7 @@ function buildPluginChatRequest(
           // The codex endpoint rejects non-streaming requests outright.
           stream: supportsSampling ? params.shouldStream : true,
           stateScope: providerStateScope,
-          reasoningEffort: thinkingEffort(options.think),
+          reasoningEffort: standardThinkingEffort(options.think),
           ...(options.tools?.length
             ? { tools: toOpenAICompatibleTools(options.tools) }
             : {}),

@@ -979,7 +979,8 @@
         "on": "Zapnuto",
         "low": "Nízká",
         "medium": "Střední",
-        "high": "Vysoká"
+        "high": "Vysoká",
+        "xhigh": "Velmi vysoká"
       }
     },
     "documents": {

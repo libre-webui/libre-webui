@@ -401,7 +401,7 @@ export interface GenerationOptions {
    * This is not a sampling parameter: it is lifted out of the options at each
    * provider boundary and sent the way that provider expects.
    */
-  think?: boolean | 'low' | 'medium' | 'high' | null;
+  think?: boolean | 'low' | 'medium' | 'high' | 'xhigh' | null;
 
   /**
    * Tools offered to the model for this call. Like `think`, this is not a
@@ -523,7 +523,7 @@ export interface OllamaChatRequest {
   messages: OllamaChatMessage[];
   tools?: Record<string, unknown>[];
   /** Ollama takes reasoning levels as strings for the models that name them. */
-  think?: boolean | 'low' | 'medium' | 'high';
+  think?: boolean | 'low' | 'medium' | 'high' | 'xhigh';
   format?: string | Record<string, unknown>;
   options?: Record<string, unknown>;
   stream?: boolean;
@@ -573,7 +573,7 @@ export interface OllamaGenerateRequest {
   model: string;
   prompt: string;
   stream?: boolean;
-  think?: boolean | 'low' | 'medium' | 'high';
+  think?: boolean | 'low' | 'medium' | 'high' | 'xhigh';
   options?: {
     temperature?: number;
     top_p?: number;

@@ -979,7 +979,8 @@
         "on": "Til",
         "low": "Lav",
         "medium": "Mellem",
-        "high": "Høj"
+        "high": "Høj",
+        "xhigh": "Meget høj"
       }
     },
     "documents": {

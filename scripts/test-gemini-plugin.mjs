@@ -493,3 +493,124 @@ test('the streaming endpoint is streamGenerateContent with server-sent events', 
     'https://generativelanguage.googleapis.com/v1beta/models/gemini-4-hydrogen:streamGenerateContent?alt=sse'
   );
 });
+
+test('extra high is XHIGH on Gemini 4 Hydrogen and HIGH or the largest budget elsewhere', () => {
+  const config = model =>
+    build(model, [message('user', 'Plan it.')], { think: 'xhigh' })
+      .generationConfig;
+  assert.deepEqual(config('gemini-4-hydrogen').thinkingConfig, {
+    thinkingLevel: 'XHIGH',
+    includeThoughts: true,
+  });
+  for (const model of [
+    'gemini-4-carbon',
+    'gemini-4-argon',
+    'gemini-3.8-flash',
+  ]) {
+    assert.equal(config(model).thinkingConfig.thinkingLevel, 'HIGH', model);
+  }
+  // Gemini 2.5 Flash tops out at a 24,576-token budget.
+  assert.equal(config('gemini-2.5-flash').thinkingConfig.thinkingBudget, 24576);
+});
+
+test('models.list becomes the chat models, with their windows and thinking', async () => {
+  const pages = {
+    '': {
+      models: [
+        {
+          name: 'models/gemini-4-hydrogen',
+          inputTokenLimit: 1048576,
+          supportedGenerationMethods: ['generateContent', 'countTokens'],
+          thinking: true,
+        },
+        {
+          name: 'models/gemini-2.0-flash',
+          inputTokenLimit: 1048576,
+          supportedGenerationMethods: ['generateContent'],
+          thinking: false,
+        },
+        {
+          name: 'models/gemini-3.8-flash-tts',
+          supportedGenerationMethods: ['generateContent'],
+        },
+        {
+          name: 'models/gemini-nano-banana-2.1',
+          supportedGenerationMethods: ['generateContent'],
+        },
+        {
+          name: 'models/gemini-embedding-2',
+          supportedGenerationMethods: ['embedContent'],
+        },
+        {
+          name: 'models/gemma-3-27b-it',
+          supportedGenerationMethods: ['generateContent'],
+        },
+        {
+          name: 'models/gemini-decision-1',
+          supportedGenerationMethods: ['decide'],
+        },
+        {
+          name: 'models/gemini-flash-latest',
+          supportedActions: ['generateContent'],
+        },
+      ],
+      nextPageToken: 'page-2',
+    },
+    'page-2': {
+      models: [
+        {
+          name: 'models/gemini-4-carbon',
+          inputTokenLimit: 1048576,
+          supportedGenerationMethods: ['generateContent'],
+          thinking: true,
+        },
+        // Pages repeat nothing, but a repeat is not listed twice.
+        {
+          name: 'models/gemini-4-hydrogen',
+          supportedGenerationMethods: ['generateContent'],
+        },
+      ],
+    },
+  };
+  const urls = [];
+  const entries = await gemini.listGeminiModels(
+    'https://generativelanguage.googleapis.com/v1beta/models',
+    async url => {
+      urls.push(url);
+      return pages[new URL(url).searchParams.get('pageToken') ?? ''];
+    }
+  );
+
+  assert.deepEqual(urls, [
+    'https://generativelanguage.googleapis.com/v1beta/models?pageSize=1000',
+    'https://generativelanguage.googleapis.com/v1beta/models?pageSize=1000&pageToken=page-2',
+  ]);
+  assert.deepEqual(
+    entries.map(entry => entry.id),
+    [
+      'gemini-2.0-flash',
+      'gemini-4-carbon',
+      'gemini-4-hydrogen',
+      'gemini-flash-latest',
+    ]
+  );
+  assert.deepEqual(pluginModelCatalog.readModelContextMap(entries), {
+    'gemini-2.0-flash': 1048576,
+    'gemini-4-carbon': 1048576,
+    'gemini-4-hydrogen': 1048576,
+  });
+  // Google's own thinking flag wins over the name.
+  assert.deepEqual(pluginModelCatalog.readModelReasoningMap(entries), {
+    'gemini-2.0-flash': false,
+    'gemini-4-carbon': true,
+    'gemini-4-hydrogen': true,
+  });
+});
+
+test('the models collection is found from the generateContent endpoint', async () => {
+  const pluginValidation = await distModule('utils/pluginValidation.js');
+  assert.equal(
+    pluginValidation.resolvePluginModelsEndpoint(plugin.endpoint),
+    'https://generativelanguage.googleapis.com/v1beta/models'
+  );
+});

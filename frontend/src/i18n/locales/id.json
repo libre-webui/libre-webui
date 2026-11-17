@@ -979,7 +979,8 @@
         "on": "Aktif",
         "low": "Rendah",
         "medium": "Sedang",
-        "high": "Tinggi"
+        "high": "Tinggi",
+        "xhigh": "Sangat tinggi"
       }
     },
     "documents": {

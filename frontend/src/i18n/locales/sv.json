@@ -979,7 +979,8 @@
         "on": "På",
         "low": "Låg",
         "medium": "Medel",
-        "high": "Hög"
+        "high": "Hög",
+        "xhigh": "Mycket hög"
       }
     },
     "documents": {
