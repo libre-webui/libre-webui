@@ -50,8 +50,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   generation, the video **Cancel job** and **Stop waiting** buttons, and the
   artifact **Preview unavailable** notice were English in every language and
   are now translated. Bengali and Icelandic gain the model picker and About
-  links strings they were missing, and labels that read oddly, such as
-  **Star on GitHub** as a noun, now read as actions.
+  links strings they were missing, labels that read oddly, such as
+  **Star on GitHub** as a noun, now read as actions, and Portuguese uses
+  Brazilian wording throughout instead of a mix with European Portuguese.
 
 ### 📚 Documentation
 
