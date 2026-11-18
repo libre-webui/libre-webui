@@ -80,7 +80,10 @@ test('scanner reports are retained and tolerated scans are re-enforced', () => {
   // The audit gate retries the advisory service, records a verdict, and
   // falls back to Dependabot alerts when npm never answered.
   assert.match(dependency, /for attempt in 1 2 3; do/);
-  assert.match(dependency, /findings=\$\{findings\}/);
+  assert.match(
+    dependency,
+    /node scripts\/dependency-audit\.mjs --report security-artifacts\/npm-audit\.json --github-output/
+  );
   assert.match(
     dependency,
     /FINDINGS: \$\{\{ steps\.dependency-audit\.outputs\.findings \}\}/

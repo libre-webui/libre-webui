@@ -44,13 +44,10 @@ jobs:
             echo "npm audit could not reach the advisory service (attempt $attempt)" >&2
             [ "$attempt" -lt 3 ] && sleep 45
           done
-          node -e '
-            const r = require("./security-artifacts/npm-audit.json");
-            const v = r.metadata && r.metadata.vulnerabilities;
-            const findings = v ? (v.moderate + v.high + v.critical) : -1;
-            require("fs").appendFileSync(process.env.GITHUB_OUTPUT, `findings=${findings}\n`);
-            console.log(v ? `npm audit findings (moderate+): ${findings}` : "npm audit produced no verdict");
-          '
+          # Advisories with no fixed release that only reach build tooling are
+          # listed, with a reason, in scripts/dependency-audit.mjs; everything
+          # else at moderate or above counts.
+          node scripts/dependency-audit.mjs --report security-artifacts/npm-audit.json --github-output
 
       - name: Generate CycloneDX source SBOM
         uses: anchore/sbom-action@v0
@@ -81,7 +78,7 @@ jobs:
           FINDINGS: ${{ steps.dependency-audit.outputs.findings }}
         run: |
           if [ "$FINDINGS" -gt 0 ] 2>/dev/null; then
-            echo "npm audit reported $FINDINGS moderate-or-higher vulnerabilities." >&2
+            echo "npm audit reported $FINDINGS moderate-or-higher vulnerabilities not tolerated in scripts/dependency-audit.mjs." >&2
             exit 1
           fi
           if [ "$FINDINGS" = "0" ]; then
