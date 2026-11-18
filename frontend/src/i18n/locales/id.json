@@ -830,6 +830,7 @@
         "enableDescription": "Buat judul chat dan ringkasan pemikiran secara langsung",
         "taskModel": "Model Tugas",
         "selectTaskModel": "Pilih model tugas",
+        "useCurrentModel": "Gunakan model yang sedang berjalan",
         "taskModelDescription": "Model yang digunakan untuk judul dan ringkasan pemikiran secara langsung. Penalaran terbaru dikirim ke model ini."
       },
       "updatingModel": "Memperbarui {{name}} ({{current}}/{{total}})",
@@ -1041,7 +1042,7 @@
       }
     },
     "tts": {
-      "title": "Text-to-Speech",
+      "title": "Teks ke Ucapan",
       "description": "Konfigurasi pengaturan text-to-speech untuk membaca pesan dengan suara",
       "loadingProviders": "Memuat penyedia TTS...",
       "noProviders": "Tidak Ada Penyedia TTS",
@@ -1213,7 +1214,7 @@
         "forgejoDescription": "Repositori Forgejo yang di-hosting sendiri",
         "sponsor": "Sponsor",
         "sponsorDescription": "Bantu danai proyek ini",
-        "star": "Bintang di GitHub",
+        "star": "Beri bintang di GitHub",
         "starDescription": "Bintang membantu orang lain menemukan proyek ini"
       },
       "version": "Versi {{version}}",
@@ -2536,6 +2537,8 @@
     "soundPlaceholder": "Deskripsikan suara, musik, suasana, atau respons lisan yang Anda inginkan...",
     "generate": "Hasilkan",
     "generating": "Menghasilkan… ini bisa memakan waktu beberapa menit",
+    "cancelJob": "Batalkan tugas",
+    "stopWaiting": "Berhenti menunggu",
     "success": "Media dihasilkan dan disimpan ke Imagine",
     "successWithSavedVoice": "Media dibuat dan “{{name}}” kini tersedia di pengaturan Ucapan",
     "failed": "Gagal menghasilkan media",
@@ -2633,8 +2636,8 @@
     "closePanelEsc": "Tutup panel (Esc)",
     "copyButton": "Salin",
     "dragEdgeToResize": "Seret tepi untuk mengubah ukuran",
-    "previewUnavailable": "Preview unavailable",
-    "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source.",
+    "previewUnavailable": "Pratinjau tidak tersedia",
+    "previewUnavailableDescription": "Artefak ini tidak berisi konten yang dapat ditampilkan sebagai pratinjau. Beralih ke tampilan kode untuk memeriksa sumbernya.",
     "versionOf": "Versi {{current}} dari {{total}}",
     "previousVersion": "Versi sebelumnya",
     "nextVersion": "Versi berikutnya",

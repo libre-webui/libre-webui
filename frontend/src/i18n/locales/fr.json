@@ -49,7 +49,7 @@
     "shortName": "Libre"
   },
   "appInitialization": {
-    "ollamaUnavailable": "Le service Ollama n’est pas disponible. Les modèles de plugins peuvent toujours être utilisés.",
+    "ollamaUnavailable": "Le service Ollama n'est pas disponible. Les modèles de plugins peuvent toujours être utilisés.",
     "backendConnectionFailed": "Échec de la connexion au service backend",
     "connecting": "Connexion au backend… ({{attempt}}/{{total}})",
     "startingUp": "Démarrage…",
@@ -112,9 +112,9 @@
       "github": "GitHub",
       "huggingFace": "Hugging Face",
       "loginSuccess": "Connexion OAuth réussie !",
-      "completionFailed": "Échec de la finalisation de l’authentification OAuth",
-      "verificationFailed": "Échec de la vérification de l’authentification OAuth",
-      "authenticationFailed": "Échec de l’authentification OAuth"
+      "completionFailed": "Échec de la finalisation de l'authentification OAuth",
+      "verificationFailed": "Échec de la vérification de l'authentification OAuth",
+      "authenticationFailed": "Échec de l'authentification OAuth"
     },
     "checkingAuth": "Vérification de l'authentification...",
     "welcome": "Bienvenue",
@@ -275,23 +275,23 @@
       "helpTonight": "Comment puis-je vous aider ce soir ?",
       "variety": {
         "create": {
-          "title": "Qu’allons-nous créer ?",
-          "subtitle": "Partez d’une pensée, d’une esquisse ou d’un problème qui résiste."
+          "title": "Qu'allons-nous créer ?",
+          "subtitle": "Partez d'une pensée, d'une esquisse ou d'un problème qui résiste."
         },
         "explore": {
           "title": "Par où commencer ?",
           "subtitle": "Apportez cette question qui vous revient sans cesse."
         },
         "imagine": {
-          "title": "Qu’imaginez-vous ?",
+          "title": "Qu'imaginez-vous ?",
           "subtitle": "Nous pouvons lui donner forme ensemble."
         },
         "focus": {
-          "title": "Qu’est-ce qui mérite votre attention ?",
+          "title": "Qu'est-ce qui mérite votre attention ?",
           "subtitle": "Clarifions la prochaine étape."
         },
         "untangle": {
-          "title": "Qu’est-ce qui coince ?",
+          "title": "Qu'est-ce qui coince ?",
           "subtitle": "Commencez par me donner la version en vrac."
         },
         "momentum": {
@@ -315,7 +315,7 @@
           "subtitle": "Montrez-moi la matière brute."
         },
         "unexpected": {
-          "title": "Créons quelque chose d’inattendu.",
+          "title": "Créons quelque chose d'inattendu.",
           "subtitle": "Donnez-moi une contrainte, une ambiance ou une idée encore floue."
         }
       }
@@ -343,7 +343,7 @@
       "voiceStop": "Arrêter l'écoute",
       "transcriptionSource": "Source de reconnaissance vocale",
       "browserSpeech": "Service de reconnaissance vocale du navigateur",
-      "providerTranscriptionDisclosure": "Enregistrer et envoyer l’audio à {{provider}} pour transcription",
+      "providerTranscriptionDisclosure": "Enregistrer et envoyer l'audio à {{provider}} pour transcription",
       "webSearchOn": "Recherche web activée — les réponses utilisent des résultats en direct",
       "webSearchOff": "Chercher sur le web pour ce message",
       "toolsOn": "Outils activés — le modèle peut appeler les outils approuvés",
@@ -420,7 +420,7 @@
       "browse": "parcourir",
       "unsupportedFileType": "Type de fichier non pris en charge : {{name}}",
       "maxImagesAllowed": "Maximum de {{count}} images autorisé",
-      "imageTooLarge": "L’image {{name}} est trop volumineuse (10 Mo max.)",
+      "imageTooLarge": "L'image {{name}} est trop volumineuse (10 Mo max.)",
       "readFailed": "Impossible de lire {{name}}",
       "uploadAlt": "Import {{number}}",
       "removeImage": "Retirer l'image {{number}}",
@@ -472,7 +472,7 @@
       "thinking": "Réflexion",
       "thinkingDescription": "Le temps que le modèle passe à réfléchir avant de répondre. Les modèles sans raisonnement l'ignorent.",
       "compaction": "Compactage du contexte",
-      "compactionDescription": "Quand le serveur compacte les longues conversations, cette discussion peut s’en exclure et garder tout son historique.",
+      "compactionDescription": "Quand le serveur compacte les longues conversations, cette discussion peut s'en exclure et garder tout son historique.",
       "compactionDefault": "Réglage du serveur",
       "compactionOff": "Désactivé pour cette discussion"
     },
@@ -499,21 +499,21 @@
       "modelsLoadFailed": "Échec du chargement des modèles",
       "modelUpdated": "Modèle mis à jour pour le chat actuel",
       "modelUpdateFailed": "Échec de la mise à jour du modèle de session",
-      "titlePreviewFallback": "Impossible de générer un titre ; l’aperçu du message sera utilisé",
+      "titlePreviewFallback": "Impossible de générer un titre ; l'aperçu du message sera utilisé",
       "titleGenerated": "Titre du chat généré",
       "titleGenerationFailed": "Échec de la génération du titre du chat",
-      "sessionNotFoundRedirect": "Session introuvable. Création d’une nouvelle session...",
+      "sessionNotFoundRedirect": "Session introuvable. Création d'une nouvelle session...",
       "comparisonError": "{{model}} : {{error}}",
       "generationFailed": "échec de la génération",
       "comparisonFailed": "échec de la comparaison",
-      "sendFailed": "Échec de l’envoi du message",
+      "sendFailed": "Échec de l'envoi du message",
       "noMessageToRegenerate": "Aucun message à régénérer",
       "regenerateFailed": "Échec de la régénération du message",
       "messageNotFound": "Message introuvable",
       "branchSwitched": "Passage à la variante {{number}}",
       "branchSelectFailed": "Échec de la sélection de la branche",
       "editFailed": "Échec de la modification du message",
-      "toolDecisionFailed": "La décision de l’outil n’a pas pu être enregistrée",
+      "toolDecisionFailed": "La décision de l'outil n'a pas pu être enregistrée",
       "archiveFailed": "Impossible d'archiver cette discussion"
     },
     "documents": {
@@ -583,7 +583,7 @@
       "placeholders": {
         "noul": "Un remboursement est-il demandé ?",
         "choice": "Quelle équipe doit traiter ceci ?",
-        "score": "Quelle est l’urgence ?"
+        "score": "Quelle est l'urgence ?"
       },
       "yesMeans": "Oui signifie (facultatif)",
       "noMeans": "Non signifie (facultatif)",
@@ -742,7 +742,7 @@
       "background": {
         "title": "Image d'arrière-plan",
         "enable": "Activer l'image d'arrière-plan",
-        "enableDescription": "Afficher votre fond sur l’Accueil et dans Chat et Travail.",
+        "enableDescription": "Afficher votre fond sur l'Accueil et dans Chat et Travail.",
         "blur": "Flou",
         "opacity": "Opacité",
         "upload": "Envoyer une image d'arrière-plan",
@@ -754,10 +754,10 @@
         "blurred": "Flouté",
         "intensity": "Intensité",
         "preview": "Aperçu du fond",
-        "change": "Changer d’image",
+        "change": "Changer d'image",
         "saved": "Enregistré",
-        "saveFailed": "Les modifications n’ont pas pu être enregistrées. Réessayez.",
-        "originalPreserved": "Votre image d’origine reste inchangée.",
+        "saveFailed": "Les modifications n'ont pas pu être enregistrées. Réessayez.",
+        "originalPreserved": "Votre image d'origine reste inchangée.",
         "fileTooLarge": "La taille de l'image d'arrière-plan ne doit pas dépasser 10 Mo."
       },
       "celestial": {
@@ -830,6 +830,7 @@
         "enableDescription": "Générer des titres de discussion et des résumés du raisonnement en direct",
         "taskModel": "Modèle de tâche",
         "selectTaskModel": "Sélectionnez le modèle de tâche",
+        "useCurrentModel": "Utiliser le modèle en cours d'exécution",
         "taskModelDescription": "Modèle utilisé pour les titres et les résumés du raisonnement en direct. Le raisonnement récent est envoyé à ce modèle."
       },
       "updatingModel": "Mise à jour de {{name}} ({{current}}/{{total}})",
@@ -1009,10 +1010,10 @@
         "regenerateSuccess": "Embeddings régénérés pour {{count}} documents",
         "regeneratePartialSuccess": "{{count}} documents régénérés ; {{skipped}} ignorés",
         "regenerateFailed": "Échec de la régénération des embeddings : {{error}}",
-        "saveSuccess": "Paramètres d’embedding mis à jour avec succès",
-        "saveFailed": "Échec de la mise à jour des paramètres d’embedding : {{error}}",
-        "resetSuccess": "Paramètres d’embedding réinitialisés aux valeurs par défaut",
-        "resetFailed": "Échec de la réinitialisation des paramètres d’embedding : {{error}}"
+        "saveSuccess": "Paramètres d'embedding mis à jour avec succès",
+        "saveFailed": "Échec de la mise à jour des paramètres d'embedding : {{error}}",
+        "resetSuccess": "Paramètres d'embedding réinitialisés aux valeurs par défaut",
+        "resetFailed": "Échec de la réinitialisation des paramètres d'embedding : {{error}}"
       },
       "collections": {
         "title": "Collections de connaissances",
@@ -1060,14 +1061,14 @@
       "voiceDescription": "Choisissez la voix pour la synthèse vocale",
       "providerDefaultVoice": "Ce modèle utilise sa voix par défaut, sauf si vous fournissez un enregistrement de référence lors de la génération de la parole.",
       "voiceCloningAvailable": "Clonage vocal disponible",
-      "voiceCloningAvailableDescription": "Utilisez Imaginer → Audio pour créer une voix à partir d’un enregistrement de référence consenti et de sa transcription exacte. Vous pouvez enregistrer cette référence comme voix réutilisable.",
+      "voiceCloningAvailableDescription": "Utilisez Imaginer → Audio pour créer une voix à partir d'un enregistrement de référence consenti et de sa transcription exacte. Vous pouvez enregistrer cette référence comme voix réutilisable.",
       "savedVoiceOption": "{{name}} (voix enregistrée)",
       "savedVoices": "Voix enregistrées",
       "loadingSavedVoices": "Chargement des voix enregistrées…",
       "deleteSavedVoice": "Supprimer la voix enregistrée {{name}}",
       "deleteSavedVoiceConfirm": "Supprimer la voix enregistrée « {{name}} » ? Son enregistrement de référence et sa transcription seront supprimés.",
       "savedVoiceDeleted": "Voix enregistrée supprimée",
-      "savedVoicePreferenceCleanupFailed": "Voix enregistrée supprimée, mais les réglages de la parole n’ont pas pu être réinitialisés",
+      "savedVoicePreferenceCleanupFailed": "Voix enregistrée supprimée, mais les réglages de la parole n'ont pas pu être réinitialisés",
       "savedVoiceDeleteFailed": "Impossible de supprimer la voix enregistrée",
       "speed": "Vitesse",
       "speedSlow": "0.5x",
@@ -1081,14 +1082,14 @@
       "consentRevoked": "Consentement retiré",
       "consentExpired": "Consentement expiré",
       "transferCount": "envoyé au fournisseur {{total}} fois",
-      "consentExpires": "consentement jusqu’au {{date}}",
+      "consentExpires": "consentement jusqu'au {{date}}",
       "revokeSavedVoice": "Retirer le consentement pour {{name}}",
       "revokeSavedVoiceConfirm": "Retirer le consentement pour « {{name}} » ? La voix enregistrée ne pourra plus être utilisée, mais la trace du consentement est conservée.",
       "savedVoiceRevoked": "Consentement retiré",
       "savedVoiceRevokeFailed": "Échec du retrait du consentement",
-      "savedVoiceUnavailableCleanupFailed": "La voix enregistrée est indisponible et n’a pas pu être supprimée des paramètres vocaux",
+      "savedVoiceUnavailableCleanupFailed": "La voix enregistrée est indisponible et n'a pas pu être supprimée des paramètres vocaux",
       "saveSuccess": "Paramètres TTS enregistrés avec succès",
-      "saveFailed": "Échec de l’enregistrement des paramètres TTS : {{error}}",
+      "saveFailed": "Échec de l'enregistrement des paramètres TTS : {{error}}",
       "testFailed": "Échec du test TTS : {{error}}"
     },
     "imageGen": {
@@ -1110,8 +1111,8 @@
       "styleDescription": "Preset de style pour les images générées",
       "availableProviders": "Fournisseurs disponibles",
       "models": "modèles",
-      "saveSuccess": "Paramètres de génération d’images enregistrés avec succès",
-      "saveFailed": "Échec de l’enregistrement des paramètres de génération d’images : {{error}}"
+      "saveSuccess": "Paramètres de génération d'images enregistrés avec succès",
+      "saveFailed": "Échec de l'enregistrement des paramètres de génération d'images : {{error}}"
     },
     "data": {
       "title": "Gestion des données",
@@ -1129,11 +1130,11 @@
       "clearing": "Effacement...",
       "importOptions": "Options d'importation",
       "importOptionsDescription": "Choisissez comment gérer les données existantes",
-      "validatingArchive": "Validation de l’archive et calcul des modifications…",
-      "archiveValidationFailed": "Échec de la validation de l’archive",
-      "preflightReport": "Aperçu de l’importation",
+      "validatingArchive": "Validation de l'archive et calcul des modifications…",
+      "archiveValidationFailed": "Échec de la validation de l'archive",
+      "preflightReport": "Aperçu de l'importation",
       "preflightIncoming": "{{folders}} dossiers · {{sessions}} discussions · {{messages}} messages · {{notes}} notes · {{collections}} collections · {{documents}} documents · {{chunks}} fragments",
-      "preflightRemappedIds": "{{count}} ID seront réattribués pour protéger les données d’un autre compte.",
+      "preflightRemappedIds": "{{count}} ID seront réattribués pour protéger les données d'un autre compte.",
       "skipDuplicates": "Ignorer les doublons",
       "overwrite": "Écraser les existants",
       "importResults": "Résultats de l'importation",
@@ -1152,16 +1153,16 @@
       "toSkip": "à ignorer",
       "documents": "Documents",
       "warnings": "Avertissements",
-      "refreshAfterImportFailed": "Les données ont été importées, mais certaines vues n’ont pas pu être actualisées. Rechargez Libre WebUI pour voir toutes les modifications.",
+      "refreshAfterImportFailed": "Les données ont été importées, mais certaines vues n'ont pas pu être actualisées. Rechargez Libre WebUI pour voir toutes les modifications.",
       "exportSuccess": "Archive de données portable exportée",
-      "exportFailed": "Échec de l’exportation",
+      "exportFailed": "Échec de l'exportation",
       "importSuccess": "Archive de données portable importée",
-      "importFailed": "Échec de l’importation",
+      "importFailed": "Échec de l'importation",
       "archiveErrors": {
-        "invalidJson": "L’archive portable ne contient pas de JSON valide.",
-        "objectRequired": "L’archive portable doit contenir un objet JSON.",
-        "unsupportedVersion": "Version {{version}} de l’archive portable non prise en charge.",
-        "unrecognized": "Ce fichier n’est pas une archive portable Libre WebUI."
+        "invalidJson": "L'archive portable ne contient pas de JSON valide.",
+        "objectRequired": "L'archive portable doit contenir un objet JSON.",
+        "unsupportedVersion": "Version {{version}} de l'archive portable non prise en charge.",
+        "unrecognized": "Ce fichier n'est pas une archive portable Libre WebUI."
       },
       "errors": "Erreurs",
       "archivedChats": {
@@ -1213,7 +1214,7 @@
         "forgejoDescription": "Dépôt Forgejo auto-hébergé",
         "sponsor": "Sponsor",
         "sponsorDescription": "Aider à financer le projet",
-        "star": "Étoile sur GitHub",
+        "star": "Mettre une étoile sur GitHub",
         "starDescription": "Une étoile aide les autres à découvrir le projet"
       },
       "version": "Version {{version}}",
@@ -1498,8 +1499,8 @@
       "saving": "Enregistrement…",
       "hide": "Masquer aux utilisateurs",
       "show": "Afficher aux utilisateurs",
-      "star": "Marquer {{name}} d’une étoile",
-      "unstar": "Retirer l’étoile de {{name}}",
+      "star": "Marquer {{name}} d'une étoile",
+      "unstar": "Retirer l'étoile de {{name}}",
       "filterLabel": "Filtrer les modèles",
       "displayName": "Nom d'affichage pour {{name}}"
     },
@@ -1843,8 +1844,8 @@
       "results": "{{visible}} comptes sur {{total}}",
       "loadFailed": "Impossible de charger les utilisateurs. Réessayez.",
       "empty": "Aucun compte actif pour le moment",
-      "editSelfRole": "Vous ne pouvez pas modifier votre propre rôle d’administrateur.",
-      "deleteTitle": "Supprimer l’utilisateur"
+      "editSelfRole": "Vous ne pouvez pas modifier votre propre rôle d'administrateur.",
+      "deleteTitle": "Supprimer l'utilisateur"
     },
     "loading": "Chargement des utilisateurs...",
     "createUser": "Créer un utilisateur",
@@ -2007,7 +2008,7 @@
         "tts": "Synthèse vocale",
         "voice-mode": "Mode vocal",
         "voice-cloning": "Clonage vocal",
-        "work-agents": "CLI d’agents dans Work",
+        "work-agents": "CLI d'agents dans Work",
         "decision-models": "Modèles de décision"
       },
       "grantViaKinds": {
@@ -2040,9 +2041,9 @@
     "voice": {
       "title": "Accès vocal",
       "description": "Détermine qui peut utiliser les fonctions vocales. Les administrateurs y ont toujours accès.",
-      "lockedByEnv": "Fixé par une variable d’environnement",
+      "lockedByEnv": "Fixé par une variable d'environnement",
       "saved": "Accès vocal mis à jour",
-      "saveFailed": "Échec de la mise à jour de l’accès vocal",
+      "saveFailed": "Échec de la mise à jour de l'accès vocal",
       "features": {
         "stt": "Reconnaissance vocale",
         "tts": "Synthèse vocale",
@@ -2114,16 +2115,16 @@
       "saved": "Paramètres de messagerie enregistrés.",
       "saveFailed": "Les paramètres de messagerie n'ont pas pu être enregistrés.",
       "templateTitle": "Apparence des e-mails",
-      "templateHint": "Choisissez un modèle clair ou sombre pour les résumés d’actualités et les e-mails de notification.",
-      "themeLabel": "Modèle d’e-mail",
+      "templateHint": "Choisissez un modèle clair ou sombre pour les résumés d'actualités et les e-mails de notification.",
+      "themeLabel": "Modèle d'e-mail",
       "themeLight": "Clair",
       "themeDark": "Sombre",
       "previewTitle": "Aperçu du modèle",
-      "previewLoading": "Chargement de l’aperçu…",
-      "previewFailed": "Impossible de charger l’aperçu de l’e-mail.",
-      "previewHeading": "Votre résumé d’actualités",
-      "previewIntro": "Aperçu de votre e-mail d’actualités quotidien.",
-      "previewMarkdown": "## À la une aujourd’hui\n\n- Actualités sur la technologie et la recherche\n- Nouvelles de vos sources sélectionnées\n\n**En résumé :** vos actualités quotidiennes sont prêtes à être lues.",
+      "previewLoading": "Chargement de l'aperçu…",
+      "previewFailed": "Impossible de charger l'aperçu de l'e-mail.",
+      "previewHeading": "Votre résumé d'actualités",
+      "previewIntro": "Aperçu de votre e-mail d'actualités quotidien.",
+      "previewMarkdown": "## À la une aujourd'hui\n\n- Actualités sur la technologie et la recherche\n- Nouvelles de vos sources sélectionnées\n\n**En résumé :** vos actualités quotidiennes sont prêtes à être lues.",
       "previewLinkLabel": "Ouvrir le résultat"
     },
     "strandsAccess": {
@@ -2139,16 +2140,16 @@
       }
     },
     "agentCliAccess": {
-      "title": "Modèles d’agents CLI",
-      "description": "Les administrateurs peuvent utiliser Kiro, Pi, OpenCode, Codex et Claude Code installés comme modèles de chat. Ils s’exécutent sur l’hôte, hors des environnements isolés de Work.",
+      "title": "Modèles d'agents CLI",
+      "description": "Les administrateurs peuvent utiliser Kiro, Pi, OpenCode, Codex et Claude Code installés comme modèles de chat. Ils s'exécutent sur l'hôte, hors des environnements isolés de Work.",
       "lockedByEnv": "Fixé par la variable d'environnement AGENT_CLI_MODELS_ENABLED."
     },
     "workAgentAccess": {
-      "title": "CLI d’agents dans Work",
+      "title": "CLI d'agents dans Work",
       "description": "Choisissez qui peut confier des tâches Work à Claude Code, Codex, Kiro, OpenCode ou Pi dans le bac à sable. Ils utilisent les mêmes connexions que dans Chat sur ce serveur.",
-      "lockedByEnv": "Fixé par la variable d’environnement LIBRE_WORK_AGENTS_ACCESS.",
-      "saved": "Accès aux CLI d’agents dans Work mis à jour",
-      "saveFailed": "Impossible de mettre à jour l’accès aux CLI d’agents dans Work",
+      "lockedByEnv": "Fixé par la variable d'environnement LIBRE_WORK_AGENTS_ACCESS.",
+      "saved": "Accès aux CLI d'agents dans Work mis à jour",
+      "saveFailed": "Impossible de mettre à jour l'accès aux CLI d'agents dans Work",
       "modes": {
         "disabled": "Désactivé",
         "admins": "Administrateurs",
@@ -2195,10 +2196,10 @@
       "highlightModel": "Mettre {{model}} en surbrillance",
       "highlightedModel": "{{model}} en surbrillance",
       "allModels": "Tous les modèles",
-      "exploreDay": "Explorer l’utilisation quotidienne",
+      "exploreDay": "Explorer l'utilisation quotidienne",
       "topModels": "Les 12 modèles les plus utilisés sont affichés par défaut. Sélectionnez un modèle ci-dessous pour suivre sa courbe individuellement.",
       "noTokens": "Aucun jeton signalé pendant cette période",
-      "breakdownUnavailable": "La répartition par modèle n’est pas disponible pour cette période.",
+      "breakdownUnavailable": "La répartition par modèle n'est pas disponible pour cette période.",
       "peak": "Jour de pointe",
       "dayTotal": "Total quotidien",
       "loadingModel": "Chargement de {{model}}…"
@@ -2233,7 +2234,7 @@
       "title": "Aucun appel fournisseur pour le moment",
       "description": "Les requêtes apparaissent ici après le traitement des discussions, tâches Work, embeddings, images, paroles, sons ou vidéos par un fournisseur ou un agent."
     },
-    "privacyNote": "L’utilisation des requêtes aux fournisseurs et agents est enregistrée sur le serveur. Libre WebUI stocke le fournisseur, le modèle, le minutage, le statut et les compteurs signalés — jamais les prompts, les réponses, les points de terminaison, les identifiants ou les corps d'erreur du fournisseur. Les totaux de jetons incluent uniquement les appels où le fournisseur a renvoyé des métadonnées d'utilisation.",
+    "privacyNote": "L'utilisation des requêtes aux fournisseurs et agents est enregistrée sur le serveur. Libre WebUI stocke le fournisseur, le modèle, le minutage, le statut et les compteurs signalés — jamais les prompts, les réponses, les points de terminaison, les identifiants ou les corps d'erreur du fournisseur. Les totaux de jetons incluent uniquement les appels où le fournisseur a renvoyé des métadonnées d'utilisation.",
     "heatmap": {
       "title": "Une année d'activité",
       "description": "Appels quotidiens aux fournisseurs sur l'année écoulée, colorés selon le modèle le plus utilisé chaque jour.",
@@ -2523,7 +2524,7 @@
     "saveVoiceProfileDescription": "Conservez cet enregistrement de référence et sa transcription de façon sécurisée. Libre WebUI les envoie au fournisseur sélectionné pour chaque lot de parole utilisant cette voix.",
     "voiceProfileName": "Nom de la voix enregistrée",
     "voiceProfileNamePlaceholder": "Par exemple, Ma voix",
-    "voiceStorageConsent": "Je confirme avoir l’autorisation de la personne qui parle pour cloner et enregistrer cette voix. La référence restera enregistrée jusqu’à ce que je la supprime.",
+    "voiceStorageConsent": "Je confirme avoir l'autorisation de la personne qui parle pour cloner et enregistrer cette voix. La référence restera enregistrée jusqu'à ce que je la supprime.",
     "resolution": "Résolution",
     "aspectRatio": "Format d'image",
     "duration": "Durée",
@@ -2536,6 +2537,8 @@
     "soundPlaceholder": "Décrivez le son, la musique, l'atmosphère ou la réponse vocale souhaitée...",
     "generate": "Générer",
     "generating": "Génération… cela peut prendre plusieurs minutes",
+    "cancelJob": "Annuler la tâche",
+    "stopWaiting": "Arrêter d'attendre",
     "success": "Média généré et enregistré dans Imagine",
     "successWithSavedVoice": "Le média a été généré et « {{name}} » est maintenant disponible dans les réglages de la parole",
     "failed": "Échec de la génération du média",
@@ -2543,7 +2546,7 @@
     "noModels": "Aucun modèle {{kind}} n'est disponible. Activez un fournisseur compatible et enregistrez d'abord ses identifiants.",
     "consentTtl": {
       "label": "Durée du consentement",
-      "never": "Jusqu’à ce que je le retire",
+      "never": "Jusqu'à ce que je le retire",
       "days30": "30 jours",
       "days90": "90 jours",
       "days365": "Un an"
@@ -2609,8 +2612,8 @@
     "preparingSpeech": "Préparation de la parole...",
     "generatingSpeech": "Génération de la parole...",
     "bufferingSpeech": "Mise en mémoire tampon...",
-    "enableAudio": "Activer l’audio et lire à voix haute",
-    "enableAudioShort": "Activer l’audio",
+    "enableAudio": "Activer l'audio et lire à voix haute",
+    "enableAudioShort": "Activer l'audio",
     "readAloud": "Lire à voix haute"
   },
   "artifacts": {
@@ -2633,8 +2636,8 @@
     "closePanelEsc": "Fermer le panneau (Échap)",
     "copyButton": "Copier",
     "dragEdgeToResize": "Faites glisser le bord pour redimensionner",
-    "previewUnavailable": "Preview unavailable",
-    "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source.",
+    "previewUnavailable": "Aperçu indisponible",
+    "previewUnavailableDescription": "Cet artefact ne contient aucun contenu affichable en aperçu. Passez à la vue code pour examiner la source.",
     "versionOf": "Version {{current}} sur {{total}}",
     "previousVersion": "Version précédente",
     "nextVersion": "Version suivante",
@@ -2840,15 +2843,15 @@
       "reconnecting": "Reconnexion aux mises à jour en direct…",
       "unavailable": "Mises à jour en direct indisponibles",
       "newActivity": "Nouvelle activité",
-      "skillsLoaded": "Compétences d’espace de travail · {{count}}",
+      "skillsLoaded": "Compétences d'espace de travail · {{count}}",
       "skillWorked": "Cette procédure a fonctionné",
       "skillFailed": "Cette procédure a échoué",
       "skillTraceSaved": "noté",
       "stats": {
-        "title": "Résumé de l’exécution",
+        "title": "Résumé de l'exécution",
         "rounds": "Tours",
-        "toolCalls": "Appels d’outils",
-        "screenshots": "Captures d’écran",
+        "toolCalls": "Appels d'outils",
+        "screenshots": "Captures d'écran",
         "fences": "Coupures",
         "checksPassed": "Vérifications réussies",
         "checksPending": "Vérifications en attente",
@@ -2960,12 +2963,12 @@
       "sendFailed": "Le message n'a pas pu être envoyé."
     },
     "terminal": {
-      "connecting": "Ouverture d’un shell dans le bac à sable…",
+      "connecting": "Ouverture d'un shell dans le bac à sable…",
       "closed": "Session de terminal terminée.",
-      "failed": "La session de terminal n’a pas pu démarrer.",
+      "failed": "La session de terminal n'a pas pu démarrer.",
       "reconnect": "Se reconnecter",
-      "unavailable": "Le terminal interactif n’est pas disponible dans ce déploiement.",
-      "blockedByRun": "Le modèle utilise ce conteneur. Le terminal s’ouvrira à la fin du tour.",
+      "unavailable": "Le terminal interactif n'est pas disponible dans ce déploiement.",
+      "blockedByRun": "Le modèle utilise ce conteneur. Le terminal s'ouvrira à la fin du tour.",
       "taskRunning": "Tour du modèle en cours"
     },
     "policy": {
@@ -3404,7 +3407,7 @@
       "event": "S'exécute quand {{event}}",
       "eventMatching": "S'exécute quand {{event}} et que le titre contient \"{{match}}\""
     },
-    "finishedNotification": "{{n}} exécution(s) d’automatisation terminée(s)",
+    "finishedNotification": "{{n}} exécution(s) d'automatisation terminée(s)",
     "templatesTitle": "Modèles",
     "templates": {
       "morningBrief": {
@@ -3432,7 +3435,7 @@
       "rotate": "Renouveler le secret",
       "enable": "Activer",
       "disable": "Désactiver",
-      "revealHint": "Affiché une seule fois. Envoyez-le comme jeton Bearer ou dans l’en-tête X-Libre-Webhook-Secret.",
+      "revealHint": "Affiché une seule fois. Envoyez-le comme jeton Bearer ou dans l'en-tête X-Libre-Webhook-Secret.",
       "failed": "Impossible de mettre à jour le webhook."
     },
     "triggers": {
@@ -3809,11 +3812,11 @@
   "composer": {
     "promptMenu": {
       "label": "Bibliothèque de prompts",
-      "empty": "Aucun prompt pour l’instant — créez-en un dans Paramètres → Prompts, ou commencez à saisir un slug."
+      "empty": "Aucun prompt pour l'instant — créez-en un dans Paramètres → Prompts, ou commencez à saisir un slug."
     },
     "skillMenu": {
       "label": "Compétences",
-      "empty": "Aucune compétence pour l’instant — créez-en une dans Paramètres → Compétences."
+      "empty": "Aucune compétence pour l'instant — créez-en une dans Paramètres → Compétences."
     },
     "variables": {
       "title": "Remplir {{title}}",
@@ -3824,8 +3827,8 @@
     "toolsMenu": {
       "enable": "Utiliser les outils pour ce message",
       "builtin": "Outils intégrés",
-      "servers": "Serveurs d’outils",
-      "hint": "Les appels à effets de bord demandent toujours une approbation avant de s’exécuter."
+      "servers": "Serveurs d'outils",
+      "hint": "Les appels à effets de bord demandent toujours une approbation avant de s'exécuter."
     }
   },
   "share": {
@@ -3877,7 +3880,7 @@
     "roleOwner": "propriétaire",
     "removeMember": "Retirer du canal",
     "leave": "Quitter le canal",
-    "noPins": "Rien d’épinglé pour le moment.",
+    "noPins": "Rien d'épinglé pour le moment.",
     "noMessages": "Aucun message — dites bonjour.",
     "create": "Créer",
     "createFailed": "Le canal n'a pas pu être créé",
@@ -3954,14 +3957,14 @@
     "open": "Démarrer le mode vocal",
     "close": "Fermer le mode vocal",
     "starting": "Démarrage…",
-    "listening": "À l’écoute…",
+    "listening": "À l'écoute…",
     "muted": "Micro coupé",
     "transcribing": "Transcription…",
     "generating": "Réflexion…",
     "speaking": "Parle…",
     "mute": "Couper le micro",
     "unmute": "Réactiver le micro",
-    "finishTurn": "J’ai fini de parler",
+    "finishTurn": "J'ai fini de parler",
     "skipReply": "Passer la réponse",
     "microphoneFailed": "Micro indisponible",
     "transcriptionFailed": "Échec de la transcription",
@@ -3970,33 +3973,33 @@
     "unsupportedHint": "Le mode vocal nécessite un micro et un fournisseur de reconnaissance vocale ou la reconnaissance du navigateur."
   },
   "imageEdit": {
-    "title": "Modifier l’image",
+    "title": "Modifier l'image",
     "prompt": "Décrire la modification",
     "promptPlaceholder": "Par exemple : remplacer le ciel par un coucher de soleil",
     "model": "Modèle",
     "apply": "Appliquer la modification",
-    "maskHint": "Peignez les zones à repeindre ; laissez la toile intacte pour modifier toute l’image.",
+    "maskHint": "Peignez les zones à repeindre ; laissez la toile intacte pour modifier toute l'image.",
     "brushSize": "Taille du pinceau",
     "clearMask": "Effacer le masque",
-    "referenceImages": "Images de référence (jusqu’à {{total}})",
-    "noModels": "Aucun modèle configuré ne prend en charge la retouche d’image.",
+    "referenceImages": "Images de référence (jusqu'à {{total}})",
+    "noModels": "Aucun modèle configuré ne prend en charge la retouche d'image.",
     "saved": "Image modifiée enregistrée dans la galerie",
-    "failed": "Échec de la modification de l’image",
-    "loadFailed": "Impossible de charger l’image source"
+    "failed": "Échec de la modification de l'image",
+    "loadFailed": "Impossible de charger l'image source"
   },
   "costs": {
     "title": "Coûts et budgets",
-    "description": "Prix des tarifs appliqués au journal d’utilisation ; les budgets surveillent ou plafonnent les dépenses.",
+    "description": "Prix des tarifs appliqués au journal d'utilisation ; les budgets surveillent ou plafonnent les dépenses.",
     "loadFailed": "Impossible de charger les données de coûts",
-    "saveFailed": "Échec de l’enregistrement",
-    "exportFailed": "Échec de l’export",
+    "saveFailed": "Échec de l'enregistrement",
+    "exportFailed": "Échec de l'export",
     "exportCsv": "Exporter en CSV",
     "totalSpend": "Dépense totale",
     "meteredEvents": "Événements tarifés",
     "unmeteredEvents": "Événements non tarifés",
     "topModel": "Modèle principal",
     "budgets": "Budgets",
-    "noBudgets": "Aucun budget pour l’instant.",
+    "noBudgets": "Aucun budget pour l'instant.",
     "budgetName": "Nom du budget",
     "principalId": "Identifiant utilisateur ou groupe",
     "addBudget": "Ajouter un budget",
@@ -4018,7 +4021,7 @@
       "hard": "Alerter et bloquer"
     },
     "tariffs": "Tarifs",
-    "noTariffs": "Aucun tarif — les coûts restent non tarifés tant qu’aucun prix n’est défini.",
+    "noTariffs": "Aucun tarif — les coûts restent non tarifés tant qu'aucun prix n'est défini.",
     "plugin": "Plugin",
     "model": "Modèle",
     "modelOptional": "Modèle (facultatif)",
@@ -4033,27 +4036,27 @@
   },
   "evaluations": {
     "title": "Évaluations",
-    "description": "Duels d’arène à l’aveugle, classement Elo, jeux d’évaluation réutilisables et votre jeu de données de retours.",
+    "description": "Duels d'arène à l'aveugle, classement Elo, jeux d'évaluation réutilisables et votre jeu de données de retours.",
     "loadFailed": "Impossible de charger les évaluations",
-    "matchFailed": "Le duel d’arène a échoué",
+    "matchFailed": "Le duel d'arène a échoué",
     "voteRecorded": "Vote enregistré",
-    "voteFailed": "Impossible d’enregistrer le vote",
-    "saveFailed": "Échec de l’enregistrement",
-    "exportFailed": "Échec de l’export",
-    "setSaved": "Jeu d’évaluation enregistré",
+    "voteFailed": "Impossible d'enregistrer le vote",
+    "saveFailed": "Échec de l'enregistrement",
+    "exportFailed": "Échec de l'export",
+    "setSaved": "Jeu d'évaluation enregistré",
     "runStarted": "Exécution lancée",
     "pickModel": "Choisir un modèle",
     "tabs": {
       "arena": "Arène",
       "leaderboard": "Classement",
-      "sets": "Jeux d’éval",
+      "sets": "Jeux d'éval",
       "feedback": "Retours"
     },
     "arenaModelA": "Modèle A",
     "arenaModelB": "Modèle B",
     "arenaPrompt": "Posez la même question aux deux modèles…",
     "startMatch": "Lancer le duel",
-    "arenaHint": "Les identités des modèles restent cachées jusqu’au vote.",
+    "arenaHint": "Les identités des modèles restent cachées jusqu'au vote.",
     "candidate": "Réponse {{letter}}",
     "voteFirst": "La première est meilleure",
     "voteSecond": "La seconde est meilleure",
@@ -4063,18 +4066,18 @@
     "rating": "Score",
     "record": "Bilan",
     "votes": "Votes",
-    "noVotes": "Aucun vote d’arène — lancez un duel pour construire le classement.",
-    "newSet": "Nouveau jeu d’évaluation",
+    "noVotes": "Aucun vote d'arène — lancez un duel pour construire le classement.",
+    "newSet": "Nouveau jeu d'évaluation",
     "setName": "Nom du jeu",
     "setPrompts": "Un prompt par ligne…",
     "saveSet": "Enregistrer le jeu",
     "yourSets": "Vos jeux",
-    "noSets": "Aucun jeu d’évaluation.",
+    "noSets": "Aucun jeu d'évaluation.",
     "itemCount": "{{total}} prompts",
     "run": "Exécuter",
     "deleteSet": "Supprimer le jeu",
-    "cancelRun": "Annuler l’exécution",
-    "exportRun": "Exporter l’exécution",
+    "cancelRun": "Annuler l'exécution",
+    "exportRun": "Exporter l'exécution",
     "status": {
       "queued": "En attente",
       "running": "En cours",

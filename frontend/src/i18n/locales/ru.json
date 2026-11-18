@@ -465,7 +465,7 @@
         "topK": "Top K",
         "minP": "Min P",
         "maxTokens": "Макс. токенов",
-        "repeatPenalty": "Штраф за повторы",
+        "repeatPenalty": "Штраф за повторение",
         "seed": "Сид",
         "contextLength": "Длина контекста"
       },
@@ -713,7 +713,7 @@
         "title": "Тема",
         "light": "Светлая",
         "dark": "Тёмная",
-        "amoled": "Глубокий Чёрный",
+        "amoled": "Глубокий чёрный",
         "celestial": "Небесная",
         "system": "Системная"
       },
@@ -830,6 +830,7 @@
         "enableDescription": "Генерировать заголовки чатов и сводки размышлений в реальном времени",
         "taskModel": "Модель для задач",
         "selectTaskModel": "Выберите модель для задач",
+        "useCurrentModel": "Использовать текущую запущенную модель",
         "taskModelDescription": "Модель для заголовков и сводок размышлений в реальном времени. Последние рассуждения отправляются этой модели."
       },
       "updatingModel": "Обновление {{name}} ({{current}}/{{total}})",
@@ -1213,7 +1214,7 @@
         "forgejoDescription": "Самостоятельно размещённый репозиторий Forgejo",
         "sponsor": "Поддержать",
         "sponsorDescription": "Помогите финансировать проект",
-        "star": "Звезда на GitHub",
+        "star": "Поставить звезду на GitHub",
         "starDescription": "Звезда помогает другим найти проект"
       },
       "version": "Версия {{version}}",
@@ -1223,7 +1224,7 @@
         "updateAvailable": "Доступна версия {{version}}",
         "ahead": "Вы опережаете последний релиз ({{version}})",
         "checkFailed": "Не удалось проверить обновления",
-        "viewChangelog": "Список изменений"
+        "viewChangelog": "Посмотреть список изменений"
       }
     },
     "groups": {
@@ -2394,7 +2395,7 @@
       "scheduleOn": "Запускается автоматически каждые {{hours}} ч — каждое учение создаёт резервную копию, восстанавливает её в изолированной среде и проверяет результат.",
       "scheduleOff": "Не запланировано — задайте RECOVERY_DRILL_INTERVAL_HOURS для автоматических учений.",
       "teamUnsupported": "Учения работают в одиночном профиле (SQLite); командный профиль использует координированный CLI резервного копирования.",
-      "runNow": "Запустить учение",
+      "runNow": "Запустить проверку сейчас",
       "running": "Выполняется…",
       "passed": "Учение по восстановлению пройдено.",
       "failed": "Учение по восстановлению не удалось.",
@@ -2536,6 +2537,8 @@
     "soundPlaceholder": "Опишите звук, музыку, атмосферу или желаемый голосовой ответ...",
     "generate": "Сгенерировать",
     "generating": "Генерация… это может занять несколько минут",
+    "cancelJob": "Отменить задание",
+    "stopWaiting": "Перестать ждать",
     "success": "Медиа сгенерировано и сохранено в Imagine",
     "successWithSavedVoice": "Медиафайл создан, и голос «{{name}}» теперь доступен в настройках речи",
     "failed": "Не удалось сгенерировать медиа",
@@ -2633,8 +2636,8 @@
     "closePanelEsc": "Закрыть панель (Esc)",
     "copyButton": "Копировать",
     "dragEdgeToResize": "Перетащите край для изменения размера",
-    "previewUnavailable": "Preview unavailable",
-    "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source.",
+    "previewUnavailable": "Предпросмотр недоступен",
+    "previewUnavailableDescription": "В этом артефакте нет содержимого, которое можно показать в предпросмотре. Переключитесь на просмотр кода, чтобы изучить исходный текст.",
     "versionOf": "Версия {{current}} из {{total}}",
     "previousVersion": "Предыдущая версия",
     "nextVersion": "Следующая версия",

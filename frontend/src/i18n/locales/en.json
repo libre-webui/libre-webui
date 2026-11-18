@@ -830,6 +830,7 @@
         "enableDescription": "Generate chat titles and live thinking summaries",
         "taskModel": "Task Model",
         "selectTaskModel": "Select task model",
+        "useCurrentModel": "Use current running model",
         "taskModelDescription": "Model used for titles and live thinking summaries. Recent reasoning is sent to this model."
       },
       "updatingModel": "Updating {{name}} ({{current}}/{{total}})",
@@ -2536,6 +2537,8 @@
     "soundPlaceholder": "Describe the sound, music, atmosphere, or spoken response you want...",
     "generate": "Generate",
     "generating": "Generating… this can take several minutes",
+    "cancelJob": "Cancel job",
+    "stopWaiting": "Stop waiting",
     "success": "Media generated and saved to Imagine",
     "successWithSavedVoice": "Media generated and “{{name}}” is now available in Speech settings",
     "failed": "Failed to generate media",
