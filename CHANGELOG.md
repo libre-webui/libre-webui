@@ -9,66 +9,45 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### ✨ New Features
 
-- **Gemini 4 and Gemini 3.8 Flash**: the bundled Gemini provider now offers
-  Gemini 4 Hydrogen, Gemini 4 Carbon, Gemini 4 Argon, Gemini 3.8 Flash, Gemini
-  3.6 Flash, and Gemini 3.5 Flash-Lite. Gemini 3.5 Flash is gone from the list
-  because Google now answers it with Gemini 3.6 Flash, so a chat that used it
-  should switch to 3.6 Flash.
-- **Gemini model discovery**: **Refresh models** and the automatic catalog
-  refresh now work for the Gemini provider. They read every page of Google's
-  model list and keep the text chat models, with their context windows and
-  whether they think, so new Gemini models appear without an update.
-- **Extra high thinking**: the thinking control has a new **Extra high** level
-  above high, in Chat, Work, and the Generation settings, in every language.
-  Gemini 4 Hydrogen and the Claude models that think adaptively receive their
-  own `xhigh` level, as do OpenAI's GPT models from 5.4 on, directly or through
-  ChatGPT sign-in. DeepSeek receives `max`, OpenRouter receives `xhigh` and maps
-  it to each model's nearest level, Claude and Gemini 2.5 models that take a
-  budget get the largest one they allow, and every other model receives
-  **high**.
-
 ### 🔧 Improvements
-
-- **Gemini thinking levels**: Gemini 3 and later models receive a thinking
-  level instead of a token budget, as Google now asks, and **off** becomes the
-  near-off `minimal` level where a model has one. Temperature and top-p are no
-  longer sent to Gemini 3.6 Flash and newer, which ignore them, and replies are
-  capped at Gemini's 65,536-token output limit.
-- **Gemini thinking in usage**: thinking tokens count toward a Gemini reply's
-  output tokens on the Provider Usage page, the way Google bills them.
 
 ### 🐛 Bug Fixes
 
-- **Gemini in Chat**: streamed Gemini replies failed, because Chat sent the
-  request to the non-streaming method with an OpenAI-only field that Google
-  rejects and then read the answer as an OpenAI stream. Chat now streams from
-  Gemini's own streaming method. Gemini replies in Chat also see the whole
-  conversation and the system prompt instead of only the latest message, read
-  attached images on earlier turns, can use tools, and pass Gemini's thought
-  signatures back so the model keeps its reasoning between turns.
-- **Untranslated labels**: the **Use current running model** choice for title
-  generation, the video **Cancel job** and **Stop waiting** buttons, and the
-  artifact **Preview unavailable** notice were English in every language and
-  are now translated. Bengali and Icelandic gain the model picker and About
-  links strings they were missing, labels that read oddly, such as
-  **Star on GitHub** as a noun, now read as actions, and Portuguese uses
-  Brazilian wording throughout instead of a mix with European Portuguese.
+### 📚 Documentation
+
+## [0.45.2] - 2026-11-18
+
+Gemini 4 arrives, Gemini replies in Chat are fixed, and the thinking control
+gets an Extra high level.
+
+### ✨ New Features
+
+- **Gemini 4**: Gemini 4 Hydrogen, Carbon, and Argon, plus Gemini 3.8 Flash,
+  3.6 Flash, and 3.5 Flash-Lite. Gemini 3.5 Flash is gone because Google now
+  serves 3.6 Flash in its place.
+- **Gemini model discovery**: Refresh models now works for Gemini, so new
+  Gemini models show up without an update.
+- **Extra high thinking**: a new level above high in Chat, Work, and Settings.
+  Models that offer a higher level get it (Gemini 4 Hydrogen, Claude, OpenAI
+  GPT 5.4 and later, DeepSeek, OpenRouter); everything else gets high.
+
+### 🔧 Improvements
+
+- **Gemini thinking**: Gemini 3 and later use thinking levels instead of token
+  budgets, and their thinking tokens count in Provider Usage.
+
+### 🐛 Bug Fixes
+
+- **Gemini in Chat**: replies failed with streaming on and only saw your last
+  message with it off. Both work now, with history, system prompt, images, and
+  tools.
+- **Translations**: labels that stayed in English are now translated, and
+  Portuguese is consistently Brazilian.
 
 ### 📚 Documentation
 
-- **Pro Tips**: how the thinking control maps to Gemini 3 and later models,
-  what **Extra high** sends to each provider, and the **Model default** entry's
-  real name.
-- **Plugin Architecture**: how discovery finds Gemini's model list.
-- **Workspaces**: Work's reasoning control lists **extra high**, and the room
-  Work adds for thinking applies to every Anthropic and Gemini model.
-- **Provider Connections**: what **Extra high** sends to Baseten and why.
-- **UI labels**: the guides name buttons, tabs, and menu paths the way the app
-  shows them (**Settings → Speech**, **Full API endpoint URL**, **Download as
-  Markdown**, **Provider Usage**, **Mute microphone**, **Close voice mode**,
-  **Reset to Defaults**, **Settings → API keys**), and the translated guides
-  now use the app's own labels in every language instead of English or
-  different wording.
+- The guides cover the changes above and name buttons and menus the way the
+  app shows them, in every language.
 
 ## [0.45.1] - 2026-11-16
 
