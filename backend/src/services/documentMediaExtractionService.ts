@@ -100,6 +100,9 @@ const ocrOneWithVisionModel = async (
       },
     ],
     userId,
+    requestContext: {
+      operation: 'document_media_extraction',
+    },
     ...(signal ? { signal } : {}),
   });
   return result.assistantContent.trim();

@@ -35,6 +35,7 @@ import type {
   OllamaChatResponse,
   Plugin,
   PluginResponse,
+  ProviderRequestContext,
 } from '../types/index.js';
 import { createLogger } from '../utils/logger.js';
 import { normalizeChatProviderSelection } from '../utils/chatProviderSelection.js';
@@ -59,6 +60,7 @@ export interface NonStreamingExecutionOptions {
   pluginMessages: ChatMessage[];
   userId: string;
   pluginFallbackPolicy?: PluginFallbackPolicy;
+  requestContext?: ProviderRequestContext;
   signal?: AbortSignal;
 }
 
@@ -292,6 +294,7 @@ class ChatGenerationService {
     pluginMessages,
     userId,
     pluginFallbackPolicy = 'disabled',
+    requestContext,
     signal,
   }: NonStreamingExecutionOptions): Promise<NonStreamingExecutionResult> {
     throwIfChatGenerationCancelled(signal);
@@ -349,7 +352,8 @@ class ChatGenerationService {
           target.mergedOptions,
           userId,
           target.activePlugin.id,
-          signal
+          signal,
+          requestContext
         );
         const incompleteReason =
           pluginResponse.providerMetadata?.[

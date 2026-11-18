@@ -43,6 +43,7 @@ import preferencesService from './services/preferencesService.js';
 import assistantCompletionService from './services/assistantCompletionService.js';
 import { personaService } from './services/personaService.js';
 import { ChatRequestService } from './services/chatRequestService.js';
+import { createToolRoundStarter } from './services/toolRoundStarter.js';
 import { streamOllamaChatResponse } from './utils/ollamaStreaming.js';
 import { streamPluginResponse } from './utils/pluginStreaming.js';
 import { createLogger } from './utils/logger.js';
@@ -640,6 +641,16 @@ export function registerWebSocketServer(
                 undefined,
                 generationSignal
               );
+          const providerRequestContext = {
+            conversationId: sessionId,
+            messageId:
+              userMessage?.id ??
+              [...persistedMessages]
+                .reverse()
+                .find(message => message.role === 'user')?.id ??
+              assistantMessageId,
+            operation: isPrivate ? 'private_chat' : 'chat',
+          };
           const preparedGeneration =
             await chatRequestService.prepareGenerationRequest({
               session,
@@ -767,15 +778,15 @@ export function registerWebSocketServer(
                       skillIds: toolSkillIds,
                       sink: toolSink,
                       signal: generationSignal,
-                      startRound: (extension, tools) =>
-                        pluginService.executePluginStreamRequest(
-                          actualModelName,
-                          [...pluginMessages, ...extension],
-                          { ...mergedOptions, tools: [...tools] },
-                          userId,
-                          activePlugin.id,
-                          generationSignal
-                        ),
+                      startRound: createToolRoundStarter({
+                        target: generationTarget,
+                        ollamaMessages,
+                        pluginMessages,
+                        userId,
+                        ollamaState: {},
+                        requestContext: providerRequestContext,
+                        signal: generationSignal,
+                      }),
                     })
                   : undefined;
               if (agentProviderId || shouldStreamPlugin || pluginToolLoop) {
@@ -796,7 +807,8 @@ export function registerWebSocketServer(
                           mergedOptions,
                           userId,
                           (activePlugin as NonNullable<typeof activePlugin>).id,
-                          generationSignal
+                          generationSignal,
+                          providerRequestContext
                         ),
                   messageId: assistantMessageId,
                   signal: generationSignal,
@@ -831,6 +843,7 @@ export function registerWebSocketServer(
                     pluginMessages,
                     userId,
                     pluginFallbackPolicy: 'disabled',
+                    requestContext: providerRequestContext,
                     signal: generationSignal,
                   });
 

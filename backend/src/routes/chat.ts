@@ -597,6 +597,12 @@ router.post(
         return;
       }
 
+      const providerRequestContext = {
+        conversationId: sessionId,
+        messageId: userMessage.id,
+        operation: 'chat',
+      };
+
       let documentContext = EMPTY_CHAT_DOCUMENT_CONTEXT(message);
       try {
         documentContext = await buildChatDocumentContext(
@@ -668,6 +674,7 @@ router.post(
         pluginMessages: preparedGeneration.pluginMessages,
         userId,
         pluginFallbackPolicy: 'allow',
+        requestContext: providerRequestContext,
         signal,
       });
 
@@ -1381,6 +1388,12 @@ router.post(
         return;
       }
 
+      const providerRequestContext = {
+        conversationId: sessionId,
+        messageId: userMessage.id,
+        operation: 'chat',
+      };
+
       // Document context first, matching the WebSocket and non-stream
       // paths; search composes on top of it.
       let documentContext = EMPTY_CHAT_DOCUMENT_CONTEXT(message);
@@ -1585,7 +1598,8 @@ router.post(
             mergedOptions,
             userId,
             activePlugin.id,
-            signal
+            signal,
+            providerRequestContext
           )) {
             if (chunk.type === 'content' && chunk.content) {
               fullResponse += chunk.content;
@@ -1646,6 +1660,7 @@ router.post(
               pluginMessages,
               userId,
               pluginFallbackPolicy: 'allow',
+              requestContext: providerRequestContext,
               signal,
             });
           fullResponse = generationResult.assistantContent;

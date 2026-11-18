@@ -27,6 +27,7 @@ import type {
   ChatMessage,
   OllamaChatMessage,
   OllamaChatResponse,
+  ProviderRequestContext,
   ProviderToolSpec,
 } from '../types/index.js';
 import { toOpenAICompatibleTools } from '../utils/pluginChatAdapter.js';
@@ -47,6 +48,7 @@ export interface ToolRoundStarterOptions {
   userId: string;
   /** Receives the Ollama bridge's terminal chunk, when that path runs. */
   ollamaState: { finalChunk?: OllamaChatResponse };
+  requestContext?: ProviderRequestContext;
   signal?: AbortSignal;
 }
 
@@ -68,7 +70,13 @@ export const createToolRoundStarter = (
         { ...options.target.mergedOptions, tools: [...tools] },
         options.userId,
         activePluginId,
-        options.signal
+        options.signal,
+        options.requestContext
+          ? {
+              ...options.requestContext,
+              operation: 'tool_round',
+            }
+          : undefined
       );
   }
   return (extension, tools) =>

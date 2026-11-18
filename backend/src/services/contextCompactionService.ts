@@ -352,6 +352,10 @@ export const planCompaction = async (
         },
       ],
       userId,
+      requestContext: {
+        conversationId: session.id,
+        operation: 'context_compaction',
+      },
       signal: options.signal,
     });
     const summary = result.assistantContent.trim();

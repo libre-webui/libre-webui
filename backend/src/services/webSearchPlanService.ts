@@ -132,6 +132,10 @@ const planWebSearch = async (
       },
     ],
     userId,
+    requestContext: {
+      conversationId: session.id,
+      operation: 'web_search_plan',
+    },
     signal,
   });
   return parsePlan(result.assistantContent);

@@ -29,6 +29,7 @@ import type {
   OllamaChatRequest,
   OllamaChatResponse,
   PluginResponse,
+  ProviderRequestContext,
 } from '../types/index.js';
 import {
   ChatProviderSelectionError,
@@ -158,7 +159,8 @@ interface ThinkingSummaryDependencies {
       options?: GenerationOptions,
       userId?: string,
       pluginId?: string,
-      signal?: AbortSignal
+      signal?: AbortSignal,
+      requestContext?: ProviderRequestContext
     ): Promise<PluginResponse>;
   };
   ollamaService: {
@@ -318,7 +320,11 @@ export class ThinkingSummaryService {
             { ...textOptions, ...options, num_predict: 256 },
             userId,
             target.activePlugin!.id,
-            signal
+            signal,
+            {
+              conversationId: sessionId,
+              operation: 'thinking_summary',
+            }
           )
         );
         raw = chatGenerationService.extractPluginAssistantContent(response);

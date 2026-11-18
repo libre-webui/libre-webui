@@ -26,6 +26,7 @@ import type {
   Plugin,
   PluginApiMode,
   PluginResponse,
+  ProviderRequestContext,
   ProviderToolSpec,
 } from '../types/index.js';
 import {
@@ -744,6 +745,49 @@ const ROUTING_AFFINITY_HEADERS: ReadonlyMap<string, string> = new Map([
   ['baseten', 'x-session-affinity'],
 ]);
 
+const MAXIMUM_PROVIDER_CONTEXT_VALUE_LENGTH = 512;
+const SAFE_PROVIDER_CONTEXT_VALUE_PATTERN = /^[\x21-\x7e]+$/;
+
+/**
+ * Builds explicitly configured provider context headers.
+ * Plugins that do not opt in receive no client context.
+ */
+export function providerRequestContextHeaders(
+  plugin: Pick<Plugin, 'request_context'>,
+  requestContext?: ProviderRequestContext
+): Record<string, string> {
+  const config = plugin.request_context;
+  if (!config || !requestContext) {
+    return {};
+  }
+
+  const mappings: Array<[string | undefined, string | undefined]> = [
+    [config.conversation_id_header, requestContext.conversationId],
+    [config.message_id_header, requestContext.messageId],
+    [config.operation_header, requestContext.operation],
+  ];
+
+  const headers: Record<string, string> = {};
+
+  for (const [headerName, value] of mappings) {
+    if (headerName === undefined || value === undefined) {
+      continue;
+    }
+
+    if (
+      value.length === 0 ||
+      value.length > MAXIMUM_PROVIDER_CONTEXT_VALUE_LENGTH ||
+      !SAFE_PROVIDER_CONTEXT_VALUE_PATTERN.test(value)
+    ) {
+      throw new Error('Provider request context contains an invalid value');
+    }
+
+    headers[headerName] = value;
+  }
+
+  return headers;
+}
+
 /**
  * Modal and Baseten route a request to the replica most likely to hold its
  * prompt prefix in cache when every request of a conversation carries the
@@ -780,7 +824,8 @@ export function buildPluginChatPayload(
   pluginVars: PluginVariables = {},
   streamOverride?: boolean,
   apiMode: PluginApiMode = 'chat_completions',
-  providerStateScope?: string
+  providerStateScope?: string,
+  requestContext?: ProviderRequestContext
 ): PluginChatPayloadResult {
   const result = buildPluginChatRequest(
     plugin,
@@ -792,9 +837,36 @@ export function buildPluginChatPayload(
     apiMode,
     providerStateScope
   );
-  const routing = providerRoutingHeaders(plugin, model, messages);
-  if (Object.keys(routing).length === 0) return result;
-  return { ...result, headers: { ...result.headers, ...routing } };
+  const routingHeaders = providerRoutingHeaders(plugin, model, messages);
+  const contextHeaders = providerRequestContextHeaders(plugin, requestContext);
+  const headers = {
+    ...result.headers,
+    ...routingHeaders,
+  };
+
+  for (const [headerName, value] of Object.entries(contextHeaders)) {
+    const normalizedHeaderName = headerName.toLowerCase();
+    if (
+      Object.keys(headers).some(
+        existingHeader => existingHeader.toLowerCase() === normalizedHeaderName
+      )
+    ) {
+      throw new Error(
+        `Provider request context header '${headerName}' conflicts with another provider header`
+      );
+    }
+
+    headers[headerName] = value;
+  }
+
+  if (Object.keys(headers).length === 0) {
+    return result;
+  }
+
+  return {
+    ...result,
+    headers,
+  };
 }
 
 function buildPluginChatRequest(

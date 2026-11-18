@@ -216,6 +216,11 @@ router.post(
           })),
           pluginMessages: messages,
           userId: actor,
+          requestContext: {
+            conversationId: `evaluation:${compareGroup}`,
+            messageId: messages[0].id,
+            operation: 'evaluation',
+          },
         });
         return result.assistantContent;
       };
