@@ -46,6 +46,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   conversation and the system prompt instead of only the latest message, read
   attached images on earlier turns, can use tools, and pass Gemini's thought
   signatures back so the model keeps its reasoning between turns.
+- **Untranslated labels**: the **Use current running model** choice for title
+  generation, the video **Cancel job** and **Stop waiting** buttons, and the
+  artifact **Preview unavailable** notice were English in every language and
+  are now translated. Bengali and Icelandic gain the model picker and About
+  links strings they were missing, and labels that read oddly, such as
+  **Star on GitHub** as a noun, now read as actions.
 
 ### 📚 Documentation
 
@@ -56,6 +62,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Workspaces**: Work's reasoning control lists **extra high**, and the room
   Work adds for thinking applies to every Anthropic and Gemini model.
 - **Provider Connections**: what **Extra high** sends to Baseten and why.
+- **UI labels**: the guides name buttons, tabs, and menu paths the way the app
+  shows them (**Settings → Speech**, **Full API endpoint URL**, **Download as
+  Markdown**, **Provider Usage**, **Mute microphone**, **Close voice mode**,
+  **Reset to Defaults**, **Settings → API keys**), and the translated guides
+  now use the app's own labels in every language instead of English or
+  different wording.
 
 ## [0.45.1] - 2026-11-16
 

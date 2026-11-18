@@ -154,8 +154,8 @@ Work does the same for every step of a run's agent loop. Cached input tokens
 cost a fraction of the normal rate. When compaction rewrites the history, the
 key changes, as Modal recommends.
 
-To call one endpoint directly, set the provider's **API Endpoint** to its URL
-(`modal endpoint info <name>` shows it as `service_url`) followed by
+To call one endpoint directly, set the provider's **Full API endpoint URL** to
+its URL (`modal endpoint info <name>` shows it as `service_url`) followed by
 `/v1/chat/completions`. That is how a Dedicated Endpoint is reached; there the
 model keeps its Hugging Face name, such as `moonshotai/Kimi-K3`, which is also
 how the bundled list names Modal's shared models before a token is saved.
@@ -199,7 +199,8 @@ it to the replica that already holds the conversation's prompt in its cache.
 Work does the same for every step of a run's agent loop. When compaction
 rewrites the history, the key changes.
 
-To call a dedicated deployment instead, set the provider's **API Endpoint** to
+To call a dedicated deployment instead, set the provider's
+**Full API endpoint URL** to
 `https://model-<model id>.api.baseten.co/environments/production/sync/v1/chat/completions`.
 The same API key works there.
 

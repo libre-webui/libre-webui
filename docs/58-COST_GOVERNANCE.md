@@ -58,7 +58,7 @@ disable an automation to stop its scheduled spend.
 
 ## Analytics and export
 
-**Usage → Costs and budgets** shows the priced total for the selected
+**Provider Usage → Costs and budgets** shows the priced total for the selected
 window, unpriced event counts, spend by plugin, model, and user, and
 every budget with its live utilization. **Export CSV** downloads the
 priced event ledger (timestamp, user, plugin, model, capability, tokens,

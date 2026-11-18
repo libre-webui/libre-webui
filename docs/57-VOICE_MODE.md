@@ -40,12 +40,12 @@ Controls while the overlay is open:
 
 - **Done speaking** ends your turn immediately — useful in noisy rooms
   or when no audio analysis is available for automatic endpointing.
-- **Mute** pauses capture without leaving the conversation; unmuting
-  starts a fresh turn.
+- **Mute microphone** pauses capture without leaving the conversation;
+  **Unmute microphone** starts a fresh turn.
 - **Skip reply** stops playback and returns to listening.
 - **Barge-in:** start talking while the reply plays and playback stops,
   returning to listening for your next turn.
-- **Close** tears the session down: the microphone stream stops, any
+- **Close voice mode** tears the session down: the microphone stream stops, any
   in-flight transcription aborts, and playback cancels.
 
 Failures never end the conversation. A microphone error, a rejected
