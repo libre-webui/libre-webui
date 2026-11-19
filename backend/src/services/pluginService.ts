@@ -278,10 +278,7 @@ type DiscoverableMediaCapability = 'image' | 'stt' | 'tts' | 'audio' | 'video';
  * silent fallback to the bundled catalog is never presented as a live update.
  */
 export type PluginModelDiscoveryOutcome =
-  | 'updated'
-  | 'unchanged'
-  | 'missing_credentials'
-  | 'unavailable';
+  'updated' | 'unchanged' | 'missing_credentials' | 'unavailable';
 
 export interface PluginModelDiscoveryResult {
   models: string[];

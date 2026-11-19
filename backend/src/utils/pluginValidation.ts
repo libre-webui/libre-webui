@@ -72,11 +72,7 @@ export function isValidPluginRequestContextConfig(
     return true;
   }
 
-  if (
-    typeof value !== 'object' ||
-    value === null ||
-    Array.isArray(value)
-  ) {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) {
     return false;
   }
 
