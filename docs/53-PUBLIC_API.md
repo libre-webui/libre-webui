@@ -13,8 +13,8 @@ scripts can point at your instance with only a base-URL change.
 
 ## Authentication
 
-Create a **scoped API token** under Settings → Account → API tokens (tokens
-use the `lwk_` prefix and are stored hashed). The `/v1` surface requires
+Create a **scoped API token** under Settings → API keys (tokens use the
+`lwk_` prefix and are stored hashed). The `/v1` surface requires
 the `chat` scope. Pass the token as an ordinary bearer key:
 
 ```bash
@@ -55,7 +55,9 @@ The `/v1` surface is **stateless inference**: it never creates chats,
 touches your knowledge base, or runs tools. Stateful conversations with
 durable replayable events, cancellation by identity, idempotent enqueues,
 and the native tool loop live on the native `/api/chat` event API, which
-the same tokens can call with the `chat` scope. Roles other than
+the same tokens can call with the `chat` scope, as they can
+`POST /api/decisions` for decision models (see
+[Decision Models](./68-DECISION_MODELS.md)). Roles other than
 `system`/`user`/`assistant` (for example `tool`) are rejected rather than
 silently accepted.
 

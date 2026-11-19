@@ -28,9 +28,16 @@
  * this option existed. Nothing is added to a payload for an unset value.
  */
 
-export const THINKING_LEVELS = ['low', 'medium', 'high'] as const;
+export const THINKING_LEVELS = ['low', 'medium', 'high', 'xhigh'] as const;
 
 export type ThinkingLevel = (typeof THINKING_LEVELS)[number];
+
+/**
+ * The levels every provider that names levels understands. Extra high sits
+ * above them and reaches only the models documented to take it; everywhere
+ * else it asks for the highest standard level.
+ */
+export type StandardThinkingLevel = Exclude<ThinkingLevel, 'xhigh'>;
 
 /** `false` disables reasoning, `true` enables it at the provider's default. */
 export type ThinkingPreference = boolean | ThinkingLevel;
@@ -45,6 +52,7 @@ const THINKING_BUDGETS: Record<ThinkingLevel, number> = {
   low: 2048,
   medium: 8192,
   high: 16384,
+  xhigh: 32768,
 };
 
 /** Headroom kept for the visible answer when a budget is applied. */
@@ -108,6 +116,17 @@ export function thinkingEffort(think: unknown): ThinkingLevel | undefined {
   const preference = normalizeThinkingPreference(think);
   if (preference === undefined || preference === false) return undefined;
   return preference === true ? 'medium' : preference;
+}
+
+/**
+ * Effort for providers whose top level is `high`: extra high asks them for
+ * the most they offer instead of a value they would reject.
+ */
+export function standardThinkingEffort(
+  think: unknown
+): StandardThinkingLevel | undefined {
+  const effort = thinkingEffort(think);
+  return effort === 'xhigh' ? 'high' : effort;
 }
 
 /** Reasoning token budget for the providers that take one. */

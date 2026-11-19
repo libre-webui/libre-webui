@@ -105,6 +105,19 @@
           "image/webp"
         ]
       }
+    },
+    "decision": {
+      "endpoint": "https://api.openai.com/v1/decisions",
+      "model_map": [
+        "gpt-6-luna-decisions"
+      ],
+      "config": {
+        "api": "openai",
+        "path": "decisions",
+        "model_aliases": {
+          "gpt-6-luna-decisions": "gpt-6-luna"
+        }
+      }
     }
   },
   "variables": [

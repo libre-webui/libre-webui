@@ -25,6 +25,7 @@ import {
   X,
 } from 'lucide-react';
 import { cn } from '@/utils';
+import { libraryCategoryLabel } from '@/utils/modelPresentation';
 import type { LibraryModel, PullProgress } from './types';
 
 interface OllamaLibraryTabProps {
@@ -79,7 +80,7 @@ export function OllamaLibraryTab({
                   : 'bg-gray-100 dark:bg-dark-200 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-dark-300'
               )}
             >
-              {cat.charAt(0).toUpperCase() + cat.slice(1)}
+              {libraryCategoryLabel(cat, t)}
             </button>
           ))}
         </div>

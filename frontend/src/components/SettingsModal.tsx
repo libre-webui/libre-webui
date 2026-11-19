@@ -265,7 +265,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     },
     {
       value: AUTO_TITLE_CURRENT_MODEL,
-      label: 'Use current running model',
+      label: t('settings.model.autoTitle.useCurrentModel'),
     },
     ...taskSelectorModels.map(model => ({
       value: chatModelOptionKey(model),

@@ -562,6 +562,62 @@
       "replyFinishedNoText": "{{name}} hat die Antwort beendet.",
       "codeBlock": "Codeblock",
       "generationStopped": "Generierung gestoppt"
+    },
+    "decision": {
+      "barTitle": "Entscheidungsfragen",
+      "interactiveHint": "Keine Fragen festgelegt. Ihre erste Nachricht ist der Zustand, und jede Zeile, die Sie danach senden, ist eine Ja/Nein-Frage dazu. Senden Sie /clear, um neu zu beginnen.",
+      "add": "Fragen festlegen",
+      "edit": "Fragen bearbeiten",
+      "dialogTitle": "Entscheidungsfragen",
+      "dialogSubtitle": "Das Entscheidungsmodell beantwortet diese Fragen zu jeder Nachricht, die Sie senden, mit einer Wahrscheinlichkeit für jede Antwort.",
+      "useInteractive": "Interaktiven Modus verwenden",
+      "questionNumber": "Frage {{number}}",
+      "removeQuestion": "Frage entfernen",
+      "typeLabel": "Fragetyp",
+      "types": {
+        "noul": "Ja/Nein",
+        "choice": "Auswahl",
+        "score": "Bewertung"
+      },
+      "question": "Frage",
+      "placeholders": {
+        "noul": "Wird eine Rückerstattung verlangt?",
+        "choice": "Welches Team soll sich darum kümmern?",
+        "score": "Wie dringend ist das?"
+      },
+      "yesMeans": "Ja bedeutet (optional)",
+      "noMeans": "Nein bedeutet (optional)",
+      "options": "Optionen",
+      "optionName": "Name von Option {{number}}",
+      "optionDescription": "Beschreibung von Option {{number}}",
+      "optionNamePlaceholder": "abrechnung",
+      "optionDescriptionPlaceholder": "Beschreibung (optional)",
+      "removeOption": "Option {{number}} entfernen",
+      "addOption": "Option hinzufügen",
+      "levels": "Stufen, niedrigste zuerst",
+      "levelLabel": "Stufe {{number}}",
+      "levelPlaceholder": "Diese Stufe beschreiben",
+      "removeLevel": "Stufe {{number}} entfernen",
+      "addLevel": "Stufe hinzufügen",
+      "addQuestion": "Frage hinzufügen",
+      "saved": "Entscheidungsfragen gespeichert",
+      "saveFailed": "Die Entscheidungsfragen konnten nicht gespeichert werden",
+      "errors": {
+        "tooMany": "Stellen Sie höchstens {{max}} Fragen.",
+        "instructions": "Frage {{number}} braucht einen Text.",
+        "options": "Frage {{number}} braucht 2 bis 255 Optionen mit jeweils eigenem Namen.",
+        "levels": "Frage {{number}} braucht 2 bis 10 Stufen."
+      },
+      "result": {
+        "yes": "Ja",
+        "no": "Nein",
+        "declined": "Abgelehnt",
+        "score": "{{value}} von {{max}}",
+        "stateSaved": "Als Zustand gespeichert. Stellen Sie Ja/Nein-Fragen dazu, eine pro Zeile, oder legen Sie Fragen für diesen Chat fest.",
+        "cleared": "Zurückgesetzt. Ihre nächste Nachricht ist der neue Zustand.",
+        "via": "{{model}} über {{provider}}",
+        "inputTokens": "{{tokens}} Eingabe-Tokens"
+      }
     }
   },
   "sidebar": {
@@ -774,6 +830,7 @@
         "enableDescription": "Chattitel und laufende Zusammenfassungen des Denkprozesses erstellen",
         "taskModel": "Aufgabenmodell",
         "selectTaskModel": "Aufgabenmodell auswählen",
+        "useCurrentModel": "Aktuell laufendes Modell verwenden",
         "taskModelDescription": "Modell für Titel und laufende Zusammenfassungen des Denkprozesses. Die jüngsten Überlegungen werden an dieses Modell gesendet."
       },
       "updatingModel": "{{name}} wird aktualisiert ({{current}}/{{total}})",
@@ -846,7 +903,8 @@
         "embedding": "Embedding",
         "image": "Bild",
         "speech": "Sprache",
-        "transcription": "Transkription"
+        "transcription": "Transkription",
+        "decision": "Entscheidung"
       },
       "exportPlugin": "Plugin exportieren",
       "deletePlugin": "Plugin löschen",
@@ -922,7 +980,8 @@
         "on": "An",
         "low": "Niedrig",
         "medium": "Mittel",
-        "high": "Hoch"
+        "high": "Hoch",
+        "xhigh": "Sehr hoch"
       }
     },
     "documents": {
@@ -1155,7 +1214,7 @@
         "forgejoDescription": "Selbst gehostetes Forgejo-Repository",
         "sponsor": "Sponsor",
         "sponsorDescription": "Das Projekt finanziell unterstützen",
-        "star": "Stern auf GitHub",
+        "star": "Auf GitHub einen Stern geben",
         "starDescription": "Ein Stern hilft anderen, das Projekt zu entdecken"
       },
       "version": "Version {{version}}",
@@ -1949,7 +2008,8 @@
         "tts": "Text zu Sprache",
         "voice-mode": "Sprachmodus",
         "voice-cloning": "Stimmklonen",
-        "work-agents": "Agent-CLIs in Work"
+        "work-agents": "Agent-CLIs in Work",
+        "decision-models": "Entscheidungsmodelle"
       },
       "grantViaKinds": {
         "user": "direkte Freigabe",
@@ -2095,6 +2155,13 @@
         "admins": "Administratoren",
         "all-users": "Alle Work-Benutzer"
       }
+    },
+    "decisionAccess": {
+      "title": "Entscheidungsmodelle",
+      "description": "Allen aktiven Benutzern Entscheidungsmodelle in Chats und über die Decisions-API erlauben. Administratoren können sie immer nutzen.",
+      "lockedByEnv": "Durch die Umgebungsvariable DECISION_MODELS_ACCESS_MODE festgelegt",
+      "saved": "Zugriff auf Entscheidungsmodelle aktualisiert",
+      "saveFailed": "Zugriff auf Entscheidungsmodelle konnte nicht aktualisiert werden"
     }
   },
   "usageAnalytics": {
@@ -2470,6 +2537,8 @@
     "soundPlaceholder": "Beschreiben Sie den Sound, die Musik, die Atmosphäre oder die gesprochene Antwort, die Sie möchten...",
     "generate": "Generieren",
     "generating": "Generieren… dies kann mehrere Minuten dauern",
+    "cancelJob": "Auftrag abbrechen",
+    "stopWaiting": "Nicht mehr warten",
     "success": "Medien generiert und in Imagine gespeichert",
     "successWithSavedVoice": "Medium erstellt und „{{name}}“ ist jetzt in den Spracheinstellungen verfügbar",
     "failed": "Mediengenerierung fehlgeschlagen",
@@ -2567,8 +2636,8 @@
     "closePanelEsc": "Panel schließen (Esc)",
     "copyButton": "Kopieren",
     "dragEdgeToResize": "Kante ziehen zum Anpassen",
-    "previewUnavailable": "Preview unavailable",
-    "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source.",
+    "previewUnavailable": "Vorschau nicht verfügbar",
+    "previewUnavailableDescription": "Dieses Artefakt enthält keinen Inhalt, der sich in der Vorschau anzeigen lässt. Wechseln Sie zur Code-Ansicht, um den Quelltext zu prüfen.",
     "versionOf": "Version {{current}} von {{total}}",
     "previousVersion": "Vorherige Version",
     "nextVersion": "Nächste Version",
@@ -3121,7 +3190,18 @@
     "sources": "Modellquellen",
     "defaultModel": "Standardmodell",
     "contextSize": "{{size}} Kontext",
-    "via": "über {{provider}}"
+    "via": "über {{provider}}",
+    "decisionBadge": "Entscheidung",
+    "libraryCategories": {
+      "all": "Alle",
+      "general": "Allgemein",
+      "coding": "Programmierung",
+      "reasoning": "Begründung",
+      "vision": "Vision",
+      "embedding": "Embedding",
+      "decision": "Entscheidung",
+      "cloud": "Cloud"
+    }
   },
   "whatsNew": {
     "title": "Was ist neu",

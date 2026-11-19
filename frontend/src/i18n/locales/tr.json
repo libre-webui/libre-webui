@@ -562,6 +562,62 @@
       "replyFinishedNoText": "{{name}} yanıtı tamamladı.",
       "codeBlock": "kod bloğu",
       "generationStopped": "Üretim durduruldu"
+    },
+    "decision": {
+      "barTitle": "Karar soruları",
+      "interactiveHint": "Soru belirlenmedi. İlk mesajınız durumdur ve sonrasında gönderdiğiniz her satır onunla ilgili bir evet/hayır sorusudur. Baştan başlamak için /clear gönderin.",
+      "add": "Soruları belirle",
+      "edit": "Soruları düzenle",
+      "dialogTitle": "Karar soruları",
+      "dialogSubtitle": "Karar modeli, gönderdiğiniz her mesaj için bu soruları yanıtlar ve her yanıta bir olasılık verir.",
+      "useInteractive": "Etkileşimli modu kullan",
+      "questionNumber": "Soru {{number}}",
+      "removeQuestion": "Soruyu kaldır",
+      "typeLabel": "Soru türü",
+      "types": {
+        "noul": "Evet/hayır",
+        "choice": "Seçim",
+        "score": "Puan"
+      },
+      "question": "Soru",
+      "placeholders": {
+        "noul": "Para iadesi isteniyor mu?",
+        "choice": "Bununla hangi ekip ilgilenmeli?",
+        "score": "Bu ne kadar acil?"
+      },
+      "yesMeans": "Evet şu anlama gelir (isteğe bağlı)",
+      "noMeans": "Hayır şu anlama gelir (isteğe bağlı)",
+      "options": "Seçenekler",
+      "optionName": "Seçenek {{number}} adı",
+      "optionDescription": "Seçenek {{number}} açıklaması",
+      "optionNamePlaceholder": "faturalama",
+      "optionDescriptionPlaceholder": "Açıklama (isteğe bağlı)",
+      "removeOption": "Seçenek {{number}} kaldır",
+      "addOption": "Seçenek ekle",
+      "levels": "Düzeyler, en düşükten başlayarak",
+      "levelLabel": "Düzey {{number}}",
+      "levelPlaceholder": "Bu düzeyi açıklayın",
+      "removeLevel": "Düzey {{number}} kaldır",
+      "addLevel": "Düzey ekle",
+      "addQuestion": "Soru ekle",
+      "saved": "Karar soruları kaydedildi",
+      "saveFailed": "Karar soruları kaydedilemedi",
+      "errors": {
+        "tooMany": "En fazla {{max}} soru sorun.",
+        "instructions": "Soru {{number}} için metin gerekli.",
+        "options": "Soru {{number}} için her biri kendi adına sahip 2 ile 255 arasında seçenek gerekli.",
+        "levels": "Soru {{number}} için 2 ile 10 arasında düzey gerekli."
+      },
+      "result": {
+        "yes": "Evet",
+        "no": "Hayır",
+        "declined": "Reddedildi",
+        "score": "{{max}} üzerinden {{value}}",
+        "stateSaved": "Durum olarak kaydedildi. Onunla ilgili evet/hayır soruları sorun, her satıra bir tane, ya da bu sohbet için sorular belirleyin.",
+        "cleared": "Temizlendi. Bir sonraki mesajınız yeni durum olacak.",
+        "via": "{{provider}} üzerinden {{model}}",
+        "inputTokens": "{{tokens}} girdi tokeni"
+      }
     }
   },
   "sidebar": {
@@ -747,7 +803,7 @@
       "defaultModel": "Varsayılan Model",
       "defaultModelDescription": "Bu model yeni konuşmalarda varsayılan olarak kullanılacak",
       "selectModel": "Bir model seçin",
-      "specializedModels": "Özelleştirilmiş Modeller",
+      "specializedModels": "Uzmanlaşmış Modeller",
       "visionModel": "Görüntü Modeli",
       "selectVisionModel": "Mevcut sohbet modelini kullan",
       "visionModelDescription": "Giden sohbet bağlamı görüntü içerdiğinde otomatik olarak kullanılır. Görüntü girişini destekleyen bir model seçin.",
@@ -774,6 +830,7 @@
         "enableDescription": "Sohbet başlıkları ve canlı düşünce özetleri oluştur",
         "taskModel": "Görev Modeli",
         "selectTaskModel": "Görev modelini seçin",
+        "useCurrentModel": "Şu anda çalışan modeli kullan",
         "taskModelDescription": "Başlıklar ve canlı düşünce özetleri için kullanılan model. Son akıl yürütme içeriği bu modele gönderilir."
       },
       "updatingModel": "{{name}} güncelleniyor ({{current}}/{{total}})",
@@ -846,7 +903,8 @@
         "embedding": "Gömme",
         "image": "Görüntü",
         "speech": "Konuşma",
-        "transcription": "Transkripsiyon"
+        "transcription": "Transkripsiyon",
+        "decision": "Karar"
       },
       "exportPlugin": "Eklentiyi dışa aktar",
       "deletePlugin": "Eklentiyi sil",
@@ -922,7 +980,8 @@
         "on": "Açık",
         "low": "Düşük",
         "medium": "Orta",
-        "high": "Yüksek"
+        "high": "Yüksek",
+        "xhigh": "Çok yüksek"
       }
     },
     "documents": {
@@ -1949,7 +2008,8 @@
         "tts": "Metinden konuşmaya",
         "voice-mode": "Ses modu",
         "voice-cloning": "Ses klonlama",
-        "work-agents": "Work'te ajan CLI'ları"
+        "work-agents": "Work'te ajan CLI'ları",
+        "decision-models": "Karar modelleri"
       },
       "grantViaKinds": {
         "user": "doğrudan yetki",
@@ -2095,6 +2155,13 @@
         "admins": "Yöneticiler",
         "all-users": "Tüm Work kullanıcıları"
       }
+    },
+    "decisionAccess": {
+      "title": "Karar modelleri",
+      "description": "Tüm etkin kullanıcıların sohbetlerde ve Decisions API üzerinden karar modellerini kullanmasına izin ver. Yöneticiler bunları her zaman kullanabilir.",
+      "lockedByEnv": "DECISION_MODELS_ACCESS_MODE ortam değişkeniyle sabitlendi",
+      "saved": "Karar modelleri erişimi güncellendi",
+      "saveFailed": "Karar modelleri erişimi güncellenemedi"
     }
   },
   "usageAnalytics": {
@@ -2470,6 +2537,8 @@
     "soundPlaceholder": "İstediğiniz sesi, müziği, atmosferi veya sözlü yanıtı açıklayın...",
     "generate": "Oluştur",
     "generating": "Oluşturuluyor… bu birkaç dakika sürebilir",
+    "cancelJob": "İşi iptal et",
+    "stopWaiting": "Beklemeyi durdur",
     "success": "Medya oluşturuldu ve Imagine'a kaydedildi",
     "successWithSavedVoice": "Medya oluşturuldu ve “{{name}}” artık Konuşma ayarlarında kullanılabilir",
     "failed": "Medya oluşturulamadı",
@@ -2567,8 +2636,8 @@
     "closePanelEsc": "Paneli kapat (Esc)",
     "copyButton": "Kopyala",
     "dragEdgeToResize": "Yeniden boyutlandırmak için kenarı sürükleyin",
-    "previewUnavailable": "Preview unavailable",
-    "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source.",
+    "previewUnavailable": "Önizleme kullanılamıyor",
+    "previewUnavailableDescription": "Bu yapıt önizlemede gösterilebilecek içerik barındırmıyor. Kaynağı incelemek için kod görünümüne geçin.",
     "versionOf": "Sürüm {{current}} / {{total}}",
     "previousVersion": "Önceki sürüm",
     "nextVersion": "Sonraki sürüm",
@@ -3121,7 +3190,18 @@
     "sources": "Model kaynakları",
     "defaultModel": "Varsayılan model",
     "contextSize": "{{size}} bağlam",
-    "via": "{{provider}} üzerinden"
+    "via": "{{provider}} üzerinden",
+    "decisionBadge": "Karar",
+    "libraryCategories": {
+      "all": "Tümü",
+      "general": "Genel",
+      "coding": "Kodlama",
+      "reasoning": "muhakeme",
+      "vision": "Görme",
+      "embedding": "Gömme",
+      "decision": "Karar",
+      "cloud": "Bulut"
+    }
   },
   "whatsNew": {
     "title": "Yenilikler",
@@ -3324,7 +3404,7 @@
       "weekly": "Her {{day}} {{time}}",
       "monthly": "Her ayın {{day}}. günü {{time}}",
       "yearly": "Her yıl {{date}} {{time}}",
-      "event": "{{event}} çalışır",
+      "event": "{{event}} olduğunda çalışır",
       "eventMatching": "{{event}} ve başlık \"{{match}}\" içerdiğinde çalışır"
     },
     "finishedNotification": "{{n}} otomasyon çalıştırması tamamlandı",

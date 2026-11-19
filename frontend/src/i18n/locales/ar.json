@@ -562,6 +562,62 @@
       "replyFinishedNoText": "أنهى {{name}} الرد.",
       "codeBlock": "كتلة شيفرة",
       "generationStopped": "تم إيقاف التوليد"
+    },
+    "decision": {
+      "barTitle": "أسئلة القرار",
+      "interactiveHint": "لم تُحدَّد أسئلة. رسالتك الأولى هي الحالة، وكل سطر ترسله بعدها سؤال بنعم أو لا عنها. أرسل /clear للبدء من جديد.",
+      "add": "تحديد الأسئلة",
+      "edit": "تعديل الأسئلة",
+      "dialogTitle": "أسئلة القرار",
+      "dialogSubtitle": "يجيب نموذج القرار عن هذه الأسئلة لكل رسالة ترسلها، مع احتمال لكل إجابة.",
+      "useInteractive": "استخدام الوضع التفاعلي",
+      "questionNumber": "السؤال {{number}}",
+      "removeQuestion": "إزالة السؤال",
+      "typeLabel": "نوع السؤال",
+      "types": {
+        "noul": "نعم/لا",
+        "choice": "اختيار",
+        "score": "تقييم"
+      },
+      "question": "السؤال",
+      "placeholders": {
+        "noul": "هل يُطلب استرداد المبلغ؟",
+        "choice": "أي فريق يجب أن يتولى هذا؟",
+        "score": "ما مدى إلحاح هذا؟"
+      },
+      "yesMeans": "نعم تعني (اختياري)",
+      "noMeans": "لا تعني (اختياري)",
+      "options": "الخيارات",
+      "optionName": "اسم الخيار {{number}}",
+      "optionDescription": "وصف الخيار {{number}}",
+      "optionNamePlaceholder": "الفوترة",
+      "optionDescriptionPlaceholder": "الوصف (اختياري)",
+      "removeOption": "إزالة الخيار {{number}}",
+      "addOption": "إضافة خيار",
+      "levels": "المستويات، من الأدنى أولًا",
+      "levelLabel": "المستوى {{number}}",
+      "levelPlaceholder": "صِف هذا المستوى",
+      "removeLevel": "إزالة المستوى {{number}}",
+      "addLevel": "إضافة مستوى",
+      "addQuestion": "إضافة سؤال",
+      "saved": "تم حفظ أسئلة القرار",
+      "saveFailed": "تعذّر حفظ أسئلة القرار",
+      "errors": {
+        "tooMany": "اطرح {{max}} سؤالًا على الأكثر.",
+        "instructions": "يحتاج السؤال {{number}} إلى نص.",
+        "options": "يحتاج السؤال {{number}} إلى ما بين 2 و255 خيارًا، لكل منها اسمه الخاص.",
+        "levels": "يحتاج السؤال {{number}} إلى ما بين 2 و10 مستويات."
+      },
+      "result": {
+        "yes": "نعم",
+        "no": "لا",
+        "declined": "مرفوض",
+        "score": "{{value}} من {{max}}",
+        "stateSaved": "حُفظت بوصفها الحالة. اطرح عنها أسئلة بنعم أو لا، سؤالًا في كل سطر، أو حدّد أسئلة لهذه المحادثة.",
+        "cleared": "تم المسح. ستكون رسالتك التالية الحالة الجديدة.",
+        "via": "{{model}} عبر {{provider}}",
+        "inputTokens": "رموز الإدخال: {{tokens}}"
+      }
     }
   },
   "sidebar": {
@@ -774,6 +830,7 @@
         "enableDescription": "توليد عناوين المحادثات وملخصات مباشرة للتفكير",
         "taskModel": "نموذج المهام",
         "selectTaskModel": "اختر نموذج المهام",
+        "useCurrentModel": "استخدام النموذج المشغَّل حاليًا",
         "taskModelDescription": "النموذج المستخدم للعناوين وملخصات التفكير المباشرة. تُرسَل أحدث مقاطع الاستدلال إلى هذا النموذج."
       },
       "updatingModel": "تحديث {{name}} ({{current}}/{{total}})",
@@ -846,7 +903,8 @@
         "embedding": "تضمين",
         "image": "صورة",
         "speech": "كلام",
-        "transcription": "نسخ"
+        "transcription": "نسخ",
+        "decision": "قرار"
       },
       "exportPlugin": "تصدير الإضافة",
       "deletePlugin": "حذف الإضافة",
@@ -922,7 +980,8 @@
         "on": "مفعّل",
         "low": "منخفض",
         "medium": "متوسط",
-        "high": "مرتفع"
+        "high": "مرتفع",
+        "xhigh": "مرتفع جدًا"
       }
     },
     "documents": {
@@ -1155,7 +1214,7 @@
         "forgejoDescription": "مستودع Forgejo مستضاف ذاتياً",
         "sponsor": "ادعم المشروع",
         "sponsorDescription": "ساهم في تمويل المشروع",
-        "star": "نجمة على GitHub",
+        "star": "أضف نجمة على GitHub",
         "starDescription": "النجمة تساعد الآخرين على اكتشاف المشروع"
       },
       "version": "الإصدار {{version}}",
@@ -1949,7 +2008,8 @@
         "tts": "تحويل النص إلى كلام",
         "voice-mode": "الوضع الصوتي",
         "voice-cloning": "استنساخ الصوت",
-        "work-agents": "واجهات CLI للوكلاء في Work"
+        "work-agents": "واجهات CLI للوكلاء في Work",
+        "decision-models": "نماذج القرار"
       },
       "grantViaKinds": {
         "user": "منح مباشر",
@@ -2095,6 +2155,13 @@
         "admins": "المسؤولون",
         "all-users": "جميع مستخدمي Work"
       }
+    },
+    "decisionAccess": {
+      "title": "نماذج القرار",
+      "description": "السماح لجميع المستخدمين النشطين باستخدام نماذج القرار في المحادثات وعبر Decisions API. يمكن للمسؤولين استخدامها دائمًا.",
+      "lockedByEnv": "مثبّت بمتغير البيئة DECISION_MODELS_ACCESS_MODE",
+      "saved": "تم تحديث الوصول إلى نماذج القرار",
+      "saveFailed": "تعذّر تحديث الوصول إلى نماذج القرار"
     }
   },
   "usageAnalytics": {
@@ -2470,6 +2537,8 @@
     "soundPlaceholder": "صف الصوت، أو الموسيقى، أو الأجواء، أو الاستجابة المنطوقة التي تريدها...",
     "generate": "توليد",
     "generating": "جارٍ التوليد… قد يستغرق هذا عدة دقائق",
+    "cancelJob": "إلغاء المهمة",
+    "stopWaiting": "إيقاف الانتظار",
     "success": "تم توليد الوسائط وحفظها في Imagine",
     "successWithSavedVoice": "تم إنشاء الوسائط وأصبح «{{name}}» متاحًا الآن في إعدادات الكلام",
     "failed": "فشل توليد الوسائط",
@@ -2567,8 +2636,8 @@
     "closePanelEsc": "إغلاق اللوحة (Esc)",
     "copyButton": "نسخ",
     "dragEdgeToResize": "اسحب الحافة لتغيير الحجم",
-    "previewUnavailable": "Preview unavailable",
-    "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source.",
+    "previewUnavailable": "المعاينة غير متاحة",
+    "previewUnavailableDescription": "لا تحتوي هذه المخرجات على محتوى يمكن عرضه في المعاينة. انتقل إلى عرض الكود لفحص المصدر.",
     "versionOf": "الإصدار {{current}} من {{total}}",
     "previousVersion": "الإصدار السابق",
     "nextVersion": "الإصدار التالي",
@@ -3121,7 +3190,18 @@
     "sources": "مصادر النماذج",
     "defaultModel": "النموذج الافتراضي",
     "contextSize": "سياق {{size}}",
-    "via": "عبر {{provider}}"
+    "via": "عبر {{provider}}",
+    "decisionBadge": "قرار",
+    "libraryCategories": {
+      "all": "الكل",
+      "general": "عام",
+      "coding": "البرمجة",
+      "reasoning": "المنطق",
+      "vision": "الرؤية",
+      "embedding": "تضمين",
+      "decision": "قرار",
+      "cloud": "السحابة"
+    }
   },
   "whatsNew": {
     "title": "ما الجديد",

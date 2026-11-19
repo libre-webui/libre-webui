@@ -464,8 +464,8 @@
         "topP": "Top P",
         "topK": "Top K",
         "minP": "Min P",
-        "maxTokens": "Max. tokens",
-        "repeatPenalty": "Herhalingsstraf",
+        "maxTokens": "Max tokens",
+        "repeatPenalty": "Herhalingsboete",
         "seed": "Seed",
         "contextLength": "Contextlengte"
       },
@@ -562,6 +562,62 @@
       "replyFinishedNoText": "{{name}} is klaar met antwoorden.",
       "codeBlock": "codeblok",
       "generationStopped": "Generatie gestopt"
+    },
+    "decision": {
+      "barTitle": "Beslisvragen",
+      "interactiveHint": "Geen vragen ingesteld. Je eerste bericht is de toestand, en elke regel die je daarna stuurt is een ja/nee-vraag erover. Stuur /clear om opnieuw te beginnen.",
+      "add": "Vragen instellen",
+      "edit": "Vragen bewerken",
+      "dialogTitle": "Beslisvragen",
+      "dialogSubtitle": "Het beslismodel beantwoordt deze vragen over elk bericht dat je stuurt, met een kans voor elk antwoord.",
+      "useInteractive": "Interactieve modus gebruiken",
+      "questionNumber": "Vraag {{number}}",
+      "removeQuestion": "Vraag verwijderen",
+      "typeLabel": "Soort vraag",
+      "types": {
+        "noul": "Ja/nee",
+        "choice": "Keuze",
+        "score": "Score"
+      },
+      "question": "Vraag",
+      "placeholders": {
+        "noul": "Wordt er om een terugbetaling gevraagd?",
+        "choice": "Welk team moet dit oppakken?",
+        "score": "Hoe dringend is dit?"
+      },
+      "yesMeans": "Ja betekent (optioneel)",
+      "noMeans": "Nee betekent (optioneel)",
+      "options": "Opties",
+      "optionName": "Naam van optie {{number}}",
+      "optionDescription": "Beschrijving van optie {{number}}",
+      "optionNamePlaceholder": "facturatie",
+      "optionDescriptionPlaceholder": "Beschrijving (optioneel)",
+      "removeOption": "Optie {{number}} verwijderen",
+      "addOption": "Optie toevoegen",
+      "levels": "Niveaus, laagste eerst",
+      "levelLabel": "Niveau {{number}}",
+      "levelPlaceholder": "Beschrijf dit niveau",
+      "removeLevel": "Niveau {{number}} verwijderen",
+      "addLevel": "Niveau toevoegen",
+      "addQuestion": "Vraag toevoegen",
+      "saved": "Beslisvragen opgeslagen",
+      "saveFailed": "De beslisvragen konden niet worden opgeslagen",
+      "errors": {
+        "tooMany": "Stel maximaal {{max}} vragen.",
+        "instructions": "Vraag {{number}} heeft een tekst nodig.",
+        "options": "Vraag {{number}} heeft 2 tot 255 opties nodig, elk met een eigen naam.",
+        "levels": "Vraag {{number}} heeft 2 tot 10 niveaus nodig."
+      },
+      "result": {
+        "yes": "Ja",
+        "no": "Nee",
+        "declined": "Geweigerd",
+        "score": "{{value}} van {{max}}",
+        "stateSaved": "Opgeslagen als toestand. Stel er ja/nee-vragen over, één per regel, of stel vragen in voor deze chat.",
+        "cleared": "Gewist. Je volgende bericht is de nieuwe toestand.",
+        "via": "{{model}} via {{provider}}",
+        "inputTokens": "{{tokens}} invoertokens"
+      }
     }
   },
   "sidebar": {
@@ -774,6 +830,7 @@
         "enableDescription": "Chattitels en live samenvattingen van het denkproces genereren",
         "taskModel": "Taakmodel",
         "selectTaskModel": "Selecteer taakmodel",
+        "useCurrentModel": "Huidig actieve model gebruiken",
         "taskModelDescription": "Model voor titels en live samenvattingen van het denkproces. Recente redeneerstappen worden naar dit model verzonden."
       },
       "updatingModel": "{{name}} bijwerken ({{current}}/{{total}})",
@@ -846,7 +903,8 @@
         "embedding": "Embedding",
         "image": "Afbeelding",
         "speech": "Spraak",
-        "transcription": "Transcriptie"
+        "transcription": "Transcriptie",
+        "decision": "Beslissing"
       },
       "exportPlugin": "Plugin exporteren",
       "deletePlugin": "Plugin verwijderen",
@@ -922,7 +980,8 @@
         "on": "Aan",
         "low": "Laag",
         "medium": "Gemiddeld",
-        "high": "Hoog"
+        "high": "Hoog",
+        "xhigh": "Zeer hoog"
       }
     },
     "documents": {
@@ -1155,7 +1214,7 @@
         "forgejoDescription": "Zelf-gehoste Forgejo-repository",
         "sponsor": "Sponsor",
         "sponsorDescription": "Help het project financieren",
-        "star": "Ster op GitHub",
+        "star": "Ster geven op GitHub",
         "starDescription": "Een ster helpt anderen het project te ontdekken"
       },
       "version": "Versie {{version}}",
@@ -1944,12 +2003,13 @@
         "model-download": "Modellen downloaden",
         "web-search": "Zoeken op het web",
         "strands": "Strands-engine",
-        "tools": "Tools",
+        "tools": "Gereedschappen",
         "stt": "Spraak naar tekst",
         "tts": "Tekst naar spraak",
         "voice-mode": "Spraakmodus",
         "voice-cloning": "Stemklonen",
-        "work-agents": "Agent-CLI's in Work"
+        "work-agents": "Agent-CLI's in Work",
+        "decision-models": "Beslismodellen"
       },
       "grantViaKinds": {
         "user": "directe toekenning",
@@ -2095,6 +2155,13 @@
         "admins": "Beheerders",
         "all-users": "Alle Work-gebruikers"
       }
+    },
+    "decisionAccess": {
+      "title": "Beslismodellen",
+      "description": "Sta alle actieve gebruikers toe beslismodellen te gebruiken in chats en via de Decisions-API. Beheerders kunnen ze altijd gebruiken.",
+      "lockedByEnv": "Vastgelegd door de omgevingsvariabele DECISION_MODELS_ACCESS_MODE",
+      "saved": "Toegang tot beslismodellen bijgewerkt",
+      "saveFailed": "Toegang tot beslismodellen kon niet worden bijgewerkt"
     }
   },
   "usageAnalytics": {
@@ -2470,6 +2537,8 @@
     "soundPlaceholder": "Beschrijf het geluid, de muziek, de sfeer of het gesproken antwoord dat je wilt...",
     "generate": "Genereren",
     "generating": "Genereren… dit kan enkele minuten duren",
+    "cancelJob": "Taak annuleren",
+    "stopWaiting": "Stoppen met wachten",
     "success": "Media gegenereerd en opgeslagen in Imagine",
     "successWithSavedVoice": "Media gegenereerd en ‘{{name}}’ is nu beschikbaar in de spraakinstellingen",
     "failed": "Media genereren mislukt",
@@ -2567,8 +2636,8 @@
     "closePanelEsc": "Paneel sluiten (Esc)",
     "copyButton": "Kopiëren",
     "dragEdgeToResize": "Sleep rand om grootte aan te passen",
-    "previewUnavailable": "Preview unavailable",
-    "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source.",
+    "previewUnavailable": "Voorbeeld niet beschikbaar",
+    "previewUnavailableDescription": "Dit artefact bevat geen inhoud die als voorbeeld kan worden weergegeven. Schakel over naar de codeweergave om de bron te bekijken.",
     "versionOf": "Versie {{current}} van {{total}}",
     "previousVersion": "Vorige versie",
     "nextVersion": "Volgende versie",
@@ -3121,7 +3190,18 @@
     "sources": "Modelbronnen",
     "defaultModel": "Standaardmodel",
     "contextSize": "{{size}} context",
-    "via": "via {{provider}}"
+    "via": "via {{provider}}",
+    "decisionBadge": "Beslissing",
+    "libraryCategories": {
+      "all": "Alle",
+      "general": "Algemeen",
+      "coding": "Programmeren",
+      "reasoning": "Redenering",
+      "vision": "Vision",
+      "embedding": "Embedding",
+      "decision": "Beslissing",
+      "cloud": "Cloud"
+    }
   },
   "whatsNew": {
     "title": "Wat is nieuw",

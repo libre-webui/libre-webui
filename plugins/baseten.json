@@ -22,6 +22,23 @@
     "openai/gpt-oss-120b",
     "reflection/Beam-1.0"
   ],
+  "capabilities": {
+    "decision": {
+      "endpoint": "https://inference.baseten.co/v1/systemone",
+      "model_map": [
+        "decision-models/baseten-elephant-9b-latest",
+        "decision-models/baseten-mammoth-27b-latest",
+        "decision-models/baseten-joey-2b-latest"
+      ],
+      "config": {
+        "api": "systemone",
+        "path": "systemone",
+        "image_input": "state-messages",
+        "discovery": "id-prefix",
+        "id_prefix": "decision-models/"
+      }
+    }
+  },
   "variables": [
     {
       "name": "endpoint",

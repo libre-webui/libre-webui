@@ -281,6 +281,7 @@ type MockMessage = {
   branchIndex?: number;
   isActive?: boolean;
   siblingCount?: number;
+  providerMetadata?: Record<string, unknown>;
 };
 
 type MockArtifact = {
@@ -304,6 +305,9 @@ type MockSession = {
   updatedAt: number;
   folderId?: string | null;
   pinned?: boolean;
+  providerType?: 'ollama' | 'plugin' | 'agent';
+  providerId?: string;
+  settings?: Record<string, unknown>;
 };
 
 type MockFolder = {
@@ -3356,6 +3360,19 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
           status: 200,
           contentType: 'application/json',
           body: JSON.stringify({ success: true, data: [] }),
+        });
+        return;
+      }
+      // No decision models unless a spec routes its own list.
+      if (method === 'GET' && path === '/decisions/models') {
+        await fulfillJson(route, { allowed: false, models: [] });
+        return;
+      }
+      if (method === 'GET' && path === '/decisions/access') {
+        await fulfillJson(route, {
+          mode: 'admins',
+          lockedByEnv: false,
+          allowed: authRole === 'admin',
         });
         return;
       }

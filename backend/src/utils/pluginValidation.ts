@@ -464,6 +464,14 @@ export function resolvePluginModelsEndpoint(
     return url.toString();
   }
 
+  // Gemini-style endpoints name the model and the method in the path
+  // (`/v1beta/models/{model}:generateContent`); the collection lists them.
+  const modelMethod = /^(.*\/models)\/[^/]+:[A-Za-z]+$/.exec(url.pathname);
+  if (modelMethod) {
+    url.pathname = modelMethod[1];
+    return url.toString();
+  }
+
   for (const suffix of [
     '/chat/completions',
     '/completions',

@@ -562,6 +562,62 @@
       "replyFinishedNoText": "Odpověď od {{name}} je hotová.",
       "codeBlock": "blok kódu",
       "generationStopped": "Generování zastaveno"
+    },
+    "decision": {
+      "barTitle": "Rozhodovací otázky",
+      "interactiveHint": "Nejsou nastaveny žádné otázky. První zpráva je stav a každý řádek, který pošlete potom, je otázka ano/ne k tomuto stavu. Pošlete /clear pro nový začátek.",
+      "add": "Nastavit otázky",
+      "edit": "Upravit otázky",
+      "dialogTitle": "Rozhodovací otázky",
+      "dialogSubtitle": "Rozhodovací model na tyto otázky odpoví ke každé odeslané zprávě, s pravděpodobností každé odpovědi.",
+      "useInteractive": "Použít interaktivní režim",
+      "questionNumber": "Otázka {{number}}",
+      "removeQuestion": "Odebrat otázku",
+      "typeLabel": "Typ otázky",
+      "types": {
+        "noul": "Ano/ne",
+        "choice": "Výběr",
+        "score": "Hodnocení"
+      },
+      "question": "Otázka",
+      "placeholders": {
+        "noul": "Žádá se o vrácení peněz?",
+        "choice": "Který tým by to měl řešit?",
+        "score": "Jak je to naléhavé?"
+      },
+      "yesMeans": "Ano znamená (volitelné)",
+      "noMeans": "Ne znamená (volitelné)",
+      "options": "Možnosti",
+      "optionName": "Název možnosti {{number}}",
+      "optionDescription": "Popis možnosti {{number}}",
+      "optionNamePlaceholder": "fakturace",
+      "optionDescriptionPlaceholder": "Popis (volitelný)",
+      "removeOption": "Odebrat možnost {{number}}",
+      "addOption": "Přidat možnost",
+      "levels": "Úrovně, od nejnižší",
+      "levelLabel": "Úroveň {{number}}",
+      "levelPlaceholder": "Popište tuto úroveň",
+      "removeLevel": "Odebrat úroveň {{number}}",
+      "addLevel": "Přidat úroveň",
+      "addQuestion": "Přidat otázku",
+      "saved": "Rozhodovací otázky uloženy",
+      "saveFailed": "Rozhodovací otázky se nepodařilo uložit",
+      "errors": {
+        "tooMany": "Položte nejvýše {{max}} otázek.",
+        "instructions": "Otázka {{number}} potřebuje text.",
+        "options": "Otázka {{number}} potřebuje 2 až 255 možností, každou s vlastním názvem.",
+        "levels": "Otázka {{number}} potřebuje 2 až 10 úrovní."
+      },
+      "result": {
+        "yes": "Ano",
+        "no": "Ne",
+        "declined": "Odmítnuto",
+        "score": "{{value}} z {{max}}",
+        "stateSaved": "Uloženo jako stav. Ptejte se na něj otázkami ano/ne, jednou na řádek, nebo nastavte otázky pro tento chat.",
+        "cleared": "Vymazáno. Další zpráva bude novým stavem.",
+        "via": "{{model}} přes {{provider}}",
+        "inputTokens": "Vstupní tokeny: {{tokens}}"
+      }
     }
   },
   "sidebar": {
@@ -774,6 +830,7 @@
         "enableDescription": "Generovat názvy chatů a průběžná shrnutí uvažování",
         "taskModel": "Model úloh",
         "selectTaskModel": "Vyberte model úloh",
+        "useCurrentModel": "Použít aktuálně spuštěný model",
         "taskModelDescription": "Model používaný pro názvy a průběžná shrnutí uvažování. Tomuto modelu se odesílají nejnovější úvahy."
       },
       "updatingModel": "Aktualizace {{name}} ({{current}}/{{total}})",
@@ -846,7 +903,8 @@
         "embedding": "Embedding",
         "image": "Obrázek",
         "speech": "Řeč",
-        "transcription": "Přepis"
+        "transcription": "Přepis",
+        "decision": "Rozhodnutí"
       },
       "exportPlugin": "Exportovat zásuvný modul",
       "deletePlugin": "Smazat zásuvný modul",
@@ -922,7 +980,8 @@
         "on": "Zapnuto",
         "low": "Nízká",
         "medium": "Střední",
-        "high": "Vysoká"
+        "high": "Vysoká",
+        "xhigh": "Velmi vysoká"
       }
     },
     "documents": {
@@ -1155,7 +1214,7 @@
         "forgejoDescription": "Vlastní hostovaný Forgejo repozitář",
         "sponsor": "Podpořit",
         "sponsorDescription": "Pomozte financovat projekt",
-        "star": "Hvězdička na GitHubu",
+        "star": "Dát hvězdičku na GitHubu",
         "starDescription": "Hvězdička pomáhá ostatním projekt objevit"
       },
       "version": "Verze {{version}}",
@@ -1949,7 +2008,8 @@
         "tts": "Text na řeč",
         "voice-mode": "Hlasový režim",
         "voice-cloning": "Klonování hlasu",
-        "work-agents": "Agentní CLI ve Work"
+        "work-agents": "Agentní CLI ve Work",
+        "decision-models": "Rozhodovací modely"
       },
       "grantViaKinds": {
         "user": "přímé udělení",
@@ -2095,6 +2155,13 @@
         "admins": "Správci",
         "all-users": "Všichni uživatelé Work"
       }
+    },
+    "decisionAccess": {
+      "title": "Rozhodovací modely",
+      "description": "Povolit všem aktivním uživatelům používat rozhodovací modely v chatech a přes Decisions API. Správci je mohou používat vždy.",
+      "lockedByEnv": "Určeno proměnnou prostředí DECISION_MODELS_ACCESS_MODE",
+      "saved": "Přístup k rozhodovacím modelům aktualizován",
+      "saveFailed": "Přístup k rozhodovacím modelům se nepodařilo aktualizovat"
     }
   },
   "usageAnalytics": {
@@ -2470,6 +2537,8 @@
     "soundPlaceholder": "Popište zvuk, hudbu, atmosféru nebo mluvenou odpověď, kterou chcete...",
     "generate": "Generovat",
     "generating": "Generování… to může trvat několik minut",
+    "cancelJob": "Zrušit úlohu",
+    "stopWaiting": "Přestat čekat",
     "success": "Média vygenerována a uložena do Imagine",
     "successWithSavedVoice": "Médium bylo vytvořeno a hlas „{{name}}“ je nyní k dispozici v nastavení Řeči",
     "failed": "Nepodařilo se vygenerovat média",
@@ -2556,7 +2625,7 @@
     "download": "Stáhnout",
     "expand": "Rozbalit",
     "collapse": "Sbalit",
-    "openInNewTab": "Otevřít v nové záložce",
+    "openInNewTab": "Otevřít v nové kartě",
     "invalidSvg": "Neplatný obsah SVG",
     "invalidJson": "Neplatný obsah JSON",
     "previewMode": "Režim náhledu",
@@ -2567,8 +2636,8 @@
     "closePanelEsc": "Zavřít panel (Esc)",
     "copyButton": "Kopírovat",
     "dragEdgeToResize": "Přetáhněte okraj pro změnu velikosti",
-    "previewUnavailable": "Preview unavailable",
-    "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source.",
+    "previewUnavailable": "Náhled není k dispozici",
+    "previewUnavailableDescription": "Tento artefakt neobsahuje obsah, který lze zobrazit v náhledu. Zdrojový kód si prohlédnete po přepnutí do zobrazení kódu.",
     "versionOf": "Verze {{current}} z {{total}}",
     "previousVersion": "Předchozí verze",
     "nextVersion": "Další verze",
@@ -3121,7 +3190,18 @@
     "sources": "Zdroje modelů",
     "defaultModel": "Výchozí model",
     "contextSize": "kontext {{size}}",
-    "via": "přes {{provider}}"
+    "via": "přes {{provider}}",
+    "decisionBadge": "Rozhodnutí",
+    "libraryCategories": {
+      "all": "Vše",
+      "general": "Obecné",
+      "coding": "Programování",
+      "reasoning": "Zdůvodnění",
+      "vision": "Vidění",
+      "embedding": "Embedding",
+      "decision": "Rozhodnutí",
+      "cloud": "Cloud"
+    }
   },
   "whatsNew": {
     "title": "Co je nového",

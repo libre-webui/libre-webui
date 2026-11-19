@@ -29,6 +29,7 @@ export const THINKING_CHOICES = [
   'low',
   'medium',
   'high',
+  'xhigh',
 ] as const;
 
 export type ThinkingChoice = (typeof THINKING_CHOICES)[number];
@@ -58,6 +59,7 @@ export function thinkingPreferenceOf(
     case 'low':
     case 'medium':
     case 'high':
+    case 'xhigh':
       return choice;
     default:
       return null;

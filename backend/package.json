@@ -1,6 +1,6 @@
 {
   "name": "libre-webui-backend",
-  "version": "0.44.1",
+  "version": "0.45.2",
   "license": "Apache-2.0",
   "type": "module",
   "description": "Backend API for Libre WebUI",
@@ -26,7 +26,7 @@
     "@kubernetes/client-node": "^2.0.0",
     "@modelcontextprotocol/client": "^2.3.1",
     "@modelcontextprotocol/sdk": "^1.30.1",
-    "@strands-agents/harness": "^0.3.0",
+    "@strands-agents/harness": "^0.4.0",
     "@strands-agents/sdk": "^1.20.0",
     "bcryptjs": "^3.0.3",
     "better-sqlite3": "^13.0.2",

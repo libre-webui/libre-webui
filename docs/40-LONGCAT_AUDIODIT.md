@@ -74,7 +74,7 @@ point model discovery at `POST /v1/audio/speech`: failed discovery falls back
 to both manifest checkpoints and can let the UI select a checkpoint that the
 adapter did not load.
 
-Use **Settings → Text-to-Speech** to select LongCat for chat playback. Natural
+Use **Settings → Speech** to select LongCat for chat playback. Natural
 batched playback is enabled by default. The shared 140-character provider cap
 keeps dense Chinese text inside the 1B checkpoint's shorter duration window;
 Libre WebUI automatically creates multiple batches for longer responses.
@@ -89,7 +89,7 @@ best; the adapter rejects clips above 15 seconds or 10 MiB.
 Cloning can remain a one-time generation, or you can select **Save as a reusable
 voice**, give the voice a private name, and explicitly confirm that the speaker
 consented to storage. Saved voices become selectable for the same LongCat model
-under **Settings → Text-to-Speech**. Chat read-aloud and autoplay then reuse
+under **Settings → Speech**. Chat read-aloud and autoplay then reuse
 that voice across Libre WebUI's sentence-aware batches.
 
 The reference consumes part of AudioDiT's duration window. If the requested

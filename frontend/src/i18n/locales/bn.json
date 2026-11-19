@@ -562,6 +562,62 @@
       "replyFinishedNoText": "{{name}} উত্তর দেওয়া শেষ করেছে।",
       "codeBlock": "কোড ব্লক",
       "generationStopped": "জেনারেশন বন্ধ করা হয়েছে"
+    },
+    "decision": {
+      "barTitle": "সিদ্ধান্তের প্রশ্ন",
+      "interactiveHint": "কোনো প্রশ্ন সেট করা নেই। আপনার প্রথম বার্তাটি অবস্থা, আর এরপর পাঠানো প্রতিটি লাইন সেটি নিয়ে একটি হ্যাঁ/না প্রশ্ন। আবার শুরু করতে /clear পাঠান।",
+      "add": "প্রশ্ন সেট করুন",
+      "edit": "প্রশ্ন সম্পাদনা করুন",
+      "dialogTitle": "সিদ্ধান্তের প্রশ্ন",
+      "dialogSubtitle": "সিদ্ধান্ত মডেল আপনার পাঠানো প্রতিটি বার্তা নিয়ে এই প্রশ্নগুলোর উত্তর দেয়, প্রতিটি উত্তরের সম্ভাবনাসহ।",
+      "useInteractive": "ইন্টারঅ্যাক্টিভ মোড ব্যবহার করুন",
+      "questionNumber": "প্রশ্ন {{number}}",
+      "removeQuestion": "প্রশ্ন সরান",
+      "typeLabel": "প্রশ্নের ধরন",
+      "types": {
+        "noul": "হ্যাঁ/না",
+        "choice": "বাছাই",
+        "score": "স্কোর"
+      },
+      "question": "প্রশ্ন",
+      "placeholders": {
+        "noul": "ফেরতের অনুরোধ করা হচ্ছে কি?",
+        "choice": "কোন দল এটি সামলাবে?",
+        "score": "এটি কতটা জরুরি?"
+      },
+      "yesMeans": "হ্যাঁ মানে (ঐচ্ছিক)",
+      "noMeans": "না মানে (ঐচ্ছিক)",
+      "options": "বিকল্পগুলো",
+      "optionName": "বিকল্প {{number}}-এর নাম",
+      "optionDescription": "বিকল্প {{number}}-এর বিবরণ",
+      "optionNamePlaceholder": "বিলিং",
+      "optionDescriptionPlaceholder": "বিবরণ (ঐচ্ছিক)",
+      "removeOption": "বিকল্প {{number}} সরান",
+      "addOption": "বিকল্প যোগ করুন",
+      "levels": "স্তর, সর্বনিম্ন আগে",
+      "levelLabel": "স্তর {{number}}",
+      "levelPlaceholder": "এই স্তরটি বর্ণনা করুন",
+      "removeLevel": "স্তর {{number}} সরান",
+      "addLevel": "স্তর যোগ করুন",
+      "addQuestion": "প্রশ্ন যোগ করুন",
+      "saved": "সিদ্ধান্তের প্রশ্ন সংরক্ষিত হয়েছে",
+      "saveFailed": "সিদ্ধান্তের প্রশ্ন সংরক্ষণ করা যায়নি",
+      "errors": {
+        "tooMany": "সর্বোচ্চ {{max}}টি প্রশ্ন করুন।",
+        "instructions": "প্রশ্ন {{number}}-এর জন্য লেখা দরকার।",
+        "options": "প্রশ্ন {{number}}-এর জন্য ২ থেকে ২৫৫টি বিকল্প দরকার, প্রতিটির নিজস্ব নাম থাকবে।",
+        "levels": "প্রশ্ন {{number}}-এর জন্য ২ থেকে ১০টি স্তর দরকার।"
+      },
+      "result": {
+        "yes": "হ্যাঁ",
+        "no": "না",
+        "declined": "প্রত্যাখ্যাত",
+        "score": "{{max}}-এর মধ্যে {{value}}",
+        "stateSaved": "অবস্থা হিসেবে সংরক্ষিত। এটি নিয়ে হ্যাঁ/না প্রশ্ন করুন, প্রতি লাইনে একটি, অথবা এই চ্যাটের জন্য প্রশ্ন সেট করুন।",
+        "cleared": "মুছে ফেলা হয়েছে। আপনার পরের বার্তাটি নতুন অবস্থা হবে।",
+        "via": "{{provider}}-এর মাধ্যমে {{model}}",
+        "inputTokens": "{{tokens}}টি ইনপুট টোকেন"
+      }
     }
   },
   "sidebar": {
@@ -774,6 +830,7 @@
         "enableDescription": "চ্যাটের শিরোনাম এবং চিন্তার তাৎক্ষণিক সারাংশ তৈরি করুন",
         "taskModel": "টাস্ক মডেল",
         "selectTaskModel": "টাস্ক মডেল নির্বাচন করুন",
+        "useCurrentModel": "বর্তমানে চলমান মডেল ব্যবহার করুন",
         "taskModelDescription": "শিরোনাম এবং চিন্তার তাৎক্ষণিক সারাংশের জন্য ব্যবহৃত মডেল। সাম্প্রতিক যুক্তিবিচার এই মডেলে পাঠানো হয়।"
       },
       "updatingModel": "{{name}} আপডেট হচ্ছে ({{current}}/{{total}})",
@@ -846,7 +903,8 @@
         "embedding": "এম্বেডিং",
         "image": "চিত্র",
         "speech": "বক্তৃতা",
-        "transcription": "ট্রান্সক্রিপশন"
+        "transcription": "ট্রান্সক্রিপশন",
+        "decision": "সিদ্ধান্ত"
       },
       "exportPlugin": "প্লাগইন রপ্তানি",
       "deletePlugin": "প্লাগইন মুছুন",
@@ -863,7 +921,7 @@
         "removeFailed": "API কী সরাতে ব্যর্থ",
         "enterKey": "অনুগ্রহ করে একটি API কী লিখুন"
       },
-      "variables": "Variables",
+      "variables": "ভেরিয়েবল",
       "dismissError": "ত্রুটি খারিজ করুন"
     },
     "generation": {
@@ -922,7 +980,8 @@
         "on": "চালু",
         "low": "কম",
         "medium": "মাঝারি",
-        "high": "বেশি"
+        "high": "বেশি",
+        "xhigh": "অনেক বেশি"
       }
     },
     "documents": {
@@ -1147,12 +1206,12 @@
         "githubDescription": "সোর্স কোড দেখুন এবং অবদান রাখুন",
         "website": "ওয়েবসাইট",
         "websiteDescription": "আমাদের ওয়েবসাইট দেখুন",
-        "documentation": "Documentation",
+        "documentation": "ডকুমেন্টেশন",
         "reportIssue": "সমস্যা রিপোর্ট করুন",
         "reportIssueDescription": "বাগ রিপোর্ট এবং ফিচার অনুরোধ",
-        "documentationDescription": "Guides, tutorials and API reference",
-        "forgejo": "Forgejo Mirror",
-        "forgejoDescription": "Self-hosted Forgejo repository",
+        "documentationDescription": "গাইড, টিউটোরিয়াল ও API রেফারেন্স",
+        "forgejo": "Forgejo মিরর",
+        "forgejoDescription": "নিজস্ব হোস্ট করা Forgejo রিপোজিটরি",
         "sponsor": "পৃষ্ঠপোষক",
         "sponsorDescription": "প্রকল্পে আর্থিক সহায়তা করুন",
         "star": "GitHub-এ স্টার দিন",
@@ -1949,7 +2008,8 @@
         "tts": "টেক্সট টু স্পিচ",
         "voice-mode": "ভয়েস মোড",
         "voice-cloning": "ভয়েস ক্লোনিং",
-        "work-agents": "Work-এ এজেন্ট CLI"
+        "work-agents": "Work-এ এজেন্ট CLI",
+        "decision-models": "সিদ্ধান্ত মডেল"
       },
       "grantViaKinds": {
         "user": "সরাসরি অনুমতি",
@@ -2095,6 +2155,13 @@
         "admins": "প্রশাসকগণ",
         "all-users": "Work-এর সব ব্যবহারকারী"
       }
+    },
+    "decisionAccess": {
+      "title": "সিদ্ধান্ত মডেল",
+      "description": "সব সক্রিয় ব্যবহারকারীকে চ্যাটে এবং Decisions API-এর মাধ্যমে সিদ্ধান্ত মডেল ব্যবহার করতে দিন। প্রশাসকেরা সবসময় এগুলো ব্যবহার করতে পারেন।",
+      "lockedByEnv": "DECISION_MODELS_ACCESS_MODE পরিবেশ ভেরিয়েবল দ্বারা নির্ধারিত",
+      "saved": "সিদ্ধান্ত মডেলে প্রবেশাধিকার হালনাগাদ হয়েছে",
+      "saveFailed": "সিদ্ধান্ত মডেলে প্রবেশাধিকার হালনাগাদ করা যায়নি"
     }
   },
   "usageAnalytics": {
@@ -2470,6 +2537,8 @@
     "soundPlaceholder": "আপনার পছন্দের শব্দ, সঙ্গীত, পরিবেশ বা কথ্য প্রতিক্রিয়া বর্ণনা করুন...",
     "generate": "তৈরি করুন",
     "generating": "তৈরি হচ্ছে… এতে কয়েক মিনিট সময় লাগতে পারে",
+    "cancelJob": "কাজ বাতিল করুন",
+    "stopWaiting": "অপেক্ষা বন্ধ করুন",
     "success": "মিডিয়া তৈরি হয়েছে এবং Imagine-এ সংরক্ষিত হয়েছে",
     "successWithSavedVoice": "মিডিয়া তৈরি হয়েছে এবং “{{name}}” এখন বক্তব্য সেটিংসে উপলভ্য",
     "failed": "মিডিয়া তৈরি করতে ব্যর্থ",
@@ -2567,8 +2636,8 @@
     "closePanelEsc": "প্যানেল বন্ধ করুন (Esc)",
     "copyButton": "কপি",
     "dragEdgeToResize": "সাইজ পরিবর্তন করতে প্রান্ত টানুন",
-    "previewUnavailable": "Preview unavailable",
-    "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source.",
+    "previewUnavailable": "প্রিভিউ পাওয়া যাচ্ছে না",
+    "previewUnavailableDescription": "এই আর্টিফ্যাক্টে প্রিভিউতে দেখানোর মতো কোনো কনটেন্ট নেই। সোর্স দেখতে কোড ভিউতে যান।",
     "versionOf": "সংস্করণ {{current}} / {{total}}",
     "previousVersion": "পূর্ববর্তী সংস্করণ",
     "nextVersion": "পরবর্তী সংস্করণ",
@@ -3096,18 +3165,18 @@
     "uploadFailed": "পটভূমি চিত্র আপলোড করতে ব্যর্থ"
   },
   "modelSelector": {
-    "searchInstalled": "Search installed models...",
-    "searchOllama": "Search Ollama library...",
-    "searchHuggingFace": "Search HuggingFace...",
+    "searchInstalled": "ইনস্টল করা মডেল খুঁজুন...",
+    "searchOllama": "Ollama লাইব্রেরিতে খুঁজুন...",
+    "searchHuggingFace": "HuggingFace-এ খুঁজুন...",
     "searchModels": "মডেল খুঁজুন...",
     "selectModel": "Select Model",
-    "personas": "Personas",
-    "ollamaModels": "Ollama Models",
-    "pluginModels": "Plugin Models",
-    "actions": "Actions",
-    "installed": "Installed",
+    "personas": "পার্সোনা",
+    "ollamaModels": "Ollama মডেল",
+    "pluginModels": "প্লাগইন মডেল",
+    "actions": "অ্যাকশন",
+    "installed": "ইনস্টল করা",
     "use": "Use",
-    "pull": "Pull",
+    "pull": "পুল করুন",
     "pullRestricted": "এই ইনস্ট্যান্সে মডেল ইনস্টলেশন শুধুমাত্র অ্যাডমিনদের জন্য সীমাবদ্ধ।",
     "adminOnlyPull": "শুধু অ্যাডমিন",
     "legacyProvider": "প্রোভাইডার নথিভুক্ত নয়",
@@ -3121,7 +3190,18 @@
     "sources": "মডেলের উৎস",
     "defaultModel": "ডিফল্ট মডেল",
     "contextSize": "{{size}} কনটেক্সট",
-    "via": "{{provider}} এর মাধ্যমে"
+    "via": "{{provider}} এর মাধ্যমে",
+    "decisionBadge": "সিদ্ধান্ত",
+    "libraryCategories": {
+      "all": "সব",
+      "general": "সাধারণ",
+      "coding": "কোডিং",
+      "reasoning": "যুক্তি",
+      "vision": "ভিশন",
+      "embedding": "এম্বেডিং",
+      "decision": "সিদ্ধান্ত",
+      "cloud": "ক্লাউড"
+    }
   },
   "whatsNew": {
     "title": "নতুন কী আছে",

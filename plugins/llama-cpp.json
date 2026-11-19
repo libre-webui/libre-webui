@@ -11,6 +11,19 @@
     "key_env": ""
   },
   "model_map": ["qwen3-35b-a3b"],
+  "capabilities": {
+    "decision": {
+      "endpoint": "http://localhost:8080/v1/systemone",
+      "model_map": ["openjev"],
+      "config": {
+        "api": "systemone",
+        "path": "systemone",
+        "image_input": "images-data-url",
+        "discovery": "output-modality",
+        "no_auth_required": true
+      }
+    }
+  },
   "variables": [
     {
       "name": "base_url",

@@ -562,6 +562,62 @@
       "replyFinishedNoText": "{{name}} har svarat klart.",
       "codeBlock": "kodblock",
       "generationStopped": "Genereringen stoppades"
+    },
+    "decision": {
+      "barTitle": "Beslutsfrågor",
+      "interactiveHint": "Inga frågor angivna. Ditt första meddelande är tillståndet, och varje rad du skickar därefter är en ja/nej-fråga om det. Skicka /clear för att börja om.",
+      "add": "Ange frågor",
+      "edit": "Redigera frågor",
+      "dialogTitle": "Beslutsfrågor",
+      "dialogSubtitle": "Beslutsmodellen besvarar dessa frågor om varje meddelande du skickar, med en sannolikhet för varje svar.",
+      "useInteractive": "Använd interaktivt läge",
+      "questionNumber": "Fråga {{number}}",
+      "removeQuestion": "Ta bort fråga",
+      "typeLabel": "Frågetyp",
+      "types": {
+        "noul": "Ja/nej",
+        "choice": "Val",
+        "score": "Poäng"
+      },
+      "question": "Fråga",
+      "placeholders": {
+        "noul": "Begärs en återbetalning?",
+        "choice": "Vilket team ska hantera detta?",
+        "score": "Hur brådskande är detta?"
+      },
+      "yesMeans": "Ja betyder (valfritt)",
+      "noMeans": "Nej betyder (valfritt)",
+      "options": "Alternativ",
+      "optionName": "Namn på alternativ {{number}}",
+      "optionDescription": "Beskrivning av alternativ {{number}}",
+      "optionNamePlaceholder": "fakturering",
+      "optionDescriptionPlaceholder": "Beskrivning (valfritt)",
+      "removeOption": "Ta bort alternativ {{number}}",
+      "addOption": "Lägg till alternativ",
+      "levels": "Nivåer, lägsta först",
+      "levelLabel": "Nivå {{number}}",
+      "levelPlaceholder": "Beskriv den här nivån",
+      "removeLevel": "Ta bort nivå {{number}}",
+      "addLevel": "Lägg till nivå",
+      "addQuestion": "Lägg till fråga",
+      "saved": "Beslutsfrågor sparade",
+      "saveFailed": "Beslutsfrågorna kunde inte sparas",
+      "errors": {
+        "tooMany": "Ställ högst {{max}} frågor.",
+        "instructions": "Fråga {{number}} behöver en text.",
+        "options": "Fråga {{number}} behöver 2 till 255 alternativ, vart och ett med eget namn.",
+        "levels": "Fråga {{number}} behöver 2 till 10 nivåer."
+      },
+      "result": {
+        "yes": "Ja",
+        "no": "Nej",
+        "declined": "Avböjd",
+        "score": "{{value}} av {{max}}",
+        "stateSaved": "Sparat som tillstånd. Ställ ja/nej-frågor om det, en per rad, eller ange frågor för den här chatten.",
+        "cleared": "Rensat. Ditt nästa meddelande blir det nya tillståndet.",
+        "via": "{{model}} via {{provider}}",
+        "inputTokens": "{{tokens}} indatatoken"
+      }
     }
   },
   "sidebar": {
@@ -774,6 +830,7 @@
         "enableDescription": "Generera chattitlar och löpande sammanfattningar av tankeprocessen",
         "taskModel": "Uppgiftsmodell",
         "selectTaskModel": "Välj uppgiftsmodell",
+        "useCurrentModel": "Använd den modell som körs nu",
         "taskModelDescription": "Modell för titlar och löpande sammanfattningar av tankeprocessen. De senaste resonemangen skickas till denna modell."
       },
       "updatingModel": "Uppdaterar {{name}} ({{current}}/{{total}})",
@@ -846,7 +903,8 @@
         "embedding": "Inbäddning",
         "image": "Bild",
         "speech": "Tal",
-        "transcription": "Transkription"
+        "transcription": "Transkription",
+        "decision": "Beslut"
       },
       "exportPlugin": "Exportera plugin",
       "deletePlugin": "Ta bort plugin",
@@ -922,7 +980,8 @@
         "on": "På",
         "low": "Låg",
         "medium": "Medel",
-        "high": "Hög"
+        "high": "Hög",
+        "xhigh": "Mycket hög"
       }
     },
     "documents": {
@@ -1155,7 +1214,7 @@
         "forgejoDescription": "Självhostat Forgejo-förråd",
         "sponsor": "Sponsra",
         "sponsorDescription": "Hjälp till att finansiera projektet",
-        "star": "Stjärna på GitHub",
+        "star": "Stjärnmärk på GitHub",
         "starDescription": "En stjärna hjälper andra att hitta projektet"
       },
       "version": "Version {{version}}",
@@ -1949,7 +2008,8 @@
         "tts": "Text till tal",
         "voice-mode": "Röstläge",
         "voice-cloning": "Röstkloning",
-        "work-agents": "Agent-CLI:er i Work"
+        "work-agents": "Agent-CLI:er i Work",
+        "decision-models": "Beslutsmodeller"
       },
       "grantViaKinds": {
         "user": "direkt tilldelning",
@@ -2095,6 +2155,13 @@
         "admins": "Administratörer",
         "all-users": "Alla Work-användare"
       }
+    },
+    "decisionAccess": {
+      "title": "Beslutsmodeller",
+      "description": "Låt alla aktiva användare använda beslutsmodeller i chattar och via Decisions-API:t. Administratörer kan alltid använda dem.",
+      "lockedByEnv": "Fastställt av miljövariabeln DECISION_MODELS_ACCESS_MODE",
+      "saved": "Åtkomst till beslutsmodeller uppdaterad",
+      "saveFailed": "Det gick inte att uppdatera åtkomsten till beslutsmodeller"
     }
   },
   "usageAnalytics": {
@@ -2470,6 +2537,8 @@
     "soundPlaceholder": "Beskriv ljudet, musiken, atmosfären eller det talade svaret du vill ha...",
     "generate": "Generera",
     "generating": "Genererar… detta kan ta flera minuter",
+    "cancelJob": "Avbryt jobb",
+    "stopWaiting": "Sluta vänta",
     "success": "Media genererad och sparad till Imagine",
     "successWithSavedVoice": "Mediet har skapats och ”{{name}}” är nu tillgänglig i talinställningarna",
     "failed": "Misslyckades att generera media",
@@ -2567,8 +2636,8 @@
     "closePanelEsc": "Stäng panel (Esc)",
     "copyButton": "Kopiera",
     "dragEdgeToResize": "Dra i kanten för att ändra storlek",
-    "previewUnavailable": "Preview unavailable",
-    "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source.",
+    "previewUnavailable": "Förhandsgranskning inte tillgänglig",
+    "previewUnavailableDescription": "Den här artefakten innehåller inget innehåll som kan förhandsgranskas. Byt till kodvyn för att granska källan.",
     "versionOf": "Version {{current}} av {{total}}",
     "previousVersion": "Föregående version",
     "nextVersion": "Nästa version",
@@ -3121,7 +3190,18 @@
     "sources": "Modellkällor",
     "defaultModel": "Standardmodell",
     "contextSize": "{{size}} kontext",
-    "via": "via {{provider}}"
+    "via": "via {{provider}}",
+    "decisionBadge": "Beslut",
+    "libraryCategories": {
+      "all": "Alla",
+      "general": "Allmänt",
+      "coding": "Programmering",
+      "reasoning": "Resonemang",
+      "vision": "Vision",
+      "embedding": "Inbäddning",
+      "decision": "Beslut",
+      "cloud": "Moln"
+    }
   },
   "whatsNew": {
     "title": "Nyheter",

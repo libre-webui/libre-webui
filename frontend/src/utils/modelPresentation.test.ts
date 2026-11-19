@@ -23,6 +23,7 @@ import en from '../i18n/locales/en.json';
 import de from '../i18n/locales/de.json';
 import {
   modelDisplayName,
+  libraryCategoryLabel,
   modelOptionLabel,
   modelProviderLabel,
 } from './modelPresentation';
@@ -151,4 +152,15 @@ test('missing display metadata does not turn an agent or plugin into Ollama', ()
     modelOptionLabel(model('persona:gone', { isPersona: true }), t),
     'persona:gone (Persona)'
   );
+});
+
+test('Ollama library categories read in the interface language', () => {
+  const german = i18n.getFixedT('de');
+  assert.equal(libraryCategoryLabel('decision', t), 'Decision');
+  assert.equal(libraryCategoryLabel('coding', t), 'Coding');
+  assert.equal(libraryCategoryLabel('decision', german), 'Entscheidung');
+  assert.equal(libraryCategoryLabel('cloud', german), 'Cloud');
+  assert.equal(libraryCategoryLabel('all', german), german('common.all'));
+  // A category the app does not know yet keeps its own name.
+  assert.equal(libraryCategoryLabel('robotics', german), 'Robotics');
 });

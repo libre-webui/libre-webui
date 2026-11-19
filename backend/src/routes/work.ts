@@ -1988,7 +1988,7 @@ const readThinkSelection = (
   const think = normalizeThinkingPreference(raw);
   if (think === undefined) {
     throw new WorkRouteError(
-      'Field "think" must be true, false, "low", "medium" or "high".',
+      'Field "think" must be true, false, "low", "medium", "high" or "xhigh".',
       400
     );
   }

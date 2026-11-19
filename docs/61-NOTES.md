@@ -28,8 +28,8 @@ The preview renders standard Markdown, including tables. It also supports basic
 inline HTML and SVG after sanitization: scripts, event handlers, and unsafe URLs
 are removed before the result reaches the page.
 
-**Export** downloads the current note content as a `.md` file. This export is
-plain text and contains neither attachments nor revision history; protect it as
+**Download as Markdown** saves the current note content as a `.md` file. This
+export is plain text and contains neither attachments nor revision history; protect it as
 you would any other copy of the note.
 
 ## Revisions and restore

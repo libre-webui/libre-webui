@@ -4880,6 +4880,115 @@
       }
     },
     {
+      "id": "decision-models",
+      "title": "Decision models",
+      "uiRoutes": [],
+      "sourceEvidence": [
+        {
+          "file": "backend/src/services/decisionService.ts",
+          "patterns": [
+            "async \\*streamChatTurn\\(",
+            "buildDecisionRequestBody\\(",
+            "capability: 'chat'"
+          ]
+        },
+        {
+          "file": "backend/src/utils/decisionProtocol.ts",
+          "patterns": [
+            "export function resolveDecisionChatTurn\\(",
+            "export function parseDecisionResponse\\("
+          ]
+        },
+        {
+          "file": "frontend/src/components/decisions/DecisionQuestionsBar.tsx",
+          "patterns": ["decisionQuestionsFromDrafts\\(next\\)"]
+        }
+      ],
+      "documentation": [
+        {
+          "file": "docs/68-DECISION_MODELS.md",
+          "patterns": [
+            "# Decision Models",
+            "`POST /api/decisions` answers one request"
+          ]
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "scripts/test-decision-models.mjs",
+          "runner": "test:package",
+          "name": "the decision service lists, routes, meters, and gates decision models",
+          "behaviorPatterns": ["decisions\\.decide\\(", "DecisionAccessError"]
+        },
+        {
+          "file": "scripts/test-decision-models.mjs",
+          "runner": "test:package",
+          "name": "a decision chat follows ollama run: state first, then yes/no lines, /clear starts over",
+          "behaviorPatterns": [
+            "resolveDecisionChatTurn\\(",
+            "user\\('/clear'\\)"
+          ]
+        }
+      ],
+      "backendRoutes": [
+        {
+          "file": "backend/src/routes/decisions.ts",
+          "mount": "/api/decisions",
+          "method": "GET",
+          "path": "/access"
+        },
+        {
+          "file": "backend/src/routes/decisions.ts",
+          "mount": "/api/decisions",
+          "method": "PUT",
+          "path": "/access"
+        },
+        {
+          "file": "backend/src/routes/decisions.ts",
+          "mount": "/api/decisions",
+          "method": "GET",
+          "path": "/models"
+        },
+        {
+          "file": "backend/src/routes/decisions.ts",
+          "mount": "/api/decisions",
+          "method": "POST",
+          "path": "/"
+        }
+      ],
+      "contractSurfaces": {
+        "schemas": {
+          "evidence": [
+            {
+              "file": "backend/src/types/index.ts",
+              "patterns": [
+                "export interface DecisionConfig",
+                "decisionQuestions\\?: Record<string, unknown>"
+              ]
+            }
+          ]
+        },
+        "manifests": {
+          "evidence": [
+            {
+              "file": "scripts/capability-contracts.json",
+              "patterns": ["\"id\": \"decision\""]
+            }
+          ]
+        },
+        "defaults": {
+          "evidence": [
+            {
+              "file": "backend/src/services/decisionAccessService.ts",
+              "patterns": [
+                "return isDecisionAccessMode\\(value\\) \\? value : 'admins'"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
       "id": "hugging-face-hub",
       "title": "Hugging Face Hub",
       "uiRoutes": [],

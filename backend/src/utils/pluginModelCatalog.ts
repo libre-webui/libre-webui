@@ -57,16 +57,32 @@ const asContextLength = (value: unknown): number | undefined => {
 /**
  * Whether an entry of a model listing is a model Chat can call. Bedrock lists
  * models the account cannot use yet, marked unavailable. Baseten lists its
- * decision models beside its language models; they answer only its System One
- * API, never Chat Completions.
+ * decision models beside its language models, and llama.cpp and OpenRouter
+ * mark a decision-only model by its output modalities; those answer only a
+ * decision API and are offered as decision models instead.
  */
 export function isCallableListedModel(
   pluginId: string,
-  entry: { id?: unknown; status?: unknown } | null | undefined
+  entry:
+    | { id?: unknown; status?: unknown; architecture?: unknown }
+    | null
+    | undefined
 ): boolean {
   if (!entry || typeof entry.id !== 'string') return false;
   if (entry.status === 'unavailable') return false;
   if (pluginId === 'baseten' && entry.id.startsWith('decision-models/')) {
+    return false;
+  }
+  const outputs =
+    entry.architecture && typeof entry.architecture === 'object'
+      ? (entry.architecture as { output_modalities?: unknown })
+          .output_modalities
+      : undefined;
+  if (
+    Array.isArray(outputs) &&
+    outputs.includes('decisions') &&
+    !outputs.includes('text')
+  ) {
     return false;
   }
   return true;

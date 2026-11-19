@@ -15,9 +15,23 @@
     "gemini-3-flash-preview",
     "gemini-3.1-flash-lite",
     "gemini-3.1-pro-preview",
-    "gemini-3.5-flash",
+    "gemini-3.5-flash-lite",
+    "gemini-3.6-flash",
+    "gemini-3.8-flash",
+    "gemini-4-argon",
+    "gemini-4-carbon",
+    "gemini-4-hydrogen",
     "gemini-flash-latest"
   ],
+  "capabilities": {
+    "decision": {
+      "endpoint": "https://generativelanguage.googleapis.com/v1beta/decisions",
+      "model_map": ["gemini-decision-1"],
+      "config": {
+        "api": "gemini"
+      }
+    }
+  },
   "variables": [
     {
       "name": "endpoint",

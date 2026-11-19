@@ -614,3 +614,70 @@ test('Bedrock discovery adds the Claude models only bedrock-runtime serves', asy
     await provider.close();
   }
 });
+
+test('Gemini discovery reads every models.list page from the generateContent endpoint', async () => {
+  const requests = [];
+  const app = express();
+  app.get('/v1beta/models', (req, res) => {
+    requests.push(req.query);
+    if (req.query.pageToken === 'next') {
+      res.json({
+        models: [
+          {
+            name: 'models/gemini-4-carbon',
+            supportedGenerationMethods: ['generateContent'],
+            thinking: true,
+          },
+        ],
+      });
+      return;
+    }
+    res.json({
+      models: [
+        {
+          name: 'models/gemini-4-hydrogen',
+          inputTokenLimit: 1048576,
+          supportedGenerationMethods: ['generateContent', 'countTokens'],
+          thinking: true,
+        },
+        {
+          name: 'models/gemini-3.8-flash-tts',
+          supportedGenerationMethods: ['generateContent'],
+        },
+        {
+          name: 'models/gemini-embedding-2',
+          supportedGenerationMethods: ['embedContent'],
+        },
+      ],
+      nextPageToken: 'next',
+    });
+  });
+  const provider = await listen(app);
+  const service = new PluginService();
+  const admin = upsertTestUser('model-refresh-gemini-admin', 'admin');
+  await service.installPlugin(
+    {
+      id: 'gemini',
+      name: 'Google Gemini',
+      type: 'completion',
+      endpoint: `${provider.baseUrl}/v1beta/models/{model}:generateContent`,
+      auth: { header: '', prefix: '', key_env: '' },
+      model_map: ['gemini-3.5-flash'],
+    },
+    admin.id
+  );
+  try {
+    assert.deepEqual(await service.discoverModels('gemini', admin.id), [
+      'gemini-4-carbon',
+      'gemini-4-hydrogen',
+    ]);
+    assert.deepEqual(
+      requests.map(query => query.pageToken ?? null),
+      [null, 'next']
+    );
+    assert.ok(requests.every(query => query.pageSize === '1000'));
+  } finally {
+    await service.deletePlugin('gemini');
+    await provider.close();
+  }
+});

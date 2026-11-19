@@ -154,8 +154,8 @@ Work does the same for every step of a run's agent loop. Cached input tokens
 cost a fraction of the normal rate. When compaction rewrites the history, the
 key changes, as Modal recommends.
 
-To call one endpoint directly, set the provider's **API Endpoint** to its URL
-(`modal endpoint info <name>` shows it as `service_url`) followed by
+To call one endpoint directly, set the provider's **Full API endpoint URL** to
+its URL (`modal endpoint info <name>` shows it as `service_url`) followed by
 `/v1/chat/completions`. That is how a Dedicated Endpoint is reached; there the
 model keeps its Hugging Face name, such as `moonshotai/Kimi-K3`, which is also
 how the bundled list names Modal's shared models before a token is saved.
@@ -179,15 +179,17 @@ models and bills per token, so there is nothing to deploy first.
 
 Libre WebUI then lists the Model APIs catalog from `/v1/models`, with each
 model's context window and whether it reasons. Baseten's decision models
-(`decision-models/…`) are left out: they answer only Baseten's System One API,
-not Chat Completions. Models keep Baseten's slugs, such as `zai-org/GLM-5.3` or `moonshotai/Kimi-K3`; the picker
+(`decision-models/…`) answer only Baseten's System One API, so they are listed
+as decision models instead of chat models; see
+[Decision Models](./68-DECISION_MODELS.md). Models keep Baseten's slugs, such as `zai-org/GLM-5.3` or `moonshotai/Kimi-K3`; the picker
 shows them as "GLM 5.3" by Z.ai and "Kimi K3" by Moonshot AI. A **Fast**
 variant runs the same weights on dedicated capacity at its own price.
 
 Most of these models reason by default. The chat's thinking control sets
 Baseten's `reasoning_effort`: **Low** and **High** are sent as they are, the
 middle setting leaves the model at its own default depth, and **Off** sends
-`none`. Baseten documents a few exceptions: Muse Spark Open and Beam always
+`none`. **Extra high** sends `high`, because Baseten's models disagree on the
+level above it: some take `xhigh`, some only `max`, and some neither. Baseten documents a few exceptions: Muse Spark Open and Beam always
 reason, and GLM 5.3 still reasons lightly with `none`. Earlier reasoning is sent
 back as `reasoning_content`, which Beam requires on every earlier answer.
 
@@ -197,7 +199,8 @@ it to the replica that already holds the conversation's prompt in its cache.
 Work does the same for every step of a run's agent loop. When compaction
 rewrites the history, the key changes.
 
-To call a dedicated deployment instead, set the provider's **API Endpoint** to
+To call a dedicated deployment instead, set the provider's
+**Full API endpoint URL** to
 `https://model-<model id>.api.baseten.co/environments/production/sync/v1/chat/completions`.
 The same API key works there.
 

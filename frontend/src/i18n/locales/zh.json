@@ -562,6 +562,62 @@
       "replyFinishedNoText": "{{name}} 已回复完毕。",
       "codeBlock": "代码块",
       "generationStopped": "已停止生成"
+    },
+    "decision": {
+      "barTitle": "判定问题",
+      "interactiveHint": "尚未设置问题。你的第一条消息就是状态，之后发送的每一行都是关于它的是/否问题。发送 /clear 可重新开始。",
+      "add": "设置问题",
+      "edit": "编辑问题",
+      "dialogTitle": "判定问题",
+      "dialogSubtitle": "判定模型会针对你发送的每条消息回答这些问题，并给出每个答案的概率。",
+      "useInteractive": "使用交互模式",
+      "questionNumber": "问题 {{number}}",
+      "removeQuestion": "删除问题",
+      "typeLabel": "问题类型",
+      "types": {
+        "noul": "是/否",
+        "choice": "选择",
+        "score": "评分"
+      },
+      "question": "问题",
+      "placeholders": {
+        "noul": "是否在请求退款？",
+        "choice": "应由哪个团队处理？",
+        "score": "有多紧急？"
+      },
+      "yesMeans": "“是”表示（可选）",
+      "noMeans": "“否”表示（可选）",
+      "options": "选项",
+      "optionName": "选项 {{number}} 名称",
+      "optionDescription": "选项 {{number}} 说明",
+      "optionNamePlaceholder": "billing",
+      "optionDescriptionPlaceholder": "说明（可选）",
+      "removeOption": "删除选项 {{number}}",
+      "addOption": "添加选项",
+      "levels": "等级，从低到高",
+      "levelLabel": "等级 {{number}}",
+      "levelPlaceholder": "描述此等级",
+      "removeLevel": "删除等级 {{number}}",
+      "addLevel": "添加等级",
+      "addQuestion": "添加问题",
+      "saved": "已保存判定问题",
+      "saveFailed": "无法保存判定问题",
+      "errors": {
+        "tooMany": "最多提出 {{max}} 个问题。",
+        "instructions": "问题 {{number}} 需要填写内容。",
+        "options": "问题 {{number}} 需要 2 到 255 个选项，且每个选项名称不同。",
+        "levels": "问题 {{number}} 需要 2 到 10 个等级。"
+      },
+      "result": {
+        "yes": "是",
+        "no": "否",
+        "declined": "已拒绝",
+        "score": "{{value}} / {{max}}",
+        "stateSaved": "已保存为状态。请就其提出是/否问题，每行一个，或为此聊天设置问题。",
+        "cleared": "已清除。你的下一条消息将成为新的状态。",
+        "via": "{{model}}（通过 {{provider}}）",
+        "inputTokens": "输入 token：{{tokens}}"
+      }
     }
   },
   "sidebar": {
@@ -774,6 +830,7 @@
         "enableDescription": "生成聊天标题和实时思考摘要",
         "taskModel": "任务模型",
         "selectTaskModel": "选择任务模型",
+        "useCurrentModel": "使用当前运行的模型",
         "taskModelDescription": "用于生成标题和实时思考摘要的模型。最近的推理内容会发送给此模型。"
       },
       "updatingModel": "正在更新 {{name}} ({{current}}/{{total}})",
@@ -846,7 +903,8 @@
         "embedding": "嵌入",
         "image": "图像",
         "speech": "语音",
-        "transcription": "转录"
+        "transcription": "转录",
+        "decision": "判定"
       },
       "exportPlugin": "导出插件",
       "deletePlugin": "删除插件",
@@ -922,7 +980,8 @@
         "on": "开启",
         "low": "低",
         "medium": "中",
-        "high": "高"
+        "high": "高",
+        "xhigh": "超高"
       }
     },
     "documents": {
@@ -1949,7 +2008,8 @@
         "tts": "文字转语音",
         "voice-mode": "语音模式",
         "voice-cloning": "语音克隆",
-        "work-agents": "Work 中的智能体 CLI"
+        "work-agents": "Work 中的智能体 CLI",
+        "decision-models": "判定模型"
       },
       "grantViaKinds": {
         "user": "直接授权",
@@ -2095,6 +2155,13 @@
         "admins": "管理员",
         "all-users": "所有 Work 用户"
       }
+    },
+    "decisionAccess": {
+      "title": "判定模型",
+      "description": "允许所有活跃用户在聊天中以及通过 Decisions API 使用判定模型。管理员始终可以使用。",
+      "lockedByEnv": "由环境变量 DECISION_MODELS_ACCESS_MODE 固定",
+      "saved": "已更新判定模型访问权限",
+      "saveFailed": "无法更新判定模型访问权限"
     }
   },
   "usageAnalytics": {
@@ -2470,6 +2537,8 @@
     "soundPlaceholder": "描述您想要的声音、音乐、氛围或语音响应...",
     "generate": "生成",
     "generating": "正在生成…这可能需要几分钟",
+    "cancelJob": "取消任务",
+    "stopWaiting": "停止等待",
     "success": "媒体已生成并保存到 Imagine",
     "successWithSavedVoice": "媒体已生成，“{{name}}”现已可在语音设置中使用",
     "failed": "生成媒体失败",
@@ -2567,8 +2636,8 @@
     "closePanelEsc": "关闭面板（Esc）",
     "copyButton": "复制",
     "dragEdgeToResize": "拖动边缘调整大小",
-    "previewUnavailable": "Preview unavailable",
-    "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source.",
+    "previewUnavailable": "无法预览",
+    "previewUnavailableDescription": "此制品不包含可预览的内容。切换到代码视图以查看源代码。",
     "versionOf": "第 {{current}} 版，共 {{total}} 版",
     "previousVersion": "上一版本",
     "nextVersion": "下一版本",
@@ -3121,7 +3190,18 @@
     "sources": "模型来源",
     "defaultModel": "默认模型",
     "contextSize": "{{size}} 上下文",
-    "via": "通过 {{provider}}"
+    "via": "通过 {{provider}}",
+    "decisionBadge": "判定",
+    "libraryCategories": {
+      "all": "全部",
+      "general": "通用",
+      "coding": "编程",
+      "reasoning": "推理",
+      "vision": "视觉",
+      "embedding": "嵌入",
+      "decision": "判定",
+      "cloud": "云端"
+    }
   },
   "whatsNew": {
     "title": "新功能",

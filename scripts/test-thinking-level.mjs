@@ -60,7 +60,9 @@ await new Promise(resolve => ollamaStub.listen(0, '127.0.0.1', resolve));
 process.env.OLLAMA_BASE_URL = `http://127.0.0.1:${ollamaStub.address().port}`;
 
 const backendImport = segments =>
-  import(pathToFileURL(path.join(repoRoot, 'backend', 'dist', ...segments)).href);
+  import(
+    pathToFileURL(path.join(repoRoot, 'backend', 'dist', ...segments)).href
+  );
 
 const thinking = await backendImport(['utils', 'thinkingOptions.js']);
 const modelDefaults = await backendImport(['utils', 'ollamaModelDefaults.js']);
@@ -73,9 +75,7 @@ after(() => {
   fs.rmSync(testDataDirectory, { recursive: true, force: true });
 });
 
-const message = content => [
-  { id: 'm1', role: 'user', content, timestamp: 1 },
-];
+const message = content => [{ id: 'm1', role: 'user', content, timestamp: 1 }];
 
 const requestsTo = url => ollamaRequests.filter(entry => entry.url === url);
 
@@ -310,4 +310,84 @@ test('Gemini receives a thinking budget in its generation config', () => {
     {}
   );
   assert.ok(!('thinkingConfig' in quiet.generationConfig));
+});
+
+test('extra high reaches the models documented to take it and asks the rest for high', async () => {
+  assert.equal(thinking.normalizeThinkingPreference('xhigh'), 'xhigh');
+  assert.equal(thinking.thinkingEffort('xhigh'), 'xhigh');
+  assert.equal(thinking.standardThinkingEffort('xhigh'), 'high');
+  assert.equal(thinking.standardThinkingEffort('low'), 'low');
+  assert.equal(thinking.thinkingBudgetTokens('xhigh'), 32768);
+
+  const build = (plugin, model, extra = {}, apiMode) =>
+    chatAdapter.buildPluginChatPayload(
+      { id: plugin, name: plugin },
+      model,
+      message('hello'),
+      { think: 'xhigh', ...extra },
+      {},
+      undefined,
+      apiMode
+    ).payload;
+
+  // OpenAI's model pages list xhigh for every GPT model from 5.4 on; older
+  // models, and gpt-5.3-codex-spark, which has no page, get high.
+  for (const model of [
+    'gpt-5.4',
+    'gpt-5.4-mini',
+    'gpt-5.4-nano',
+    'gpt-5.5',
+    'gpt-5.6-terra',
+    'gpt-6-sol',
+    'gpt-6.1-terra',
+  ]) {
+    assert.equal(build('openai', model).reasoning_effort, 'xhigh', model);
+  }
+  assert.equal(build('openai', 'gpt-5').reasoning_effort, 'high');
+  assert.equal(build('openai', 'gpt-4o').reasoning_effort, 'high');
+  assert.deepEqual(
+    build('codex-oauth', 'gpt-6.1-sol', {}, 'responses').reasoning,
+    { effort: 'xhigh', summary: 'auto' }
+  );
+  assert.deepEqual(
+    build('codex-oauth', 'gpt-5.3-codex-spark', {}, 'responses').reasoning,
+    { effort: 'high', summary: 'auto' }
+  );
+  // An OpenAI-style provider that serves other vendors' models stays at high.
+  assert.equal(build('groq', 'openai/gpt-oss-120b').reasoning_effort, 'high');
+  // OpenRouter lists xhigh and maps it to each model's nearest level;
+  // DeepSeek's level above high is max.
+  assert.equal(build('openrouter', 'openai/gpt-5').reasoning_effort, 'xhigh');
+  assert.equal(build('deepseek', 'deepseek-flash').reasoning_effort, 'max');
+  // Baseten's models disagree on the level above high (xhigh, max, or
+  // neither), so they get high.
+  assert.equal(build('baseten', 'zai-org/GLM-5.3').reasoning_effort, 'high');
+  assert.deepEqual(build('openai', 'gpt-5', {}, 'responses').reasoning, {
+    effort: 'high',
+    summary: 'auto',
+  });
+
+  // Anthropic lists xhigh for its adaptive models...
+  const adaptive = build('anthropic', 'claude-opus-5-5');
+  assert.deepEqual(adaptive.thinking, { type: 'adaptive' });
+  assert.deepEqual(adaptive.output_config, { effort: 'xhigh' });
+  // ...and the budget models get the largest budget, inside their ceiling.
+  const budgeted = build('anthropic', 'claude-sonnet-4-6');
+  assert.deepEqual(budgeted.thinking, {
+    type: 'enabled',
+    budget_tokens: 32768,
+  });
+  assert.equal(budgeted.max_tokens, 32768 + 1024);
+
+  ollamaRequests.length = 0;
+  await ollamaService.generateChatResponse({
+    model: 'gpt-oss:20b',
+    messages: [{ role: 'user', content: 'hello' }],
+    options: { think: 'xhigh' },
+  });
+  assert.equal(
+    requestsTo('/api/chat')[0].body.think,
+    'high',
+    'gpt-oss names low, medium, and high only'
+  );
 });

@@ -562,6 +562,62 @@
       "replyFinishedNoText": "{{name}} finished replying.",
       "codeBlock": "code block",
       "generationStopped": "Generation stopped"
+    },
+    "decision": {
+      "barTitle": "Decision questions",
+      "interactiveHint": "No questions set. Your first message is the state, and each line you send after it is a yes/no question about it. Send /clear to start over.",
+      "add": "Set questions",
+      "edit": "Edit questions",
+      "dialogTitle": "Decision questions",
+      "dialogSubtitle": "The decision model answers these about every message you send, with a probability for each answer.",
+      "useInteractive": "Use interactive mode",
+      "questionNumber": "Question {{number}}",
+      "removeQuestion": "Remove question",
+      "typeLabel": "Question type",
+      "types": {
+        "noul": "Yes/no",
+        "choice": "Choice",
+        "score": "Score"
+      },
+      "question": "Question",
+      "placeholders": {
+        "noul": "Is a refund being requested?",
+        "choice": "Which team should handle this?",
+        "score": "How urgent is this?"
+      },
+      "yesMeans": "Yes means (optional)",
+      "noMeans": "No means (optional)",
+      "options": "Options",
+      "optionName": "Option {{number}} name",
+      "optionDescription": "Option {{number}} description",
+      "optionNamePlaceholder": "billing",
+      "optionDescriptionPlaceholder": "Description (optional)",
+      "removeOption": "Remove option {{number}}",
+      "addOption": "Add option",
+      "levels": "Levels, lowest first",
+      "levelLabel": "Level {{number}}",
+      "levelPlaceholder": "Describe this level",
+      "removeLevel": "Remove level {{number}}",
+      "addLevel": "Add level",
+      "addQuestion": "Add question",
+      "saved": "Decision questions saved",
+      "saveFailed": "The decision questions could not be saved",
+      "errors": {
+        "tooMany": "Ask at most {{max}} questions.",
+        "instructions": "Question {{number}} needs its text.",
+        "options": "Question {{number}} needs 2 to 255 options, each with its own name.",
+        "levels": "Question {{number}} needs 2 to 10 levels."
+      },
+      "result": {
+        "yes": "Yes",
+        "no": "No",
+        "declined": "Declined",
+        "score": "{{value}} of {{max}}",
+        "stateSaved": "Saved as the state. Ask yes/no questions about it, one per line, or set questions for this chat.",
+        "cleared": "Cleared. Your next message is the new state.",
+        "via": "{{model}} via {{provider}}",
+        "inputTokens": "{{tokens}} input tokens"
+      }
     }
   },
   "sidebar": {
@@ -774,6 +830,7 @@
         "enableDescription": "Generate chat titles and live thinking summaries",
         "taskModel": "Task Model",
         "selectTaskModel": "Select task model",
+        "useCurrentModel": "Use current running model",
         "taskModelDescription": "Model used for titles and live thinking summaries. Recent reasoning is sent to this model."
       },
       "updatingModel": "Updating {{name}} ({{current}}/{{total}})",
@@ -846,7 +903,8 @@
         "embedding": "Embedding",
         "image": "Image",
         "speech": "Speech",
-        "transcription": "Transcription"
+        "transcription": "Transcription",
+        "decision": "Decision"
       },
       "exportPlugin": "Export plugin",
       "deletePlugin": "Delete plugin",
@@ -922,7 +980,8 @@
         "on": "On",
         "low": "Low",
         "medium": "Medium",
-        "high": "High"
+        "high": "High",
+        "xhigh": "Extra high"
       }
     },
     "documents": {
@@ -1949,7 +2008,8 @@
         "tts": "Text to speech",
         "voice-mode": "Voice mode",
         "voice-cloning": "Voice cloning",
-        "work-agents": "Agent CLIs in Work"
+        "work-agents": "Agent CLIs in Work",
+        "decision-models": "Decision models"
       },
       "grantViaKinds": {
         "user": "direct grant",
@@ -2095,6 +2155,13 @@
         "admins": "Administrators",
         "all-users": "All Work users"
       }
+    },
+    "decisionAccess": {
+      "title": "Decision models",
+      "description": "Allow all active users to use decision models in chats and through the Decisions API. Administrators can always use them.",
+      "lockedByEnv": "Pinned by the DECISION_MODELS_ACCESS_MODE environment variable",
+      "saved": "Decision models access updated",
+      "saveFailed": "Could not update decision models access"
     }
   },
   "usageAnalytics": {
@@ -2470,6 +2537,8 @@
     "soundPlaceholder": "Describe the sound, music, atmosphere, or spoken response you want...",
     "generate": "Generate",
     "generating": "Generating… this can take several minutes",
+    "cancelJob": "Cancel job",
+    "stopWaiting": "Stop waiting",
     "success": "Media generated and saved to Imagine",
     "successWithSavedVoice": "Media generated and “{{name}}” is now available in Speech settings",
     "failed": "Failed to generate media",
@@ -3121,7 +3190,18 @@
     "sources": "Model sources",
     "defaultModel": "Default model",
     "contextSize": "{{size}} context",
-    "via": "via {{provider}}"
+    "via": "via {{provider}}",
+    "decisionBadge": "Decision",
+    "libraryCategories": {
+      "all": "All",
+      "general": "General",
+      "coding": "Coding",
+      "reasoning": "Reasoning",
+      "vision": "Vision",
+      "embedding": "Embedding",
+      "decision": "Decision",
+      "cloud": "Cloud"
+    }
   },
   "whatsNew": {
     "title": "What's new",

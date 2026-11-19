@@ -392,8 +392,8 @@ The following security and ownership rules also apply:
 - Image model availability, endpoint overrides, and API keys are also resolved
   for the current user. If an image request appears to use another account's
   provider settings, verify the request is authenticated as the expected user.
-- If an upgraded non-admin account once stored a routing value, use **Reset**
-  for that plugin. The ignored legacy value is purged so it cannot become active
+- If an upgraded non-admin account once stored a routing value, use **Reset to
+  Defaults** for that plugin. The ignored legacy value is purged so it cannot become active
   after a later role change. Saving or resetting routing also clears that
   account's discovered models so a stale catalog cannot follow the old route.
 - Requests originate from the backend. When Libre WebUI runs in a container,

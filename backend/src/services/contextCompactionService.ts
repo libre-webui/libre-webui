@@ -301,6 +301,21 @@ export const planCompaction = async (
     const nonSystem = active.filter(message => message.role !== 'system');
     if (nonSystem.length <= config.keepRecentMessages + 2) return null;
 
+    // A decision chat's first message can be the state every later question
+    // is asked about; summarizing it away would change the answers.
+    const { getDecisionService } = await import('./decisionService.js');
+    const decisionTarget = await (
+      await getDecisionService()
+    ).resolveTarget(
+      await chatGenerationService.resolveActualModelName(session.model, userId),
+      session.model.startsWith('persona:')
+        ? undefined
+        : normalizeChatProviderSelection(session),
+      userId,
+      options.signal
+    );
+    if (decisionTarget) return null;
+
     // Keep the most recent messages, extended backwards so the survivors
     // start on a user turn — a turn is never split across the summary
     // boundary, and at least keepRecentMessages always survive.

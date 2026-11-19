@@ -562,6 +562,62 @@
       "replyFinishedNoText": "{{name}} lauk við að svara.",
       "codeBlock": "kóðablokk",
       "generationStopped": "Myndun stöðvuð"
+    },
+    "decision": {
+      "barTitle": "Ákvörðunarspurningar",
+      "interactiveHint": "Engar spurningar skilgreindar. Fyrstu skilaboðin þín eru staðan og hver lína sem þú sendir á eftir er já/nei-spurning um hana. Sendu /clear til að byrja upp á nýtt.",
+      "add": "Skilgreina spurningar",
+      "edit": "Breyta spurningum",
+      "dialogTitle": "Ákvörðunarspurningar",
+      "dialogSubtitle": "Ákvörðunarlíkanið svarar þessum spurningum um hver skilaboð sem þú sendir, með líkum fyrir hvert svar.",
+      "useInteractive": "Nota gagnvirkan ham",
+      "questionNumber": "Spurning {{number}}",
+      "removeQuestion": "Fjarlægja spurningu",
+      "typeLabel": "Tegund spurningar",
+      "types": {
+        "noul": "Já/nei",
+        "choice": "Val",
+        "score": "Einkunn"
+      },
+      "question": "Spurning",
+      "placeholders": {
+        "noul": "Er beðið um endurgreiðslu?",
+        "choice": "Hvaða teymi á að sjá um þetta?",
+        "score": "Hversu áríðandi er þetta?"
+      },
+      "yesMeans": "Já þýðir (valfrjálst)",
+      "noMeans": "Nei þýðir (valfrjálst)",
+      "options": "Valkostir",
+      "optionName": "Heiti valkosts {{number}}",
+      "optionDescription": "Lýsing valkosts {{number}}",
+      "optionNamePlaceholder": "reikningar",
+      "optionDescriptionPlaceholder": "Lýsing (valfrjálst)",
+      "removeOption": "Fjarlægja valkost {{number}}",
+      "addOption": "Bæta við valkosti",
+      "levels": "Stig, lægst fyrst",
+      "levelLabel": "Stig {{number}}",
+      "levelPlaceholder": "Lýstu þessu stigi",
+      "removeLevel": "Fjarlægja stig {{number}}",
+      "addLevel": "Bæta við stigi",
+      "addQuestion": "Bæta við spurningu",
+      "saved": "Ákvörðunarspurningar vistaðar",
+      "saveFailed": "Ekki tókst að vista ákvörðunarspurningarnar",
+      "errors": {
+        "tooMany": "Spyrðu í mesta lagi {{max}} spurninga.",
+        "instructions": "Spurning {{number}} þarf texta.",
+        "options": "Spurning {{number}} þarf 2 til 255 valkosti, hvern með eigið heiti.",
+        "levels": "Spurning {{number}} þarf 2 til 10 stig."
+      },
+      "result": {
+        "yes": "Já",
+        "no": "Nei",
+        "declined": "Hafnað",
+        "score": "{{value}} af {{max}}",
+        "stateSaved": "Vistað sem staða. Spyrðu já/nei-spurninga um hana, einnar í hverri línu, eða skilgreindu spurningar fyrir þetta spjall.",
+        "cleared": "Hreinsað. Næstu skilaboð þín verða nýja staðan.",
+        "via": "{{model}} í gegnum {{provider}}",
+        "inputTokens": "{{tokens}} inntakstákn"
+      }
     }
   },
   "sidebar": {
@@ -607,7 +663,7 @@
       "updated": "Prófílmynd uppfærð",
       "updateFailed": "Ekki tókst að uppfæra prófílmynd",
       "saving": "Vistar...",
-      "label": "Avatar",
+      "label": "Notandamynd",
       "uploadAvatarImage": "Hlaða upp avatar mynd",
       "dragAndDrop": "Dragðu og slepptu mynd eða smelltu til að vafra",
       "chooseImage": "Velja mynd",
@@ -774,6 +830,7 @@
         "enableDescription": "Búa til spjalltitla og samantektir á hugsunarferlinu í rauntíma",
         "taskModel": "Verkefnislíkan",
         "selectTaskModel": "Veldu verkefnislíkan",
+        "useCurrentModel": "Nota líkanið sem er í gangi",
         "taskModelDescription": "Líkan fyrir titla og samantektir á hugsunarferlinu í rauntíma. Nýjustu röksemdir eru sendar til þessa líkans."
       },
       "updatingModel": "Uppfæri {{name}} ({{current}}/{{total}})",
@@ -846,7 +903,8 @@
         "embedding": "Ívefing",
         "image": "Mynd",
         "speech": "Tal",
-        "transcription": "Ritskráning"
+        "transcription": "Ritskráning",
+        "decision": "Ákvörðun"
       },
       "exportPlugin": "Flytja út viðbót",
       "deletePlugin": "Eyða viðbót",
@@ -863,7 +921,7 @@
         "removeFailed": "Ekki tókst að fjarlægja API lykil",
         "enterKey": "Sláðu inn API lykil"
       },
-      "variables": "Variables",
+      "variables": "Breytur",
       "dismissError": "Loka villu"
     },
     "generation": {
@@ -922,7 +980,8 @@
         "on": "Á",
         "low": "Lágt",
         "medium": "Miðlungs",
-        "high": "Hátt"
+        "high": "Hátt",
+        "xhigh": "Mjög hátt"
       }
     },
     "documents": {
@@ -1147,15 +1206,15 @@
         "githubDescription": "Skoðaðu frumkóða og leggðu til",
         "website": "Vefsíða",
         "websiteDescription": "Heimsæktu vefsíðuna okkar",
-        "documentation": "Documentation",
+        "documentation": "Skjölun",
         "reportIssue": "Tilkynna vandamál",
         "reportIssueDescription": "Villutilkynningar og eiginleikabeiðnir",
-        "documentationDescription": "Guides, tutorials and API reference",
-        "forgejo": "Forgejo Mirror",
-        "forgejoDescription": "Self-hosted Forgejo repository",
+        "documentationDescription": "Leiðbeiningar, kennsluefni og API-tilvísun",
+        "forgejo": "Forgejo-spegill",
+        "forgejoDescription": "Forgejo-geymsla í eigin hýsingu",
         "sponsor": "Styrkja",
         "sponsorDescription": "Hjálpaðu til við að fjármagna verkefnið",
-        "star": "Stjarna á GitHub",
+        "star": "Gefa stjörnu á GitHub",
         "starDescription": "Stjarna hjálpar öðrum að finna verkefnið"
       },
       "version": "Útgáfa {{version}}",
@@ -1949,7 +2008,8 @@
         "tts": "Texti í tal",
         "voice-mode": "Raddstilling",
         "voice-cloning": "Raddafritun",
-        "work-agents": "CLI-agentar í Work"
+        "work-agents": "CLI-agentar í Work",
+        "decision-models": "Ákvörðunarlíkön"
       },
       "grantViaKinds": {
         "user": "bein úthlutun",
@@ -2095,6 +2155,13 @@
         "admins": "Stjórnendur",
         "all-users": "Allir Work-notendur"
       }
+    },
+    "decisionAccess": {
+      "title": "Ákvörðunarlíkön",
+      "description": "Leyfa öllum virkum notendum að nota ákvörðunarlíkön í spjalli og í gegnum Decisions-API. Stjórnendur geta alltaf notað þau.",
+      "lockedByEnv": "Fest með umhverfisbreytunni DECISION_MODELS_ACCESS_MODE",
+      "saved": "Aðgangur að ákvörðunarlíkönum uppfærður",
+      "saveFailed": "Ekki tókst að uppfæra aðgang að ákvörðunarlíkönum"
     }
   },
   "usageAnalytics": {
@@ -2214,7 +2281,7 @@
       "hostname": "Vélarheiti",
       "operatingSystem": "Stýrikerfi",
       "processor": "Örgjörvi",
-      "logicalCpus": "logical CPUs",
+      "logicalCpus": "rökrænir örgjörvar",
       "loadAverage": "Meðalálag · 1 / 5 / 15 mín",
       "libreVersion": "Libre WebUI",
       "nodeVersion": "Node.js",
@@ -2470,6 +2537,8 @@
     "soundPlaceholder": "Lýstu hljóðmerki, tónlist, andrúmlofti eða töluðu svari sem þú vilt...",
     "generate": "Búa til",
     "generating": "Bý til… þetta getur tekið nokkrar mínútur",
+    "cancelJob": "Hætta við verk",
+    "stopWaiting": "Hætta að bíða",
     "success": "Miðill búinn til og vistaður í Imagine",
     "successWithSavedVoice": "Miðillinn var búinn til og „{{name}}“ er nú í boði í talstillingum",
     "failed": "Mistókst að búa til miðil",
@@ -2567,8 +2636,8 @@
     "closePanelEsc": "Loka spjaldi (Esc)",
     "copyButton": "Afrita",
     "dragEdgeToResize": "Dragðu brún til að breyta stærð",
-    "previewUnavailable": "Preview unavailable",
-    "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source.",
+    "previewUnavailable": "Forskoðun ekki í boði",
+    "previewUnavailableDescription": "Þessi hlutur inniheldur ekkert efni sem hægt er að birta í forskoðun. Skiptu yfir í kóðasýn til að skoða frumkóðann.",
     "versionOf": "Útgáfa {{current}} af {{total}}",
     "previousVersion": "Fyrri útgáfa",
     "nextVersion": "Næsta útgáfa",
@@ -3096,18 +3165,18 @@
     "uploadFailed": "Ekki tókst að hlaða upp bakgrunnsmynd"
   },
   "modelSelector": {
-    "searchInstalled": "Search installed models...",
-    "searchOllama": "Search Ollama library...",
-    "searchHuggingFace": "Search HuggingFace...",
+    "searchInstalled": "Leita í uppsettum líkönum...",
+    "searchOllama": "Leita í Ollama-safninu...",
+    "searchHuggingFace": "Leita á HuggingFace...",
     "searchModels": "Leita í líkönum...",
     "selectModel": "Select Model",
-    "personas": "Personas",
-    "ollamaModels": "Ollama Models",
-    "pluginModels": "Plugin Models",
-    "actions": "Actions",
-    "installed": "Installed",
+    "personas": "Persónur",
+    "ollamaModels": "Ollama-líkön",
+    "pluginModels": "Líkön úr viðbótum",
+    "actions": "Aðgerðir",
+    "installed": "Uppsett",
     "use": "Use",
-    "pull": "Pull",
+    "pull": "Sækja",
     "pullRestricted": "Uppsetning líkana er takmörkuð við stjórnendur á þessu tilviki.",
     "adminOnlyPull": "Aðeins stjórnendur",
     "legacyProvider": "veitandi ekki skráður",
@@ -3121,7 +3190,18 @@
     "sources": "Uppruni líkana",
     "defaultModel": "Sjálfgefið líkan",
     "contextSize": "{{size}} samhengi",
-    "via": "í gegnum {{provider}}"
+    "via": "í gegnum {{provider}}",
+    "decisionBadge": "Ákvörðun",
+    "libraryCategories": {
+      "all": "Allt",
+      "general": "Almennt",
+      "coding": "Forritun",
+      "reasoning": "Rökstuðningur",
+      "vision": "Sjón",
+      "embedding": "Ívefing",
+      "decision": "Ákvörðun",
+      "cloud": "Ský"
+    }
   },
   "whatsNew": {
     "title": "Nýjungar",

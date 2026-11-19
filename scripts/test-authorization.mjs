@@ -252,6 +252,9 @@ test('explainEffectiveAccess returns groups, feature booleans, and grants', asyn
     tts: true,
     'voice-mode': true,
     'voice-cloning': true,
+    // Decision models start admins-only, like every capability that can
+    // bill a provider account.
+    'decision-models': false,
   });
   assert.equal('agents' in view.features, false);
   const groupGrant = view.grants.find(

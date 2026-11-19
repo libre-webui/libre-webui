@@ -85,7 +85,7 @@ A clone can optionally be saved as a reusable, named voice for the same plugin
 and model. Saving requires a separate storage-consent confirmation. Libre WebUI
 encrypts the original reference and transcript in a user-owned voice profile;
 it does not use generated speech as the reference. Saved profiles can be
-selected or permanently deleted under **Settings → Text-to-Speech**. The
+selected or permanently deleted under **Settings → Speech**. The
 configured provider receives the stored reference again whenever it generates
 a Speech batch. The profile is bound to that provider's approved routing; if
 the plugin definition or endpoint changes, recreate the profile to consent to

@@ -562,6 +562,62 @@
       "replyFinishedNoText": "{{name}} selesai membalas.",
       "codeBlock": "blok kode",
       "generationStopped": "Pembuatan dihentikan"
+    },
+    "decision": {
+      "barTitle": "Pertanyaan keputusan",
+      "interactiveHint": "Belum ada pertanyaan. Pesan pertama Anda adalah keadaannya, dan setiap baris yang Anda kirim setelahnya adalah pertanyaan ya/tidak tentangnya. Kirim /clear untuk memulai ulang.",
+      "add": "Atur pertanyaan",
+      "edit": "Edit pertanyaan",
+      "dialogTitle": "Pertanyaan keputusan",
+      "dialogSubtitle": "Model keputusan menjawab pertanyaan ini untuk setiap pesan yang Anda kirim, dengan probabilitas untuk tiap jawaban.",
+      "useInteractive": "Gunakan mode interaktif",
+      "questionNumber": "Pertanyaan {{number}}",
+      "removeQuestion": "Hapus pertanyaan",
+      "typeLabel": "Jenis pertanyaan",
+      "types": {
+        "noul": "Ya/tidak",
+        "choice": "Pilihan",
+        "score": "Skor"
+      },
+      "question": "Pertanyaan",
+      "placeholders": {
+        "noul": "Apakah pengembalian dana diminta?",
+        "choice": "Tim mana yang harus menangani ini?",
+        "score": "Seberapa mendesak ini?"
+      },
+      "yesMeans": "Ya berarti (opsional)",
+      "noMeans": "Tidak berarti (opsional)",
+      "options": "Opsi",
+      "optionName": "Nama opsi {{number}}",
+      "optionDescription": "Deskripsi opsi {{number}}",
+      "optionNamePlaceholder": "tagihan",
+      "optionDescriptionPlaceholder": "Deskripsi (opsional)",
+      "removeOption": "Hapus opsi {{number}}",
+      "addOption": "Tambah opsi",
+      "levels": "Tingkat, terendah lebih dulu",
+      "levelLabel": "Tingkat {{number}}",
+      "levelPlaceholder": "Jelaskan tingkat ini",
+      "removeLevel": "Hapus tingkat {{number}}",
+      "addLevel": "Tambah tingkat",
+      "addQuestion": "Tambah pertanyaan",
+      "saved": "Pertanyaan keputusan disimpan",
+      "saveFailed": "Pertanyaan keputusan tidak dapat disimpan",
+      "errors": {
+        "tooMany": "Ajukan paling banyak {{max}} pertanyaan.",
+        "instructions": "Pertanyaan {{number}} memerlukan teks.",
+        "options": "Pertanyaan {{number}} memerlukan 2 sampai 255 opsi, masing-masing dengan nama sendiri.",
+        "levels": "Pertanyaan {{number}} memerlukan 2 sampai 10 tingkat."
+      },
+      "result": {
+        "yes": "Ya",
+        "no": "Tidak",
+        "declined": "Ditolak",
+        "score": "{{value}} dari {{max}}",
+        "stateSaved": "Disimpan sebagai keadaan. Ajukan pertanyaan ya/tidak tentangnya, satu per baris, atau atur pertanyaan untuk obrolan ini.",
+        "cleared": "Dihapus. Pesan Anda berikutnya menjadi keadaan baru.",
+        "via": "{{model}} melalui {{provider}}",
+        "inputTokens": "{{tokens}} token masukan"
+      }
     }
   },
   "sidebar": {
@@ -774,6 +830,7 @@
         "enableDescription": "Buat judul chat dan ringkasan pemikiran secara langsung",
         "taskModel": "Model Tugas",
         "selectTaskModel": "Pilih model tugas",
+        "useCurrentModel": "Gunakan model yang sedang berjalan",
         "taskModelDescription": "Model yang digunakan untuk judul dan ringkasan pemikiran secara langsung. Penalaran terbaru dikirim ke model ini."
       },
       "updatingModel": "Memperbarui {{name}} ({{current}}/{{total}})",
@@ -846,7 +903,8 @@
         "embedding": "Embedding",
         "image": "Gambar",
         "speech": "Suara",
-        "transcription": "Transkripsi"
+        "transcription": "Transkripsi",
+        "decision": "Keputusan"
       },
       "exportPlugin": "Ekspor plugin",
       "deletePlugin": "Hapus plugin",
@@ -922,7 +980,8 @@
         "on": "Aktif",
         "low": "Rendah",
         "medium": "Sedang",
-        "high": "Tinggi"
+        "high": "Tinggi",
+        "xhigh": "Sangat tinggi"
       }
     },
     "documents": {
@@ -983,7 +1042,7 @@
       }
     },
     "tts": {
-      "title": "Text-to-Speech",
+      "title": "Teks ke Ucapan",
       "description": "Konfigurasi pengaturan text-to-speech untuk membaca pesan dengan suara",
       "loadingProviders": "Memuat penyedia TTS...",
       "noProviders": "Tidak Ada Penyedia TTS",
@@ -1155,7 +1214,7 @@
         "forgejoDescription": "Repositori Forgejo yang di-hosting sendiri",
         "sponsor": "Sponsor",
         "sponsorDescription": "Bantu danai proyek ini",
-        "star": "Bintang di GitHub",
+        "star": "Beri bintang di GitHub",
         "starDescription": "Bintang membantu orang lain menemukan proyek ini"
       },
       "version": "Versi {{version}}",
@@ -1949,7 +2008,8 @@
         "tts": "Teks ke ucapan",
         "voice-mode": "Mode suara",
         "voice-cloning": "Kloning suara",
-        "work-agents": "CLI agen di Work"
+        "work-agents": "CLI agen di Work",
+        "decision-models": "Model keputusan"
       },
       "grantViaKinds": {
         "user": "pemberian langsung",
@@ -2095,6 +2155,13 @@
         "admins": "Administrator",
         "all-users": "Semua pengguna Work"
       }
+    },
+    "decisionAccess": {
+      "title": "Model keputusan",
+      "description": "Izinkan semua pengguna aktif memakai model keputusan di obrolan dan melalui Decisions API. Administrator selalu dapat memakainya.",
+      "lockedByEnv": "Ditetapkan oleh variabel lingkungan DECISION_MODELS_ACCESS_MODE",
+      "saved": "Akses model keputusan diperbarui",
+      "saveFailed": "Akses model keputusan tidak dapat diperbarui"
     }
   },
   "usageAnalytics": {
@@ -2470,6 +2537,8 @@
     "soundPlaceholder": "Deskripsikan suara, musik, suasana, atau respons lisan yang Anda inginkan...",
     "generate": "Hasilkan",
     "generating": "Menghasilkan… ini bisa memakan waktu beberapa menit",
+    "cancelJob": "Batalkan tugas",
+    "stopWaiting": "Berhenti menunggu",
     "success": "Media dihasilkan dan disimpan ke Imagine",
     "successWithSavedVoice": "Media dibuat dan “{{name}}” kini tersedia di pengaturan Ucapan",
     "failed": "Gagal menghasilkan media",
@@ -2567,8 +2636,8 @@
     "closePanelEsc": "Tutup panel (Esc)",
     "copyButton": "Salin",
     "dragEdgeToResize": "Seret tepi untuk mengubah ukuran",
-    "previewUnavailable": "Preview unavailable",
-    "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source.",
+    "previewUnavailable": "Pratinjau tidak tersedia",
+    "previewUnavailableDescription": "Artefak ini tidak berisi konten yang dapat ditampilkan sebagai pratinjau. Beralih ke tampilan kode untuk memeriksa sumbernya.",
     "versionOf": "Versi {{current}} dari {{total}}",
     "previousVersion": "Versi sebelumnya",
     "nextVersion": "Versi berikutnya",
@@ -3121,7 +3190,18 @@
     "sources": "Sumber model",
     "defaultModel": "Model default",
     "contextSize": "konteks {{size}}",
-    "via": "melalui {{provider}}"
+    "via": "melalui {{provider}}",
+    "decisionBadge": "Keputusan",
+    "libraryCategories": {
+      "all": "Semua",
+      "general": "Umum",
+      "coding": "Pemrograman",
+      "reasoning": "Penalaran",
+      "vision": "Visi",
+      "embedding": "Embedding",
+      "decision": "Keputusan",
+      "cloud": "Cloud"
+    }
   },
   "whatsNew": {
     "title": "Yang baru",

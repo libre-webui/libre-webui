@@ -63,6 +63,7 @@ const canonicalCapabilityIds = [
   'web-search',
   'settings-preferences',
   'speech',
+  'decision-models',
   'hugging-face-hub',
   'strands-engine',
   'durable-jobs',

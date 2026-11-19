@@ -24,6 +24,7 @@ import {
   GenerationStatistics,
   Persona,
   ChatProviderType,
+  DecisionQuestions,
   SessionFolder,
 } from '@/types';
 import { chatApi, ollamaApi, preferencesApi, personaApi } from '@/utils/api';
@@ -33,6 +34,7 @@ import i18n from '@/i18n';
 import toast from 'react-hot-toast';
 import {
   appendMessageToChatState,
+  applyDecisionModels,
   buildPersonaModels,
   buildPersonasById,
   buildPluginModels,
@@ -65,6 +67,8 @@ const logger = createLogger('chat-store');
 export interface DraftSessionSettings {
   systemPrompt?: string;
   generationOptions?: Partial<GenerationOptions>;
+  /** Questions for a decision model, carried onto the chat it starts. */
+  decisionQuestions?: DecisionQuestions;
 }
 
 interface ChatState {
@@ -832,6 +836,17 @@ export const useChatStore = create<ChatState>((set, get) => ({
         }
       } catch (agentError) {
         logger.warn('Agent CLI models unavailable:', agentError);
+      }
+
+      // Decision models: Ollama's are marked in place, a provider's added.
+      try {
+        const { decisionsApi } = await import('@/utils/api/decisionsApi');
+        const decisionResponse = await decisionsApi.getModels();
+        if (decisionResponse.success && decisionResponse.data) {
+          allModels = applyDecisionModels(allModels, decisionResponse.data);
+        }
+      } catch (decisionError) {
+        logger.warn('Decision models unavailable:', decisionError);
       }
 
       const providerModelCount = allModels.length;

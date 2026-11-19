@@ -83,9 +83,11 @@ import {
   chatModelSelectionFromKey,
   chatModelSelectionFromModel,
   chatModelSelectionKeyForModels,
+  findChatModelForSelection,
   isChatModelSelectionAvailable,
   withUnavailableChatModel,
 } from '@/utils/chatModelSelection';
+import { DecisionQuestionsBar } from '@/components/decisions/DecisionQuestionsBar';
 import toast from 'react-hot-toast';
 import {
   getWelcomePromptId,
@@ -230,6 +232,9 @@ export const ChatPage: React.FC = () => {
     () => withUnavailableChatModel(models, selectedModelState),
     [models, selectedModelState]
   );
+  // Decision models answer typed questions; see the same rule in ChatInput.
+  const welcomeIsDecisionModel =
+    findChatModelForSelection(models, selectedModelState)?.isDecision === true;
   const selectedModelKey = selectedModel
     ? chatModelSelectionKeyForModels(welcomeModels, selectedModelState)
     : '';
@@ -389,6 +394,7 @@ export const ChatPage: React.FC = () => {
 
   const welcomeThinkingAvailable = Boolean(
     selectedModel &&
+    !welcomeIsDecisionModel &&
     !selectedModelEntry?.isAgent &&
     (selectedModelEntry?.isPlugin
       ? selectedModelEntry.reasoningSupport !== false
@@ -673,8 +679,11 @@ export const ChatPage: React.FC = () => {
     const pendingMessage = {
       content: welcomeMessage.trim(),
       images: welcomeImages.length > 0 ? welcomeImages : undefined,
-      webSearch: welcomeWebSearchAllowed && welcomeWebSearch ? true : undefined,
-      ...composerToolsRequest(welcomeTools),
+      webSearch:
+        welcomeWebSearchAllowed && welcomeWebSearch && !welcomeIsDecisionModel
+          ? true
+          : undefined,
+      ...(welcomeIsDecisionModel ? {} : composerToolsRequest(welcomeTools)),
     };
     sessionStorage.setItem('pendingMessage', JSON.stringify(pendingMessage));
 
@@ -733,8 +742,9 @@ export const ChatPage: React.FC = () => {
       const draft = useChatStore.getState().draftSessionSettings;
       const prompt = draft.systemPrompt?.trim();
       const options = draft.generationOptions;
+      const decisionQuestions = draft.decisionQuestions;
 
-      if (!prompt && !options) return;
+      if (!prompt && !options && !decisionQuestions) return;
 
       const messages = prompt
         ? [
@@ -751,7 +761,13 @@ export const ChatPage: React.FC = () => {
       try {
         const response = await chatApi.updateSession(session.id, {
           messages,
-          settings: options ? { generationOptions: options } : undefined,
+          settings:
+            options || decisionQuestions
+              ? {
+                  ...(options ? { generationOptions: options } : {}),
+                  ...(decisionQuestions ? { decisionQuestions } : {}),
+                }
+              : undefined,
         } as Partial<ChatSession>);
 
         if (response.success && response.data) {
@@ -951,6 +967,17 @@ export const ChatPage: React.FC = () => {
                   </div>
                 )}
 
+                {welcomeIsDecisionModel && (
+                  <DecisionQuestionsBar
+                    questions={draftSessionSettings.decisionQuestions}
+                    onSave={questions =>
+                      setDraftSessionSettings({
+                        ...useChatStore.getState().draftSessionSettings,
+                        decisionQuestions: questions,
+                      })
+                    }
+                  />
+                )}
                 {/* Floating composer card: text row on top, controls below. */}
                 <form onSubmit={handleWelcomeSubmit}>
                   <div data-composer-box='' className={composerSurfaceClass}>
@@ -1016,7 +1043,7 @@ export const ChatPage: React.FC = () => {
                         />
                       )}
 
-                      {welcomeWebSearchAllowed && (
+                      {welcomeWebSearchAllowed && !welcomeIsDecisionModel && (
                         <Button
                           type='button'
                           variant='ghost'
@@ -1045,11 +1072,13 @@ export const ChatPage: React.FC = () => {
                         </Button>
                       )}
 
-                      <ComposerToolsMenu
-                        value={welcomeTools}
-                        onChange={setWelcomeTools}
-                        buttonClassName='h-9 w-9'
-                      />
+                      {!welcomeIsDecisionModel && (
+                        <ComposerToolsMenu
+                          value={welcomeTools}
+                          onChange={setWelcomeTools}
+                          buttonClassName='h-9 w-9'
+                        />
+                      )}
 
                       <div className='min-w-0 flex-1' />
 

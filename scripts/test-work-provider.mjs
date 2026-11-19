@@ -1415,6 +1415,20 @@ test('Work payloads carry the run reasoning level per provider', () => {
   ).payload;
   assert.deepEqual(responses.reasoning, { effort: 'low', summary: 'auto' });
 
+  // Extra high is the provider's own level above high where its docs list one
+  // for the model, and high elsewhere, on both Work protocols.
+  const extraHigh = (id, model, apiMode) =>
+    buildPluginWorkPayload(plugin(id), request(model, 'xhigh'), {}, apiMode)
+      .payload;
+  assert.equal(extraHigh('openai', 'gpt-5.5').reasoning_effort, 'xhigh');
+  assert.deepEqual(extraHigh('openai', 'gpt-6-sol', 'responses').reasoning, {
+    effort: 'xhigh',
+    summary: 'auto',
+  });
+  assert.equal(extraHigh('openai', 'test-model').reasoning_effort, 'high');
+  assert.equal(extraHigh('deepseek', 'deepseek-flash').reasoning_effort, 'max');
+  assert.equal(extraHigh('openrouter', 'z-ai/glm-5').reasoning_effort, 'xhigh');
+
   const anthropic = buildPluginWorkPayload(
     plugin('anthropic'),
     request('claude-opus-4-1', 'medium')

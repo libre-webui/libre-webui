@@ -34,8 +34,16 @@ import {
   normalizeOpenAIResponsesResponse,
 } from './openAIResponsesAdapter.js';
 import {
+  convertGeminiResponse,
+  geminiSamplingConfig,
+  resolveGeminiThinking,
+  toGeminiContents,
+  toGeminiTools,
+} from './geminiProtocol.js';
+import {
   fitThinkingBudget,
   normalizeThinkingPreference,
+  standardThinkingEffort,
   thinkingBudgetTokens,
   thinkingEffort,
 } from './thinkingOptions.js';
@@ -537,34 +545,52 @@ export function resolveAnthropicThinking(
   };
 }
 
+const EXTRA_HIGH_REASONING_EFFORT: Readonly<Record<string, string>> = {
+  // DeepSeek lists none, low, high, and max; it would quietly run `xhigh` at
+  // high, so extra high asks for max.
+  deepseek: 'max',
+  // OpenRouter lists `xhigh` for `reasoning_effort` and maps it to the
+  // nearest level each model supports.
+  openrouter: 'xhigh',
+};
+
 /**
- * Gemini takes a thinking budget inside the generation config. Only an
- * enabled setting is sent: a zero budget is rejected by the models that
- * always reason, so switching thinking off is left to the model. Thinking
- * tokens count against maxOutputTokens, so the ceiling has to hold the budget
- * plus the answer or the reply arrives empty at MAX_TOKENS.
+ * OpenAI's model pages list `xhigh` for every GPT model from 5.4 on (5.4 and
+ * its mini and nano, 5.5, 5.6, and the GPT-6 family). Older models, and
+ * gpt-5.3-codex-spark, which has no model page, are left at high.
  */
-export function resolveGeminiThinking(
-  think: unknown,
-  requestedMaxTokens: number | undefined
-): { maxOutputTokens: number; thinkingConfig?: Record<string, unknown> } {
-  const levelBudget = thinkingBudgetTokens(think);
-  const fitted =
-    levelBudget === undefined
-      ? undefined
-      : fitThinkingBudget(requestedMaxTokens, levelBudget);
-  return {
-    maxOutputTokens: fitted?.maxTokens ?? requestedMaxTokens ?? 1024,
-    ...(fitted !== undefined
-      ? {
-          thinkingConfig: {
-            thinkingBudget: fitted.budgetTokens,
-            // Without this the user pays for thinking and sees none.
-            includeThoughts: true,
-          },
-        }
-      : {}),
-  };
+export function openAIModelTakesExtraHigh(model: string): boolean {
+  const match = /^(?:openai\/)?gpt-(\d+)(?:\.(\d+))?(?![\d.])/.exec(
+    model.toLowerCase()
+  );
+  if (!match) return false;
+  const major = Number(match[1]);
+  const minor = Number(match[2] ?? 0);
+  return major > 5 || (major === 5 && minor >= 4);
+}
+
+/**
+ * The named effort an OpenAI-style provider receives. Extra high goes out as
+ * the provider's own level above high where its docs list one for the model:
+ * OpenAI's `xhigh` on the GPT models whose pages list it, DeepSeek's `max`,
+ * and OpenRouter's `xhigh`. Everywhere else it asks for `high`, which every
+ * reasoning model accepts.
+ */
+export function reasoningEffortFor(
+  plugin: Pick<Plugin, 'id'>,
+  model: string,
+  think: unknown
+): string | undefined {
+  if (thinkingEffort(think) !== 'xhigh') return standardThinkingEffort(think);
+  const providerLevel = EXTRA_HIGH_REASONING_EFFORT[plugin.id];
+  if (providerLevel) return providerLevel;
+  if (
+    (plugin.id === 'openai' || plugin.id === 'codex-oauth') &&
+    openAIModelTakesExtraHigh(model)
+  ) {
+    return 'xhigh';
+  }
+  return 'high';
 }
 
 /**
@@ -579,12 +605,13 @@ export function resolveGeminiThinking(
  */
 export function openAICompatibleReasoningFields(
   plugin: Pick<Plugin, 'id'>,
+  model: string,
   think: unknown
 ): Record<string, unknown> {
   if (plugin.id === 'baseten' && normalizeThinkingPreference(think) === false) {
     return { reasoning_effort: 'none' };
   }
-  const thinkingLevel = thinkingEffort(think);
+  const thinkingLevel = reasoningEffortFor(plugin, model, think);
   const effort =
     (plugin.id === 'deepseek' || plugin.id === 'baseten') &&
     thinkingLevel === 'medium'
@@ -654,44 +681,37 @@ function buildAnthropicChatPayload(
   };
 }
 
+/**
+ * Gemini's own request shape: the whole conversation as `contents`, the
+ * system prompt as `systemInstruction`, and tools as function declarations.
+ * The stream flag is not part of it; streaming is a different method on the
+ * same model, which the caller picks with `geminiStreamingEndpoint`.
+ */
 function buildGeminiChatPayload(
   model: string,
   messages: ChatMessage[],
   options: GenerationOptions,
   params: PluginChatParameters
 ): PluginChatPayloadResult {
-  const lastMessage = messages[messages.length - 1];
-  const parts: Array<{
-    text?: string;
-    inline_data?: { mime_type: string; data: string };
-  }> = [];
-
-  if (lastMessage?.images && lastMessage.images.length > 0) {
-    for (const image of lastMessage.images) {
-      const { mediaType, base64Data } = splitDataUrlImage(image);
-      parts.push({
-        inline_data: {
-          mime_type: mediaType,
-          data: base64Data,
-        },
-      });
-    }
-  }
-
-  if (lastMessage?.content) {
-    parts.push({ text: lastMessage.content });
-  }
-
-  const thinking = resolveGeminiThinking(options.think, params.maxTokens);
+  const { systemInstruction, contents } = toGeminiContents(messages, model);
+  const thinking = resolveGeminiThinking(
+    model,
+    options.think,
+    params.maxTokens
+  );
+  const tools = toGeminiTools(options.tools);
 
   return {
     payload: {
-      contents: [{ parts }],
+      ...(systemInstruction ? { systemInstruction } : {}),
+      contents,
+      ...(tools ? { tools } : {}),
       generationConfig: {
-        temperature: params.temperature,
-        maxOutputTokens: thinking.maxOutputTokens,
-        topP: params.topP,
-        stopSequences: options.stop,
+        ...geminiSamplingConfig(model, params),
+        ...(thinking.maxOutputTokens !== undefined
+          ? { maxOutputTokens: thinking.maxOutputTokens }
+          : {}),
+        ...(options.stop?.length ? { stopSequences: options.stop } : {}),
         ...(thinking.thinkingConfig
           ? { thinkingConfig: thinking.thinkingConfig }
           : {}),
@@ -733,7 +753,7 @@ function buildOpenAICompatibleChatPayload(
       // Meta's Muse models reason, and its API rejects stop sequences then.
       stop: plugin.id === 'meta' ? undefined : options.stop,
       stream: params.shouldStream,
-      ...openAICompatibleReasoningFields(plugin, options.think),
+      ...openAICompatibleReasoningFields(plugin, model, options.think),
       ...(tools ? { tools } : {}),
     },
   };
@@ -912,7 +932,7 @@ function buildPluginChatRequest(
           // The codex endpoint rejects non-streaming requests outright.
           stream: supportsSampling ? params.shouldStream : true,
           stateScope: providerStateScope,
-          reasoningEffort: thinkingEffort(options.think),
+          reasoningEffort: reasoningEffortFor(plugin, model, options.think),
           ...(options.tools?.length
             ? { tools: toOpenAICompatibleTools(options.tools) }
             : {}),
@@ -999,98 +1019,6 @@ export function convertAnthropicResponse(
           ...(reasoning ? { reasoning_content: reasoning } : {}),
         },
         finish_reason: stopReason,
-      },
-    ],
-    usage,
-  };
-}
-
-export function convertGeminiResponse(
-  geminiResponse: Record<string, unknown>,
-  model: string
-): PluginResponse {
-  const id = `chatcmpl-${Date.now()}`;
-
-  let content = '';
-  let reasoning = '';
-  let finishReason = 'stop';
-
-  if (Array.isArray(geminiResponse.candidates)) {
-    const candidate = geminiResponse.candidates[0];
-    if (candidate && typeof candidate === 'object') {
-      const candidateObj = candidate as Record<string, unknown>;
-
-      if (candidateObj.content && typeof candidateObj.content === 'object') {
-        const contentObj = candidateObj.content as Record<string, unknown>;
-        if (Array.isArray(contentObj.parts)) {
-          for (const part of contentObj.parts) {
-            if (
-              part &&
-              typeof part === 'object' &&
-              'text' in part &&
-              typeof part.text === 'string'
-            ) {
-              // Thought summaries arrive as parts flagged `thought`; they are
-              // reasoning, not answer text.
-              if ('thought' in part && part.thought === true) {
-                reasoning += part.text;
-              } else {
-                content += part.text;
-              }
-            }
-          }
-        }
-      }
-
-      if (typeof candidateObj.finishReason === 'string') {
-        const finishReasonMap: Record<string, string> = {
-          STOP: 'stop',
-          MAX_TOKENS: 'length',
-          SAFETY: 'content_filter',
-          RECITATION: 'content_filter',
-          OTHER: 'stop',
-        };
-        finishReason = finishReasonMap[candidateObj.finishReason] || 'stop';
-      }
-    }
-  }
-
-  let usage;
-  if (
-    geminiResponse.usageMetadata &&
-    typeof geminiResponse.usageMetadata === 'object'
-  ) {
-    const usageObj = geminiResponse.usageMetadata as Record<string, unknown>;
-    const promptTokens =
-      typeof usageObj.promptTokenCount === 'number'
-        ? usageObj.promptTokenCount
-        : 0;
-    const completionTokens =
-      typeof usageObj.candidatesTokenCount === 'number'
-        ? usageObj.candidatesTokenCount
-        : 0;
-
-    usage = {
-      prompt_tokens: promptTokens,
-      completion_tokens: completionTokens,
-      total_tokens: promptTokens + completionTokens,
-    };
-  }
-
-  return {
-    id,
-    object: 'chat.completion',
-    created: Math.floor(Date.now() / 1000),
-    model,
-    choices: [
-      {
-        index: 0,
-        message: {
-          role: 'assistant',
-          content,
-          ...(reasoning ? { reasoning_content: reasoning } : {}),
-        },
-        finish_reason: finishReason,
       },
     ],
     usage,

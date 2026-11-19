@@ -562,6 +562,62 @@
       "replyFinishedNoText": "{{name}} terminó de responder.",
       "codeBlock": "bloque de código",
       "generationStopped": "Generación detenida"
+    },
+    "decision": {
+      "barTitle": "Preguntas de decisión",
+      "interactiveHint": "No hay preguntas definidas. Tu primer mensaje es el estado, y cada línea que envíes después es una pregunta de sí/no sobre él. Envía /clear para empezar de nuevo.",
+      "add": "Definir preguntas",
+      "edit": "Editar preguntas",
+      "dialogTitle": "Preguntas de decisión",
+      "dialogSubtitle": "El modelo de decisión responde a estas preguntas sobre cada mensaje que envías, con una probabilidad para cada respuesta.",
+      "useInteractive": "Usar el modo interactivo",
+      "questionNumber": "Pregunta {{number}}",
+      "removeQuestion": "Quitar pregunta",
+      "typeLabel": "Tipo de pregunta",
+      "types": {
+        "noul": "Sí/no",
+        "choice": "Opción",
+        "score": "Puntuación"
+      },
+      "question": "Pregunta",
+      "placeholders": {
+        "noul": "¿Se solicita un reembolso?",
+        "choice": "¿Qué equipo debe encargarse?",
+        "score": "¿Qué tan urgente es?"
+      },
+      "yesMeans": "Sí significa (opcional)",
+      "noMeans": "No significa (opcional)",
+      "options": "Opciones",
+      "optionName": "Nombre de la opción {{number}}",
+      "optionDescription": "Descripción de la opción {{number}}",
+      "optionNamePlaceholder": "facturacion",
+      "optionDescriptionPlaceholder": "Descripción (opcional)",
+      "removeOption": "Quitar la opción {{number}}",
+      "addOption": "Añadir opción",
+      "levels": "Niveles, del más bajo al más alto",
+      "levelLabel": "Nivel {{number}}",
+      "levelPlaceholder": "Describe este nivel",
+      "removeLevel": "Quitar el nivel {{number}}",
+      "addLevel": "Añadir nivel",
+      "addQuestion": "Añadir pregunta",
+      "saved": "Preguntas de decisión guardadas",
+      "saveFailed": "No se pudieron guardar las preguntas de decisión",
+      "errors": {
+        "tooMany": "Haz como máximo {{max}} preguntas.",
+        "instructions": "La pregunta {{number}} necesita un texto.",
+        "options": "La pregunta {{number}} necesita de 2 a 255 opciones, cada una con su propio nombre.",
+        "levels": "La pregunta {{number}} necesita de 2 a 10 niveles."
+      },
+      "result": {
+        "yes": "Sí",
+        "no": "No",
+        "declined": "Rechazada",
+        "score": "{{value}} de {{max}}",
+        "stateSaved": "Guardado como estado. Haz preguntas de sí/no sobre él, una por línea, o define preguntas para este chat.",
+        "cleared": "Borrado. Tu próximo mensaje será el nuevo estado.",
+        "via": "{{model}} vía {{provider}}",
+        "inputTokens": "{{tokens}} tokens de entrada"
+      }
     }
   },
   "sidebar": {
@@ -774,6 +830,7 @@
         "enableDescription": "Generar títulos de chat y resúmenes del razonamiento en tiempo real",
         "taskModel": "Modelo de tarea",
         "selectTaskModel": "Seleccionar modelo de tarea",
+        "useCurrentModel": "Usar el modelo en ejecución",
         "taskModelDescription": "Modelo usado para títulos y resúmenes del razonamiento en tiempo real. El razonamiento reciente se envía a este modelo."
       },
       "updatingModel": "Actualizando {{name}} ({{current}}/{{total}})",
@@ -846,7 +903,8 @@
         "embedding": "Embedding",
         "image": "Imagen",
         "speech": "Voz",
-        "transcription": "Transcripción"
+        "transcription": "Transcripción",
+        "decision": "Decisión"
       },
       "exportPlugin": "Exportar plugin",
       "deletePlugin": "Eliminar plugin",
@@ -922,7 +980,8 @@
         "on": "Activado",
         "low": "Bajo",
         "medium": "Medio",
-        "high": "Alto"
+        "high": "Alto",
+        "xhigh": "Muy alto"
       }
     },
     "documents": {
@@ -1155,7 +1214,7 @@
         "forgejoDescription": "Repositorio Forgejo auto-alojado",
         "sponsor": "Patrocinar",
         "sponsorDescription": "Ayuda a financiar el proyecto",
-        "star": "Estrella en GitHub",
+        "star": "Dar una estrella en GitHub",
         "starDescription": "Una estrella ayuda a otros a descubrir el proyecto"
       },
       "version": "Versión {{version}}",
@@ -1949,7 +2008,8 @@
         "tts": "Texto a voz",
         "voice-mode": "Modo de voz",
         "voice-cloning": "Clonación de voz",
-        "work-agents": "CLI de agentes en Work"
+        "work-agents": "CLI de agentes en Work",
+        "decision-models": "Modelos de decisión"
       },
       "grantViaKinds": {
         "user": "acceso directo",
@@ -2095,6 +2155,13 @@
         "admins": "Administradores",
         "all-users": "Todos los usuarios de Work"
       }
+    },
+    "decisionAccess": {
+      "title": "Modelos de decisión",
+      "description": "Permitir que todos los usuarios activos usen modelos de decisión en los chats y a través de la API Decisions. Los administradores siempre pueden usarlos.",
+      "lockedByEnv": "Fijado por la variable de entorno DECISION_MODELS_ACCESS_MODE",
+      "saved": "Acceso a modelos de decisión actualizado",
+      "saveFailed": "No se pudo actualizar el acceso a modelos de decisión"
     }
   },
   "usageAnalytics": {
@@ -2470,6 +2537,8 @@
     "soundPlaceholder": "Describe el sonido, la música, la atmósfera o la respuesta hablada que deseas...",
     "generate": "Generar",
     "generating": "Generando… esto puede tardar varios minutos",
+    "cancelJob": "Cancelar trabajo",
+    "stopWaiting": "Dejar de esperar",
     "success": "Multimedia generada y guardada en Imagine",
     "successWithSavedVoice": "Se generó el contenido y «{{name}}» ya está disponible en los ajustes de Voz",
     "failed": "Error al generar multimedia",
@@ -2567,8 +2636,8 @@
     "closePanelEsc": "Cerrar panel (Esc)",
     "copyButton": "Copiar",
     "dragEdgeToResize": "Arrastra el borde para redimensionar",
-    "previewUnavailable": "Preview unavailable",
-    "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source.",
+    "previewUnavailable": "Vista previa no disponible",
+    "previewUnavailableDescription": "Este artefacto no tiene contenido que se pueda mostrar en la vista previa. Cambia a la vista de código para revisar el código fuente.",
     "versionOf": "Versión {{current}} de {{total}}",
     "previousVersion": "Versión anterior",
     "nextVersion": "Versión siguiente",
@@ -3121,7 +3190,18 @@
     "sources": "Orígenes de modelos",
     "defaultModel": "Modelo predeterminado",
     "contextSize": "contexto de {{size}}",
-    "via": "mediante {{provider}}"
+    "via": "mediante {{provider}}",
+    "decisionBadge": "Decisión",
+    "libraryCategories": {
+      "all": "Todos",
+      "general": "General",
+      "coding": "Programación",
+      "reasoning": "Razonamiento",
+      "vision": "Visión",
+      "embedding": "Embedding",
+      "decision": "Decisión",
+      "cloud": "Nube"
+    }
   },
   "whatsNew": {
     "title": "Novedades",

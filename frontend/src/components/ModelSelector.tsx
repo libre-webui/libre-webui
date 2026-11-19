@@ -148,6 +148,7 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
     'reasoning',
     'vision',
     'embedding',
+    'decision',
     'cloud',
   ];
 
@@ -256,6 +257,12 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
     }
   }, []);
 
+  // Cloud and decision models are their own ollama.com listings; the rest
+  // are filtered from the popular pages.
+  const serverLibraryCategory =
+    libraryCategory === 'cloud' || libraryCategory === 'decision'
+      ? libraryCategory
+      : 'all';
   const {
     data: libraryModels = [],
     isLoading: loadingLibrary,
@@ -264,13 +271,14 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
     queryKey: [
       'ollama-library-selector',
       libraryDebouncedSearch,
-      libraryCategory === 'cloud' ? 'cloud' : 'all',
+      serverLibraryCategory,
     ],
     queryFn: async (): Promise<LibraryModel[]> => {
       const response = await ollamaApi.getLibraryModels({
         search: libraryDebouncedSearch || undefined,
         sort: 'popular',
-        category: libraryCategory === 'cloud' ? 'cloud' : undefined,
+        category:
+          serverLibraryCategory === 'all' ? undefined : serverLibraryCategory,
       });
       return response.success && response.data ? response.data : [];
     },

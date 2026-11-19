@@ -562,6 +562,62 @@
       "replyFinishedNoText": "Odpowiedź od {{name}} jest gotowa.",
       "codeBlock": "blok kodu",
       "generationStopped": "Generowanie zatrzymane"
+    },
+    "decision": {
+      "barTitle": "Pytania decyzyjne",
+      "interactiveHint": "Nie ustawiono pytań. Pierwsza wiadomość to stan, a każdy wiersz wysłany potem to pytanie tak/nie o ten stan. Wyślij /clear, aby zacząć od nowa.",
+      "add": "Ustaw pytania",
+      "edit": "Edytuj pytania",
+      "dialogTitle": "Pytania decyzyjne",
+      "dialogSubtitle": "Model decyzyjny odpowiada na te pytania dla każdej wysłanej wiadomości, podając prawdopodobieństwo każdej odpowiedzi.",
+      "useInteractive": "Użyj trybu interaktywnego",
+      "questionNumber": "Pytanie {{number}}",
+      "removeQuestion": "Usuń pytanie",
+      "typeLabel": "Typ pytania",
+      "types": {
+        "noul": "Tak/nie",
+        "choice": "Wybór",
+        "score": "Ocena"
+      },
+      "question": "Pytanie",
+      "placeholders": {
+        "noul": "Czy ktoś prosi o zwrot pieniędzy?",
+        "choice": "Który zespół powinien się tym zająć?",
+        "score": "Jak pilne to jest?"
+      },
+      "yesMeans": "Tak oznacza (opcjonalnie)",
+      "noMeans": "Nie oznacza (opcjonalnie)",
+      "options": "Opcje",
+      "optionName": "Nazwa opcji {{number}}",
+      "optionDescription": "Opis opcji {{number}}",
+      "optionNamePlaceholder": "rozliczenia",
+      "optionDescriptionPlaceholder": "Opis (opcjonalnie)",
+      "removeOption": "Usuń opcję {{number}}",
+      "addOption": "Dodaj opcję",
+      "levels": "Poziomy, od najniższego",
+      "levelLabel": "Poziom {{number}}",
+      "levelPlaceholder": "Opisz ten poziom",
+      "removeLevel": "Usuń poziom {{number}}",
+      "addLevel": "Dodaj poziom",
+      "addQuestion": "Dodaj pytanie",
+      "saved": "Zapisano pytania decyzyjne",
+      "saveFailed": "Nie udało się zapisać pytań decyzyjnych",
+      "errors": {
+        "tooMany": "Zadaj najwyżej {{max}} pytań.",
+        "instructions": "Pytanie {{number}} wymaga treści.",
+        "options": "Pytanie {{number}} wymaga od 2 do 255 opcji, każdej z własną nazwą.",
+        "levels": "Pytanie {{number}} wymaga od 2 do 10 poziomów."
+      },
+      "result": {
+        "yes": "Tak",
+        "no": "Nie",
+        "declined": "Odrzucono",
+        "score": "{{value}} z {{max}}",
+        "stateSaved": "Zapisano jako stan. Zadawaj pytania tak/nie o ten stan, po jednym w wierszu, albo ustaw pytania dla tego czatu.",
+        "cleared": "Wyczyszczono. Następna wiadomość będzie nowym stanem.",
+        "via": "{{model}} przez {{provider}}",
+        "inputTokens": "Tokeny wejściowe: {{tokens}}"
+      }
     }
   },
   "sidebar": {
@@ -774,6 +830,7 @@
         "enableDescription": "Generuj tytuły czatów i bieżące podsumowania rozumowania",
         "taskModel": "Model zadań",
         "selectTaskModel": "Wybierz model zadań",
+        "useCurrentModel": "Użyj aktualnie uruchomionego modelu",
         "taskModelDescription": "Model używany do tytułów i bieżących podsumowań rozumowania. Najnowsze rozumowanie jest wysyłane do tego modelu."
       },
       "updatingModel": "Aktualizacja {{name}} ({{current}}/{{total}})",
@@ -846,7 +903,8 @@
         "embedding": "Embedding",
         "image": "Obraz",
         "speech": "Mowa",
-        "transcription": "Transkrypcja"
+        "transcription": "Transkrypcja",
+        "decision": "Decyzja"
       },
       "exportPlugin": "Eksportuj wtyczkę",
       "deletePlugin": "Usuń wtyczkę",
@@ -922,7 +980,8 @@
         "on": "Włączone",
         "low": "Niski",
         "medium": "Średni",
-        "high": "Wysoki"
+        "high": "Wysoki",
+        "xhigh": "Bardzo wysoki"
       }
     },
     "documents": {
@@ -1155,7 +1214,7 @@
         "forgejoDescription": "Samodzielnie hostowane repozytorium Forgejo",
         "sponsor": "Wesprzyj",
         "sponsorDescription": "Pomóż sfinansować projekt",
-        "star": "Gwiazdka na GitHubie",
+        "star": "Daj gwiazdkę na GitHubie",
         "starDescription": "Gwiazdka pomaga innym odkryć projekt"
       },
       "version": "Wersja {{version}}",
@@ -1949,7 +2008,8 @@
         "tts": "Tekst na mowę",
         "voice-mode": "Tryb głosowy",
         "voice-cloning": "Klonowanie głosu",
-        "work-agents": "CLI agentów w Work"
+        "work-agents": "CLI agentów w Work",
+        "decision-models": "Modele decyzyjne"
       },
       "grantViaKinds": {
         "user": "bezpośrednie przyznanie",
@@ -2095,6 +2155,13 @@
         "admins": "Administratorzy",
         "all-users": "Wszyscy użytkownicy Work"
       }
+    },
+    "decisionAccess": {
+      "title": "Modele decyzyjne",
+      "description": "Pozwól wszystkim aktywnym użytkownikom korzystać z modeli decyzyjnych w czatach i przez Decisions API. Administratorzy zawsze mają do nich dostęp.",
+      "lockedByEnv": "Ustalone przez zmienną środowiskową DECISION_MODELS_ACCESS_MODE",
+      "saved": "Zaktualizowano dostęp do modeli decyzyjnych",
+      "saveFailed": "Nie udało się zaktualizować dostępu do modeli decyzyjnych"
     }
   },
   "usageAnalytics": {
@@ -2470,6 +2537,8 @@
     "soundPlaceholder": "Opisz dźwięk, muzykę, atmosferę lub odpowiedź głosową, której oczekujesz...",
     "generate": "Generuj",
     "generating": "Generowanie… to może zająć kilka minut",
+    "cancelJob": "Anuluj zadanie",
+    "stopWaiting": "Przestań czekać",
     "success": "Multimedia wygenerowane i zapisane w Imagine",
     "successWithSavedVoice": "Multimedia zostały utworzone, a „{{name}}” jest teraz dostępny w ustawieniach mowy",
     "failed": "Nie udało się wygenerować multimediów",
@@ -2567,8 +2636,8 @@
     "closePanelEsc": "Zamknij panel (Esc)",
     "copyButton": "Kopiuj",
     "dragEdgeToResize": "Przeciągnij krawędź, aby zmienić rozmiar",
-    "previewUnavailable": "Preview unavailable",
-    "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source.",
+    "previewUnavailable": "Podgląd niedostępny",
+    "previewUnavailableDescription": "Ten artefakt nie zawiera treści, którą można wyświetlić w podglądzie. Przełącz na widok kodu, aby sprawdzić źródło.",
     "versionOf": "Wersja {{current}} z {{total}}",
     "previousVersion": "Poprzednia wersja",
     "nextVersion": "Następna wersja",
@@ -3121,7 +3190,18 @@
     "sources": "Źródła modeli",
     "defaultModel": "Model domyślny",
     "contextSize": "kontekst {{size}}",
-    "via": "przez {{provider}}"
+    "via": "przez {{provider}}",
+    "decisionBadge": "Decyzja",
+    "libraryCategories": {
+      "all": "Wszystkie",
+      "general": "Ogólne",
+      "coding": "Programowanie",
+      "reasoning": "Rozumowanie",
+      "vision": "Widzenie",
+      "embedding": "Embedding",
+      "decision": "Decyzja",
+      "cloud": "Chmura"
+    }
   },
   "whatsNew": {
     "title": "Co nowego",

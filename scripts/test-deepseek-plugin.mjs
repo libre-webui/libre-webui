@@ -128,6 +128,12 @@ test('DeepSeek reasoning defaults to the provider and the toggle is explicit', (
   assert.deepEqual(high.thinking, { type: 'enabled' });
   assert.equal(high.reasoning_effort, 'high');
 
+  // DeepSeek documents none, low, high, and max, and runs `xhigh` at high,
+  // so extra high asks for max.
+  const extraHigh = buildPayload([userMessage], { think: 'xhigh' });
+  assert.deepEqual(extraHigh.thinking, { type: 'enabled' });
+  assert.equal(extraHigh.reasoning_effort, 'max');
+
   const on = buildPayload([userMessage], { think: true });
   assert.deepEqual(on.thinking, { type: 'enabled' });
   assert.equal(

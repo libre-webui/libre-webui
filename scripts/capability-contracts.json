@@ -575,6 +575,107 @@
         "exposure": "root-or-capability",
         "requiresBundledDefinition": true
       }
+    },
+    {
+      "id": "decision",
+      "title": "Decision models",
+      "pluginTypes": ["decision"],
+      "catalogLabel": "Decision",
+      "execution": {
+        "registration": {
+          "kind": "websocket-server",
+          "file": "backend/src/index.ts",
+          "function": "registerWebSocketServer"
+        },
+        "routes": [
+          {
+            "kind": "websocket-message",
+            "file": "backend/src/websocketServer.ts",
+            "path": "/ws",
+            "messageType": "chat_stream",
+            "operationPatterns": [
+              "\\(await getDecisionService\\(\\)\\)\\.streamChatTurn\\(",
+              "questions: decisionTarget\\.questions"
+            ]
+          }
+        ],
+        "clientCalls": [
+          {
+            "kind": "websocket-message",
+            "file": "frontend/src/hooks/useChat.ts",
+            "pathFile": "frontend/src/utils/websocketUrl.ts",
+            "pathConstant": "CHAT_WEBSOCKET_PATH",
+            "path": "/ws",
+            "messageType": "chat_stream"
+          }
+        ],
+        "discoveryOnly": [
+          {
+            "label": "GET /api/decisions/models",
+            "registration": {
+              "kind": "express-mount",
+              "file": "backend/src/index.ts",
+              "mount": "/api/decisions",
+              "router": "decisionsRoutes"
+            },
+            "route": {
+              "kind": "express-route",
+              "file": "backend/src/routes/decisions.ts",
+              "method": "get",
+              "path": "/models",
+              "operationPatterns": ["\\.listModels\\(userId\\)"],
+              "forbiddenPatterns": ["\\.decide\\(", "streamChatTurn\\("]
+            }
+          }
+        ]
+      },
+      "ui": {
+        "file": "frontend/src/components/ChatInput.tsx",
+        "action": "saveDecisionQuestions",
+        "operationPatterns": [
+          "settings\\.decisionQuestions = questions",
+          "chatApi\\.updateSession\\("
+        ],
+        "trigger": {
+          "file": "frontend/src/components/ChatInput.tsx",
+          "patterns": ["onSave=\\{saveDecisionQuestions\\}"]
+        }
+      },
+      "documentation": [
+        {
+          "file": "docs/68-DECISION_MODELS.md",
+          "patterns": [
+            "A decision model answers questions about an input with probabilities",
+            "Decision models appear in the model picker with a \\*\\*Decision\\*\\* badge\\."
+          ]
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "scripts/test-decision-models.mjs",
+          "runner": "test:package",
+          "name": "the decision service lists, routes, meters, and gates decision models",
+          "behaviorPatterns": [
+            "decisions\\.decide\\(",
+            "basetenCall\\.url, 'https://inference\\.baseten\\.co/v1/systemone'",
+            "openaiCall\\.json\\.model"
+          ]
+        },
+        {
+          "file": "frontend/e2e/decision-models.spec.ts",
+          "runner": "test:e2e",
+          "name": "a decision chat shows its answers and saves the questions it asks",
+          "behaviorPatterns": [
+            "getByTestId\\('decision-result'\\)",
+            "getByTestId\\('decision-questions-save'\\)",
+            "decisionQuestions"
+          ]
+        }
+      ],
+      "manifest": {
+        "exposure": "root-or-capability",
+        "requiresBundledDefinition": true
+      }
     }
   ]
 }

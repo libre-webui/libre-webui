@@ -15,6 +15,118 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 📚 Documentation
 
+## [0.45.2] - 2026-11-18
+
+Gemini 4 arrives, Gemini replies in Chat are fixed, and the thinking control
+gets an Extra high level.
+
+### ✨ New Features
+
+- **Gemini 4**: Gemini 4 Hydrogen, Carbon, and Argon, plus Gemini 3.8 Flash,
+  3.6 Flash, and 3.5 Flash-Lite. Gemini 3.5 Flash is gone because Google now
+  serves 3.6 Flash in its place.
+- **Gemini model discovery**: Refresh models now works for Gemini, so new
+  Gemini models show up without an update.
+- **Extra high thinking**: a new level above high in Chat, Work, and Settings.
+  Models that offer a higher level get it (Gemini 4 Hydrogen, Claude, OpenAI
+  GPT 5.4 and later, DeepSeek, OpenRouter); everything else gets high.
+
+### 🔧 Improvements
+
+- **Gemini thinking**: Gemini 3 and later use thinking levels instead of token
+  budgets, and their thinking tokens count in Provider Usage.
+
+### 🐛 Bug Fixes
+
+- **Gemini in Chat**: replies failed with streaming on and only saw your last
+  message with it off. Both work now, with history, system prompt, images, and
+  tools.
+- **Translations**: labels that stayed in English are now translated, and
+  Portuguese is consistently Brazilian.
+
+### 📚 Documentation
+
+- The guides cover the changes above and name buttons and menus the way the
+  app shows them, in every language.
+
+## [0.45.1] - 2026-11-16
+
+Decision answers keep their table intact when a question or option contains
+a backslash, and the Ollama library's categories now read in your language.
+
+### 🐛 Bug Fixes
+
+- **Decision tables with backslashes**: a backslash before a pipe in a
+  decision question or option split that row of the reply's answer table,
+  which is the text exports, the API, and search see. Backslashes are now
+  escaped along with pipes.
+- **Ollama library categories in every language**: the category buttons in
+  the model picker's Ollama tab and in the model manager (All, General,
+  Coding, Reasoning, Vision, Embedding, Decision, Cloud), and each model's
+  category tag, showed the English category name in every language. They now
+  follow the interface language.
+
+## [0.45.0] - 2026-11-16
+
+Decision models arrive: typed yes/no, choice, and score answers with
+probabilities from Ollama, llama.cpp, Baseten, OpenRouter, OpenAI, and Gemini,
+in Chat and through a new Decisions API. parse5 picks up nineteen security
+fixes for the web page reader.
+
+### ✨ New Features
+
+- **Decision models**: models that answer questions about an input with
+  probabilities instead of writing text now work in Libre WebUI. It finds them
+  on Ollama (installed models with the `decision` capability, such as Nimble,
+  Tev, Clef, and Kev), llama.cpp, Baseten, OpenRouter, OpenAI
+  (`gpt-6-luna-decisions`), and Gemini (`gemini-decision-1`), and talks to each
+  through its own API: System One, OpenAI Decisions, or Gemini Decisions. They
+  carry a **Decision** badge in the model picker, the Ollama library has a
+  **Decision** category, and provider keys you already saved work for them.
+- **Decision questions in Chat**: pick a decision model, click **Set
+  questions**, and add yes/no, choice, or score questions. Each message is then
+  judged against them, and the reply shows every answer with its probability
+  and the full spread. Models that read images can judge an attached image.
+  Without questions, a chat works like `ollama run`: the first message is the
+  state, each line after it is a yes/no question, and `/clear` starts over.
+  The questions are saved with the chat.
+- **Decisions API**: `POST /api/decisions` answers one request for scripts and
+  API tokens with the `chat` scope, in the same answer shape from every
+  provider, and `GET /api/decisions/models` lists the decision models an
+  account can reach.
+- **Decision models access**: decision models are for administrators until an
+  administrator opens them to everyone with the **Decision models** card in
+  User Management. `DECISION_MODELS_ACCESS_MODE` pins the choice. Provider
+  decision calls appear on the Provider Usage page with their tokens.
+
+### 🔧 Improvements
+
+- **Decision chats stay simple**: web search, tools, thinking, and model
+  comparison are hidden while a decision model is selected, and titles,
+  follow-up suggestions, and context compaction never call one.
+
+### 🐛 Bug Fixes
+
+- **Chat lists without decision-only models**: OpenRouter and llama.cpp model
+  lists no longer offer models that only make decisions as chat models, which
+  failed when picked.
+
+### 🔒 Security
+
+- **Dependency updates**: parse5 8.1.1, which reads fetched web pages, fixes
+  nineteen issues in its HTML parser, including crashes and runaway parse time
+  from a few bytes of input. i18next 27, react-i18next 18, the Strands harness
+  0.4, Vite 8.3.8, zustand 5.1, framer-motion, TanStack Query, lucide-react,
+  Tailwind CSS 4.3.5, better-sqlite3 13.1, ws 8.23, and the AWS SDK are also
+  current, and `npm audit` reports no vulnerabilities.
+
+### 📚 Documentation
+
+- **Decision Models**: a new page covers where decision models come from,
+  using them in Chat, the Decisions API, access, and limits. Provider
+  Connections, Plugin Architecture, Environment Variables, and Public API
+  mention them.
+
 ## [0.44.1] - 2026-11-15
 
 Claude Fable 5.2 joins the Anthropic provider and Claude Code, and Muse Ember

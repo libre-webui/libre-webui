@@ -358,6 +358,12 @@ export interface ChatSessionSettings {
     title?: string;
     forkedAt: number;
   };
+  /**
+   * The questions a decision model answers about each message of this chat.
+   * Empty or absent keeps the interactive mode: the first message is the
+   * state and each later line is a yes/no question about it.
+   */
+  decisionQuestions?: Record<string, unknown>;
 }
 
 /**
@@ -412,7 +418,7 @@ export interface GenerationOptions {
    * This is not a sampling parameter: it is lifted out of the options at each
    * provider boundary and sent the way that provider expects.
    */
-  think?: boolean | 'low' | 'medium' | 'high' | null;
+  think?: boolean | 'low' | 'medium' | 'high' | 'xhigh' | null;
 
   /**
    * Tools offered to the model for this call. Like `think`, this is not a
@@ -534,7 +540,7 @@ export interface OllamaChatRequest {
   messages: OllamaChatMessage[];
   tools?: Record<string, unknown>[];
   /** Ollama takes reasoning levels as strings for the models that name them. */
-  think?: boolean | 'low' | 'medium' | 'high';
+  think?: boolean | 'low' | 'medium' | 'high' | 'xhigh';
   format?: string | Record<string, unknown>;
   options?: Record<string, unknown>;
   stream?: boolean;
@@ -584,7 +590,7 @@ export interface OllamaGenerateRequest {
   model: string;
   prompt: string;
   stream?: boolean;
-  think?: boolean | 'low' | 'medium' | 'high';
+  think?: boolean | 'low' | 'medium' | 'high' | 'xhigh';
   options?: {
     temperature?: number;
     top_p?: number;
@@ -735,7 +741,8 @@ export type PluginType =
   | 'stt'
   | 'image'
   | 'audio'
-  | 'video';
+  | 'video'
+  | 'decision';
 
 // TTS-specific configuration
 export interface TTSConfig {
@@ -882,6 +889,39 @@ export interface PluginCapabilities {
     models_endpoint?: string;
     config?: VideoGenConfig;
   };
+  /**
+   * Decision models: typed choice, yes/no, and score answers with
+   * probabilities instead of generated text.
+   */
+  decision?: {
+    endpoint: string;
+    model_map: string[];
+    config?: DecisionConfig;
+  };
+}
+
+/**
+ * How a provider serves decision models. `api` names the wire format;
+ * `path`, when set, is resolved against the provider's own API root (the
+ * chat endpoint without its operation), so a changed Base URL moves both.
+ */
+export interface DecisionConfig {
+  api: 'systemone' | 'openai' | 'gemini';
+  path?: string;
+  /** Where images go in a System One request, or `none` for text only. */
+  image_input?:
+    'images' | 'images-data-url' | 'state-messages' | 'state-parts' | 'none';
+  /** How the provider's model listing marks its decision models. */
+  discovery?: 'id-prefix' | 'output-modality';
+  id_prefix?: string;
+  /** Listing path resolved against the API root, query string included. */
+  models_path?: string;
+  /**
+   * Model ids shown in Libre mapped to the id sent to the provider, for a
+   * decision model that shares its provider id with a chat model.
+   */
+  model_aliases?: Record<string, string>;
+  no_auth_required?: boolean;
 }
 
 export type PluginApiMode = 'chat_completions' | 'responses';
