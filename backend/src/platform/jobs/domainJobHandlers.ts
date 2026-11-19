@@ -1551,6 +1551,12 @@ const runChannelMention: DurableJobHandler = async context => {
     }));
     await context.assertSideEffectAllowed();
 
+    const providerRequestContext = {
+      conversationId: mentionApprovalScope(payload.channelId),
+      messageId: payload.promptMessageId,
+      operation: 'channel_mention',
+    };
+
     // Agent-CLI providers drive their own tools; everything else can run
     // the native loop when the member has a catalog to run.
     const tools =
@@ -1581,6 +1587,7 @@ const runChannelMention: DurableJobHandler = async context => {
           pluginMessages,
           userId: context.actorUserId,
           ollamaState: {},
+          requestContext: providerRequestContext,
           signal: context.signal,
         }),
       });
@@ -1597,6 +1604,7 @@ const runChannelMention: DurableJobHandler = async context => {
         ollamaMessages,
         pluginMessages,
         userId: context.actorUserId,
+        requestContext: providerRequestContext,
         signal: context.signal,
       });
       assistantContent = result.assistantContent;
@@ -1879,6 +1887,11 @@ const runEvaluation: DurableJobHandler = async context => {
           })),
           pluginMessages: messages,
           userId: context.actorUserId,
+          requestContext: {
+            conversationId: `evaluation:${runId}`,
+            messageId: messages[0].id,
+            operation: 'evaluation',
+          },
           signal: context.signal,
         });
         results.push({

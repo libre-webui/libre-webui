@@ -33,7 +33,14 @@ export interface GenerationStatistics {
 export interface Artifact {
   id: string;
   type:
-    'html' | 'react' | 'svg' | 'mermaid' | 'chart' | 'code' | 'text' | 'json';
+    | 'html'
+    | 'react'
+    | 'svg'
+    | 'mermaid'
+    | 'chart'
+    | 'code'
+    | 'text'
+    | 'json';
   title: string;
   content: string;
   language?: string; // For code artifacts
@@ -357,6 +364,16 @@ export interface ChatSessionSettings {
    * state and each later line is a yes/no question about it.
    */
   decisionQuestions?: Record<string, unknown>;
+}
+
+/**
+ * Identifies the originating client operation without mixing transport
+ * metadata into model generation options.
+ */
+export interface ProviderRequestContext {
+  conversationId?: string;
+  messageId?: string;
+  operation?: string;
 }
 
 export interface GenerationOptions {
@@ -705,6 +722,16 @@ export interface PluginAuthConfig {
   key_env: string; // Environment variable name
 }
 
+/**
+ * Maps provider request context values to opt-in HTTP headers.
+ * Omitted fields are never forwarded.
+ */
+export interface PluginRequestContextConfig {
+  conversation_id_header?: string;
+  message_id_header?: string;
+  operation_header?: string;
+}
+
 // Unified plugin type supporting multiple capabilities
 export type PluginType =
   | 'completion'
@@ -923,6 +950,7 @@ export interface Plugin {
   base_url?: string; // Optional API root combined with api_path
   api_path?: string; // Optional path relative to base_url
   auth: PluginAuthConfig;
+  request_context?: PluginRequestContextConfig;
   model_map: string[]; // Primary model map for backward compatibility
   /**
    * Context window per model, for the providers that publish one with their

@@ -528,6 +528,10 @@ export const assistNote = async (
       },
     ],
     userId: actor.userId,
+    requestContext: {
+      conversationId: `note:${noteId}`,
+      operation: 'note_assist',
+    },
     signal,
   });
   const content = result.assistantContent.trim();

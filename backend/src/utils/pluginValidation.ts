@@ -28,6 +28,27 @@ const PLUGIN_API_MODES = new Set<PluginApiMode>([
   'responses',
 ]);
 const MAX_API_PATH_DECODE_PASSES = 8;
+const HTTP_HEADER_NAME_PATTERN = /^[!#$%&'*+\-.^_`|~0-9A-Za-z]+$/;
+
+const REQUEST_CONTEXT_HEADER_FIELDS = new Set([
+  'conversation_id_header',
+  'message_id_header',
+  'operation_header',
+]);
+
+const FORBIDDEN_REQUEST_CONTEXT_HEADERS = new Set([
+  'authorization',
+  'connection',
+  'content-length',
+  'cookie',
+  'host',
+  'proxy-authorization',
+  'set-cookie',
+  'te',
+  'trailer',
+  'transfer-encoding',
+  'upgrade',
+]);
 // https://openrouter.ai/docs/app-attribution
 const OPENROUTER_APP_URL = 'https://librewebui.org';
 const OPENROUTER_APP_TITLE = 'Libre WebUI';
@@ -42,6 +63,51 @@ export const PLUGIN_MODEL_DISCOVERY_VARIABLES = [
 ] as const;
 
 type PluginVariableValues = Record<string, unknown>;
+
+export function isValidPluginRequestContextConfig(
+  value: unknown,
+  authHeader: string
+): boolean {
+  if (value === undefined) {
+    return true;
+  }
+
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+    return false;
+  }
+
+  const entries = Object.entries(value as Record<string, unknown>);
+  if (entries.length === 0) {
+    return false;
+  }
+
+  const normalizedAuthHeader = authHeader.trim().toLowerCase();
+  const configuredHeaders = new Set<string>();
+
+  for (const [fieldName, headerValue] of entries) {
+    if (
+      !REQUEST_CONTEXT_HEADER_FIELDS.has(fieldName) ||
+      typeof headerValue !== 'string' ||
+      headerValue !== headerValue.trim() ||
+      !HTTP_HEADER_NAME_PATTERN.test(headerValue)
+    ) {
+      return false;
+    }
+
+    const normalizedHeader = headerValue.toLowerCase();
+    if (
+      normalizedHeader === normalizedAuthHeader ||
+      FORBIDDEN_REQUEST_CONTEXT_HEADERS.has(normalizedHeader) ||
+      configuredHeaders.has(normalizedHeader)
+    ) {
+      return false;
+    }
+
+    configuredHeaders.add(normalizedHeader);
+  }
+
+  return true;
+}
 
 function optionalPluginVariableString(value: unknown): string | undefined {
   return typeof value === 'string' && value.trim().length > 0

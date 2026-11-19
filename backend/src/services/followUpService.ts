@@ -23,6 +23,7 @@ import type {
   OllamaGenerateRequest,
   OllamaGenerateResponse,
   PluginResponse,
+  ProviderRequestContext,
 } from '../types/index.js';
 import { normalizeChatProviderSelection } from '../utils/chatProviderSelection.js';
 import {
@@ -99,7 +100,9 @@ interface PluginServiceDependency {
     messages: ChatMessage[],
     options?: GenerationOptions,
     userId?: string,
-    pluginId?: string
+    pluginId?: string,
+    signal?: AbortSignal,
+    requestContext?: ProviderRequestContext
   ): Promise<PluginResponse>;
 }
 
@@ -240,7 +243,12 @@ export class FollowUpService {
         // reasoning budget, whatever it is set to.
         { ...target.mergedOptions, think: false },
         userId,
-        target.activePlugin.id
+        target.activePlugin.id,
+        undefined,
+        {
+          conversationId: sessionId,
+          operation: 'follow_up',
+        }
       );
 
       return this.chatGenerationService.extractPluginAssistantContent(

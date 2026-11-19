@@ -23,6 +23,7 @@ import type {
   GenerationOptions,
   OllamaGenerateRequest,
   OllamaGenerateResponse,
+  ProviderRequestContext,
   PluginResponse,
 } from '../types/index.js';
 import {
@@ -171,7 +172,9 @@ interface PluginServiceDependency {
     messages: ChatMessage[],
     options?: GenerationOptions,
     userId?: string,
-    pluginId?: string
+    pluginId?: string,
+    signal?: AbortSignal,
+    requestContext?: ProviderRequestContext
   ): Promise<PluginResponse>;
 }
 
@@ -454,7 +457,12 @@ export class TitleGenerationService {
         ],
         { ...textOptions, ...PLUGIN_TITLE_GENERATION_OPTIONS },
         userId,
-        target.activePlugin.id
+        target.activePlugin.id,
+        undefined,
+        {
+          conversationId: sessionId,
+          operation: 'title',
+        }
       );
 
       return {

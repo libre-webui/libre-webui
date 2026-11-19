@@ -240,6 +240,11 @@ router.post(
 
       const completionId = `chatcmpl-${randomUUID()}`;
       const created = Math.floor(timestamp / 1000);
+      const providerRequestContext = {
+        conversationId: `openai-compat:${completionId}`,
+        messageId: `openai-compat:${completionId}:request`,
+        operation: 'openai_compat',
+      };
 
       if (!stream) {
         const result = await chatGenerationService.executeNonStreaming({
@@ -247,6 +252,7 @@ router.post(
           ollamaMessages,
           pluginMessages,
           userId,
+          requestContext: providerRequestContext,
           signal: controller.signal,
         });
         if (controller.signal.aborted) return;
@@ -303,7 +309,8 @@ router.post(
             target.mergedOptions as GenerationOptions,
             userId,
             target.activePlugin.id,
-            controller.signal
+            controller.signal,
+            providerRequestContext
           )) {
             if (chunk.type === 'content' && chunk.content) {
               writeChunk({ content: chunk.content });

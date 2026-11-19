@@ -174,7 +174,14 @@ export async function createStrandsAgent(
 ): Promise<Agent> {
   const { createHarness } = await loadHarness();
   return createHarness({
-    model: new LibreWebUiModel(options.target, options.userId),
+    model: new LibreWebUiModel(options.target, options.userId, {
+      requestContext: {
+        conversationId: options.session
+          ? `strands:${options.session.id}`
+          : `strands:${randomUUID()}`,
+        operation: 'strands',
+      },
+    }),
     instructions: options.instructions ?? STRANDS_INSTRUCTIONS,
     builtinTools: ['read', 'write', 'edit'],
     builtinPlugins: ['todos'],

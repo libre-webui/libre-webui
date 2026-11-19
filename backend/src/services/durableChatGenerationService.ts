@@ -323,6 +323,12 @@ const streamGeneratedAssistant = async (
     };
   }
 
+  const providerRequestContext = {
+    conversationId: input.sessionId,
+    messageId: input.userMessageId,
+    operation: 'chat',
+  };
+
   if (
     prepared.target.activePlugin &&
     (prepared.shouldStreamPlugin || toolContext)
@@ -353,6 +359,7 @@ const streamGeneratedAssistant = async (
             pluginMessages: prepared.pluginMessages,
             userId: input.actorUserId,
             ollamaState: {},
+            requestContext: providerRequestContext,
             signal: context.signal,
           }),
         })
@@ -366,7 +373,8 @@ const streamGeneratedAssistant = async (
             prepared.target.mergedOptions,
             input.actorUserId,
             activePluginId,
-            context.signal
+            context.signal,
+            providerRequestContext
           )) {
         if (chunk.type === 'content' && chunk.content) {
           content += chunk.content;
@@ -451,6 +459,7 @@ const streamGeneratedAssistant = async (
       pluginMessages: prepared.pluginMessages,
       userId: input.actorUserId,
       pluginFallbackPolicy: 'allow',
+      requestContext: providerRequestContext,
       signal: context.signal,
     });
     content = generated.assistantContent;

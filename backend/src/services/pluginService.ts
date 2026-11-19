@@ -40,6 +40,7 @@ import {
   PluginResponse,
   ChatMessage,
   GenerationOptions,
+  ProviderRequestContext,
   TTSConfig,
   ImageGenConfig,
   ImageGenResponse,
@@ -96,6 +97,7 @@ import {
   assertSafePluginEndpoint,
   buildPluginAuthHeaders,
   buildPluginModelDiscoveryHeaders,
+  isValidPluginRequestContextConfig,
   pluginRequiresApiKey,
   resolvePluginApiConfig,
   resolvePluginEndpoint,
@@ -2536,7 +2538,8 @@ export class PluginService {
     options: GenerationOptions = {},
     userId?: string,
     pluginId?: string,
-    signal?: AbortSignal
+    signal?: AbortSignal,
+    requestContext?: ProviderRequestContext
   ): Promise<PluginResponse> {
     throwIfChatGenerationCancelled(signal);
     validatePluginModel(model);
@@ -2572,7 +2575,8 @@ export class PluginService {
         options,
         userId,
         activePlugin.id,
-        signal
+        signal,
+        requestContext
       )) {
         if (chunk.type === 'content' && chunk.content) {
           aggregated += chunk.content;
@@ -2621,7 +2625,8 @@ export class PluginService {
       pluginVars,
       false,
       apiMode,
-      providerStateScope
+      providerStateScope,
+      requestContext
     );
     Object.assign(headers, payloadHeaders);
 
@@ -2726,7 +2731,8 @@ export class PluginService {
     options: GenerationOptions = {},
     userId?: string,
     pluginId?: string,
-    signal?: AbortSignal
+    signal?: AbortSignal,
+    requestContext?: ProviderRequestContext
   ): AsyncGenerator<PluginStreamChunk, void, unknown> {
     throwIfChatGenerationCancelled(signal);
     validatePluginModel(model);
@@ -2798,7 +2804,8 @@ export class PluginService {
       pluginVars,
       true,
       apiMode,
-      providerStateScope
+      providerStateScope,
+      requestContext
     );
     const payload = pluginRequest.payload;
     Object.assign(headers, pluginRequest.headers);
@@ -3011,6 +3018,10 @@ export class PluginService {
       ((pluginRecord.auth as Record<string, unknown>).prefix === undefined ||
         typeof (pluginRecord.auth as Record<string, unknown>).prefix ===
           'string') &&
+      isValidPluginRequestContextConfig(
+        pluginRecord.request_context,
+        (pluginRecord.auth as Record<string, unknown>).header as string
+      ) &&
       Array.isArray(pluginRecord.model_map) &&
       pluginRecord.model_map.length > 0
     );
