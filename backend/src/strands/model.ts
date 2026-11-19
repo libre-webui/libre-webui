@@ -25,7 +25,7 @@
  * says why the turn ended. Tools only run when that reason is 'toolUse'.
  */
 
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import {
   Model,
   type BaseModelConfig,
@@ -38,6 +38,7 @@ import {
 import type {
   ChatMessage,
   GenerationOptions,
+  ProviderRequestContext,
   ProviderToolSpec,
 } from '../types/index.js';
 import pluginService from '../services/pluginService.js';
@@ -52,6 +53,8 @@ const MAX_BUFFERED_BYTES = 2_000_000;
 export interface LibreWebUiModelConfig extends BaseModelConfig {
   /** Route id the engine resolved for this session. */
   modelId: string;
+  /** Stable provider scope owned by the Strands session. */
+  requestContext?: ProviderRequestContext;
 }
 
 type ProviderEvent =
@@ -203,6 +206,24 @@ export class LibreWebUiModel extends Model<LibreWebUiModelConfig> {
     signal?.throwIfAborted();
     const chatMessages = toChatMessages(messages, options.systemPrompt);
     const tools = toProviderTools(options.toolSpecs);
+    const requestContext = this.config.requestContext
+      ? {
+          ...this.config.requestContext,
+          messageId: `strands-${createHash('sha256')
+            .update(
+              JSON.stringify([
+                this.config.requestContext.conversationId,
+                systemText(options.systemPrompt),
+                messages,
+              ])
+            )
+            .digest('hex')
+            .slice(0, 32)}`,
+          operation: chatMessages.some(message => message.role === 'tool')
+            ? 'strands_tool_round'
+            : 'strands',
+        }
+      : undefined;
     const generation: GenerationOptions = {
       ...(this.config.temperature === undefined
         ? {}
@@ -222,7 +243,13 @@ export class LibreWebUiModel extends Model<LibreWebUiModelConfig> {
 
     const source =
       this.target.route.type === 'plugin'
-        ? this.pluginEvents(chatMessages, generation, tools, signal)
+        ? this.pluginEvents(
+            chatMessages,
+            generation,
+            tools,
+            signal,
+            requestContext
+          )
         : this.ollamaEvents(chatMessages, generation, tools, signal);
 
     for await (const event of source) {
@@ -296,7 +323,8 @@ export class LibreWebUiModel extends Model<LibreWebUiModelConfig> {
     messages: ChatMessage[],
     generation: GenerationOptions,
     tools: ProviderToolSpec[] | undefined,
-    signal?: AbortSignal
+    signal?: AbortSignal,
+    requestContext?: ProviderRequestContext
   ): AsyncGenerator<ProviderEvent> {
     const route = this.target.route;
     if (route.type !== 'plugin') return;
@@ -306,7 +334,8 @@ export class LibreWebUiModel extends Model<LibreWebUiModelConfig> {
       { ...generation, ...(tools ? { tools } : {}) },
       this.userId,
       route.pluginId,
-      signal
+      signal,
+      requestContext
     )) {
       signal?.throwIfAborted();
       if (chunk.type === 'content' && chunk.content) {
