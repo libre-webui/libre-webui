@@ -820,21 +820,15 @@ export function registerWebSocketServer(
                             signal: generationSignal,
                           }
                         )
-                      : pluginService.executePluginStreamRequest(
-                          actualModelName,
-                          pluginMessages,
-                          mergedOptions,
-                          userId,
-                          (activePlugin as NonNullable<typeof activePlugin>).id,
-                          generationSignal,
-                          providerRequestContext
-                        ),
                       : agentProviderId
                         ? agentCliService.executeAgentStreamRequest(
                             agentProviderId,
                             pluginMessages,
                             userId,
-                            { model: actualModelName, signal: generationSignal }
+                            {
+                              model: actualModelName,
+                              signal: generationSignal,
+                            }
                           )
                         : pluginService.executePluginStreamRequest(
                             actualModelName,
@@ -843,7 +837,8 @@ export function registerWebSocketServer(
                             userId,
                             (activePlugin as NonNullable<typeof activePlugin>)
                               .id,
-                            generationSignal
+                            generationSignal,
+                            providerRequestContext
                           ),
                   messageId: assistantMessageId,
                   signal: generationSignal,
