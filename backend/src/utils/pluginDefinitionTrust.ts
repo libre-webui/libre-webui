@@ -34,7 +34,7 @@ export const BUNDLED_PLUGIN_DEFINITION_FINGERPRINTS: Readonly<
   deepseek: '32cc8662939e304869f9e02ef3b7c8ced6ffe14c333bea9230bfabe2f2350181',
   elevenlabs:
     'de6afcbd123600f484a078227618b5c9687bc56f6e2637b57514349fbcea63d6',
-  gemini: '63e90a03067a11768a32fbc67456d0ebfaf0e22ebac652847ced046eeb49ca0f',
+  gemini: '0e603268e7cce086b0c8ef6880ad3c2f01eb15f0fff27ead2aa81c65c6de66e3',
   github: '482f22da003d73fe0d6684572dc2d959b46d7f8dbecf0f92205c2b4ef2f03817',
   groq: 'd03908e9caddae5ad838de9967fdc0b5dfb249d13f24391af1c9822fcf28e823',
   huggingface:

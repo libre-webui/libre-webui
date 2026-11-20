@@ -77,9 +77,13 @@ const GEMINI_MINIMAL_THINKING_MODELS = new Set([
 
 /**
  * Models that take the `xhigh` level above high. Google's thinking guide lists
- * it for Gemini 4 Hydrogen only; elsewhere extra high asks for `high`.
+ * it for Gemini 4 Hydrogen and Neon only; elsewhere extra high asks for
+ * `high`.
  */
-const GEMINI_XHIGH_THINKING_MODELS = new Set(['gemini-4-hydrogen']);
+const GEMINI_XHIGH_THINKING_MODELS = new Set([
+  'gemini-4-hydrogen',
+  'gemini-4-neon',
+]);
 
 /**
  * Gemini 2.5 Flash and Flash-Lite cap a thinking budget at 24,576 tokens

@@ -355,22 +355,22 @@ Opus 5.5 and the Fable models have no off switch, so **off** leaves them at
 their own default.
 
 Gemini 3 and later, including Gemini 3.8 Flash and the Gemini 4 models
-(Hydrogen, Carbon, and Argon), take a named thinking level instead of a budget,
-and **on** leaves them at their default level. None of them can stop thinking
-entirely, so **off** becomes Google's near-off `minimal` level on the models
-that have one (Gemini 3 Flash, 3.1 Flash-Lite, 3.5 Flash-Lite, and 3.6 Flash)
-and leaves the rest at their default.
+(Hydrogen, Neon, Carbon, and Argon), take a named thinking level instead of a
+budget, and **on** leaves them at their default level. None of them can stop
+thinking entirely, so **off** becomes Google's near-off `minimal` level on the
+models that have one (Gemini 3 Flash, 3.1 Flash-Lite, 3.5 Flash-Lite, and 3.6
+Flash) and leaves the rest at their default.
 
 **Extra high** asks for more than high where a provider documents a level
-above it: Gemini 4 Hydrogen's `xhigh`, the `xhigh` effort on the Claude models
-that think adaptively, OpenAI's `xhigh` on GPT models from 5.4 on (directly or
-through ChatGPT sign-in), DeepSeek's `max`, and OpenRouter's `xhigh`, which
-OpenRouter maps to the nearest level each model supports. Claude and Gemini 2.5
-models that take a budget get the largest one they allow. Everywhere else,
-including older OpenAI models, Baseten, the other OpenAI-style providers, and
-gpt-oss on Ollama, extra high asks for **high**: those providers don't name a
-higher level that every one of their models accepts, and high is never
-rejected.
+above it: the `xhigh` level on Gemini 4 Hydrogen and Neon, the `xhigh` effort
+on the Claude models that think adaptively, OpenAI's `xhigh` on GPT models from
+5.4 on (directly or through ChatGPT sign-in), DeepSeek's `max`, and
+OpenRouter's `xhigh`, which OpenRouter maps to the nearest level each model
+supports. Claude and Gemini 2.5 models that take a budget get the largest one
+they allow. Everywhere else, including older OpenAI models, Baseten, the other
+OpenAI-style providers, and gpt-oss on Ollama, extra high asks for **high**:
+those providers don't name a higher level that every one of their models
+accepts, and high is never rejected.
 
 Two things are worth knowing. A model Ollama reports as unable to reason never
 receives the setting at all, so the control is simply absent for it. And the

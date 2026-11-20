@@ -81,6 +81,7 @@ const collect = async chunks => {
 test('the Gemini manifest lists the current models and matches its trust anchor', () => {
   for (const model of [
     'gemini-4-hydrogen',
+    'gemini-4-neon',
     'gemini-4-carbon',
     'gemini-4-argon',
     'gemini-3.8-flash',
@@ -143,6 +144,7 @@ test('Gemini 3.6 and later get no sampling parameters; earlier models keep them'
   const variables = { temperature: 0.3, top_p: 0.8 };
   for (const model of [
     'gemini-4-hydrogen',
+    'gemini-4-neon',
     'gemini-4-carbon',
     'gemini-4-argon',
     'gemini-3.8-flash',
@@ -192,6 +194,7 @@ test('Gemini 3 and later take a thinking level; Gemini 2.5 keeps its budget', ()
   });
   // ...and nothing on the models that reject it.
   assert.equal('thinkingConfig' in config('gemini-4-hydrogen', false), false);
+  assert.equal('thinkingConfig' in config('gemini-4-neon', false), false);
   assert.equal('thinkingConfig' in config('gemini-3.8-flash', false), false);
   assert.equal('thinkingConfig' in config('gemini-4-argon', undefined), false);
 
@@ -494,14 +497,17 @@ test('the streaming endpoint is streamGenerateContent with server-sent events', 
   );
 });
 
-test('extra high is XHIGH on Gemini 4 Hydrogen and HIGH or the largest budget elsewhere', () => {
+test('extra high is XHIGH on Gemini 4 Hydrogen and Neon and HIGH or the largest budget elsewhere', () => {
   const config = model =>
     build(model, [message('user', 'Plan it.')], { think: 'xhigh' })
       .generationConfig;
-  assert.deepEqual(config('gemini-4-hydrogen').thinkingConfig, {
-    thinkingLevel: 'XHIGH',
-    includeThoughts: true,
-  });
+  for (const model of ['gemini-4-hydrogen', 'gemini-4-neon']) {
+    assert.deepEqual(
+      config(model).thinkingConfig,
+      { thinkingLevel: 'XHIGH', includeThoughts: true },
+      model
+    );
+  }
   for (const model of [
     'gemini-4-carbon',
     'gemini-4-argon',

@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### ✨ New Features
 
+- **Gemini 4 Neon**: Google's new model between Hydrogen and Carbon is in the
+  Gemini provider, with the Extra high thinking level.
+
 ### 🔧 Improvements
 
 ### 🐛 Bug Fixes
