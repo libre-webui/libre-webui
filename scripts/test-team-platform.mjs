@@ -1651,9 +1651,17 @@ test(
       'actor-revoked'
     );
     command(['start', 'redis']);
-    await waitFor('Redis reconnection', async () => {
+    // The gateway round-robins three replicas and each reconnects to Redis on
+    // its own schedule, so one ready answer proves only the replica that gave
+    // it. Wait until every replica has answered ready.
+    const reconnectedReplicas = new Set();
+    await waitFor('Redis reconnection on every replica', async () => {
       const response = await fetch(`${baseUrl}/health/ready`);
-      return response.status === 200;
+      const upstream = response.headers.get('x-libre-upstream');
+      if (response.status === 200 && upstream) {
+        reconnectedReplicas.add(upstream.split(',').pop().trim());
+      }
+      return reconnectedReplicas.size === 3;
     });
     // Once shared admission is available again, authoritative SQL must still
     // reject the retired actor and preserve cross-user resource isolation.
