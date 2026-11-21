@@ -11,6 +11,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Gemini 4 Neon**: Google's new model between Hydrogen and Carbon is in the
   Gemini provider, with the Extra high thinking level.
+- **Wide mode**: a toggle in Settings > Appearance lets Chat, Work, Strands,
+  Notes, Automations, and library pages use the whole window instead of the
+  centered reading width. It is saved to your account.
 
 ### 🔧 Improvements
 

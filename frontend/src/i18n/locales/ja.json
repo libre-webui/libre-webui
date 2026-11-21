@@ -705,6 +705,8 @@
     },
     "appearance": {
       "title": "外観",
+      "wideMode": "ワイドモード",
+      "wideModeDescription": "チャットとページをウィンドウの幅いっぱいに表示します",
       "language": {
         "title": "言語",
         "description": "ご希望の言語を選択"

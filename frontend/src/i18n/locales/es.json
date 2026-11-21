@@ -705,6 +705,8 @@
     },
     "appearance": {
       "title": "Apariencia",
+      "wideMode": "Modo ancho",
+      "wideModeDescription": "Permite que los chats y las páginas usen todo el ancho de la ventana",
       "language": {
         "title": "Idioma",
         "description": "Selecciona tu idioma preferido"

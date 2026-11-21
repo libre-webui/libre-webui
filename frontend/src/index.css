@@ -12,6 +12,9 @@
 /* Tailwind v4 applies hover only where the pointer can hover. The controls
    revealed on hover were built on v3, where a tap also triggers it. */
 @custom-variant hover (&:hover);
+/* Wide mode (Settings > Appearance) lets reading columns and page shells use
+   the whole window. App sets data-layout on <html> from the preference. */
+@custom-variant wide (&:where([data-layout='wide'] *));
 
 /* Runtime tokens are bare RGB channels ("15 17 21") that JavaScript swaps for
    accents and themes, defined below on :root, .dark and .amoled. `reference`

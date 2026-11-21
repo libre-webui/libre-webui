@@ -1362,6 +1362,17 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     });
   };
 
+  const handleWideModeChange = (wideMode: boolean) => {
+    setPreferences({ wideMode });
+    preferencesApi.updatePreferences({ wideMode }).catch(error => {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      toast.error(
+        t('settings.preferences.updateFailed', { error: errorMessage })
+      );
+    });
+  };
+
   const handleHapticFeedbackChange = (hapticFeedbackEnabled: boolean) => {
     setPreferences({ hapticFeedbackEnabled });
     if (hapticFeedbackEnabled) triggerHapticFeedback('selection');
@@ -1879,6 +1890,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             onShowFollowUpsChange={handleShowFollowUpsChange}
             onAutoOpenArtifactsChange={handleAutoOpenArtifactsChange}
             onHapticFeedbackChange={handleHapticFeedbackChange}
+            onWideModeChange={handleWideModeChange}
           />
         );
 

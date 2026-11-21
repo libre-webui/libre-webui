@@ -705,6 +705,8 @@
     },
     "appearance": {
       "title": "Внешний вид",
+      "wideMode": "Широкий режим",
+      "wideModeDescription": "Чаты и страницы занимают всю ширину окна",
       "language": {
         "title": "Язык",
         "description": "Выберите предпочтительный язык"

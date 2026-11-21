@@ -705,6 +705,8 @@
     },
     "appearance": {
       "title": "Aparência",
+      "wideMode": "Modo amplo",
+      "wideModeDescription": "Deixe conversas e páginas usarem toda a largura da janela",
       "language": {
         "title": "Idioma",
         "description": "Selecione seu idioma preferido"

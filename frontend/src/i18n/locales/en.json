@@ -705,6 +705,8 @@
     },
     "appearance": {
       "title": "Appearance",
+      "wideMode": "Wide mode",
+      "wideModeDescription": "Let chats and pages use the full width of the window",
       "language": {
         "title": "Language",
         "description": "Select your preferred language"

@@ -705,6 +705,8 @@
     },
     "appearance": {
       "title": "Útlit",
+      "wideMode": "Breiður hamur",
+      "wideModeDescription": "Spjall og síður nota alla breidd gluggans",
       "language": {
         "title": "Tungumál",
         "description": "Veldu tungumálið sem þú vilt nota"

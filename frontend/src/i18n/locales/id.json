@@ -705,6 +705,8 @@
     },
     "appearance": {
       "title": "Tampilan",
+      "wideMode": "Mode lebar",
+      "wideModeDescription": "Biarkan obrolan dan halaman memakai seluruh lebar jendela",
       "language": {
         "title": "Bahasa",
         "description": "Pilih bahasa pilihan Anda"

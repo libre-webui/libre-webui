@@ -705,6 +705,8 @@
     },
     "appearance": {
       "title": "Giao diện",
+      "wideMode": "Chế độ rộng",
+      "wideModeDescription": "Cho phép cuộc trò chuyện và trang dùng toàn bộ chiều rộng cửa sổ",
       "language": {
         "title": "Ngôn ngữ",
         "description": "Chọn ngôn ngữ ưa thích của bạn"

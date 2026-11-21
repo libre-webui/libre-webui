@@ -113,6 +113,7 @@ export const DEFAULT_DEMO_PREFERENCES: UserPreferences = {
   },
   showUsername: false,
   hapticFeedbackEnabled: false,
+  wideMode: false,
   workRemoteProviderDisclosureDismissed: false,
   backgroundSettings: {
     enabled: false,

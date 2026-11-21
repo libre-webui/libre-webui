@@ -705,6 +705,8 @@
     },
     "appearance": {
       "title": "Udseende",
+      "wideMode": "Bred tilstand",
+      "wideModeDescription": "Lad chats og sider bruge hele vinduets bredde",
       "language": {
         "title": "Sprog",
         "description": "Vælg dit foretrukne sprog"

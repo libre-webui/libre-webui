@@ -494,6 +494,7 @@ export interface UserPreferences {
   showFollowUpSuggestions?: boolean; // Suggest follow-up messages after responses // If true, show username in chat; if false, show "you"
   autoOpenArtifactPanel?: boolean; // Open the artifact panel when a response generates one
   hapticFeedbackEnabled?: boolean; // Android Vibration API; unsupported platforms no-op
+  wideMode?: boolean; // Content columns and pages use the whole window width
   workRemoteProviderDisclosureDismissed: boolean;
   /** Which notifications also go out by email when an SMTP server is set up. */
   emailNotifications?: EmailNotificationPreferences;

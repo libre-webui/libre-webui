@@ -705,6 +705,8 @@
     },
     "appearance": {
       "title": "दिखावट",
+      "wideMode": "चौड़ा मोड",
+      "wideModeDescription": "चैट और पेजों को विंडो की पूरी चौड़ाई इस्तेमाल करने दें",
       "language": {
         "title": "भाषा",
         "description": "अपनी पसंदीदा भाषा चुनें"

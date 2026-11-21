@@ -705,6 +705,8 @@
     },
     "appearance": {
       "title": "المظهر",
+      "wideMode": "الوضع العريض",
+      "wideModeDescription": "اسمح للمحادثات والصفحات باستخدام عرض النافذة بالكامل",
       "language": {
         "title": "اللغة",
         "description": "اختر لغتك المفضلة"

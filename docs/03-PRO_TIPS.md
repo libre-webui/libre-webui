@@ -81,6 +81,14 @@ The Agents shortcut appears when enabled for your account. Hover over an icon fo
 label; the current destination stays highlighted. On short screens, scroll
 the shortcuts while settings and account controls remain at the bottom.
 
+## Use Wide Mode on Big Screens
+
+Chat and most pages keep a centered reading width. Turn on **Wide mode** in
+Settings > Appearance to let Chat, Work, Strands, Notes, Automations, and
+library pages fill the whole window, which helps with long code blocks and
+tables. It pairs well with the compact sidebar. The setting is saved to your
+account, so it follows you to other browsers.
+
 ## Scroll Through Panels
 
 Chat and Work lists fade softly at edges where more items are available.

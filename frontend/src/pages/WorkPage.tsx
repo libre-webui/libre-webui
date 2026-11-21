@@ -1846,7 +1846,7 @@ export default function WorkPage() {
           <div className='relative min-h-0 flex-1 overflow-y-auto'>
             <section
               data-testid='work-landing'
-              className='mx-auto flex min-h-full w-full max-w-3xl flex-col items-center justify-center px-4 py-8 sm:px-8 sm:py-10'
+              className='mx-auto flex min-h-full w-full max-w-3xl flex-col items-center justify-center px-4 py-8 sm:px-8 sm:py-10 wide:max-w-none'
             >
               <div className='flex max-w-xl flex-col items-center text-center'>
                 <h2 className='text-balance text-[clamp(1.5rem,2.8vw,2rem)] font-medium leading-tight tracking-tight text-ink rtl:tracking-normal'>

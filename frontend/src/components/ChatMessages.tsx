@@ -583,9 +583,12 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
           } as React.CSSProperties
         }
       >
+        {/* In wide mode the column reaches both edges, so md:px-12 clears the
+            floating chat controls (end) and the history rail (start). */}
         <div
           ref={messagesContentRef}
-          className='mx-auto w-full min-w-0 max-w-3xl px-4 sm:px-6 md:px-8'
+          data-testid='chat-messages-column'
+          className='mx-auto w-full min-w-0 max-w-3xl px-4 sm:px-6 md:px-8 wide:max-w-none wide:md:px-12'
         >
           {messageGroups.map((group, groupIndex) => {
             const isLastAssistantGroup = groupIndex === lastAssistantGroupIndex;

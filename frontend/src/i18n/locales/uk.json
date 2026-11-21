@@ -705,6 +705,8 @@
     },
     "appearance": {
       "title": "Зовнішній вигляд",
+      "wideMode": "Широкий режим",
+      "wideModeDescription": "Чати та сторінки займають усю ширину вікна",
       "language": {
         "title": "Мова",
         "description": "Виберіть бажану мову"

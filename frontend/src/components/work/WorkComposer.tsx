@@ -387,7 +387,7 @@ export function WorkComposer({
       {remoteProvider && !remoteDisclosureDismissed && (
         <div
           className={cn(
-            'mx-auto mb-3 max-w-3xl',
+            'mx-auto mb-3 max-w-3xl wide:max-w-none',
             !landing && 'absolute inset-x-3 bottom-full z-30 md:inset-x-5'
           )}
         >
@@ -453,7 +453,7 @@ export function WorkComposer({
       )}
 
       <form
-        className='relative mx-auto w-full max-w-3xl'
+        className='relative mx-auto w-full max-w-3xl wide:max-w-none'
         onSubmit={event => {
           event.preventDefault();
           void submit();

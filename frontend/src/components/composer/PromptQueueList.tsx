@@ -95,7 +95,7 @@ export const PromptQueueList: React.FC<PromptQueueListProps> = ({
 
   return (
     <div
-      className='mx-auto mb-1.5 w-full max-w-3xl px-1'
+      className='mx-auto mb-1.5 w-full max-w-3xl px-1 wide:max-w-none'
       data-testid='prompt-queue'
     >
       <p className='mb-1 flex items-center gap-1.5 px-1 text-[11px] font-medium text-gray-400 dark:text-dark-500'>

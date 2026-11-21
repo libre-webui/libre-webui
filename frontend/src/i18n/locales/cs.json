@@ -705,6 +705,8 @@
     },
     "appearance": {
       "title": "Vzhled",
+      "wideMode": "Široký režim",
+      "wideModeDescription": "Chaty a stránky využijí celou šířku okna",
       "language": {
         "title": "Jazyk",
         "description": "Vyberte preferovaný jazyk"

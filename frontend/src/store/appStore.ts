@@ -356,6 +356,7 @@ export const useAppStore = create<AppState>()(
         },
         showUsername: false, // Default to showing "you" instead of username
         hapticFeedbackEnabled: false,
+        wideMode: false,
         workRemoteProviderDisclosureDismissed: false,
         backgroundSettings: { ...DEFAULT_BACKGROUND_SETTINGS },
       },

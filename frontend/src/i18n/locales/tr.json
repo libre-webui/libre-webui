@@ -705,6 +705,8 @@
     },
     "appearance": {
       "title": "Görünüm",
+      "wideMode": "Geniş mod",
+      "wideModeDescription": "Sohbetler ve sayfalar pencerenin tüm genişliğini kullanır",
       "language": {
         "title": "Dil",
         "description": "Tercih ettiğiniz dili seçin"

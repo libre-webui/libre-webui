@@ -666,6 +666,7 @@ export interface UserPreferences {
   showFollowUpSuggestions?: boolean; // Suggest follow-up messages after responses
   autoOpenArtifactPanel?: boolean; // Open the artifact panel when a response generates one
   hapticFeedbackEnabled?: boolean; // Android Vibration API; unsupported platforms no-op
+  wideMode?: boolean; // Content columns and pages use the whole window width
   workRemoteProviderDisclosureDismissed: boolean;
   emailNotifications?: EmailNotificationPreferences;
   backgroundSettings?: {

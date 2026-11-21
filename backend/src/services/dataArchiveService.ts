@@ -386,6 +386,7 @@ const preferenceKeys = new Set<keyof UserPreferences>([
   'showFollowUpSuggestions',
   'autoOpenArtifactPanel',
   'hapticFeedbackEnabled',
+  'wideMode',
   'workRemoteProviderDisclosureDismissed',
   'backgroundSettings',
 ]);
@@ -417,6 +418,7 @@ const booleanPreferenceKeys = new Set([
   'showFollowUpSuggestions',
   'autoOpenArtifactPanel',
   'hapticFeedbackEnabled',
+  'wideMode',
   'workRemoteProviderDisclosureDismissed',
 ]);
 

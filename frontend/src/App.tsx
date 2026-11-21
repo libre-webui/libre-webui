@@ -307,6 +307,17 @@ const AppContent: React.FC = () => {
     return armTTSAudioPlaybackUnlock();
   }, [preferences.ttsSettings?.autoPlay, preferences.ttsSettings?.enabled]);
 
+  // Wide mode drops the reading-width caps through the `wide:` CSS variant,
+  // which keys off this attribute on <html>.
+  React.useEffect(() => {
+    const root = document.documentElement;
+    if (preferences.wideMode === true) {
+      root.dataset.layout = 'wide';
+    } else {
+      delete root.dataset.layout;
+    }
+  }, [preferences.wideMode]);
+
   // Handle OAuth callback FIRST - before any routing or initialization
   const [oauthProcessed, setOauthProcessed] = React.useState(false);
   const processingRef = React.useRef(false);

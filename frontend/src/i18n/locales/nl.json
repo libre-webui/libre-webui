@@ -705,6 +705,8 @@
     },
     "appearance": {
       "title": "Weergave",
+      "wideMode": "Brede modus",
+      "wideModeDescription": "Laat chats en pagina’s de volledige breedte van het venster gebruiken",
       "language": {
         "title": "Taal",
         "description": "Selecteer uw voorkeurstaal"

@@ -553,7 +553,7 @@ export const NotesPage: React.FC = () => {
                 <RichMessageContent
                   content={contentDraft}
                   allowHtml
-                  className='mx-auto w-full max-w-5xl pb-12'
+                  className='mx-auto w-full max-w-5xl pb-12 wide:max-w-none'
                 />
               </div>
             ) : (

@@ -904,7 +904,7 @@ export const ChatPage: React.FC = () => {
             <span>{t('chat.session.incognito', 'Incognito Chat')}</span>
           </button>
 
-          <div className='relative z-1 mx-auto flex min-h-full w-full max-w-3xl flex-col items-center justify-center'>
+          <div className='relative z-1 mx-auto flex min-h-full w-full max-w-3xl flex-col items-center justify-center wide:max-w-none'>
             <div
               key={welcomePrompt.id}
               className='mb-8 flex flex-col items-center text-center animate-fade-in sm:mb-10'
@@ -1277,7 +1277,7 @@ export const ChatPage: React.FC = () => {
             />
             {currentSession?.shared ? (
               <div
-                className='mx-auto mb-4 w-full max-w-3xl rounded-xl border border-black/6 bg-black/2 px-4 py-3 text-center text-[13px] text-gray-500 dark:border-white/8 dark:bg-white/3 dark:text-dark-600'
+                className='mx-auto mb-4 w-full max-w-3xl rounded-xl border wide:max-w-none border-black/6 bg-black/2 px-4 py-3 text-center text-[13px] text-gray-500 dark:border-white/8 dark:bg-white/3 dark:text-dark-600'
                 data-testid='chat-shared-readonly'
               >
                 {t('chat.sharedReadOnly', {

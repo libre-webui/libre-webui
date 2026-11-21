@@ -872,7 +872,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
       {/* Centered container matching chat messages width */}
       <div
         ref={composerRef}
-        className='pointer-events-auto mx-auto w-full max-w-3xl px-4 sm:px-6 md:px-8'
+        className='pointer-events-auto mx-auto w-full max-w-3xl px-4 sm:px-6 md:px-8 wide:max-w-none wide:md:px-12'
       >
         {/* Advanced Features Panel */}
         {showAdvanced && (
@@ -905,7 +905,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
               entry => entry.sessionId === currentSessionId
             ) && (
               <div
-                className='mx-auto mb-1.5 flex w-full max-w-3xl flex-wrap gap-1.5 px-1'
+                className='mx-auto mb-1.5 flex w-full max-w-3xl flex-wrap gap-1.5 px-1 wide:max-w-none'
                 data-testid='pending-comparisons'
               >
                 {pendingComparisons

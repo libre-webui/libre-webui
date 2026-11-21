@@ -45,6 +45,7 @@ interface SettingsAppearanceTabProps {
   onShowFollowUpsChange: (showFollowUpSuggestions: boolean) => void;
   onAutoOpenArtifactsChange: (autoOpenArtifactPanel: boolean) => void;
   onHapticFeedbackChange: (hapticFeedbackEnabled: boolean) => void;
+  onWideModeChange: (wideMode: boolean) => void;
 }
 
 /** Row shell: title + optional description left, control right, 16px rhythm. */
@@ -108,6 +109,7 @@ export function SettingsAppearanceTab({
   onShowFollowUpsChange,
   onAutoOpenArtifactsChange,
   onHapticFeedbackChange,
+  onWideModeChange,
 }: SettingsAppearanceTabProps) {
   const { t } = useTranslation();
   const activeAccent = theme.accent || DEFAULT_ACCENT;
@@ -477,6 +479,19 @@ export function SettingsAppearanceTab({
           </div>
         )}
       </div>
+
+      {/* Layout: wide mode lets content use the whole window. */}
+      <SettingRow
+        title={t('settings.appearance.wideMode')}
+        description={t('settings.appearance.wideModeDescription')}
+      >
+        <ToggleSwitch
+          checked={preferences.wideMode === true}
+          onChange={onWideModeChange}
+          label={t('settings.appearance.wideMode')}
+          testId='wide-mode-toggle'
+        />
+      </SettingRow>
 
       {/* Chat interface toggles. */}
       <SettingRow

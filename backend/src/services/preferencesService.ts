@@ -130,6 +130,7 @@ class PreferencesService {
     showFollowUpSuggestions: true, // Suggest follow-up messages after responses
     autoOpenArtifactPanel: true, // Open the artifact panel when a response generates one
     hapticFeedbackEnabled: false,
+    wideMode: false,
     workRemoteProviderDisclosureDismissed: false,
     emailNotifications: { channelMentions: false, automationRuns: false },
     backgroundSettings: { ...DEFAULT_BACKGROUND_SETTINGS },

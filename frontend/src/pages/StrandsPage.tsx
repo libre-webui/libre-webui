@@ -491,7 +491,7 @@ export default function StrandsPage() {
 
         <section className='flex min-h-0 min-w-0 flex-1 flex-col'>
           <div className='scroll-region min-h-0 flex-1 overflow-y-auto px-4 py-5 sm:px-6'>
-            <div className='mx-auto max-w-3xl space-y-5'>
+            <div className='mx-auto max-w-3xl space-y-5 wide:max-w-none'>
               {loading ? (
                 <LoadingState />
               ) : messages.length === 0 && !streaming ? (
@@ -507,7 +507,12 @@ export default function StrandsPage() {
           </div>
 
           <div className='shrink-0 px-4 pb-4 sm:px-6'>
-            <div className={cn('mx-auto max-w-3xl', composerSurfaceClass)}>
+            <div
+              className={cn(
+                'mx-auto max-w-3xl wide:max-w-none',
+                composerSurfaceClass
+              )}
+            >
               <Textarea
                 value={draft}
                 onChange={event => setDraft(event.target.value)}

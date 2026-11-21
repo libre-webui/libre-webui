@@ -705,6 +705,8 @@
     },
     "appearance": {
       "title": "Penampilan",
+      "wideMode": "Mod lebar",
+      "wideModeDescription": "Benarkan sembang dan halaman menggunakan lebar penuh tetingkap",
       "language": {
         "title": "Bahasa",
         "description": "Pilih bahasa pilihan anda"

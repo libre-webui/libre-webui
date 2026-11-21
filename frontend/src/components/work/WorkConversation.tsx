@@ -504,7 +504,7 @@ export function WorkConversation({
         }}
         className='min-h-0 flex-1 overflow-y-auto'
       >
-        <div className='mx-auto flex min-h-full max-w-3xl flex-col px-4 py-6 md:px-6'>
+        <div className='mx-auto flex min-h-full max-w-3xl flex-col px-4 py-6 md:px-6 wide:max-w-none'>
           {messages.length === 0 && !liveRun ? (
             <div className='m-auto max-w-md text-center'>
               <WorkAvatar role='assistant' persona={taskPersona} size='empty' />

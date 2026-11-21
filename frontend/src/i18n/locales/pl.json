@@ -705,6 +705,8 @@
     },
     "appearance": {
       "title": "Wygląd",
+      "wideMode": "Tryb szeroki",
+      "wideModeDescription": "Czaty i strony zajmują całą szerokość okna",
       "language": {
         "title": "Język",
         "description": "Wybierz preferowany język"

@@ -705,6 +705,8 @@
     },
     "appearance": {
       "title": "รูปลักษณ์",
+      "wideMode": "โหมดกว้าง",
+      "wideModeDescription": "ให้แชทและหน้าเพจใช้ความกว้างเต็มหน้าต่าง",
       "language": {
         "title": "ภาษา",
         "description": "เลือกภาษาที่คุณต้องการ"

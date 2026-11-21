@@ -21,9 +21,9 @@ import { cn } from '@/utils';
 type PageWidth = 'narrow' | 'default' | 'wide';
 
 const pageWidths: Record<PageWidth, string> = {
-  narrow: 'max-w-4xl',
-  default: 'max-w-6xl',
-  wide: 'max-w-7xl',
+  narrow: 'max-w-4xl wide:max-w-none',
+  default: 'max-w-6xl wide:max-w-none',
+  wide: 'max-w-7xl wide:max-w-none',
 };
 
 interface PageShellProps extends React.HTMLAttributes<HTMLDivElement> {

@@ -335,7 +335,7 @@ const AutomationsPage: React.FC = () => {
           ) : automations.length === 0 ? (
             <EmptyState icon={Zap} title={t('automations.empty')} />
           ) : (
-            <div className='mx-auto w-full max-w-3xl space-y-2'>
+            <div className='mx-auto w-full max-w-3xl space-y-2 wide:max-w-none'>
               {automations.map(automation => (
                 <div
                   key={automation.id}
@@ -449,7 +449,7 @@ const AutomationsPage: React.FC = () => {
           )
         ) : null}
         {tab === 'automations' && !loading && (
-          <div className='mx-auto mt-8 w-full max-w-3xl'>
+          <div className='mx-auto mt-8 w-full max-w-3xl wide:max-w-none'>
             <p className='mb-2 text-[11px] font-medium uppercase tracking-wide text-gray-400 dark:text-dark-500'>
               {t('automations.templatesTitle')}
             </p>
@@ -477,7 +477,7 @@ const AutomationsPage: React.FC = () => {
           </div>
         )}
         {tab === 'runs' && (
-          <div className='mx-auto w-full max-w-3xl space-y-4'>
+          <div className='mx-auto w-full max-w-3xl space-y-4 wide:max-w-none'>
             {summary && (
               <RunHistoryStrip days={summary.days} locale={i18n.language} />
             )}
