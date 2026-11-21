@@ -133,13 +133,15 @@ export const ConversationHistoryRail = React.memo(
         ? `conversation-history-preview-${previewIndex}`
         : undefined;
 
+    // The rail sits beside the centered reading column. In wide mode the
+    // column fills the chat, so the rail moves to the start edge, inside the
+    // column's padding.
     return (
       <nav
         ref={navRef}
         data-testid='conversation-history-rail'
         aria-label={t('chatHistory.label')}
-        className='pointer-events-none absolute top-1/2 z-20 hidden h-[min(58vh,30rem)] w-7 -translate-y-1/2 lg:block xl:w-9'
-        style={{ insetInlineStart: 'max(0.25rem, calc(50% - 27rem))' }}
+        className='pointer-events-none absolute inset-s-[max(0.25rem,calc(50%_-_27rem))] top-1/2 z-20 hidden h-[min(58vh,30rem)] w-7 -translate-y-1/2 lg:block xl:w-9 wide:inset-s-1'
         onPointerLeave={() => {
           if (!navRef.current?.contains(document.activeElement)) {
             setPreviewId(null);

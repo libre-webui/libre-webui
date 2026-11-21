@@ -22,29 +22,30 @@ test.use({ viewport: { width: 1600, height: 900 } });
 
 const baseTimestamp = Date.now() - 60_000;
 
+// Three turns, so the conversation history rail renders as well.
 const session = {
   id: 'wide-mode-session',
   title: 'Wide mode conversation',
   model: 'llama3.2:3b',
-  messages: [
+  messages: [1, 2, 3].flatMap(turn => [
     {
-      id: 'wide-user-1',
+      id: `wide-user-${turn}`,
       role: 'user' as const,
-      content: 'Write a long paragraph.',
-      timestamp: baseTimestamp,
+      content: `Write long paragraph number ${turn}.`,
+      timestamp: baseTimestamp + turn * 2_000,
     },
     {
-      id: 'wide-assistant-1',
+      id: `wide-assistant-${turn}`,
       role: 'assistant' as const,
       content: 'A long answer that would normally wrap at the reading width. '
         .repeat(20)
         .trim(),
-      timestamp: baseTimestamp + 1_000,
+      timestamp: baseTimestamp + turn * 2_000 + 1_000,
       model: 'llama3.2:3b',
     },
-  ],
+  ]),
   createdAt: baseTimestamp,
-  updatedAt: baseTimestamp + 1_000,
+  updatedAt: baseTimestamp + 7_000,
 };
 
 const widthOf = async (page: Page, testId: string) =>
@@ -120,6 +121,23 @@ test('wide mode lets the chat column and composer use the whole window', async (
     .boundingBox();
   expect(controls).not.toBeNull();
   expect(controls!.x).toBeGreaterThanOrEqual(contentEnd);
+
+  // The history rail leaves the middle of the chat for the start edge, still
+  // clear of the messages.
+  const rail = page.getByTestId('conversation-history-rail');
+  await expect(rail).toBeVisible();
+  const columnBox = await page
+    .getByTestId('chat-messages-column')
+    .boundingBox();
+  const railBox = await rail.boundingBox();
+  const firstAnchorBox = await page
+    .getByTestId('conversation-turn-anchor')
+    .first()
+    .boundingBox();
+  expect(railBox!.x).toBeLessThan(columnBox!.x + 16);
+  expect(railBox!.x + railBox!.width).toBeLessThanOrEqual(
+    firstAnchorBox!.x + 1
+  );
 
   // The preference is saved to the account, so it survives a reload.
   await page.reload();
