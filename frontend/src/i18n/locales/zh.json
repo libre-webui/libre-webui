@@ -394,8 +394,7 @@
     "persona": {
       "applied": "已应用角色",
       "label": "角色",
-      "loadFailed": "无法加载角色详细信息",
-      "removeFailed": "移除角色失败"
+      "loadFailed": "无法加载角色详细信息"
     },
     "model": {
       "updated": "模型已更新",
@@ -409,7 +408,8 @@
       "connectDescription": "还没有连接任何模型。从下面选择一个来源——本地运行时、您自己的服务器，或云端 API——不到一分钟即可开始对话。"
     },
     "footer": {
-      "disclaimer": "大语言模型可能会犯错——请核实重要信息",
+      "disclaimer": "AI 可能会出错。请核实重要信息。",
+      "disclaimerNamed": "{{name}} 可能会出错。请核实重要信息。",
       "images": "{{count}} 张图片",
       "images_plural": "{{count}} 张图片",
       "structuredOutput": "结构化输出"

@@ -394,8 +394,7 @@
     "persona": {
       "applied": "Persona anvendt",
       "label": "Persona",
-      "loadFailed": "Kunne ikke indlæse personadetaljer",
-      "removeFailed": "Kunne ikke fjerne persona"
+      "loadFailed": "Kunne ikke indlæse personadetaljer"
     },
     "model": {
       "updated": "Model opdateret",
@@ -409,7 +408,8 @@
       "connectDescription": "Der er endnu ikke forbundet nogen modeller. Vælg en kilde nedenfor — en lokal runtime, din egen server eller et cloud-API — og du chatter på under et minut."
     },
     "footer": {
-      "disclaimer": "LLM kan begå fejl - verificer vigtige oplysninger",
+      "disclaimer": "AI kan begå fejl. Kontrollér vigtige oplysninger.",
+      "disclaimerNamed": "{{name}} kan begå fejl. Kontrollér vigtige oplysninger.",
       "images": "{{count}} billede",
       "images_plural": "{{count}} billeder",
       "structuredOutput": "Struktureret output"

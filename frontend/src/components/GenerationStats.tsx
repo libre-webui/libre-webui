@@ -15,22 +15,35 @@
  * limitations under the License.
  */
 
-import React, { useState } from 'react';
-import { ChevronDown, ChevronRight, Info } from 'lucide-react';
+import React, { useId } from 'react';
+import { Info } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { GenerationStatistics } from '@/types';
+import { cn } from '@/utils';
 
 interface GenerationStatsProps {
   statistics: GenerationStatistics;
+  /** Whether the detailed breakdown is open; the message row owns it. */
+  expanded: boolean;
+  onExpandedChange: (expanded: boolean) => void;
+  /** Leave the model out when the message header already names it. */
+  hideModel?: boolean;
   className?: string;
 }
 
+/**
+ * Generation statistics inline in a message's action row. The token count is
+ * also the toggle for the detailed breakdown, which opens below the row.
+ */
 export const GenerationStats: React.FC<GenerationStatsProps> = ({
   statistics,
-  className = '',
+  expanded,
+  onExpandedChange,
+  hideModel = false,
+  className,
 }) => {
-  const [isExpanded, setIsExpanded] = useState(false);
   const { t, i18n } = useTranslation();
+  const detailsId = useId();
   const formatNumber = (value: number, digits: number): string =>
     value.toLocaleString(i18n.language, {
       minimumFractionDigits: digits,
@@ -65,21 +78,48 @@ export const GenerationStats: React.FC<GenerationStatsProps> = ({
   const totalDuration = formatDuration(statistics.total_duration);
   const tokensPerSecond = formatTokensPerSecond(statistics.tokens_per_second);
 
+  const details: Array<[string, string | number]> = [
+    [t('generationStats.promptTokens'), promptTokens],
+    [t('generationStats.generatedTokens'), generatedTokens],
+    [t('generationStats.totalTokens'), totalTokens],
+    [t('generationStats.speed'), tokensPerSecond],
+    [
+      t('generationStats.promptEval'),
+      formatDuration(statistics.prompt_eval_duration),
+    ],
+    [t('generationStats.generation'), formatDuration(statistics.eval_duration)],
+    [t('generationStats.modelLoad'), formatDuration(statistics.load_duration)],
+    [t('generationStats.totalTime'), totalDuration],
+  ];
+
   return (
-    <div className={`text-xs text-ink-muted mt-2 ${className}`}>
-      {/* Summary Stats */}
-      <div className='flex items-center gap-4 mb-1'>
-        <span className='flex items-center gap-1 text-gray-600 dark:text-dark-600'>
-          <Info size={12} className='text-primary-500' />
+    <>
+      <div
+        data-testid='generation-stats'
+        className={cn(
+          'flex min-w-0 items-center gap-3 text-xs tabular-nums text-ink-subtle',
+          className
+        )}
+      >
+        <button
+          type='button'
+          onClick={() => onExpandedChange(!expanded)}
+          aria-expanded={expanded}
+          aria-controls={detailsId}
+          title={t('generationStats.details')}
+          className='flex items-center gap-1 rounded-md transition-colors hover:text-ink focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary-500/40'
+        >
+          <Info aria-hidden='true' className='h-3 w-3' />
           {t('generationStats.tokenCount', {
             tokens: generatedTokens.toLocaleString(i18n.language),
           })}
-        </span>
-        <span className='text-ink-muted'>{tokensPerSecond}</span>
-        <span className='text-ink-muted'>{totalDuration}</span>
-        {statistics.model && (
+        </button>
+        <span>{tokensPerSecond}</span>
+        <span>{totalDuration}</span>
+        {statistics.model && !hideModel && (
           <span
-            className='text-ink-muted bg-gray-100 dark:bg-dark-200 px-2 py-0.5 rounded-full truncate max-w-32 sm:max-w-48'
+            dir='ltr'
+            className='max-w-32 truncate sm:max-w-48'
             title={statistics.model}
           >
             {statistics.model}
@@ -87,87 +127,32 @@ export const GenerationStats: React.FC<GenerationStatsProps> = ({
         )}
       </div>
 
-      {/* Expandable Detailed Stats */}
-      <button
-        type='button'
-        onClick={() => setIsExpanded(!isExpanded)}
-        aria-expanded={isExpanded}
-        className='flex items-center gap-1 text-ink-muted hover:text-ink transition-colors'
-      >
-        {isExpanded ? (
-          <ChevronDown size={12} />
-        ) : (
-          <ChevronRight size={12} className='rtl:rotate-180' />
-        )}
-        <span>{t('generationStats.details')}</span>
-      </button>
-
-      {isExpanded && (
-        <div className='mt-2 p-3 bg-gray-50 dark:bg-dark-100 border border-gray-200 dark:border-dark-300 rounded-lg text-xs space-y-2'>
-          <div className='grid grid-cols-2 gap-x-4 gap-y-2'>
-            <div className='text-gray-700 dark:text-dark-700'>
-              <span className='font-medium text-gray-800 dark:text-dark-800'>
-                {t('generationStats.promptTokens')}
-              </span>{' '}
-              {promptTokens}
-            </div>
-            <div className='text-gray-700 dark:text-dark-700'>
-              <span className='font-medium text-gray-800 dark:text-dark-800'>
-                {t('generationStats.generatedTokens')}
-              </span>{' '}
-              {generatedTokens}
-            </div>
-            <div className='text-gray-700 dark:text-dark-700'>
-              <span className='font-medium text-gray-800 dark:text-dark-800'>
-                {t('generationStats.totalTokens')}
-              </span>{' '}
-              {totalTokens}
-            </div>
-            <div className='text-gray-700 dark:text-dark-700'>
-              <span className='font-medium text-gray-800 dark:text-dark-800'>
-                {t('generationStats.speed')}
-              </span>{' '}
-              {tokensPerSecond}
-            </div>
-            <div className='text-gray-700 dark:text-dark-700'>
-              <span className='font-medium text-gray-800 dark:text-dark-800'>
-                {t('generationStats.promptEval')}
-              </span>{' '}
-              {formatDuration(statistics.prompt_eval_duration)}
-            </div>
-            <div className='text-gray-700 dark:text-dark-700'>
-              <span className='font-medium text-gray-800 dark:text-dark-800'>
-                {t('generationStats.generation')}
-              </span>{' '}
-              {formatDuration(statistics.eval_duration)}
-            </div>
-            <div className='text-gray-700 dark:text-dark-700'>
-              <span className='font-medium text-gray-800 dark:text-dark-800'>
-                {t('generationStats.modelLoad')}
-              </span>{' '}
-              {formatDuration(statistics.load_duration)}
-            </div>
-            <div className='text-gray-700 dark:text-dark-700'>
-              <span className='font-medium text-gray-800 dark:text-dark-800'>
-                {t('generationStats.totalTime')}
-              </span>{' '}
-              {totalDuration}
-            </div>
-          </div>
-
+      {expanded && (
+        <div
+          id={detailsId}
+          className='mt-1.5 basis-full rounded-xl border border-line bg-surface-subtle p-3 text-xs'
+        >
+          <dl className='grid max-w-md grid-cols-2 gap-x-4 gap-y-1.5'>
+            {details.map(([label, value]) => (
+              <div key={label} className='flex gap-1 text-ink-muted'>
+                <dt className='font-medium text-ink'>{label}</dt>
+                <dd className='tabular-nums'>{value}</dd>
+              </div>
+            ))}
+          </dl>
           {statistics.created_at && (
-            <div className='pt-2 border-t border-gray-200 dark:border-dark-300 text-gray-600 dark:text-dark-600'>
-              <span className='font-medium text-gray-800 dark:text-dark-800'>
+            <p className='mt-2 border-t border-line pt-2 text-ink-muted'>
+              <span className='font-medium text-ink'>
                 {t('generationStats.generatedAt')}
               </span>{' '}
               {new Date(statistics.created_at).toLocaleTimeString(
                 i18n.language
               )}
-            </div>
+            </p>
           )}
         </div>
       )}
-    </div>
+    </>
   );
 };
 

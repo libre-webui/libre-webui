@@ -21,16 +21,12 @@
  * durable generation with independent stop, error, and usage.
  */
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Columns2 } from 'lucide-react';
 import { cn } from '@/utils';
 import { Button } from '@/components/ui';
-import {
-  chatModelOptionKey,
-  isAvailableOllamaModel,
-} from '@/utils/chatModelSelection';
-import { MAX_COMPARE_MODELS } from './compareTargets';
+import { MAX_COMPARE_MODELS, compareModelOptions } from './compareTargets';
 import type { OllamaModel } from '@/types';
 
 interface ComposerCompareMenuProps {
@@ -39,6 +35,9 @@ interface ComposerCompareMenuProps {
   currentModelKey: string;
   selectedKeys: string[];
   onChange: (keys: string[]) => void;
+  /** Open state is owned by the composer, which also opens it from its menu. */
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
   disabled?: boolean;
 }
 
@@ -47,27 +46,32 @@ export const ComposerCompareMenu: React.FC<ComposerCompareMenuProps> = ({
   currentModelKey,
   selectedKeys,
   onChange,
+  open,
+  onOpenChange,
   disabled = false,
 }) => {
   const { t } = useTranslation();
-  const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!open) return;
     const onPointerDown = (event: MouseEvent) => {
       if (!containerRef.current?.contains(event.target as Node)) {
-        setOpen(false);
+        onOpenChange(false);
       }
     };
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') onOpenChange(false);
+    };
     document.addEventListener('mousedown', onPointerDown);
-    return () => document.removeEventListener('mousedown', onPointerDown);
-  }, [open]);
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', onPointerDown);
+      document.removeEventListener('keydown', onKeyDown);
+    };
+  }, [open, onOpenChange]);
 
-  const options = models
-    .filter(isAvailableOllamaModel)
-    .map(model => ({ model, key: chatModelOptionKey(model) }))
-    .filter(entry => entry.key !== currentModelKey);
+  const options = compareModelOptions(models, currentModelKey);
 
   if (options.length === 0) return null;
 
@@ -86,7 +90,7 @@ export const ComposerCompareMenu: React.FC<ComposerCompareMenuProps> = ({
         variant='ghost'
         size='sm'
         disabled={disabled}
-        onClick={() => setOpen(current => !current)}
+        onClick={() => onOpenChange(!open)}
         className={cn(
           'h-9 w-9 p-0 rounded-full shrink-0 flex items-center justify-center',
           'text-ink-muted hover:bg-interactive-hover hover:text-ink',

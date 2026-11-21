@@ -394,8 +394,7 @@
     "persona": {
       "applied": "Persona uygulandı",
       "label": "Persona",
-      "loadFailed": "Persona ayrıntıları yüklenemedi",
-      "removeFailed": "Persona kaldırılamadı"
+      "loadFailed": "Persona ayrıntıları yüklenemedi"
     },
     "model": {
       "updated": "Model güncellendi",
@@ -409,7 +408,8 @@
       "connectDescription": "Henüz bağlı bir model yok. Aşağıdan bir kaynak seçin — yerel bir çalışma zamanı, kendi sunucunuz ya da bir bulut API'si — ve bir dakikadan kısa sürede sohbete başlayın."
     },
     "footer": {
-      "disclaimer": "Yapay zeka hata yapabilir - önemli bilgileri doğrulayın",
+      "disclaimer": "Yapay zekâ hata yapabilir. Önemli bilgileri doğrulayın.",
+      "disclaimerNamed": "{{name}} hata yapabilir. Önemli bilgileri doğrulayın.",
       "images": "{{count}} görsel",
       "images_plural": "{{count}} görsel",
       "structuredOutput": "Yapılandırılmış çıktı"

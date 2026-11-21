@@ -141,7 +141,7 @@ export const ConversationHistoryRail = React.memo(
         ref={navRef}
         data-testid='conversation-history-rail'
         aria-label={t('chatHistory.label')}
-        className='pointer-events-none absolute inset-s-[max(0.25rem,calc(50%_-_27rem))] top-1/2 z-20 hidden h-[min(58vh,30rem)] w-7 -translate-y-1/2 lg:block xl:w-9 wide:inset-s-1'
+        className='group/rail pointer-events-none absolute inset-s-[max(0.25rem,calc(50%_-_27rem))] top-1/2 z-20 hidden h-[min(58vh,30rem)] w-7 -translate-y-1/2 lg:block xl:w-9 wide:inset-s-1'
         onPointerLeave={() => {
           if (!navRef.current?.contains(document.activeElement)) {
             setPreviewId(null);
@@ -150,7 +150,9 @@ export const ConversationHistoryRail = React.memo(
       >
         <ol
           ref={listRef}
-          className='pointer-events-auto flex h-full min-h-0 flex-col overflow-y-auto py-2 scrollbar-none [&::-webkit-scrollbar]:hidden [&>li:first-child]:mt-auto [&>li:last-child]:mb-auto'
+          // Faint beside the reading, full strength while pointed at or
+          // focused, so the ticks never compete with the messages.
+          className='pointer-events-auto flex h-full min-h-0 flex-col overflow-y-auto py-2 opacity-40 transition-opacity duration-150 scrollbar-none group-hover/rail:opacity-100 group-focus-within/rail:opacity-100 motion-reduce:transition-none [&::-webkit-scrollbar]:hidden [&>li:first-child]:mt-auto [&>li:last-child]:mb-auto'
         >
           {items.map((item, index) => {
             const isActive = item.id === resolvedActiveId;

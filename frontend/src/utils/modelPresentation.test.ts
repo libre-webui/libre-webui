@@ -22,6 +22,7 @@ import type { OllamaModel } from '@/types';
 import en from '../i18n/locales/en.json';
 import de from '../i18n/locales/de.json';
 import {
+  assistantDisplayName,
   modelDisplayName,
   libraryCategoryLabel,
   modelOptionLabel,
@@ -163,4 +164,41 @@ test('Ollama library categories read in the interface language', () => {
   assert.equal(libraryCategoryLabel('all', german), german('common.all'));
   // A category the app does not know yet keeps its own name.
   assert.equal(libraryCategoryLabel('robotics', german), 'Robotics');
+});
+
+test('the composer footer names the persona, label, or readable model', () => {
+  assert.equal(assistantDisplayName(undefined), '');
+  assert.equal(
+    assistantDisplayName(
+      model('persona:mia', { isPersona: true, personaName: 'Mia K.' })
+    ),
+    'Mia K.'
+  );
+  // A persona fallback row that only knows its raw id stays unnamed.
+  assert.equal(
+    assistantDisplayName(model('persona:gone', { isPersona: true })),
+    ''
+  );
+  assert.equal(
+    assistantDisplayName(model('llama3.2:3b'), {
+      'llama3.2:3b': { label: 'House model' },
+    }),
+    'House model'
+  );
+  assert.equal(
+    assistantDisplayName(
+      model('gemini-4-neon', { isPlugin: true, pluginId: 'gemini' }),
+      { 'gemini/gemini-4-neon': { label: 'Neon' } }
+    ),
+    'Neon'
+  );
+  // Bare Ollama names are shown exactly as typed.
+  assert.equal(
+    assistantDisplayName(model('arete-27b-instruct')),
+    'arete-27b-instruct'
+  );
+  assert.equal(
+    assistantDisplayName(model('pi', { isAgent: true, agentName: 'Pi' })),
+    'Pi'
+  );
 });

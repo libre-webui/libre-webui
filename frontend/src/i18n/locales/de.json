@@ -394,8 +394,7 @@
     "persona": {
       "applied": "Persona angewendet",
       "label": "Persona",
-      "loadFailed": "Persona-Details konnten nicht geladen werden",
-      "removeFailed": "Persona konnte nicht entfernt werden"
+      "loadFailed": "Persona-Details konnten nicht geladen werden"
     },
     "model": {
       "updated": "Modell aktualisiert",
@@ -409,7 +408,8 @@
       "connectDescription": "Es sind noch keine Modelle verbunden. Wählen Sie unten eine Quelle — eine lokale Laufzeitumgebung, Ihren eigenen Server oder eine Cloud-API — und Sie chatten in weniger als einer Minute."
     },
     "footer": {
-      "disclaimer": "KI kann Fehler machen – überprüfen Sie wichtige Informationen",
+      "disclaimer": "KI kann Fehler machen. Überprüfen Sie wichtige Informationen.",
+      "disclaimerNamed": "{{name}} kann Fehler machen. Überprüfen Sie wichtige Informationen.",
       "images": "{{count}} Bild",
       "images_plural": "{{count}} Bilder",
       "structuredOutput": "Strukturierte Ausgabe"

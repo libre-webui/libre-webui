@@ -394,8 +394,7 @@
     "persona": {
       "applied": "Persona tillämpad",
       "label": "Persona",
-      "loadFailed": "Det gick inte att ladda personadetaljer",
-      "removeFailed": "Det gick inte att ta bort personan"
+      "loadFailed": "Det gick inte att ladda personadetaljer"
     },
     "model": {
       "updated": "Modell uppdaterad",
@@ -409,7 +408,8 @@
       "connectDescription": "Inga modeller är anslutna än. Välj en källa nedan — en lokal körmiljö, din egen server eller ett moln-API — så chattar du på under en minut."
     },
     "footer": {
-      "disclaimer": "AI kan göra misstag - verifiera viktig information",
+      "disclaimer": "AI kan göra misstag. Kontrollera viktig information.",
+      "disclaimerNamed": "{{name}} kan göra misstag. Kontrollera viktig information.",
       "images": "{{count}} bild",
       "images_plural": "{{count}} bilder",
       "structuredOutput": "Strukturerad utdata"

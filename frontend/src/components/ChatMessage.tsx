@@ -256,6 +256,7 @@ const ChatMessageBase: React.FC<ChatMessageProps> = ({
       )?.[1])
     : undefined;
   const [isEditing, setIsEditing] = useState(false);
+  const [statsExpanded, setStatsExpanded] = useState(false);
   const [editedContent, setEditedContent] = useState(message.content);
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
   const lightboxRef = useRef<HTMLDivElement>(null);
@@ -683,7 +684,10 @@ const ChatMessageBase: React.FC<ChatMessageProps> = ({
       <div
         className={cn(
           'flex min-w-0 gap-2.5 sm:gap-3',
-          isUser ? 'max-w-[85%] sm:max-w-[70%]' : 'w-full'
+          // Wide mode keeps a long prompt at the same readable measure as replies.
+          isUser
+            ? 'max-w-[85%] sm:max-w-[70%] wide:sm:max-w-[min(70%,56rem)]'
+            : 'w-full'
         )}
       >
         {!isUser && !isSystem && (
@@ -1080,32 +1084,31 @@ const ChatMessageBase: React.FC<ChatMessageProps> = ({
                 </div>
               )}
 
-            {/* Display generation statistics for assistant messages */}
-            {!isUser && !isSystem && message.statistics && (
-              <div className='mt-2'>
-                <GenerationStats statistics={message.statistics} />
-              </div>
-            )}
-
-            {/* Quiet action row - revealed on hover/focus on desktop */}
+            {/* One quiet row for actions and generation stats. The latest
+                reply keeps it in view; older messages reveal it on hover or
+                focus on desktop. */}
             {!isSystem && !isStreaming && (
               <div
+                data-testid='message-action-row'
                 className={cn(
-                  'flex items-center gap-0.5 text-ink-subtle',
+                  'flex flex-wrap items-center gap-0.5 text-ink-subtle',
                   'sm:transition-opacity sm:duration-150 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100',
                   !isUser &&
-                    [
-                      'loading',
-                      'generating',
-                      'buffering',
-                      'blocked',
-                      'playing',
-                    ].includes(autoPlayState)
+                    (isLastAssistantMessage ||
+                      statsExpanded ||
+                      feedbackDetailsFor !== null ||
+                      [
+                        'loading',
+                        'generating',
+                        'buffering',
+                        'blocked',
+                        'playing',
+                      ].includes(autoPlayState))
                     ? 'sm:opacity-100'
                     : // Hidden only where hover exists to reveal it; touch
                       // tablets would otherwise never see the actions.
                       '[@media(hover:hover)]:sm:opacity-0',
-                  isUser ? 'mt-1 justify-end' : 'mt-1'
+                  isUser ? 'mt-1 justify-end' : 'mt-1.5'
                 )}
               >
                 {isUser && (
@@ -1277,6 +1280,15 @@ const ChatMessageBase: React.FC<ChatMessageProps> = ({
                   >
                     <GitFork className='h-3.5 w-3.5' />
                   </button>
+                )}
+                {!isUser && message.statistics && (
+                  <GenerationStats
+                    statistics={message.statistics}
+                    expanded={statsExpanded}
+                    onExpandedChange={setStatsExpanded}
+                    hideModel={Boolean(message.model && currentPersona?.name)}
+                    className='ms-2'
+                  />
                 )}
               </div>
             )}

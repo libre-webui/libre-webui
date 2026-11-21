@@ -394,8 +394,7 @@
     "persona": {
       "applied": "Persona toegepast",
       "label": "Persona",
-      "loadFailed": "Persoona-details laden mislukt",
-      "removeFailed": "Kan persona niet verwijderen"
+      "loadFailed": "Persoona-details laden mislukt"
     },
     "model": {
       "updated": "Model bijgewerkt",
@@ -409,7 +408,8 @@
       "connectDescription": "Er zijn nog geen modellen verbonden. Kies hieronder een bron — een lokale runtime, uw eigen server of een cloud-API — en binnen een minuut kunt u chatten."
     },
     "footer": {
-      "disclaimer": "LLM kan fouten maken - verifieer belangrijke informatie",
+      "disclaimer": "AI kan fouten maken. Controleer belangrijke informatie.",
+      "disclaimerNamed": "{{name}} kan fouten maken. Controleer belangrijke informatie.",
       "images": "{{count}} afbeelding",
       "images_plural": "{{count}} afbeeldingen",
       "structuredOutput": "Gestructureerde uitvoer"

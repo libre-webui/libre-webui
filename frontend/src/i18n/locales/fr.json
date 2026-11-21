@@ -394,8 +394,7 @@
     "persona": {
       "applied": "Persona appliqué",
       "label": "Persona",
-      "loadFailed": "Échec du chargement des détails de la persona",
-      "removeFailed": "Échec de la suppression du persona"
+      "loadFailed": "Échec du chargement des détails de la persona"
     },
     "model": {
       "updated": "Modèle mis à jour",
@@ -409,7 +408,8 @@
       "connectDescription": "Aucun modèle n'est encore connecté. Choisissez une source ci-dessous — un environnement d'exécution local, votre propre serveur ou une API cloud — et vous discuterez en moins d'une minute."
     },
     "footer": {
-      "disclaimer": "Les LLM peuvent faire des erreurs - vérifiez les informations importantes",
+      "disclaimer": "L'IA peut faire des erreurs. Vérifiez les informations importantes.",
+      "disclaimerNamed": "{{name}} peut faire des erreurs. Vérifiez les informations importantes.",
       "images": "{{count}} image",
       "images_plural": "{{count}} images",
       "structuredOutput": "Sortie structurée"

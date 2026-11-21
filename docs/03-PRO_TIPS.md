@@ -86,8 +86,10 @@ the shortcuts while settings and account controls remain at the bottom.
 Chat and most pages keep a centered reading width. Turn on **Wide mode** in
 Settings > Appearance to let Chat, Work, Strands, Notes, Automations, and
 library pages fill the whole window, which helps with long code blocks and
-tables. It pairs well with the compact sidebar. The setting is saved to your
-account, so it follows you to other browsers.
+tables. Paragraphs still stop at about 90 characters per line so replies stay
+easy to read; code blocks, tables, and artifacts use the full width. It pairs
+well with the compact sidebar. The setting is saved to your account, so it
+follows you to other browsers.
 
 ## Scroll Through Panels
 
@@ -310,10 +312,11 @@ thread.
 
 ## Compare Models in One Turn
 
-The columns button beside the tool picker fans your next prompt out to up
-to three extra models. Each reply is its own generation with its own model
-label, statistics, and cancel control, so slow or failing models never
-block the others.
+Choose **Compare models** in the composer's **+** menu to fan your next prompt
+out to up to three extra models. While models are picked, the compare button
+stays in the toolbar with a count. Each reply is its own generation with its
+own model label, statistics, and cancel control, so slow or failing models
+never block the others.
 
 ## Use Document Chat Deliberately
 
@@ -390,10 +393,11 @@ runs with, and the **Model default** entry names what it currently resolves to.
 
 ## Watch the Context Window
 
-The ring beside the model name fills as the conversation grows. Hover it for how
-full the window is, the tokens used, and the window they run against. It turns
-amber past four fifths and red at the window; a model whose window is unknown
-shows a dashed ring rather than an empty one.
+The gauge beside the model name fills as the conversation grows, with the
+percentage next to it, so it reads as a meter even at 0%. Hover it for the
+tokens used and the window they run against. It turns amber past four fifths
+and red at the window; a model whose window is unknown shows a dashed ring and
+no percentage.
 
 The count covers what the next request will actually send — compacted history
 and abandoned branches cost nothing. It anchors to what the provider measured

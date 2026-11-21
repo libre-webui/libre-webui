@@ -42,11 +42,14 @@ exists:
    search admins-only even while it is enabled; on opens it to all active
    users. The backend enforces this on every request.
 4. **The per-use controls** that appear for permitted users:
-   - **Chat retrieval:** a globe toggle in the composer. When it is on, the
-     session model plans focused keyword queries with optional freshness and
-     category hints. If planning fails, Libre falls back to the raw message.
-     Results enter the prompt as context and the reply shows numbered
-     **source chips**. This works with models that do not support tool calls.
+   - **Chat retrieval:** the globe in the new-chat composer, or **Search
+     the web for this message** in the **+** menu once a conversation has
+     started. While it is on, the globe shows in the toolbar; click it to
+     turn search off. The session model plans focused keyword queries with
+     optional freshness and category hints. If planning fails, Libre falls
+     back to the raw message. Results enter the prompt as context and the
+     reply shows numbered **source chips**. This works with models that do
+     not support tool calls.
    - **Chat Tools:** permitted tool-capable models can call the built-in
      `web_search` tool when tools are enabled for that turn.
    - **Work:** tasks whose network access is on gain a `web_search` tool in
@@ -115,7 +118,7 @@ survives restarts and takes effect immediately without redeploying.
 
 ## Troubleshooting
 
-**No globe in the composer / no `web_search` tool in Work.** Search is not
+**No web search in the composer / no `web_search` tool in Work.** Search is not
 enabled (Settings > Connections > Search), or the account is not permitted:
 regular users need the **Web search** toggle under Settings → User Management → Access & policies turned on.
 

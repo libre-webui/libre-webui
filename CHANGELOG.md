@@ -17,6 +17,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 🔧 Improvements
 
+- **Calmer chat layout**: each reply has one row for actions and generation
+  stats, and the token count opens the details. Older replies show the row on
+  hover. Follow-up suggestions are chips under the reply text. Chat controls
+  sit in a slim header row, and the persona is shown and changed only in the
+  composer's model picker. Web search and model comparison moved into the +
+  menu and return to the toolbar while active. The context meter shows its
+  percentage, the conversation timeline stays faint until pointed at, and the
+  footer names the model or persona that can make mistakes. In wide mode,
+  paragraphs keep a readable width while code and tables use the full window.
+
 ### 🐛 Bug Fixes
 
 ### 📚 Documentation

@@ -41,6 +41,5 @@ export { ArtifactContainer } from './ArtifactContainer';
 export { ArtifactDemo } from './ArtifactDemo';
 export * from './ui';
 export { FirstTimeSetup } from './FirstTimeSetup';
-export { PersonaIndicator } from './PersonaIndicator';
 export { PersonaCard } from './PersonaCard';
 export { PersonaQuickSwitch } from './PersonaQuickSwitch';

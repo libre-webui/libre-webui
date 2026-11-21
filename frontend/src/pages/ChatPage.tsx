@@ -57,11 +57,11 @@ import {
 } from '@/components/composer/composerTools';
 import { LogoMark } from '@/components/LogoMark';
 import { ModelSelector } from '@/components/ModelSelector';
-import { PersonaIndicator } from '@/components/PersonaIndicator';
 import { ThinkingSelector } from '@/components/ThinkingSelector';
 import { Button } from '@/components/ui';
 import { ImageUpload } from '@/components/ImageUpload';
 import { useChatStore } from '@/store/chatStore';
+import { assistantDisplayName } from '@/utils/modelPresentation';
 import { UPLOAD_ACCEPT_ATTRIBUTE } from '@/utils/documentUploadTypes';
 import { useAuthStore } from '@/store/authStore';
 import { useAppStore } from '@/store/appStore';
@@ -238,6 +238,11 @@ export const ChatPage: React.FC = () => {
   const selectedModelKey = selectedModel
     ? chatModelSelectionKeyForModels(welcomeModels, selectedModelState)
     : '';
+  const modelMetadata = useChatStore(state => state.modelMetadata);
+  const welcomeAssistantName = assistantDisplayName(
+    welcomeModels.find(model => chatModelOptionKey(model) === selectedModelKey),
+    modelMetadata
+  );
   const selectedModelAvailable = isChatModelSelectionAvailable(
     models,
     selectedModelState
@@ -1129,7 +1134,11 @@ export const ChatPage: React.FC = () => {
                 </div>
 
                 <p className='mt-4 text-center text-[10px] leading-relaxed text-ink-subtle'>
-                  {t('chat.footer.disclaimer')}
+                  {welcomeAssistantName
+                    ? t('chat.footer.disclaimerNamed', {
+                        name: welcomeAssistantName,
+                      })
+                    : t('chat.footer.disclaimer')}
                 </p>
               </div>
             ) : (
@@ -1172,91 +1181,62 @@ export const ChatPage: React.FC = () => {
       )}
 
       <div className='relative z-10 flex h-full flex-col'>
-        {/* Private mode indicator */}
-        {currentSession?.isPrivate && (
-          <div className='shrink-0 border-b border-black/5 bg-surface/55 px-4 py-2 backdrop-blur-xl dark:border-white/6 dark:bg-dark-100/55'>
-            <div className='flex items-center justify-center gap-2 text-gray-500 dark:text-dark-600'>
-              <Ghost className='h-3.5 w-3.5' />
-              <span className='text-xs font-medium'>
+        {/* One slim header row: private mode or the fork origin at the
+            start, chat controls at the end. The persona is shown and changed
+            in the composer's model picker. */}
+        <div
+          data-testid='chat-session-header'
+          className='flex h-11 shrink-0 items-center gap-2 ps-4 pe-3'
+        >
+          {currentSession?.isPrivate && (
+            <div className='flex min-w-0 items-center gap-2 text-gray-500 dark:text-dark-600'>
+              <Ghost className='h-3.5 w-3.5 shrink-0' />
+              <span className='shrink-0 text-xs font-medium'>
                 {t('chat.session.privateMode')}
               </span>
-              <span className='hidden text-[11px] text-ink-subtle sm:inline'>
+              <span className='hidden truncate text-[11px] text-ink-subtle sm:inline'>
                 — {t('chat.session.privateDescription')}
               </span>
             </div>
-          </div>
-        )}
-        {/* Persona indicator header */}
-        {currentPersona && !currentSession?.isPrivate && (
-          <div className='shrink-0 border-b border-black/5 bg-surface/55 px-4 py-2 backdrop-blur-xl dark:border-white/6 dark:bg-dark-100/55'>
-            <PersonaIndicator
-              persona={currentPersona}
-              onClear={() => {
-                if (!currentSession) return;
-                void chatApi
-                  .updateSession(currentSession.id, {
-                    model: currentPersona.model,
-                    providerType: 'ollama',
-                    providerId: null,
-                    personaId: null,
-                  })
-                  .then(response => {
-                    if (!response.success || !response.data) {
-                      throw new Error(
-                        response.error || 'Failed to remove persona'
-                      );
-                    }
-                    useChatStore.setState(state => ({
-                      sessions: state.sessions.map(session =>
-                        session.id === currentSession.id
-                          ? response.data!
-                          : session
-                      ),
-                      currentSession: response.data!,
-                    }));
-                  })
-                  .catch(error => {
-                    logger.error('Failed to remove persona:', error);
-                    toast.error(t('chat.persona.removeFailed'));
-                  });
-              }}
-            />
-          </div>
-        )}
-        <div className='flex min-h-0 flex-1'>
-          <div className='relative flex min-w-0 flex-1 flex-col'>
+          )}
+          {currentSession.settings?.forkedFrom && (
             <button
-              onClick={() => setControlsOpen(open => !open)}
-              className={cn(
-                'absolute inset-e-3 top-3 z-20 flex h-8 w-8 items-center justify-center rounded-full border border-black/[0.07] bg-surface/65 text-gray-500 backdrop-blur-md transition-colors duration-150 hover:bg-surface-raised hover:text-gray-950 dark:border-white/8 dark:bg-dark-200/65 dark:text-dark-600 dark:hover:bg-dark-200 dark:hover:text-dark-950',
-                controlsOpen && 'text-primary-600 dark:text-primary-400'
-              )}
               type='button'
-              title={t('chat.controls.title')}
-              aria-label={t('chat.controls.title')}
-              aria-expanded={controlsOpen}
+              onClick={() =>
+                navigate(`/c/${currentSession.settings!.forkedFrom!.sessionId}`)
+              }
+              className='flex min-w-0 items-center gap-1.5 rounded-full border border-black/[0.07] bg-surface/70 px-3 py-1 text-[11px] text-gray-500 transition-colors hover:text-gray-800 dark:border-white/8 dark:bg-dark-200/70 dark:text-dark-600 dark:hover:text-dark-900'
+              data-testid='forked-from-banner'
             >
-              <SlidersHorizontal className='h-3.5 w-3.5' />
-            </button>
-            {currentSession.settings?.forkedFrom && (
-              <button
-                type='button'
-                onClick={() =>
-                  navigate(
-                    `/c/${currentSession.settings!.forkedFrom!.sessionId}`
-                  )
-                }
-                className='mx-auto mt-2 flex items-center gap-1.5 rounded-full border border-black/[0.07] bg-surface/70 px-3 py-1 text-[11px] text-gray-500 transition-colors hover:text-gray-800 dark:border-white/8 dark:bg-dark-200/70 dark:text-dark-600 dark:hover:text-dark-900'
-                data-testid='forked-from-banner'
-              >
-                <GitFork className='h-3 w-3' />
+              <GitFork className='h-3 w-3 shrink-0' />
+              <span className='truncate'>
                 {t('chat.fork.origin', {
                   title:
                     currentSession.settings.forkedFrom.title ||
                     t('chat.fork.originUnknown'),
                 })}
-              </button>
+              </span>
+            </button>
+          )}
+          <div className='min-w-0 flex-1' />
+          {/* Room for the sources trigger, which sits here below xl. */}
+          <div aria-hidden='true' className='w-9 shrink-0 xl:hidden' />
+          <button
+            onClick={() => setControlsOpen(open => !open)}
+            className={cn(
+              'flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-black/[0.07] bg-surface/65 text-gray-500 backdrop-blur-md transition-colors duration-150 hover:bg-surface-raised hover:text-gray-950 dark:border-white/8 dark:bg-dark-200/65 dark:text-dark-600 dark:hover:bg-dark-200 dark:hover:text-dark-950',
+              controlsOpen && 'text-primary-600 dark:text-primary-400'
             )}
+            type='button'
+            title={t('chat.controls.title')}
+            aria-label={t('chat.controls.title')}
+            aria-expanded={controlsOpen}
+          >
+            <SlidersHorizontal className='h-3.5 w-3.5' />
+          </button>
+        </div>
+        <div className='flex min-h-0 flex-1'>
+          <div className='relative flex min-w-0 flex-1 flex-col'>
             <ChatMessages
               messages={currentSession.messages}
               streamingMessage={streamingMessage}

@@ -394,8 +394,7 @@
     "persona": {
       "applied": "Persona digunakan",
       "label": "Persona",
-      "loadFailed": "Gagal memuatkan butiran persona",
-      "removeFailed": "Gagal mengeluarkan persona"
+      "loadFailed": "Gagal memuatkan butiran persona"
     },
     "model": {
       "updated": "Model dikemas kini",
@@ -409,7 +408,8 @@
       "connectDescription": "Belum ada model disambungkan. Pilih sumber di bawah — masa jalan tempatan, pelayan anda sendiri, atau API awan — dan anda akan mula bersembang dalam masa kurang seminit."
     },
     "footer": {
-      "disclaimer": "LLM boleh membuat kesilapan - sahkan maklumat penting",
+      "disclaimer": "AI boleh membuat kesilapan. Sahkan maklumat penting.",
+      "disclaimerNamed": "{{name}} boleh membuat kesilapan. Sahkan maklumat penting.",
       "images": "{{count}} imej",
       "images_plural": "{{count}} imej",
       "structuredOutput": "Output berstruktur"

@@ -394,8 +394,7 @@
     "persona": {
       "applied": "Persona diterapkan",
       "label": "Persona",
-      "loadFailed": "Gagal memuat detail persona",
-      "removeFailed": "Gagal menghapus persona"
+      "loadFailed": "Gagal memuat detail persona"
     },
     "model": {
       "updated": "Model diperbarui",
@@ -409,7 +408,8 @@
       "connectDescription": "Belum ada model yang terhubung. Pilih sumber di bawah ini — runtime lokal, server Anda sendiri, atau API cloud — dan Anda akan mulai mengobrol dalam waktu kurang dari satu menit."
     },
     "footer": {
-      "disclaimer": "LLM dapat membuat kesalahan - verifikasi informasi penting",
+      "disclaimer": "AI dapat membuat kesalahan. Verifikasi informasi penting.",
+      "disclaimerNamed": "{{name}} dapat membuat kesalahan. Verifikasi informasi penting.",
       "images": "{{count}} gambar",
       "images_plural": "{{count}} gambar",
       "structuredOutput": "Output terstruktur"

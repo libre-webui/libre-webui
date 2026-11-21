@@ -56,7 +56,7 @@ function StreamingTextSegment({ content }: { content: string }) {
   return (
     <div
       dir='auto'
-      className='whitespace-pre-wrap wrap-break-word leading-relaxed'
+      className='whitespace-pre-wrap wrap-break-word leading-relaxed wide:max-w-[90ch]'
     >
       {content}
     </div>

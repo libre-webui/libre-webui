@@ -394,8 +394,7 @@
     "persona": {
       "applied": "Persona použita",
       "label": "Persona",
-      "loadFailed": "Načtení podrobností persony se nezdařilo",
-      "removeFailed": "Nepodařilo se odebrat personu"
+      "loadFailed": "Načtení podrobností persony se nezdařilo"
     },
     "model": {
       "updated": "Model aktualizován",
@@ -409,7 +408,8 @@
       "connectDescription": "Zatím nejsou připojeny žádné modely. Vyberte zdroj níže — lokální runtime, vlastní server nebo cloudové API — a za méně než minutu budete moci chatovat."
     },
     "footer": {
-      "disclaimer": "LLM může dělat chyby - ověřujte důležité informace",
+      "disclaimer": "AI může dělat chyby. Ověřujte důležité informace.",
+      "disclaimerNamed": "{{name}} může dělat chyby. Ověřujte důležité informace.",
       "images": "{{count}} obrázek",
       "images_plural": "{{count}} obrázků",
       "structuredOutput": "Strukturovaný výstup"

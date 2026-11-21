@@ -394,8 +394,7 @@
     "persona": {
       "applied": "Đã áp dụng persona",
       "label": "Persona",
-      "loadFailed": "Không tải được chi tiết persona",
-      "removeFailed": "Không thể xóa persona"
+      "loadFailed": "Không tải được chi tiết persona"
     },
     "model": {
       "updated": "Đã cập nhật mô hình",
@@ -409,7 +408,8 @@
       "connectDescription": "Chưa có mô hình nào được kết nối. Hãy chọn một nguồn bên dưới — một môi trường chạy cục bộ, máy chủ riêng của bạn, hoặc một API đám mây — và bạn sẽ trò chuyện được trong chưa đầy một phút."
     },
     "footer": {
-      "disclaimer": "LLM có thể mắc lỗi - hãy xác minh thông tin quan trọng",
+      "disclaimer": "AI có thể mắc lỗi. Hãy xác minh thông tin quan trọng.",
+      "disclaimerNamed": "{{name}} có thể mắc lỗi. Hãy xác minh thông tin quan trọng.",
       "images": "{{count}} hình ảnh",
       "images_plural": "{{count}} hình ảnh",
       "structuredOutput": "Đầu ra có cấu trúc"

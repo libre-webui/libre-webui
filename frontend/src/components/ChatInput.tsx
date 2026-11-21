@@ -32,6 +32,7 @@ import {
   AudioLines,
   BookOpen,
   Check,
+  Columns2,
 } from 'lucide-react';
 import { Button } from '@/components/ui';
 import { unlockTTSAudioPlayback } from '@/utils/ttsBatching';
@@ -44,9 +45,11 @@ import { ThinkingSelector } from './ThinkingSelector';
 import { ContextMeter } from './ContextMeter';
 import { useAppStore } from '@/store/appStore';
 import { useChatStore } from '@/store/chatStore';
+import { assistantDisplayName } from '@/utils/modelPresentation';
 import PromptQueueList from '@/components/composer/PromptQueueList';
 import ComposerCompareMenu from '@/components/composer/ComposerCompareMenu';
 import {
+  compareModelOptions,
   compareTargetsFromKeys,
   type CompareTarget,
 } from '@/components/composer/compareTargets';
@@ -144,7 +147,11 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   const [webSearchAvailable, setWebSearchAvailable] = useState(false);
   const [webSearchActive, setWebSearchActive] = useState(false);
   const [compareKeys, setCompareKeys] = useState<string[]>([]);
+  // The compare picker lives in the + menu and joins the toolbar while it is
+  // open or has models picked.
+  const [compareMenuOpen, setCompareMenuOpen] = useState(false);
   const pendingComparisons = useChatStore(state => state.pendingComparisons);
+  const modelMetadata = useChatStore(state => state.modelMetadata);
   // Native tool calls: the picker manages catalog availability itself.
   // Private sessions never offer tools.
   const [composerTools, setComposerTools] = useState<ComposerToolsValue>(
@@ -215,6 +222,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   if (compareSessionId !== currentSessionId) {
     setCompareSessionId(currentSessionId);
     setCompareKeys([]);
+    setCompareMenuOpen(false);
   }
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const suggestionsRef = useRef<ComposerSuggestionsHandle>(null);
@@ -854,6 +862,22 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   };
 
   const hasAdvancedFeatures = images.length > 0 || format !== null;
+  const assistantName =
+    currentPersona?.name ||
+    assistantDisplayName(
+      selectorModels.find(
+        model => chatModelOptionKey(model) === sessionModelKey
+      ),
+      modelMetadata
+    );
+  const compareCurrentKey = currentSession
+    ? chatModelSelectionKey(chatModelSelectionFromSession(currentSession))
+    : '';
+  const compareAvailable =
+    !isPrivateSession &&
+    !isDecisionModel &&
+    Boolean(currentSession) &&
+    compareModelOptions(models, compareCurrentKey).length > 0;
   const webSearchLabel = webSearchActive
     ? t('chat.input.webSearchOn')
     : t('chat.input.webSearchOff');
@@ -1013,7 +1037,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                   </Button>
 
                   {attachMenuOpen && (
-                    <div className='absolute bottom-full inset-s-0 z-30 mb-2 w-64 rounded-2xl border border-black/8 bg-surface/95 p-1.5 shadow-[0_16px_48px_rgba(15,23,42,0.16)] backdrop-blur-xl animate-scale-in dark:border-white/9 dark:bg-dark-100/95'>
+                    <div className='absolute bottom-full inset-s-0 z-30 mb-2 w-72 rounded-2xl border border-black/8 bg-surface/95 p-1.5 shadow-[0_16px_48px_rgba(15,23,42,0.16)] backdrop-blur-xl animate-scale-in dark:border-white/9 dark:bg-dark-100/95'>
                       {knowledgeMenuOpen ? (
                         <div className='p-1'>
                           <p className='mb-1 px-1.5 text-[11px] font-medium text-ink-muted'>
@@ -1167,8 +1191,9 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                             {t('chat.input.menu.structuredOutput')}
                           </button>
 
-                          {/* Controls folded out of the narrow icon row */}
-                          {compact && webSearchOffered && (
+                          {/* Less-used controls live here; an active one
+                              also shows in the toolbar. */}
+                          {webSearchOffered && (
                             <button
                               type='button'
                               onClick={() => {
@@ -1190,6 +1215,27 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                               </span>
                               {webSearchActive && (
                                 <Check className='h-3.5 w-3.5 shrink-0' />
+                              )}
+                            </button>
+                          )}
+                          {compareAvailable && (
+                            <button
+                              type='button'
+                              onClick={() => {
+                                setCompareMenuOpen(true);
+                                closeAttachMenu();
+                              }}
+                              data-testid='composer-menu-compare'
+                              className='flex w-full items-center justify-between gap-2.5 rounded-xl px-2.5 py-2 text-start text-[13px] text-gray-700 hover:bg-gray-100 dark:text-dark-800 dark:hover:bg-dark-200'
+                            >
+                              <span className='flex items-center gap-2.5'>
+                                <Columns2 className='h-4 w-4 text-gray-500 dark:text-dark-600' />
+                                {t('chat.compare.title')}
+                              </span>
+                              {compareKeys.length > 0 && (
+                                <span className='rounded-full bg-primary-50 px-1.5 text-[10px] font-medium tabular-nums text-primary-600 dark:bg-primary-900/20 dark:text-primary-400'>
+                                  +{compareKeys.length}
+                                </span>
                               )}
                             </button>
                           )}
@@ -1233,8 +1279,9 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                     />
                   )}
 
-                  {/* Web search toggle */}
-                  {webSearchOffered && !compact && (
+                  {/* Web search, shown here only while it is on so one
+                    click turns it off; it is switched on from the + menu. */}
+                  {webSearchOffered && webSearchActive && (
                     <Button
                       type='button'
                       variant='ghost'
@@ -1263,18 +1310,16 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                     />
                   )}
 
-                  {/* Multi-model comparison picker */}
-                  {!isPrivateSession &&
-                    !isDecisionModel &&
-                    currentSession &&
-                    !compact && (
+                  {/* Multi-model comparison, opened from the + menu */}
+                  {compareAvailable &&
+                    (compareMenuOpen || compareKeys.length > 0) && (
                       <ComposerCompareMenu
                         models={models}
-                        currentModelKey={chatModelSelectionKey(
-                          chatModelSelectionFromSession(currentSession)
-                        )}
+                        currentModelKey={compareCurrentKey}
                         selectedKeys={compareKeys}
                         onChange={setCompareKeys}
+                        open={compareMenuOpen}
+                        onOpenChange={setCompareMenuOpen}
                         disabled={disabled}
                       />
                     )}
@@ -1461,7 +1506,11 @@ export const ChatInput: React.FC<ChatInputProps> = ({
           <div className='mt-1.5 flex min-h-4 items-center justify-center gap-2 text-[10px] text-ink-subtle'>
             <DocumentIndicator sessionId={currentSession?.id} />
             <div className='text-center leading-relaxed'>
-              <span>{t('chat.footer.disclaimer')}</span>
+              <span>
+                {assistantName
+                  ? t('chat.footer.disclaimerNamed', { name: assistantName })
+                  : t('chat.footer.disclaimer')}
+              </span>
               {hasAdvancedFeatures && (
                 <span className='ms-2 text-primary-600 dark:text-primary-400'>
                   •{' '}

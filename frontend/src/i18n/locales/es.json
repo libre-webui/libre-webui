@@ -394,8 +394,7 @@
     "persona": {
       "applied": "Persona aplicada",
       "label": "Persona",
-      "loadFailed": "No se pudieron cargar los detalles de la persona",
-      "removeFailed": "No se pudo eliminar la persona"
+      "loadFailed": "No se pudieron cargar los detalles de la persona"
     },
     "model": {
       "updated": "Modelo actualizado",
@@ -409,7 +408,8 @@
       "connectDescription": "Aún no hay modelos conectados. Elige una fuente abajo — un entorno de ejecución local, tu propio servidor o una API en la nube — y estarás chateando en menos de un minuto."
     },
     "footer": {
-      "disclaimer": "Los LLM pueden cometer errores - verifica la información importante",
+      "disclaimer": "La IA puede cometer errores. Verifica la información importante.",
+      "disclaimerNamed": "{{name}} puede cometer errores. Verifica la información importante.",
       "images": "{{count}} imagen",
       "images_plural": "{{count}} imágenes",
       "structuredOutput": "Salida estructurada"

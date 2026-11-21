@@ -37,9 +37,9 @@ const session = {
     {
       id: `wide-assistant-${turn}`,
       role: 'assistant' as const,
-      content: 'A long answer that would normally wrap at the reading width. '
+      content: `${'A long answer that would normally wrap at the reading width. '
         .repeat(20)
-        .trim(),
+        .trim()}\n\n\`\`\`js\nconst turn = ${turn};\n\`\`\``,
       timestamp: baseTimestamp + turn * 2_000 + 1_000,
       model: 'llama3.2:3b',
     },
@@ -108,19 +108,25 @@ test('wide mode lets the chat column and composer use the whole window', async (
     .poll(() => composerWidth(page))
     .toBeGreaterThan(narrowComposer + 250);
 
-  // The full-width column keeps its content clear of the floating chat
-  // controls button at the top end of the chat.
-  const contentEnd = await page
-    .getByTestId('chat-messages-column')
-    .evaluate(element => {
-      const box = element.getBoundingClientRect();
-      return box.right - parseFloat(getComputedStyle(element).paddingRight);
-    });
+  // The chat controls sit in the header row above the messages, never on
+  // top of the full-width column.
+  const viewportBox = await page
+    .getByTestId('chat-scroll-viewport')
+    .boundingBox();
   const controls = await page
     .getByRole('button', { name: 'Chat controls' })
     .boundingBox();
   expect(controls).not.toBeNull();
-  expect(controls!.x).toBeGreaterThanOrEqual(contentEnd);
+  expect(controls!.y + controls!.height).toBeLessThanOrEqual(viewportBox!.y);
+
+  // Running text keeps a readable measure while code uses the full width.
+  const paragraph = page
+    .getByText('A long answer that would normally wrap', { exact: false })
+    .first();
+  const paragraphBox = await paragraph.boundingBox();
+  const codeBox = await page.getByTestId('code-block').first().boundingBox();
+  expect(paragraphBox!.width).toBeLessThan(900);
+  expect(codeBox!.width).toBeGreaterThan(1000);
 
   // The history rail leaves the middle of the chat for the start edge, still
   // clear of the messages.

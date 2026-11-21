@@ -394,8 +394,7 @@
     "persona": {
       "applied": "Persona aplicada",
       "label": "Persona",
-      "loadFailed": "Falha ao carregar os detalhes da persona",
-      "removeFailed": "Falha ao remover a persona"
+      "loadFailed": "Falha ao carregar os detalhes da persona"
     },
     "model": {
       "updated": "Modelo atualizado",
@@ -409,7 +408,8 @@
       "connectDescription": "Nenhum modelo está conectado ainda. Escolha uma fonte abaixo — um runtime local, seu próprio servidor ou uma API na nuvem — e você estará conversando em menos de um minuto."
     },
     "footer": {
-      "disclaimer": "IAs podem cometer erros - verifique informações importantes",
+      "disclaimer": "A IA pode cometer erros. Verifique informações importantes.",
+      "disclaimerNamed": "{{name}} pode cometer erros. Verifique informações importantes.",
       "images": "{{count}} imagem",
       "images_plural": "{{count}} imagens",
       "structuredOutput": "Saída estruturada"

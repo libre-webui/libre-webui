@@ -15,10 +15,24 @@
  * limitations under the License.
  */
 
-import { chatModelSelectionFromKey } from '@/utils/chatModelSelection';
+import {
+  chatModelOptionKey,
+  chatModelSelectionFromKey,
+  isAvailableOllamaModel,
+} from '@/utils/chatModelSelection';
 import type { OllamaModel } from '@/types';
 
 export const MAX_COMPARE_MODELS = 3;
+
+/** Models that can answer alongside the session's own model. */
+export const compareModelOptions = (
+  models: OllamaModel[],
+  currentModelKey: string
+): Array<{ model: OllamaModel; key: string }> =>
+  models
+    .filter(isAvailableOllamaModel)
+    .map(model => ({ model, key: chatModelOptionKey(model) }))
+    .filter(entry => entry.key !== currentModelKey);
 
 export interface CompareTarget {
   model: string;

@@ -17,6 +17,8 @@
 
 import type { TFunction } from 'i18next';
 import type { OllamaModel } from '@/types';
+import { modelNameParts } from './modelNames';
+import { modelVisibilityKey } from './modelVisibility';
 
 export function modelDisplayName(model: OllamaModel): string {
   if (model.isLegacySelection) return model.name;
@@ -67,4 +69,26 @@ export function libraryCategoryLabel(category: string, t: TFunction): string {
   return LIBRARY_CATEGORIES.has(category)
     ? t(`modelSelector.libraryCategories.${category}`)
     : category.charAt(0).toUpperCase() + category.slice(1);
+}
+
+/**
+ * The short name a chat answers as, for one-line text such as the composer
+ * footer: a persona's name, an administrator's label, or the readable model
+ * name the picker shows. Empty when nothing readable is known.
+ */
+export function assistantDisplayName(
+  model: OllamaModel | undefined,
+  labels: Record<string, { label?: string } | undefined> = {}
+): string {
+  if (!model) return '';
+  if (model.isPersona) return model.personaName || '';
+  const label = labels[modelVisibilityKey(model)]?.label;
+  if (label) return label;
+  if (model.isAgent) return model.agentName || model.name;
+  if (model.isLegacySelection) return model.name;
+  const parts = modelNameParts(
+    model.name,
+    model.isPlugin ? { prettify: true } : {}
+  );
+  return parts.tag ? `${parts.name} ${parts.tag}` : parts.name;
 }

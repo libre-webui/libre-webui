@@ -394,8 +394,7 @@
     "persona": {
       "applied": "ペルソナが適用されました",
       "label": "ペルソナ",
-      "loadFailed": "ペルソナの詳細を読み込めませんでした",
-      "removeFailed": "ペルソナの削除に失敗しました"
+      "loadFailed": "ペルソナの詳細を読み込めませんでした"
     },
     "model": {
       "updated": "モデルが更新されました",
@@ -409,7 +408,8 @@
       "connectDescription": "まだモデルが接続されていません。下記からソースを選んでください — ローカルランタイム、自分のサーバー、またはクラウドAPI — 1分もかからずにチャットを始められます。"
     },
     "footer": {
-      "disclaimer": "LLMは間違えることがあります - 重要な情報は確認してください",
+      "disclaimer": "AIは間違えることがあります。重要な情報は確認してください。",
+      "disclaimerNamed": "{{name}}は間違えることがあります。重要な情報は確認してください。",
       "images": "{{count}}枚の画像",
       "images_plural": "{{count}}枚の画像",
       "structuredOutput": "構造化出力"

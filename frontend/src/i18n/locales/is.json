@@ -394,8 +394,7 @@
     "persona": {
       "applied": "Persóna notuð",
       "label": "Persóna",
-      "loadFailed": "Mistókst að hlaða upplýsingar um persónu",
-      "removeFailed": "Ekki tókst að fjarlægja persónu"
+      "loadFailed": "Mistókst að hlaða upplýsingar um persónu"
     },
     "model": {
       "updated": "Líkan uppfært",
@@ -409,7 +408,8 @@
       "connectDescription": "Engin líkön eru tengd ennþá. Veldu uppsprettu hér fyrir neðan — staðbundið keyrsluumhverfi, þinn eigin netþjón eða ský-API — og þú getur byrjað að spjalla innan við mínútu."
     },
     "footer": {
-      "disclaimer": "Gervigreind getur gert mistök - staðfestu mikilvægar upplýsingar",
+      "disclaimer": "Gervigreind getur gert mistök. Staðfestu mikilvægar upplýsingar.",
+      "disclaimerNamed": "Svör frá {{name}} geta innihaldið villur. Staðfestu mikilvægar upplýsingar.",
       "images": "{{count}} mynd",
       "images_plural": "{{count}} myndir",
       "structuredOutput": "Skipulagt úttak"

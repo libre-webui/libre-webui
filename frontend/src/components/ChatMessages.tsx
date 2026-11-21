@@ -42,7 +42,7 @@ import {
 } from '@/components/ChatToolCalls';
 import { cn } from '@/utils';
 import { isCompactionSummaryContent } from '@/utils/contextUsage';
-import { ArrowDown, Sparkles } from 'lucide-react';
+import { ArrowDown, CornerDownRight, Sparkles } from 'lucide-react';
 import { createLogger } from '@/utils/logger';
 
 const logger = createLogger('components:chat-messages');
@@ -584,7 +584,7 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
         }
       >
         {/* In wide mode the column reaches both edges, so md:px-12 clears the
-            floating chat controls (end) and the history rail (start). */}
+            history rail at the start and keeps the column symmetric. */}
         <div
           ref={messagesContentRef}
           data-testid='chat-messages-column'
@@ -695,22 +695,29 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
             followUpSuggestions &&
             followUpSuggestions.length > 0 &&
             onFollowUpSelect && (
-              <div className='mt-1 pb-2'>
-                <p className='mb-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-subtle'>
-                  {t('chat.followUp')}
-                </p>
-                <div className='flex flex-col'>
-                  {followUpSuggestions.map(suggestion => (
-                    <button
-                      key={suggestion}
-                      onClick={() => onFollowUpSelect(suggestion)}
-                      dir='auto'
-                      className='border-t border-gray-100 py-2 text-start text-[0.9rem] leading-relaxed text-ink-muted transition-colors hover:text-ink dark:border-dark-200'
-                    >
-                      {suggestion}
-                    </button>
-                  ))}
-                </div>
+              // Chips under the reply text: the start padding is the
+              // assistant avatar (2rem) plus the gap beside it.
+              <div
+                role='group'
+                aria-label={t('chat.followUp')}
+                data-testid='follow-up-suggestions'
+                className='mt-1 flex flex-wrap gap-1.5 pb-2 ps-[2.625rem] sm:ps-11 wide:max-w-[calc(90ch+2.75rem)]'
+              >
+                {followUpSuggestions.map(suggestion => (
+                  <button
+                    key={suggestion}
+                    type='button'
+                    onClick={() => onFollowUpSelect(suggestion)}
+                    dir='auto'
+                    className='flex max-w-full items-start gap-1.5 rounded-2xl border border-line px-3 py-1.5 text-start text-[13px] leading-snug text-ink-muted transition-colors hover:border-line-strong hover:bg-interactive-hover hover:text-ink focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary-500/40'
+                  >
+                    <CornerDownRight
+                      aria-hidden='true'
+                      className='mt-0.5 h-3.5 w-3.5 shrink-0 text-ink-subtle rtl:-scale-x-100'
+                    />
+                    <span className='min-w-0'>{suggestion}</span>
+                  </button>
+                ))}
               </div>
             )}
           <div ref={messagesEndRef} className='h-4 sm:h-6' />

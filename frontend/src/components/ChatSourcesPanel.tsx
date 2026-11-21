@@ -453,12 +453,13 @@ export const ChatSourcesPanel: React.FC<ChatSourcesPanelProps> = ({
         {sections}
       </aside>
 
-      {/* Compact trigger below xl, sitting under the chat controls button */}
+      {/* Compact trigger below xl, in the chat header beside the controls
+          button (ChatPage keeps the room for it). */}
       <button
         type='button'
         onClick={() => setSheetOpen(true)}
         data-testid='chat-sources-trigger'
-        className='absolute inset-e-3 top-17 z-20 flex h-8 w-8 items-center justify-center rounded-full border border-black/[0.07] bg-surface/65 text-gray-500 backdrop-blur-md transition-colors duration-150 hover:bg-surface-raised hover:text-gray-950 dark:border-white/8 dark:bg-dark-200/65 dark:text-dark-600 dark:hover:bg-dark-200 dark:hover:text-dark-950 xl:hidden'
+        className='absolute inset-e-12 top-1.5 z-20 flex h-8 w-8 items-center justify-center rounded-full border border-black/[0.07] bg-surface/65 text-gray-500 backdrop-blur-md transition-colors duration-150 hover:bg-surface-raised hover:text-gray-950 dark:border-white/8 dark:bg-dark-200/65 dark:text-dark-600 dark:hover:bg-dark-200 dark:hover:text-dark-950 xl:hidden'
         title={t('chat.message.sources', 'Sources')}
         aria-label={t('chat.sources.triggerLabel', {
           count: webSources.length + documents.length,

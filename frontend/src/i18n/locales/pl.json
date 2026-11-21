@@ -394,8 +394,7 @@
     "persona": {
       "applied": "Persona zastosowana",
       "label": "Persona",
-      "loadFailed": "Nie udało się załadować szczegółów persony",
-      "removeFailed": "Nie udało się usunąć persony"
+      "loadFailed": "Nie udało się załadować szczegółów persony"
     },
     "model": {
       "updated": "Model zaktualizowany",
@@ -409,7 +408,8 @@
       "connectDescription": "Żaden model nie jest jeszcze podłączony. Wybierz źródło poniżej — lokalne środowisko uruchomieniowe, własny serwer lub API w chmurze — i zaczniesz rozmawiać w mniej niż minutę."
     },
     "footer": {
-      "disclaimer": "LLM może popełniać błędy - weryfikuj ważne informacje",
+      "disclaimer": "AI może popełniać błędy. Weryfikuj ważne informacje.",
+      "disclaimerNamed": "Odpowiedzi {{name}} mogą zawierać błędy. Weryfikuj ważne informacje.",
       "images": "{{count}} obraz",
       "images_plural": "{{count}} obrazów",
       "structuredOutput": "Strukturalne wyjście"

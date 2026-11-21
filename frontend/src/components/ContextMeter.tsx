@@ -31,9 +31,14 @@ interface ContextMeterProps {
   trainedBudget?: number;
 }
 
-/** Ring geometry, in the same units as the SVG viewBox. */
-const RADIUS = 7;
-const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
+/**
+ * Gauge geometry, in the same units as the SVG viewBox: an outline ring with
+ * a filled wedge inside it. The wedge is a circle whose stroke is as wide as
+ * its diameter, so dashing the stroke draws a pie slice.
+ */
+const RING_RADIUS = 7.25;
+const PIE_RADIUS = 2.5;
+const PIE_CIRCUMFERENCE = 2 * Math.PI * PIE_RADIUS;
 
 /**
  * How full the model's context is, as a ring beside the model name.
@@ -83,9 +88,13 @@ export const ContextMeter: React.FC<ContextMeterProps> = ({
     .filter(Boolean)
     .join(' ');
 
-  // The arc caps at full; the color and the percentage keep going, so an
+  // The wedge caps at full; the color and the percentage keep going, so an
   // over-budget conversation reads as one instead of as exactly full.
   const arcRatio = Math.min(ratio, 1);
+  const percentLabel = new Intl.NumberFormat(locale, {
+    style: 'percent',
+    maximumFractionDigits: 0,
+  }).format(ratio);
 
   return (
     <div
@@ -111,7 +120,7 @@ export const ContextMeter: React.FC<ContextMeterProps> = ({
             }
           : {})}
         className={cn(
-          'touch-target relative flex h-9 w-9 items-center justify-center rounded-full text-ink-muted outline-hidden',
+          'touch-target relative flex h-9 min-w-9 items-center justify-center gap-1 rounded-full px-1 text-ink-muted outline-hidden',
           'transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-primary-500/40',
           // Past four fifths the summarizer is close enough to warn about;
           // at the window the conversation is losing history.
@@ -119,33 +128,43 @@ export const ContextMeter: React.FC<ContextMeterProps> = ({
           ratio >= 1 && 'text-red-600 dark:text-red-400'
         )}
       >
-        <svg viewBox='0 0 18 18' className='h-4 w-4 -rotate-90'>
+        <svg
+          viewBox='0 0 18 18'
+          aria-hidden='true'
+          className='h-4 w-4 shrink-0 -rotate-90'
+        >
           <circle
             cx='9'
             cy='9'
-            r={RADIUS}
+            r={RING_RADIUS}
             fill='none'
             stroke='currentColor'
-            strokeWidth='2'
-            className='opacity-30'
-            // An unknown window is not an empty one: the track goes dashed
-            // instead of rendering the same ring as a fresh conversation.
+            strokeWidth='1.5'
+            className='opacity-60'
+            // An unknown window is not an empty one: the ring goes dashed
+            // instead of rendering the same gauge as a fresh conversation.
             {...(hasBudget ? {} : { strokeDasharray: '2 2' })}
           />
           {hasBudget && arcRatio > 0 && (
             <circle
               cx='9'
               cy='9'
-              r={RADIUS}
+              r={PIE_RADIUS}
               fill='none'
               stroke='currentColor'
-              strokeWidth='2'
-              strokeLinecap='round'
-              strokeDasharray={CIRCUMFERENCE}
-              strokeDashoffset={CIRCUMFERENCE * (1 - arcRatio)}
+              strokeWidth={PIE_RADIUS * 2}
+              strokeDasharray={PIE_CIRCUMFERENCE}
+              strokeDashoffset={PIE_CIRCUMFERENCE * (1 - arcRatio)}
             />
           )}
         </svg>
+        {/* The number keeps the gauge readable at 0%, where the wedge is
+            empty and the ring alone could pass for a loading spinner. */}
+        {hasBudget && (
+          <span aria-hidden='true' className='text-[11px] tabular-nums'>
+            {bidiIsolate(percentLabel)}
+          </span>
+        )}
         {/* Color alone must not carry the warning. */}
         {ratio >= 0.8 && (
           <AlertTriangle className='absolute inset-e-0 top-0 h-3 w-3' />

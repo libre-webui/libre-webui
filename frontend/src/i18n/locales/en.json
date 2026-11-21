@@ -394,8 +394,7 @@
     "persona": {
       "applied": "Persona applied",
       "label": "Persona",
-      "loadFailed": "Failed to load persona details",
-      "removeFailed": "Failed to remove persona"
+      "loadFailed": "Failed to load persona details"
     },
     "model": {
       "updated": "Model updated",
@@ -409,7 +408,8 @@
       "connectDescription": "No models are connected yet. Pick a source below — a local runtime, your own server, or a cloud API — and you'll be chatting in under a minute."
     },
     "footer": {
-      "disclaimer": "LLM can make mistakes - verify important information",
+      "disclaimer": "AI can make mistakes. Verify important information.",
+      "disclaimerNamed": "{{name}} can make mistakes. Verify important information.",
       "images": "{{count}} image",
       "images_plural": "{{count}} images",
       "structuredOutput": "Structured output"
