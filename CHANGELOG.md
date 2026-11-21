@@ -29,6 +29,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 🐛 Bug Fixes
 
+- **Follow-up suggestions with llama.cpp**: reasoning models such as Qwen
+  thought through the whole suggestion budget and returned nothing, so no
+  follow-ups appeared. Turning thinking off now reaches llama.cpp models, and
+  follow-ups on other providers leave room to reason and still answer.
+
 ### 📚 Documentation
 
 ## [0.45.2] - 2026-11-18

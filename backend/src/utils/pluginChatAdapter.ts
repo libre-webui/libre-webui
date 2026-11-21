@@ -252,14 +252,23 @@ export function getOpenAICompatibleSamplingParameters(
  * Reasoning is on by default there, so the toggle is sent only when the user
  * actually chose a thinking preference; an unset preference keeps the
  * provider's own default.
+ *
+ * llama.cpp's server hands `chat_template_kwargs` to the model's chat
+ * template, and hybrid reasoners such as Qwen read `enable_thinking` there.
+ * They think by default and ignore `reasoning_effort`, so without the switch
+ * "thinking off" never reaches them and a short side task (follow-ups, a
+ * summary) spends its whole budget reasoning and comes back empty.
  */
 export function getOpenAICompatibleThinkingParameters(
   plugin: Pick<Plugin, 'id'>,
   think: unknown
 ): Record<string, unknown> {
-  if (plugin.id !== 'deepseek') return {};
+  if (plugin.id !== 'deepseek' && plugin.id !== 'llama-cpp') return {};
   const preference = normalizeThinkingPreference(think);
   if (preference === undefined) return {};
+  if (plugin.id === 'llama-cpp') {
+    return { chat_template_kwargs: { enable_thinking: preference !== false } };
+  }
   return {
     thinking: { type: preference === false ? 'disabled' : 'enabled' },
   };

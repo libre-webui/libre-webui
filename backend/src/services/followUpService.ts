@@ -35,6 +35,13 @@ const FOLLOW_UP_GENERATION_OPTIONS: GenerationOptions = {
   num_predict: 200,
 };
 
+/**
+ * Not every provider on the plugin path can be told to skip reasoning, and a
+ * reasoning model that spends 200 tokens thinking returns no suggestions at
+ * all. Titles hit the same wall; this leaves room to think and still answer.
+ */
+const PLUGIN_FOLLOW_UP_MAX_TOKENS = 512;
+
 const MAX_SUGGESTIONS = 4;
 const MAX_SUGGESTION_LENGTH = 120;
 const CONTEXT_CHARS = 1500;
@@ -238,7 +245,11 @@ export class FollowUpService {
         ],
         // Suggestions are a side task; they should not spend the chat's
         // reasoning budget, whatever it is set to.
-        { ...target.mergedOptions, think: false },
+        {
+          ...target.mergedOptions,
+          num_predict: PLUGIN_FOLLOW_UP_MAX_TOKENS,
+          think: false,
+        },
         userId,
         target.activePlugin.id
       );

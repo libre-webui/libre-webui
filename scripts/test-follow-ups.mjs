@@ -50,8 +50,9 @@ function createHarness(session) {
         response.choices[0].message.content,
     },
     pluginService: {
-      executePluginRequest: async (model, _messages, _options, _user, id) => {
+      executePluginRequest: async (model, _messages, options, _user, id) => {
         calls.plugin.push({ model, pluginId: id });
+        calls.pluginOptions = options;
         return {
           choices: [{ message: { content: 'Add a river\nMake it night' } }],
         };
@@ -129,4 +130,8 @@ test('a plugin session keeps its own provider', async () => {
   assert.deepEqual(calls.plugin, [
     { model: 'anthropic.claude-opus-5-5', pluginId: 'bedrock' },
   ]);
+  // A reasoning model that cannot be told to skip thinking still has room
+  // to answer after it.
+  assert.equal(calls.pluginOptions.think, false);
+  assert.equal(calls.pluginOptions.num_predict, 512);
 });

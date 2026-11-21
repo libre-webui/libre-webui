@@ -963,6 +963,38 @@ test('model discovery rejects an unsupported derived URL before reading credenti
   }
 });
 
+test('llama.cpp hears thinking on and off through the chat template', () => {
+  const plugin = JSON.parse(
+    fs.readFileSync(path.join(repoRoot, 'plugins', 'llama-cpp.json'), 'utf8')
+  );
+  const payloadFor = options =>
+    chatAdapter.buildPluginChatPayload(
+      plugin,
+      'qwen3.8-27b',
+      [{ id: 'message-1', role: 'user', content: 'Hello', timestamp: 1 }],
+      options,
+      {},
+      false,
+      'chat_completions'
+    ).payload;
+
+  // Qwen reasons by default and ignores reasoning_effort, so "off" has to
+  // reach its template or a 200-token side task comes back empty.
+  const off = payloadFor({ think: false, num_predict: 200 });
+  assert.deepEqual(off.chat_template_kwargs, { enable_thinking: false });
+  assert.equal(off.reasoning_effort, undefined);
+  assert.equal(off.max_tokens, 200);
+
+  assert.deepEqual(payloadFor({ think: 'high' }).chat_template_kwargs, {
+    enable_thinking: true,
+  });
+  assert.equal(
+    payloadFor({}).chat_template_kwargs,
+    undefined,
+    'an unset preference leaves the template default alone'
+  );
+});
+
 test('Chat adapter sends and normalizes Responses API payloads', () => {
   const plugin = {
     id: 'openai',
