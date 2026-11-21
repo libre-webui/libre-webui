@@ -186,7 +186,14 @@ function WallpaperMedia({ settings, testId }: WallpaperLayerProps) {
   );
 }
 
-export function BackgroundRenderer({ active = true }: { active?: boolean }) {
+export function BackgroundRenderer({
+  active = true,
+  source,
+}: {
+  active?: boolean;
+  /** An image shown in place of the account's, styled by the same settings. */
+  source?: string;
+}) {
   const preferences = useAppStore(
     state => state.preferences.backgroundSettings
   );
@@ -194,7 +201,9 @@ export function BackgroundRenderer({ active = true }: { active?: boolean }) {
   const userId = useAuthStore(state => state.user?.id);
   const requiresAuth = useAuthStore(state => state.systemInfo?.requiresAuth);
   const settings = normalizeBackgroundSettings(preferences);
-  settings.imageUrl = backgroundImage ?? settings.imageUrl;
+  settings.imageUrl = source || backgroundImage || settings.imageUrl;
+  // The shell already decided whether a stand-in image shows at all.
+  if (source) settings.enabled = true;
   if (
     !active ||
     (requiresAuth !== false && !userId) ||

@@ -618,9 +618,16 @@ export const ChatPage: React.FC = () => {
     location.pathname,
   ]);
 
-  // Note: Persona backgrounds are handled locally in this component's JSX
-  // and should NOT set the global backgroundImage state, which is for user-configured
-  // backgrounds in settings. Persona backgrounds only apply to the current chat view.
+  // A persona's background stands in for the account wallpaper while its chat
+  // is open, drawn by the shell with the account's wallpaper settings. It
+  // never touches the saved wallpaper (backgroundImage).
+  const setChatWallpaper = useAppStore(state => state.setChatWallpaper);
+  const personaWallpaper =
+    (currentSession && currentPersona?.background) || null;
+  useEffect(() => {
+    setChatWallpaper(personaWallpaper);
+    return () => setChatWallpaper(null);
+  }, [personaWallpaper, setChatWallpaper]);
 
   // Check for pending message from welcome screen and send it
   useEffect(() => {
@@ -1162,24 +1169,7 @@ export const ChatPage: React.FC = () => {
   }
 
   return (
-    <div
-      className='relative flex h-full flex-col'
-      style={
-        currentPersona?.background
-          ? {
-              backgroundImage: `url(${currentPersona.background})`,
-              backgroundSize: 'cover',
-              backgroundPosition: 'center',
-              backgroundRepeat: 'no-repeat',
-            }
-          : undefined
-      }
-    >
-      {/* Background overlay for better readability when persona background is active */}
-      {currentPersona?.background && (
-        <div className='absolute inset-0 bg-gray-50/88 backdrop-blur-sm dark:bg-dark-100/88' />
-      )}
-
+    <div className='relative flex h-full flex-col'>
       <div className='relative z-10 flex h-full flex-col'>
         {/* One slim header row: private mode or the fork origin at the
             start, chat controls at the end. The persona is shown and changed

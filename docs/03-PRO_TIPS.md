@@ -201,8 +201,10 @@ removing it. You can also disable it temporarily, replace it, or remove it.
 The preview works across Light, Dark (grey), Pure Black, and Celestial.
 Wallpaper stays visible when navigation expands or collapses. On phones, the
 sidebar overlays part of the content while the uncovered wallpaper stays visible.
-Persona backgrounds stay specific to their chats and do not replace the account
-wallpaper. Image processing runs in your browser. If an external image cannot be
+A persona's own background shows in its chats in place of your image, with the
+same style, blur, and intensity, and never replaces your saved wallpaper.
+Turning the wallpaper off hides persona backgrounds too; if you have never set
+a wallpaper, they still show. Image processing runs in your browser. If an external image cannot be
 processed because of its origin policy, a local visual fallback is used.
 
 ## Get Mentions and Automation Results by Email

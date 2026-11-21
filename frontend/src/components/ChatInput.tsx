@@ -181,7 +181,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   const [collections, setCollections] = useState<KnowledgeCollection[]>([]);
   const [attachingWebpage, setAttachingWebpage] = useState(false);
   const [uploadingDocument, setUploadingDocument] = useState(false);
-  const [currentPersona, setCurrentPersona] = useState<Persona | null>(null);
+  const [loadedPersona, setLoadedPersona] = useState<Persona | null>(null);
   const [hasImageGenPlugins, setHasImageGenPlugins] = useState(false);
   const attachMenuRef = useRef<HTMLDivElement>(null);
   const documentInputRef = useRef<HTMLInputElement>(null);
@@ -210,6 +210,11 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   );
   const showImageGeneration = imageGenerationEnabled && hasImageGenPlugins;
   const { currentSession, models } = useChatStore();
+  // Only the open chat's own persona counts; anything else is a leftover.
+  const currentPersona =
+    loadedPersona && loadedPersona.id === currentSession?.personaId
+      ? loadedPersona
+      : null;
   const pinnedModelOptions = useAppStore(state =>
     currentSession?.model
       ? state.preferences.modelGenerationOptions?.[currentSession.model]
@@ -742,48 +747,44 @@ export const ChatInput: React.FC<ChatInputProps> = ({
     }
   }, [message]);
 
-  // Load current persona when session changes
+  // Load current persona when session changes. A chat opened while another
+  // one's persona is still loading must not inherit that persona, so a
+  // response for a session the user already left is dropped.
   useEffect(() => {
+    const sessionId = currentSession?.id;
+    const personaId = currentSession?.personaId;
+    if (!sessionId || !personaId) return undefined;
+    let cancelled = false;
+    // Clear the personaId from the session to prevent repeated requests
+    const clearReference = () => {
+      const { currentSession: latest, setCurrentSession } =
+        useChatStore.getState();
+      if (latest?.id !== sessionId) return;
+      setCurrentSession({ ...latest, personaId: undefined });
+    };
+
     const loadCurrentPersona = async () => {
-      if (currentSession?.personaId) {
-        try {
-          const response = await personaApi.getPersona(
-            currentSession.personaId
-          );
-          if (response.success && response.data) {
-            setCurrentPersona(response.data);
-          } else {
-            logger.warn(
-              `Persona ${currentSession.personaId} not found, clearing reference`
-            );
-            setCurrentPersona(null);
-            // Clear the personaId from the session to prevent repeated requests
-            const { setCurrentSession } = useChatStore.getState();
-            setCurrentSession({
-              ...currentSession,
-              personaId: undefined,
-            });
-          }
-        } catch (error) {
-          logger.error('Failed to load current persona:', error);
-          setCurrentPersona(null);
-          // Clear the personaId from the session to prevent repeated requests
-          if (currentSession) {
-            const { setCurrentSession } = useChatStore.getState();
-            setCurrentSession({
-              ...currentSession,
-              personaId: undefined,
-            });
-          }
+      try {
+        const response = await personaApi.getPersona(personaId);
+        if (cancelled) return;
+        if (response.success && response.data) {
+          setLoadedPersona(response.data);
+        } else {
+          logger.warn(`Persona ${personaId} not found, clearing reference`);
+          clearReference();
         }
-      } else {
-        setCurrentPersona(null);
+      } catch (error) {
+        if (cancelled) return;
+        logger.error('Failed to load current persona:', error);
+        clearReference();
       }
     };
 
-    loadCurrentPersona();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentSession?.personaId]);
+    void loadCurrentPersona();
+    return () => {
+      cancelled = true;
+    };
+  }, [currentSession?.id, currentSession?.personaId]);
 
   const handleModelOrPersonaChange = async (
     event: React.ChangeEvent<HTMLSelectElement>

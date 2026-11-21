@@ -182,6 +182,29 @@ async function toggleWallpaper(page: Page) {
   await expect(page.getByTestId('background-save-status')).toHaveText('Saved');
 }
 
+/** Average colour of the painted wallpaper, to tell two sources apart. */
+async function wallpaperTint(page: Page) {
+  return page
+    .getByTestId('app-background')
+    .getByTestId('wallpaper-canvas')
+    .evaluate(element => {
+      const image = element as HTMLCanvasElement;
+      const data = image
+        .getContext('2d')!
+        .getImageData(0, 0, image.width, image.height).data;
+      const sum = [0, 0, 0];
+      let painted = 0;
+      for (let index = 0; index < data.length; index += 4) {
+        if (data[index + 3] === 0) continue;
+        sum[0] += data[index];
+        sum[1] += data[index + 1];
+        sum[2] += data[index + 2];
+        painted++;
+      }
+      return sum.map(total => Math.round(total / Math.max(1, painted)));
+    });
+}
+
 async function savedWallpaperSource(page: Page) {
   return page.evaluate(async () => {
     const token = localStorage.getItem('auth-token');
@@ -457,7 +480,7 @@ test('a failed wallpaper save restores confirmed settings and offers retry', asy
   expect(await savedWallpaperSource(page)).toBe(wallpaper);
 });
 
-test('choosing a chat persona cannot replace the account wallpaper', async ({
+test('a persona background follows the wallpaper settings without replacing them', async ({
   page,
 }) => {
   const mock = await seedWallpaper(page, 'dark', 12);
@@ -488,6 +511,9 @@ test('choosing a chat persona cannot replace the account wallpaper', async ({
   );
   await page.goto('/c/wallpaper-chat');
   await assertWallpaperContained(page);
+  const accountTint = await wallpaperTint(page);
+  // The account art is cool; the persona's is a warm red.
+  expect(accountTint[0] - accountTint[2]).toBeLessThan(40);
   const preferenceWrites = mock.preferenceUpdateRequests.length;
   await page.getByRole('button', { name: /llama3\.2:3b/ }).click();
   await page
@@ -501,10 +527,42 @@ test('choosing a chat persona cannot replace the account wallpaper', async ({
       .locator('[data-composer-box]')
       .getByRole('button', { name: /Paper guide/ })
   ).toBeVisible();
+
+  // The persona's art takes the wallpaper's place in its chat, drawn by the
+  // same layer with the account's style and intensity, not as a fixed veil.
+  await assertWallpaperContained(page);
+  await expect(page.getByTestId('app-background')).toHaveCSS(
+    '--wallpaper-intensity',
+    '0.8'
+  );
+  await expect
+    .poll(async () => {
+      const [red, , blue] = await wallpaperTint(page);
+      return red - blue;
+    })
+    .toBeGreaterThan(40);
+  expect(await wallpaperTint(page)).not.toEqual(accountTint);
+  await expect(
+    page.locator('[data-wallpaper-content] [style*="background-image"]')
+  ).toHaveCount(0);
   expect(mock.preferenceUpdateRequests).toHaveLength(preferenceWrites);
   expect(await savedWallpaperSource(page)).toBe(wallpaper);
+
+  // Turning the wallpaper off turns persona art off with it.
+  await openSettingsTab(page, 'appearance');
+  await toggleWallpaper(page);
+  await expect(page.getByTestId('background-enabled')).not.toBeChecked();
+  await page.keyboard.press('Escape');
+  await expect(page.getByTestId('settings-modal-panel')).toHaveCount(0);
+  await expect(page.getByTestId('app-background')).toHaveCount(0);
+  await openSettingsTab(page, 'appearance');
+  await toggleWallpaper(page);
+  await page.keyboard.press('Escape');
+
   await page.goto('/work/wallpaper-task');
   await assertWallpaperContained(page);
+  const [red, , blue] = await wallpaperTint(page);
+  expect(red - blue).toBeLessThan(40);
   expect(await savedWallpaperSource(page)).toBe(wallpaper);
 });
 

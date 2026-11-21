@@ -33,6 +33,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   thought through the whole suggestion budget and returned nothing, so no
   follow-ups appeared. Turning thinking off now reaches llama.cpp models, and
   follow-ups on other providers leave room to reason and still answer.
+- **Persona backgrounds and wallpaper settings**: a persona's background
+  covered the chat behind a fixed grey veil, ignoring your wallpaper style,
+  blur, intensity, and on/off switch. It now uses all of them.
+- **Composer naming the wrong persona**: opening a chat right after a persona
+  chat could show that persona's name in the footer and count its system
+  prompt in the context meter.
 
 ### 📚 Documentation
 

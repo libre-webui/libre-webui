@@ -203,12 +203,18 @@ const ShellLayout: React.FC<ShellLayoutProps> = ({
     state => state.preferences.backgroundSettings
   );
   const backgroundImage = useAppStore(state => state.backgroundImage);
+  const chatWallpaper = useAppStore(state => state.chatWallpaper);
   const background = normalizeBackgroundSettings(savedBackground);
+  const accountImage = backgroundImage ?? background.imageUrl;
+  // A persona's background takes the account image's place in its chats and
+  // follows the same switch, style, blur and intensity. Someone who never set
+  // a wallpaper of their own still sees persona backgrounds.
+  const wallpaperSource = chatWallpaper || accountImage;
   const hasWallpaper =
     isWallpaperRoute(pathname) &&
-    background.enabled &&
+    (background.enabled || (Boolean(chatWallpaper) && !accountImage)) &&
     background.opacity > 0 &&
-    Boolean(backgroundImage ?? background.imageUrl);
+    Boolean(wallpaperSource);
 
   return (
     <div
@@ -242,7 +248,10 @@ const ShellLayout: React.FC<ShellLayoutProps> = ({
           data-wallpaper={hasWallpaper ? 'true' : undefined}
           className='relative isolate min-h-0 flex-1 overflow-hidden bg-canvas focus:outline-hidden lg:rounded-3xl lg:border lg:border-black/6 dark:lg:border-white/[0.07] lg:shadow-[0_1px_2px_rgba(0,0,0,0.03),0_18px_60px_rgba(15,23,42,0.04)]'
         >
-          <BackgroundRenderer active={hasWallpaper} />
+          <BackgroundRenderer
+            active={hasWallpaper}
+            source={chatWallpaper ?? undefined}
+          />
           <div
             className='relative z-10 h-full min-h-0'
             data-wallpaper-content=''

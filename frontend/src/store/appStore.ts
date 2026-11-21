@@ -89,6 +89,10 @@ interface AppState {
   ) => Promise<void>;
   uploadBackgroundImage: (file: File) => Promise<void>;
   removeBackgroundImage: () => Promise<void>;
+  // A persona's own background, shown in place of the account image while
+  // its chat is open. Never saved: the account wallpaper stays untouched.
+  chatWallpaper: string | null;
+  setChatWallpaper: (imageUrl: string | null) => void;
 
   // Clear user-specific state (called on logout/login)
   clearUserState: () => void;
@@ -460,6 +464,10 @@ export const useAppStore = create<AppState>()(
 
       // Background settings
       backgroundImage: null,
+      chatWallpaper: null,
+      setChatWallpaper: imageUrl => {
+        if (get().chatWallpaper !== imageUrl) set({ chatWallpaper: imageUrl });
+      },
       updateBackgroundSettings: updates => {
         if ('imageUrl' in updates || updates.enabled === false) {
           invalidateUpload();
@@ -587,6 +595,7 @@ export const useAppStore = create<AppState>()(
           themeSyncPending: false,
           themeSource: 'default',
           backgroundImage: null,
+          chatWallpaper: null,
           preferences: {
             theme: defaultTheme,
             defaultModel: '',
