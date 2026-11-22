@@ -33,14 +33,7 @@ export interface GenerationStatistics {
 export interface Artifact {
   id: string;
   type:
-    | 'html'
-    | 'react'
-    | 'svg'
-    | 'mermaid'
-    | 'chart'
-    | 'code'
-    | 'text'
-    | 'json';
+    'html' | 'react' | 'svg' | 'mermaid' | 'chart' | 'code' | 'text' | 'json';
   title: string;
   content: string;
   language?: string; // For code artifacts
@@ -371,6 +364,7 @@ export interface ChatSessionSettings {
  * metadata into model generation options.
  */
 export interface ProviderRequestContext {
+  userId?: string;
   conversationId?: string;
   messageId?: string;
   operation?: string;
@@ -727,6 +721,7 @@ export interface PluginAuthConfig {
  * Omitted fields are never forwarded.
  */
 export interface PluginRequestContextConfig {
+  user_id_header?: string;
   conversation_id_header?: string;
   message_id_header?: string;
   operation_header?: string;

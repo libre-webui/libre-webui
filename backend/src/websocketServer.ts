@@ -647,6 +647,7 @@ export function registerWebSocketServer(
                 generationSignal
               );
           const providerRequestContext = {
+            userId,
             conversationId: sessionId,
             messageId:
               userMessage?.id ??

@@ -603,6 +603,7 @@ router.post(
       }
 
       const providerRequestContext = {
+        userId,
         conversationId: sessionId,
         messageId: userMessage.id,
         operation: 'chat',
@@ -1394,6 +1395,7 @@ router.post(
       }
 
       const providerRequestContext = {
+        userId,
         conversationId: sessionId,
         messageId: userMessage.id,
         operation: 'chat',

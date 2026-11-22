@@ -31,6 +31,7 @@ const MAX_API_PATH_DECODE_PASSES = 8;
 const HTTP_HEADER_NAME_PATTERN = /^[!#$%&'*+\-.^_`|~0-9A-Za-z]+$/;
 
 const REQUEST_CONTEXT_HEADER_FIELDS = new Set([
+  'user_id_header',
   'conversation_id_header',
   'message_id_header',
   'operation_header',

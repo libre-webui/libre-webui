@@ -16,6 +16,7 @@ const { isValidPluginRequestContextConfig } = await import(
 );
 
 const requestContextConfig = {
+  user_id_header: 'X-Libre-User-Id',
   conversation_id_header: 'X-Libre-Conversation-Id',
   message_id_header: 'X-Libre-Message-Id',
   operation_header: 'X-Libre-Operation',
@@ -40,12 +41,14 @@ test('configured request-context headers are generated', () => {
     providerRequestContextHeaders(
       { request_context: requestContextConfig },
       {
+        userId: 'user-1',
         conversationId: 'conversation-1',
         messageId: 'message-1',
         operation: 'chat',
       }
     ),
     {
+      'X-Libre-User-Id': 'user-1',
       'X-Libre-Conversation-Id': 'conversation-1',
       'X-Libre-Message-Id': 'message-1',
       'X-Libre-Operation': 'chat',
@@ -87,6 +90,7 @@ test('plugin chat payload includes configured request-context headers', () => {
     'chat_completions',
     undefined,
     {
+      userId: 'user-1',
       conversationId: 'conversation-1',
       messageId: 'message-1',
       operation: 'chat',
@@ -94,6 +98,7 @@ test('plugin chat payload includes configured request-context headers', () => {
   );
 
   assert.deepEqual(result.headers, {
+    'X-Libre-User-Id': 'user-1',
     'X-Libre-Conversation-Id': 'conversation-1',
     'X-Libre-Message-Id': 'message-1',
     'X-Libre-Operation': 'chat',
@@ -149,8 +154,8 @@ test('duplicate request-context headers are rejected case-insensitively', () => 
   assert.equal(
     isValidPluginRequestContextConfig(
       {
-        conversation_id_header: 'X-Libre-Context',
-        message_id_header: 'x-libre-context',
+        user_id_header: 'X-Libre-Context',
+        conversation_id_header: 'x-libre-context',
       },
       'Authorization'
     ),
@@ -162,7 +167,7 @@ test('authentication-header collisions are rejected case-insensitively', () => {
   assert.equal(
     isValidPluginRequestContextConfig(
       {
-        conversation_id_header: 'x-api-key',
+        user_id_header: 'x-api-key',
       },
       'X-API-Key'
     ),
@@ -182,7 +187,7 @@ test('forbidden transport and credential headers are rejected', () => {
     assert.equal(
       isValidPluginRequestContextConfig(
         {
-          conversation_id_header: header,
+          user_id_header: header,
         },
         'X-Provider-Key'
       ),

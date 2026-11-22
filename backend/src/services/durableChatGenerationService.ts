@@ -324,6 +324,7 @@ const streamGeneratedAssistant = async (
   }
 
   const providerRequestContext = {
+    userId: input.actorUserId,
     conversationId: input.sessionId,
     messageId: input.userMessageId,
     operation: 'chat',
