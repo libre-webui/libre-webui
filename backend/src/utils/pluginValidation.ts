@@ -32,6 +32,7 @@ const HTTP_HEADER_NAME_PATTERN = /^[!#$%&'*+\-.^_`|~0-9A-Za-z]+$/;
 
 const REQUEST_CONTEXT_HEADER_FIELDS = new Set([
   'user_id_header',
+  'identity_subject_header',
   'conversation_id_header',
   'message_id_header',
   'operation_header',

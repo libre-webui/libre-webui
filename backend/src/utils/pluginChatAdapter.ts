@@ -783,6 +783,7 @@ export function providerRequestContextHeaders(
 
   const mappings: Array<[string | undefined, string | undefined]> = [
     [config.user_id_header, requestContext.userId],
+    [config.identity_subject_header, requestContext.identitySubject],
     [config.conversation_id_header, requestContext.conversationId],
     [config.message_id_header, requestContext.messageId],
     [config.operation_header, requestContext.operation],

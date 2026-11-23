@@ -75,7 +75,9 @@ import {
   applyPluginDefinitionPolicy,
   buildPluginChatPayload,
   convertProviderResponse,
+  providerRequestContextHeaders,
 } from '../utils/pluginChatAdapter.js';
+import { enrichProviderRequestContext } from './providerIdentityContextService.js';
 import {
   inferReasoningFromModelId,
   isCallableListedModel,
@@ -1916,10 +1918,18 @@ export class PluginService {
         reason: this.describeMissingCredential(plugin),
       };
     }
+    const discoveryRequestContext = await enrichProviderRequestContext(
+      plugin,
+      userId ? { userId } : undefined
+    );
     const headers = buildPluginModelDiscoveryHeaders(
       plugin,
       apiKey,
       modelsEndpoint
+    );
+    Object.assign(
+      headers,
+      providerRequestContextHeaders(plugin, discoveryRequestContext)
     );
 
     try {
@@ -2617,6 +2627,10 @@ export class PluginService {
       apiKey,
       processedEndpoint
     );
+    const resolvedRequestContext = await enrichProviderRequestContext(
+      activePlugin,
+      requestContext
+    );
     const { payload, headers: payloadHeaders } = buildPluginChatPayload(
       activePlugin,
       model,
@@ -2626,7 +2640,7 @@ export class PluginService {
       false,
       apiMode,
       providerStateScope,
-      requestContext
+      resolvedRequestContext
     );
     Object.assign(headers, payloadHeaders);
 
@@ -2796,6 +2810,10 @@ export class PluginService {
       apiKey,
       processedEndpoint
     );
+    const resolvedRequestContext = await enrichProviderRequestContext(
+      activePlugin,
+      requestContext
+    );
     const pluginRequest = buildPluginChatPayload(
       activePlugin,
       model,
@@ -2805,7 +2823,7 @@ export class PluginService {
       true,
       apiMode,
       providerStateScope,
-      requestContext
+      resolvedRequestContext
     );
     const payload = pluginRequest.payload;
     Object.assign(headers, pluginRequest.headers);

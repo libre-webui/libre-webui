@@ -1,0 +1,66 @@
+{
+  "id": "reliquary",
+  "name": "Reliquary",
+  "type": "completion",
+  "endpoint": "http://127.0.0.1:8090/v1/chat/completions",
+  "api_mode": "chat_completions",
+  "base_url": "http://127.0.0.1:8090/v1",
+  "auth": {
+    "header": "Authorization",
+    "prefix": "Bearer ",
+    "key_env": "RELIQUARY_LIBRE_GATEWAY_TOKEN"
+  },
+  "request_context": {
+    "identity_subject_header": "X-Libre-Auth-Subject",
+    "conversation_id_header": "X-Libre-Conversation-Id",
+    "message_id_header": "X-Libre-Message-Id",
+    "operation_header": "X-Libre-Operation"
+  },
+  "model_map": ["reliquary"],
+  "variables": [
+    {
+      "name": "base_url",
+      "type": "string",
+      "label": "Base URL",
+      "description": "Reliquary OpenAI-compatible API root.",
+      "default": "http://127.0.0.1:8090/v1"
+    },
+    {
+      "name": "api_path",
+      "type": "string",
+      "label": "API Path",
+      "description": "Optional path relative to Base URL. Leave blank to use /chat/completions."
+    },
+    {
+      "name": "endpoint",
+      "type": "string",
+      "label": "Legacy Full Endpoint",
+      "description": "Optional complete request URL overriding Base URL and API Path."
+    },
+    {
+      "name": "temperature",
+      "type": "number",
+      "label": "Temperature",
+      "description": "Controls response randomness.",
+      "default": 0.7,
+      "min": 0,
+      "max": 2
+    },
+    {
+      "name": "max_tokens",
+      "type": "number",
+      "label": "Max Tokens",
+      "description": "Maximum response tokens.",
+      "default": 4096,
+      "min": 1,
+      "max": 32768
+    },
+    {
+      "name": "stream",
+      "type": "boolean",
+      "label": "Stream Response",
+      "description": "Stream response tokens as they are generated.",
+      "default": true
+    }
+  ]
+}

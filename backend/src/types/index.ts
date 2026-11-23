@@ -365,6 +365,7 @@ export interface ChatSessionSettings {
  */
 export interface ProviderRequestContext {
   userId?: string;
+  identitySubject?: string;
   conversationId?: string;
   messageId?: string;
   operation?: string;
@@ -722,6 +723,7 @@ export interface PluginAuthConfig {
  */
 export interface PluginRequestContextConfig {
   user_id_header?: string;
+  identity_subject_header?: string;
   conversation_id_header?: string;
   message_id_header?: string;
   operation_header?: string;
