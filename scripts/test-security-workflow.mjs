@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import test from 'node:test';
 import { execFileSync } from 'node:child_process';
-import yaml from 'js-yaml';
+import * as yaml from 'js-yaml';
 
 const repoRoot = path.resolve(import.meta.dirname, '..');
 const workflowPath = '.github/workflows/security.yml';
