@@ -20,20 +20,10 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-export const TOLERATED_ADVISORIES = new Map([
-  [
-    1247710,
-    {
-      id: 'GHSA-fc5q-39xc-vjpf',
-      package: 'picomatch',
-      reason:
-        'picomatch <=4.0.7 extglob ReDoS has no fixed release (checked 2026-11-18). ' +
-        'It is reached only through vite (frontend build) and typescript-eslint ' +
-        "(lint), which match globs from this repository's own config. The server " +
-        'never loads picomatch.',
-    },
-  ],
-]);
+// Entry shape: [npm advisory source id, { id: 'GHSA-…', package, reason }].
+// Empty since 2026-11-24: GitHub withdrew GHSA-fc5q-39xc-vjpf (picomatch), the
+// only entry, on 2026-11-18, and npm audit no longer reports it.
+export const TOLERATED_ADVISORIES = new Map();
 
 const SEVERITY_RANK = { info: 0, low: 1, moderate: 2, high: 3, critical: 4 };
 

@@ -5,6 +5,19 @@ import {
   evaluateAuditReport,
 } from './dependency-audit.mjs';
 
+// A fixture list, so the gate's mechanics stay covered while the shipped
+// list is empty.
+const picomatchTolerance = new Map([
+  [
+    1247710,
+    {
+      id: 'GHSA-fc5q-39xc-vjpf',
+      package: 'picomatch',
+      reason: 'fixture: build-time globbing of repository paths only',
+    },
+  ],
+]);
+
 const report = vulnerabilities => ({
   metadata: { vulnerabilities: { high: Object.keys(vulnerabilities).length } },
   vulnerabilities,
@@ -32,7 +45,10 @@ const picomatchChain = (
 });
 
 test('findings that trace only to a tolerated advisory pass', () => {
-  const result = evaluateAuditReport(report(picomatchChain()));
+  const result = evaluateAuditReport(
+    report(picomatchChain()),
+    picomatchTolerance
+  );
   assert.equal(result.verdict, true);
   assert.deepEqual(result.blocking, []);
   assert.deepEqual(result.tolerated.sort(), [
@@ -43,7 +59,10 @@ test('findings that trace only to a tolerated advisory pass', () => {
 });
 
 test('a tolerated advisory stops counting once npm can install its fix', () => {
-  const result = evaluateAuditReport(report(picomatchChain(true)));
+  const result = evaluateAuditReport(
+    report(picomatchChain(true)),
+    picomatchTolerance
+  );
   assert.deepEqual(result.expired, ['GHSA-fc5q-39xc-vjpf']);
   assert.equal(result.blocking.length, 3);
 });
@@ -62,7 +81,8 @@ test('any other moderate-or-higher advisory still fails', () => {
         via: ['picomatch', { source: 1000 }],
         fixAvailable: false,
       },
-    })
+    }),
+    picomatchTolerance
   );
   assert.deepEqual(result.blocking.map(item => item.name).sort(), [
     'lodash',
@@ -79,6 +99,13 @@ test('low findings are ignored and a report without metadata is no verdict', () 
   assert.deepEqual(low.blocking, []);
   assert.equal(evaluateAuditReport({}).verdict, false);
   assert.equal(evaluateAuditReport(null).verdict, false);
+});
+
+test('the shipped list tolerates nothing by default', () => {
+  const result = evaluateAuditReport(report(picomatchChain()));
+  assert.equal(result.verdict, true);
+  assert.equal(result.blocking.length, 3);
+  assert.deepEqual(result.tolerated, []);
 });
 
 test('every tolerated advisory names its package and a reason', () => {
