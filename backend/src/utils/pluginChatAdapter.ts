@@ -227,14 +227,51 @@ export function applyPluginDefinitionPolicy(plugin: Plugin): Plugin {
     : { ...plugin, variables };
 }
 
+/**
+ * OpenAI's reasoning models, GPT-5 onward and the o-series, take no sampling
+ * parameters. The GPT-6.2 guide says to leave temperature and top_p out of
+ * Chat Completions and Responses requests, OpenRouter lists neither these nor
+ * the penalties for any of them, and the ChatGPT-backed codex endpoint
+ * answers them with a 400. They also take their answer cap as
+ * `max_completion_tokens`, which replaced `max_tokens` in Chat Completions.
+ */
+export function openAIModelIsReasoningOnly(model: string): boolean {
+  const name = model.toLowerCase().replace(/^openai\//, '');
+  if (/^o\d/.test(name)) return true;
+  const match = /^gpt-(\d+)/.exec(name);
+  return match !== null && Number(match[1]) >= 5;
+}
+
+function omitsOpenAISampling(
+  plugin: Pick<Plugin, 'id'>,
+  model: string | undefined
+): boolean {
+  return (
+    plugin.id === 'openai' &&
+    model !== undefined &&
+    openAIModelIsReasoningOnly(model)
+  );
+}
+
+/** The Chat Completions field an answer cap goes out under. */
+export function openAICompatibleTokenLimitField(
+  plugin: Pick<Plugin, 'id'>,
+  model: string
+): 'max_tokens' | 'max_completion_tokens' {
+  return omitsOpenAISampling(plugin, model)
+    ? 'max_completion_tokens'
+    : 'max_tokens';
+}
+
 export function getOpenAICompatibleSamplingParameters(
   plugin: Pick<Plugin, 'id'>,
-  params: PluginChatParameters
+  params: PluginChatParameters,
+  model?: string
 ): OpenAICompatibleSamplingParameters {
   // Kimi Code models choose fixed sampling values for their active mode and
   // reject generic application preferences. Moonshot recommends omitting
   // these fields instead of sending explicit fixed values.
-  if (plugin.id === 'kimi-code') {
+  if (plugin.id === 'kimi-code' || omitsOpenAISampling(plugin, model)) {
     return {};
   }
 
@@ -756,8 +793,8 @@ function buildOpenAICompatibleChatPayload(
           plugin.id === 'baseten',
         reasoningField,
       }),
-      ...getOpenAICompatibleSamplingParameters(plugin, params),
-      max_tokens: params.maxTokens,
+      ...getOpenAICompatibleSamplingParameters(plugin, params, model),
+      [openAICompatibleTokenLimitField(plugin, model)]: params.maxTokens,
       // Meta's Muse models reason, and its API rejects stop sequences then.
       stop: plugin.id === 'meta' ? undefined : options.stop,
       stream: params.shouldStream,
@@ -850,8 +887,11 @@ function buildPluginChatRequest(
   }
 
   if (apiMode === 'responses') {
-    // The ChatGPT-backed codex endpoint rejects sampling parameters outright.
-    const supportsSampling = plugin.id !== 'codex-oauth';
+    // The ChatGPT-backed codex endpoint rejects sampling parameters and an
+    // answer cap outright; OpenAI's reasoning models take the cap only.
+    const codexEndpoint = plugin.id === 'codex-oauth';
+    const supportsSampling =
+      !codexEndpoint && !omitsOpenAISampling(plugin, model);
     return {
       payload: buildOpenAIResponsesPayload(
         model,
@@ -859,15 +899,15 @@ function buildPluginChatRequest(
           preserveProviderMetadata: true,
         }),
         {
+          ...(codexEndpoint ? {} : { max_tokens: params.maxTokens }),
           ...(supportsSampling
             ? {
-                max_tokens: params.maxTokens,
                 temperature: params.temperature,
                 top_p: params.topP,
               }
             : {}),
           // The codex endpoint rejects non-streaming requests outright.
-          stream: supportsSampling ? params.shouldStream : true,
+          stream: codexEndpoint ? true : params.shouldStream,
           stateScope: providerStateScope,
           reasoningEffort: reasoningEffortFor(plugin, model, options.think),
           ...(options.tools?.length

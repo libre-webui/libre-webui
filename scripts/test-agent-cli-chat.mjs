@@ -205,6 +205,8 @@ test('Codex lists the GPT-6 family alongside the bundled ChatGPT models', async 
       ['codex', ...plugin.model_map.map(model => `codex:${model}`)]
     );
     for (const [model, label] of [
+      ['gpt-6.2-astra', 'GPT-6.2 Astra'],
+      ['gpt-6.2-sol', 'GPT-6.2 Sol'],
       ['gpt-6-astra', 'GPT-6 Astra'],
       ['gpt-6.1-sol', 'GPT-6.1 Sol'],
       ['gpt-6.1-terra', 'GPT-6.1 Terra'],

@@ -995,6 +995,85 @@ test('llama.cpp hears thinking on and off through the chat template', () => {
   );
 });
 
+test("OpenAI's reasoning models get no sampling and a completion-token cap", () => {
+  const plugin = JSON.parse(
+    fs.readFileSync(path.join(repoRoot, 'plugins', 'openai.json'), 'utf8')
+  );
+  // The manifest's own defaults: temperature 0.7, top_p 1, both penalties 0
+  // and a 4096-token cap all reach the payload builders on every request.
+  const variables = {
+    temperature: 0.7,
+    top_p: 1,
+    frequency_penalty: 0,
+    presence_penalty: 0,
+    max_tokens: 4096,
+  };
+  const chatPayload = (model, apiMode, target = plugin) =>
+    chatAdapter.buildPluginChatPayload(
+      target,
+      model,
+      [{ id: 'message-1', role: 'user', content: 'Hello', timestamp: 1 }],
+      {},
+      variables,
+      false,
+      apiMode
+    ).payload;
+  const workPayload = (model, apiMode) =>
+    workProvider.buildPluginWorkPayload(
+      plugin,
+      {
+        model,
+        messages: [{ role: 'user', content: 'Hello' }],
+        stream: false,
+      },
+      variables,
+      apiMode
+    ).payload;
+  const sampling = [
+    'temperature',
+    'top_p',
+    'frequency_penalty',
+    'presence_penalty',
+  ];
+
+  for (const model of ['gpt-6.2-astra', 'gpt-6.2-sol', 'gpt-5.4-nano', 'o3']) {
+    for (const payload of [
+      chatPayload(model, 'chat_completions'),
+      workPayload(model, 'chat_completions'),
+    ]) {
+      for (const field of sampling) {
+        assert.equal(field in payload, false, `${model} must not get ${field}`);
+      }
+      assert.equal(payload.max_completion_tokens, 4096, model);
+      assert.equal('max_tokens' in payload, false, model);
+    }
+    for (const payload of [
+      chatPayload(model, 'responses'),
+      workPayload(model, 'responses'),
+    ]) {
+      assert.equal(payload.temperature, undefined, model);
+      assert.equal(payload.top_p, undefined, model);
+      assert.equal(payload.max_output_tokens, 4096, model);
+    }
+  }
+
+  // Older chat models and other providers keep the user's sampling.
+  const legacy = chatPayload('gpt-4.1', 'chat_completions');
+  assert.equal(legacy.temperature, 0.7);
+  assert.equal(legacy.top_p, 1);
+  assert.equal(legacy.max_tokens, 4096);
+  assert.equal('max_completion_tokens' in legacy, false);
+  assert.equal(chatPayload('gpt-4.1', 'responses').temperature, 0.7);
+  assert.equal(workPayload('gpt-4.1', 'chat_completions').temperature, 0.7);
+
+  const openrouter = chatPayload('openai/gpt-6.2-sol', 'chat_completions', {
+    id: 'openrouter',
+    name: 'OpenRouter',
+  });
+  assert.equal(openrouter.temperature, 0.7);
+  assert.equal(openrouter.max_tokens, 4096);
+});
+
 test('Chat adapter sends and normalizes Responses API payloads', () => {
   const plugin = {
     id: 'openai',

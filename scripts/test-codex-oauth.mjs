@@ -178,6 +178,8 @@ test('the bundled codex plugin omits sampling parameters and adds ChatGPT header
   assert.equal(plugin.id, CODEX_OAUTH_PLUGIN_ID);
   assert.equal(plugin.api_mode, 'responses');
   for (const model of [
+    'gpt-6.2-astra',
+    'gpt-6.2-sol',
     'gpt-6-astra',
     'gpt-6.1-sol',
     'gpt-6.1-terra',
@@ -209,6 +211,8 @@ test('the bundled codex plugin omits sampling parameters and adds ChatGPT header
     ).href
   );
   for (const model of [
+    'gpt-6.2-astra',
+    'gpt-6.2-sol',
     'gpt-6-astra',
     'gpt-6.1-sol',
     'gpt-6.1-terra',
@@ -248,7 +252,7 @@ test('the bundled codex plugin omits sampling parameters and adds ChatGPT header
   assert.equal(headers['Authorization'], 'Bearer token-value');
 });
 
-test('GPT-6.1 Terra is also bundled for the OpenAI API and OpenRouter', async () => {
+test('GPT-6.1 Terra and GPT-6.2 are also bundled for the OpenAI API and OpenRouter', async () => {
   const trust = await import(
     pathToFileURL(
       path.join(
@@ -262,7 +266,11 @@ test('GPT-6.1 Terra is also bundled for the OpenAI API and OpenRouter', async ()
   );
   for (const [id, model] of [
     ['openai', 'gpt-6.1-terra'],
+    ['openai', 'gpt-6.2-astra'],
+    ['openai', 'gpt-6.2-sol'],
     ['openrouter', 'openai/gpt-6.1-terra'],
+    ['openrouter', 'openai/gpt-6.2-astra'],
+    ['openrouter', 'openai/gpt-6.2-sol'],
   ]) {
     const plugin = JSON.parse(
       fs.readFileSync(path.join(repoRoot, 'plugins', `${id}.json`), 'utf8')

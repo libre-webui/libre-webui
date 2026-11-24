@@ -37,6 +37,7 @@ import type {
 import {
   getOpenAICompatibleSamplingParameters,
   openAICompatibleReasoningFields,
+  openAICompatibleTokenLimitField,
   providerRoutingHeaders,
   reasoningEffortFor,
   resolveAnthropicThinking,
@@ -919,7 +920,11 @@ function buildPluginWorkRequest(
     };
   }
   if (apiMode === 'responses') {
-    const sampling = getOpenAICompatibleSamplingParameters(plugin, params);
+    const sampling = getOpenAICompatibleSamplingParameters(
+      plugin,
+      params,
+      request.model
+    );
     const tools = toOpenAIResponsesTools(request.tools || []);
     // The ChatGPT-backed codex endpoint rejects sampling parameters outright.
     const supportsSampling = plugin.id !== CODEX_OAUTH_PLUGIN_ID;
@@ -957,8 +962,9 @@ function buildPluginWorkRequest(
       messages: toOpenAIWorkMessages(request.messages),
       tools: request.tools,
       tool_choice: request.tools?.length ? 'auto' : undefined,
-      ...getOpenAICompatibleSamplingParameters(plugin, params),
-      max_tokens: params.maxTokens,
+      ...getOpenAICompatibleSamplingParameters(plugin, params, request.model),
+      [openAICompatibleTokenLimitField(plugin, request.model)]:
+        params.maxTokens,
       ...openAICompatibleReasoningFields(plugin, request.model, options.think),
       stream: Boolean(request.stream),
     },

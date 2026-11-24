@@ -29,7 +29,7 @@ export const BUNDLED_PLUGIN_DEFINITION_FINGERPRINTS: Readonly<
   baseten: 'd0486c8c44a5f2ca7bdb5407869f411fe3ca7ba0ee2b2a30d1cd5f96a18cfc35',
   bedrock: '3cfcf2c3728f621b4b9f22ecb8f6d30cb4aec2164302a3fb65268bdc2f6eca64',
   'codex-oauth':
-    '82f39cd30da614cbdba5fc504962947e59d616592b334abb8afa6e498a81a216',
+    '4459af83bbf53e469323fd31ae0c62149436f4db915a79612ea9ece582bba83a',
   comfyui: 'eaefe81897b58bffdf92bae8f0d0b675a062af276d5379e43147d6a0adaf0f47',
   deepseek: '32cc8662939e304869f9e02ef3b7c8ced6ffe14c333bea9230bfabe2f2350181',
   elevenlabs:
@@ -55,9 +55,9 @@ export const BUNDLED_PLUGIN_DEFINITION_FINGERPRINTS: Readonly<
   modal: '1090d56f1358d0bfeaea52db7551d2a0e10ce19898a4999b754a2cb801c67189',
   'openai-tts':
     'ebc3677f4f0ef2ec1628408d59a9e273059cc50d2f9d462e7a3b7f0c4eefe843',
-  openai: 'b09166167dabcce34818526331dd128b07f9995ef192f85ee9dbaeb98841ac57',
+  openai: '787c224c9026a7763f2a95fb55d3ba57c3a063acca9ab27ea446b84b82b415bf',
   openrouter:
-    '52e400545e141c4e021ebc600966ce83665c37b1e0b877308dc6782bd449fe54',
+    'ad54eb5ebe576cd861d120d18a5d64c14d1097deaee1a13a2ebd1ec1d461fb23',
   'qwen-tts':
     '3a663efb46a9a228a78f850996b8006e886a67c32b52d0e31627586f856a9ba9',
 });

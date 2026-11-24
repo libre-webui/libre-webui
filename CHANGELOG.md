@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### ✨ New Features
 
+- **GPT-6.2 Astra and GPT-6.2 Sol**: OpenAI's new models (`gpt-6.2-astra`,
+  `gpt-6.2-sol`) are in the bundled OpenAI provider for API keys, the Codex
+  provider and the Codex agent CLI (subject to the signed-in account's access),
+  and the OpenRouter catalog. Extra high thinking reaches them as `xhigh`.
 - **Gemini 4 Neon**: Google's new model between Hydrogen and Carbon is in the
   Gemini provider, with the Extra high thinking level.
 - **Wide mode**: a toggle in Settings > Appearance lets Chat, Work, Strands,
@@ -39,6 +43,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Composer naming the wrong persona**: opening a chat right after a persona
   chat could show that persona's name in the footer and count its system
   prompt in the context meter.
+- **OpenAI reasoning models and sampling settings**: the OpenAI provider sent
+  Temperature, Top P, the penalties, and `max_tokens` to GPT-5 and newer
+  models, which take none of them. OpenAI's GPT-6.2 guide says to leave
+  temperature and top_p out. Chat and Work now omit them for those models and
+  send the answer cap as `max_completion_tokens`.
 
 ### 📚 Documentation
 

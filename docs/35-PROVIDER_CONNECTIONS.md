@@ -80,10 +80,11 @@ above.
 
 The bundled **Codex (ChatGPT)** provider needs no API key. When the server has
 a Codex CLI sign-in (`codex login` as the server's operating-system user), the
-provider appears to administrators, offering GPT-6 Astra, GPT-6.1 Sol
-(`gpt-6.1-sol`), GPT-6.1 Terra (`gpt-6.1-terra`), GPT-6 Sol, GPT-6 Luna, GPT-5.6
-Sol, Terra, Luna, GPT-5.5, and GPT-5.3 Codex Spark through the ChatGPT session,
-subject to the signed-in account's model access. Access tokens are read from the
+provider appears to administrators, offering GPT-6.2 Astra (`gpt-6.2-astra`),
+GPT-6.2 Sol (`gpt-6.2-sol`), GPT-6 Astra, GPT-6.1 Sol (`gpt-6.1-sol`), GPT-6.1
+Terra (`gpt-6.1-terra`), GPT-6 Sol, GPT-6 Luna, GPT-5.6 Sol, Terra, Luna,
+GPT-5.5, and GPT-5.3 Codex Spark through the ChatGPT session, subject to the
+signed-in account's model access. Access tokens are read from the
 CLI's own `auth.json`, refreshed through the same OAuth client the CLI uses, and
 written back so the CLI keeps working; token values never appear in logs.
 
@@ -260,6 +261,12 @@ OpenAI-compatible completion plugins can use either API mode:
 The bundled OpenAI provider exposes **API Mode** in its configuration. Libre
 WebUI maps completed and streamed Responses output back into Chat and Work,
 including bounded replay state for reasoning and tool calls.
+
+OpenAI's reasoning models, GPT-5 and later and the o-series, take no sampling
+settings. For those models the bundled OpenAI provider leaves Temperature, Top
+P, and the frequency and presence penalties out of the request in either mode,
+and sends **Max Tokens** as `max_completion_tokens` (Chat Completions) or
+`max_output_tokens` (Responses). Older GPT models still receive every setting.
 
 Changing the mode affects the default operation path. It does not change the
 protocol spoken by the upstream server, so select Responses only when that

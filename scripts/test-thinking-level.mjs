@@ -340,6 +340,8 @@ test('extra high reaches the models documented to take it and asks the rest for 
     'gpt-5.6-terra',
     'gpt-6-sol',
     'gpt-6.1-terra',
+    'gpt-6.2-astra',
+    'gpt-6.2-sol',
   ]) {
     assert.equal(build('openai', model).reasoning_effort, 'xhigh', model);
   }
