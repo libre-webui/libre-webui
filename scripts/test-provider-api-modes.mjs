@@ -995,6 +995,41 @@ test('llama.cpp hears thinking on and off through the chat template', () => {
   );
 });
 
+test('MLX hears thinking on and off on both of its servers', () => {
+  const plugin = JSON.parse(
+    fs.readFileSync(path.join(repoRoot, 'plugins', 'mlx-lm.json'), 'utf8')
+  );
+  const payloadFor = options =>
+    chatAdapter.buildPluginChatPayload(
+      plugin,
+      'prism-ml/Ternary-Bonsai-2.5-27B-mlx-2bit',
+      [{ id: 'message-1', role: 'user', content: 'Hello', timestamp: 1 }],
+      options,
+      {},
+      false,
+      'chat_completions'
+    ).payload;
+
+  // mlx-vlm, which serves the Bonsai 2.5 pack, reads the top-level switch;
+  // mlx_lm.server reads the chat template arguments.
+  const off = payloadFor({ think: false, num_predict: 200 });
+  assert.equal(off.enable_thinking, false);
+  assert.deepEqual(off.chat_template_kwargs, { enable_thinking: false });
+  assert.equal(off.max_tokens, 200);
+
+  const on = payloadFor({ think: true });
+  assert.equal(on.enable_thinking, true);
+  assert.deepEqual(on.chat_template_kwargs, { enable_thinking: true });
+
+  const unset = payloadFor({});
+  assert.equal(unset.enable_thinking, undefined);
+  assert.equal(
+    unset.chat_template_kwargs,
+    undefined,
+    'an unset preference leaves the server default alone'
+  );
+});
+
 test("OpenAI's reasoning models get no sampling and a completion-token cap", () => {
   const plugin = JSON.parse(
     fs.readFileSync(path.join(repoRoot, 'plugins', 'openai.json'), 'utf8')

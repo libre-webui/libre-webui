@@ -295,16 +295,34 @@ export function getOpenAICompatibleSamplingParameters(
  * They think by default and ignore `reasoning_effort`, so without the switch
  * "thinking off" never reaches them and a short side task (follow-ups, a
  * summary) spends its whole budget reasoning and comes back empty.
+ *
+ * The MLX plugin talks to one of two servers. mlx_lm.server reads the same
+ * `chat_template_kwargs`; the mlx-vlm server that runs Ternary Bonsai 2.5
+ * reads a top-level `enable_thinking`. Each ignores the other's field, so
+ * both are sent.
  */
 export function getOpenAICompatibleThinkingParameters(
   plugin: Pick<Plugin, 'id'>,
   think: unknown
 ): Record<string, unknown> {
-  if (plugin.id !== 'deepseek' && plugin.id !== 'llama-cpp') return {};
+  if (
+    plugin.id !== 'deepseek' &&
+    plugin.id !== 'llama-cpp' &&
+    plugin.id !== 'mlx-lm'
+  ) {
+    return {};
+  }
   const preference = normalizeThinkingPreference(think);
   if (preference === undefined) return {};
+  const enableThinking = preference !== false;
   if (plugin.id === 'llama-cpp') {
-    return { chat_template_kwargs: { enable_thinking: preference !== false } };
+    return { chat_template_kwargs: { enable_thinking: enableThinking } };
+  }
+  if (plugin.id === 'mlx-lm') {
+    return {
+      enable_thinking: enableThinking,
+      chat_template_kwargs: { enable_thinking: enableThinking },
+    };
   }
   return {
     thinking: { type: preference === false ? 'disabled' : 'enabled' },

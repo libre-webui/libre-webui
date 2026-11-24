@@ -8,7 +8,7 @@
     "prefix": "",
     "key_env": ""
   },
-  "model_map": ["prism-ml/Ternary-Bonsai-27B-mlx-2bit"],
+  "model_map": ["prism-ml/Ternary-Bonsai-2.5-27B-mlx-2bit"],
   "variables": [
     {
       "name": "endpoint",
@@ -21,8 +21,8 @@
       "name": "temperature",
       "type": "number",
       "label": "Temperature",
-      "description": "Controls randomness. Ternary Bonsai recommends 0.7.",
-      "default": 0.7,
+      "description": "Controls randomness. Ternary Bonsai 2.5 ships 1.0.",
+      "default": 1.0,
       "min": 0,
       "max": 2
     },
@@ -30,7 +30,7 @@
       "name": "max_tokens",
       "type": "number",
       "label": "Max Output Tokens",
-      "description": "Maximum output allowance for Ternary Bonsai. Prompt and output must fit its 262,144-token context together.",
+      "description": "Maximum output allowance for Ternary Bonsai 2.5. Prompt and output must fit its 262,144-token context together.",
       "default": 262144,
       "min": 1,
       "max": 262144
@@ -39,7 +39,7 @@
       "name": "top_p",
       "type": "number",
       "label": "Top P",
-      "description": "Nucleus sampling. Ternary Bonsai recommends 0.95.",
+      "description": "Nucleus sampling. Ternary Bonsai 2.5 ships 0.95.",
       "default": 0.95,
       "min": 0,
       "max": 1

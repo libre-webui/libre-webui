@@ -51,7 +51,7 @@ export const BUNDLED_PLUGIN_DEFINITION_FINGERPRINTS: Readonly<
     'ac898aaad95181722b4f53303edd4939a9f9b0fcd0c5a8126f39fa80e45cba25',
   meta: '4e3a7061dd82562ff9978d98aedf25e9e247dd73b5f3df2b60cf8e5afa14a270',
   mistral: 'a8a188cc75799a4b0a4c8fa4b448a8601b5ed72babc358ee460683459a75fbed',
-  'mlx-lm': 'c5aad700fd557216a1e1eda361c0d67f92d51d1fe46d9c2028354f8ca8f25503',
+  'mlx-lm': '574f5b9469c48c1defe1664ac149a94ba3f80ab53ca615a13e148c450be402fb',
   modal: '1090d56f1358d0bfeaea52db7551d2a0e10ce19898a4999b754a2cb801c67189',
   'openai-tts':
     'ebc3677f4f0ef2ec1628408d59a9e273059cc50d2f9d462e7a3b7f0c4eefe843',

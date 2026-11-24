@@ -15,12 +15,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   and the OpenRouter catalog. Extra high thinking reaches them as `xhigh`.
 - **Gemini 4 Neon**: Google's new model between Hydrogen and Carbon is in the
   Gemini provider, with the Extra high thinking level.
+- **Ternary Bonsai 2.5 on Apple Silicon**: the MLX plugin's default model is
+  now Prism ML's Ternary Bonsai 2.5 27B
+  (`prism-ml/Ternary-Bonsai-2.5-27B-mlx-2bit`), which reads images as well as
+  text. Its weights need the loader that ships with the model, so
+  `examples/mlx-lm-server` now serves it through mlx-vlm with that loader,
+  pinned to a reviewed revision and held to that one model. Other MLX models
+  still run on `mlx_lm.server`.
 - **Wide mode**: a toggle in Settings > Appearance lets Chat, Work, Strands,
   Notes, Automations, and library pages use the whole window instead of the
   centered reading width. It is saved to your account.
 
 ### 🔧 Improvements
 
+- **Thinking control for MLX models**: turning thinking on or off in Libre
+  WebUI now reaches models on the MLX plugin, whether they run on mlx-vlm or
+  `mlx_lm.server`, so follow-up suggestions and titles no longer wait for the
+  model to reason first.
 - **Calmer chat layout**: each reply has one row for actions and generation
   stats, and the token count opens the details. Older replies show the row on
   hover. Follow-up suggestions are chips under the reply text. Chat controls

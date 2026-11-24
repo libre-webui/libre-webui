@@ -387,7 +387,7 @@ test('packed npm artifact resolves package metadata and frontend dist', async ()
       key_env: '',
     });
     assert.ok(
-      mlxPlugin.model_map.includes('prism-ml/Ternary-Bonsai-27B-mlx-2bit')
+      mlxPlugin.model_map.includes('prism-ml/Ternary-Bonsai-2.5-27B-mlx-2bit')
     );
 
     const anthropicPlugin = JSON.parse(
