@@ -83,8 +83,9 @@ uv run server.py
 The script:
 
 1. Installs the versions the pack's loader was built against (`mlx` 0.32.0,
-   `mlx-lm` 0.31.3, `mlx-vlm` 0.6.3, `transformers` 5.5.0) in an isolated
-   environment.
+   `mlx-lm` 0.31.3, `mlx-vlm` 0.6.3) in an isolated environment, with
+   `transformers` 5.10.4 instead of the pack's 5.5.0 to stay clear of two
+   file-write advisories in older releases.
 2. Downloads the model into the Hugging Face cache at a pinned revision. The
    first run fetches about 8.6 GB; later runs use the cache. The optional MTP
    draft head is skipped because the server does not use it.

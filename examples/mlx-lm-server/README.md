@@ -19,9 +19,10 @@ uv run server.py
 ```
 
 The PEP 723 metadata in `server.py` installs the versions the pack's loader
-was built against (`mlx` 0.32.0, `mlx-lm` 0.31.3, `mlx-vlm` 0.6.3,
-`transformers` 5.5.0) in uv's isolated environment. The first run downloads
-about 8.6 GB into the Hugging Face cache.
+was built against (`mlx` 0.32.0, `mlx-lm` 0.31.3, `mlx-vlm` 0.6.3) in uv's
+isolated environment, with `transformers` 5.10.4 instead of the pack's 5.5.0
+to stay clear of two file-write advisories in older releases. The first run
+downloads about 8.6 GB into the Hugging Face cache.
 
 To use another MLX model:
 

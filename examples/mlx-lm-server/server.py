@@ -16,7 +16,7 @@ mlx_lm.server unchanged.
 #   "mlx==0.32.0",
 #   "mlx-lm==0.31.3",
 #   "mlx-vlm==0.6.3",
-#   "transformers==5.5.0",
+#   "transformers==5.10.4",
 #   "numpy>=2.0",
 #   "tokenizers>=0.21",
 #   "jinja2>=3.1",

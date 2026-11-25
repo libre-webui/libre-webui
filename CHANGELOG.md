@@ -13,6 +13,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 🐛 Bug Fixes
 
+- **Reasoning and penalty labels**: Arabic showed Frequency Penalty and Repeat
+  Penalty under the same name, and German and Arabic translated "Reasoning" as
+  "justification" and "logic". Each now has its own correct label.
+
+### 🔒 Security
+
+- **MLX example dependencies**: the Ternary Bonsai 2.5 server now installs
+  transformers 5.10.4 instead of 5.5.0, past two advisories in older releases
+  (GHSA-x9r9-c232-4q39, GHSA-xrqw-3rrv-vx5w). Neither code path ran in the
+  example, which only loads its pinned model and never saves one.
+
 ### 📚 Documentation
 
 ## [0.46.0] - 2026-11-25
