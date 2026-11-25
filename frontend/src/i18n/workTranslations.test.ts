@@ -342,6 +342,54 @@ test('every shipped locale completely translates the Work interface', async () =
   }
 });
 
+test('every locale keeps sampling settings apart', async () => {
+  // Arabic once called Frequency Penalty and Repeat Penalty the same thing,
+  // so the two sliders could not be told apart.
+  const groups = [
+    'settings.generation.',
+    'chat.controls.params.',
+    'personaForm.parameters.',
+  ];
+  const english = flattenMessages(
+    JSON.parse(
+      await readFile(join(localeDirectory, 'en.json'), 'utf8')
+    ) as Messages
+  );
+  const localeFiles = (await readdir(localeDirectory))
+    .filter(file => file.endsWith('.json'))
+    .sort();
+
+  for (const localeFile of localeFiles) {
+    const locale = flattenMessages(
+      JSON.parse(
+        await readFile(join(localeDirectory, localeFile), 'utf8')
+      ) as Messages
+    );
+
+    for (const group of groups) {
+      const depth = group.split('.').length - 1;
+      const keys = Object.keys(english).filter(
+        key => key.startsWith(group) && key.split('.').length - 1 === depth
+      );
+      const byLabel = new Map<string, string[]>();
+      for (const key of keys) {
+        const label = locale[key].trim().toLowerCase();
+        byLabel.set(label, [...(byLabel.get(label) ?? []), key]);
+      }
+      for (const [label, sharing] of byLabel) {
+        const englishLabels = new Set(
+          sharing.map(key => english[key].trim().toLowerCase())
+        );
+        assert.equal(
+          englishLabels.size,
+          1,
+          `${localeFile}: ${sharing.join(', ')} all read "${label}"`
+        );
+      }
+    }
+  }
+});
+
 test('Arabic is the shipped right-to-left locale', () => {
   assert.equal(
     supportedLanguages.find(language => language.code === 'ar')?.dir,

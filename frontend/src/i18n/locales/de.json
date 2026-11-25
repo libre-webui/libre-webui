@@ -41,7 +41,7 @@
     "remove": "Entfernen",
     "home": "Start",
     "more": "Mehr",
-    "reasoning": "Begründung",
+    "reasoning": "Schlussfolgern",
     "skipToContent": "Zum Inhalt springen"
   },
   "brand": {
@@ -3198,7 +3198,7 @@
       "all": "Alle",
       "general": "Allgemein",
       "coding": "Programmierung",
-      "reasoning": "Begründung",
+      "reasoning": "Schlussfolgern",
       "vision": "Vision",
       "embedding": "Embedding",
       "decision": "Entscheidung",
@@ -4174,7 +4174,7 @@
     "defaultModel": "Standardmodell",
     "send": "Senden",
     "stop": "Stoppen",
-    "reasoning": "Begründung",
+    "reasoning": "Schlussfolgern",
     "tool": {
       "running": "Wird ausgeführt",
       "done": "Fertig",

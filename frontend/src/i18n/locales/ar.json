@@ -41,7 +41,7 @@
     "remove": "إزالة",
     "home": "الرئيسية",
     "more": "أكثر",
-    "reasoning": "المنطق",
+    "reasoning": "الاستدلال",
     "skipToContent": "انتقل إلى المحتوى"
   },
   "brand": {
@@ -959,7 +959,7 @@
       "advancedOptions": "خيارات متقدمة",
       "presencePenalty": "عقوبة الوجود",
       "presencePenaltyDescription": "يعاقب الرموز التي تظهر في السياق.",
-      "frequencyPenalty": "عقوبة التكرار",
+      "frequencyPenalty": "عقوبة التردد",
       "frequencyPenaltyDescription": "يعاقب الرموز المستخدمة بشكل متكرر.",
       "stopSequences": "تسلسلات الإيقاف",
       "commaSeparated": "مفصولة بفواصل",
@@ -3198,7 +3198,7 @@
       "all": "الكل",
       "general": "عام",
       "coding": "البرمجة",
-      "reasoning": "المنطق",
+      "reasoning": "الاستدلال",
       "vision": "الرؤية",
       "embedding": "تضمين",
       "decision": "قرار",
@@ -4174,7 +4174,7 @@
     "defaultModel": "النموذج الافتراضي",
     "send": "إرسال",
     "stop": "إيقاف",
-    "reasoning": "المنطق",
+    "reasoning": "الاستدلال",
     "tool": {
       "running": "قيد التشغيل",
       "done": "تم",
