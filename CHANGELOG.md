@@ -9,6 +9,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### ✨ New Features
 
+### 🔧 Improvements
+
+### 🐛 Bug Fixes
+
+### 📚 Documentation
+
+## [0.46.0] - 2026-11-25
+
+Wide mode and a calmer chat layout arrive, GPT-6.2 Astra and Sol and Gemini 4
+Neon join the catalogs, and the MLX example serves Ternary Bonsai 2.5 on Apple
+Silicon.
+
+### ✨ New Features
+
 - **GPT-6.2 Astra and GPT-6.2 Sol**: OpenAI's new models (`gpt-6.2-astra`,
   `gpt-6.2-sol`) are in the bundled OpenAI provider for API keys, the Codex
   provider and the Codex agent CLI (subject to the signed-in account's access),
