@@ -60,7 +60,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   temperature and top_p out. Chat and Work now omit them for those models and
   send the answer cap as `max_completion_tokens`.
 
+### 🔒 Security
+
+- **Dependency updates**: the 21 updates from Dependabot, including the Strands
+  harness 0.5, React Router 8.5.2, Recharts 3.11, i18next, TanStack Query,
+  lucide-react, and Playwright. js-yaml moves to 5, which lets Dependabot's
+  update runs finish again. GitHub withdrew the picomatch advisory that 0.45.2
+  tolerated, so the audit gate allows no advisories again, and `npm audit`
+  reports no vulnerabilities.
+
 ### 📚 Documentation
+
+- **MLX LM on Apple Silicon**: rewritten for Ternary Bonsai 2.5, with the
+  supported Python versions, the pinned loader and `--trust-remote-code`, the
+  model's generation settings, thinking, and how to keep running other MLX
+  models on `mlx_lm.server`.
+- Pro Tips, Provider Connections, Agent CLI Models, and Web Search cover wide
+  mode, the new chat layout, persona backgrounds, Gemini 4 Neon, GPT-6.2, and
+  where web search and model comparison moved.
 
 ## [0.45.2] - 2026-11-18
 
