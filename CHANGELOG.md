@@ -22,9 +22,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **MLX example dependencies**: the Ternary Bonsai 2.5 server now installs
   transformers 5.10.4 instead of 5.5.0, past two advisories in older releases
   (GHSA-x9r9-c232-4q39, GHSA-xrqw-3rrv-vx5w). Neither code path ran in the
-  example, which only loads its pinned model and never saves one.
+  example, which only loads its pinned model and never saves one. Its Pillow
+  and Jinja2 floors move to 13.0.0 and 3.1.6, so a fresh install can no longer
+  pick releases with known advisories.
 
 ### 📚 Documentation
+
+- **MLX LM on Apple Silicon**: the install step names transformers 5.10.4.
 
 ## [0.46.0] - 2026-11-25
 
