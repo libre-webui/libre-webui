@@ -13,6 +13,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 🐛 Bug Fixes
 
+### 📚 Documentation
+
+## [0.46.1] - 2026-11-27
+
+This patch moves the MLX example to dependency versions without known
+advisories and fixes mistranslated labels in Arabic and German.
+
+### 🐛 Bug Fixes
+
 - **Reasoning and penalty labels**: Arabic showed Frequency Penalty and Repeat
   Penalty under the same name, and German and Arabic translated "Reasoning" as
   "justification" and "logic". Each now has its own correct label.
